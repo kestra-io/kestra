@@ -132,3 +132,23 @@ tasks:
     },
 };
 
+export const NewTaskWithAutoID = Template.bind({});
+NewTaskWithAutoID.args = {
+    flow: `
+id: flow1
+namespace: namespace1
+tasks:
+  - id: task1
+    type: io.kestra.plugin.core.debug.Return
+    message: "Hello world"
+    values:
+      - one
+      - two
+      - three
+    `.trim(),
+    props: {
+       creatingTask: true,
+       blockSchemaPath: "#/definitions/io.kestra.core.models.flows.Flow/properties/tasks/items",
+    },
+};
+

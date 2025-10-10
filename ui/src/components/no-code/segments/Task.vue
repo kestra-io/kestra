@@ -94,6 +94,8 @@
                     flowStore.validateTask({
                         task,
                         section: validationSection.value
+                    }).catch(() => {
+                        console.warn("Task validation failed, but continuing");
                     });
                 }
             }, 500) as any;

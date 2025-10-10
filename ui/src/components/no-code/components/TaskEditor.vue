@@ -44,6 +44,7 @@
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
         DATA_TYPES_MAP_INJECTION_KEY,
+        FULL_SOURCE_INJECTION_KEY,
     } from "../injectionKeys";
     import {removeNullAndUndefined} from "../utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins";
@@ -51,6 +52,7 @@
     import {getValueAtJsonPath, resolve$ref} from "../../../utils/utils";
     import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue";
     import isEqual from "lodash/isEqual";
+    import {generateElementId} from "../utils/idGenerator";
 
     const {t} = useI18n();
 
@@ -329,6 +331,13 @@
     }, {immediate: true});
 
     function onTaskInput(val: PartialCodeElement | undefined) {
+        if (val) {
+            if (!val.id && isPlugin.value) {
+                const flowSource = fullSource.value;
+                val.id = generateElementId(flowSource, parentPath);
+            }
+        }
+        
         taskObject.value = val;
         if(fieldName){
             val = {
@@ -356,11 +365,14 @@
 
     function onTaskTypeSelect() {
         const value: PartialCodeElement = {
-            type: selectedTaskType.value ?? ""
+            type: selectedTaskType.value ?? "",
+            id: generateElementId(fullSource.value, parentPath)
         };
 
         onTaskInput(value);
     }
+
+    const fullSource = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
 </script>
 
 <style scoped lang="scss">

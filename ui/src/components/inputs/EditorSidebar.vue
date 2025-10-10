@@ -123,7 +123,7 @@
                 }
             "
             @node-drop="nodeMoved"
-            @keydown.delete.prevent="removeSelectedFiles && removeSelectedFiles()" 
+            @keydown.delete.prevent="removeSelectedFiles"
         >
             <template #empty>
                 <div class="m-4 empty">
@@ -397,12 +397,7 @@
                 FileExplorerEmpty,
                 namespace: undefined,
                 filter: "",
-                dialog: {
-                    visible: false,
-                    type: '',
-                    folder: '',
-                    name: '',
-                },
+                dialog: {...DIALOG_DEFAULTS},
                 renameDialog: {...RENAME_DEFAULTS},
                 dropdownRef: "",
                 tree: {allExpanded: false},

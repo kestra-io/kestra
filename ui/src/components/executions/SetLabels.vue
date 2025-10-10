@@ -6,18 +6,23 @@
         :hideAfter="0"
         :content="t('Set labels tooltip')"
         rawContent
-        :placement="tooltipPosition"
+        placement="bottom"
     >
-        <component
-            :is="component"
+        <el-button
             :icon="LabelMultiple"
             @click="isOpen = !isOpen"
             :disabled="!enabled"
         >
             {{ t("Set labels") }}
-        </component>
+        </el-button>
     </el-tooltip>
-    <el-dialog v-if="isOpen" v-model="isOpen" destroyOnClose :appendToBody="true">
+
+    <el-dialog
+        v-if="isOpen"
+        v-model="isOpen"
+        destroyOnClose
+        :appendToBody="true"
+    >
         <template #header>
             <h5>{{ t("Set labels") }}</h5>
         </template>
@@ -46,54 +51,60 @@
 
 <script setup lang="ts">
     import {computed, ref, watch} from "vue";
-    import {useI18n} from "vue-i18n";
-    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
+
+    import LabelInput from "../../components/labels/LabelInput.vue";
+
     import {State} from "@kestra-io/ui-libs";
+    import {filterValidLabels} from "./utils";
+
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
-    import LabelInput from "../../components/labels/LabelInput.vue";
-    import {filterValidLabels} from "./utils";
-    import {useToast} from "../../utils/toast";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
 
-    interface Label {
-        key: string | null;
-        value: string | null;
-    }
-
-    interface Execution {
-        id: string;
-        namespace: string;
-        state: {
-            current: string;
-        };
-        labels?: Label[];
-    }
-
-    interface Props {
-        component?: string;
-        execution: Execution;
-        tooltipPosition?: string;
-    }
-
-    const props = withDefaults(defineProps<Props>(), {
-        component: "el-button",
-        tooltipPosition: "bottom"
-    });
-
-    const {t} = useI18n();
-    const toast = useToast();
     const miscStore = useMiscStore();
     const executionsStore = useExecutionsStore();
     const authStore = useAuthStore();
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
+    import {useToast} from "../../utils/toast";
+    const toast = useToast();
+
+    import permission from "../../models/permission";
+    import action from "../../models/action";
+
+    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
+
+    interface Label {
+        key: string;
+        value: string;
+    }
+
+    interface Props {
+        execution: {
+            id: string;
+            namespace: string;
+            state: {
+                current: string;
+            };
+            labels?: Label[];
+        };
+    }
+
+    const props = defineProps<Props>();
 
     const isOpen = ref(false);
     const executionLabels = ref<Label[]>([]);
 
     const enabled = computed(() => {
-        if (!authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace)) {
+        if (
+            !authStore.user?.isAllowed(
+                permission.EXECUTION,
+                action.UPDATE,
+                props.execution.namespace,
+            )
+        ) {
             return false;
         }
         return !State.isRunning(props.execution.state.current);
@@ -103,7 +114,7 @@
         const filtered = filterValidLabels(executionLabels.value);
 
         if (filtered.error) {
-            toast.error(t("wrong labels"));
+            toast.error(t("wrong labels"), t("error"));
             return;
         }
 
@@ -111,12 +122,12 @@
         try {
             const response = await executionsStore.setLabels({
                 labels: filtered.labels,
-                executionId: props.execution.id
+                executionId: props.execution.id,
             });
             executionsStore.execution = response.data;
             toast.success(t("Set labels done"));
-        } catch (error) {
-            // Error handling is done by the store/interceptor
+        } catch (err) {
+            console.error(err); // Error handling is done by the store/interceptor
         }
     };
 
@@ -127,7 +138,10 @@
 
         if (props.execution.labels) {
             executionLabels.value = props.execution.labels.filter(
-                label => !toIgnore.some(prefix => label.key?.startsWith(prefix))
+                (label) =>
+                    !toIgnore.some((prefix: string) =>
+                        label.key?.startsWith(prefix),
+                    ),
             );
         }
     });

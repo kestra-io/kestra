@@ -54,18 +54,22 @@ public class KvFunction implements Function {
                 namespace = flowNamespace;
                 value = getValueWithInheritance(flowNamespace, key, flowTenantId);
             } else {
-                // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
                 value = kvStoreService.get(flowTenantId, namespace, flowNamespace).getValue(key);
             }
         } catch (Exception e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
 
-        if (value.isEmpty() && errorOnMissing == Boolean.TRUE) {
-            throw new PebbleException(null, "The key '" + key + "' does not exist in the namespace '" + namespace + "'.", lineNumber, self.getName());
+        if (value.isEmpty()) {
+            if (Boolean.TRUE.equals(errorOnMissing)) {
+                throw new PebbleException(null, "The key '" + key + "' does not exist in the namespace '" + namespace + "'.", lineNumber, self.getName());
+            }
+            return "";
         }
 
-        return value.map(KVValue::value).orElse(null);
+        Object result = value.map(KVValue::value).orElse(null);
+
+        return result == null ? "" : result;
     }
 
     private Optional<KVValue> getValueWithInheritance(String flowNamespace, String key, String tenantId)
@@ -86,7 +90,10 @@ public class KvFunction implements Function {
         if (!args.containsKey(KEY_ARGS)) {
             throw new PebbleException(null, "The 'kv' function expects an argument 'key'.", lineNumber, self.getName());
         }
-
-        return (String) args.get(KEY_ARGS);
+        Object key = args.get(KEY_ARGS);
+        if (key == null) {
+            throw new PebbleException(null, "The 'kv' function received a null key.", lineNumber, self.getName());
+        }
+        return key.toString();
     }
 }

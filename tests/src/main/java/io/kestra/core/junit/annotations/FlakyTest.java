@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Tag;
 public @interface FlakyTest {
 
     /**
-     * Use to excplain why the test is flaky
+     * Use to explain why the test is flaky
      */
     String description() default "";
 }

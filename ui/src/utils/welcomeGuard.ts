@@ -4,17 +4,10 @@ import {useExecutionsStore} from "../stores/executions";
 export const DASHBOARD_ROUTE = "home";
 
 export const shouldShowWelcome = async () => {
-    const flowStore = useFlowStore();
-    const executionsStore = useExecutionsStore();
+    const flows = await useFlowStore().findFlows({size: 1, onlyTotal: true});
+    const executions = await useExecutionsStore().findExecutions({size: 1, onlyTotal: true});
 
-    let executions = 0;
-
-    await flowStore.findFlows({size: 10, sort: "id:asc"})
-    await executionsStore.findExecutions({size: 10}).then(response => executions = response?.total)
-
-    return !flowStore.overallTotal && !executions;
+    return !flows && !executions;
 };
 
-export const isDashboardRoute = (routeName: string) => {
-    return routeName == DASHBOARD_ROUTE;
-};
+export const isDashboardRoute = (routeName: string) => routeName == DASHBOARD_ROUTE;

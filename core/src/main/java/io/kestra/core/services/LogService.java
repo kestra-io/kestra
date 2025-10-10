@@ -40,7 +40,7 @@ public class LogService {
     }
 
     /**
-     * Log an execution via the execution logger named: 'execution.{flowId}'.
+     * Log an execution via the execution logger named: '{namespace}.{flowId}'.
      */
     public void logExecution(Execution execution, Level level, String message, Object... args) {
         Logger logger = logger(execution);
@@ -54,7 +54,7 @@ public class LogService {
     }
 
     /**
-     * Log a trigger via the trigger logger named: 'trigger.{flowId}.{triggereId}'.
+     * Log a trigger via the trigger logger named: '{namespace}.{flowId}.{triggereId}'.
      */
     public void logTrigger(TriggerContext triggerContext, Level level, String message, Object... args) {
         Logger logger = logger(triggerContext);
@@ -68,7 +68,7 @@ public class LogService {
     }
 
     /**
-     * Log a taskRun via the taskRun logger named: 'task.{flowId}.{taskId}'.
+     * Log a taskRun via the taskRun logger named: '{namespace}.{flowId}.{taskId}'.
      */
     public void logTaskRun(TaskRun taskRun, Level level, String message, Object... args) {
         String prefix = TASKRUN_PREFIX_WITH_TENANT;
@@ -96,19 +96,19 @@ public class LogService {
 
     private Logger logger(TaskRun taskRun) {
         return LoggerFactory.getLogger(
-            "task." + taskRun.getFlowId() + "." + taskRun.getTaskId()
+            taskRun.getNamespace() + "." + taskRun.getFlowId() + "." + taskRun.getTaskId()
         );
     }
 
     private Logger logger(TriggerContext triggerContext) {
         return LoggerFactory.getLogger(
-            "trigger." + triggerContext.getFlowId() + "." + triggerContext.getTriggerId()
+            triggerContext.getNamespace() + "." + triggerContext.getFlowId() + "." + triggerContext.getTriggerId()
         );
     }
 
     private Logger logger(Execution execution) {
         return LoggerFactory.getLogger(
-            "execution." + execution.getFlowId()
+            execution.getNamespace() + "." + execution.getFlowId()
         );
     }
 }

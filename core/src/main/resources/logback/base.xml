@@ -9,10 +9,13 @@
     <property name="pattern" value="%date{HH:mm:ss}.%ms %highlight(%-5.5level) %magenta(%-12.36thread) %cyan(%-12.36logger{36}) %msg%n" />
 
     <logger name="io.kestra" level="INFO" />
-    <logger name="flow" level="INFO" />
-    <logger name="task" level="INFO" />
-    <logger name="execution" level="INFO" />
-    <logger name="trigger" level="INFO" />
+    <!-- Logger levels for namespace-aware loggers: {namespace}.{flowId}.{taskId} -->
+    <!-- Example configurations:
+         <logger name="mynamespace.myflowId.mytaskId" level="OFF" />
+         <logger name="mynamespace.myflowId.mytriggerId" level="OFF" />
+         <logger name="mynamespace.myflowId" level="OFF" />
+         <logger name="mynamespace" level="OFF" />
+    -->
 
     <logger name="io.kestra.ee.runner.kafka.services.KafkaConsumerService" level="WARN" />
     <logger name="io.kestra.ee.runner.kafka.services.KafkaProducerService" level="WARN" />

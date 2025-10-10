@@ -70,7 +70,7 @@ jobs:
     needs: [publish-develop-docker, publish-develop-maven]
     if: always()
     steps:
-      - run: echo "debug ${{github.event.pull_request.head.repo.full_name}} and ${{github.repository}}"
+      - run: echo "debug ${{github.repository}} ${{needs.backend-tests}} ${{needs.backend-tests.result}}"
       - name: Trigger EE Workflow
         uses: peter-evans/repository-dispatch@v4
         if: github.ref == 'refs/heads/develop' && needs.backend-tests.result == 'success'
@@ -81,7 +81,7 @@ jobs:
 
       # Slack
       - name: Slack - Notification
-        if: ${{ failure() && github.event.pull_request.head.repo.full_name == github.repository && (github.ref == 'refs/heads/develop') }}
+        if: ${{ failure() && github.repository == 'kestra-io/kestra' && (github.ref == 'refs/heads/develop') }}
         uses: kestra-io/actions/composite/slack-status@main
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}

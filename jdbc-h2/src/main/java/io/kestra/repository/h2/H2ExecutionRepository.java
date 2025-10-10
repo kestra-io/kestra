@@ -30,56 +30,12 @@ public class H2ExecutionRepository extends AbstractJdbcExecutionRepository {
 
     @Override
     protected Condition findCondition(String query, Map<String, String> labels) {
-        List<Condition> conditions = new ArrayList<>();
-
-        if (query != null) {
-            conditions.add(jdbcRepository.fullTextCondition(List.of("fulltext"), query));
-        }
-
-        if (labels != null) {
-            labels.forEach((key, value) -> {
-                Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | select(.key == \"" + key + "\") | .value')", String.class);
-                if (value == null) {
-                    conditions.add(valueField.isNull());
-                } else {
-                    conditions.add(valueField.eq(value));
-                }
-            });
-        }
-
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return H2ExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
     }
 
     @Override
     protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
-        List<Condition> conditions = new ArrayList<>();
-        List<Condition> inConditions = new ArrayList<>();
-        if (input.isRight()) {
-            var query = input.right().get();
-            Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | .value')", String.class);
-            if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
-                conditions.add(valueField.contains(query));
-            } else {
-                throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
-            }
-        } else {
-            var labels = input.left().get();
-            labels.forEach((key, value) -> {
-                Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | select(.key == \"" + key + "\") | .value')", String.class);
-                switch (operation) {
-                    case EQUALS -> conditions.add(value == null ? valueField.isNull() : valueField.eq((String) value));
-                    case NOT_EQUALS, NOT_IN ->
-                        conditions.add(value == null ? valueField.isNotNull() : valueField.isNull().or(valueField.ne((String) value)));
-                    case IN -> inConditions.add(value == null ? valueField.isNull() : valueField.eq((String) value));
-                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
-                }
-            });
-        }
-
-        if (!inConditions.isEmpty()) {
-            conditions.add(DSL.or(inConditions));
-        }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return H2ExecutionRepositoryService.findLabelCondition(input, operation);
     }
 
     @Override

@@ -44,59 +44,12 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
 
     @Override
     protected Condition findCondition(String query, Map<String, String> labels) {
-        List<Condition> conditions = new ArrayList<>();
-
-        if (query != null) {
-            conditions.add(jdbcRepository.fullTextCondition(Collections.singletonList("fulltext"), query));
-        }
-
-        if (labels != null) {
-            labels.forEach((key, value) -> {
-                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
-                conditions.add(DSL.condition(sql));
-            });
-        }
-
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return PostgresExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
     }
 
     @Override
     protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
-        List<Condition> conditions = new ArrayList<>();
-        List<Condition> inConditions = new ArrayList<>();
-        if (input.isRight()) {
-            var query = input.right().get();
-            if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
-                // Match when ANY label's value contains the query (case-insensitive).
-                // `labels` is a JSONB array under value -> 'labels'.
-                String sql = """
-                    EXISTS (
-                      SELECT 1
-                      FROM jsonb_array_elements(value -> 'labels') AS l
-                      WHERE l ->> 'value' ILIKE '%' || ? || '%'
-                    )
-                    """;
-                conditions.add(DSL.condition(sql, query));
-            } else {
-                throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
-            }
-        } else {
-            var labels = input.getLeft();
-            labels.forEach((key, value) -> {
-                String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
-                switch (operation) {
-                    case EQUALS -> conditions.add(DSL.condition(sql));
-                    case NOT_EQUALS, NOT_IN -> conditions.add(DSL.not(DSL.condition(sql)));
-                    case IN -> inConditions.add(DSL.condition(sql));
-                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
-                }
-            });
-        }
-
-        if (!inConditions.isEmpty()) {
-            conditions.add(DSL.or(inConditions));
-        }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return PostgresExecutionRepositoryService.findLabelCondition(input, operation);
     }
 
     @Override

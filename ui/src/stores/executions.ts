@@ -250,6 +250,11 @@ export const useExecutionsStore = defineStore("executions", () => {
                 executions.value = response.data.results;
                 total.value = response.data.total;
             }
+
+            if (options.onlyTotal) {
+                return response.data.total;
+            }
+
             return response.data;
         })
     }

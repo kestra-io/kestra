@@ -12,7 +12,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.plugin.core.flow.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -242,7 +241,6 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.flowTriggerPreconditions();
     }
 
-    @Disabled
     @Test
     @LoadFlows(value = {"flows/valids/flow-trigger-preconditions-flow-listen.yaml",
         "flows/valids/flow-trigger-preconditions-flow-a.yaml",

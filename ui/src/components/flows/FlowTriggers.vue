@@ -24,9 +24,14 @@
         </el-table-column>
         <el-table-column prop="id" :label="$t('id')">
             <template #default="scope">
-                <code>
-                    {{ scope.row.id }}
-                </code>
+                <el-tooltip>
+                    <template #content>
+                        <TimeSeriesChart :flowId="scope.row.flowId" :namespace="scope.row.namespace" />
+                    </template>
+                    <code>
+                        {{ scope.row.id }}
+                    </code>
+                </el-tooltip>
             </template>
         </el-table-column>
 
@@ -284,6 +289,7 @@
     import {useTriggerStore} from "../../stores/trigger";
     import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
+    import TimeSeriesChart from "../charts/TimeSeriesChart.vue";
 
     export default {
         inheritAttrs: false,

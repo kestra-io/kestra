@@ -207,8 +207,6 @@
                                 className="row-graph"
                             >
                                 <template #default="scope">
-                                    {{ console.log(scope.row.id) }}
-
                                     <TimeSeriesChart :flowId="scope.row.id" :namespace="scope.row.namespace" />
                                 </template>
                             </el-table-column>

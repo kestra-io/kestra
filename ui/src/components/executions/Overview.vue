@@ -134,6 +134,9 @@
                                 {{ scope.row.value }}
                             </router-link>
                         </span>
+                        <span v-if="scope.row.key === $t('flow')">
+                            {{ scope.row.value }} <TimeSeriesChart :flowId="scope.row.value" :namespace="execution.namespace" />
+                        </span>
                         <span v-else>{{ scope.row.value }}</span>
                     </span>
                 </template>
@@ -231,6 +234,7 @@
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import Id from "../Id.vue";
+    import TimeSeriesChart from "../charts/TimeSeriesChart.vue";
 
     export default {
         inheritAttrs: false,
@@ -245,6 +249,7 @@
             Pause,
             Unqueue,
             ForceRun,
+            TimeSeriesChart,
             Kill,
             DateAgo,
             Labels,

@@ -397,7 +397,12 @@
                 FileExplorerEmpty,
                 namespace: undefined,
                 filter: "",
-                dialog: {...DIALOG_DEFAULTS},
+                dialog: {
+                    visible: false,
+                    type: '',
+                    folder: '',
+                    name: '',
+                },
                 renameDialog: {...RENAME_DEFAULTS},
                 dropdownRef: "",
                 tree: {allExpanded: false},

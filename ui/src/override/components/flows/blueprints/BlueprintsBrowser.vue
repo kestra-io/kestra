@@ -37,7 +37,7 @@
                         <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
                             <el-input
                                 v-model="searchText"
-                                :placeholder="$t('search')"
+                                :placeholder="$t('Search or choose filters...')"
                                 clearable
                                 @input="updateSearch"
                             />
@@ -48,77 +48,49 @@
                     <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
                         {{ $t('blueprints.empty') }}
                     </el-alert>
-                    <el-card
-                        class="blueprint-card"
-                        :class="{'embed': embed}"
-                        v-for="blueprint in blueprints"
-                        :key="blueprint.id"
-                        @click="goToDetail(blueprint.id)"
-                    >
-                        <component
-                            class="blueprint-link"
-                            :is="embed ? 'div' : 'router-link'"
-                            :to="embed ? undefined : {name: 'blueprints/view', params: {blueprintId: blueprint.id, tab: blueprintType, kind: blueprintKind}}"
+                    <div class="card-grid">
+                        <el-card
+                            class="blueprint-card"
+                            :class="{'embed': embed}"
+                            v-for="blueprint in blueprints"
+                            :key="blueprint.id"
+                            @click="goToDetail(blueprint.id)"
                         >
-                            <div class="left">
-                                <div class="blueprint">
-                                    <div
-                                        class="ps-0 title"
-                                        :class="{'embed-title': embed, 'text-truncate': embed}"
-                                    >
+                            <div class="card-content-wrapper">
+                                <div v-if="!system && blueprint.tags?.length > 0" class="tags-section text-uppercase">
+                                    <span v-for="tag in blueprint.tags" :key="tag" class="tag-item">{{ tag }}</span>
+                                </div>
+
+                                <div class="text-section">
+                                    <h3 class="title">
                                         {{ blueprint.title ?? blueprint.id }}
+                                    </h3>
+                                </div>
+
+                                <div class="bottom-section">
+                                    <div class="task-icons">
+                                        <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
                                     </div>
-                                    <div v-if="embed" class="tags-w-icons-container">
-                                        <div class="tags-w-icons">
-                                            <div v-for="(tag, index) in blueprint.tags" :key="index">
-                                                <el-tag size="small">
-                                                    {{ tag }}
-                                                </el-tag>
-                                            </div>
-                                            <div class="tasks-container">
-                                                <TaskIcon
-                                                    :icons="pluginsStore.icons"
-                                                    :cls="task"
-                                                    :key="task"
-                                                    v-for="task in [...new Set(blueprint.includedTasks)]"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div v-else-if="!system" class="tags text-uppercase">
-                                        <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
-                                            <el-tag size="small">
-                                                {{ tag }}
-                                            </el-tag>
-                                        </div>
+
+                                    <div>
+                                        <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
+                                            <el-button
+                                                type="primary"
+                                                size="default"
+                                                :icon="icon.ContentCopy"
+                                                @click.prevent.stop="copy(blueprint.id)"
+                                                class="p-2"
+                                            />
+                                        </el-tooltip>
+
+                                        <el-button v-else-if="userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                            {{ $t('use') }}
+                                        </el-button>
                                     </div>
                                 </div>
-                                <div v-if="!embed" class="tasks-container">
-                                    <TaskIcon
-                                        :icons="pluginsStore.icons"
-                                        :cls="task"
-                                        :key="task"
-                                        v-for="task in [...new Set(blueprint.includedTasks)]"
-                                    />
-                                </div>
                             </div>
-                            <div class="side buttons ms-auto">
-                                <slot name="buttons" :blueprint="blueprint" />
-                                <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
-                                    <el-button
-                                        type="primary"
-                                        size="default"
-                                        :icon="icon.ContentCopy"
-                                        @click.prevent.stop="copy(blueprint.id)"
-                                        class="copy-button p-2"
-                                    />
-                                </el-tooltip>
-                                <el-button v-else-if="userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
-                                    {{ $t('use') }}
-                                </el-button>
-                            </div>
-                        </component>
-                    </el-card>
+                        </el-card>
+                    </div>
                 </template>
             </DataTable>
             <slot name="bottom-bar" />
@@ -356,177 +328,87 @@
     }
 
     .blueprints {
-        display: grid;
         width: 100%;
+    }
 
-        .blueprint-card {
-            cursor: pointer;
-            border-radius: 0;
-            border: 0;
-            border-bottom: 1px solid var(--ks-border-primary);
+    .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
 
-            .blueprint {
-                display: flex;
-                align-items: center;
-                flex-wrap: wrap;
+    .blueprint-card {
+        cursor: pointer;
+        border: 1px solid var(--ks-border-primary);
+        border-radius: 8px;
+        background-color: var(--ks-background-card);
+        transition: all 0.2s ease;
+        display: flex;
 
-                @media (max-width: 1024px) {
-                    margin-bottom: 10px;
-                }
+        &:hover {
+            border-color: var(--bs-primary);
+            box-shadow: 0 4px 16px rgba(var(--bs-primary-rgb), 0.1);
+        }
 
-                .tags-w-icons-container {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    width: 100%;
-                    margin-top: 7px;
-
-                    .tags-w-icons {
-                        display: flex;
-                        align-items: center;
-                        gap: .35rem;
-                    }
-                }
-            }
-
-            .el-tag {
-                background-color: var(--ks-tag-background);
-                padding: 13px 10px;
-                color: var(--ks-tag-content);
-                text-transform: capitalize;
-                font-size: $small-font-size;
-                border: 1px solid var(--ks-border-primary);
-
-                html.dark & {
-                    background-color: rgba(64, 69, 89, .7);
-                }
-            }
-
-            &.embed {
-                position: relative;
-            }
-
-            .blueprint-link {
-                display: flex;
-                color: inherit;
-                text-decoration: inherit;
-                align-items: center;
-                width: 100%;
-
-                .left {
-                    align-items: center;
-                    flex: 1;
-                    min-width: 0;
-                    .title {
-                        width: 500px;
-                        font-weight: bold;
-                        font-size: $small-font-size;
-                        padding-left: 0;
-                        margin-right: 15px;
-
-                        @media (max-width: 780px) {
-                            margin-bottom: 10px;
-                        }
-                    }
-
-                    .embed-title {
-                        width: 100%;
-                        white-space: nowrap;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        font-weight: 400;
-                    }
-
-                    .tags {
-                        margin: 10px 0;
-                        display: flex;
-
-                        .tag-box {
-                            margin-right: .5rem;
-                        }
-                    }
-
-
-                    .tasks-container {
-                        $plugin-icon-size: calc(var(--font-size-base) + 0.3rem);
-                        display: flex;
-                        gap: .25rem;
-                        width: fit-content;
-                        height: $plugin-icon-size;
-
-                        :deep(> *) {
-                            width: $plugin-icon-size;
-                        }
-                    }
-                }
-
-
-                .side {
-                    &.buttons {
-                        white-space: nowrap;
-                        flex-shrink: 0;
-                    }
-
-                    &.copy-button {
-                        position: absolute;
-                        right: 1rem;
-                        transform: translateY(-50%);
-                        top: 50%;
-                        z-index: 10;
-                    }
-                }
-            }
-
-            @include res(lg) {
-                &:not(.embed) .blueprint-link .left {
-                    display: flex;
-                    width: 100%;
-
-                    > :first-child {
-                        flex-grow: 1;
-                    }
-
-                    .tags {
-                        margin-bottom: 0;
-                    }
-
-                    .tasks-container {
-                        margin: 0 $spacer;
-                        height: 2.0rem;
-
-                        :deep(.wrapper) {
-                            width: 2.0rem;
-                            height: 2.0rem;
-                        }
-                    }
-                }
-            }
-
-            html.dark &.embed {
-                background-color: var(--ks-background-card);
-            }
+        :deep(.el-card__body) {
+            padding: 0;
+            height: 100%;
+            width: 100%;
         }
     }
 
-    .tags-selection {
+    .card-content-wrapper {
+        padding: 1.5rem;
         display: flex;
+        flex-direction: column;
+        height: 100%;
         width: 100%;
-        margin-bottom: 1rem;
-        gap: .3rem;
+    }
+
+    .tags-section {
+        display: flex;
         flex-wrap: wrap;
-        --el-button-bg-color: var(--ks-background-card);
+        gap: 0.75rem;
+        
+        .tag-item {
+            background-color: rgba(39, 38, 38, 0.144);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.25rem 0.6rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: white;
+        }
+    }
 
-        & > * {
-            max-width: 50%;
+    .text-section {
+        flex-grow: 1;
+        margin-top: 0.75rem;
+        
+        .title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--bs-body-color);
+            line-height: 1.4;
+            margin: 0;
+        }
+    }
 
-            :deep(span) {
-                border-radius: $border-radius !important;
-                border: 1px solid var(--ks-border-primary);
-                width: 100%;
-                font-size: var(--el-font-size-extra-small);
-                box-shadow: none;
-                text-overflow: ellipsis;
-                overflow: hidden;
+    .bottom-section {
+        margin-top: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .task-icons {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+
+            :deep(.wrapper) {
+                height: 1.5rem;
+                width: 1.5rem;
             }
         }
     }

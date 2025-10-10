@@ -39,7 +39,7 @@ public class KvFunction implements Function {
         String key = getKey(args, self, lineNumber);
         String namespace = (String) args.get(NAMESPACE_ARG);
 
-        Boolean insideKvTask = (Boolean) context.getVariable(INSIDE_KV_TASK, false);
+        Boolean insideKvTask = Boolean.TRUE.equals(context.getVariable(INSIDE_KV_TASK));
         Boolean errorOnMissing = Optional.ofNullable((Boolean) args.get(ERROR_ON_MISSING_ARG))
             .orElse(insideKvTask ? false : true);
 

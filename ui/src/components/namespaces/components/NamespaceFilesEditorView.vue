@@ -934,7 +934,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 @use "element-plus/theme-chalk/src/mixins/mixins" as *;
 @import "@kestra-io/ui-libs/src/scss/variables";
 
@@ -1132,7 +1132,7 @@ ul.tabs-context {
 }
 </style>
 
-<style lang="scss" scoped>
+<style lang="scss">
     .tabs .el-scrollbar__bar.is-horizontal {
         height: 1px !important;
     }

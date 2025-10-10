@@ -345,7 +345,7 @@
     </div>
 </template>
 
-<script-ts>
+<script>
     import {mapStores} from "pinia";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useEditorStore} from "../../stores/editor";
@@ -524,6 +524,7 @@
                         this.selectedNodes = [...this.selectedNodes, node.data.id];
                     }
                     this.lastClickedIndex = currentIndex;
+
                 } else {
                     // Handle single-click selection
                     this.selectedFiles = [path];
@@ -1183,7 +1184,7 @@
             },
         },
     };
-</script-ts>
+</script>
 
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";

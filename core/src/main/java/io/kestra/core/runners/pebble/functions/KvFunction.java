@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @Slf4j
 @Singleton
@@ -30,7 +31,7 @@ public class KvFunction implements Function {
 
     @Override
     public List<String> getArgumentNames() {
-        return List.of(KEY_ARGS, NAMESPACE_ARG, ERROR_ON_MISSING_ARG);
+        return new ArrayList<>(List.of(KEY_ARGS, NAMESPACE_ARG, ERROR_ON_MISSING_ARG));
     }
 
     @SuppressWarnings("unchecked")

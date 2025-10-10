@@ -37,14 +37,13 @@
                 <el-table-column prop="value" sortable :label="$t('value')">
                     <template #default="scope">
                         <span v-if="scope.row.type === 'timer'">
-                            {{ $filters.humanizeDuration(scope.row.value / 1000) }}
+                            {{ Utils.humanDuration(scope.row.value / 1000) }}
                         </span>
                         <span v-else>
-                            {{ $filters.humanizeNumber(scope.row.value) }}
+                            {{ humanizeNumber(scope.row.value) }}
                         </span>
                     </template>
                 </el-table-column>
-
 
                 <el-table-column prop="tags" :label="$t('tags')">
                     <template #default="scope">
@@ -65,88 +64,75 @@
     </DataTable>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {ref, watch, onMounted} from "vue";
     import Kicon from "../Kicon.vue";
     import Timer from "vue-material-design-icons/Timer.vue";
     import Counter from "vue-material-design-icons/Numeric.vue";
-    import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../layout/DataTable.vue";
-    import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
+    import Utils from "../../utils/utils";
+    import {humanizeNumber} from "../../utils/filters";
 
-    export default {
-        mixins: [DataTableActions],
-        components: {
-            Kicon,
-            Timer,
-            Counter,
-            DataTable,
-        },
-        data() {
-            return {
-                loadInit: false,
-                metrics: undefined,
-                metricsTotal: 0
-            };
-        },
-        props: {
-            embed: {
-                type: Boolean,
-                default: true
-            },
-            taskRunId: {
-                type: String,
-                default: undefined
-            },
-            showTask: {
-                type: Boolean,
-                default: false
-            },
-            execution: {
-                type: Object,
-                required: true
-            }
-        },
-        watch: {
-            taskRunId() {
-                this.loadData(this.onDataLoaded);
-            }
-        },
-        computed: {
-            ...mapStores(useExecutionsStore),
-        },
-        methods: {
-            loadData(callback) {
-                let params = {};
+    const props = defineProps<{
+        embed?: boolean;
+        taskRunId?: string;
+        showTask?: boolean;
+        execution: Record<string, any>;
+    }>();
 
-                if (this.taskRunId) {
-                    params.taskRunId = this.taskRunId;
-                }
+    const metrics = ref<any[]>();
+    const metricsTotal = ref<number>(0);
 
-                if (this.internalPageNumber) {
-                    params.page = this.internalPageNumber;
-                }
+    const executionsStore = useExecutionsStore();
 
-                if (this.internalPageSize) {
-                    params.size = this.internalPageSize;
-                }
+    // Pagination/sorting state
+    const internalPageNumber = ref<number>(1);
+    const internalPageSize = ref<number>(25);
+    const internalSort = ref<string>("name:asc");
 
-                if (this.internalSort) {
-                    params.sort = this.internalSort;
-                } else {
-                    params.sort = "name:asc";
-                }
+    function onPageChanged({page, size}: { page: number; size: number }) {
+        internalPageNumber.value = page;
+        internalPageSize.value = size;
+        loadData(() => {});
+    }
 
-                this.executionsStore.loadMetrics({
-                    executionId: this.execution.id,
-                    params: params,
-                    store: false
-                }).then(metrics => {
-                    this.metrics = metrics.results;
-                    this.metricsTotal = metrics.total;
-                    callback();
-                })
-            },
-        },
-    };
+    function onSort({prop, order}: { prop: string; order: string }) {
+        internalSort.value = `${prop}:${order === "descending" ? "desc" : "asc"}`;
+        loadData();
+    }
+
+    async function loadData(callback?: () => void) {
+        const params: Record<string, any> = {};
+
+        if (props.taskRunId) params.taskRunId = props.taskRunId;
+        if (internalPageNumber.value) params.page = internalPageNumber.value;
+        if (internalPageSize.value) params.size = internalPageSize.value;
+        if (internalSort.value) params.sort = internalSort.value;
+        else params.sort = "name:asc";
+
+        const metricsResult = await executionsStore.loadMetrics({
+            executionId: props.execution.id,
+            params,
+            store: false
+        });
+        metrics.value = metricsResult.results;
+        metricsTotal.value = metricsResult.total;
+        callback?.();
+    }
+
+    watch(
+        () => props.taskRunId,
+        () => {
+            loadData();
+        }
+    );
+
+    onMounted(() => {
+        loadData();
+    });
+
+    defineExpose({
+        loadData,
+    });
 </script>

@@ -5,23 +5,17 @@
         <slot name="content">
             <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hideTopPagination divider>
                 <template #navbar>
-                    <div v-if="!system && !embed" class="tags-selection">
-                        <el-button
-                            :class="{'is-selected': selectedTags.length === 0}"
-                            @click="clearAllTags"
-                            class="tag-button hoverable"
-                        >
-                            {{ $t("all tags") }}
-                        </el-button>
-                        <el-button
-                            v-for="tag in Object.values(tags || {})"
-                            :key="tag.id"
-                            :class="{'is-selected': selectedTags.includes(tag.id)}"
-                            @click="toggleTag(tag.id)"
-                            class="tag-button hoverable"
-                        >
-                            {{ tag.name }}
-                        </el-button>
+                    <div v-if="ready && !system && !embed" class="tags-selection">
+                        <el-checkbox-group v-model="selectedTags" class="tags-checkbox-group">
+                            <el-checkbox-button
+                                v-for="tag in Object.values(tags || {})"
+                                :key="tag.id"
+                                :value="tag.id"
+                                class="hoverable"
+                            >
+                                {{ tag.name }}
+                            </el-checkbox-button>
+                        </el-checkbox-group>
                     </div>
                     <nav v-else-if="system" class="header pb-3">
                         <p class="mb-0 fw-lighter">
@@ -198,41 +192,6 @@
         router.push({query: {...route.query, q: value || undefined}});
     };
 
-    const clearAllTags = () => {
-        selectedTags.value = [];
-
-        if (!props.embed) {
-            router.push({
-                query: {
-                    ...route.query,
-                    selectedTag: undefined
-                }
-            });
-        }
-    };
-
-    const toggleTag = (tagId: string) => {
-        const currentTags = [...selectedTags.value];
-        const index = currentTags.indexOf(tagId);
-
-        if (index > -1) {
-            currentTags.splice(index, 1);
-        } else {
-            currentTags.push(tagId);
-        }
-
-        selectedTags.value = currentTags;
-
-        if (!props.embed) {
-            router.push({
-                query: {
-                    ...route.query,
-                    selectedTag: currentTags.length > 0 ? currentTags : undefined
-                }
-            });
-        }
-    };
-
     async function copy(id: string) {
         await Utils.copy(
             await blueprintsStore.getBlueprintSource({
@@ -332,8 +291,15 @@
         load(onDataLoaded);
     });
 
-    watch(selectedTags, () => {
-        if (props.embed) {
+    watch(selectedTags, (newTags) => {
+        if (!props.embed) {
+            router.push({
+                query: {
+                    ...route.query,
+                    selectedTag: newTags.length > 0 ? newTags : undefined
+                }
+            });
+        } else {
             load(onDataLoaded);
         }
     });
@@ -545,29 +511,24 @@
         gap: .3rem;
         flex-wrap: wrap;
 
-        .tag-button {
-            border-radius: $border-radius;
-            border: 1px solid var(--ks-border-primary);
-            background-color: var(--ks-background-card);
-            font-size: var(--el-font-size-extra-small);
-            padding: 8px 15px;
-            color: var(--el-text-color-primary);
-            cursor: pointer;
-            transition: all 0.2s;
+        .tags-checkbox-group {
+            display: flex;
+            width: 100%;
+            gap: .3rem;
+            flex-wrap: wrap;
+            --el-button-bg-color: var(--ks-background-card);
 
-            &:hover {
-                background-color: var(--el-color-primary-light-9);
-                border-color: var(--el-color-primary);
-            }
+            & > * {
+                max-width: 50%;
 
-            &.is-selected {
-                background-color: var(--el-color-primary);
-                border-color: var(--el-color-primary);
-                color: white;
-
-                &:hover {
-                    background-color: var(--el-color-primary-dark-2);
-                    border-color: var(--el-color-primary-dark-2);
+                :deep(span) {
+                    border-radius: $border-radius !important;
+                    border: 1px solid var(--ks-border-primary);
+                    width: 100%;
+                    font-size: var(--el-font-size-extra-small);
+                    box-shadow: none;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
                 }
             }
         }

@@ -52,28 +52,23 @@
     // i18n
     const {t} = useI18n();
 
-    // Mock data for testing
-    const mockSubflowsStatus: Record<string, number> = {
-        RUNNING: 3,
-        SUCCESS: 5,
-        FAILED: 2,
-    };
-    const mockExecutionId = "mock-execution";
-    const mockMax = Object.values(mockSubflowsStatus).reduce((a, b) => a + b, 0);
+    
 
     // Reactive local state
-    const localSubflowStatus = ref<Record<string, number>>(props.subflowsStatus || mockSubflowsStatus);
-    const max = props.max || mockMax;
-    const executionId = props.executionId || mockExecutionId;
+    const localSubflowStatus = ref<Record<string, number>>(props.subflowsStatus || {});
+    const max = props.max || 0;
+    const executionId = props.executionId || "";
 
     // Throttled update
     const updateThrottled = throttle(() => {
-        localSubflowStatus.value = props.subflowsStatus || mockSubflowsStatus;
+        localSubflowStatus.value = props.subflowsStatus || {};
+
     }, 500);
 
     // Lifecycle hook
     onMounted(() => {
-        localSubflowStatus.value = props.subflowsStatus || mockSubflowsStatus;
+        localSubflowStatus.value = props.subflowsStatus || {};
+
     });
 
     // Watch props

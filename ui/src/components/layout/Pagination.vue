@@ -42,13 +42,13 @@
 
     const props = defineProps<{
         total?: number;
-        size: number;
-        page: number;
+        size?: number;
+        page?: number;
         top?: boolean;
     }>();
 
     const emit = defineEmits<{
-        (e: "page-changed", payload: { page: number; size: number }): void;
+        (e: "page-changed", payload: { page?: number; size?: number }): void;
     }>();
 
     const route = useRoute();
@@ -122,11 +122,11 @@
 
     // Watch for prop changes to keep pagination controls synchronized
     watch(() => props.page, (newPage) => {
-        internalPage.value = newPage;
+        internalPage.value = newPage ?? 1;
     });
 
     watch(() => props.size, (newSize) => {
-        internalSize.value = newSize;
+        internalSize.value = newSize ?? 25;
     });
 </script>
 <style scoped lang="scss">

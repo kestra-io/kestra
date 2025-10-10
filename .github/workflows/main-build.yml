@@ -70,10 +70,10 @@ jobs:
     needs: [publish-develop-docker, publish-develop-maven]
     if: always()
     steps:
-      - run: echo "debug ${{github.repository}} ${{needs.backend-tests}} ${{needs.backend-tests.result}}"
+      - run: echo "debug ${{github.repository}} ${{needs.publish-develop-maven}} ${{needs.publish-develop-maven.result}}"
       - name: Trigger EE Workflow
         uses: peter-evans/repository-dispatch@v4
-        if: github.ref == 'refs/heads/develop' && needs.backend-tests.result == 'success'
+        if: github.ref == 'refs/heads/develop' && needs.publish-develop-maven == 'success'
         with:
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
           repository: kestra-io/kestra-ee

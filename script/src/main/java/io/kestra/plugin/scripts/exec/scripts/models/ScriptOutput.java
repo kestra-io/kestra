@@ -17,7 +17,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 public class ScriptOutput implements Output {
     @Schema(
-        title = "The value extracted from the output of the executed `commands`."
+        title = "The values extracted from executed `commands` using the [Kestra outputs](https://kestra.io/docs/scripts/outputs-metrics#outputs-and-metrics-in-script-and-commands-tasks) format."
     )
     @JsonInclude(JsonInclude.Include.ALWAYS) // always include vars so it's easier to reason about in expressions
     private final Map<String, Object> vars;

@@ -584,6 +584,13 @@ public class Execution implements DeletedInterface, TenantInterface {
         );
     }
 
+    public Optional<TaskRun> findLastSubmitted(List<TaskRun> taskRuns) {
+        return Streams.findLast(taskRuns
+            .stream()
+            .filter(t -> t.getState().getCurrent() == State.Type.SUBMITTED)
+        );
+    }
+
     public Optional<TaskRun> findLastRunning(List<TaskRun> taskRuns) {
         return Streams.findLast(taskRuns
             .stream()

@@ -304,6 +304,10 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
     const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number; }>({data: [], count: 0});
     onMounted(async () => {
         if (isTesting) {
+            if (!container.value) {
+                isLoading.value = false;
+                return;
+            }
             elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
             isLoading.value = false;
         }
@@ -326,16 +330,20 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             }
         }
 
-        // Only initialize cytoscape if we have elements and a container
-        if (elements.value.data.length > 0) {
+        if (isTesting && container.value) {
+            cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+        } else if (!isTesting && elements.value.data.length > 0) {
             // Wait for the container to be available in the DOM
             await nextTick();
             
             if (!container.value) return;
 
-        if (subtype === EXECUTION) nextTick(() => openSSE());
+            cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+        }
 
-        cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+        if (!cy) return;
+
+        if (subtype === EXECUTION) nextTick(() => openSSE());
 
         // Hide nodes immediately after initialization to avoid visual flickering or rearrangement during layout setup
         cy.ready(() => cy.nodes().style("display", "none"));
@@ -374,7 +382,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
             if (subtype === NAMESPACE) fit(cy); // If the subtype is NAMESPACE, fit the entire graph in the viewport
             else if (node) selectHandler(cy, node, selectedNodeID, subtype); // Else, preselect the proper node after layout rendering completes
         });
-    }});
+    });
 
     const sse = ref();
     const messages = ref<Record<string, any>[]>([]);

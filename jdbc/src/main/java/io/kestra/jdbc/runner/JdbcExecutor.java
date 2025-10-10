@@ -64,8 +64,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.Rethrow.*;
 
 @SuppressWarnings("deprecation")
 @Singleton
@@ -118,10 +117,6 @@ public class JdbcExecutor implements ExecutorInterface {
     private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_RUNNING_NAMED)
-    private QueueInterface<ExecutionRunning> executionRunningQueue;
-
-    @Inject
     @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
     private QueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
 
@@ -159,7 +154,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private AbstractJdbcExecutionQueuedStorage executionQueuedStorage;
 
     @Inject
-    private AbstractJdbcExecutionRunningStorage executionRunningStorage;
+    private AbstractJdbcConcurrencyLimitStorage concurrencyLimitStorage;
 
     @Inject
     private AbstractJdbcExecutorStateStorage executorStateStorage;
@@ -318,7 +313,6 @@ public class JdbcExecutor implements ExecutorInterface {
         this.receiveCancellations.addFirst(this.killQueue.receive(Executor.class, this::killQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));
-        this.receiveCancellations.addFirst(this.executionRunningQueue.receive(Executor.class, this::executionRunningQueue));
         this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
 
@@ -603,11 +597,23 @@ public class JdbcExecutor implements ExecutorInterface {
                                 .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
                                 .build();
 
-                            executionRunningQueue.emit(executionRunning);
-                            return Pair.of(
-                                executor,
-                                executorState
-                            );
+                            ExecutionRunning processed = concurrencyLimitStorage.countThenProcess(flow, (dslContext, concurrencyLimit) -> {
+                                ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
+                                if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
+                                    return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
+                                } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                    executionQueuedStorage.save(dslContext, ExecutionQueued.fromExecutionRunning(computed));
+                                }
+                                return Pair.of(computed, concurrencyLimit);
+                            });
+
+                            // if the execution is queued or terminated due to concurrency limit, we stop here
+                            if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                return Pair.of(
+                                    executor.withExecution(processed.getExecution(), "handleConcurrencyLimit"),
+                                    executorState
+                                );
+                            }
                         }
 
                         // handle execution changed SLA
@@ -1017,37 +1023,6 @@ public class JdbcExecutor implements ExecutorInterface {
         }
     }
 
-    private void executionRunningQueue(Either<ExecutionRunning, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a running execution: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ExecutionRunning executionRunning = either.getLeft();
-        // we need to update the execution after applying concurrency limit so we use the lock for that
-        Executor executor = executionRepository.lock(executionRunning.getExecution().getId(), pair -> {
-                Execution execution = pair.getLeft();
-                Executor newExecutor = new Executor(execution, null);
-                FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
-                ExecutionRunning processed = executionRunningStorage.countThenProcess(flow, (dslContext, count) -> {
-                    ExecutionRunning computed = executorService.processExecutionRunning(flow, count, executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
-                    if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
-                        executionRunningStorage.save(dslContext, computed);
-                    } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                        executionQueuedStorage.save(dslContext, ExecutionQueued.fromExecutionRunning(computed));
-                    }
-                    return computed;
-                });
-
-                return Pair.of(
-                    newExecutor.withExecution(processed.getExecution(), "handleExecutionRunning"),
-                    pair.getRight()
-                );
-            });
-
-        toExecution(executor);
-    }
-
     private Executor killingOrAfterKillState(final String executionId, Optional<State.Type> afterKillState) {
         return executionRepository.lock(executionId, pair -> {
             Execution currentExecution = pair.getLeft();
@@ -1161,31 +1136,31 @@ public class JdbcExecutor implements ExecutorInterface {
                 // check if there exist a queued execution and submit it to the execution queue
                 if (executor.getFlow().getConcurrency() != null) {
 
-                    // purge execution running
-                    boolean hasExecutionRunning = executionRunningStorage.remove(execution);
+                    // decrement execution concurrency limit
+                    // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
+                    // this could only happen for KILLED execution.
+                    boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
+                        && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
+                        && execution.getState().getHistories().stream().noneMatch(h -> h.getState().isRunning());
+                    if (!queuedThenKilled) {
+                        concurrencyLimitStorage.decrement(executor.getFlow());
 
-                    // some execution  may have concurrency limit but no execution running: for ex QUEUED -> KILLED, in this case we should not pop any execution
-                    if (hasExecutionRunning && executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
-                        executionQueuedStorage.pop(executor.getFlow().getTenantId(),
-                            executor.getFlow().getNamespace(),
-                            executor.getFlow().getId(),
-                            throwConsumer(queued -> {
-                                var newExecution = queued.withState(State.Type.RUNNING);
-                                ExecutionRunning executionRunning = ExecutionRunning.builder()
-                                    .tenantId(newExecution.getTenantId())
-                                    .namespace(newExecution.getNamespace())
-                                    .flowId(newExecution.getFlowId())
-                                    .execution(newExecution)
-                                    .concurrencyState(ExecutionRunning.ConcurrencyState.RUNNING)
-                                    .build();
-                                executionRunningStorage.save(executionRunning);
-                                executionQueue.emit(newExecution);
-                                metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                        if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
+                            var finalFlow = executor.getFlow();
+                            executionQueuedStorage.pop(executor.getFlow().getTenantId(),
+                                executor.getFlow().getNamespace(),
+                                executor.getFlow().getId(),
+                                throwBiConsumer((dslContext, queued) -> {
+                                    var newExecution = queued.withState(State.Type.RUNNING);
+                                    concurrencyLimitStorage.increment(dslContext, finalFlow);
+                                    executionQueue.emit(newExecution);
+                                    metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
 
-                                // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                                processFlowTriggers(newExecution);
-                            })
-                        );
+                                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                                    processFlowTriggers(newExecution);
+                                })
+                            );
+                        }
                     }
                 }
 

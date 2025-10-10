@@ -383,7 +383,7 @@
                 }
 
                 &::-webkit-scrollbar-thumb {
-                    background: var(--ks-border-primary);
+                    background: var(--ks-content-secondary);
                     border-radius: 5px;
                 }
             }

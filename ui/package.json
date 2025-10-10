@@ -6,6 +6,7 @@
     "packageManager": "npm@10.9.0",
     "scripts": {
         "dev": "vite --host",
+        "check:types": "vue-tsc --noEmit",
         "build": "vite build --emptyOutDir",
         "preview": "vite preview",
         "test:lint": "eslint",
@@ -128,7 +129,8 @@
         "typescript-eslint": "^8.46.0",
         "uuid": "^13.0.0",
         "vite": "^6.3.5",
-        "vitest": "^3.2.4"
+        "vitest": "^3.2.4",
+        "vue-tsc": "^3.1.1"
     },
     "optionalDependencies": {
         "@esbuild/darwin-arm64": "^0.25.10",

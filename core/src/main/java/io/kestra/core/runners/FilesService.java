@@ -85,7 +85,9 @@ public abstract class FilesService {
         String filename = path.getFileName().toString();
         
         String uniqueId = IdUtils.create();
+
+        String encodedFilename = java.net.URLEncoder.encode(filename, java.nio.charset.StandardCharsets.UTF_8);
         
-        return uniqueId + "-" + filename;
+        return uniqueId + "-" + encodedFilename;
     }
 }

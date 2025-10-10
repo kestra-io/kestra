@@ -2,6 +2,7 @@ package io.kestra.webserver.services.ai.gemini;
 
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.listener.ChatModelListener;
+import dev.langchain4j.model.googleai.GeminiThinkingConfig;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.plugins.PluginRegistry;
@@ -37,6 +38,8 @@ public class GeminiAiService extends AiService<GeminiConfiguration> {
             .maxOutputTokens(getAiConfiguration().maxOutputTokens())
             .logRequests(getAiConfiguration().logRequests())
             .logResponses(getAiConfiguration().logResponses())
+            .thinkingConfig(GeminiThinkingConfig.builder().includeThoughts(false).build())
+            .returnThinking(false)
             .build();
     }
 }

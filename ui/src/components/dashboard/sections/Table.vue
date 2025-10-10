@@ -139,3 +139,45 @@
         refresh();
     }, {deep: true, immediate: true});
 </script>
+
+<style scoped>
+/* Improve scrollbar contrast for better visibility in dark theme */
+:deep(.el-table__body-wrapper) {
+    /* Horizontal scrollbar styling */
+    scrollbar-width: thin;
+    scrollbar-color: #6B7280 var(--ks-background-body);
+}
+
+:deep(.el-table__body-wrapper)::-webkit-scrollbar {
+    height: 8px;
+}
+
+:deep(.el-table__body-wrapper)::-webkit-scrollbar-track {
+    background: var(--ks-background-body);
+    border-radius: 4px;
+}
+
+:deep(.el-table__body-wrapper)::-webkit-scrollbar-thumb {
+    background: #6B7280;
+    border-radius: 4px;
+    border: 1px solid var(--ks-background-body);
+}
+
+:deep(.el-table__body-wrapper)::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF;
+}
+
+/* Dark theme specific improvements */
+html.dark :deep(.el-table__body-wrapper) {
+    scrollbar-color: #9CA3AF var(--ks-background-body);
+}
+
+html.dark :deep(.el-table__body-wrapper)::-webkit-scrollbar-thumb {
+    background: #9CA3AF;
+    border: 1px solid var(--ks-background-body);
+}
+
+html.dark :deep(.el-table__body-wrapper)::-webkit-scrollbar-thumb:hover {
+    background: #D1D5DB;
+}
+</style>

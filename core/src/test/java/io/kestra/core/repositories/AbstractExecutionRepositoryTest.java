@@ -668,10 +668,10 @@ inject(tenant);
             .build()
         );
         var exec2 = executionRepository.save(builder(tenant, State.Type.RUNNING, null)
-                .labels(List.of(
-                    new Label("labelkey2", "labelvalue2")
-                ))
-                .build()
+            .labels(List.of(
+                new Label("labelkey2", "labelvalue2")
+            ))
+            .build()
         );
         var exec3 = executionRepository.save(builder(tenant, State.Type.RUNNING, null)
             .labels(List.of(
@@ -682,7 +682,7 @@ inject(tenant);
         );
 
         assertThat(
-            executionRepository.find(Pageable.from(1, 10),  tenant,
+            executionRepository.find(Pageable.from(1, 10), tenant,
                 List.of(QueryFilter.builder()
                     .field(QueryFilter.Field.LABELS)
                     .operation(QueryFilter.Op.EQUALS)
@@ -694,7 +694,7 @@ inject(tenant);
             .containsOnly(exec1);
 
         assertThat(
-            executionRepository.find(Pageable.from(1, 10),  tenant,
+            executionRepository.find(Pageable.from(1, 10), tenant,
                 List.of(QueryFilter.builder()
                     .field(QueryFilter.Field.LABELS)
                     .operation(QueryFilter.Op.EQUALS)
@@ -706,7 +706,7 @@ inject(tenant);
 
         // Filtering by two pairs of labels, since now its a and behavior, it should not return anything
         assertThat(
-            executionRepository.find(Pageable.from(1, 10),  tenant,
+            executionRepository.find(Pageable.from(1, 10), tenant,
                 List.of(QueryFilter.builder()
                     .field(QueryFilter.Field.LABELS)
                     .operation(QueryFilter.Op.EQUALS)
@@ -716,7 +716,7 @@ inject(tenant);
             .isEmpty();
 
         assertThat(
-            executionRepository.find(Pageable.from(1, 10),  tenant,
+            executionRepository.find(Pageable.from(1, 10), tenant,
                 List.of(QueryFilter.builder()
                     .field(QueryFilter.Field.LABELS)
                     .operation(Op.NOT_EQUALS)
@@ -763,7 +763,7 @@ inject(tenant);
             .usingRecursiveFieldByFieldElementComparatorOnFields("id")
             .containsOnly(exec2, exec3);
 
-       /* assertThat( TODO is this required ?
+        assertThat(
             executionRepository.find(Pageable.from(1, 10), tenant,
                 List.of(QueryFilter.builder()
                     .field(QueryFilter.Field.LABELS)
@@ -773,7 +773,7 @@ inject(tenant);
         )
             .as("find execution CONTAINS LABELS key")
             .usingRecursiveFieldByFieldElementComparatorOnFields("id")
-            .containsOnly(exec1);*/
+            .containsOnly(exec1);
     }
 
     @Test

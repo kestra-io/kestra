@@ -9,8 +9,6 @@ import org.jooq.impl.DSL;
 
 import java.util.*;
 
-import static io.kestra.core.models.QueryFilter.Op.EQUALS;
-
 public abstract class PostgresExecutionRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<Execution> jdbcRepository, String query, Map<String, String> labels) {
         List<Condition> conditions = new ArrayList<>();
@@ -35,14 +33,14 @@ public abstract class PostgresExecutionRepositoryService {
         if (input.isRight()) {
             var query = input.right().get();
             if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
-                String sql = """
-                    EXISTS (
-                      SELECT 1
-                      FROM jsonb_array_elements(value -> 'labels') AS l
-                      WHERE l ->> 'value' ILIKE '%' || ? || '%'
-                    )
-                    """;
-                conditions.add(DSL.condition(sql, query));
+                String sql = "EXISTS ( " +
+                    "SELECT 1 FROM JSON_TABLE(value, '$.labels[*]' COLUMNS(" +
+                    "  label_key VARCHAR(255) PATH '$.key'," +
+                    "  label_value VARCHAR(255) PATH '$.value')) AS lbl " +
+                    "WHERE LOWER(lbl.label_value) LIKE LOWER(CONCAT('%', ?, '%')) " +
+                    "   OR LOWER(lbl.label_key) LIKE LOWER(CONCAT('%', ?, '%'))" +
+                    ")";
+                conditions.add(DSL.condition(sql, query, query));
             } else {
                 throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
             }

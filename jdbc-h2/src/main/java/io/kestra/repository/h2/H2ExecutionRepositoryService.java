@@ -40,9 +40,10 @@ public abstract class H2ExecutionRepositoryService {
         List<Condition> inConditions = new ArrayList<>();
         if (input.isRight()) {
             var query = input.right().get();
+            Field<String> keyField = DSL.field("JQ_STRING(\"value\", '.labels[]? | .key')", String.class);
             Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | .value')", String.class);
             if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
-                conditions.add(valueField.contains(query));
+                conditions.add(keyField.contains(query).or(valueField.contains(query)));
             } else {
                 throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
             }

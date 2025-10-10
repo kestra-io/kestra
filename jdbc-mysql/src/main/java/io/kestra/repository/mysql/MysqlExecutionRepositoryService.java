@@ -38,7 +38,7 @@ public abstract class MysqlExecutionRepositoryService {
             if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
                 String sql = "EXISTS (" +
                     "SELECT 1 FROM JSON_TABLE(value, '$.labels[*]' COLUMNS(label_value VARCHAR(255) PATH '$.value')) AS lbl " +
-                    "WHERE lbl.label_value LIKE '%'" +
+                    "WHERE lbl.label_value LIKE CONCAT('%', ?, '%')" +
                     ")";
                 conditions.add(DSL.condition(sql, query));
             } else {

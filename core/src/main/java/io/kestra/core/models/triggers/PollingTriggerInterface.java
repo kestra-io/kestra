@@ -4,11 +4,7 @@ import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.inject.Inject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.DateTimeException;
 import java.time.Duration;
@@ -49,7 +45,7 @@ public interface PollingTriggerInterface extends WorkerTriggerInterface {
 
     /**
      * computes the next evaluation date using the configured interval.
-     * Falls back to 60 seconds if the interval causes date overflow.
+     * Throw InvalidTriggerConfigurationException, if the interval causes date overflow.
      */
     private ZonedDateTime computeNextEvaluationDate() throws InvalidTriggerConfigurationException {
         Duration interval = this.getInterval();

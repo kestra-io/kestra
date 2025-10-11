@@ -30,6 +30,10 @@ public interface TaskCommands {
 
     Map<String, Object> getAdditionalVars();
 
+    default String outputDirectoryName() {
+        return this.getWorkingDirectory().relativize(this.getOutputDirectory()).toString();
+    }
+
     Path getWorkingDirectory();
 
     Path getOutputDirectory();

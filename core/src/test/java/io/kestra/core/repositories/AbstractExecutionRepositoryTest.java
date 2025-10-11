@@ -43,6 +43,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import org.awaitility.Awaitility;
+import java.util.concurrent.TimeUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -530,24 +532,27 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(before);
         executionRepository.save(after);
 
-        // Small pause for DB
-        Thread.sleep(200);
-
         ZonedDateTime start = dayBeforeMidnight.truncatedTo(ChronoUnit.DAYS);
         ZonedDateTime end = dayAfterMidnight.plusDays(1).truncatedTo(ChronoUnit.DAYS);
 
-        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
-            null,
-            MAIN_TENANT,
-            null,
-            null,
-            null,
-            start,
-            end,
-            null,
-            null,
-            false
-        );
+        // Wait up to 2 seconds for DB to reflect saved executions using Awaitility
+        List<DailyExecutionStatistics> result = Awaitility.await()
+            .atMost(2, TimeUnit.SECONDS)
+            .pollInterval(50, TimeUnit.MILLISECONDS)
+            .until(() -> executionRepository.dailyStatistics(
+                null,
+                MAIN_TENANT,
+                null,
+                null,
+                null,
+                start,
+                end,
+                null,
+                null,
+                false
+            ), r -> r.stream()
+                .map(rr -> ZonedDateTime.ofInstant(rr.getStartDate(), prague).toLocalDate())
+                .anyMatch(d -> d.equals(dayBeforeMidnight.toLocalDate()) || d.equals(dayAfterMidnight.toLocalDate())));
 
         // Expect at least two days intervals covering both dates
         assertThat(result.stream().map(r -> ZonedDateTime.ofInstant(r.getStartDate(), prague).toLocalDate())).contains(

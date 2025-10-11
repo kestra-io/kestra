@@ -8,6 +8,7 @@
     >
         {{ $t("preview.label") }}
     </el-button>
+
     <Drawer
         v-if="selectedPreview === value && preview"
         v-model="isPreviewOpen"
@@ -15,11 +16,19 @@
         <template #header>
             {{ $t("preview.label") }}
         </template>
+
         <template #default>
-            <el-alert v-if="preview.truncated" showIcon type="warning" :closable="false" class="mb-2">
+            <el-alert
+                v-if="preview.truncated"
+                showIcon
+                type="warning"
+                :closable="false"
+                class="mb-2"
+            >
                 {{ $t('file preview truncated') }}
             </el-alert>
-            <el-form class="ks-horizontal max-size mt-3">
+
+            <el-form v-if="preview.type !== 'HTML'" class="ks-horizontal max-size mt-3">
                 <el-form-item :label="$t('row count')">
                     <el-select
                         v-model="maxPreview"
@@ -37,6 +46,7 @@
                         />
                     </el-select>
                 </el-form-item>
+
                 <el-form-item :label="$t('encoding')">
                     <el-select
                         v-model="encoding"
@@ -54,6 +64,7 @@
                         />
                     </el-select>
                 </el-form-item>
+
                 <el-form-item :label="($t('preview.view'))">
                     <el-switch
                         v-model="forceEditor"
@@ -63,10 +74,14 @@
                     />
                 </el-form-item>
             </el-form>
+
             <ListPreview v-if="!forceEditor && preview.type === 'LIST'" :value="preview.content" />
             <img v-else-if="!forceEditor && preview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
             <PdfPreview v-else-if="!forceEditor && preview.type === 'PDF'" :source="preview.content" />
             <Markdown v-else-if="!forceEditor && preview.type === 'MARKDOWN'" :source="preview.content" />
+
+            <HtmlPreview v-else-if="!forceEditor && preview.type === 'HTML'" :downloadUrl="htmlDownloadUrl" />
+
             <Editor
                 v-else
                 :modelValue="!forceEditor ? preview.content : JSON.stringify(preview.content, null, 2)"
@@ -112,6 +127,8 @@
     import Drawer from "../Drawer.vue";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
+    import HtmlPreview from "./outputs/HtmlPreview.vue";
+    import {apiUrl} from "override/utils/route";
 
     interface EncodingOption {
         value: string;
@@ -160,67 +177,68 @@
         {value: "Cp500", label: "EBCDIC IBM-500"}
     ];
 
-    const configPreviewInitialRows = (): number => {
-        return miscStore.configs?.preview.initial || 50;
-    };
+    const configPreviewInitialRows = (): number => miscStore.configs?.preview.initial || 50;
+    const configPreviewMaxRows = (): number => miscStore.configs?.preview.max || 5000;
 
-    const configPreviewMaxRows = (): number => {
-        return miscStore.configs?.preview.max || 5000;
-    };
-
-    const maxPreviewOptions = computed(() => {
-        return [10, 25, 50, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(
-            value => value <= configPreviewMaxRows()
-        );
-    });
+    const maxPreviewOptions = computed(() =>
+        [10, 25, 50, 100, 500, 1000, 5000, 10000, 25000, 50000].filter(v => v <= configPreviewMaxRows())
+    );
 
     const extensionToMonacoLang = computed(() => {
         switch (preview.value?.extension) {
-        case "json":
-            return "json";
-        case "jsonl":
-            return "jsonl";
+        case "json": return "json";
+        case "jsonl": return "jsonl";
         case "yaml":
         case "yml":
-        case "ion":
-            return "yaml";
-        case "csv":
-            return "csv";
-        case "py":
-            return "python";
-        default:
-            return preview.value?.extension;
+        case "ion": return "yaml";
+        case "csv": return "csv";
+        case "py": return "python";
+        default: return preview.value?.extension;
         }
     });
 
-    const imageContent = computed(() => {
-        return `data:image/${preview.value?.extension};base64,${preview.value?.content}`;
+    const imageContent = computed(() =>
+        `data:image/${preview.value?.extension};base64,${preview.value?.content}`
+    );
+
+    const isZipFile = computed(() =>
+        props.value?.toLowerCase().endsWith(".zip")
+    );
+
+    const isHtmlFile = computed(() => {
+        const v = props.value?.toLowerCase() || "";
+        return v.endsWith(".html") || v.endsWith(".htm");
     });
 
-    const isZipFile = computed(() => {
-        return props.value?.toLowerCase().endsWith(".zip");
-    });
+    const htmlDownloadUrl = computed(() =>
+        `${apiUrl()}/executions/${props.executionId}/file?path=${encodeURI(props.value)}`
+    );
 
     const getFilePreview = (): void => {
+        selectedPreview.value = props.value;
+
+        if (isHtmlFile.value) {
+            preview.value = {type: "HTML", extension: "html"};
+            isPreviewOpen.value = true;
+            return;
+        }
+
         const data = {
             path: props.value,
             maxRows: maxPreview.value,
             encoding: encoding.value
         };
-        selectedPreview.value = props.value;
+
         if (props.executionId !== undefined) {
             executionsStore
-                .filePreview({
-                    executionId: props.executionId,
-                    ...data
-                })
+                .filePreview({executionId: props.executionId, ...data})
                 .then(response => {
                     preview.value = response;
                     isPreviewOpen.value = true;
                 });
         } else {
             emits("preview", {
-                data: data,
+                data,
                 callback: (response: Preview) => {
                     preview.value = response;
                     isPreviewOpen.value = true;

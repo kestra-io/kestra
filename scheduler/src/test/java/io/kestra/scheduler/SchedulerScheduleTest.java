@@ -1,6 +1,7 @@
 package io.kestra.scheduler;
 
 import com.devskiller.friendly_id.FriendlyId;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
@@ -25,8 +26,9 @@ import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -40,6 +42,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+@TestInstance(Lifecycle.PER_CLASS)
 public class SchedulerScheduleTest extends AbstractSchedulerTest {
     @Inject
     protected FlowListeners flowListenersService;
@@ -160,8 +163,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             });
 
             scheduler.run();
-            queueCount.await(1, TimeUnit.MINUTES);
-            invalidLogCount.await(1, TimeUnit.MINUTES);
+            queueCount.await(20, TimeUnit.SECONDS);
+            invalidLogCount.await(20, TimeUnit.SECONDS);
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
             receiveExecutions.blockLast();
             receiveLogs.blockLast();
@@ -542,8 +545,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
 
+    @FlakyTest(description = "too flaky on CI")
     @Test
-    @Disabled("too flaky on CI")
     void recoverLASTLongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
@@ -615,8 +618,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
 
+    @FlakyTest(description = "too flaky on CI")
     @Test
-    @Disabled("too flaky on CI")
     void recoverNONELongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);

@@ -79,7 +79,9 @@
     import Backspace from "vue-material-design-icons/Backspace.vue";
     import CloseIcon from "vue-material-design-icons/Close.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    // @ts-expect-error no types on gantt
     import Gantt from "../executions/Gantt.vue";
+    // @ts-expect-error no types on logs
     import Logs from "../executions/Logs.vue";
     import ExecutionOutput from "../executions/outputs/Wrapper.vue";
     import ExecutionMetric from "../executions/ExecutionMetric.vue";
@@ -136,7 +138,7 @@
     const historyVisible = ref(false);
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/_color-palette";
 
     .tab-icon{

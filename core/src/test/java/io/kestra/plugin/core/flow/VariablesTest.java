@@ -12,7 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -31,7 +31,7 @@ class VariablesTest {
     QueueInterface<LogEntry> workerTaskLogQueue;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @ExecuteFlow("flows/valids/variables.yaml")

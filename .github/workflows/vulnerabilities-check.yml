@@ -21,20 +21,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Checkout GitHub Actions
-      - uses: actions/checkout@v5
-        with:
-          repository: kestra-io/actions
-          path: actions
-          ref: main
-
       # Setup build
-      - uses: ./actions/.github/actions/setup-build
+      - uses: kestra-io/actions/composite/setup-build@main
         id: build
         with:
           java-enabled: true
           node-enabled: true
-          caches-enabled: true
 
       # Npm
       - name: Npm - Install
@@ -70,20 +62,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Checkout GitHub Actions
-      - uses: actions/checkout@v5
-        with:
-          repository: kestra-io/actions
-          path: actions
-          ref: main
-
       # Setup build
-      - uses: ./actions/.github/actions/setup-build
+      - uses: kestra-io/actions/composite/setup-build@main
         id: build
         with:
           java-enabled: false
           node-enabled: false
-          caches-enabled: true
 
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
@@ -97,7 +81,7 @@ jobs:
           skip-dirs: /app/plugins
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
           category: docker-
@@ -115,20 +99,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Checkout GitHub Actions
-      - uses: actions/checkout@v5
-        with:
-          repository: kestra-io/actions
-          path: actions
-          ref: main
-
       # Setup build
-      - uses: ./actions/.github/actions/setup-build
+      - uses: kestra-io/actions/composite/setup-build@main
         id: build
         with:
           java-enabled: false
           node-enabled: false
-          caches-enabled: true
 
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
@@ -142,6 +118,7 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: 'trivy-results.sarif'
+          category: docker-

@@ -163,13 +163,14 @@
     "choose file": "Elige un archivo o suéltalo aquí...",
     "close": "Cerrar",
     "close sidebar": "cerrar barra lateral",
+    "codeDisabled": "Desactivado en Flow",
     "collapse": "Colapsar",
     "collapse all": "Colapsar todo",
     "common": {
       "back": "Atrás"
     },
     "concurrency": "Concurrente",
-    "conditions": "condiciones",
+    "conditions": "Condiciones",
     "configure basic auth": "Configurar autenticación básica",
     "confirm": "Confirmar",
     "confirm password": "Confirmar contraseña",
@@ -529,7 +530,7 @@
     "execution not found": "Ejecución <code>{executionId}</code> no encontrada",
     "execution not in state FAILED": "Ejecución <code>{executionId}</code> no está en estado FAILED",
     "execution not in state PAUSED": "Ejecución <code>{executionId}</code> no está en estado PAUSED",
-    "execution replay": "Esta ejecución es una repetición de <code>{originalId}</code>.",
+    "execution replay": "Esta ejecución es una repetición de",
     "execution replayed": "Esta ejecución ha sido reproducida.",
     "execution restarted": "Esta ejecución se ha reiniciado {nbRestart} vez/veces.",
     "execution statistics": "Estadísticas de ejecución",
@@ -651,6 +652,7 @@
       },
       "text_search": "Buscar este texto"
     },
+    "fix_with_ai": "Solucionar con IA",
     "flow": "Flujo",
     "flow already exists": "Flow ya existe",
     "flow creation": "Creación de flujo",
@@ -667,6 +669,7 @@
     "flow-no-dependencies": "Tu flow no tiene dependencias.",
     "flow_export": "Exportar flow",
     "flow_only": "Solo disponible en la pestaña Flow.",
+    "flow_outputs": "Salidas del Flow",
     "flows": "Flujos",
     "flows deleted": "<code>{count}</code> Flow(s) eliminados",
     "flows disabled": "<code>{count}</code> Flow(s) deshabilitados",
@@ -772,8 +775,10 @@
     "metrics": "Métricas",
     "min": "Min",
     "minutes": "Minutos",
+    "missingSource": "Fuente faltante",
     "monogram": "Monograma",
     "months": "Meses",
+    "more_actions": "Más acciones",
     "multi_panel_editor": {
       "close_all_panels": "Cerrar todos los paneles",
       "close_all_tabs": "Cerrar todas las pestañas",
@@ -786,9 +791,12 @@
     "namespace and id readonly": "Las propiedades `namespace` y `id` no se pueden cambiar — ahora están configuradas a sus valores iniciales. Si deseas renombrar un flow o cambiar su namespace, puedes crear un nuevo flow y eliminar el antiguo.",
     "namespace files": {
       "create": {
-        "already_exists": "Un archivo con este nombre ya existe",
         "file": "Crear archivo",
+        "file_already_exists": "Ya existe un archivo con este nombre",
+        "file_error": "Se produjo un error al crear el archivo",
         "folder": "Crear carpeta",
+        "folder_already_exists": "Ya existe una carpeta con este nombre",
+        "folder_error": "Se produjo un error al crear la carpeta",
         "label": "Crear"
       },
       "delete": {
@@ -799,11 +807,13 @@
         "label": "Eliminar"
       },
       "dialog": {
-        "confirm": "Confirmar",
-        "file_deletion": "Confirmar eliminación de archivo",
-        "file_deletion_description": "¿Estás seguro de que quieres eliminar este archivo?",
-        "folder_deletion": "Confirmar eliminación de carpeta",
-        "folder_deletion_description": "¿Estás seguro de que quieres eliminar esta carpeta y todo su contenido?",
+        "deletion": {
+          "confirm": "Confirmar",
+          "files": "¿Está seguro de que desea eliminar <code>{count}</code> archivo(s)?",
+          "folders": "¿Está seguro de que desea eliminar <code>{count}</code> carpeta(s) y todo su contenido?",
+          "mixed": "¿Está seguro de que desea eliminar la(s) carpeta(s) <code>{folders}</code> y el/los archivo(s) <code>{files}</code>?",
+          "title": "Confirmar eliminación de contenido"
+        },
         "name": {
           "file": "Nombre con extensión:",
           "folder": "Nombre de la carpeta:"
@@ -893,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Agregar un bloque después de la ejecución",
+        "charts": "Agregar un gráfico",
         "conditions": "Agregar una condición",
         "errors": "Agregar un manejador de errores",
         "finally": "Agregar un bloque finally",
         "inputs": "Agregar un campo de input",
+        "numerator": "Agregar un numerador",
         "pluginDefaults": "Agregar un plugin predeterminado",
         "tasks": "Agregar una task",
-        "triggers": "Agregar un trigger"
+        "triggers": "Agregar un trigger",
+        "where": "Filtra tus datos"
       },
       "fields": {
         "general": {
@@ -942,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Seleccionar una task",
+        "charts": "Seleccione un tipo de gráfico",
         "conditions": "Seleccione una condición",
         "errors": "Selecciona una task",
         "finally": "Seleccionar una task",
         "inputs": "Seleccione un tipo de campo de input",
+        "numerator": "Seleccione un numerador",
         "pluginDefaults": "Seleccionar un plugin",
         "task": "Selecciona una task",
         "tasks": "Seleccionar una task",
-        "triggers": "Seleccione un trigger"
+        "triggers": "Seleccione un trigger",
+        "where": "Seleccione un tipo de filtro"
       },
       "toggle_pebble": "Alternar editor de Pebble",
       "unnamed": "Sin Nombre",
@@ -1057,6 +1073,7 @@
     "pause confirm": "¿Está seguro de pausar la ejecución <code>{id}</code>?",
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
+    "paused": "Pausado",
     "playground": {
       "clear_history": "Borrar historial",
       "confirm_create": "No puedes ejecutar el playground mientras creas un flow. Iniciar una ejecución de playground creará el flow.",
@@ -1387,7 +1404,6 @@
     "task_id_exists": "El Id de Task ya existe",
     "task_id_message": "El Task Id ${existingTask} ya existe en el flow.",
     "taskid column details": "Última task siendo ejecutada y su número de intentos.",
-    "taskruns": "Ejecuciones de tareas",
     "tasks": "Tareas",
     "template": "Plantilla",
     "template creation": "Creación de plantilla",
@@ -1401,6 +1417,7 @@
       "name": "Mandante",
       "names": "Arrendatarios"
     },
+    "tenantId": "ID de Mandante",
     "test-badge-text": "Prueba",
     "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "theme": "Tema",
@@ -1424,6 +1441,7 @@
       "zoom-out": "Alejar",
       "zoom-reset": "Restablecer zoom"
     },
+    "total_duration": "Duración total",
     "total_executions": "Total de Ejecuciones",
     "trigger": "Trigger",
     "trigger details": "Detalles del trigger",
@@ -1438,6 +1456,7 @@
       "title": "Filtrar ejecuciones hijas"
     },
     "trigger refresh": "Actualizar trigger",
+    "triggerId": "ID del Trigger",
     "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "El Trigger Id ya existe",
     "trigger_id_message": "El Trigger Id ${existingTrigger} ya existe en el flow.",

@@ -6,7 +6,7 @@
         </el-alert>
 
         <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <InputsForm :initialInputs="flow.inputs" :selectedTrigger="selectedTrigger" :flow="flow" v-model="inputs" :executeClicked="executeClicked" @confirm="onSubmit($refs.form)" />
+            <InputsForm :initialInputs="flow.inputs" :selectedTrigger="selectedTrigger" :flow="flow" v-model="inputs" :executeClicked="executeClicked" @confirm="onSubmit($refs.form)" @update:model-value-no-default="values => inputsNoDefaults=values" />
 
             <el-collapse v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
@@ -79,7 +79,6 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
-    import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import Inputs from "../../utils/inputs";
     import Curl from "./Curl.vue";
@@ -106,6 +105,7 @@
         data() {
             return {
                 inputs: {},
+                inputsNoDefaults: {},
                 inputNewLabel: "",
                 executionLabels: [],
                 scheduleDate: undefined,
@@ -134,8 +134,8 @@
                 if (!this.flow?.triggers) {
                     return false;
                 }
-                return this.flow.triggers.some(trigger => 
-                    trigger.type === "io.kestra.plugin.core.trigger.Webhook" && 
+                return this.flow.triggers.some(trigger =>
+                    trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
                     (trigger.disabled === undefined || trigger.disabled === false)
                 );
             }
@@ -184,16 +184,16 @@
                                 formRef,
                                 id: this.flow.id,
                                 namespace: this.flow.namespace,
-                                inputs: this.inputs,
+                                inputs: this.inputsNoDefaults,
                                 labels: [...new Set(
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
-                                )],                                
+                                )],
                                 scheduleDate: this.scheduleDate
                             });
                         } else {
-                            executeTask(this, this.flow, this.inputs, {
+                            executeTask(this, this.flow, this.inputsNoDefaults, {
                                 redirect: this.redirect,
                                 newTab: this.newTab,
                                 id: this.flow.id,
@@ -203,7 +203,7 @@
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
                                 )],
-                                scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
+                                scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
                                 nextStep: true,
                             });
                         }

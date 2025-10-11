@@ -1,5 +1,5 @@
 <template>
-    <span data-component="FILENAME_PLACEHOLDER" v-if="description">
+    <span v-if="description">
         <a @click="open()">
             <HelpCircle
                 title=""
@@ -17,45 +17,35 @@
     </span>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {ref} from "vue";
     import HelpCircle from "vue-material-design-icons/HelpCircle.vue";
     import Markdown from "./Markdown.vue";
     import Drawer from "../Drawer.vue";
 
-    export default {
-        components: {
-            HelpCircle,
-            Markdown,
-            Drawer
+    defineProps({
+        id: {
+            type: String,
+            required: true
         },
-        data() {
-            return {
-                isOpen: false,
-            };
+        title: {
+            type: String,
+            default: ""
         },
-        props: {
-            id: {
-                type: String,
-                required: true
-            },
-            title: {
-                type: String,
-                default: "",
-            },
-            description: {
-                type: String,
-                default: "",
-            }
-        },
-        methods: {
-            open() {
-                this.isOpen = true
-            }
+        description: {
+            type: String,
+            default: ""
         }
+    });
+
+    const isOpen = ref(false);
+
+    const open = (): void => {
+        isOpen.value = true;
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     a {
         cursor: pointer;
     }

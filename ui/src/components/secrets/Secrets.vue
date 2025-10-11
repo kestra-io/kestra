@@ -11,7 +11,6 @@
         </template>
     </Navbar>
     <section
-        data-component="FILENAME_PLACEHOLDER"
         class="d-flex flex-column fill-height padding-bottom"
         :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
     >
@@ -77,14 +76,14 @@
     </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Navbar from "../layout/TopNavBar.vue";
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
-    import useRouteContext from "../../mixins/useRouteContext.js";
-    import {useMiscStore} from "override/stores/misc.js";
+    import useRouteContext from "../../composables/useRouteContext";
+    import {useMiscStore} from "override/stores/misc";
     import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
@@ -107,7 +106,7 @@
     useRouteContext(routeInfo);
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .no-secret-manager-block {
         padding: 0 10.75rem;
 

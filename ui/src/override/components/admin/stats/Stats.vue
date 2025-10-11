@@ -5,26 +5,21 @@
         <EditionComparator class="mt-4" />
     </section>
 </template>
-<script>
-    import RouteContext from "../../../../mixins/routeContext";
+
+<script setup lang="ts">
+    import {ref, computed} from "vue";
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
     import Usages from "../../../../components/admin/stats/Usages.vue";
     import EditionComparator from "../../../../components/admin/stats/EditionComparator.vue";
+    import useRouteContext from "../../../../composables/useRouteContext";
+    import {useI18n} from "vue-i18n";
 
-    export default {
-        mixins: [RouteContext],
-        components: {TopNavBar, Usages, EditionComparator},
-        data() {
-            return {
-                ready: false
-            };
-        },
-        computed: {
-            routeInfo() {
-                return {
-                    title: this.$t("system overview"),
-                }
-            }
-        }
-    };
+    const ready = ref(false);
+
+    const {t} = useI18n();
+
+    const routeInfo = computed(() => ({
+        title: t("system overview"),
+    }));
+    useRouteContext(routeInfo);
 </script>

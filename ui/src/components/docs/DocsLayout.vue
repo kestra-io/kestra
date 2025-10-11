@@ -22,21 +22,14 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {ref} from "vue"
+
+    const collapsed = ref(false);
 
 </script>
 
-<script>
-    export default {
-        data() {
-            return {
-                collapsed: false,
-            }
-        }
-    };
-</script>
-
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .sidebar {

@@ -1,5 +1,6 @@
 <template>
     <MetricsTable
+        v-if="executionsStore.execution"
         ref="table"
         :taskRunId="route.query.metric?.[0] ?? undefined"
         :showTask="true"
@@ -19,7 +20,7 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {useExecutionsStore} from "../../stores/executions";
-    import {MetricFilterLanguage} from "../../composables/monaco/languages/filters/impl/metricFilterLanguage.ts";
+    import {MetricFilterLanguage} from "../../composables/monaco/languages/filters/impl/metricFilterLanguage";
     import MetricsTable from "../executions/MetricsTable.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
 

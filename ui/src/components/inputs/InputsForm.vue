@@ -339,7 +339,7 @@
                 editableItems: {},
             };
         },
-        emits: ["update:modelValue", "confirm", "validation"],
+        emits: ["update:modelValue", "update:modelValueNoDefault", "confirm", "validation"],
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
             this.debouncedValidation = debounce(this.validateInputs, 500)
@@ -356,6 +356,7 @@
                             // to avoid too many calls to the server
                             this.debouncedValidation();
                             this.$emit("update:modelValue", this.inputsValues);
+                            this.$emit("update:modelValueNoDefault", this.inputsValuesWithNoDefault());
                         }
                         this.previousInputsValues = JSON.parse(JSON.stringify(val))
                     },
@@ -385,6 +386,21 @@
             document.removeEventListener("keydown", this._keyListener);
         },
         methods: {
+            normalizeJSON(value) {
+                try {
+                    // Step 1: Remove trailing commas in objects and arrays
+                    let cleaned = value.replace(/,\s*([}\]])/g, "$1");
+
+                    // Step 2: Quote unquoted keys (simple case: keys with letters, numbers, or _)
+                    cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, "$1\"$2\":");
+
+                    // Step 3: Parse into JS object
+                    return JSON.parse(cleaned);
+                } catch (e) {
+                    console.error("Failed to normalize JSON:", e.message);
+                    return null;
+                }
+            },
             inputError(id) {
                 // if this input has not been edited yet
                 // showing any error is annoying
@@ -406,8 +422,15 @@
                     if (this.inputsValues[id] === undefined || this.inputsValues[id] === null || input.isDefault) {
                         if (type === "MULTISELECT") {
                             this.multiSelectInputs[id] = value;
+                        } else if(type === "JSON" && value == undefined && input.isDefault) {
+                            /*
+                            * Handle multiline JSON default values
+                            * See https://github.com/kestra-io/kestra/issues/11449
+                            */
+                            this.inputsValues[id] = Inputs.normalize(type, this.normalizeJSON(input.defaults));
+                        } else {
+                            this.inputsValues[id] = Inputs.normalize(type, value);
                         }
-                        this.inputsValues[id] = Inputs.normalize(type, value);
                     }
                 }
             },
@@ -419,6 +442,7 @@
                 }, 2000);
                 input.isDefault = false;
                 this.$emit("update:modelValue", this.inputsValues);
+                this.$emit("update:modelValueNoDefault", this.inputsValuesWithNoDefault());
             },
             onSubmit() {
                 this.$emit("confirm");
@@ -445,6 +469,12 @@
                 this.inputsValues[input.id] = e.target.value;
                 this.onChange(input);
             },
+            inputsValuesWithNoDefault() {
+                return this.inputsMetaData.reduce((acc, input) => {
+                    acc[input.id] = input.isDefault ? undefined : this.inputsValues[input.id];
+                    return acc;
+                }, {});
+            },
             numberHint(input){
                 const {min, max} = input;
 
@@ -462,10 +492,7 @@
                     return;
                 }
               
-                const inputsValuesWithNoDefault = this.inputsMetaData.reduce((acc, input) => {
-                    acc[input.id] = input.isDefault ? undefined : this.inputsValues[input.id];
-                    return acc;
-                }, {});
+                const inputsValuesWithNoDefault = this.inputsValuesWithNoDefault();
                 
                 const formData = inputsToFormData(this, this.inputsMetaData, inputsValuesWithNoDefault);
 

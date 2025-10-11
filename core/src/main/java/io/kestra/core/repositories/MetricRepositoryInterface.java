@@ -29,6 +29,8 @@ public interface MetricRepositoryInterface extends SaveRepositoryInterface<Metri
 
     Integer purge(Execution execution);
 
+    Integer purge(List<Execution> executions);
+
     Flux<MetricEntry> findAllAsync(@Nullable String tenantId);
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {

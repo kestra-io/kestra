@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div>
         <el-autocomplete
             ref="searchInput"
             class="flex-shrink-0"
@@ -41,12 +41,12 @@
     import ArrowRight from "vue-material-design-icons/ArrowRight.vue";
 
     const router = useRouter();
-    const {generateMenu} = useLeftMenu()
+    const {menu} = useLeftMenu()
 
     const filter = ref("");
 
     const navItems = computed(() => {
-        return generateMenu().flatMap(item => {
+        return menu.value.flatMap(item => {
             if(item.hidden) {
                 return [];
             }
@@ -90,7 +90,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
     div {
         :deep(.el-input) {

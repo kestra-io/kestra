@@ -35,10 +35,11 @@
     import {useI18n} from "vue-i18n";
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
     import DottedLayout from "../../../../components/layout/DottedLayout.vue";
+    // @ts-expect-error - Component not typed
     import BlueprintDetail from "../../../../components/flows/blueprints/BlueprintDetail.vue";
     import BlueprintsBrowser from "./BlueprintsBrowser.vue";
     import DemoBlueprints from "../../../../components/demo/Blueprints.vue";
-    import useRouteContext from "../../../../mixins/useRouteContext";
+    import useRouteContext from "../../../../composables/useRouteContext";
 
     import headerImage from "../../../../assets/icons/blueprint.svg";
     import headerImageDark from "../../../../assets/icons/blueprint-dark.svg";
@@ -48,7 +49,7 @@
     const {t} = useI18n();
 
     interface Props {
-        kind: string;
+        kind: "flow" | "dashboard" | "app";
         tab?: string;
         combinedView?: boolean;
         embed?: boolean;
@@ -64,10 +65,9 @@
 
     const selectedBlueprintId = ref<string | undefined>(undefined);
 
-    const routeInfo = computed(() => ({
-        title: props.kind === "flow" ? t("blueprints.flows") :
-            props.kind === "dashboard" ? t("blueprints.dashboards") :
-            t("blueprints.title")
+    const routeInfo = computed(() => ({title: props.kind === "flow" ? t("blueprints.flows") :
+        props.kind === "dashboard" ? t("blueprints.dashboards") :
+        t("blueprints.title")
     }));
 
     useRouteContext(routeInfo);

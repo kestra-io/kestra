@@ -5,7 +5,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import java.time.temporal.ChronoUnit;
 import java.util.stream.Stream;
@@ -29,7 +29,7 @@ class PurgeLogsTest {
     private LogRepositoryInterface logRepository;
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Test
     @LoadFlows("flows/valids/purge_logs_no_arguments.yaml")

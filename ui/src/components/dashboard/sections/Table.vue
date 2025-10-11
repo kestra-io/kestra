@@ -10,6 +10,7 @@
                 v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
                 :label="value.displayName || key"
                 :key
+                :width="value.field === 'STATE' ? 140 : null"
             >
                 <template #default="scope">
                     <component :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)">
@@ -33,7 +34,7 @@
     <NoData v-else :text="EMPTY_TEXT" />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {PropType, watch, ref, computed} from "vue";
 
     import type {RouteLocation} from "vue-router";
@@ -52,7 +53,7 @@
 
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<string[]>, default: () => []},
+        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
     });
 
@@ -101,6 +102,7 @@
     const {EMPTY_TEXT, generate} = useChartGenerator(props, false);
 
     import {useRoute} from "vue-router";
+    import {FilterObject} from "../../../utils/filters";
     const route = useRoute();
 
     const getData = async (ID: string) => (data.value = await generate(ID, pagination.value));

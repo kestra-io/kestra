@@ -1,4 +1,4 @@
-import {Comparators, getComparator} from "../../../composables/monaco/languages/filters/filterCompletion.ts";
+import {Comparators, getComparator} from "../../../composables/monaco/languages/filters/filterCompletion";
 
 type LegacyFilter = { field: string, operation: (keyof typeof Comparators) | "IN" | "NOT_IN", value: string };
 const getItem: (key: string) => { name: string, value: string | LegacyFilter[] }[] = (key) => {

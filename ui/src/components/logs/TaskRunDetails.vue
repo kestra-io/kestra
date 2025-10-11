@@ -82,7 +82,7 @@
                                     :level="level"
                                     :log="item"
                                     :excludeMetas="excludeMetas"
-                                    v-else-if="filter === '' || item.message?.toLowerCase().includes(filter)"
+                                    v-else-if="filter === '' || item.message?.toLowerCase().includes(filter.toLowerCase())"
                                 />
                                 <TaskRunDetails
                                     v-if="!taskRunId && isSubflow(currentTaskRun) && shouldDisplaySubflow(index, currentTaskRun) && currentTaskRun.outputs?.executionId"
@@ -131,7 +131,7 @@
     import FilePreview from "../executions/FilePreview.vue";
     import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
-    import LogUtils from "../../utils/logs.js";
+    import LogUtils from "../../utils/logs";
     import throttle from "lodash/throttle";
 
     export default {
@@ -351,7 +351,7 @@
                 logFilesWrappers.forEach(logFileWrapper => this.fetchAndStoreLogFileSize(logFileWrapper.logFile))
 
                 const indexedLogs = [...this.filteredLogs, ...logFilesWrappers]
-                    .filter(logLine => logLine.logFile !== undefined || (this.filter === "" || logLine?.message.toLowerCase().includes(this.filter) || this.isSubflow(this.taskRunById[logLine.taskRunId])))
+                    .filter(logLine => logLine.logFile !== undefined || (this.filter === "" || logLine?.message.toLowerCase().includes(this.filter.toLowerCase()) || this.isSubflow(this.taskRunById[logLine.taskRunId])))
                     .map((logLine, index) => ({...logLine, index}));
 
                 return _groupBy(indexedLogs, indexedLog => this.attemptUid(indexedLog.taskRunId, indexedLog.attemptNumber));
@@ -665,7 +665,7 @@
         },
     };
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .log-wrapper {

@@ -118,6 +118,13 @@ public class DockerOptions {
     )
     private Property<Boolean> privileged;
 
+    @Schema(
+        title = "Whether to resume an existing matching container on restart.",
+        description = "If enabled, the runner will search for an existing container labeled with the current execution/task identifiers and reattach to it instead of creating a new container."
+    )
+    @PluginProperty
+    private Property<Boolean> resume;
+
     @Deprecated
     public void setDockerHost(String host) {
         this.host = host;

@@ -41,21 +41,21 @@ const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
 
     // Physical forces
-    nodeRepulsion: 8_000_000,
-    edgeElasticity: 100,
-    idealEdgeLength: 400,
+    nodeRepulsion: 50_000_000,
+    edgeElasticity: 80,
+    idealEdgeLength: 800,
 
     // Gravity settings
     gravity: 0.05,
 
     // Layout iterations & cooling
-    numIter: 20_000,
+    numIter: 30_000,
     initialTemp: 200,
     minTemp: 1,
 
     // Spacing and padding
-    padding: 80,
-    componentSpacing: 300,
+    padding: 100,
+    componentSpacing: 400,
 
     // Node sizing
     nodeDimensionsIncludeLabels: true,
@@ -309,6 +309,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
             isLoading.value = false;
         }
+
         else {
             if (subtype === NAMESPACE) {
                 const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});

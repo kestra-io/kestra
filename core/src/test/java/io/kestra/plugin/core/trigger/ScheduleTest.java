@@ -77,7 +77,7 @@ class ScheduleTest {
             .namespace(flow.getNamespace())
             .flowId(flow.getNamespace())
             .triggerId(schedule.getId())
-            .date(date)
+            .date(Property.of(date))
             .build();
     }
 
@@ -315,7 +315,7 @@ class ScheduleTest {
                     .type(DayWeekInMonth.class.getName())
                     .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                     .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                    .date("{{ trigger.date }}")
+                    .date(Property.of("{{ trigger.date }}"))
                     .build()
             ))
             .build();
@@ -348,7 +348,7 @@ class ScheduleTest {
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
                     .before(Property.ofValue(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
-                    .date("{{ trigger.date }}")
+                    .date(Property.of("{{ trigger.date }}"))
                     .build()
             ))
             .build();
@@ -385,7 +385,7 @@ class ScheduleTest {
         ZonedDateTime evaluate = trigger.nextEvaluationDate(
             conditionContext(trigger),
             Optional.of(TriggerContext.builder()
-                .date(date)
+                .date(Property.of(date))
                 .build())
         );
 
@@ -405,7 +405,7 @@ class ScheduleTest {
         Optional<Execution> evaluate = trigger.evaluate(
             conditionContext(trigger),
             TriggerContext.builder()
-                .date(date)
+                .date(Property.of(date))
                 .namespace("io.kestra.tests")
                 .flowId(IdUtils.create())
                 .build()

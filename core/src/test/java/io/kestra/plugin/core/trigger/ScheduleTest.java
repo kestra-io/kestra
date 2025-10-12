@@ -77,7 +77,7 @@ class ScheduleTest {
             .namespace(flow.getNamespace())
             .flowId(flow.getNamespace())
             .triggerId(schedule.getId())
-            .date(Property.of(date))
+            .date(date)
             .build();
     }
 
@@ -189,7 +189,7 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent()).isTrue();
 
-        var vars = evaluate.get().getTrigger().getVariables();;
+        var vars = evaluate.get().getTrigger().getVariables();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plus(Duration.ofMinutes(1)));
@@ -211,7 +211,7 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent()).isTrue();
 
-        var vars = evaluate.get().getTrigger().getVariables();;
+        var vars = evaluate.get().getTrigger().getVariables();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plus(Duration.ofSeconds(1)));
@@ -238,8 +238,7 @@ class ScheduleTest {
     }
 
     @Test
-    void
-    shouldReturnExecutionForBackFillWhenCurrentDateIsAfterScheduleDate() throws Exception {
+    void shouldReturnExecutionForBackFillWhenCurrentDateIsAfterScheduleDate() throws Exception {
         // Given
         Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron(TEST_CRON_EVERYDAY_AT_8).build();
         ZonedDateTime now = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
@@ -297,7 +296,7 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent()).isTrue();
 
-        var vars = evaluate.get().getTrigger().getVariables();;
+        var vars = evaluate.get().getTrigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), expexted)).isEqualTo(expexted);
         assertThat(dateFromVars((String) vars.get("next"), expexted)).isEqualTo(expexted.plusMonths(1));
         assertThat(dateFromVars((String) vars.get("previous"), expexted)).isEqualTo(expexted.minusMonths(1));
@@ -331,7 +330,7 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent()).isTrue();
 
-        var vars = evaluate.get().getTrigger().getVariables();;
+        var vars = evaluate.get().getTrigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), next)).isEqualTo(next);
         assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
@@ -363,7 +362,7 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent()).isTrue();
 
-        var vars = evaluate.get().getTrigger().getVariables();;
+        var vars = evaluate.get().getTrigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
         assertThat(vars.containsKey("next")).isFalse();
@@ -385,7 +384,7 @@ class ScheduleTest {
         ZonedDateTime evaluate = trigger.nextEvaluationDate(
             conditionContext(trigger),
             Optional.of(TriggerContext.builder()
-                .date(Property.of(date))
+                .date(date)
                 .build())
         );
 
@@ -405,14 +404,14 @@ class ScheduleTest {
         Optional<Execution> evaluate = trigger.evaluate(
             conditionContext(trigger),
             TriggerContext.builder()
-                .date(Property.of(date))
+                .date(date)
                 .namespace("io.kestra.tests")
                 .flowId(IdUtils.create())
                 .build()
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        var vars = evaluate.get().getTrigger().getVariables();;
+        var vars = evaluate.get().getTrigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
     }
 
@@ -438,7 +437,7 @@ class ScheduleTest {
 
         assertThat(evaluate.isPresent()).isTrue();
 
-        var vars = evaluate.get().getTrigger().getVariables();;
+        var vars = evaluate.get().getTrigger().getVariables();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(ZonedDateTime.parse((String) vars.get("date")).getZone().getId()).isEqualTo("-04:00");

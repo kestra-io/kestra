@@ -1,0 +1,18 @@
+configurations {
+    implementation.extendsFrom(micronaut)
+}
+
+dependencies {
+    annotationProcessor project(":processor")
+    implementation project(":core")
+    
+    // HTTP client for Pipedrive API
+    implementation 'com.fasterxml.jackson.core:jackson-core'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    testAnnotationProcessor project(":processor")
+    testImplementation project(':tests')
+    testImplementation 'org.mockito:mockito-core'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+    testImplementation "org.wiremock:wiremock-jetty12"
+}

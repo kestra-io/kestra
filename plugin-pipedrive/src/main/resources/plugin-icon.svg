@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Pipedrive-inspired design -->
+  <rect x="10" y="10" width="80" height="80" rx="12" fill="#00B8D4" stroke="none"/>
+  
+  <!-- Pipeline representation -->
+  <circle cx="25" cy="35" r="5" fill="white" opacity="0.9"/>
+  <circle cx="40" cy="35" r="5" fill="white" opacity="0.7"/>
+  <circle cx="55" cy="35" r="5" fill="white" opacity="0.5"/>
+  <circle cx="70" cy="35" r="5" fill="white" opacity="0.3"/>
+  
+  <!-- Connection lines -->
+  <line x1="30" y1="35" x2="35" y2="35" stroke="white" stroke-width="2" opacity="0.8"/>
+  <line x1="45" y1="35" x2="50" y2="35" stroke="white" stroke-width="2" opacity="0.6"/>
+  <line x1="60" y1="35" x2="65" y2="35" stroke="white" stroke-width="2" opacity="0.4"/>
+  
+  <!-- Deal/Activity icons -->
+  <rect x="20" y="50" width="12" height="8" rx="2" fill="white" opacity="0.9"/>
+  <rect x="35" y="52" width="12" height="8" rx="2" fill="white" opacity="0.7"/>
+  <rect x="50" y="54" width="12" height="8" rx="2" fill="white" opacity="0.5"/>
+  
+  <!-- Text -->
+  <text x="50" y="80" font-family="Arial, sans-serif" font-size="8" font-weight="bold" text-anchor="middle" fill="white">Pipedrive</text>
+</svg>

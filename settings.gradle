@@ -28,3 +28,4 @@ include 'script'
 include 'e2e-tests'
 
 include 'jmh-benchmarks'
+include 'plugin-pipedrive'

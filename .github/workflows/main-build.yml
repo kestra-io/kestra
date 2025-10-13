@@ -67,7 +67,7 @@ jobs:
 
   end:
     runs-on: ubuntu-latest
-    needs: [publish-develop-docker, publish-develop-maven]
+    needs: [backend-tests, frontend-tests, publish-develop-docker, publish-develop-maven]
     if: always()
     steps:
       - run: echo "debug repo ${{github.repository}} ref ${{github.ref}} res ${{needs.publish-develop-maven.result}} failure ${{failure()}} isNotFork ${{github.repository == 'kestra-io/kestra'}} isDevelop ${{github.ref == 'refs/heads/develop'}}"

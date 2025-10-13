@@ -1,7 +1,13 @@
 import {useStorage} from "@vueuse/core";
 import {DeserializableEditorElement, Panel, Tab} from "../utils/multiPanelTypes";
 
-export function useStoredPanels(key: string, editorElements: Pick<DeserializableEditorElement, "deserialize">[], defaultPanels: string[] = [], preSerializePanels?: (panels: Panel[]) => {tabs: string[], activeTab: string | undefined, size: number}[]) {
+interface PreSerializedPanel {
+    tabs: string[];
+    activeTab: string | undefined;
+    size: number;
+}
+
+export function useStoredPanels(key: string, editorElements: Pick<DeserializableEditorElement, "deserialize">[], defaultPanels: string[] = [], preSerializePanels?: (panels: Panel[]) => PreSerializedPanel[]) {
     const preSerializePanelsFn = preSerializePanels ?? ((ps: Panel[]) => ps.map(p => ({
         tabs: p.tabs.map(t => t.value),
         activeTab: p.activeTab?.value,
@@ -22,7 +28,7 @@ export function useStoredPanels(key: string, editorElements: Pick<Deserializable
                     return deserializedTab;
                 }
             }
-        }).filter(t => t !== undefined) as Tab[];
+        }).filter(t => t !== undefined);
     }
 
     const panels = useStorage<Panel[]>(
@@ -41,22 +47,25 @@ export function useStoredPanels(key: string, editorElements: Pick<Deserializable
                     return JSON.stringify(preSerializePanelsFn(v));
                 },
                 read(v?: string) {
-                    if(!v) return null;
-                    const panels = JSON.parse(v);
-                    return panels
-                        .filter((p: any) => p.tabs.length)
-                        .map((p: {tabs: string[], activeTab: string, size: number}):Panel => {
-                            const tabs = deserializeTabTags(p.tabs);
-                            const activeTab = tabs.find((t: any) => t.value === p.activeTab) ?? tabs[0];
+                    if(!v) return [];
+                    const rawPanels: PreSerializedPanel[] = JSON.parse(v);
+                    const convertedPanels = rawPanels
+                        .filter((p) => p.tabs.length)
+                        .map((p):Panel => {
+                            const tabsConverted = deserializeTabTags(p.tabs);
+                            const activeTab = tabsConverted.find((t) => t.value === p.activeTab) ?? tabsConverted[0];
                             return {
                                 activeTab,
-                                tabs,
+                                tabs: tabsConverted,
                                 size: p.size
                             };
                         });
+
+                    return convertedPanels
                 }
             },
         }
     );
+
     return panels;
 }

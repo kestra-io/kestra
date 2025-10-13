@@ -7,6 +7,7 @@ import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.AuthUtils;
+import io.kestra.webserver.controllers.api.MiscController;
 import io.kestra.webserver.models.events.OssAuthEvent;
 import io.micronaut.context.annotation.ConfigurationInject;
 import io.micronaut.context.annotation.ConfigurationProperties;
@@ -68,6 +69,13 @@ public class BasicAuthService {
                 .value(e.getInvalids())
                 .build());
         }
+    }
+
+    public void createBasicAuthCredentials(MiscController.BasicAuthCredentials basicAuthCredentials){
+        save(
+            basicAuthCredentials.getUid(),
+            basicAuthConfiguration.updateWithUsernamePassword(basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword())
+        );
     }
 
     public void save(BasicAuthConfiguration basicAuthConfiguration) {
@@ -195,7 +203,7 @@ public class BasicAuthService {
         }
 
         @VisibleForTesting
-        BasicAuthConfiguration withUsernamePassword(String username, String password) {
+        BasicAuthConfiguration updateWithUsernamePassword(String username, String password) {
             return new BasicAuthConfiguration(
                 username,
                 password,

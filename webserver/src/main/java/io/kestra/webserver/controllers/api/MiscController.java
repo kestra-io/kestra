@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.plugins.PluginRegistry;
@@ -157,7 +156,7 @@ public class MiscController {
     public HttpResponse<Void> createBasicAuth(
         @RequestBody @Body BasicAuthCredentials basicAuthCredentials
     ) {
-        basicAuthService.save(basicAuthCredentials.getUid(), new BasicAuthService.BasicAuthConfiguration(basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()));
+        basicAuthService.createBasicAuthCredentials(basicAuthCredentials);
 
         return HttpResponse.noContent();
     }

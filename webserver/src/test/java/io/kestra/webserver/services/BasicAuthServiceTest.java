@@ -1,21 +1,5 @@
 package io.kestra.webserver.services;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.and;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
-import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_SETTINGS_KEY;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -24,20 +8,28 @@ import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.Await;
+import io.kestra.webserver.controllers.api.MiscController;
 import io.kestra.webserver.models.events.Event;
 import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 import io.micronaut.context.env.Environment;
 import jakarta.inject.Inject;
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_SETTINGS_KEY;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 @WireMockTest(httpPort = 28181)
 @KestraTest(environments = Environment.TEST)
@@ -89,6 +81,40 @@ class BasicAuthServiceTest {
             .value(new BasicAuthConfiguration(null, null, null, null))
             .build());
         assertFalse(basicAuthService.isBasicAuthInitialized());
+    }
+
+    @Test
+    void basicAuthAPICreation_shouldNot_discardYamlConfiguration(){
+        // simulate starting Kestra for the first time
+        deleteSetting();
+        var defaultConfigWithoutBasicAuthCreds = new ConfigWrapper(
+            new BasicAuthConfiguration(null, null, "Kestra2", List.of("/api/v1/main/executions/webhook/"))
+        );
+        basicAuthService.basicAuthConfiguration = defaultConfigWithoutBasicAuthCreds.config;
+        basicAuthService.init();
+        assertFalse(basicAuthService.isBasicAuthInitialized());
+
+        /**
+         * simulate basic auth UI onboarding (createBasicAuth)
+         * {@link io.kestra.webserver.controllers.api.MiscController#createBasicAuth(MiscController.BasicAuthCredentials)}
+         */
+        basicAuthService.createBasicAuthCredentials(
+            new MiscController.BasicAuthCredentials(
+                BASIC_AUTH_SETTINGS_KEY,
+                "username1@example.com",
+                "Password1"
+            )
+        );
+        assertTrue(basicAuthService.isBasicAuthInitialized());
+
+        assertThat(basicAuthService.configuration())
+            .as("Default configured realm and openUrls should not have been discarded after creating the basic auth user")
+            .satisfies(configuration -> {
+                assertThat(configuration.getUsername()).isEqualTo("username1@example.com");
+                assertThat(configuration.getPassword()).isNotBlank();
+                assertThat(configuration.getRealm()).isEqualTo("Kestra2");
+                assertThat(configuration.getOpenUrls()).isEqualTo(List.of("/api/v1/main/executions/webhook/"));
+        });
     }
 
     @Test

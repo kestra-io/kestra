@@ -77,14 +77,6 @@ public abstract class AbstractFlow implements FlowInterface {
     Map<String, Object> variables;
 
 
-    @Schema(
-        oneOf = {
-            String.class,  // Corresponds to 'type: string' in OpenAPI
-            Map.class      // Corresponds to 'type: object' in OpenAPI
-        }
-    )
-    interface StringOrMapValue {}
-
     @Valid
     private WorkerGroup workerGroup;
 

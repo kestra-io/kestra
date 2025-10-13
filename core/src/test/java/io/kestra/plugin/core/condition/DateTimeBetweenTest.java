@@ -38,9 +38,9 @@ class DateTimeBetweenTest {
     void valid(String date, ZonedDateTime before, ZonedDateTime after, boolean result) {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
+
         DateTimeBetween build = DateTimeBetween.builder()
-            .date(Property.of(date))
-            .date(date.startsWith("{{") ? Property.ofExpression(date) : Property.ofValue(date))
+            .date(date.contains("{{") ? Property.ofExpression(date) : Property.ofValue(date))
             .before(Property.ofValue(before))
             .after(Property.ofValue(after))
             .build();

@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import com.google.common.io.CharStreams;
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -23,7 +24,6 @@ import io.netty.handler.codec.http.multipart.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -54,17 +54,20 @@ public class PauseTest {
         suite.run(runnerUtils);
     }
 
-    @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
+    @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
+    @Test
     void delay() throws Exception {
         suite.runDelay(runnerUtils);
     }
 
-    @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
+    @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
+    @Test
     void delayFromInput() throws Exception {
         suite.runDurationFromInput(runnerUtils);
     }
 
-    @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
+    @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
+    @Test
     void parallelDelay() throws Exception {
         suite.runParallelDelay(runnerUtils);
     }

@@ -37,6 +37,7 @@ import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.plugin.core.flow.ForEachItem;
 import io.kestra.plugin.core.flow.Template;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -648,7 +649,14 @@ public class JdbcExecutor implements ExecutorInterface {
                                                 Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
                                                 String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> workerTask.getRunContext().render(workerGroup.getKey())))
                                                     .orElse(null);
-                                                workerJobQueue.emit(workerGroupKey, workerTask);
+                                                if (workerTask.getTask() instanceof WorkingDirectory) {
+                                                    // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
+                                                    workerJobQueue.emit(workerGroupKey, workerTask);
+                                                } else {
+                                                    TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
+                                                    workerJobQueue.emit(workerGroupKey, workerTask.withTaskRun(taskRun));
+                                                    workerTaskResults.add(new WorkerTaskResult(taskRun));
+                                                }
                                             }
                                             if (workerTask.getTask().isFlowable()) {
                                                 workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
@@ -1370,7 +1378,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     + taskRun.getIteration();
 
                 if (executorState.getChildDeduplication().containsKey(deduplicationKey)) {
-                    log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
+                    log.warn("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
                     return false;
                 } else {
                     executorState.getChildDeduplication().put(deduplicationKey, taskRun.getId());
@@ -1386,7 +1394,7 @@ public class JdbcExecutor implements ExecutorInterface {
         State.Type current = executorState.getWorkerTaskDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.trace("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
+            log.warn("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}', taskId '{}' on state {}", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), current);
             return false;
         } else {
             executorState.getWorkerTaskDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());
@@ -1400,7 +1408,7 @@ public class JdbcExecutor implements ExecutorInterface {
         State.Type current = executorState.getSubflowExecutionDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.trace("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}', taskId '{}', attempt '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), taskRun.getAttempts() == null ? null : taskRun.getAttempts().size() + 1);
+            log.warn("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}', taskId '{}', attempt '{}' on state {}", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), taskRun.getAttempts() == null ? null : taskRun.getAttempts().size() + 1, current);
             return false;
         } else {
             executorState.getSubflowExecutionDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());

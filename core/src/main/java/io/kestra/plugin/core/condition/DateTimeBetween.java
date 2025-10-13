@@ -101,11 +101,23 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         Map<String, Object> vars = conditionContext.getVariables();
-        String render = conditionContext.getRunContext().render(date).as(String.class, vars).orElseThrow();
+        RunContext runContext = conditionContext.getRunContext();
+        
+        String dateValue = date.getExpression(); // Get the raw expression
+        boolean isPebble = dateValue != null && dateValue.contains("{{");
+        String render = runContext.render(date).as(String.class, vars).orElseThrow();
         ZonedDateTime currentDate = DateUtils.parseZonedDateTime(render);
-
-        ZonedDateTime afterRendered = conditionContext.getRunContext().render(this.after).as(ZonedDateTime.class, vars).orElse(null);
-        ZonedDateTime beforeRendered = conditionContext.getRunContext().render(this.before).as(ZonedDateTime.class, vars).orElse(null);
+        
+        runContext.logger().debug(
+            "DateTimeBetween debug: original='{}', isPebble={}, rendered='{}', parsedDate='{}'",
+            dateValue, 
+            isPebble,
+            render,
+            currentDate
+        );
+        
+        ZonedDateTime afterRendered = runContext.render(this.after).as(ZonedDateTime.class, vars).orElse(null);
+        ZonedDateTime beforeRendered = runContext.render(this.before).as(ZonedDateTime.class, vars).orElse(null);
 
         if (beforeRendered != null && afterRendered != null) {
             return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);

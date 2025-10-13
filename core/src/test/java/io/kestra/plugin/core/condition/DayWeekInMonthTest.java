@@ -42,14 +42,23 @@ class DayWeekInMonthTest {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
-        DayWeekInMonth build = DayWeekInMonth.builder()
+        DayWeekInMonth buildWithProperty = DayWeekInMonth.builder()
             .date(date.contains("{{") ? Property.ofExpression(date) : Property.ofValue(date))
             .dayOfWeek(Property.ofValue(dayOfWeek))
             .dayInMonth(Property.ofValue(dayInMonth))
             .build();
 
-        boolean test = conditionService.isValid(build, flow, execution);
+        boolean testWithProperty = conditionService.isValid(buildWithProperty, flow, execution);
+        
+        DayWeekInMonth buildWithDirectString = DayWeekInMonth.builder()
+            .date(date)
+            .dayOfWeek(Property.ofValue(dayOfWeek))
+            .dayInMonth(Property.ofValue(dayInMonth))
+            .build();
 
-        assertThat(test).isEqualTo(result);
+        boolean testWithDirectString = conditionService.isValid(buildWithDirectString, flow, execution);
+        
+        assertThat(testWithProperty).isEqualTo(testWithDirectString);
+        assertThat(testWithProperty).isEqualTo(result);
     }
 }

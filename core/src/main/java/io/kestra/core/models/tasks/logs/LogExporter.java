@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Flux;
 
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
+
 @Plugin
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -22,7 +24,7 @@ public abstract class LogExporter<T extends Output>  implements io.kestra.core.m
     protected String id;
 
     @NotBlank
-    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     protected String type;
 
     public abstract T sendLogs(RunContext runContext, Flux<LogRecord> logRecords) throws Exception;

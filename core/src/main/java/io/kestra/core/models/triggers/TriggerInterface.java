@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
 
 public interface TriggerInterface extends Plugin, PluginVersioning {
     @NotNull
@@ -17,7 +18,7 @@ public interface TriggerInterface extends Plugin, PluginVersioning {
 
     @NotNull
     @NotBlank
-    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     @Schema(title = "The class name for this current trigger.")
     String getType();
 

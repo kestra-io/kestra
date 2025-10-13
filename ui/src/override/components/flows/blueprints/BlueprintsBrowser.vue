@@ -255,9 +255,11 @@
                 loadBlueprints(beforeLoadBlueprintType)
             ]);
             emit("loaded");
+            onDataLoaded();
         } catch {
             if (props.embed) error.value = true;
             else coreStore.error = 404;
+            onDataLoaded();
         }
     };
 
@@ -283,6 +285,7 @@
               if (oldValue.name === newValue.name) {
                   selectedTags.value = initSelectedTags();
                   searchText.value = route.query.q || "";
+                  load(onDataLoaded);
               }
           }
     );

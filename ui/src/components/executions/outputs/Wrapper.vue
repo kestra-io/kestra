@@ -258,6 +258,28 @@
 
     const execution = computed(() => executionsStore.execution);
 
+    const hasOutputValue = (value: unknown): boolean => {
+        if (value === null || value === undefined) return false;
+
+        if (Array.isArray(value)) {
+            return value.some(hasOutputValue);
+        }
+
+        if (typeof value === "object") {
+            const entries = Object.entries(value as Record<string, unknown>).filter(
+                ([key]) => key !== "__class",
+            );
+
+            if (!entries.length) return false;
+
+            return entries.some(([, nested]) => hasOutputValue(nested));
+        }
+
+        return true;
+    };
+
+    const hasOutputs = (value: unknown): boolean => hasOutputValue(value);
+
     function isValidURL(url) {
         try {
             new URL(url);
@@ -294,25 +316,46 @@
     const expandedValue = ref("");
     const selected = ref<string[]>([]);
 
-    onMounted(() => {
-        const task = outputs.value?.[1];
+    const firstNonHeadingChild = (children = []) =>
+        children.find((child) => !child.heading);
+
+    const initializeSelection = () => {
+        const tasks = outputs.value;
+
+        const findInitialTask = () => {
+            const taskNodes = tasks?.slice(1) ?? [];
+            if (!taskNodes.length) return undefined;
+
+            return (
+                taskNodes.find((task) => firstNonHeadingChild(task.children)) ??
+                taskNodes[0]
+            );
+        };
+
+        const task = findInitialTask();
+        selected.value = [];
+        expandedValue.value = "";
+
         if (!task) return;
 
         selected.value = [task.value];
         expandedValue.value = task.value;
 
-        const child = task.children?.[1];
+        const child = firstNonHeadingChild(task.children);
         if (child) {
             selected.value.push(child.value);
             expandedValue.value = child.path;
 
-            const grandChild = child.children?.[1];
+            const grandChild = firstNonHeadingChild(child.children);
             if (grandChild) {
                 selected.value.push(grandChild.value);
                 expandedValue.value = grandChild.path;
             }
         }
+    };
 
+    onMounted(() => {
+        initializeSelection();
         debugCollapse.value = "debug";
     });
 
@@ -376,26 +419,24 @@
         return result;
     };
     const outputs = computed(() => {
-        const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
-            return {
-                label: task.taskId,
-                value: task.taskId,
-                ...task,
-                icon: true,
-                children: task?.outputs
-                    ? transform(task.outputs, true, task.taskId)
-                    : [],
-            };
-        });
+        const taskRunList = executionsStore?.execution?.taskRunList ?? [];
+        const tasksWithOutputs = taskRunList.filter((task) => hasOutputs(task.outputs));
+
+        const tasks = tasksWithOutputs.map((task) => ({
+            label: task.taskId,
+            value: task.taskId,
+            ...task,
+            icon: true,
+            children: task?.outputs ? transform(task.outputs, true, task.taskId) : [],
+        }));
 
         const HEADING = {
             label: t("tasks"),
             heading: true,
             component: shallowRef(TimelineTextOutline),
         };
-        tasks?.unshift(HEADING);
 
-        return tasks;
+        return [HEADING, ...tasks];
     });
 
     const pluginsStore = usePluginsStore();
@@ -560,4 +601,10 @@
     word-break: break-word !important;
     overflow-wrap: break-word !important;
 }
+
+.tasks-header {
+    border-bottom: 1px solid var(--ks-border-primary);
+    background: var(--ks-background-card);
+}
+//final
 </style>

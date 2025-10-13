@@ -226,8 +226,8 @@ class ScheduleTest {
         TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
             .backfill(Backfill
                 .builder()
-                .currentDate(ZonedDateTime.now().with(LocalTime.MIN))
-                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .currentDate(now.with(LocalTime.MIN))
+                .end(now.with(LocalTime.MAX))
                 .build()
             ).build();
         // When
@@ -242,7 +242,7 @@ class ScheduleTest {
         // Given
         Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron(TEST_CRON_EVERYDAY_AT_8).build();
         ZonedDateTime now = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
-        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
             .backfill(Backfill
                 .builder()
                 .currentDate(now.with(LocalTime.MIN).plus(Duration.ofHours(8)))
@@ -453,7 +453,8 @@ class ScheduleTest {
             .timezone("America/New_York")
             .build();
 
-        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+        ZonedDateTime fixedDate = ZonedDateTime.parse("2025-01-15T00:00:00-05:00[America/New_York]");
+        TriggerContext triggerContext = triggerContext(fixedDate, trigger).toBuilder()
             .backfill(Backfill
                 .builder()
                 .currentDate(ZonedDateTime.parse("2025-01-15T08:00-05:00[America/New_York]"))

@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.ExecutionQueued;
+import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.jdbc.runner.AbstractJdbcExecutionQueuedStorage;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -14,8 +15,6 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.util.Optional;
-
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @CommandLine.Command(
     name = "submit-queued-execution",
@@ -49,9 +48,11 @@ public class SubmitQueuedCommand extends AbstractCommand {
         }
         else if (queueType.get().equals("postgres") || queueType.get().equals("mysql") || queueType.get().equals("h2")) {
             var executionQueuedStorage = applicationContext.getBean(AbstractJdbcExecutionQueuedStorage.class);
+            var concurrencyLimitService = applicationContext.getBean(ConcurrencyLimitService.class);
 
             for (ExecutionQueued queued : executionQueuedStorage.getAllForAllTenants()) {
-                executionQueuedStorage.pop(queued.getTenantId(), queued.getNamespace(), queued.getFlowId(), throwConsumer(execution -> executionQueue.emit(execution.withState(State.Type.CREATED))));
+                Execution restart = concurrencyLimitService.unqueue(queued.getExecution(), State.Type.RUNNING);
+                executionQueue.emit(restart);
                 cpt++;
             }
         }

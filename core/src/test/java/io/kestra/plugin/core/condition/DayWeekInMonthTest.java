@@ -44,6 +44,7 @@ class DayWeekInMonthTest {
 
         DayWeekInMonth build = DayWeekInMonth.builder()
             .date(Property.of(date))
+            .date(Property.ofValue(date))
             .dayOfWeek(Property.ofValue(dayOfWeek))
             .dayInMonth(Property.ofValue(dayInMonth))
             .build();

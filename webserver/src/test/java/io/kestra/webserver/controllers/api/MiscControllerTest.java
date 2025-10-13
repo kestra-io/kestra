@@ -53,7 +53,7 @@ class MiscControllerTest {
         assertThat(response).isNotNull();
         assertThat(response.getUuid()).isNotNull();
         assertThat(response.getIsAnonymousUsageEnabled()).isTrue();
-        assertThat(response.getIsAiEnabled()).isFalse();
+        assertThat(response.getIsAiEnabled()).isTrue();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
     }
 

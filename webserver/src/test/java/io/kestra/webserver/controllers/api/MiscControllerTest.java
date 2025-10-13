@@ -6,7 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.controllers.api.MiscController.BasicAuthCredentials;
+import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 import io.micronaut.context.annotation.Property;
@@ -106,7 +106,7 @@ class MiscControllerTest {
         String uid = "someUid";
         String username = "my.email@kestra.io";
         String password = "myPassword1";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
         try {
             assertThatThrownBy(
                 () -> client.toBlocking().retrieve("/api/v1/main/dashboards", MiscController.Configuration.class)
@@ -134,7 +134,7 @@ class MiscControllerTest {
             ).as("expect success GET /api/v1/main/dashboards with good password")
                 .doesNotThrowAnyException();
         } finally {
-            basicAuthService.save(basicAuthConfiguration);
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
         }
     }
 
@@ -143,7 +143,7 @@ class MiscControllerTest {
         String uid = "someUid2";
         String username = "my.email2@kestra.io";
         String password = "myPassword2";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
 
         try {
             var namespace = "namespace1";
@@ -180,7 +180,7 @@ class MiscControllerTest {
             ).as("can trigger this Flow webhook when not authenticated")
                 .doesNotThrowAnyException();
         } finally {
-            basicAuthService.save(basicAuthConfiguration);
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
         }
     }
 }

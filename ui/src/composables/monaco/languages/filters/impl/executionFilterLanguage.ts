@@ -72,6 +72,11 @@ const executionFilterKeys: Record<string, FilterKeyCompletions> = {
         [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH],
         undefined,
         true
+    ),
+      kind: new FilterKeyCompletions(
+        [Comparators.EQUALS,Comparators.NOT_EQUALS],
+        undefined,
+        true
     )
 }
 

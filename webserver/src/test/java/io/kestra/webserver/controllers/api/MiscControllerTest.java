@@ -1,9 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
@@ -19,9 +15,13 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import java.util.List;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 @Property(name = "kestra.system-flows.namespace", value = "some.system.ns")
@@ -92,30 +92,38 @@ class MiscControllerTest {
 
     @Test
     void basicAuth() {
-        Assertions.assertDoesNotThrow(() -> client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class));
+        assertThatCode(() -> client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class)).doesNotThrowAnyException();
 
         String uid = "someUid";
         String username = "my.email@kestra.io";
         String password = "myPassword1";
         client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
         try {
-            assertThrows(
-                HttpClientResponseException.class,
+            assertThatThrownBy(
                 () -> client.toBlocking().retrieve("/api/v1/main/dashboards", MiscController.Configuration.class)
-            );
-            assertThrows(
-                HttpClientResponseException.class,
+            )
+                .as("expect 401 for unauthenticated GET /api/v1/main/dashboards")
+                .isInstanceOfSatisfying(HttpClientResponseException.class, ex ->
+                    assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+                );
+
+            assertThatThrownBy(
                 () -> client.toBlocking().retrieve(
                     HttpRequest.GET("/api/v1/main/dashboards")
                         .basicAuth("bad.user@kestra.io", "badPassword"),
                     MiscController.Configuration.class
                 )
-            );
-            Assertions.assertDoesNotThrow(() -> client.toBlocking().retrieve(
+            ).as("expect 401 for GET /api/v1/main/dashboards with wrong password")
+                .isInstanceOfSatisfying(HttpClientResponseException.class, ex ->
+                    assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+                );
+
+            assertThatCode(() -> client.toBlocking().retrieve(
                 HttpRequest.GET("/api/v1/main/dashboards")
                     .basicAuth(username, password),
                 MiscController.Configuration.class)
-            );
+            ).as("expect success GET /api/v1/main/dashboards with good password")
+                .doesNotThrowAnyException();
         } finally {
             basicAuthService.save(basicAuthConfiguration);
         }

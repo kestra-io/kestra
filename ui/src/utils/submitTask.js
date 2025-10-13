@@ -5,8 +5,13 @@ export const inputsToFormData = (submitor, inputsList, values) => {
     let inputValuesCloned = _cloneDeep(values)
 
     for (const input of inputsList || []) {
-        if (inputValuesCloned[input.id] === undefined || inputValuesCloned[input.id] === "") {
+        if (inputValuesCloned[input.id] === undefined) {
             delete inputValuesCloned[input.id];
+        }
+        
+        // Input was explicitly filled with empty string
+        if (inputValuesCloned[input.id] === "") {
+            inputValuesCloned[input.id] = undefined;
         }
 
         // Required to have "undefined" value for boolean
@@ -34,6 +39,8 @@ export const inputsToFormData = (submitor, inputsList, values) => {
             } else {
                 formData.append(inputName, inputValue);
             }
+        } else if (input.type !== "BOOLEAN") {
+            formData.append(inputName, null);
         }
     }
 

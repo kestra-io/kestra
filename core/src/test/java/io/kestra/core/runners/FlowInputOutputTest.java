@@ -19,6 +19,7 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.reactivestreams.Publisher;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @KestraTest
 class FlowInputOutputTest {
@@ -333,6 +335,44 @@ class FlowInputOutputTest {
         
         // Then
         Assertions.assertEquals(TEST_SECRET_VALUE, results.get("input"));
+    }
+    
+    @Test
+    void shouldNotGetDefaultWhenPassingNullForNotRequiredInput() {
+        // Given
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .defaults(Property.ofValue("default"))
+            .required(false)
+            .build();
+        
+        Mono<CompletedPart> data = Mono.just(new MemoryCompletedPart("input", "null".getBytes(StandardCharsets.UTF_8)));
+        
+        // When
+        Map<String, Object> results = flowInputOutput.readExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, data).block();
+        
+        // Then
+        Assertions.assertNull(results.get("input"));
+    }
+    
+    @Test
+    void shouldNotGetErrorWhenPassingNullForRequiredInput() {
+        // Given
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .defaults(Property.ofValue("default"))
+            .required(true)
+            .build();
+        
+        Mono<CompletedPart> data = Mono.just(new MemoryCompletedPart("input", "null".getBytes(StandardCharsets.UTF_8)));
+        
+        // When
+        ConstraintViolationException exception = Assertions.assertThrows(ConstraintViolationException.class, () ->
+            flowInputOutput.readExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, data).block()
+        );
+        assertThat(exception.getMessage()).isEqualTo("input: Invalid input for `input`, missing required input, but received `null`");
     }
     
     private static class MemoryCompletedPart implements CompletedPart {

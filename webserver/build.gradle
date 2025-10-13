@@ -27,6 +27,8 @@ dependencies {
     // ai
     implementation("dev.langchain4j:langchain4j")
     implementation("dev.langchain4j:langchain4j-google-ai-gemini")
+    implementation("dev.langchain4j:langchain4j-http-client-jdk")
+    implementation('org.bouncycastle:bcpkix-jdk18on')
 
     implementation("de.siegmar:fastcsv")
 

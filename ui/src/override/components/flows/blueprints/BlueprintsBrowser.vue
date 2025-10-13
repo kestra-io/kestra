@@ -5,24 +5,31 @@
         <slot name="content">
             <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hideTopPagination divider>
                 <template #navbar>
-                    <el-radio-group v-if="ready && !system && !embed" v-model="selectedTag" class="tags-selection">
-                        <el-radio-button
-                            :key="0"
-                            :value="0"
-                            class="hoverable"
-                        >
-                            {{ $t("all tags") }}
-                        </el-radio-button>
-                        <el-radio-button
-                            v-for="tag in Object.values(tags || {})"
-                            :key="tag.id"
-                            :value="tag.id"
-                            class="hoverable"
-                            @dblclick.stop="selectedTag = 0"
-                        >
-                            {{ tag.name }}
-                        </el-radio-button>
-                    </el-radio-group>
+                    <div v-if="ready && !system && !embed">
+                        <div class="tags-selection">
+                            <el-checkbox-group v-model="selectedTags" class="tags-checkbox-group">
+                                <el-checkbox-button
+                                    v-for="tag in Object.values(tags || {})"
+                                    :key="tag.id"
+                                    :label="tag.id"
+                                    class="hoverable"
+                                >
+                                    {{ tag.name }}
+                                </el-checkbox-button>
+                            </el-checkbox-group>
+                        </div>
+                        
+                        <el-row class="search-bar-row" justify="center">
+                            <el-col :xs="24">
+                                <el-input
+                                    v-model="searchText"
+                                    :placeholder="$t('Search or choose filters...')"
+                                    clearable
+                                    @input="updateSearch"
+                                />
+                            </el-col>
+                        </el-row>
+                    </div>
                     <nav v-else-if="system" class="header pb-3">
                         <p class="mb-0 fw-lighter">
                             {{ $t("system_namespace") }}
@@ -32,18 +39,9 @@
                         </p>
                     </nav>
                 </template>
-                <template #top>
-                    <el-row class="mb-3 px-3" justify="center">
-                        <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
-                            <el-input
-                                v-model="searchText"
-                                :placeholder="$t('Search or choose filters...')"
-                                clearable
-                                @input="updateSearch"
-                            />
-                        </el-col>
-                    </el-row>
-                </template>
+                
+                <template #top />
+
                 <template #table>
                     <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
                         {{ $t('blueprints.empty') }}
@@ -51,7 +49,6 @@
                     <div class="card-grid">
                         <el-card
                             class="blueprint-card"
-                            :class="{'embed': embed}"
                             v-for="blueprint in blueprints"
                             :key="blueprint.id"
                             @click="goToDetail(blueprint.id)"
@@ -60,13 +57,11 @@
                                 <div v-if="!system && blueprint.tags?.length > 0" class="tags-section text-uppercase">
                                     <span v-for="tag in blueprint.tags" :key="tag" class="tag-item">{{ tag }}</span>
                                 </div>
-
                                 <div class="text-section">
                                     <h3 class="title">
                                         {{ blueprint.title ?? blueprint.id }}
                                     </h3>
                                 </div>
-
                                 <div class="bottom-section">
                                     <div class="task-icons">
                                         <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
@@ -82,7 +77,6 @@
                                                 class="p-2"
                                             />
                                         </el-tooltip>
-
                                         <el-button v-else-if="userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                             {{ $t('use') }}
                                         </el-button>
@@ -138,10 +132,16 @@
     const route = useRoute();
     const router = useRouter();
 
-    const initSelectedTag = () => route.query.selectedTag && typeof route.query.selectedTag === "string" ? route.query.selectedTag : 0;
+    const initSelectedTags = (): string[] => {
+        if (!route.query.selectedTag) return [];
+        if (Array.isArray(route.query.selectedTag)) {
+            return route.query.selectedTag.filter((tag): tag is string => tag !== null);
+        }
+        return route.query.selectedTag ? [route.query.selectedTag] : [];
+    };
 
     const searchText = ref(route.query.q || "");
-    const selectedTag = ref<number | string>(initSelectedTag());
+    const selectedTags = ref<string[]>(initSelectedTags());
     const tags = ref<Record<string, any> | undefined>(undefined);
     const total = ref(0);
     const blueprints = ref<{
@@ -206,7 +206,7 @@
         if (route.query.size || internalPageSize.value) query.size = parseInt((route.query.size || internalPageSize.value) as string);
         if (route.query.q || searchText.value) query.q = route.query.q || searchText.value;
         if (props.system) query.tags = "system";
-        else if (route.query.selectedTag || selectedTag.value) query.tags = route.query.selectedTag || selectedTag.value;
+        else if (selectedTags.value.length > 0) query.tags = selectedTags.value;
 
         const data = await blueprintsStore.getBlueprintsForQuery({
             type: props.blueprintType,
@@ -227,9 +227,11 @@
                 loadBlueprints(beforeLoadBlueprintType)
             ]);
             emit("loaded");
+            onDataLoaded();
         } catch {
             if (props.embed) error.value = true;
             else coreStore.error = 404;
+            onDataLoaded();
         }
     };
 
@@ -253,8 +255,9 @@
     watch(route,
           (newValue, oldValue) =>{
               if (oldValue.name === newValue.name) {
-                  selectedTag.value = initSelectedTag();
+                  selectedTags.value = initSelectedTags();
                   searchText.value = route.query.q || "";
+                  load(onDataLoaded);
               }
           }
     );
@@ -263,19 +266,12 @@
         load(onDataLoaded);
     });
 
-    watch(selectedTag, (newSelectedTag) => {
+    watch(selectedTags, (newTags) => {
         if (!props.embed) {
-            if (newSelectedTag === 0) {
-                router.push({
-                    query: {
-                        ...route.query,
-                    }
-                });
-            }
             router.push({
                 query: {
                     ...route.query,
-                    selectedTag: newSelectedTag
+                    selectedTag: newTags.length > 0 ? newTags : undefined
                 }
             });
         } else {
@@ -284,8 +280,11 @@
     });
 
     watch(tags, (val) => {
-        if(!Object.prototype.hasOwnProperty.call(val, selectedTag.value)) {
-            selectedTag.value = 0;
+        const validTags = selectedTags.value.filter(tagId =>
+            Object.prototype.hasOwnProperty.call(val, tagId)
+        );
+        if (validTags.length !== selectedTags.value.length) {
+            selectedTags.value = validTags;
         }
     })
 
@@ -298,37 +297,20 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
     @import "@kestra-io/ui-libs/src/scss/variables";
 
-    .sub-nav {
-        margin: 0 0 $spacer;
-
-        > * {
-            margin: 0;
-        }
-
-        // Two elements => one element on each side
-        &:has(> :nth-child(2)) {
-            margin: $spacer 0 .5rem 0;
-
-            .el-card & {
-                // Enough space not to overlap with switch view when embedded
-                margin-top: 1.6rem;
-
-
-                // Embedded tabs looks weird without cancelling the margin (this brings a top-left tabs with bottom-right search)
-                > :nth-child(1) {
-                    margin-top: -1.5rem;
-                }
-            }
-
-            > :nth-last-child(1) {
-                margin-left: auto;
-                padding: .5rem 0;
-            }
-        }
-    }
-
     .blueprints {
         width: 100%;
+    }
+
+    .tags-selection {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .search-bar-row {
+        max-width: 800px;
+        margin: 0 auto 1.5rem auto;
     }
 
     .card-grid {
@@ -390,7 +372,7 @@
     }
 
     .text-section {
-        flex-grow: 1;
+        flex-grow: 1; 
         margin-top: 0.75rem;
         
         .title {

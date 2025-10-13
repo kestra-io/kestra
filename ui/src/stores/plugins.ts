@@ -221,14 +221,14 @@ export const usePluginsStore = defineStore("plugins", () => {
         const apiStore = useApiStore();
 
         const apiPromise = apiStore.pluginIcons().then(response => {
-            apiIcons.value = response.data;
+            apiIcons.value = response.data ?? {};
             return response.data;
         });
 
         const iconsPromise =
             axios.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(response => {
-                const iconsData = response.data ?? {};
-                return iconsData;
+                pluginsIcons.value = response.data ?? {};
+                return pluginsIcons.value;
             });
 
         _iconsPromise.value = Promise.all([apiPromise, iconsPromise]).then(() => {
@@ -238,8 +238,6 @@ export const usePluginsStore = defineStore("plugins", () => {
 
         return _iconsPromise.value;
     }
-
-    const LogIcon = computed(() => icons.value["io.kestra.plugin.core.log.Log"]);
 
     function groupIcons() {
         return axios.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
@@ -358,8 +356,5 @@ export const usePluginsStore = defineStore("plugins", () => {
         loadInputSchema,
         loadSchemaType,
         updateDocumentation,
-        pluginsIcons,
-        apiIcons,
-        LogIcon,
     };
 });

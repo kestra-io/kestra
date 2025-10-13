@@ -66,11 +66,13 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, onMounted, ref} from "vue";
+    import {computed, onMounted, ref} from "vue";
     import {useRoute} from "vue-router";
+    // @ts-expect-error types to be done
     import DateRange from "../../layout/DateRange.vue";
+    // @ts-expect-error types to be done
     import TimeSelect from "./TimeSelect.vue";
-    import type momentType from "moment";
+    import moment from "moment";
 
     interface FilterValue {
         startDate?: string;
@@ -78,12 +80,12 @@
         timeRange?: string;
     };
 
-    type AbsoluteEvent = {
+    interface AbsoluteEvent {
         startDate?: string;
         endDate?: string;
     };
 
-    type RelativeEvent = {
+    interface RelativeEvent {
         timeRange?: string;
     };
 
@@ -105,8 +107,6 @@
     }>();
 
     const route = useRoute();
-    const instance = getCurrentInstance();
-    const moment = instance?.proxy?.$moment as (typeof momentType) | undefined;
 
     const normalizedQuery = computed<Record<string, string>>(() => {
         const entries = Object.entries(route.query).map(([key, value]) => [

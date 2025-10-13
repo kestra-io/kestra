@@ -1,6 +1,7 @@
 package io.kestra.scheduler;
 
 import com.devskiller.friendly_id.FriendlyId;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
@@ -25,7 +26,6 @@ import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -545,8 +545,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
 
+    @FlakyTest(description = "too flaky on CI")
     @Test
-    @Disabled("too flaky on CI")
     void recoverLASTLongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
@@ -618,8 +618,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
 
+    @FlakyTest(description = "too flaky on CI")
     @Test
-    @Disabled("too flaky on CI")
     void recoverNONELongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);

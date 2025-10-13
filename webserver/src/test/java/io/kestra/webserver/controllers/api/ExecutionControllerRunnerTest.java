@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
@@ -1287,9 +1288,10 @@ class ExecutionControllerRunnerTest {
         assertThat(executions.getTotal()).isEqualTo(4L);
     }
 
-    @RetryingTest(5)
+    @FlakyTest
+    @Test
     @LoadFlows({"flows/valids/pause-test.yaml"})
-    void killExecutionPaused() throws TimeoutException, InterruptedException, QueueException {
+    void killExecutionPaused() throws TimeoutException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();

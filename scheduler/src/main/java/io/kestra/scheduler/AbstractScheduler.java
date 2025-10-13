@@ -572,14 +572,6 @@ public abstract class AbstractScheduler implements Scheduler {
 
             triggerQueue.emit(disabledTrigger);
 
-            schedulableNextDate.remove(disabledTrigger.uid());
-
-            synchronized (this) {
-                schedulable = schedulable.stream()
-                    .filter(f -> !f.getTriggerContext().uid().equals(disabledTrigger.uid()))
-                    .toList();
-            }
-
             log.warn("Disabled trigger {}.{} due to invalid configuration: {}", disabledTrigger.getFlowId(), disabledTrigger.getTriggerId(), e.getMessage());
         } catch (Exception ex) {
             log.error("Failed to disable trigger {}.{}: {}", triggerContext.getFlowId(), triggerContext.getTriggerId(), ex.getMessage(), ex);

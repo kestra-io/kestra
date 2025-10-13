@@ -11,7 +11,7 @@ export default defineConfig({
         outDir: "../webserver/src/main/resources/ui",
         rollupOptions: {
             output: {
-                advancedChunks:{
+                advancedChunks: {
                     groups: [
                         {
                             test: /src\/components\/dashboard/i,

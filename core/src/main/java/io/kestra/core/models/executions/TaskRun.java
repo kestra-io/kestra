@@ -42,15 +42,12 @@ public class TaskRun implements TenantInterface {
     @NotNull
     String taskId;
 
-    @Nullable
     String parentTaskRunId;
 
     @With
-    @Nullable
     String value;
 
     @With
-    @Nullable
     List<TaskRunAttempt> attempts;
 
     @With
@@ -62,16 +59,13 @@ public class TaskRun implements TenantInterface {
     State state;
 
     @With
-    @Nullable
     Integer iteration;
 
     @With
-    @Nullable
     Boolean dynamic;
 
     // Set it to true to force execution even if the execution is killed
     @With
-    @Nullable
     Boolean forceExecution;
 
     @Deprecated

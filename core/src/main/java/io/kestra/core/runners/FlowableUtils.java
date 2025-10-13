@@ -84,6 +84,12 @@ public class FlowableUtils {
             return Collections.emptyList();
         }
 
+        // have submitted, leave
+        Optional<TaskRun> lastSubmitted = execution.findLastSubmitted(taskRuns);
+        if (lastSubmitted.isPresent()) {
+            return Collections.emptyList();
+        }
+
         // have running, leave
         Optional<TaskRun> lastRunning = execution.findLastRunning(taskRuns);
         if (lastRunning.isPresent()) {

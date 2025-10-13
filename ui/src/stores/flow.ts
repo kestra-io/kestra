@@ -364,11 +364,17 @@ export const useFlowStore = defineStore("flow", () => {
         return axios.get(`${apiUrl()}/flows/search${sortString}`, {
             params: options
         }).then(response => {
-            flows.value = response.data.results
-            total.value = response.data.total
-            overallTotal.value = response.data.results.filter((f: any) => f.namespace !== "tutorial").length
+            if (options.onlyTotal) {
+                return response.data.total;
+            }
+            
+            else {
+                flows.value = response.data.results
+                total.value = response.data.total
+                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== "tutorial").length
 
-            return response.data;
+                return response.data;
+            }
         })
     }
     function searchFlows(options: { [key: string]: any }) {

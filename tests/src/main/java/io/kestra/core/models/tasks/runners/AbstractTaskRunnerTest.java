@@ -263,6 +263,7 @@ public abstract class AbstractTaskRunnerTest {
         var outputDirectory = workingDirectory.resolve(IdUtils.create());
         outputDirectory.toFile().mkdirs();
         Mockito.when(commands.getOutputDirectory()).thenReturn(outputDirectory);
+        Mockito.when(commands.outputDirectoryName()).thenCallRealMethod();
         Mockito.when(commands.getAdditionalVars()).thenReturn(Collections.emptyMap());
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(true);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(true);

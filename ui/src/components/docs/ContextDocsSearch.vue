@@ -44,7 +44,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted} from "vue";
     import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
@@ -139,7 +139,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .search-container {
         position: relative;
         margin-bottom: 0;

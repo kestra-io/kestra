@@ -46,7 +46,7 @@ public class KVController {
     @ExecuteOn(TaskExecutors.IO)
     @Get("/inheritance")
     @Operation(tags = {"KV"}, summary = "List all keys for inherited namespaces")
-    public List<KVEntry> listKeysWithInheritance(
+    public List<KVEntry> listKeysWithInheritence(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
         List<String> namespaces = NamespaceUtils.asTree(namespace).stream()
@@ -176,7 +176,7 @@ public class KVController {
             return Optional.ofNullable(keys).orElse(List.of());
         }
     }
-    
+
     /**
      * Create a new {@link KVStore} facade for the given namespace.
      *
@@ -186,11 +186,11 @@ public class KVController {
     protected KVStore kvStore(final String namespace) {
         return new InternalKVStore(tenantService.resolveTenant(), namespace, storageInterface);
     }
-    
+
     public record TypedValue(
         @Parameter(description = "The type of the KV entry.")
         KVType type,
-        
+
         @Parameter(description = "The value of the KV entry.")
         Object value
     ) {

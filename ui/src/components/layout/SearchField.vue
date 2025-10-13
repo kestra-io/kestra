@@ -1,6 +1,5 @@
 <template>
     <el-input
-        data-component="FILENAME_PLACEHOLDER"
         v-model="search"
         @input="onInput"
         :placeholder="$t(placeholder)"
@@ -81,7 +80,7 @@
         }
     };
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .shortcut {
         font-size: 0.75rem;
         line-height: 1.25rem;

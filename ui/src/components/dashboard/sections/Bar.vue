@@ -10,7 +10,7 @@
     <NoData v-else />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {PropType, computed, watch} from "vue";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
@@ -175,7 +175,7 @@
     }, {deep: true});
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .chart {
         #{--chart-height}: 200px;
 

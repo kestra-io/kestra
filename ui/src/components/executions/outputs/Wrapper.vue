@@ -474,7 +474,7 @@
     const leftWidth = ref("70%");
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .outputs {
     display: flex;
     width: 100%;

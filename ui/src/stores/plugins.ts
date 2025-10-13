@@ -136,7 +136,7 @@ export const usePluginsStore = defineStore("plugins", () => {
             plugins.value = await listWithSubgroup({includeDeprecated: false});
         }
 
-        return plugins.value?.map(p => ({
+        return plugins.value.map(p => ({
             ...p,
             ...Object.fromEntries(excludedElements.map(e => [e, undefined]))
         })).filter(p => Object.entries(p)

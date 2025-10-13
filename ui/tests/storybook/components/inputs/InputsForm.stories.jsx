@@ -45,8 +45,8 @@ export const InputTypes = {
 
         const MonacoEditor = await waitFor(function MonacoEditorReady() {
             const editor = can.getByTestId("input-form-email").querySelector(".ks-monaco-editor");
-
-            expect(editor).to.exist();
+            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+            expect(editor).to.exist;
             return editor;
         }, {timeout: 2000, interval: 100});
         // wait for the setup to finish

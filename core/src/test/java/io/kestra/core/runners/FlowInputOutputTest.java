@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class FlowInputOutputTest {
@@ -335,8 +336,7 @@ class FlowInputOutputTest {
         // Then
         Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput)results.getFirst().input()).getValues().getFirst());
     }
-    
-    
+
     @Test
     void shouldNotObfuscateSecretsWhenReadingInputs() {
         // Given
@@ -352,6 +352,22 @@ class FlowInputOutputTest {
         
         // Then
         Assertions.assertEquals(TEST_SECRET_VALUE, results.get("input"));
+    }
+    
+    @Test
+    void shouldGetDefaultWhenPassingNoDataForRequiredInput() {
+        // Given
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .defaults(Property.ofValue("default"))
+            .build();
+        
+        // When
+        Map<String, Object> results = flowInputOutput.readExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+        
+        // Then
+        assertThat(results.get("input")).isEqualTo("default");
     }
     
     private static class MemoryCompletedPart implements CompletedPart {

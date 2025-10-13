@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.kestra.core.models.flows.input.*;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.validations.InputValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
@@ -44,6 +45,7 @@ import lombok.experimental.SuperBuilder;
     @JsonSubTypes.Type(value = YamlInput.class, name = "YAML"),
     @JsonSubTypes.Type(value = EmailInput.class, name = "EMAIL"),
 })
+@InputValidation
 public abstract class Input<T> implements Data {
     @Schema(
         title = "The ID of the input."
@@ -80,7 +82,13 @@ public abstract class Input<T> implements Data {
         title = "The default value to use if no value is specified."
     )
     Property<T> defaults;
-
+    
+    @Schema(
+        title = "The suggested value for the input.",
+        description = "Optional UI hint for pre-filling the input. Cannot be used together with a default value."
+    )
+    Property<T> prefill;
+    
     @Schema(
         title = "The display name of the input."
     )

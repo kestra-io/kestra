@@ -1,3 +1,199 @@
+<script setup lang="ts">
+import { onMounted, onBeforeUnmount, watch, computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+
+import { useCoreStore } from "../../stores/core";
+import { useExecutionsStore } from "../../stores/executions";
+import { useFlowStore } from "../../stores/flow";
+import { useAuthStore } from "override/stores/auth";
+
+import Gantt from "./Gantt.vue";
+import Overview from "./Overview.vue";
+import Logs from "./Logs.vue";
+import Topology from "./Topology.vue";
+import ExecutionOutput from "./outputs/Wrapper.vue";
+import ExecutionMetric from "./ExecutionMetric.vue";
+import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
+import DemoAuditLogs from "../demo/AuditLogs.vue";
+import Dependencies from "../dependencies/Dependencies.vue";
+
+import Tabs from "../../components/Tabs.vue";
+
+import permission from "../../models/permission";
+import action from "../../models/action";
+
+const route = useRoute();
+const router = useRouter();
+
+const coreStore = useCoreStore();
+const executionsStore = useExecutionsStore();
+const flowStore = useFlowStore();
+const authStore = useAuthStore();
+
+const previousExecutionId = ref<string | undefined>(undefined);
+const dependenciesCount = ref<number | undefined>(undefined);
+
+const follow = () => {
+    previousExecutionId.value = route.params.id as string;
+    executionsStore.followExecution(route.params as any, coreStore.$t);
+};
+
+const getTabs = () => {
+    return [
+        {
+            name: undefined,
+            component: Overview,
+            title: coreStore.$t("overview"),
+        },
+        {
+            name: "gantt",
+            component: Gantt,
+            title: coreStore.$t("gantt")
+        },
+        {
+            name: "logs",
+            component: Logs,
+            title: coreStore.$t("logs")
+        },
+        {
+            name: "topology",
+            component: Topology,
+            title: coreStore.$t("topology")
+        },
+        {
+            name: "outputs",
+            component: ExecutionOutput,
+            title: coreStore.$t("outputs"),
+            maximized: true
+        },
+        {
+            name: "metrics",
+            component: ExecutionMetric,
+            title: coreStore.$t("metrics")
+        },
+        {
+            name: "dependencies",
+            component: Dependencies,
+            title: coreStore.$t("dependencies"),
+            count: dependenciesCount.value,
+            maximized: true,
+            props: {
+                isReadOnly: true,
+            },
+        },
+        {
+            name: "auditlogs",
+            component: DemoAuditLogs,
+            title: coreStore.$t("auditlogs"),
+            maximized: true,
+            locked: true
+        }
+    ];
+};
+
+const tabs = computed(() => getTabs());
+
+const routeInfo = computed(() => {
+    const ns = route.params.namespace as string;
+    const flowId = route.params.flowId as string;
+
+    if (!ns || !flowId) {
+        return {};
+    }
+
+    return {
+        title: route.params.id,
+        breadcrumb: [
+            {
+                label: coreStore.$t("flows"),
+                link: {
+                    name: "flows/list",
+                    query: {
+                        namespace: ns
+                    }
+                }
+            },
+            {
+                label: `${ns}.${flowId}`,
+                link: {
+                    name: "flows/update",
+                    params: {
+                        namespace: ns,
+                        id: flowId
+                    }
+                }
+            },
+            {
+                label: coreStore.$t("executions"),
+                link: {
+                    name: "flows/update",
+                    params: {
+                        namespace: ns,
+                        id: flowId,
+                        tab: "executions"
+                    }
+                }
+            }
+        ]
+    };
+});
+
+const isAllowedTrigger = computed(() => {
+    return executionsStore.execution
+        && authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, executionsStore.execution.namespace);
+});
+
+const isAllowedEdit = computed(() => {
+    return executionsStore.execution
+        && authStore.user?.isAllowed(permission.FLOW, action.UPDATE, executionsStore.execution.namespace);
+});
+
+const canDelete = computed(() => {
+    return executionsStore.execution
+        && authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, executionsStore.execution.namespace);
+});
+
+const ready = computed(() => {
+    return executionsStore.execution !== undefined;
+});
+
+if (!route.params.tab) {
+    const tab = localStorage.getItem("executeDefaultTab") || undefined;
+    router.replace({ name: "executions/update", params: { ...route.params, tab } });
+}
+
+follow();
+window.addEventListener("popstate", follow);
+
+flowStore.loadDependencies({
+    namespace: route.params.namespace as string,
+    id: route.params.flowId as string
+}).then((res: { count: number }) => {
+    dependenciesCount.value = res.count;
+});
+
+onMounted(() => {
+    previousExecutionId.value = route.params.id as string;
+});
+
+watch(() => route.fullPath, () => {
+    executionsStore.taskRun = undefined;
+    if (previousExecutionId.value !== route.params.id) {
+        flowStore.flow = undefined;
+        flowStore.flowGraph = undefined;
+        follow();
+    }
+});
+
+onBeforeUnmount(() => {
+    executionsStore.closeSSE();
+    window.removeEventListener("popstate", follow);
+    executionsStore.execution = undefined;
+    flowStore.flow = undefined;
+    flowStore.flowGraph = undefined;
+});
+</script>
+
 <template>
     <template v-if="ready">
         <ExecutionRootTopBar :routeInfo="routeInfo" />
@@ -12,199 +208,8 @@
     </div>
 </template>
 
-<script>
-    import {mapStores} from "pinia";
-
-    import Gantt from "./Gantt.vue";
-    import Overview from "./Overview.vue";
-    import Logs from "./Logs.vue";
-    import Topology from "./Topology.vue";
-    import ExecutionOutput from "./outputs/Wrapper.vue";
-    import ExecutionMetric from "./ExecutionMetric.vue";
-    import RouteContext from "../../mixins/routeContext";
-    import {useCoreStore} from "../../stores/core";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import Tabs from "../../components/Tabs.vue";
-    import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
-    import DemoAuditLogs from "../demo/AuditLogs.vue";
-    import Dependencies from "../dependencies/Dependencies.vue";
-
-    import {useExecutionsStore} from "../../stores/executions";
-    import {useAuthStore} from "override/stores/auth"
-    import {useFlowStore} from "../../stores/flow";
-
-    export default {
-        mixins: [RouteContext],
-        components: {
-            Tabs,
-            ExecutionRootTopBar,
-        },
-        data() {
-            return {
-                sse: undefined,
-                previousExecutionId: undefined,
-                dependenciesCount: undefined
-            };
-        },
-        async created() {
-            if(!this.$route.params.tab) {
-                const tab = localStorage.getItem("executeDefaultTab") || undefined;
-                this.$router.replace({name: "executions/update", params: {...this.$route.params, tab}});
-            }
-
-            this.follow();
-            window.addEventListener("popstate", this.follow)
-
-            this.dependenciesCount = (await this.flowStore.loadDependencies({namespace: this.$route.params.namespace, id: this.$route.params.flowId})).count;
-        },
-        mounted() {
-            this.previousExecutionId = this.$route.params.id
-        },
-        watch: {
-            $route() {
-                this.executionsStore.taskRun = undefined;
-                if (this.previousExecutionId !== this.$route.params.id) {
-                    this.flowStore.flow = undefined;
-                    this.flowStore.flowGraph = undefined;
-                    this.follow();
-                }
-            },
-        },
-        methods: {
-            follow() {
-                this.previousExecutionId = this.$route.params.id;
-                this.executionsStore.followExecution(this.$route.params, this.$t);
-            },
-            getTabs() {
-                return [
-                    {
-                        name: undefined,
-                        component: Overview,
-                        title: this.$t("overview"),
-                    },
-                    {
-                        name: "gantt",
-                        component: Gantt,
-                        title: this.$t("gantt")
-                    },
-                    {
-                        name: "logs",
-                        component: Logs,
-                        title: this.$t("logs")
-                    },
-                    {
-                        name: "topology",
-                        component: Topology,
-                        title: this.$t("topology")
-                    },
-                    {
-                        name: "outputs",
-                        component: ExecutionOutput,
-                        title: this.$t("outputs"),
-                        maximized: true
-                    },
-                    {
-                        name: "metrics",
-                        component: ExecutionMetric,
-                        title: this.$t("metrics")
-                    },
-                    {
-                        name: "dependencies",
-                        component: Dependencies,
-                        title: this.$t("dependencies"),
-                        count: this.dependenciesCount,
-                        maximized: true,
-                        props: {
-                            isReadOnly: true,
-                        },
-                    },
-                    {
-                        name: "auditlogs",
-                        component: DemoAuditLogs,
-                        title: this.$t("auditlogs"),
-                        maximized: true,
-                        locked: true
-                    }
-                ];
-            }
-        },
-        computed: {
-            ...mapStores(useCoreStore, useExecutionsStore, useFlowStore, useAuthStore),
-            tabs() {
-                return this.getTabs();
-            },
-            routeInfo() {
-                const ns = this.$route.params.namespace;
-                const flowId = this.$route.params.flowId;
-
-                if (!ns || !flowId) {
-                    return {};
-                }
-
-                return {
-                    title: this.$route.params.id,
-                    breadcrumb: [
-                        {
-                            label: this.$t("flows"),
-                            link: {
-                                name: "flows/list",
-                                query: {
-                                    namespace: ns
-                                }
-                            }
-                        },
-                        {
-                            label: `${ns}.${flowId}`,
-                            link: {
-                                name: "flows/update",
-                                params: {
-                                    namespace: ns,
-                                    id: flowId
-                                }
-                            }
-                        },
-                        {
-                            label: this.$t("executions"),
-                            link: {
-                                name: "flows/update",
-                                params: {
-                                    namespace: ns,
-                                    id: flowId,
-                                    tab: "executions"
-                                }
-                            }
-                        }
-                    ]
-                };
-            },
-            isAllowedTrigger() {
-                return this.executionsStore.execution
-                    && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.executionsStore.execution.namespace);
-            },
-            isAllowedEdit() {
-                return this.executionsStore.execution
-                    && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.executionsStore.execution.namespace);
-            },
-            canDelete() {
-                return this.executionsStore.execution
-                    && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.executionsStore.execution.namespace);
-            },
-            ready() {
-                return this.executionsStore.execution !== undefined;
-            }
-        },
-        beforeUnmount() {
-            this.executionsStore.closeSSE();
-            window.removeEventListener("popstate", this.follow)
-            this.executionsStore.execution = undefined;
-            this.flowStore.flow = undefined;
-            this.flowStore.flowGraph = undefined;
-        }
-    };
-</script>
 <style scoped lang="scss">
-    .full-space {
-        flex: 1 1 auto;
-    }
+.full-space {
+    flex: 1 1 auto;
+}
 </style>

@@ -94,7 +94,7 @@
         }
 
         if(openTabs.value.includes(tabValue)){
-            focusTab(tabValue);
+            onRemoveTab(tabValue);
             return;
         }
 

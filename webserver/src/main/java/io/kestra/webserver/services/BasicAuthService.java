@@ -108,7 +108,7 @@ public class BasicAuthService {
         String salt = previousConfiguredCredentials == null
             ? null
             : previousConfiguredCredentials.getSalt();
-        SaltedBasicAuthCredentials saltedNewConfiguration = new SaltedBasicAuthCredentials(
+        SaltedBasicAuthCredentials saltedNewConfiguration = SaltedBasicAuthCredentials.salt(
             salt,
             basicAuthCredentials.getUsername(),
             basicAuthCredentials.getPassword()
@@ -198,11 +198,20 @@ public class BasicAuthService {
         protected String password;
 
         public SaltedBasicAuthCredentials(String salt, String username, String password) {
-            this.salt = salt == null
+            this.salt = salt;
+            this.username = username;
+            this.password = password;
+        }
+
+        public static SaltedBasicAuthCredentials salt(String salt, String username, String password) {
+            var salt1 = salt == null
                 ? AuthUtils.generateSalt()
                 : salt;
-            this.username = username;
-            this.password = AuthUtils.encodePassword(this.salt, password);
+            return new SaltedBasicAuthCredentials(
+                salt1,
+                username,
+                AuthUtils.encodePassword(salt1, password)
+            );
         }
     }
 }

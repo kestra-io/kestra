@@ -280,7 +280,7 @@ class BasicAuthServiceTest {
 
     private void assertConfigurationMatchesApplicationYaml() {
         var actualConfiguration = basicAuthService.configuration().credentials();
-        var applicationYamlConfiguration = new BasicAuthService.SaltedBasicAuthCredentials(
+        var applicationYamlConfiguration = BasicAuthService.SaltedBasicAuthCredentials.salt(
             actualConfiguration.getSalt(),
             basicAuthService.basicAuthConfiguration.getUsername(),
             basicAuthService.basicAuthConfiguration.getPassword()

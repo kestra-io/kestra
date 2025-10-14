@@ -51,7 +51,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch, type Ref, type Component, PropType} from "vue";
-    import {useMouse, watchThrottled} from "@vueuse/core"
+    import {useMouse, watchThrottled, useStorage, useNetwork} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
     import DateAgo from "./layout/DateAgo.vue"
@@ -67,11 +67,12 @@
     import WeatherNight from "vue-material-design-icons/WeatherNight.vue"
     import Star from "vue-material-design-icons/Star.vue"
 
-    import {useStorage} from "@vueuse/core"
     import {useI18n} from "vue-i18n";
     import Utils from "../utils/utils";
     import {useApiStore} from "../stores/api";
     import {useMiscStore} from "override/stores/misc";
+
+    const {isOnline} = useNetwork()
 
     const {t} = useI18n({useScope: "global"});
 
@@ -106,19 +107,23 @@
         }
     });
 
+    interface InfoButton {
+        title: string;
+        icon: Component;
+        component?: Component;
+        url?: string;
+        hasUnreadMarker?: boolean;
+        isOSSOnly?: boolean;
+        hideWhenOffline?: boolean;
+    };
 
-    const allButtonsList: Record<string, {
-        title:string,
-        icon: Component,
-        component?: Component,
-        url?: string,
-        hasUnreadMarker?: boolean
-    }> = {
+    const allButtonsList: Record<string, InfoButton> = {
         news: {
             title: t("contextBar.news"),
             icon: MessageOutline,
             component: ContextNews,
-            hasUnreadMarker: true
+            hasUnreadMarker: true,
+            hideWhenOffline: true
         },
         docs: {
             title: t("contextBar.docs"),
@@ -133,30 +138,34 @@
         issue: {
             title: t("contextBar.issue"),
             icon: Github,
-            url: "https://github.com/kestra-io/kestra/issues/new/choose"
+            url: "https://github.com/kestra-io/kestra/issues/new/choose",
+            isOSSOnly: true
         },
         demo: {
             title: t("contextBar.demo"),
             icon: Calendar,
-            url: "https://kestra.io/demo"
+            url: "https://kestra.io/demo",
+            isOSSOnly: true
         },
         star: {
             title: t("contextBar.star"),
             icon: Star,
-            url: "https://github.com/kestra-io/kestra"
+            url: "https://github.com/kestra-io/kestra",
+            isOSSOnly: true
         }
     }
 
-    const buttonsList = computed(() => {
-        if (props.communityButton) {
-            return allButtonsList;
-        }
-        let updatedButtons = allButtonsList;
-        delete updatedButtons["issue"];
-        delete updatedButtons["demo"];
-        delete updatedButtons["star"];
-        return updatedButtons;
-    });
+    const buttonsList = computed(() =>
+        Object.fromEntries(
+            Object.entries(allButtonsList).filter(([, b]) =>
+                // Keep all buttons if community mode is enabled, otherwise exclude those marked as OSS-only
+                (props.communityButton || !b.isOSSOnly) &&
+
+                // Keep all buttons when online, otherwise remove those that should be hidden offline
+                (isOnline.value || !b.hideWhenOffline)
+            )
+        )
+    );
 
     const panelWidth = ref(640)
 

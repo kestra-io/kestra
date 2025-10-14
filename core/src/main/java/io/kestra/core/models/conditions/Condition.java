@@ -12,6 +12,8 @@ import lombok.experimental.SuperBuilder;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
+
 @io.kestra.core.models.annotations.Plugin
 @SuperBuilder
 @Getter
@@ -20,6 +22,6 @@ import jakarta.validation.constraints.Pattern;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class Condition implements Plugin, Rethrow.PredicateChecked<ConditionContext, InternalException> {
     @NotNull
-    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     protected String type;
 }

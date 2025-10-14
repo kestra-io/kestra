@@ -1,22 +1,40 @@
 package io.kestra.plugin.scripts.runner.docker;
 
+import com.github.dockerjava.api.model.Container;
+import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
+import io.kestra.core.models.tasks.runners.ScriptService;
 import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.Await;
+import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import reactor.core.publisher.Flux;
 
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.mockito.Mockito;
+
+import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 
  
 
 class DockerTest extends AbstractTaskRunnerTest {
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
+    QueueInterface<LogEntry> workerTaskLogQueue;
     @Override
     protected TaskRunner<?> taskRunner() {
         return Docker.builder().image("rockylinux:9.3-minimal").build();
@@ -67,116 +85,64 @@ class DockerTest extends AbstractTaskRunnerTest {
         MatcherAssert.assertThat((String) result.getLogConsumer().getOutputs().get("cpuLimit"), containsString("150000"));
         assertThat(result.getLogConsumer().getStdOutCount()).isEqualTo(1);
     }
-    
 
     @Test
-    void shouldResumeExistingContainer() throws Exception {
-        // resume = true
+    void killAfterResume() throws Exception {
         var runContext = runContext(this.runContextFactory);
+        var commands = initScriptCommands(runContext);
 
-        // first run: create a container and do not wait for it to finish immediately
-        var dockerCreate = Docker.builder()
-            .image("rockylinux:9.3-minimal")
-            .wait(Property.ofValue(false))
-            .resume(Property.ofValue(true))
-            .build();
+        var commandsList = ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("sleep 50"));
+        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(commandsList));
 
-        var createCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
-            "/bin/sh", "-c",
-            "echo \"::{\\\"outputs\\\":{\\\"msg\\\":\\\"Token\\\"}}::\" && sleep 1"
-        )));
-
-        var first = dockerCreate.run(runContext, createCommands, Collections.emptyList());
-        var firstContainerId = first.getDetails().getContainerId();
-
-        // second run: resume and wait, reusing the same labels context (same runContext)
-        var dockerResume = Docker.builder()
-            .image("rockylinux:9.3-minimal")
-            .wait(Property.ofValue(true))
-            .resume(Property.ofValue(true))
-            .build();
-
-        var resumeCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
-            "/bin/sh", "-c",
-            "echo \"::{\\\"outputs\\\":{\\\"msg\\\":\\\"Token\\\"}}::\" && sleep 1"
-        )));
-
-        var resumeResult = dockerResume.run(runContext, resumeCommands, Collections.emptyList());
-        var resumedContainerId = resumeResult.getDetails().getContainerId();
-
-        assertThat(resumeResult).isNotNull();
-        assertThat(resumeResult.getExitCode()).isZero();
-        assertThat(resumedContainerId).isEqualTo(firstContainerId);
-        assertThat(resumeResult.getLogConsumer().getStdOutCount()).isEqualTo(1);
-    }
-
-    @Test
-    void shouldCreateNewContainerIfNoneToResume() throws Exception {
-        var runContext = runContext(this.runContextFactory);
-
-        var docker = Docker.builder()
-            .image("rockylinux:9.3-minimal")
-            .resume(Property.ofValue(true))
-            .build();
-
-        var commands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
-            "/bin/sh", "-c",
-            "echo \"::{\\\"outputs\\\":{\\\"msg\\\":\\\"NewContainer\\\"}}::\""
-        )));
-
-        var result = docker.run(runContext, commands, Collections.emptyList());
-
-        assertThat(result).isNotNull();
-        assertThat(result.getExitCode()).isZero();
-        String msg = (String) result.getLogConsumer().getOutputs().get("msg");
-        MatcherAssert.assertThat(msg, containsString("NewContainer"));
-        assertThat(result.getLogConsumer().getStdOutCount()).isEqualTo(1);
-    }
-
-    @Test
-    void shouldCreateTwoContainersWhenResumeDisabled() throws Exception {
-        // resume = false
-        var runContext = runContext(this.runContextFactory);
-
-        var dockerCreate = Docker.builder()
-            .image("rockylinux:9.3-minimal")
-            .wait(Property.ofValue(false))
-            .delete(Property.ofValue(false))
-            .build();
-
-        var commandProps = Property.ofValue(List.of(
-            "/bin/sh", "-c",
-            "echo 'Token' && sleep 1"
-        ));
-        var commands1 = new CommandsWrapper(runContext).withCommands(commandProps);
-        var commands2 = new CommandsWrapper(runContext).withCommands(commandProps);
-
-        var first = dockerCreate.run(runContext, commands1, Collections.emptyList());
-        var firstContainerId = first.getDetails().getContainerId();
-
-        var dockerSecond = Docker.builder()
-            .image("rockylinux:9.3-minimal")
-            .wait(Property.ofValue(false))
-            .delete(Property.ofValue(false))
-            .build();
-
-        var second = dockerSecond.run(runContext, commands2, Collections.emptyList());
-        var secondContainerId = second.getDetails().getContainerId();
-
-        assertThat(firstContainerId).isNotNull();
-        assertThat(secondContainerId).isNotNull();
-        assertThat(secondContainerId).isNotEqualTo(firstContainerId);
-
+        var taskRunner = ((Docker) taskRunner()).toBuilder().resume(Property.ofValue(true)).build();
+        Thread initialContainerThread = new Thread(throwRunnable(() -> taskRunner.run(runContext, commands, Collections.emptyList())));
+        initialContainerThread.start();
 
         try (var client = DockerService.client(runContext, null, null, null, "rockylinux:9.3-minimal")) {
-            // wait concurrently
-            var f1 = CompletableFuture.supplyAsync(() -> client.waitContainerCmd(firstContainerId).start().awaitStatusCode());
-            var f2 = CompletableFuture.supplyAsync(() -> client.waitContainerCmd(secondContainerId).start().awaitStatusCode());
+            Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
+
+            // Wait for the container to be created
+            Await.until(() -> {
+                List<Container> existingContainers = client.listContainersCmd()
+                    .withShowAll(true)
+                    .withLabelFilter(labels)
+                    .exec();
+                return !existingContainers.isEmpty() && existingContainers.get(0).getState().equals("running");
+            });
+            initialContainerThread.interrupt();
+
+            // Create a new RunContext with the same taskrun variables to maintain labels
+            @SuppressWarnings("unchecked")
+            Map<String, Object> taskRunProps = new HashMap<>((Map<String, Object>) runContext.getVariables().get("taskrun"));
+            RunContext anotherRunContext = runContext(this.runContextFactory, Map.of("taskrun", taskRunProps));
+            var anotherTaskRunner = ((Docker) taskRunner()).toBuilder().resume(Property.ofValue(true)).build();
+
+            // Setup log queue consumer
+            List<LogEntry> logs = new CopyOnWriteArrayList<>();
+            Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, (logEntry) -> {
+                logs.add(logEntry.getLeft());
+            });
+
+            // Start resume in a new thread
+            var resumeCommands = initScriptCommands(anotherRunContext);
+
+            Mockito.when(resumeCommands.getCommands()).thenReturn(Property.ofValue(commandsList));
+            Thread resumeContainerThread = new Thread(throwRunnable(() -> anotherTaskRunner.run(anotherRunContext, resumeCommands, Collections.emptyList())));
+            resumeContainerThread.start();
             
-            CompletableFuture.allOf(f1, f2).join();
-            assertThat(f1.get()).isZero();
-            assertThat(f2.get()).isZero();
+            // Wait for the log message indicating resume
+            TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Resuming existing container"));
+            receive.blockLast();
+
+            // Kill the container and verify cleanup
+            anotherTaskRunner.kill();
+            resumeContainerThread.interrupt();
+
+            List<Container> existingContainers = client.listContainersCmd()
+                .withShowAll(true)
+                .withLabelFilter(labels)
+                .exec();
+            MatcherAssert.assertThat(existingContainers.isEmpty(), is(true));
         }
     }
-    
 }

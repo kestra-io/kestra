@@ -50,6 +50,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -151,7 +152,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
     private static final String LEGACY_VOLUME_ENABLED_CONFIG = "kestra.tasks.scripts.docker.volume-enabled";
     private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";
-    private static final String RESUME_ENABLED_CONFIG = "resume";
 
     @Schema(
         title = "Docker API URI."
@@ -314,12 +314,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     )
     private Duration killGracePeriod = Duration.ZERO;
 
+    @Builder.Default
     @Schema(
         title = "Whether to resume an existing matching container on restart.",
         description = "If enabled, the runner will search for an existing container labeled with the current execution/task identifiers and reattach to it instead of creating a new container."
     )
     @PluginProperty
-    private Property<Boolean> resume;
+    private Property<Boolean> resume = Property.ofValue(false);
 
     /**
      * Convenient default instance to be used as task default value for a 'taskRunner' property.
@@ -350,7 +351,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .memory(dockerOptions.getMemory())
             .shmSize(dockerOptions.getShmSize())
             .privileged(dockerOptions.getPrivileged())
-            .resume(dockerOptions.getResume())
             .build();
     }
 
@@ -375,9 +375,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         String resolvedHost = DockerService.findHost(runContext, this.host);
         try (DockerClient dockerClient = dockerClient(runContext, image, resolvedHost)) {
             // evaluate resume (task property overrides plugin configuration if set)
-            Boolean resumeProp = runContext.render(this.resume).as(Boolean.class).orElse(null);
-            Optional<Boolean> resumeConfig = runContext.pluginConfiguration(RESUME_ENABLED_CONFIG);
-            boolean resumeEnabled = resumeProp != null ? resumeProp : resumeConfig.orElse(Boolean.FALSE);
+            Boolean resumeProp = runContext.render(this.resume).as(Boolean.class).orElse(Boolean.FALSE);
+            boolean resumeEnabled = Boolean.TRUE.equals(resumeProp);
 
             String containerId = null;
 
@@ -390,9 +389,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
                 if (!existing.isEmpty()) {
                     containerId = existing.get(0).getId();
-                    if (logger.isDebugEnabled()) {
-                        logger.debug("Resuming existing container {}", containerId);
-                    }
+                    logger.info("Resuming existing container {}", containerId);
                 }
             }
 
@@ -494,6 +491,18 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 if (logger.isDebugEnabled()) {
                     logger.debug("Attaching to logs of container {}", containerId);
                 }
+                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
+                    var inspectResult = dockerClient.inspectContainerCmd(containerId).exec();
+                    if (inspectResult.getMounts().isEmpty()) {
+                        logger.error("No volume found for resumed container {}", containerId);
+                        throw new TaskException(1, defaultLogConsumer);
+                    } else {
+                        var mount = inspectResult.getMounts().get(0);
+                        filesVolumeName = mount.getName();
+                        logger.info("Volume {} found for resumed container {}", filesVolumeName, containerId);
+                    }
+                }
+                
             }
 
             final String runContainerId = containerId;
@@ -574,7 +583,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 Await.until(ended::get);
 
                 if (exitCode != 0) {
-                    if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
+                    if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
                         // On failure, still attempt to download outputs if VOLUME strategy is used
                         downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands);
                     }
@@ -585,11 +594,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 }
 
                 if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
-                    // For newly created containers, original condition holds; for resumed ones, filesVolumeName is null
-                    // but we still want to retrieve outputs from the container working directory.
-                    if (filesVolumeName != null || resumeEnabled) {
-                        downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands);
-                    }
+                    downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands);
                 }
 
                 return TaskRunnerResult.<DockerTaskRunnerDetailResult>builder()

@@ -12,7 +12,7 @@
                     type="primary"
                     :icon="Plus"
                     tag="router-link"
-                    :to="{name: 'dashboards/create', query}"
+                    :to="{name: 'dashboards/create'}"
                     class="w-100"
                 >
                     <small>{{ t("dashboards.creation.label") }}</small>
@@ -81,13 +81,6 @@
 
     const emits = defineEmits(["dashboard"]);
 
-    const query = computed(() => {
-        return {
-            name: ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home",
-            params: JSON.stringify({...route.params, dashboard: undefined}),
-        };
-    });
-
     const search = ref("");
     const dashboards = ref<{ id: string; title: string }[]>([]);
     const filtered = computed(() => {
@@ -134,7 +127,7 @@
                 if (lastSelected) {
                     const dashboard = dashboards.value.find((d) => d.id === lastSelected);
 
-                    if (dashboard) select(dashboard);                    
+                    if (dashboard) select(dashboard);
                     else {
                         selected.value = null;
                         emits("dashboard", "default");

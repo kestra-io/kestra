@@ -53,13 +53,11 @@
         size: number;
     }
 
-    interface Props {
+    const props = withDefaults(defineProps<{
         value?: string | object | boolean | number;
         execution?: Execution;
         restrictUri?: boolean;
-    }
-
-    const props = withDefaults(defineProps<Props>(), {
+    }>(), {
         value: undefined,
         execution: undefined,
         restrictUri: false,

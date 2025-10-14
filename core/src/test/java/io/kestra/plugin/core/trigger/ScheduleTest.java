@@ -306,7 +306,7 @@ class ScheduleTest {
     void conditions() throws Exception {
         Schedule trigger = Schedule.builder()
             .id("schedule")
-            .type(Schedule.class.getName()) // Remove duplicate type declaration
+            .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
@@ -314,7 +314,7 @@ class ScheduleTest {
                     .type(DayWeekInMonth.class.getName())
                     .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                     .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                    .date(Property.ofExpression("{{ trigger.date | date }}"))
+                    .date(Property.ofExpression("{{ trigger.date }}"))
                     .build()
             ))
             .build();
@@ -340,14 +340,14 @@ class ScheduleTest {
     void impossibleNextConditions() throws Exception {
         Schedule trigger = Schedule.builder()
             .id("schedule")
-            .type(Schedule.class.getName()) // Remove duplicate type declaration
+            .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
                     .before(Property.ofValue(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
-                    .date(Property.ofExpression("{{ trigger.date | date }}"))
+                    .date(Property.ofExpression("{{ trigger.date }}"))
                     .build()
             ))
             .build();

@@ -354,8 +354,8 @@
 
     .card-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fill, minmax(297px, 1fr));
+        gap: 1rem;
     }
 
     .blueprint-card {
@@ -367,13 +367,11 @@
         display: flex;
         box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
         min-height: 200px;
-        min-width: 297px;
 
         :deep(.icon) {
             width: 24px;
             height: 24px;
         }
-
 
         :deep(.el-card__body) {
             height: 100%;
@@ -422,6 +420,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 1rem;
 
         .task-icons {
             display: flex;

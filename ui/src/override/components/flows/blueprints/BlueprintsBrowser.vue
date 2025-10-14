@@ -368,6 +368,11 @@
         box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
         min-height: 200px;
 
+        &:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0.5rem 1rem 0 var(--ks-card-shadow);
+        }
+
         :deep(.icon) {
             width: 24px;
             height: 24px;
@@ -392,7 +397,6 @@
         gap: 0.25rem;
         
         .tag-item {
-            background-color: rgba(0, 0, 0, 0.05);
             border: 1px solid var(--ks-border-primary);
             color: var(--ks-content-primary);
             border-radius: 0.25rem;

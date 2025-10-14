@@ -75,7 +75,7 @@ class ScheduleTest {
 
         return TriggerContext.builder()
             .namespace(flow.getNamespace())
-            .flowId(flow.getNamespace())
+            .flowId(flow.getId())  // Fixed: was using namespace instead of ID
             .triggerId(schedule.getId())
             .date(date)
             .build();
@@ -305,8 +305,8 @@ class ScheduleTest {
     @Test
     void conditions() throws Exception {
         Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
-            .type(Schedule.class.getName())
+            .id("schedule")
+            .type(Schedule.class.getName()) // Remove duplicate type declaration
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
@@ -314,7 +314,7 @@ class ScheduleTest {
                     .type(DayWeekInMonth.class.getName())
                     .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                     .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                    .date(Property.ofExpression("{{ trigger.date }}"))
+                    .date(Property.ofExpression("{{ trigger.date | date }}"))
                     .build()
             ))
             .build();
@@ -339,15 +339,15 @@ class ScheduleTest {
     @Test
     void impossibleNextConditions() throws Exception {
         Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
-            .type(Schedule.class.getName())
+            .id("schedule")
+            .type(Schedule.class.getName()) // Remove duplicate type declaration
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
                     .before(Property.ofValue(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
-                    .date(Property.ofExpression("{{ trigger.date }}"))
+                    .date(Property.ofExpression("{{ trigger.date | date }}"))
                     .build()
             ))
             .build();

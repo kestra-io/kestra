@@ -54,8 +54,8 @@
                             @click="goToDetail(blueprint.id)"
                         >
                             <div class="card-content-wrapper">
-                                <div v-if="!system && blueprint.tags?.length > 0" class="tags-section text-uppercase">
-                                    <span v-for="tag in blueprint.tags" :key="tag" class="tag-item">{{ tag }}</span>
+                                <div v-if="!system && blueprint.tags?.length > 0" class="tags-section">
+                                    <span v-for="tag in processedTags(blueprint.tags)" :key="tag.original" class="tag-item">{{ tag.display }}</span>
                                 </div>
                                 <div class="text-section">
                                     <h3 class="title">
@@ -67,7 +67,7 @@
                                         <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
                                     </div>
 
-                                    <div>
+                                    <div class="action-button">
                                         <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                             <el-button
                                                 type="primary"
@@ -97,7 +97,6 @@
     import {useRoute, useRouter} from "vue-router";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    // @ts-expect-error data-table does not have types yet
     import DataTable from "../../../../components/layout/DataTable.vue";
     import Errors from "../../../../components/errors/Errors.vue";
     import {editorViewTypes} from "../../../../utils/constants";
@@ -160,6 +159,14 @@
 
     const userCanCreate = computed(() => canCreate(props.blueprintKind));
 
+    const processedTags = (tags: string[]) => {
+        return tags.map(tag => ({
+            original: tag,
+            display: tag.length <= 3 && tag === tag.toUpperCase() ? tag : 
+                tag.replace(/\b\w/g, l => l.toUpperCase())
+        }));
+    };
+
     const updateSearch = (value: string) => {
         router.push({query: {...route.query, q: value || undefined}});
     };
@@ -182,6 +189,16 @@
     function goToDetail(blueprintId: string) {
         if (props.embed) {
             emit("goToDetail", blueprintId);
+        } else {
+            router.push({
+                name: "blueprints/view",
+                params: {
+                    tenant: route.params.tenant,
+                    kind: props.blueprintKind,
+                    tab: route.params.tab,
+                    blueprintId: blueprintId
+                }
+            });
         }
     };
 
@@ -300,12 +317,34 @@
     .blueprints {
         width: 100%;
     }
-
     .tags-selection {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
+        width: 100%;
         margin-bottom: 1rem;
+        gap: .3rem;
+        flex-wrap: wrap;
+
+        .tags-checkbox-group {
+            display: flex;
+            width: 100%;
+            gap: .5rem;
+            flex-wrap: wrap;
+            --el-button-bg-color: var(--ks-background-card);
+
+            & > * {
+                max-width: 50%;
+
+                :deep(span) {
+                    border-radius: $border-radius !important;
+                    border: 1px solid var(--ks-border-primary);
+                    width: 100%;
+                    font-size: var(--el-font-size-extra-small);
+                    box-shadow: none;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                }
+            }
+        }
     }
 
     .search-bar-row {
@@ -322,25 +361,27 @@
     .blueprint-card {
         cursor: pointer;
         border: 1px solid var(--ks-border-primary);
-        border-radius: 8px;
+        border-radius: 0.25rem;
         background-color: var(--ks-background-card);
         transition: all 0.2s ease;
         display: flex;
+        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+        min-height: 200px;
+        min-width: 297px;
 
-        &:hover {
-            border-color: var(--bs-primary);
-            box-shadow: 0 4px 16px rgba(var(--bs-primary-rgb), 0.1);
+        :deep(.icon) {
+            width: 24px;
+            height: 24px;
         }
 
+
         :deep(.el-card__body) {
-            padding: 0;
             height: 100%;
             width: 100%;
         }
     }
 
     .card-content-wrapper {
-        padding: 1.5rem;
         display: flex;
         flex-direction: column;
         height: 100%;
@@ -350,24 +391,16 @@
     .tags-section {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.75rem;
+        gap: 0.25rem;
         
         .tag-item {
             background-color: rgba(0, 0, 0, 0.05);
             border: 1px solid var(--ks-border-primary);
-            color: var(--bs-body-color);
-
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
-            padding: 0.25rem 0.6rem;
-            font-size: 0.7rem;
-            font-weight: 700;
-
-            html.dark & {
-                background-color: rgba(255, 255, 255, 0.1);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                color: white;
-            }
+            color: var(--ks-content-primary);
+            border-radius: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 12px;
+            background: var(--ks-tag-background-active);
         }
     }
 
@@ -378,9 +411,9 @@
         .title {
             font-size: 1rem;
             font-weight: 600;
-            color: var(--bs-body-color);
-            line-height: 1.4;
-            margin: 0;
+            color: var(--ks-content-primary);
+            line-height: 22px;
+            overflow-wrap: break-word;
         }
     }
 
@@ -392,8 +425,10 @@
 
         .task-icons {
             display: flex;
-            gap: 0.25rem;
+            gap: 0.5rem;
             align-items: center;
+            flex: 1;
+            flex-wrap: wrap;
 
             :deep(.wrapper) {
                 height: 1.5rem;

@@ -1,10 +1,12 @@
 package io.kestra.scheduler;
 
 import io.kestra.core.models.Label;
-import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.SchedulerTriggerStateInterface;
 import io.kestra.core.tasks.test.FailingPollingTrigger;
@@ -12,8 +14,6 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.condition.Expression;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.FlowListeners;
@@ -25,12 +25,15 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -228,6 +231,31 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
         }
     }
 
+    @Test
+    void shouldDisableTriggerOnInvalidOverflowInterval() throws Exception {
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+
+        OverflowIntervalTrigger overflow = OverflowIntervalTrigger.builder()
+            .id("overflow-interval")
+            .type(OverflowIntervalTrigger.class.getName())
+            .build();
+
+        FlowWithSource flow = createPollingTriggerFlow(overflow);
+        doReturn(List.of(flow)).when(flowListenersServiceSpy).flows();
+
+        try (
+            AbstractScheduler scheduler = scheduler(flowListenersServiceSpy);
+            Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
+        ) {
+            worker.run();
+            scheduler.run();
+
+            Trigger key = Trigger.of(flow, overflow);
+
+            Await.until(() -> this.triggerState.findLast(key).map(TriggerContext::getDisabled).get().booleanValue(), Duration.ofMillis(100), Duration.ofSeconds(15));
+        }
+    }
+
     private FlowWithSource createPollingTriggerFlow(AbstractTrigger pollingTrigger) {
         return createFlow(Collections.singletonList(pollingTrigger));
     }
@@ -245,5 +273,21 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
             applicationContext,
             flowListenersServiceSpy
         );
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    public static class OverflowIntervalTrigger extends AbstractTrigger implements PollingTriggerInterface {
+        // we set a large interval which will throw an exception
+        @Builder.Default
+        private final Duration interval = Duration.ofSeconds(Long.MAX_VALUE);
+
+        @Override
+        public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
+            return Optional.empty();
+        }
     }
 }

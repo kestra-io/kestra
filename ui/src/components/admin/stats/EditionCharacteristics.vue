@@ -56,7 +56,7 @@
     defineProps<Props>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .edition-card {
     padding: 1rem 2rem;
     background-color: var(--ks-background-body);

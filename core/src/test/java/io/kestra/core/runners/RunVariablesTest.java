@@ -10,14 +10,13 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.runners.pebble.functions.SecretFunction;
+import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -126,6 +125,8 @@ class RunVariablesTest {
 
     @Test
     void nonResolvableDynamicInputsShouldBeSkipped() throws IllegalVariableEvaluationException {
+        VariableRenderer.VariableConfiguration mkVariableConfiguration = Mockito.mock(VariableRenderer.VariableConfiguration.class);
+        ApplicationContext mkApplicationContext = Mockito.mock(ApplicationContext.class);
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withFlow(Flow
                 .builder()
@@ -138,7 +139,7 @@ class RunVariablesTest {
                 .build()
             )
             .withExecution(Execution.builder().id(IdUtils.create()).build())
-            .build(new RunContextLogger(), PropertyContext.create(new VariableRenderer(Mockito.mock(ApplicationContext.class), Mockito.mock(VariableRenderer.VariableConfiguration.class), Collections.emptyList())));
+            .build(new RunContextLogger(), PropertyContext.create(new VariableRenderer(new PebbleEngineFactory(mkApplicationContext, mkVariableConfiguration), mkVariableConfiguration)));
 
         Assertions.assertEquals(Map.of(
             "a", true

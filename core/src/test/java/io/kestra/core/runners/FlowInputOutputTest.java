@@ -10,11 +10,14 @@ import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.secret.SecretNotFoundException;
+import io.kestra.core.secret.SecretService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.http.multipart.CompletedPart;
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,7 +37,9 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 @KestraTest
 class FlowInputOutputTest {
-
+    
+    private static final String TEST_SECRET_VALUE = "test-secret-value";
+    
     static final Execution DEFAULT_TEST_EXECUTION = Execution.builder()
         .id(IdUtils.create())
         .flowId(IdUtils.create())
@@ -47,7 +52,17 @@ class FlowInputOutputTest {
 
     @Inject
     StorageInterface storageInterface;
-
+    
+    @MockBean(SecretService.class)
+    SecretService testSecretService() {
+        return new SecretService() {
+            @Override
+            public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException {
+                return TEST_SECRET_VALUE;
+            }
+        };
+    }
+    
     @Test
     void shouldResolveEnabledInputsGivenInputWithConditionalExpressionMatchingTrue() {
         // Given
@@ -285,44 +300,86 @@ class FlowInputOutputTest {
             values
         );
     }
-
-    private static final class MemoryCompletedFileUpload implements CompletedFileUpload {
-
-        private final String name;
-        private final String fileName;
-        private final byte[] content;
-
-        public MemoryCompletedFileUpload(String name, String fileName, byte[] content) {
+    
+    @Test
+    void shouldObfuscateSecretsWhenValidatingInputs() {
+        // Given
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+        
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+        
+        // Then
+        Assertions.assertEquals("******", results.getFirst().value());
+    }
+    
+    @Test
+    void shouldNotObfuscateSecretsWhenReadingInputs() {
+        // Given
+        StringInput input = StringInput.builder()
+            .id("input")
+            .type(Type.STRING)
+            .defaults(Property.ofExpression("{{ secret('???') }}"))
+            .required(false)
+            .build();
+        
+        // When
+        Map<String, Object> results = flowInputOutput.readExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+        
+        // Then
+        Assertions.assertEquals(TEST_SECRET_VALUE, results.get("input"));
+    }
+    
+    private static class MemoryCompletedPart implements CompletedPart {
+        
+        protected final String name;
+        protected final byte[] content;
+        
+        public MemoryCompletedPart(String name, byte[] content) {
             this.name = name;
-            this.fileName = fileName;
             this.content = content;
         }
-
+        
         @Override
         public InputStream getInputStream() {
             return new ByteArrayInputStream(content);
         }
-
+        
         @Override
         public byte[] getBytes() {
             return content;
         }
-
+        
         @Override
         public ByteBuffer getByteBuffer() {
             return ByteBuffer.wrap(content);
         }
-
+        
         @Override
         public Optional<MediaType> getContentType() {
             return Optional.empty();
         }
-
+        
         @Override
         public String getName() {
             return name;
         }
+    }
+    
+    private static final class MemoryCompletedFileUpload extends MemoryCompletedPart implements CompletedFileUpload {
 
+        private final String fileName;
+
+        public MemoryCompletedFileUpload(String name, String fileName, byte[] content) {
+            super(name, content);
+            this.fileName = fileName;
+        }
+        
         @Override
         public String getFilename() {
             return fileName;

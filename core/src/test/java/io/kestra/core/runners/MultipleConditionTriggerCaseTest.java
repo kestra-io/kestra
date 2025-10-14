@@ -10,6 +10,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 
 import io.micronaut.data.model.Pageable;
+
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -165,5 +167,27 @@ public class MultipleConditionTriggerCaseTest {
 
         assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
         assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void forEachItemWithFlowTrigger() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.foreachitem",
+            "flow-trigger-for-each-item-parent");
+        assertThat(execution.getTaskRunList().size()).isEqualTo(5);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // trigger is done
+        List<Execution> childExecutions = runnerUtils.awaitFlowExecutionNumber(5, MAIN_TENANT, "io.kestra.tests.trigger.foreachitem", "flow-trigger-for-each-item-child");
+        assertThat(childExecutions).hasSize(5);
+        childExecutions.forEach(exec -> {
+            assertThat(exec.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(exec.getTaskRunList().size()).isEqualTo(1);
+        });
+
+        List<Execution> grandchildExecutions = runnerUtils.awaitFlowExecutionNumber(5, MAIN_TENANT, "io.kestra.tests.trigger.foreachitem", "flow-trigger-for-each-item-grandchild");
+        assertThat(grandchildExecutions).hasSize(5);
+        grandchildExecutions.forEach(exec -> {
+            assertThat(exec.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(exec.getTaskRunList().size()).isEqualTo(2);
+        });
     }
 }

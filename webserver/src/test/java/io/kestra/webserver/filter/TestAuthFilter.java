@@ -35,7 +35,7 @@ public class TestAuthFilter implements HttpClientFilter {
             //Add basic authorization header if no header are present in the query
             if (request.getHeaders().getAuthorization().isEmpty()) {
                 String token = "Basic " + Base64.getEncoder().encodeToString(
-                    (basicAuthService.configuration().credentials() + ":" + basicAuthService.configuration().credentials()).getBytes());
+                    (basicAuthService.configuration().credentials().getUsername() + ":" + basicAuthService.configuration().credentials().getPassword()).getBytes());
                 request.getHeaders().add(HttpHeaders.AUTHORIZATION, token);
             }
         }

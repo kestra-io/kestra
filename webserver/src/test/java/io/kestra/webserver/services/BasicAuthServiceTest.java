@@ -132,7 +132,7 @@ class BasicAuthServiceTest {
         basicAuthService.basicAuthConfiguration = defaultConfigWithoutBasicAuthCreds.config;
         settingRepositoryInterface.save(Setting.builder()
             .key(BASIC_AUTH_SETTINGS_KEY)
-            .value(new BasicAuthService.SaltedBasicAuthCredentials(null, "username1@example.com", "Password1"))
+            .value(BasicAuthService.SaltedBasicAuthCredentials.salt(null, "username1@example.com", "Password1"))
             .build());
         assertTrue(basicAuthService.isBasicAuthInitialized());
         basicAuthService.init();

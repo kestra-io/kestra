@@ -23,10 +23,7 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @Context
@@ -198,6 +195,9 @@ public class BasicAuthService {
         protected String password;
 
         public SaltedBasicAuthCredentials(String salt, String username, String password) {
+            Objects.requireNonNull(salt);
+            Objects.requireNonNull(username);
+            Objects.requireNonNull(password);
             this.salt = salt;
             this.username = username;
             this.password = password;

@@ -23,6 +23,9 @@ public class TestAuthFilter implements HttpClientFilter {
     @Inject
     private BasicAuthService basicAuthService;
 
+    @Inject
+    private BasicAuthService.BasicAuthConfiguration basicAuthConfiguration;
+
     @Override
     public Publisher<? extends HttpResponse<?>> doFilter(MutableHttpRequest<?> request,
         ClientFilterChain chain) {
@@ -35,7 +38,7 @@ public class TestAuthFilter implements HttpClientFilter {
             //Add basic authorization header if no header are present in the query
             if (request.getHeaders().getAuthorization().isEmpty()) {
                 String token = "Basic " + Base64.getEncoder().encodeToString(
-                    (basicAuthService.configuration().credentials().getUsername() + ":" + basicAuthService.configuration().credentials().getPassword()).getBytes());
+                    (basicAuthConfiguration.getUsername() + ":" + basicAuthConfiguration.getPassword()).getBytes());
                 request.getHeaders().add(HttpHeaders.AUTHORIZATION, token);
             }
         }

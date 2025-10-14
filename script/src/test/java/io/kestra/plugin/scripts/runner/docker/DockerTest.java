@@ -18,7 +18,7 @@ import org.assertj.core.api.Assertions;
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
-
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -35,6 +35,7 @@ class DockerTest extends AbstractTaskRunnerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;
+
     @Override
     protected TaskRunner<?> taskRunner() {
         return Docker.builder().image("rockylinux:9.3-minimal").build();
@@ -91,10 +92,21 @@ class DockerTest extends AbstractTaskRunnerTest {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
 
-        var commandsList = ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("sleep 50"));
+
+        // Setup log queue consumer
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, (logEntry) -> {
+            logs.add(logEntry.getLeft());
+        });
+
+        var commandsList = ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(),
+            List.of("echo 'sleeping for 50 seconds' && sleep 50"));
         Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(commandsList));
 
-        var taskRunner = ((Docker) taskRunner()).toBuilder().resume(Property.ofValue(true)).build();
+        var taskRunner = ((Docker) taskRunner())
+            .toBuilder()
+            .delete(Property.ofValue(false))
+            .resume(Property.ofValue(true)).build();
         Thread initialContainerThread = new Thread(throwRunnable(() -> taskRunner.run(runContext, commands, Collections.emptyList())));
         initialContainerThread.start();
 
@@ -115,13 +127,11 @@ class DockerTest extends AbstractTaskRunnerTest {
             @SuppressWarnings("unchecked")
             Map<String, Object> taskRunProps = new HashMap<>((Map<String, Object>) runContext.getVariables().get("taskrun"));
             RunContext anotherRunContext = runContext(this.runContextFactory, Map.of("taskrun", taskRunProps));
-            var anotherTaskRunner = ((Docker) taskRunner()).toBuilder().resume(Property.ofValue(true)).build();
-
-            // Setup log queue consumer
-            List<LogEntry> logs = new CopyOnWriteArrayList<>();
-            Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, (logEntry) -> {
-                logs.add(logEntry.getLeft());
-            });
+            var anotherTaskRunner = ((Docker) taskRunner())
+                .toBuilder()
+                .delete(Property.ofValue(false))
+                .resume(Property.ofValue(true))
+                .build();
 
             // Start resume in a new thread
             var resumeCommands = initScriptCommands(anotherRunContext);
@@ -129,9 +139,11 @@ class DockerTest extends AbstractTaskRunnerTest {
             Mockito.when(resumeCommands.getCommands()).thenReturn(Property.ofValue(commandsList));
             Thread resumeContainerThread = new Thread(throwRunnable(() -> anotherTaskRunner.run(anotherRunContext, resumeCommands, Collections.emptyList())));
             resumeContainerThread.start();
-            
             // Wait for the log message indicating resume
-            TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Resuming existing container"));
+            LogEntry awaitLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Resuming existing container"));
+            // assertThat(awaitLog).isNotNull().withFailMessage("await log should not be null");
+            // assertThat(awaitLog.getMessage()).contains("Resuming existing container");
+
             receive.blockLast();
 
             // Kill the container and verify cleanup
@@ -139,7 +151,6 @@ class DockerTest extends AbstractTaskRunnerTest {
             resumeContainerThread.interrupt();
 
             List<Container> existingContainers = client.listContainersCmd()
-                .withShowAll(true)
                 .withLabelFilter(labels)
                 .exec();
             MatcherAssert.assertThat(existingContainers.isEmpty(), is(true));

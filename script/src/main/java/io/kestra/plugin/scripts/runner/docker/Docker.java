@@ -373,6 +373,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         String image = runContext.render(this.image, additionalVars);
 
         String resolvedHost = DockerService.findHost(runContext, this.host);
+        Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
+
         try (DockerClient dockerClient = dockerClient(runContext, image, resolvedHost)) {
             // evaluate resume (task property overrides plugin configuration if set)
             Boolean resumeProp = runContext.render(this.resume).as(Boolean.class).orElse(Boolean.FALSE);
@@ -381,7 +383,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             String containerId = null;
 
             if (resumeEnabled) {
-                Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
                 List<Container> existing = dockerClient.listContainersCmd()
                     .withShowAll(true)
                     .withLabelFilter(labels)
@@ -419,7 +420,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 // create a volume if we need to handle files
                 if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
                     CreateVolumeCmd files = dockerClient.createVolumeCmd()
-                        .withLabels(ScriptService.labels(runContext, "kestra.io/"));
+                        .withLabels(labels);
                     filesVolumeName = files.exec().getName();
                     if (logger.isTraceEnabled()) {
                         logger.trace("Volume created: {}", filesVolumeName);
@@ -492,14 +493,19 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     logger.debug("Attaching to logs of container {}", containerId);
                 }
                 if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
-                    var inspectResult = dockerClient.inspectContainerCmd(containerId).exec();
-                    if (inspectResult.getMounts().isEmpty()) {
+                    List<String> labelsList = labels.entrySet()
+                        .stream()
+                        .map(entry -> String.join("=", entry.getKey(), entry.getValue()))
+                        .toList();
+                    var volumes = dockerClient.listVolumesCmd()
+                        .withFilter("label", labelsList).exec();
+                    if (volumes.getVolumes() == null || volumes.getVolumes().isEmpty()) {
                         logger.error("No volume found for resumed container {}", containerId);
                         throw new TaskException(1, defaultLogConsumer);
                     } else {
-                        var mount = inspectResult.getMounts().get(0);
-                        filesVolumeName = mount.getName();
-                        logger.info("Volume {} found for resumed container {}", filesVolumeName, containerId);
+                        var volume = volumes.getVolumes().get(0);
+                        filesVolumeName = volume.getName();
+                        logger.info("Volume found with name {} for resumed container {}", filesVolumeName, containerId);
                     }
                 }
                 

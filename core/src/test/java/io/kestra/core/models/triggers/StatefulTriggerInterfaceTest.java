@@ -37,7 +37,7 @@ class StatefulTriggerInterfaceTest implements StatefulTriggerInterface {
             )
         ));
 
-        var key = defaultKey("ns", "test-flow", "trigger");
+        var key = defaultKey("ns", "test-flow", "trigger-persist");
         var ttl = Optional.of(Duration.ofMinutes(5));
         var state = new HashMap<String, Entry>();
 
@@ -74,7 +74,7 @@ class StatefulTriggerInterfaceTest implements StatefulTriggerInterface {
             )
         ));
 
-        var key = defaultKey("ns", "test-flow", "trigger");
+        var key = defaultKey("ns", "test-flow", "trigger-ttl");
         var ttl = Optional.of(Duration.ofMinutes(5));
         var now = Instant.now();
 

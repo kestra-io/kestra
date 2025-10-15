@@ -2,6 +2,7 @@ package io.kestra.core.services;
 
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -10,11 +11,20 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.plugin.core.debug.Echo;
+import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotBlank;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -268,16 +278,14 @@ class FlowServiceTest {
         assertThat(warnings.getFirst().to()).isEqualTo("io.kestra.core.runners.test.TaskWithAlias");
     }
 
-    @SuppressWarnings("deprecation")
     @Test
     void propertyRenamingDeprecation() {
         FlowWithSource flow = FlowWithSource.builder()
             .id("flowId")
             .namespace(TEST_NAMESPACE)
-            .tasks(Collections.singletonList(Echo.builder()
+            .tasks(Collections.singletonList(DeprecatedTask.builder()
                 .id("taskId")
-                .type(Return.class.getName())
-                .format(Property.ofValue("test"))
+                .type(DeprecatedTask.class.getName())
                 .build()))
             .build();
 
@@ -523,5 +531,23 @@ class FlowServiceTest {
 
         // Then
         assertThat(result).isEmpty();
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Deprecated
+    static class DeprecatedTask extends Task implements RunnableTask<VoidOutput> {
+        @NotBlank
+        @PluginProperty(dynamic = true)
+        @Deprecated
+        private String additionalProperty;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            return null;
+        }
     }
 }

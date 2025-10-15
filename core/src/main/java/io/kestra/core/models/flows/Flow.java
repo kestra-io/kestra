@@ -13,7 +13,6 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.sla.SLA;
-import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
@@ -87,10 +86,6 @@ public class Flow extends AbstractFlow implements HasUID {
     }
 
     @Valid
-    @Deprecated
-    List<Listener> listeners;
-
-    @Valid
     List<Task> afterExecution;
 
     @Valid
@@ -153,7 +148,7 @@ public class Flow extends AbstractFlow implements HasUID {
                 this.tasks != null ? this.tasks : Collections.<Task>emptyList(),
                 this.errors != null ? this.errors : Collections.<Task>emptyList(),
                 this._finally != null ? this._finally : Collections.<Task>emptyList(),
-                this.afterExecutionTasks()
+                this.afterExecution != null ? this.afterExecution : Collections.<Task>emptyList()
             )
             .flatMap(Collection::stream);
     }
@@ -294,13 +289,6 @@ public class Flow extends AbstractFlow implements HasUID {
         } else {
             return object;
         }
-    }
-
-    private List<Task> afterExecutionTasks() {
-        return ListUtils.concat(
-            ListUtils.emptyOnNull(this.getListeners()).stream().flatMap(listener -> listener.getTasks().stream()).toList(),
-            this.getAfterExecution()
-        );
     }
 
     public boolean equalsWithoutRevision(FlowInterface o) {

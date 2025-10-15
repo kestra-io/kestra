@@ -19,7 +19,6 @@ public class FlowWithSource extends Flow {
 
     String source;
 
-    @SuppressWarnings("deprecation")
     public Flow toFlow() {
         return Flow.builder()
             .tenantId(this.tenantId)
@@ -34,7 +33,6 @@ public class FlowWithSource extends Flow {
             .tasks(this.tasks)
             .errors(this.errors)
             ._finally(this._finally)
-            .listeners(this.listeners)
             .afterExecution(this.afterExecution)
             .triggers(this.triggers)
             .pluginDefaults(this.pluginDefaults)
@@ -61,7 +59,6 @@ public class FlowWithSource extends Flow {
             .build();
     }
 
-    @SuppressWarnings("deprecation")
     public static FlowWithSource of(Flow flow, String source) {
         return FlowWithSource.builder()
             .tenantId(flow.tenantId)
@@ -77,7 +74,6 @@ public class FlowWithSource extends Flow {
             .errors(flow.errors)
             ._finally(flow._finally)
             .afterExecution(flow.afterExecution)
-            .listeners(flow.listeners)
             .triggers(flow.triggers)
             .pluginDefaults(flow.pluginDefaults)
             .disabled(flow.disabled)

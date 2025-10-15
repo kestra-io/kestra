@@ -552,10 +552,4 @@ public abstract class AbstractRunnerTest {
     public void shouldCallTasksAfterError(Execution execution) {
         afterExecutionTestCase.shouldCallTasksAfterError(execution);
     }
-
-    @Test
-    @ExecuteFlow("flows/valids/after-execution-listener.yaml")
-    public void shouldCallTasksAfterListener(Execution execution) {
-        afterExecutionTestCase.shouldCallTasksAfterListener(execution);
-    }
 }

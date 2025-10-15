@@ -113,10 +113,6 @@ class JsonSchemaGeneratorTest {
             var requiredWithDefault = definitions.get("io.kestra.core.docs.JsonSchemaGeneratorTest-RequiredWithDefault");
             assertThat(requiredWithDefault, is(notNullValue()));
             assertThat((List<String>) requiredWithDefault.get("required"), not(containsInAnyOrder("requiredWithDefault", "anotherRequiredWithDefault")));
-
-            var properties = (Map<String, Map<String, Object>>) flow.get("properties");
-            var listeners = properties.get("listeners");
-            assertThat(listeners.get("$deprecated"), is(true));
         });
     }
 

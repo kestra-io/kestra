@@ -1,12 +1,12 @@
 id: get-log
 namespace: io.kestra.tests
 tasks:
-  - type: io.kestra.plugin.core.debug.Echo
+  - type: io.kestra.plugin.core.log.Log
     id: task-1
-    format: task 1
-  - type: io.kestra.plugin.core.debug.Echo
+    message: task 1
+  - type: io.kestra.plugin.core.log.Log
     id: task-2
-    format: task 2
+    message: task 2
   # as logs are async, to get your own logs reliably on tasks that run quickly, you must sleep a little
   - type: io.kestra.plugin.core.flow.Sleep
     id: sleep

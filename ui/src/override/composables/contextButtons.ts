@@ -19,10 +19,10 @@ interface Button {
     title: string;
     icon: Component;
 
-    url?: string;
-
     component?: Component;
     hasUnreadMarker?: boolean;
+
+    url?: string;
 }
 
 export function useContextButtons() {

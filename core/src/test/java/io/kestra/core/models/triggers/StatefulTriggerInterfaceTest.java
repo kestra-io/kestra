@@ -16,9 +16,12 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 @KestraTest
-class StatefulTriggerInterfaceTest implements StatefulTriggerInterface {
+class StatefulTriggerInterfaceTest {
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    StatefulTriggerService statefulTriggerService;
 
     @Test
     void shouldPersistAndReadState() throws Exception {
@@ -37,23 +40,23 @@ class StatefulTriggerInterfaceTest implements StatefulTriggerInterface {
             )
         ));
 
-        var key = defaultKey("ns", "test-flow", "trigger-persist");
+        var key = statefulTriggerService.defaultKey("ns", "test-flow", "trigger-persist");
         var ttl = Optional.of(Duration.ofMinutes(5));
-        var state = new HashMap<String, Entry>();
+        var state = new HashMap<String, StatefulTriggerService.Entry>();
 
-        var candidate = Entry.candidate("gs://bucket/file1.csv", "v1", Instant.now());
-        var result = computeAndUpdateState(state, candidate, On.CREATE_OR_UPDATE);
+        var candidate = StatefulTriggerService.Entry.candidate("gs://bucket/file1.csv", "v1", Instant.now());
+        var result = statefulTriggerService.computeAndUpdateState(state, candidate, StatefulTriggerInterface.On.CREATE_OR_UPDATE);
 
         assertThat(result.fire(), is(true));
         assertThat(result.isNew(), is(true));
 
-        writeState(runContext, key, state, ttl);
-        var reloaded = readState(runContext, key, ttl);
+        statefulTriggerService.writeState(runContext, key, state, ttl);
+        var reloaded = statefulTriggerService.readState(runContext, key, ttl);
 
         assertThat(reloaded, hasKey("gs://bucket/file1.csv"));
         assertThat(reloaded.get("gs://bucket/file1.csv").version(), is("v1"));
 
-        var result2 = computeAndUpdateState(reloaded, candidate, On.CREATE_OR_UPDATE);
+        var result2 = statefulTriggerService.computeAndUpdateState(reloaded, candidate, StatefulTriggerInterface.On.CREATE_OR_UPDATE);
         assertThat(result2.fire(), is(false));
     }
 
@@ -74,16 +77,16 @@ class StatefulTriggerInterfaceTest implements StatefulTriggerInterface {
             )
         ));
 
-        var key = defaultKey("ns", "test-flow", "trigger-ttl");
+        var key = statefulTriggerService.defaultKey("ns", "test-flow", "trigger-ttl");
         var ttl = Optional.of(Duration.ofMinutes(5));
         var now = Instant.now();
 
-        var state = new HashMap<String, Entry>();
-        state.put("gs://bucket/old.csv", new Entry("gs://bucket/old.csv", "v1", now.minus(Duration.ofHours(2)), now.minus(Duration.ofHours(2))));
-        state.put("gs://bucket/new.csv", new Entry("gs://bucket/new.csv", "v1", now, now));
+        var state = new HashMap<String, StatefulTriggerService.Entry>();
+        state.put("gs://bucket/old.csv", new StatefulTriggerService.Entry("gs://bucket/old.csv", "v1", now.minus(Duration.ofHours(2)), now.minus(Duration.ofHours(2))));
+        state.put("gs://bucket/new.csv", new StatefulTriggerService.Entry("gs://bucket/new.csv", "v1", now, now));
 
-        writeState(runContext, key, state, ttl);
-        var reloaded = readState(runContext, key, ttl);
+        statefulTriggerService.writeState(runContext, key, state, ttl);
+        var reloaded = statefulTriggerService.readState(runContext, key, ttl);
 
         assertThat(reloaded, allOf(hasKey("gs://bucket/new.csv"), not(hasKey("gs://bucket/old.csv"))));
     }

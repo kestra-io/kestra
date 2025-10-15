@@ -1,6 +1,6 @@
 <template>
     <ContextInfoContent :title="routeInfo.title">
-        <template v-if="!isOnline" #back-button>
+        <template v-if="isOnline" #back-button>
             <button
                 class="back-button"
                 type="button"
@@ -27,17 +27,17 @@
             </router-link>
         </template>
         <div ref="docWrapper" class="docs-controls">
-            <template v-if="!isOnline">
+            <template v-if="isOnline">
                 <ContextDocsSearch />
                 <DocsMenu />
             </template>
             
-            <Markdown v-if="isOnline" :source="OFFLINE" class="m-3" />
-            <DocsLayout v-else>
+            <DocsLayout v-if="isOnline">
                 <template #content>
                     <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
                 </template>
             </DocsLayout>
+            <Markdown v-else :source="OFFLINE_MD" class="m-3" />
         </div>
     </ContextInfoContent>
 </template>
@@ -57,8 +57,7 @@
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue";
 
     import Markdown from "../../components/layout/Markdown.vue";
-    // const OFFLINE = "## EE sidebar configuration\n\n### Right sidebar: custom links\n\n```yaml\nkestra:\n  ee:\n    right-sidebar:\n      custom-links:\n        internal-docs:\n          title: \"Internal Docs\"\n          url: \"https://kestra.io/docs/\"\n        support-portal:\n          title: \"Support portal\"\n          url: \"https://kestra.io/support/\"\n```";
-    const OFFLINE = "You're seeing this because you are offline.\n\nHere's how to configure the right sidebar in Kestra to include custom links:\n\n```yaml\nkestra:\n  ee:\n    right-sidebar:\n      custom-links:\n        internal-docs:\n          title: \"Internal Docs\"\n          url: \"https://kestra.io/docs/\"\n        support-portal:\n          title: \"Support portal\"\n          url: \"https://kestra.io/support/\"\n```";
+    const OFFLINE_MD = "You're seeing this because you are offline.\n\nHere's how to configure the right sidebar in Kestra to include custom links:\n\n```yaml\nkestra:\n  ee:\n    right-sidebar:\n      custom-links:\n        internal-docs:\n          title: \"Internal Docs\"\n          url: \"https://kestra.io/docs/\"\n        support-portal:\n          title: \"Support portal\"\n          url: \"https://kestra.io/support/\"\n```";
 
     import {useNetwork} from "@vueuse/core"
     const {isOnline} = useNetwork()
@@ -122,11 +121,10 @@
     }
 
     async function fetchDefaultDocFromDocIdIfPossible() {
-        if(isOnline.value) return;
+        if(!isOnline.value) return;
 
         try {
             const response = await docStore.fetchDocId(docStore.docId!);
-            // console.log("Fetched default doc from docId", response);
             if (response) {
                 await setDocPageFromResponse(response);
                 // Add the default page to history

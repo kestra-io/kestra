@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div>
         <span class="markdown" v-html="markdownRenderer" />
     </div>
 </template>

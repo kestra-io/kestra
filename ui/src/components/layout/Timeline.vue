@@ -78,7 +78,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .timeline {
     $min: 480px;
     $max: 960px;

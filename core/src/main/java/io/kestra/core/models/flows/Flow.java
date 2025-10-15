@@ -61,6 +61,11 @@ public class Flow extends AbstractFlow implements HasUID {
             }
         });
 
+
+    @Schema(
+        type = "object",
+        additionalProperties = Schema.AdditionalPropertiesValue.FALSE
+    )
     Map<String, Object> variables;
 
     @Valid

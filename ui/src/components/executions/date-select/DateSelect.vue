@@ -20,39 +20,23 @@
     </el-tooltip>
 </template>
 
-<script lang="ts" setup>
-    import {PropType} from "vue";
+<script setup lang="ts">
     import ClockOutline from "vue-material-design-icons/ClockOutline.vue";
 
-    const emit = defineEmits<{
-        (e: "change", value: string | undefined): void;
+    interface Option {
+        value: string;
+        label: string;
+    }
+
+    defineProps<{
+        placeholder?: string,
+        value?: string,
+        options: Option[],
+        tooltip?: string,
+        clearable?: boolean
     }>();
 
-    defineProps({
-        placeholder: {
-            type: String,
-            default: undefined
-        },
-        value: {
-            type: String,
-            default: undefined
-        },
-        options: {
-            type: Array as PropType<
-                {
-                    value?: string;
-                    label: string;
-                }[]
-            >,
-            default: () => []
-        },
-        tooltip: {
-            type: String,
-            default: undefined
-        },
-        clearable: {
-            type: Boolean,
-            default: false
-        }
-    })
+    defineEmits<{
+        (e: "change", value: string): void
+    }>();
 </script>

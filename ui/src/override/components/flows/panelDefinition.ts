@@ -14,10 +14,11 @@ import PluginListWrapper from "../../../components/plugins/PluginListWrapper.vue
 import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrapper.vue";
 import EditorSidebarWrapper from "../../../components/inputs/EditorSidebarWrapper.vue";
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue";
+import {DeserializableEditorElement} from "../../../utils/multiPanelTypes";
 
 export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
 
-export const EDITOR_ELEMENTS = [
+export const EDITOR_ELEMENTS: DeserializableEditorElement[] = [
     {
         button: {
             icon: markRaw(CodeTagsIcon),
@@ -56,6 +57,7 @@ export const EDITOR_ELEMENTS = [
             label: "Files"
         },
         value: "files",
+        prepend: true,
         component: markRaw(EditorSidebarWrapper),
     },
     {
@@ -66,4 +68,13 @@ export const EDITOR_ELEMENTS = [
         value: "blueprints",
         component: markRaw(BlueprintsWrapper),
     }
-]
+].map((e): DeserializableEditorElement => ({
+    // add a default deserializer
+    deserialize: (value: string) => {
+        if(e.value === value){
+            return e;
+        }
+        return undefined;
+    },
+    ...e,
+}));

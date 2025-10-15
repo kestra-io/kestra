@@ -94,7 +94,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     ul {
         margin: 1rem 0 0;
         padding: 0;

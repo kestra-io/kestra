@@ -126,9 +126,9 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
-    @Named("executionrunning")
-    public InstantiableJdbcTableConfig executionRunning() {
-        return new InstantiableJdbcTableConfig("executionrunning", ExecutionRunning.class, "execution_running");
+    @Named("concurrencylimit")
+    public InstantiableJdbcTableConfig concurrencyLimit() {
+        return new InstantiableJdbcTableConfig("concurrencylimit", ConcurrencyLimit.class, "concurrency_limit");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

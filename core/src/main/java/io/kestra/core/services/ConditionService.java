@@ -143,27 +143,4 @@ public class ConditionService {
                 }
             });
     }
-
-    @SuppressWarnings("deprecation")
-    public List<ResolvedTask> findValidListeners(Flow flow, Execution execution) {
-        if (flow == null || flow.getListeners() == null) {
-            return Collections.emptyList();
-        }
-
-        ConditionContext conditionContext = this.conditionContext(
-            runContextFactory.of(flow, execution),
-            flow,
-            execution
-        );
-
-        return flow
-            .getListeners()
-            .stream()
-            .filter(listener -> listener.getConditions() == null ||
-                this.valid(flow, listener.getConditions(), conditionContext)
-            )
-            .flatMap(listener -> listener.getTasks().stream())
-            .map(ResolvedTask::of)
-            .toList();
-    }
 }

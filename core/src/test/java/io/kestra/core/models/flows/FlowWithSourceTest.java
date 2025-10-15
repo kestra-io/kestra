@@ -3,9 +3,7 @@ package io.kestra.core.models.flows;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.property.Property;
-import io.kestra.plugin.core.condition.Expression;
 import io.kestra.core.models.flows.input.StringInput;
-import io.kestra.core.models.listeners.Listener;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.debug.Return;
@@ -105,11 +103,6 @@ class FlowWithSourceTest {
                     .id(IdUtils.create())
                     .type(Log.class.getName())
                     .message("Finally")
-                    .build()
-            ))
-            .listeners(List.of(
-                Listener.builder()
-                    .conditions(List.of(Expression.builder().expression(Property.ofValue("true")).build()))
                     .build()
             ))
             .triggers(List.of(

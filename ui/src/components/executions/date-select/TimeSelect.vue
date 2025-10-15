@@ -12,90 +12,84 @@
     </el-tooltip>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref, computed, watch, PropType } from "vue";
-import DateSelect from "./DateSelect.vue";
+<script lang="ts" setup>
+    import {ref, computed, watch, PropType} from "vue";
+    import DateSelect from "./DateSelect.vue";
 
-interface TimePreset {
-  value?: string;
-  label: string;
-}
+    interface TimePreset {
+        value?: string;
+        label: string;
+    }
 
-export default defineComponent({
-  name: "TimeRangePicker",
-  components: { DateSelect },
-  emits: ["update:modelValue"],
-  props: {
-    allowCustom: { type: Boolean, default: false },
-    placeholder: { type: String as PropType<string | undefined>, default: undefined },
-    timeRange: { type: String as PropType<string | undefined>, default: undefined },
-    fromNow: { type: Boolean, default: true },
-    allowInfinite: { type: Boolean, default: false },
-    clearable: { type: Boolean, default: false },
-    includeNever: { type: Boolean, default: false }
-  },
-  setup(props, { emit }) {
+    defineOptions({
+        name: "TimeRangePicker",
+    })
+
+    const props = defineProps({
+        allowCustom: {type: Boolean, default: false},
+        placeholder: {type: String as PropType<string | undefined>, default: undefined},
+        timeRange: {type: String as PropType<string | undefined>, default: undefined},
+        fromNow: {type: Boolean, default: true},
+        allowInfinite: {type: Boolean, default: false},
+        clearable: {type: Boolean, default: false},
+        includeNever: {type: Boolean, default: false}
+    })
+
     const timeRangeSelect = ref<string | undefined>(undefined);
 
     const label = (duration: string): string =>
-      "datepicker." + (props.fromNow ? "last" : "") + duration;
+        "datepicker." + (props.fromNow ? "last" : "") + duration;
 
     const timeFilterPresets = computed<TimePreset[]>(() => {
-      const values: TimePreset[] = [
-        { value: "PT5M", label: label("5minutes") },
-        { value: "PT15M", label: label("15minutes") },
-        { value: "PT1H", label: label("1hour") },
-        { value: "PT12H", label: label("12hours") },
-        { value: "PT24H", label: label("24hours") },
-        { value: "PT48H", label: label("48hours") },
-        { value: "PT168H", label: label("7days") },
-        { value: "PT720H", label: label("30days") },
-        { value: "PT8760H", label: label("365days") }
-      ];
+        const values: TimePreset[] = [
+            {value: "PT5M", label: label("5minutes")},
+            {value: "PT15M", label: label("15minutes")},
+            {value: "PT1H", label: label("1hour")},
+            {value: "PT12H", label: label("12hours")},
+            {value: "PT24H", label: label("24hours")},
+            {value: "PT48H", label: label("48hours")},
+            {value: "PT168H", label: label("7days")},
+            {value: "PT720H", label: label("30days")},
+            {value: "PT8760H", label: label("365days")}
+        ];
 
-      if (props.includeNever) {
-        values.push({ value: undefined, label: "datepicker.never" });
-      }
+        if (props.includeNever) {
+            values.push({value: undefined, label: "datepicker.never"});
+        }
 
-      return values;
+        return values;
     });
 
     const presetValues = computed<(string | undefined)[]>(() =>
-      timeFilterPresets.value.map(preset => preset.value)
+        timeFilterPresets.value.map(preset => preset.value)
     );
 
     const customAwarePlaceholder = computed<string | undefined>(() => {
-      if (props.placeholder) return props.placeholder;
-      return props.allowCustom ? "datepicker.custom" : undefined;
+        if (props.placeholder) return props.placeholder;
+        return props.allowCustom ? "datepicker.custom" : undefined;
     });
 
     const onTimeRangeSelect = (range: string | undefined) => {
-      timeRangeSelect.value = range;
-      onTimeRangeChange(range);
+        timeRangeSelect.value = range;
+        onTimeRangeChange(range);
     };
 
+    const emit = defineEmits<{
+        (e: "update:modelValue", payload: { timeRange: string | undefined }): void;
+    }>();
+
     const onTimeRangeChange = (range: string | undefined) => {
-      emit("update:modelValue", { timeRange: range });
+        emit("update:modelValue", {timeRange: range});
     };
 
     // Watcher
     watch(
-      () => props.timeRange,
-      (newValue, oldValue) => {
-        if (oldValue === undefined && presetValues.value.includes(newValue)) {
-          onTimeRangeSelect(newValue);
-        }
-      },
-      { immediate: true }
+        () => props.timeRange,
+        (newValue, oldValue) => {
+            if (oldValue === undefined && presetValues.value.includes(newValue)) {
+                onTimeRangeSelect(newValue);
+            }
+        },
+        {immediate: true}
     );
-
-    return {
-      timeRangeSelect,
-      customAwarePlaceholder,
-      timeFilterPresets,
-      onTimeRangeSelect,
-      onTimeRangeChange
-    };
-  }
-});
 </script>

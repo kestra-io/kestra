@@ -321,7 +321,7 @@ class ScheduleTest {
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
         ZonedDateTime previous = ZonedDateTime.parse("2021-07-05T12:00:00+02:00");
-        ZonedDateTime next = ZonedDateTime.parse("2021-09-06T12:00:00+02:00");
+        ZonedDateTime next = ZonedDateTime.parse("2021-08-09T12:00:00+02:00");
 
         Optional<Execution> evaluate = trigger.evaluate(
             conditionContext(trigger),
@@ -346,7 +346,7 @@ class ScheduleTest {
             .conditions(List.of(
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
-                    .before(Property.ofValue(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
+                    .before(Property.ofValue(ZonedDateTime.parse("2021-08-02T12:00:00+02:00")))
                     .date(Property.ofExpression("{{ trigger.date }}"))
                     .build()
             ))

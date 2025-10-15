@@ -1,27 +1,33 @@
 package io.kestra.webserver.controllers.api;
 
-import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.SettingRepositoryInterface;
-import io.kestra.webserver.controllers.api.MiscController.BasicAuthCredentials;
+import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import java.util.List;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
+import static io.micronaut.http.HttpRequest.GET;
+import static io.micronaut.http.HttpRequest.POST;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 @Property(name = "kestra.system-flows.namespace", value = "some.system.ns")
@@ -38,6 +44,9 @@ class MiscControllerTest {
 
     @Inject
     private SettingRepositoryInterface settingRepository;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     @Test
     void ping() {
@@ -59,7 +68,7 @@ class MiscControllerTest {
 
     @Test
     void getEmptyValidationErrors() {
-        List<String> response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/basicAuthValidationErrors"), Argument.LIST_OF_STRING);
+        List<String> response = client.toBlocking().retrieve(GET("/api/v1/basicAuthValidationErrors"), Argument.LIST_OF_STRING);
 
         assertThat(response).isNotNull();
     }
@@ -68,7 +77,7 @@ class MiscControllerTest {
     void getValidationErrors() {
         settingRepository.save(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).value(List.of("error1", "error2")).build());
         try {
-            List<String> response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/basicAuthValidationErrors"), Argument.LIST_OF_STRING);
+            List<String> response = client.toBlocking().retrieve(GET("/api/v1/basicAuthValidationErrors"), Argument.LIST_OF_STRING);
 
             assertThat(response).containsExactly("error1", "error2");
         } finally {
@@ -92,32 +101,86 @@ class MiscControllerTest {
 
     @Test
     void basicAuth() {
-        Assertions.assertDoesNotThrow(() -> client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class));
+        assertThatCode(() -> client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class)).doesNotThrowAnyException();
 
         String uid = "someUid";
         String username = "my.email@kestra.io";
         String password = "myPassword1";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
         try {
-            assertThrows(
-                HttpClientResponseException.class,
+            assertThatThrownBy(
                 () -> client.toBlocking().retrieve("/api/v1/main/dashboards", MiscController.Configuration.class)
-            );
-            assertThrows(
-                HttpClientResponseException.class,
+            )
+                .as("expect 401 for unauthenticated GET /api/v1/main/dashboards")
+                .isInstanceOfSatisfying(HttpClientResponseException.class, ex ->
+                    assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+                );
+
+            assertThatThrownBy(
                 () -> client.toBlocking().retrieve(
-                    HttpRequest.GET("/api/v1/main/dashboards")
+                    GET("/api/v1/main/dashboards")
                         .basicAuth("bad.user@kestra.io", "badPassword"),
                     MiscController.Configuration.class
                 )
-            );
-            Assertions.assertDoesNotThrow(() -> client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/main/dashboards")
+            ).as("expect 401 for GET /api/v1/main/dashboards with wrong password")
+                .isInstanceOfSatisfying(HttpClientResponseException.class, ex ->
+                    assertThat((CharSequence) ex.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED)
+                );
+
+            assertThatCode(() -> client.toBlocking().retrieve(
+                GET("/api/v1/main/dashboards")
                     .basicAuth(username, password),
                 MiscController.Configuration.class)
-            );
+            ).as("expect success GET /api/v1/main/dashboards with good password")
+                .doesNotThrowAnyException();
         } finally {
-            basicAuthService.save(basicAuthConfiguration);
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
+        }
+    }
+
+    @Test
+    void canTriggerAWebhookWithoutBasicAuth() {
+        String uid = "someUid2";
+        String username = "my.email2@kestra.io";
+        String password = "myPassword2";
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new BasicAuthCredentials(uid, username, password)));
+
+        try {
+            var namespace = "namespace1";
+            var flowId = "flowWithWebhook" + IdUtils.create();
+            var key = "1KERKzRQZSMtLdMdNI7Nkr";
+            var flowWithWebhook = """
+                id: %s
+                namespace: %s
+                tasks:
+                  - id: out
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "output1"
+                triggers:
+                  - id: webhook_trigger
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    key: %s
+                disabled: false
+                deleted: false
+                """.formatted(flowId, namespace, key);
+
+            assertThatCode(() -> client.toBlocking().retrieve(
+                POST("/api/v1/main/flows", flowWithWebhook)
+                    .contentType(MediaType.APPLICATION_YAML)
+                    .basicAuth(username, password),
+                FlowWithSource.class)
+            ).as("can create a Flow with webhook when authenticated")
+                .doesNotThrowAnyException();
+
+            assertThatCode(() -> client.toBlocking().retrieve(POST("/api/v1/main/executions/webhook/{namespace}/{flowId}/{key}"
+                    .replace("{namespace}", namespace)
+                    .replace("{flowId}", flowId)
+                    .replace("{key}", key)
+                , flowWithWebhook), FlowWithSource.class)
+            ).as("can trigger this Flow webhook when not authenticated")
+                .doesNotThrowAnyException();
+        } finally {
+            basicAuthService.save(new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword()));
         }
     }
 }

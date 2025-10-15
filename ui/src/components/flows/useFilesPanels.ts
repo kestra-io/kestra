@@ -6,15 +6,25 @@ import {DeserializableEditorElement, Panel} from "../../utils/multiPanelTypes";
 
 export const CODE_PREFIX = "code"
 
-function getTabFromFilesTab(tab: EditorTabProps){
+export function getTabFromFilesTab(tab: EditorTabProps) {
     return {
         value: `${CODE_PREFIX}-${tab.path}`,
         button: {
             label: tab.name,
-            icon: () => h(TypeIcon, {name:tab.name})
+            icon: () => h(TypeIcon, {name:tab.name}),
         },
         component: () => h(markRaw(EditorWrapper), {...tab}),
         dirty: tab.dirty,
+    }
+}
+
+export function getTabPropsFromFilePath(filePath: string, flow: boolean = false): EditorTabProps {
+    return {
+        name: filePath.split("/").pop()!,
+        path: filePath,
+        extension: filePath.split(".").pop()!,
+        flow,
+        dirty: false
     }
 }
 
@@ -22,7 +32,7 @@ export function useInitialFilesTabs(EDITOR_ELEMENTS: DeserializableEditorElement
     const editorStore = useEditorStore()
 
     const codeElement = EDITOR_ELEMENTS.find(e => e.value === CODE_PREFIX)!
-    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
+    codeElement.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
 
     function setupInitialCodeTab(tab: string, codeElement: DeserializableEditorElement){
         const flow = CODE_PREFIX === tab
@@ -30,13 +40,7 @@ export function useInitialFilesTabs(EDITOR_ELEMENTS: DeserializableEditorElement
             return
         }
         const filePath = flow ? "Flow.yaml" : tab.substring(5)
-        const editorTab: EditorTabProps = {
-            name: filePath.split("/").pop()!,
-            path: filePath,
-            extension: filePath.split(".").pop()!,
-            flow,
-            dirty: false
-        }
+        const editorTab = getTabPropsFromFilePath(filePath, flow)
         editorStore.openTab(editorTab)
         return flow ? codeElement : getTabFromFilesTab(editorTab)
     }
@@ -44,7 +48,7 @@ export function useInitialFilesTabs(EDITOR_ELEMENTS: DeserializableEditorElement
     return {setupInitialCodeTab}
 }
 
-export function useFilesPanels(panels: Ref<Panel[]>) {
+export function useFilesPanels(panels: Ref<Panel[]>, namespaceFiles = false) {
     const editorStore = useEditorStore()
 
     const codeEditorTabs = computed(() => editorStore.tabs.filter((t) => !t.flow))
@@ -95,7 +99,7 @@ export function useFilesPanels(panels: Ref<Panel[]>) {
     })
 
     watch(codeEditorTabs, (newVal) => {
-        const codeTabs = getPanelsFromCodeEditorTabs(newVal)
+        const codeTabs = getPanelsFromCodeEditorTabs(newVal.map(tab => ({...tab, namespaceFiles})))
 
         // Loop through tabs to see if any code tab should be removed due to file deletion
         const openedTabs = new Set(codeTabs.tabs.map(tab => tab.value))

@@ -333,8 +333,15 @@
     function onTaskInput(val: PartialCodeElement | undefined) {
         if (val) {
             if (!val.id && isPlugin.value) {
-                const flowSource = fullSource.value;
-                val.id = generateElementId(flowSource, parentPath);
+                const isNewTask = !taskObject.value?.id;
+                const userClearedId = taskObject.value?.id === "" || val.id === "";
+
+                if (isNewTask && !userClearedId)
+                {
+                    const flowSource = fullSource.value;
+                    val.id = generateElementId(flowSource, parentPath);
+                }
+                
             }
         }
         

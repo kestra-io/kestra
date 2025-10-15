@@ -15,10 +15,12 @@ import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import org.slf4j.event.Level;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -30,6 +32,10 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Plugin
 abstract public class Task implements TaskInterface {
     @Size(max = 256, message = "Task id must be at most 256 characters")
+    @jakarta.validation.constraints.Pattern(
+        regexp = "^$|^[\\s\\S]*$",
+        message = "Task id can be empty or any string up to 256 characters"
+    )
     protected String id;
 
     protected String type;
@@ -143,4 +149,15 @@ abstract public class Task implements TaskInterface {
         return !(this instanceof FlowableTask) || this instanceof WorkingDirectory;
     }
 
+    @Valid
+    @Override
+    public List<String> validate() {
+        List<String> errors = super.validate();
+
+        if (this.id != null && this.id.isBlank()) {
+            this.id = null;
+        }
+
+        return errors;
+    }
 }

@@ -350,4 +350,34 @@ public class Flow extends AbstractFlow implements HasUID {
     public String getSource() {
         return null;
     }
+
+    public List<String> validate() {
+        List<String> errors = new ArrayList<>();
+
+        if (this.getTasks() != null) {
+            this.getTasks()
+                .stream()
+                .filter(task -> task.getId() != null && !task.getId().isBlank())
+                .collect(Collectors.groupingBy(Task::getId))
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().size() > 1)
+                .map(Map.Entry::getKey)
+                .forEach(duplicateTaskId -> errors.add("Duplicate task id '" + duplicateTaskId + "'"));
+        }
+
+        if (this.getTriggers() != null) {
+            this.getTriggers()
+                .stream()
+                .filter(trigger -> trigger.getId() != null && !trigger.getId().isBlank())
+                .collect(Collectors.groupingBy(Trigger::getId))
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue().size() > 1)
+                .map(Map.Entry::getKey)
+                .forEach(duplicateTriggerId -> errors.add("Duplicate trigger id '" + duplicateTriggerId + "'"));
+        }
+
+        return errors;
+    }
 }

@@ -17,6 +17,8 @@ import lombok.experimental.SuperBuilder;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @SuperBuilder(toBuilder = true)
@@ -310,5 +312,16 @@ public class Trigger extends TriggerContext implements HasUID {
     // This is a hack to make JavaDoc working as annotation processor didn't run before JavaDoc.
     // See https://stackoverflow.com/questions/51947791/javadoc-cannot-find-symbol-error-when-using-lomboks-builder-annotation
     public static abstract class TriggerBuilder<C extends Trigger, B extends TriggerBuilder<C, B>> extends TriggerContextBuilder<C, B> {
+        @Valid
+        @Override
+        public List<String> validate() {
+            List<String> errors = new ArrayList<>();
+
+            if (this.id != null && this.id.isBlank()) {
+                this.id = null;
+            }
+
+            return errors;
+        }
     }
 }

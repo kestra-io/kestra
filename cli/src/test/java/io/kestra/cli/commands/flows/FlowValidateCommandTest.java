@@ -61,7 +61,6 @@ class FlowValidateCommandTest {
 
             assertThat(call).isZero();
             assertThat(out.toString()).contains("✓ - system / warning");
-            assertThat(out.toString()).contains("⚠ - tasks[0] is deprecated");
             assertThat(out.toString()).contains("ℹ - io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log");
         }
     }

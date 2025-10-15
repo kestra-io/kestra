@@ -13,7 +13,6 @@ import {mapStores} from "pinia";
 import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
-import {useTemplateStore} from "../stores/template";
 import {useAuthStore} from "override/stores/auth";
 import {useFlowStore} from "../stores/flow";
 
@@ -34,7 +33,7 @@ export default {
         };
     },
     computed: {
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useFlowStore, useAuthStore),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useFlowStore, useAuthStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
         },
@@ -125,12 +124,6 @@ export default {
             }
         },
         deleteConfirmMessage() {
-            if (this.dataType === "template") {
-                return new Promise((resolve) => {
-                    resolve(this.$t("delete confirm", {name: this.item.id}));
-                });
-            }
-
             return this.$http
                 .get(`${apiUrl()}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
                 .then(response => {

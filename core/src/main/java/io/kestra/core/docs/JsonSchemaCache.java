@@ -4,7 +4,6 @@ import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import jakarta.inject.Singleton;
 
@@ -36,7 +35,6 @@ public class JsonSchemaCache {
     public JsonSchemaCache(final JsonSchemaGenerator jsonSchemaGenerator) {
         this.jsonSchemaGenerator = Objects.requireNonNull(jsonSchemaGenerator, "JsonSchemaGenerator cannot be null");
         registerClassForType(SchemaType.FLOW, Flow.class);
-        registerClassForType(SchemaType.TEMPLATE, Template.class);
         registerClassForType(SchemaType.TASK, Task.class);
         registerClassForType(SchemaType.TRIGGER, AbstractTrigger.class);
         registerClassForType(SchemaType.PLUGINDEFAULT, PluginDefault.class);

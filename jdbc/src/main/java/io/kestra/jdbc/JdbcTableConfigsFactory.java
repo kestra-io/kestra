@@ -8,7 +8,6 @@ import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
-import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
@@ -40,12 +39,6 @@ public class JdbcTableConfigsFactory {
     @Named("executions")
     public InstantiableJdbcTableConfig executions() {
         return new InstantiableJdbcTableConfig("executions", Execution.class, "executions");
-    }
-
-    @Bean
-    @Named("templates")
-    public InstantiableJdbcTableConfig templates() {
-        return new InstantiableJdbcTableConfig("templates", Template.class, "templates");
     }
 
     @Bean

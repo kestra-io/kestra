@@ -36,7 +36,6 @@ import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.plugin.core.flow.ForEachItem;
-import io.kestra.plugin.core.flow.Template;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -126,9 +125,6 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private PluginDefaultService pluginDefaultService;
-
-    @Inject
-    private Optional<Template.TemplateExecutorInterface> templateExecutorInterface;
 
     @Inject
     private ExecutorService executorService;
@@ -1244,21 +1240,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
     private FlowWithSource findFlow(Execution execution) {
         FlowInterface flow = this.flowMetaStore.findByExecution(execution).orElseThrow();
-        FlowWithSource flowWithSource = pluginDefaultService.injectDefaults(flow, execution);
-
-        if (templateExecutorInterface.isPresent()) {
-            try {
-                flowWithSource = Template.injectTemplate(
-                    flowWithSource,
-                    execution,
-                    (tenantId, namespace, id) -> templateExecutorInterface.get().findById(tenantId, namespace, id).orElse(null)
-                );
-            } catch (InternalException e) {
-                log.warn("Failed to inject template", e);
-            }
-        }
-
-        return flowWithSource;
+        return pluginDefaultService.injectDefaults(flow, execution);
     }
 
     /**

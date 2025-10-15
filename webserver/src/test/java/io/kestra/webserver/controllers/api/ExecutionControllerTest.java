@@ -96,7 +96,6 @@ class ExecutionControllerTest {
 
         return MultipartBody.builder()
             .addPart("string", "myString")
-            .addPart("enum", "ENUM_VALUE")
             .addPart("int", "42")
             .addPart("float", "42.42")
             .addPart("instant", "2019-10-06T18:27:49Z")

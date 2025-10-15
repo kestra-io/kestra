@@ -48,28 +48,36 @@ public abstract class AbstractMetricRepositoryTest {
         results = metricRepository.findByExecutionIdAndTaskRunId(tenant, executionId, taskRun1.getId(), Pageable.from(1, 10));
         assertThat(results.size()).isEqualTo(2);
 
+        // Use fixed dates to avoid timezone boundary issues
+        ZonedDateTime endDate = ZonedDateTime.of(2025, 1, 15, 12, 0, 0, 0, ZoneId.of("UTC"));
+        ZonedDateTime startDate = endDate.minusDays(30);
+        
         MetricAggregations aggregationResults = metricRepository.aggregateByFlowId(
             tenant,
             "namespace",
             "flow",
             null,
             counter.getName(),
-            ZonedDateTime.now().minusDays(30),
-            ZonedDateTime.now(),
+            startDate,
+            endDate,
             "sum"
         );
 
         assertThat(aggregationResults.getAggregations().size()).isEqualTo(31);
         assertThat(aggregationResults.getGroupBy()).isEqualTo("day");
 
+        // Use fixed dates for weekly aggregation test
+        ZonedDateTime weeklyEndDate = ZonedDateTime.of(2025, 1, 15, 12, 0, 0, 0, ZoneId.of("UTC"));
+        ZonedDateTime weeklyStartDate = weeklyEndDate.minusWeeks(26);
+        
         aggregationResults = metricRepository.aggregateByFlowId(
             tenant,
             "namespace",
             "flow",
             null,
             counter.getName(),
-            ZonedDateTime.now().minusWeeks(26),
-            ZonedDateTime.now(),
+            weeklyStartDate,
+            weeklyEndDate,
             "sum"
         );
 

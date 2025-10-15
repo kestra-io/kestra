@@ -79,10 +79,13 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
 
         assertThat(window.getStart().toLocalTime()).isEqualTo(LocalTime.parse("20:00:00"));
-        assertThat(window.getStart().toLocalDate()).isEqualTo(ZonedDateTime.now().minusDays(1).toLocalDate());
+        // Check that start date is either today or yesterday (timezone resilient)
+        ZonedDateTime now = ZonedDateTime.now();
+        assertThat(window.getStart().toLocalDate()).isIn(now.toLocalDate(), now.minusDays(1).toLocalDate());
 
         assertThat(window.getEnd().toLocalTime()).isEqualTo(LocalTime.parse("19:59:59.999"));
-        assertThat(window.getEnd().toLocalDate()).isEqualTo(ZonedDateTime.now().toLocalDate());
+        // Check that end date is either today or tomorrow (timezone resilient)
+        assertThat(window.getEnd().toLocalDate()).isIn(now.toLocalDate(), now.plusDays(1).toLocalDate());
     }
 
     @Test

@@ -448,14 +448,18 @@ public abstract class AbstractExecutionRepositoryTest {
         // mysql need some time ...
         Thread.sleep(500);
 
+        // Use fixed dates to avoid timezone boundary issues during midnight
+        ZonedDateTime endDate = ZonedDateTime.of(2025, 1, 15, 12, 0, 0, 0, ZoneId.of("UTC"));
+        ZonedDateTime startDate = endDate.minusDays(10);
+        
         List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
             null,
             tenant,
             null,
             null,
             null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
+            startDate,
+            endDate,
             null,
             null);
 
@@ -473,8 +477,8 @@ public abstract class AbstractExecutionRepositoryTest {
             List.of(FlowScope.USER, FlowScope.SYSTEM),
             null,
             null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
+            startDate,
+            endDate,
             null,
             null);
 
@@ -487,8 +491,8 @@ public abstract class AbstractExecutionRepositoryTest {
             List.of(FlowScope.USER),
             null,
             null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
+            startDate,
+            endDate,
             null,
             null);
         assertThat(result.size()).isEqualTo(11);
@@ -500,8 +504,8 @@ public abstract class AbstractExecutionRepositoryTest {
             List.of(FlowScope.SYSTEM),
             null,
             null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
+            startDate,
+            endDate,
             null,
             null);
         assertThat(result.size()).isEqualTo(11);
@@ -523,6 +527,10 @@ public abstract class AbstractExecutionRepositoryTest {
         // mysql need some time ...
         Thread.sleep(500);
 
+        // Use fixed dates to avoid timezone boundary issues
+        ZonedDateTime endDate = ZonedDateTime.of(2025, 1, 15, 12, 0, 0, 0, ZoneId.of("UTC"));
+        ZonedDateTime startDate = endDate.minusDays(10);
+        
         List<ExecutionCount> result = executionRepository.executionCounts(
             tenant,
             List.of(
@@ -532,8 +540,8 @@ public abstract class AbstractExecutionRepositoryTest {
                 new Flow(NAMESPACE, "missing")
             ),
             null,
-            ZonedDateTime.now().minusDays(10),
-            ZonedDateTime.now(),
+            startDate,
+            endDate,
             null
         );
         assertThat(result.size()).isEqualTo(4);

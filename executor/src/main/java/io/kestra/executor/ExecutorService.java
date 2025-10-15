@@ -741,23 +741,7 @@ public class ExecutorService {
             return executor;
         }
 
-        // first, execute listeners
-        List<ResolvedTask> listenerResolvedTasks = conditionService.findValidListeners(executor.getFlow(), executor.getExecution());
-        List<TaskRun> listenerNexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), listenerResolvedTasks)
-            .stream()
-            .map(throwFunction(NextTaskRun::getTaskRun))
-            .toList();
-
-        if (!listenerNexts.isEmpty()) {
-            return executor.withTaskRun(listenerNexts, "handleListeners");
-        }
-
-        // then, check if all listener tasks are terminated
-        if (!listenerResolvedTasks.isEmpty() && !executor.getExecution().isTerminated(listenerResolvedTasks)) {
-            return executor;
-        }
-
-        // then, when no more listeners, execute afterExecution tasks
+        // execute afterExecution tasks
         List<ResolvedTask> afterExecutionResolvedTasks = executionService.resolveAfterExecutionTasks(executor.getFlow());
         List<TaskRun> afterExecutionNexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), afterExecutionResolvedTasks)
             .stream()

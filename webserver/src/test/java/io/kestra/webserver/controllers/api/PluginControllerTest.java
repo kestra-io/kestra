@@ -167,7 +167,7 @@ class PluginControllerTest {
             Argument.mapOf(String.class, Object.class)
         );
 
-        assertThat((Map<String, Object>) doc.get("properties")).hasSize(23);
+        assertThat((Map<String, Object>) doc.get("properties")).hasSize(22);
         assertThat((List<String>) doc.get("required")).hasSize(3);
     }
 
@@ -198,7 +198,7 @@ class PluginControllerTest {
             Argument.listOf(InputType.class)
         );
 
-        assertThat(doc.size()).isEqualTo(19);
+        assertThat(doc.size()).isEqualTo(17);
     }
 
     @SuppressWarnings("unchecked")
@@ -211,7 +211,6 @@ class PluginControllerTest {
 
         assertThat(doc.getSchema().getProperties().size()).isEqualTo(3);
         Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
-        assertThat(properties.size()).isEqualTo(9);
-        assertThat(((Map<String, Object>) properties.get("name")).get("$deprecated")).isEqualTo(true);
+        assertThat(properties.size()).isEqualTo(8);
     }
 }

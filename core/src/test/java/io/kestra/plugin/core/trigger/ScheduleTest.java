@@ -320,7 +320,7 @@ class ScheduleTest {
             .build();
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
-        ZonedDateTime previous = ZonedDateTime.parse("2021-07-05T12:00:00+02:00");
+        ZonedDateTime previous = ZonedDateTime.parse("2021-07-26T12:00:00+02:00");
         ZonedDateTime next = ZonedDateTime.parse("2021-08-09T12:00:00+02:00");
 
         Optional<Execution> evaluate = trigger.evaluate(
@@ -353,7 +353,7 @@ class ScheduleTest {
             .build();
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
-        ZonedDateTime previous = ZonedDateTime.parse("2021-07-26T12:00:00+02:00");
+        ZonedDateTime previous = ZonedDateTime.parse("2021-07-05T12:00:00+02:00");
 
         Optional<Execution> evaluate = trigger.evaluate(
             conditionContext(trigger),

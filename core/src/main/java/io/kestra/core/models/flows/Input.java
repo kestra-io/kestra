@@ -25,7 +25,6 @@ import lombok.experimental.SuperBuilder;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ArrayInput.class, name = "ARRAY"),
-    @JsonSubTypes.Type(value = BooleanInput.class, name = "BOOLEAN"),
     @JsonSubTypes.Type(value = BoolInput.class, name = "BOOL"),
     @JsonSubTypes.Type(value = DateInput.class, name = "DATE"),
     @JsonSubTypes.Type(value = DateTimeInput.class, name = "DATETIME"),

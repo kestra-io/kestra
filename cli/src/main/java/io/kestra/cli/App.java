@@ -7,7 +7,6 @@ import io.kestra.cli.commands.namespaces.NamespaceCommand;
 import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
-import io.kestra.cli.commands.templates.TemplateCommand;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -39,7 +38,6 @@ import java.util.concurrent.Callable;
         PluginCommand.class,
         ServerCommand.class,
         FlowCommand.class,
-        TemplateCommand.class,
         SysCommand.class,
         ConfigCommand.class,
         NamespaceCommand.class,

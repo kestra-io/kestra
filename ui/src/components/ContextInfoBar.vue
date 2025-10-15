@@ -1,9 +1,9 @@
 <template>
-    <div class="barWrapper" :class="{opened: activeTab?.length > 0}">
+    <div v-if="Object.keys(buttons).length" class="barWrapper" :class="{opened: activeTab?.length > 0}">
         <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
 
         <el-button
-            v-for="(button, key) of {...buttonsList, ...props.additionalButtons}"
+            v-for="(button, key) of {...buttons, ...props.additionalButtons}"
             :key="key"
             :type="activeTab === key ? 'primary' : 'default'"
             :tag="button.url ? 'a' : 'button'"
@@ -51,29 +51,22 @@
 
 <script setup lang="ts">
     import {computed, ref, watch, type Ref, type Component, PropType} from "vue";
-    import {useMouse, watchThrottled} from "@vueuse/core"
+    import {useMouse, watchThrottled, useStorage} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
     import DateAgo from "./layout/DateAgo.vue"
 
-    import MessageOutline from "vue-material-design-icons/MessageOutline.vue"
-    import FileDocument from "vue-material-design-icons/FileDocument.vue"
-    import Slack from "vue-material-design-icons/Slack.vue"
-    import Github from "vue-material-design-icons/Github.vue"
-    import Calendar from "vue-material-design-icons/Calendar.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue"
     import WeatherNight from "vue-material-design-icons/WeatherNight.vue"
-    import Star from "vue-material-design-icons/Star.vue"
 
-    import {useStorage} from "@vueuse/core"
-    import {useI18n} from "vue-i18n";
     import Utils from "../utils/utils";
     import {useApiStore} from "../stores/api";
     import {useMiscStore} from "override/stores/misc";
 
-    const {t} = useI18n({useScope: "global"});
+    import {useContextButtons} from "override/composables/contextButtons";
+    const {buttons} = useContextButtons();
 
     const apiStore = useApiStore();
     const miscStore = useMiscStore();
@@ -99,63 +92,7 @@
                 hasUnreadMarker: false;
             }>>,
             default: () => ({})
-        },
-        communityButton: {
-            type: Boolean,
-            default: true
         }
-    });
-
-
-    const allButtonsList: Record<string, {
-        title:string,
-        icon: Component,
-        component?: Component,
-        url?: string,
-        hasUnreadMarker?: boolean
-    }> = {
-        news: {
-            title: t("contextBar.news"),
-            icon: MessageOutline,
-            component: ContextNews,
-            hasUnreadMarker: true
-        },
-        docs: {
-            title: t("contextBar.docs"),
-            icon: FileDocument,
-            component: ContextDocs
-        },
-        help: {
-            title: t("contextBar.help"),
-            icon: Slack,
-            url: "https://kestra.io/slack"
-        },
-        issue: {
-            title: t("contextBar.issue"),
-            icon: Github,
-            url: "https://github.com/kestra-io/kestra/issues/new/choose"
-        },
-        demo: {
-            title: t("contextBar.demo"),
-            icon: Calendar,
-            url: "https://kestra.io/demo"
-        },
-        star: {
-            title: t("contextBar.star"),
-            icon: Star,
-            url: "https://github.com/kestra-io/kestra"
-        }
-    }
-
-    const buttonsList = computed(() => {
-        if (props.communityButton) {
-            return allButtonsList;
-        }
-        let updatedButtons = allButtonsList;
-        delete updatedButtons["issue"];
-        delete updatedButtons["demo"];
-        delete updatedButtons["star"];
-        return updatedButtons;
     });
 
     const panelWidth = ref(640)

@@ -704,7 +704,7 @@
 
                         modifiedBackspaceTimeout = window.setTimeout(() => {
                             modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
-                        }, 250); 
+                        }, 250);
                     }
                 });
             }
@@ -743,7 +743,7 @@
                     fixedOverflowWidgets: true // Helps suggestion widget render above other elements
                 });
                 let localBackspaceTimeout: number | null = null;
-                
+
                 localEditor.value.onKeyDown((e) => {
                     if (e.keyCode === monaco.KeyCode.Backspace) {
                         if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout);

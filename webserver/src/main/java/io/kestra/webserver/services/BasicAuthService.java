@@ -13,19 +13,18 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import java.util.ArrayList;
-import lombok.*;
-
-import jakarta.annotation.Nullable;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.regex.Pattern;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+
+import java.time.Instant;
+import java.util.*;
+import java.util.regex.Pattern;
 
 @Context
 @Singleton
@@ -51,14 +50,18 @@ public class BasicAuthService {
 
     public BasicAuthService() {}
 
+    @VisibleForTesting
     @PostConstruct
-    protected void init() {
+    public void init() {
         if (basicAuthConfiguration == null ||
             (StringUtils.isBlank(basicAuthConfiguration.getUsername()) && StringUtils.isBlank(basicAuthConfiguration.getPassword()))){
             return;
         }
         try {
-            save(basicAuthConfiguration);
+            // save configured default credentials
+            save(
+                new BasicAuthCredentials(null, basicAuthConfiguration.getUsername(), basicAuthConfiguration.getPassword())
+            );
             if (settingRepository.findByKey(BASIC_AUTH_ERROR_CONFIG).isPresent()) {
                 settingRepository.delete(Setting.builder().key(BASIC_AUTH_ERROR_CONFIG).build());
             }
@@ -70,31 +73,27 @@ public class BasicAuthService {
         }
     }
 
-    public void save(BasicAuthConfiguration basicAuthConfiguration) {
-        save(null, basicAuthConfiguration);
-    }
-
-    public void save(String uid, BasicAuthConfiguration basicAuthConfiguration) {
+    public void save(BasicAuthCredentials basicAuthCredentials) {
         List<String> validationErrors = new ArrayList<>();
 
-        if (basicAuthConfiguration.getUsername() != null && !EMAIL_PATTERN.matcher(basicAuthConfiguration.getUsername()).matches()) {
+        if (basicAuthCredentials.getUsername() != null && !EMAIL_PATTERN.matcher(basicAuthCredentials.getUsername()).matches()) {
             validationErrors.add("Invalid username for Basic Authentication. Please provide a valid email address.");
         }
 
-        if (basicAuthConfiguration.getUsername() == null) {
+        if (basicAuthCredentials.getUsername() == null) {
             validationErrors.add("No user name set for Basic Authentication. Please provide a user name.");
         }
 
-        if (basicAuthConfiguration.getPassword() == null) {
+        if (basicAuthCredentials.getPassword() == null) {
             validationErrors.add("No password set for Basic Authentication. Please provide a password.");
         }
 
-        if (basicAuthConfiguration.getPassword() != null && !PASSWORD_PATTERN.matcher(basicAuthConfiguration.getPassword()).matches()) {
+        if (basicAuthCredentials.getPassword() != null && !PASSWORD_PATTERN.matcher(basicAuthCredentials.getPassword()).matches()) {
             validationErrors.add("Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number");
         }
 
-        if ((basicAuthConfiguration.getUsername() != null && basicAuthConfiguration.getUsername().length() > EMAIL_PASSWORD_MAX_LEN) ||
-            (basicAuthConfiguration.getPassword() != null && basicAuthConfiguration.getPassword().length() > EMAIL_PASSWORD_MAX_LEN)) {
+        if ((basicAuthCredentials.getUsername() != null && basicAuthCredentials.getUsername().length() > EMAIL_PASSWORD_MAX_LEN) ||
+            (basicAuthCredentials.getPassword() != null && basicAuthCredentials.getPassword().length() > EMAIL_PASSWORD_MAX_LEN)) {
             validationErrors.add("The length of email or password should not exceed 256 characters.");
         }
 
@@ -102,15 +101,16 @@ public class BasicAuthService {
             throw new ValidationErrorException(validationErrors);
         }
 
-        SaltedBasicAuthConfiguration previousConfiguration = this.configuration();
-        String salt = previousConfiguration == null
+        var previousConfiguredCredentials = this.configuration().credentials();
+        String salt = previousConfiguredCredentials == null
             ? null
-            : previousConfiguration.getSalt();
-        SaltedBasicAuthConfiguration saltedNewConfiguration = new SaltedBasicAuthConfiguration(
+            : previousConfiguredCredentials.getSalt();
+        SaltedBasicAuthCredentials saltedNewConfiguration = SaltedBasicAuthCredentials.salt(
             salt,
-            basicAuthConfiguration
+            basicAuthCredentials.getUsername(),
+            basicAuthCredentials.getPassword()
         );
-        if (!saltedNewConfiguration.equals(previousConfiguration)) {
+        if (!saltedNewConfiguration.equals(previousConfiguredCredentials)) {
             settingRepository.save(
                 Setting.builder()
                     .key(BASIC_AUTH_SETTINGS_KEY)
@@ -120,11 +120,11 @@ public class BasicAuthService {
 
             ossAuthEventPublisher.publishEventAsync(
                 OssAuthEvent.builder()
-                    .uid(uid)
+                    .uid(basicAuthCredentials.getUid())
                     .iid(instanceService.fetch())
                     .date(Instant.now())
                     .ossAuth(OssAuthEvent.OssAuth.builder()
-                        .email(basicAuthConfiguration.getUsername())
+                        .email(basicAuthCredentials.getUsername())
                         .build()
                     ).build()
             );
@@ -138,26 +138,27 @@ public class BasicAuthService {
             .orElse(List.of());
     }
 
-    public SaltedBasicAuthConfiguration configuration() {
-        return settingRepository.findByKey(BASIC_AUTH_SETTINGS_KEY)
+    public ConfiguredBasicAuth configuration() {
+        var credentials = settingRepository.findByKey(BASIC_AUTH_SETTINGS_KEY)
             .map(Setting::getValue)
-            .map(value -> JacksonMapper.ofJson(false).convertValue(value, SaltedBasicAuthConfiguration.class))
+            .map(value -> JacksonMapper.ofJson(false).convertValue(value, SaltedBasicAuthCredentials.class))
             .orElse(null);
+        return new ConfiguredBasicAuth(this.basicAuthConfiguration != null ? this.basicAuthConfiguration.realm : null, this.basicAuthConfiguration != null ? this.basicAuthConfiguration.openUrls : null, credentials);
     }
 
     public boolean isBasicAuthInitialized(){
+        var configuration = configuration();
 
-        SaltedBasicAuthConfiguration configuration = configuration();
-
-        return configuration != null &&
-               !StringUtils.isBlank(configuration.getUsername()) &&
-               !StringUtils.isBlank(configuration.getPassword());
+        return configuration.credentials() != null &&
+            !StringUtils.isBlank(configuration.credentials().getUsername()) &&
+            !StringUtils.isBlank(configuration.credentials().getPassword());
     }
 
     @Getter
     @NoArgsConstructor
     @EqualsAndHashCode
     @ConfigurationProperties("kestra.server.basic-auth")
+    @VisibleForTesting
     public static class BasicAuthConfiguration {
         private String username;
         protected String password;
@@ -177,50 +178,40 @@ public class BasicAuthService {
             this.realm = Optional.ofNullable(realm).orElse("Kestra");
             this.openUrls = Optional.ofNullable(openUrls).orElse(Collections.emptyList());
         }
+    }
 
-        public BasicAuthConfiguration(
-            String username,
-            String password
-        ) {
-            this(username, password, null, null);
-        }
-
-        public BasicAuthConfiguration(BasicAuthConfiguration basicAuthConfiguration) {
-            if (basicAuthConfiguration != null) {
-                this.username = basicAuthConfiguration.getUsername();
-                this.password = basicAuthConfiguration.getPassword();
-                this.realm = basicAuthConfiguration.getRealm();
-                this.openUrls = basicAuthConfiguration.getOpenUrls();
-            }
-        }
-
-        @VisibleForTesting
-        BasicAuthConfiguration withUsernamePassword(String username, String password) {
-            return new BasicAuthConfiguration(
-                username,
-                password,
-                this.realm,
-                this.openUrls
-            );
-        }
+    public record ConfiguredBasicAuth(
+        String realm,
+        List<String> openUrls,
+        SaltedBasicAuthCredentials credentials
+    ) {
     }
 
     @Getter
-    @AllArgsConstructor
-    @EqualsAndHashCode(callSuper = true)
-    public static class SaltedBasicAuthConfiguration extends BasicAuthConfiguration {
+    @EqualsAndHashCode
+    public static class SaltedBasicAuthCredentials {
         private String salt;
+        private String username;
+        protected String password;
 
-        public SaltedBasicAuthConfiguration(String salt, BasicAuthConfiguration basicAuthConfiguration) {
-            super(basicAuthConfiguration);
-            this.salt = salt == null
-                ? AuthUtils.generateSalt()
-                : salt;
-            this.password = AuthUtils.encodePassword(this.salt, basicAuthConfiguration.getPassword());
+        public SaltedBasicAuthCredentials(String salt, String username, String password) {
+            Objects.requireNonNull(salt);
+            Objects.requireNonNull(username);
+            Objects.requireNonNull(password);
+            this.salt = salt;
+            this.username = username;
+            this.password = password;
         }
 
-        public SaltedBasicAuthConfiguration() {
-            super();
+        public static SaltedBasicAuthCredentials salt(String salt, String username, String password) {
+            var salt1 = salt == null
+                ? AuthUtils.generateSalt()
+                : salt;
+            return new SaltedBasicAuthCredentials(
+                salt1,
+                username,
+                AuthUtils.encodePassword(salt1, password)
+            );
         }
     }
 }

@@ -21,11 +21,14 @@
             v-if="!pebble && showDurationDays"
             :modelValue="daysDurationValue"
             style="width:250px"
-            :max="365"
             :min="0"
-            :placeholder="`Days`"
+            :controls="false"
             @update:model-value="onInputDaysDuration"
-        />
+        >
+            <template #suffix>
+                <span class="duration-unit">Days</span>
+            </template>
+        </el-input-number>
         <el-time-picker
             v-if="!pebble && schema.format === 'duration'"
             :modelValue="timeDurationValue"
@@ -204,6 +207,13 @@
         font-size: 24px;
         vertical-align: top;
     }
+}
+
+.duration-unit{
+    color: var(--ks-content-inactive);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    background-color: transparent;
 }
 
 </style>

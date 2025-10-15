@@ -5,7 +5,6 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -95,14 +94,6 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<ExecutionKilled> kill() {
         return new PostgresQueue<>(ExecutionKilled.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.TEMPLATE_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<Template> template() {
-        return new PostgresQueue<>(Template.class, applicationContext);
     }
 
     @Override

@@ -918,16 +918,15 @@ public class ExecutionService {
     }
 
     /**
-     * Remove true if the execution is terminated, including listeners and afterExecution tasks.
+     * Remove true if the execution is terminated, including afterExecution tasks.
      */
     public boolean isTerminated(Flow flow, Execution execution) {
         if (!execution.getState().isTerminated()) {
             return false;
         }
 
-        List<ResolvedTask> validListeners = conditionService.findValidListeners(flow, execution);
         List<ResolvedTask> afterExecution = resolveAfterExecutionTasks(flow);
-        return execution.isTerminated(validListeners) && execution.isTerminated(afterExecution);
+        return execution.isTerminated(afterExecution);
     }
 
     /**

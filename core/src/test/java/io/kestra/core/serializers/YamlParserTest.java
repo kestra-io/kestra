@@ -150,18 +150,6 @@ class YamlParserTest {
     }
 
     @Test
-    void listeners() {
-        ConstraintViolationException exception = assertThrows(
-            ConstraintViolationException.class,
-            () -> modelValidator.validate(this.parse("flows/invalids/listener.yaml"))
-        );
-
-        assertThat(exception.getConstraintViolations().size()).isEqualTo(2);
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("must not be empty");
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage()).isEqualTo("must not be empty");
-    }
-
-    @Test
     void serialization() throws IOException {
         Flow flow = this.parse("flows/valids/minimal.yaml");
 
@@ -186,7 +174,7 @@ class YamlParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size()).isEqualTo(2);
-        assertThat(exception.getConstraintViolations().stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage()).contains("Invalid type: io.kestra.plugin.core.debug.MissingOne");
+        assertThat(exception.getConstraintViolations().stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage()).contains("Invalid type: io.kestra.plugin.core.debug.MissingTwo");
     }
 
     @Test

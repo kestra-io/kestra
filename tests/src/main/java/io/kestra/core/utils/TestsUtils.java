@@ -62,7 +62,7 @@ abstract public class TestsUtils {
     public static String randomTenant(String... prefix) {
         var list = List.of(prefix);
         if (list.isEmpty()) {
-            throw new IllegalArgumentException("tenant prefix must not be empty");
+            list = List.of(IdUtils.create());
         }
         var tenantRegex = "^[a-z0-9][a-z0-9_-]*";
         var validTenantPrefixes = list.stream()

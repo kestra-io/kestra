@@ -1,5 +1,7 @@
 package io.kestra.core.secret;
 
+import io.kestra.core.repositories.ArrayListTotal;
+import io.micronaut.data.model.Pageable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -12,9 +14,11 @@ import java.util.stream.Collectors;
 
 @Singleton
 @Slf4j
-public class SecretService {
+public class SecretService<META> {
     private static final String SECRET_PREFIX = "SECRET_";
+
     private Map<String, String> decodedSecrets;
+
 
     @PostConstruct
     private void postConstruct() {
@@ -44,6 +48,14 @@ public class SecretService {
             throw new SecretNotFoundException("Cannot find secret for key '" + key + "'.");
         }
         return secret;
+    }
+
+    public ArrayListTotal<META> searchByName(Pageable pageable, String tenantId, String query) throws IOException {
+        //noinspection unchecked
+        return ArrayListTotal.of(
+            pageable,
+            decodedSecrets.keySet().stream().filter(s -> query == null || s.toLowerCase().contains(query.toLowerCase())).map(s -> (META) s).toList()
+        );
     }
 
     public Map<String, Set<String>> inheritedSecrets(String tenantId, String namespace) throws IOException {

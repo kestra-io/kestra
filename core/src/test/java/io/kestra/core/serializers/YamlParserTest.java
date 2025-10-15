@@ -120,8 +120,8 @@ class YamlParserTest {
     void inputs() {
         Flow flow = this.parse("flows/valids/inputs.yaml");
 
-        assertThat(flow.getInputs().size()).isEqualTo(29);
-        assertThat(flow.getInputs().stream().filter(Input::getRequired).count()).isEqualTo(11L);
+        assertThat(flow.getInputs().size()).isEqualTo(28);
+        assertThat(flow.getInputs().stream().filter(Input::getRequired).count()).isEqualTo(10L);
         assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count()).isEqualTo(18L);
         assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count()).isEqualTo(3L);
         assertThat(flow.getInputs().stream().filter(r -> r instanceof StringInput stringInput && stringInput.getValidator() != null).count()).isEqualTo(1L);

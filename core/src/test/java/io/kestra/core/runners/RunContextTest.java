@@ -179,7 +179,7 @@ class RunContextTest {
 
     @Test
     void taskDefaults() throws TimeoutException, QueueException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(RunContextTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
         pluginDefaultsCaseTest.taskDefaults();
     }
 

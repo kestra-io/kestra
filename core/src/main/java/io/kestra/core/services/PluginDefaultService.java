@@ -25,7 +25,6 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
-import io.kestra.plugin.core.flow.Template;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -392,22 +391,12 @@ public class PluginDefaultService {
         FlowWithSource withDefault = YamlParser.parse(mapFlow, FlowWithSource.class, strictParsing);
 
         // revision, tenants, and deleted are not in the 'source', so we copy them manually
-        FlowWithSource full = withDefault.toBuilder()
+        return withDefault.toBuilder()
             .tenantId(tenant)
             .revision(revision)
             .deleted(isDeleted)
             .source(source)
             .build();
-
-        if (templatesEnabled && tenant != null) {
-            // This is a hack to set the tenant in template tasks.
-            // When using the Template task, we need the tenant to fetch the Template from the database.
-            // However, as the task is executed on the Executor we cannot retrieve it from the tenant service and have no other options.
-            // So we save it at flow creation/updating time.
-            full.allTasksWithChilds().stream().filter(task -> task instanceof Template).forEach(task -> ((Template) task).setTenantId(tenant));
-        }
-
-        return full;
     }
 
 

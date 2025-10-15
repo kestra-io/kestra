@@ -6,7 +6,6 @@ import io.kestra.core.utils.Enums;
 
 public enum SchemaType {
     FLOW,
-    TEMPLATE,
     TASK,
     TRIGGER,
     PLUGINDEFAULT,

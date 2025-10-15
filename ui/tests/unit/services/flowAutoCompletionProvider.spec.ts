@@ -6,7 +6,7 @@ const defaultFlow = `inputs:
   - id: input1
     type: STRING
   - id: input2
-    type: BOOLEAN
+    type: BOOL
 labels:
   myLabel1: "myLabelValue1"
   myLabel2: "myLabelValue2"

@@ -13,7 +13,6 @@ public enum Type {
     SELECT(SelectInput.class.getName()),
     INT(IntInput.class.getName()),
     FLOAT(FloatInput.class.getName()),
-    BOOLEAN(BooleanInput.class.getName()),
     BOOL(BoolInput.class.getName()),
     DATETIME(DateTimeInput.class.getName()),
     DATE(DateInput.class.getName()),

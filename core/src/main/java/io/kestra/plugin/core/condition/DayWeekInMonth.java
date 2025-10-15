@@ -85,16 +85,19 @@ public class DayWeekInMonth extends Condition implements ScheduleCondition {
         DayOfWeek renderedDayOfWeek = runContext.render(this.dayOfWeek).as(DayOfWeek.class, vars).orElseThrow();
         DayWeekInMonth.DayInMonth renderedDayInMonth = runContext.render(this.dayInMonth).as(DayWeekInMonth.DayInMonth.class, vars).orElseThrow();
 
-        if (renderedDayInMonth.equals(DayInMonth.FIRST)) {
+        if (renderedDayInMonth == DayInMonth.FIRST) {
             computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.LAST)) {
+        } else if (renderedDayInMonth == DayInMonth.SECOND) {
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek))
+                          .plusWeeks(1);
+        } else if (renderedDayInMonth == DayInMonth.THIRD) {
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek))
+                          .plusWeeks(2);
+        } else if (renderedDayInMonth == DayInMonth.FOURTH) {
+            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek))
+                          .plusWeeks(3);
+        } else if (renderedDayInMonth == DayInMonth.LAST) {
             computed = currentDate.with(TemporalAdjusters.lastInMonth(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.SECOND)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.THIRD)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
-        } else if (renderedDayInMonth.equals(DayInMonth.FOURTH)) {
-            computed = currentDate.with(TemporalAdjusters.firstInMonth(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek)).with(TemporalAdjusters.next(renderedDayOfWeek));
         } else {
             throw new IllegalArgumentException("Invalid dayInMonth");
         }

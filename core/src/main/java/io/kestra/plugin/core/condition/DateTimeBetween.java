@@ -109,11 +109,11 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
         ZonedDateTime beforeRendered = conditionContext.getRunContext().render(this.before).as(ZonedDateTime.class, vars).orElse(null);
         
         if (beforeRendered != null && afterRendered != null) {
-            return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);
+            return !currentDate.isAfter(afterRendered) && !currentDate.isBefore(beforeRendered);
         } else if (beforeRendered != null) {
-            return currentDate.isBefore(beforeRendered);
+            return !currentDate.isBefore(beforeRendered);
         } else if (afterRendered != null) {
-            return currentDate.isAfter(afterRendered);
+            return !currentDate.isAfter(afterRendered);
         } else {
             throw new IllegalConditionEvaluation("Invalid condition with no before nor after");
         }

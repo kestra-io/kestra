@@ -121,7 +121,7 @@ public class ExecutionController {
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
-    
+
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -168,7 +168,7 @@ public class ExecutionController {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
-    
+
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -1816,8 +1816,6 @@ public class ExecutionController {
     ) {
         String subscriberId = UUID.randomUUID().toString();
         return Flux.<Event<Execution>>create(emitter -> {
-                // Send initial event
-                emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
 
                 // Check if execution exists
                 try {
@@ -1826,6 +1824,9 @@ public class ExecutionController {
                         Duration.ofMillis(500),
                         Duration.ofSeconds(10)
                     );
+
+                    // Send initial event only if executionId exists
+                    emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
 
                     Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 

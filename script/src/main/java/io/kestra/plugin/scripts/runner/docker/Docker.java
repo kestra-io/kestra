@@ -390,7 +390,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
                 if (!existing.isEmpty()) {
                     containerId = existing.get(0).getId();
-                    logger.info("Resuming existing container {}", containerId);
+                    logger.debug("Resuming existing container: {}", containerId);
                 }
             }
 
@@ -505,7 +505,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     } else {
                         var volume = volumes.getVolumes().get(0);
                         filesVolumeName = volume.getName();
-                        logger.info("Volume found with name {} for resumed container {}", filesVolumeName, containerId);
+                        logger.debug("Volume found with name {} for resumed container {}", filesVolumeName, containerId);
                     }
                 }
                 

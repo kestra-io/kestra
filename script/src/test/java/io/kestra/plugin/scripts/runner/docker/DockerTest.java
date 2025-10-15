@@ -23,7 +23,8 @@ import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
-
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.mockito.Mockito;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
@@ -126,6 +127,7 @@ class DockerTest extends AbstractTaskRunnerTest {
         try (var client = DockerService.client(runContext, null, null, null, "rockylinux:9.3-minimal")) {
             Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
 
+            var timeout = Duration.ofSeconds(30);
             // Wait for the container to be created
             Await.until(() -> {
                 List<Container> existingContainers = client.listContainersCmd()
@@ -133,7 +135,7 @@ class DockerTest extends AbstractTaskRunnerTest {
                     .withLabelFilter(labels)
                     .exec();
                 return !existingContainers.isEmpty() && existingContainers.get(0).getState().equals("running");
-            }, Duration.ofMillis(100), Duration.ofMillis(1000)); // Add timeout to avoid waiting forever for container to be created
+            }, Duration.ofMillis(100), timeout); // Add timeout to avoid waiting forever for container to be created
 
             callOnKill(taskRunner, () -> {
                 // override the kill method to not kill the container
@@ -156,16 +158,40 @@ class DockerTest extends AbstractTaskRunnerTest {
             Thread resumeContainerThread = new Thread(throwRunnable(() -> anotherTaskRunner.run(anotherRunContext, resumeCommands, Collections.emptyList())));
             resumeContainerThread.start();
 
-            // Add timeout to avoid waiting forever for logs
-            var timeout = Duration.ofSeconds(1);
-            receive.blockLast(timeout);
             // Wait for the log message indicating resume
             LogEntry awaitLog = TestsUtils
-                .awaitLog(logs, logEntry -> logEntry.getMessage().contains("Resuming existing container"));
+                .awaitLog(logs, logEntry -> logEntry.getMessage().contains("Resuming existing container:"));
+            LogEntry createContainerLog = TestsUtils
+                .awaitLog(logs, logEntry -> logEntry.getMessage().contains("Container created:"));
 
-            // Assert that the log message is present
+            receive.blockLast(timeout);
+            // Assert that the log messages are present
+            assertThat(createContainerLog).isNotNull().withFailMessage("create container log should not be null");
+            assertThat(createContainerLog.getMessage()).contains("Container created:");
             assertThat(awaitLog).isNotNull().withFailMessage("await log should not be null");
-            assertThat(awaitLog.getMessage()).contains("Resuming existing container");
+            assertThat(awaitLog.getMessage()).contains("Resuming existing container:");
+
+            // Get container id from the logs using regex
+
+            String createContainerId = null;
+            String resumeContainerId = null;
+            Matcher createContainerMatcher =
+                Pattern.compile("Container created: ([\\w]+)").matcher(createContainerLog.getMessage());
+            if (createContainerMatcher.find()) {
+                createContainerId = createContainerMatcher.group(1);
+            }
+
+            assertThat(createContainerId)
+                .withFailMessage("Could not extract container id from create container log: %s", createContainerLog.getMessage())
+                .isNotNull();
+            Matcher resumeContainerMatcher =
+                Pattern.compile("Resuming existing container: ([\\w]+)").matcher(awaitLog.getMessage());
+            if (resumeContainerMatcher.find()) {
+                resumeContainerId = resumeContainerMatcher.group(1);
+            }
+
+            // Assert that the container id is the same
+            assertThat(resumeContainerId).isEqualTo(createContainerId);
 
             // Kill the container and verify cleanup
             anotherTaskRunner.kill();

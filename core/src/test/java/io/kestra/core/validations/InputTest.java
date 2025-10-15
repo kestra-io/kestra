@@ -29,29 +29,6 @@ class InputTest {
         assertThat(modelValidator.isValid(validInput).isEmpty()).isTrue();
     }
 
-    @SuppressWarnings("deprecation")
-    @Test
-    void inputNameDeprecation() {
-        String id = "test";
-        StringInput validInput = StringInput.builder()
-            .id(id)
-            .type(Type.STRING)
-            .build();
-
-        assertThat(validInput.getId()).isEqualTo(id);
-        assertThat(validInput.getName()).isNull();
-
-        String newName = "newName";
-        validInput = StringInput.builder()
-            .type(Type.STRING)
-            .build();
-
-        validInput.setName(newName);
-
-        assertThat(validInput.getName()).isEqualTo(newName);
-        assertThat(validInput.getId()).isEqualTo(newName);
-    }
-
     @Test
     void shouldFailFileInputWithDefault() {
         var fileInput = FileInput.builder()

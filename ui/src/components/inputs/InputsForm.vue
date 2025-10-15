@@ -109,17 +109,6 @@
                 />
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
-            <el-radio-group
-                :data-testid="`input-form-${input.id}`"
-                v-if="input.type === 'BOOLEAN'"
-                v-model="inputsValues[input.id]"
-                @update:model-value="onChange(input)"
-                class="w-100 boolean-inputs"
-            >
-                <el-radio-button :label="$t('true')" :value="true" />
-                <el-radio-button :label="$t('false')" :value="false" />
-                <el-radio-button :label="$t('undefined')" value="undefined" />
-            </el-radio-group>
             <el-switch
                 :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"
@@ -575,17 +564,6 @@
             requiredRules(input) {
                 if(input.required === false)
                     return undefined
-
-                if(input.type === "BOOLEAN"){
-                    return [{
-                        validator: (_, val, callback) => {
-                            if(val === "undefined"){
-                                return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
-                            }
-                            callback()
-                        },
-                    }]
-                }
 
                 if(["ENUM", "SELECT", "MULTISELECT"].includes(input.type)){
                     return [

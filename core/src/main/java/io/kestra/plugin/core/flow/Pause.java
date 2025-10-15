@@ -111,7 +111,7 @@ import java.util.*;
                     onResume:
                       - id: approved
                         description: Whether to approve the request
-                        type: BOOLEAN
+                        type: BOOL
                         defaults: true
                       - id: reason
                         description: Reason for approval or rejection

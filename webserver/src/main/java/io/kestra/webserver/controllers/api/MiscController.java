@@ -10,7 +10,6 @@ import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.NamespaceUtils;
@@ -50,9 +49,6 @@ public class MiscController {
     DashboardRepositoryInterface dashboardRepository;
 
     @Inject
-    ExecutionRepositoryInterface executionRepository;
-
-    @Inject
     InstanceService instanceService;
 
     @Inject
@@ -60,9 +56,6 @@ public class MiscController {
 
     @Inject
     BasicAuthService basicAuthService;
-
-    @Inject
-    Optional<TemplateRepositoryInterface> templateRepository;
 
     @Inject
     NamespaceUtils namespaceUtils;
@@ -115,7 +108,6 @@ public class MiscController {
             .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
-            .isTemplateEnabled(templateRepository.isPresent())
             .preview(Preview.builder()
                 .initial(this.initialPreviewRows)
                 .max(this.maxPreviewRows)
@@ -192,9 +184,6 @@ public class MiscController {
 
         @JsonInclude
         Boolean isUiAnonymousUsageEnabled;
-
-        @JsonInclude
-        Boolean isTemplateEnabled;
 
         Environment environment;
 

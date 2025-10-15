@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FlowDotCommandTest {
     @Test
     void run()  {
-        URL directory = TemplateValidateCommandTest.class.getClassLoader().getResource("flows/same/first.yaml");
+        URL directory = FlowDotCommandTest.class.getClassLoader().getResource("flows/same/first.yaml");
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 

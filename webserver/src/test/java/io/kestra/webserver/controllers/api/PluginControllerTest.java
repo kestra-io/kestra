@@ -172,16 +172,6 @@ class PluginControllerTest {
     }
 
     @Test
-    void template() {
-        Map<String, Object> doc = client.toBlocking().retrieve(
-            HttpRequest.GET(PATH + "/schemas/template"),
-            Argument.mapOf(String.class, Object.class)
-        );
-
-        assertThat(doc.get("$ref")).isEqualTo("#/definitions/io.kestra.core.models.templates.Template");
-    }
-
-    @Test
     void task() {
         Map<String, Object> doc = client.toBlocking().retrieve(
             HttpRequest.GET(PATH + "/schemas/task"),

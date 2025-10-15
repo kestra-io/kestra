@@ -105,14 +105,14 @@ public class Template extends Task implements FlowableTask<Template.Output> {
 
     @NotNull
     @Schema(
-        title = "The namespace of the template."
+        title = "The namespace of the template"
     )
     @PluginProperty
     private String namespace;
 
     @NotNull
     @Schema(
-        title = "The ID of the template."
+        title = "The ID of the template"
     )
     @PluginProperty
     private String templateId;
@@ -122,7 +122,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     private String tenantId;
 
     @Schema(
-        title = "The arguments to pass to the template.",
+        title = "The arguments to pass to the template",
         description = "You can provide a list of named arguments (like function argument on dev) allowing to rename " +
             "outputs of current flow for this template.\n" +
             "For example, if you declare this use of template like this: \n" +
@@ -327,7 +327,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The arguments passed to the template."
+            title = "The arguments passed to the template"
         )
         private final Map<String, Object> args;
     }

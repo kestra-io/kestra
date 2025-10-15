@@ -1,32 +1,21 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER" class="collapse mb-sm-4 mb-md-0">
+    <div class="collapse mb-sm-4 mb-md-0">
         <div class="button mb-2">
             <el-button @click="isNavbarVisible = !isNavbarVisible">
-                <menu-icon />
+                <MenuIcon />
             </el-button>
         </div>
-        <el-form :inline="true" @submit="prevent" :class="{'d-block': isNavbarVisible}">
+        <el-form :inline="true" @submit.prevent :class="{'d-block': isNavbarVisible}">
             <slot />
         </el-form>
     </div>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {ref} from "vue";
     import MenuIcon from "vue-material-design-icons/Menu.vue";
 
-    export default {
-        components: {MenuIcon},
-        data() {
-            return {
-                isNavbarVisible: false,
-            };
-        },
-        methods: {
-            prevent(event) {
-                event.preventDefault();
-            },
-        },
-    };
+    const isNavbarVisible = ref(false);
 </script>
 
 <style scoped lang="scss">

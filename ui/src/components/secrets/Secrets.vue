@@ -11,7 +11,6 @@
         </template>
     </Navbar>
     <section
-        data-component="FILENAME_PLACEHOLDER"
         class="d-flex flex-column fill-height padding-bottom"
         :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
     >
@@ -59,9 +58,9 @@
                 <SecretsTable
                     v-show="hasData === true"
                     :filterable="false"
-                    key-only
+                    keyOnly
                     :namespace="miscStore.configs?.systemNamespace ?? 'system'"
-                    :add-secret-modal-visible="addSecretModalVisible"
+                    :addSecretModalVisible="addSecretModalVisible"
                     @update:add-secret-modal-visible="addSecretModalVisible = $event"
                     @has-data="hasData = $event"
                 />
@@ -70,21 +69,21 @@
         <SecretsTable
             v-else
             filterable
-            :add-secret-modal-visible="addSecretModalVisible"
+            :addSecretModalVisible="addSecretModalVisible"
             :namespace="props.namespace"
             @update:add-secret-modal-visible="addSecretModalVisible = $event"
         />
     </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Navbar from "../layout/TopNavBar.vue";
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
-    import useRouteContext from "../../mixins/useRouteContext.js";
-    import {useMiscStore} from "override/stores/misc.js";
+    import useRouteContext from "../../composables/useRouteContext";
+    import {useMiscStore} from "override/stores/misc";
     import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
@@ -107,7 +106,7 @@
     useRouteContext(routeInfo);
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .no-secret-manager-block {
         padding: 0 10.75rem;
 

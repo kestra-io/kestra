@@ -21,7 +21,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, PropType, watch} from "vue";
 
     import {Chart, getDashboard} from "../composables/useDashboards";
@@ -33,7 +33,7 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts";
     import {totalsDurationLegend, totalsLegend} from "../composables/useLegend";
 
     import moment from "moment";
@@ -198,7 +198,7 @@
     }, {deep: true});
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     $height: 200px;
 
     .chart {

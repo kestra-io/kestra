@@ -9,6 +9,7 @@ import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
 
 import MultiPanelTabs from "../../../src/components/MultiPanelTabs.vue";
+import {Panel} from "../../../src/utils/multiPanelTypes";
 
 const meta: Meta<typeof MultiPanelTabs> = {
     title: "Components/MultiPanelTabs",
@@ -33,7 +34,7 @@ const render: Story["render"] = ({modelValue}) => ({
             textAlign: "right",
             padding: "0 1rem"
           };
-          
+
         return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-background-body)">
             <div style={{...labelStyle, background: "red", width: "250px"}}>This is an example of 250px wide element.</div>
             <div style={{...labelStyle, background: "blue", width: "800px", top: "20px"}}>This is an example of 800px wide element.</div>
@@ -78,6 +79,7 @@ const argGenerator = (index?: number) => {
                     value: "tab1",
                     component: () => <PlaceholderComponent tabId="1" />,
                 },
+                size: 1,
                 tabs: [
                     {
                         button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
@@ -102,6 +104,7 @@ const argGenerator = (index?: number) => {
                     value: "tab4",
                     component: () => <PlaceholderComponent tabId="4" />,
                 },
+                size: 1,
                 tabs: [
 
                     {
@@ -121,7 +124,7 @@ const argGenerator = (index?: number) => {
                     },
                 ],
             },
-        ]
+        ] satisfies Panel[],
     }
 
     return index === undefined ? values : {modelValue:[values.modelValue[index]]}

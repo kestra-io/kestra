@@ -12,5 +12,7 @@ class FileUtilsTest {
         assertThat(FileUtils.getExtension("")).isNull();
         assertThat(FileUtils.getExtension("/file/hello")).isNull();
         assertThat(FileUtils.getExtension("/file/hello.txt")).isEqualTo(".txt");
+        assertThat(FileUtils.getExtension("/file/hello.file with spaces.txt")).isEqualTo(".txt");
+        assertThat(FileUtils.getExtension("/file/hello.file.with.multiple.dots.txt")).isEqualTo(".txt");
     }
 }

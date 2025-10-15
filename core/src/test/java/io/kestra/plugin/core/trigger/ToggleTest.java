@@ -11,12 +11,14 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.schedulers.AbstractScheduler;
+import io.kestra.core.runners.TestRunnerUtils;
+import io.kestra.scheduler.AbstractScheduler;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,13 +38,13 @@ class ToggleTest {
     private AbstractScheduler scheduler;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @LoadFlows({"flows/valids/trigger-toggle.yaml"})
     void toggle() throws Exception {
         // we need to await for the scheduler to be ready otherwise there may be an issue with updating the trigger
-        Await.until(() -> scheduler.isReady());
+        Await.until(() -> scheduler.isReady(), Duration.ofMillis(100), Duration.ofSeconds(20));
 
         Trigger trigger = Trigger
             .builder()

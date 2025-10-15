@@ -6,7 +6,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
@@ -14,7 +14,6 @@ import io.kestra.core.models.flows.State;
 
 import java.util.concurrent.TimeoutException;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -22,7 +21,7 @@ class AllowFailureTest {
     @Inject
     private FlowInputOutput flowIO;
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Test
     @ExecuteFlow("flows/valids/allow-failure.yaml")
@@ -35,10 +34,10 @@ class AllowFailureTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/allow-failure.yaml"})
+    @LoadFlows(value = {"flows/valids/allow-failure.yaml"}, tenantId = "fail")
     void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            "fail",
             "io.kestra.tests",
             "allow-failure",
             null,
@@ -51,6 +50,29 @@ class AllowFailureTest {
         assertThat(execution.findTaskRunsByTaskId("switch").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("crash").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/allow-failure-with-retry.yaml")
+    void withRetry(Execution execution) {
+        // Verify the execution completes in warning
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+
+        // Verify the retry_block completes with WARNING (because child task failed but was allowed)
+        assertThat(execution.findTaskRunsByTaskId("retry_block").getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+
+        // Verify failing_task was retried (3 attempts total: initial + 2 retries)
+        assertThat(execution.findTaskRunsByTaskId("failing_task").getFirst().attemptNumber()).isEqualTo(3);
+        assertThat(execution.findTaskRunsByTaskId("failing_task").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // Verify error handler was executed on failures
+        assertThat(execution.findTaskRunsByTaskId("error_handler").size()).isEqualTo(1);
+
+        // Verify finally block executed
+        assertThat(execution.findTaskRunsByTaskId("finally_task").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // Verify downstream_task executed (proving the flow didn't get stuck)
+        assertThat(execution.findTaskRunsByTaskId("downstream_task").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     private static void control(Execution execution) {

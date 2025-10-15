@@ -21,7 +21,7 @@ const getNestedKeys = (obj, prefix = "") =>
 // Use English as a base language
 const content = getNestedKeys(readJSON(getPath("en"))["en"]);
 
-const languages = ["de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "ru", "zh_CN"];
+const languages = ["de", "es", "fr", "hi", "it", "ja", "ko", "pl", "pt", "pt_BR", "ru", "zh_CN"];
 const paths = languages.map((lang) => getPath(lang));
 
 const globalMissing = {}

@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
@@ -25,6 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
 class RunContextLoggerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)

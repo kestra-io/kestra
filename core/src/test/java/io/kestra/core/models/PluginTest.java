@@ -10,7 +10,12 @@ class PluginTest {
 
     @Test
     void shouldReturnTrueForInternal() {
-        Assertions.assertTrue( io.kestra.core.models.Plugin.isInternal(TestPlugin.class));
+        Assertions.assertTrue(io.kestra.core.models.Plugin.isInternal(TestPlugin.class));
+    }
+
+    @Test
+    void shouldReturnTrueForPrimary() {
+        Assertions.assertTrue(io.kestra.core.models.Plugin.isPrimary(TestPlugin.class));
     }
 
     @Test
@@ -18,7 +23,7 @@ class PluginTest {
         Assertions.assertEquals(Optional.of("test"), io.kestra.core.models.Plugin.getId(TestPlugin.class));
     }
 
-    @Plugin(internal = true)
+    @Plugin(internal = true, priority = Plugin.Priority.PRIMARY)
     @Plugin.Id("test")
     public static class TestPlugin implements io.kestra.core.models.Plugin {
 

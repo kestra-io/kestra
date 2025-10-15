@@ -91,6 +91,12 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
             }
         },
+        KIND("kind") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS,Op.NOT_EQUALS);
+            }
+        },
         LABELS("labels") {
             @Override
             public List<Op> supportedOp() {
@@ -211,7 +217,7 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
                     Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.CHILD_FILTER,
-                    Field.NAMESPACE
+                    Field.NAMESPACE,Field.KIND
                 );
             }
         },
@@ -254,18 +260,6 @@ public record QueryFilter(
          *
          * @return List of {@code ResourceField} with resource names, fields, and operations.
          */
-        public static List<ResourceField> asResourceList() {
-            return Arrays.stream(values())
-                .map(Resource::toResourceField)
-                .toList();
-        }
-
-        private static ResourceField toResourceField(Resource resource) {
-            List<FieldOp> fieldOps = resource.supportedField().stream()
-                .map(Resource::toFieldInfo)
-                .toList();
-            return new ResourceField(resource.name().toLowerCase(), fieldOps);
-        }
 
         private static FieldOp toFieldInfo(Field field) {
             List<Operation> operations = field.supportedOp().stream()
@@ -277,9 +271,6 @@ public record QueryFilter(
         private static Operation toOperation(Op op) {
             return new Operation(op.name(), op.name());
         }
-    }
-
-    public record ResourceField(String name, List<FieldOp> fields) {
     }
 
     public record FieldOp(String name, String value, List<Operation> operations) {

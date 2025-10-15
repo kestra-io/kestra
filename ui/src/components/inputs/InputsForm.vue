@@ -7,13 +7,13 @@
             :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
-            :inline-message="true"
+            :inlineMessage="true"
         >
             <template #label>
-                <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+                <Markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
-            <editor
-                :full-height="false"
+            <Editor
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
@@ -23,14 +23,14 @@
                 @confirm="onSubmit"
             />
             <el-select
-                :full-height="false"
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="selectedTriggerLocal[input.id]"
                 @update:model-value="onChange(input)"
-                :allow-create="input.allowCustomValue"
+                :allowCreate="input.allowCustomValue"
                 filterable
                 clearable
             >
@@ -40,7 +40,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <markdown :source="item" />
+                    <Markdown :source="item" />
                 </el-option>
             </el-select>
             <el-radio-group
@@ -58,7 +58,7 @@
                 />
             </el-radio-group>
             <el-select
-                :full-height="false"
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'MULTISELECT'"
@@ -68,7 +68,7 @@
                 multiple
                 filterable
                 clearable
-                :allow-create="input.allowCustomValue"
+                :allowCreate="input.allowCustomValue"
             >
                 <el-option
                     v-for="item in (input.values ?? input.options)"
@@ -76,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <markdown :source="item" />
+                    <Markdown :source="item" />
                 </el-option>
             </el-select>
             <el-input
@@ -85,7 +85,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
-                show-password
+                showPassword
             />
             <span v-if="input.type === 'INT'">
                 <el-input-number
@@ -216,33 +216,33 @@
                     </div>
                 </div>
             </div>
-            <editor
-                :full-height="false"
+            <Editor
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'JSON'"
-                :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
+                :showScroll="inputsValues[input.id]?.length > 530 ? true : false"
                 :data-testid="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
             />
-            <editor
-                :full-height="false"
+            <Editor
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
                 :data-testid="`input-form-${input.id}`"
                 lang="yaml"
-                :model-value="inputsValues[input.id]"
+                :modelValue="inputsValues[input.id]"
                 @change="onYamlChange(input, $event)"
             />
-            <duration-picker
+            <DurationPicker
                 v-if="input.type === 'DURATION'"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             />
-            <markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
             <template v-if="executeClicked">
                 <template v-for="err in input.errors ?? []" :key="err">
                     <el-text type="warning">
@@ -256,7 +256,7 @@
         </div>
     </template>
 
-    <el-alert type="info" :show-icon="true" :closable="false" class="mb-3" v-else>
+    <el-alert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>
@@ -339,7 +339,7 @@
                 editableItems: {},
             };
         },
-        emits: ["update:modelValue", "confirm", "validation"],
+        emits: ["update:modelValue", "update:modelValueNoDefault", "confirm", "validation"],
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
             this.debouncedValidation = debounce(this.validateInputs, 500)
@@ -356,6 +356,7 @@
                             // to avoid too many calls to the server
                             this.debouncedValidation();
                             this.$emit("update:modelValue", this.inputsValues);
+                            this.$emit("update:modelValueNoDefault", this.inputsValuesWithNoDefault());
                         }
                         this.previousInputsValues = JSON.parse(JSON.stringify(val))
                     },
@@ -385,6 +386,21 @@
             document.removeEventListener("keydown", this._keyListener);
         },
         methods: {
+            normalizeJSON(value) {
+                try {
+                    // Step 1: Remove trailing commas in objects and arrays
+                    let cleaned = value.replace(/,\s*([}\]])/g, "$1");
+
+                    // Step 2: Quote unquoted keys (simple case: keys with letters, numbers, or _)
+                    cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, "$1\"$2\":");
+
+                    // Step 3: Parse into JS object
+                    return JSON.parse(cleaned);
+                } catch (e) {
+                    console.error("Failed to normalize JSON:", e.message);
+                    return null;
+                }
+            },
             inputError(id) {
                 // if this input has not been edited yet
                 // showing any error is annoying
@@ -406,8 +422,15 @@
                     if (this.inputsValues[id] === undefined || this.inputsValues[id] === null || input.isDefault) {
                         if (type === "MULTISELECT") {
                             this.multiSelectInputs[id] = value;
+                        } else if(type === "JSON" && value == undefined && input.isDefault) {
+                            /*
+                            * Handle multiline JSON default values
+                            * See https://github.com/kestra-io/kestra/issues/11449
+                            */
+                            this.inputsValues[id] = Inputs.normalize(type, this.normalizeJSON(input.defaults));
+                        } else {
+                            this.inputsValues[id] = Inputs.normalize(type, value);
                         }
-                        this.inputsValues[id] = Inputs.normalize(type, value);
                     }
                 }
             },
@@ -419,6 +442,7 @@
                 }, 2000);
                 input.isDefault = false;
                 this.$emit("update:modelValue", this.inputsValues);
+                this.$emit("update:modelValueNoDefault", this.inputsValuesWithNoDefault());
             },
             onSubmit() {
                 this.$emit("confirm");
@@ -445,6 +469,12 @@
                 this.inputsValues[input.id] = e.target.value;
                 this.onChange(input);
             },
+            inputsValuesWithNoDefault() {
+                return this.inputsMetaData.reduce((acc, input) => {
+                    acc[input.id] = input.isDefault ? undefined : this.inputsValues[input.id];
+                    return acc;
+                }, {});
+            },
             numberHint(input){
                 const {min, max} = input;
 
@@ -462,10 +492,7 @@
                     return;
                 }
               
-                const inputsValuesWithNoDefault = this.inputsMetaData.reduce((acc, input) => {
-                    acc[input.id] = input.isDefault ? undefined : this.inputsValues[input.id];
-                    return acc;
-                }, {});
+                const inputsValuesWithNoDefault = this.inputsValuesWithNoDefault();
                 
                 const formData = inputsToFormData(this, this.inputsMetaData, inputsValuesWithNoDefault);
 

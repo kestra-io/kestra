@@ -1,18 +1,17 @@
 <template>
     <el-tooltip
-        data-component="FILENAME_PLACEHOLDER"
         :key="uid('tooltip')"
         v-if="date"
         :content="inverted ? from : full"
         :persistent="false"
         transition=""
-        :hide-after="0"
+        :hideAfter="0"
         effect="light"
     >
         <span :class="className">{{ inverted ? full : from }}</span>
     </el-tooltip>
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
     import Utils from "../../utils/utils";
 

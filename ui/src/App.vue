@@ -1,7 +1,7 @@
 <template>
-    <doc-id-display />
+    <DocIdDisplay />
     <el-config-provider>
-        <error-toast v-if="coreStore.message" :no-auto-hide="true" :message="coreStore.message" />
+        <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
@@ -51,9 +51,6 @@
             ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore, useFlowStore),
             envName() {
                 return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
-            },
-            isOSS(){
-                return true;
             },
             shouldRenderApp() {
                 return this.loaded
@@ -122,20 +119,6 @@
             },
         },
         watch: {
-            $route: {
-                async handler(route) {
-                    if(route.name === "home" && this.isOSS) {
-                        await this.flowStore.findFlows({size: 10, sort: "id:asc"})
-                        await this.executionsStore.findExecutions({size: 10}).then(response => {
-                            this.executions = response?.total ?? 0;
-                        })
-
-                        if (!this.executions && !this.flowStore.overallTotal) {
-                            this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
-                        }
-                    }
-                }
-            },
             envName() {
                 this.setTitleEnvSuffix();
             }

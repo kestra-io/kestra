@@ -664,6 +664,14 @@ public abstract class StorageTestSuite {
     }
 
     @Test
+    void put_PathWithTenantStringInIt() throws Exception {
+        String tenantId = IdUtils.create();
+        String prefix = tenantId + "/" + IdUtils.create();
+
+        put(tenantId, prefix);
+    }
+
+    @Test
     void putFromAnotherFile() throws Exception {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
@@ -978,6 +986,14 @@ public abstract class StorageTestSuite {
     void deleteByPrefix() throws Exception {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
+
+        deleteByPrefix(prefix, tenantId);
+    }
+
+    @Test
+    void deleteByPrefix_PathWithTenantStringInIt() throws Exception {
+        String tenantId = IdUtils.create();
+        String prefix = tenantId + "/" + IdUtils.create();
 
         deleteByPrefix(prefix, tenantId);
     }

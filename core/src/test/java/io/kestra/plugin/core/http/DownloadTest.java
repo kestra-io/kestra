@@ -217,6 +217,25 @@ class DownloadTest {
         assertThat(output.getUri().toString()).endsWith("filename..jpg");
     }
 
+    @Test
+    void contentDispositionWithSpaceAfterDot() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition-space-after-dot"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Download.Output output = task.run(runContext);
+
+        assertThat(output.getUri().toString()).doesNotContain("/secure-path/");
+        assertThat(output.getUri().toString()).endsWith("file.with+spaces.txt");
+    }
+
     @Controller()
     public static class SlackWebController {
         @Get("500")
@@ -256,6 +275,12 @@ class DownloadTest {
         public HttpResponse<byte[]> contentDispositionWithDoubleDot() {
             return HttpResponse.ok("Hello World".getBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"/secure-path/filename..jpg\"");
+        }
+
+        @Get("content-disposition-space-after-dot")
+        public HttpResponse<byte[]> contentDispositionWithSpaceAfterDot() {
+            return HttpResponse.ok("Hello World".getBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"file.with spaces.txt\"");
         }
     }
 }

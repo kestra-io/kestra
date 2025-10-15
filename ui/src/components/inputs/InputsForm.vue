@@ -26,7 +26,7 @@
                 :fullHeight="false"
                 :input="true"
                 :navbar="false"
-                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
+                v-if="input.type === 'SELECT' && !input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="selectedTriggerLocal[input.id]"
                 @update:model-value="onChange(input)"
@@ -44,7 +44,7 @@
                 </el-option>
             </el-select>
             <el-radio-group
-                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio"
+                v-if="input.type === 'SELECT' && input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
@@ -519,7 +519,7 @@
                 if(input.required === false)
                     return undefined
 
-                if(["ENUM", "SELECT", "MULTISELECT"].includes(input.type)){
+                if(["SELECT", "MULTISELECT"].includes(input.type)){
                     return [
                         {
                             required: true,

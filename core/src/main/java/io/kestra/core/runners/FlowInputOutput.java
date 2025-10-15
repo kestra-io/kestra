@@ -368,7 +368,7 @@ public class FlowInputOutput {
             case STRING, ENUM, SELECT, SECRET, EMAIL -> resolveDefaultPropertyAs(input, renderer, String.class);
             case INT -> resolveDefaultPropertyAs(input, renderer, Integer.class);
             case FLOAT -> resolveDefaultPropertyAs(input, renderer, Float.class);
-            case BOOLEAN, BOOL -> resolveDefaultPropertyAs(input, renderer, Boolean.class);
+            case BOOL -> resolveDefaultPropertyAs(input, renderer, Boolean.class);
             case DATETIME -> resolveDefaultPropertyAs(input, renderer, Instant.class);
             case DATE -> resolveDefaultPropertyAs(input, renderer, LocalDate.class);
             case TIME -> resolveDefaultPropertyAs(input, renderer, LocalTime.class);
@@ -487,7 +487,6 @@ public class FlowInputOutput {
                 case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
                 case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
-                case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
                 case BOOL -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
                 case DATETIME -> current instanceof Instant ? current : Instant.parse(current.toString());
                 case DATE -> current instanceof LocalDate ? current : LocalDate.parse(current.toString());

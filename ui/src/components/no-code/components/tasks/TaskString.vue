@@ -20,13 +20,14 @@
         <el-input-number
             v-if="!pebble && showDurationDays"
             :modelValue="daysDurationValue"
-            style="width:250px"
+            align="right"
+            style="width:200px"
             :min="0"
             :controls="false"
             @update:model-value="onInputDaysDuration"
         >
             <template #suffix>
-                <span class="duration-unit">Days</span>
+                <span class="duration-unit">{{ $t("days") }}</span>
             </template>
         </el-input-number>
         <el-time-picker
@@ -36,6 +37,7 @@
             :defaultValue="defaultDuration"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'duration'}`"
             @update:model-value="onInputDuration"
+            @clear="onInputDaysDuration(undefined)"
         />
         <InputText
             v-if="disabled"
@@ -101,12 +103,12 @@
         return props.schema.format === "duration" && props.root?.startsWith("timeWindow")
     });
 
-    const daysDurationValue = computed<number>(() => {
+    const daysDurationValue = computed<number | undefined>(() => {
         if (typeof values.value === "string") {
             const duration = $moment.duration(values.value);
             return Math.floor(duration.asDays());
         }
-        return 0;
+        return undefined;
     });
 
     const timeDurationValue = computed<Date | undefined>(() => {
@@ -145,16 +147,22 @@
 
     function onInputDaysDuration(value: number | undefined) {
         const currentTimeDuration = timeDurationValue.value;
-        const emitted = (value === undefined || !currentTimeDuration)
+        const emitted = (value === undefined)
             ? undefined
-            : $moment
-                .duration({
-                    days: value,
-                    hours: currentTimeDuration.getHours(),
-                    minutes: currentTimeDuration.getMinutes(),
-                    seconds: currentTimeDuration.getSeconds(),
-                })
-                .toString();
+            : currentTimeDuration === undefined
+                ? $moment
+                    .duration({
+                        days: value,
+                    })
+                    .toString()
+                : $moment
+                    .duration({
+                        days: value,
+                        hours: currentTimeDuration.getHours(),
+                        minutes: currentTimeDuration.getMinutes(),
+                        seconds: currentTimeDuration.getSeconds(),
+                    })
+                    .toString()
         emit("update:modelValue", emitted);
     }
 

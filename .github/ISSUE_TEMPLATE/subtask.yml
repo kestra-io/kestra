@@ -1,0 +1,21 @@
+name: Subtask
+title: "[Subtask] "
+description: Create a subtask linked to a parent issue.
+labels: ' '
+
+body:
+  - type: textarea
+    attributes:
+      label: Subtask Description
+      description: Clearly describe the purpose and details of this subtask.
+      placeholder: Explain what needs to be done in this subtask.
+    validations:
+      required: true
+
+  - type: input
+    attributes:
+      label: Parent Issue
+      description: Provide the link or reference number of the parent issue (e.g., #123).
+      placeholder: "Example: #45 or https://github.com/org/repo/issues/45"
+    validations:
+      required: true

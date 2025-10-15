@@ -169,7 +169,7 @@
     const parsedData = computed(() => {
         const rawData = generated.value.results;
         const xAxis = (() => {
-            const values = rawData.map((v) => {
+            const values = rawData?.map((v) => {
                 return parseValue(v[chartOptions.column]);
             });
 
@@ -179,7 +179,7 @@
         const aggregatorKeys = aggregator.value.map(([key]) => key);
 
         const reducer = (array, field, yAxisID) => {
-            if (!array.length) return;
+            if (!array?.length) return;
 
             const {columns} = data;
             const {column, colorByColumn} = chartOptions;
@@ -260,11 +260,11 @@
 
         let duration: number[] = [];
         if(yBShown.value){
-            const helper = Array.from(new Set(rawData.map((v) => parseValue(v.date)))).sort();
+            const helper = Array.from(new Set(rawData?.map((v) => parseValue(v.date)))).sort();
 
             // Step 1: Group durations by formatted date
             const groupedDurations = {};
-            rawData.forEach(item => {
+            rawData?.forEach(item => {
                 const formattedDate = parseValue(item.date);
                 groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration;
             });

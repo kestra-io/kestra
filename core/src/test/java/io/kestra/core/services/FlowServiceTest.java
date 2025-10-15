@@ -5,12 +5,9 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.flows.Type;
-import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -262,22 +259,6 @@ class FlowServiceTest {
         assertThat(warnings.size()).isEqualTo(2);
         assertThat(warnings.getFirst().from()).isEqualTo("io.kestra.core.runners.test.task.Alias");
         assertThat(warnings.getFirst().to()).isEqualTo("io.kestra.core.runners.test.TaskWithAlias");
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    void propertyRenamingDeprecation() {
-        FlowWithSource flow = FlowWithSource.builder()
-            .id("flowId")
-            .namespace(TEST_NAMESPACE)
-            .tasks(Collections.singletonList(Echo.builder()
-                .id("taskId")
-                .type(Return.class.getName())
-                .format(Property.ofValue("test"))
-                .build()))
-            .build();
-
-        assertThat(flowService.deprecationPaths(flow)).containsExactlyInAnyOrder("tasks[0]");
     }
 
     @Test

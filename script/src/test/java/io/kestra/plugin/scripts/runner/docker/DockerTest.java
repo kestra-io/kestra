@@ -10,6 +10,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import jakarta.inject.Inject;
@@ -18,6 +19,7 @@ import org.assertj.core.api.Assertions;
 import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
+import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -87,16 +89,27 @@ class DockerTest extends AbstractTaskRunnerTest {
         assertThat(result.getLogConsumer().getStdOutCount()).isEqualTo(1);
     }
 
+    public static void callOnKill(TaskRunner<?> taskRunner, Runnable runnable) throws Exception {
+        Method method = TaskRunner.class.getDeclaredMethod("onKill", Runnable.class);
+        method.setAccessible(true);
+        method.invoke(taskRunner, runnable);
+    }
+
     @Test
     void killAfterResume() throws Exception {
-        var runContext = runContext(this.runContextFactory);
+        var taskRunId = IdUtils.create();
+
+        // Create a new RunContext with a specific taskRunId
+        var runContext = runContext(this.runContextFactory, null, taskRunId);
         var commands = initScriptCommands(runContext);
 
 
         // Setup log queue consumer
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, (logEntry) -> {
-            logs.add(logEntry.getLeft());
+            if (logEntry.isLeft()) {
+                logs.add(logEntry.getLeft());
+            }
         });
 
         var commandsList = ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(),
@@ -120,13 +133,16 @@ class DockerTest extends AbstractTaskRunnerTest {
                     .withLabelFilter(labels)
                     .exec();
                 return !existingContainers.isEmpty() && existingContainers.get(0).getState().equals("running");
+            }, Duration.ofMillis(100), Duration.ofMillis(1000)); // Add timeout to avoid waiting forever for container to be created
+
+            callOnKill(taskRunner, () -> {
+                // override the kill method to not kill the container
             });
             initialContainerThread.interrupt();
 
-            // Create a new RunContext with the same taskrun variables to maintain labels
-            @SuppressWarnings("unchecked")
-            Map<String, Object> taskRunProps = new HashMap<>((Map<String, Object>) runContext.getVariables().get("taskrun"));
-            RunContext anotherRunContext = runContext(this.runContextFactory, Map.of("taskrun", taskRunProps));
+            // Create a new RunContext with the same taskRunId to maintain labels AND the same method to get a similar context
+            RunContext anotherRunContext = runContext(this.runContextFactory, null, taskRunId);
+
             var anotherTaskRunner = ((Docker) taskRunner())
                 .toBuilder()
                 .delete(Property.ofValue(false))
@@ -139,12 +155,17 @@ class DockerTest extends AbstractTaskRunnerTest {
             Mockito.when(resumeCommands.getCommands()).thenReturn(Property.ofValue(commandsList));
             Thread resumeContainerThread = new Thread(throwRunnable(() -> anotherTaskRunner.run(anotherRunContext, resumeCommands, Collections.emptyList())));
             resumeContainerThread.start();
-            // Wait for the log message indicating resume
-            LogEntry awaitLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Resuming existing container"));
-            // assertThat(awaitLog).isNotNull().withFailMessage("await log should not be null");
-            // assertThat(awaitLog.getMessage()).contains("Resuming existing container");
 
-            receive.blockLast();
+            // Add timeout to avoid waiting forever for logs
+            var timeout = Duration.ofSeconds(1);
+            receive.blockLast(timeout);
+            // Wait for the log message indicating resume
+            LogEntry awaitLog = TestsUtils
+                .awaitLog(logs, logEntry -> logEntry.getMessage().contains("Resuming existing container"));
+
+            // Assert that the log message is present
+            assertThat(awaitLog).isNotNull().withFailMessage("await log should not be null");
+            assertThat(awaitLog.getMessage()).contains("Resuming existing container");
 
             // Kill the container and verify cleanup
             anotherTaskRunner.kill();

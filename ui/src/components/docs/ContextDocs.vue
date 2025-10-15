@@ -30,13 +30,12 @@
             <template v-if="isOnline">
                 <ContextDocsSearch />
                 <DocsMenu />
+                <DocsLayout>
+                    <template #content>
+                        <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
+                    </template>
+                </DocsLayout>
             </template>
-            
-            <DocsLayout v-if="isOnline">
-                <template #content>
-                    <MDCRenderer v-if="ast?.body" :body="ast.body" :data="ast.data" :key="ast" :components="proseComponents" />
-                </template>
-            </DocsLayout>
             <Markdown v-else :source="OFFLINE_MD" class="m-3" />
         </div>
     </ContextInfoContent>

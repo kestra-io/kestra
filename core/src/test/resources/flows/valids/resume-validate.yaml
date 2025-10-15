@@ -10,7 +10,7 @@ tasks:
     onResume:
       - id: approved
         description: Whether to approve the request
-        type: BOOLEAN
+        type: BOOL
         defaults: true
   - id: last
     type: io.kestra.plugin.core.debug.Return

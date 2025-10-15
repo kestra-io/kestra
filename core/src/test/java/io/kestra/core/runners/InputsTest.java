@@ -70,7 +70,6 @@ public class InputsTest {
     );
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")
-        .put("enum", "ENUM_VALUE")
         .put("int", "42")
         .put("float", "42.42")
         .put("bool", "false")
@@ -200,7 +199,6 @@ public class InputsTest {
         typeds.put("bool", false);
 
         assertThat(typeds.get("string")).isEqualTo("myString");
-        assertThat(typeds.get("enum")).isEqualTo("ENUM_VALUE");
         assertThat(typeds.get("int")).isEqualTo(42);
         assertThat(typeds.get("float")).isEqualTo(42.42F);
         assertThat((Boolean) typeds.get("bool")).isFalse();
@@ -342,17 +340,6 @@ public class InputsTest {
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map, "tenant11"));
 
         assertThat(e.getMessage()).contains("Invalid input for `uri`, Expected `URI` but received `http:/bla`, but received `http:/bla`");
-    }
-
-    @Test
-    @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "tenant12")
-    void inputEnumFailed() {
-        HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("enum", "INVALID");
-
-        ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map, "tenant12"));
-
-        assertThat(e.getMessage()).isEqualTo("enum: Invalid input for `enum`, it must match the values `[ENUM_VALUE, OTHER_ONE]`, but received `INVALID`");
     }
 
     @Test

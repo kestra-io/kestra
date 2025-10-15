@@ -35,7 +35,6 @@ import lombok.experimental.SuperBuilder;
     @JsonSubTypes.Type(value = JsonInput.class, name = "JSON"),
     @JsonSubTypes.Type(value = SecretInput.class, name = "SECRET"),
     @JsonSubTypes.Type(value = StringInput.class, name = "STRING"),
-    @JsonSubTypes.Type(value = EnumInput.class, name = "ENUM"),
     @JsonSubTypes.Type(value = SelectInput.class, name = "SELECT"),
     @JsonSubTypes.Type(value = TimeInput.class, name = "TIME"),
     @JsonSubTypes.Type(value = URIInput.class, name = "URI"),

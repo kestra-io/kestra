@@ -361,7 +361,7 @@ public class FlowInputOutput {
 
     public static Object resolveDefaultValue(Input<?> input, PropertyContext renderer) throws IllegalVariableEvaluationException {
         return switch (input.getType()) {
-            case STRING, ENUM, SELECT, SECRET, EMAIL -> resolveDefaultPropertyAs(input, renderer, String.class);
+            case STRING, SELECT, SECRET, EMAIL -> resolveDefaultPropertyAs(input, renderer, String.class);
             case INT -> resolveDefaultPropertyAs(input, renderer, Integer.class);
             case FLOAT -> resolveDefaultPropertyAs(input, renderer, Float.class);
             case BOOL -> resolveDefaultPropertyAs(input, renderer, Boolean.class);
@@ -473,7 +473,7 @@ public class FlowInputOutput {
     private Object parseType(Execution execution, Type type, String id, Type elementType, Object current) throws Exception {
         try {
             return switch (type) {
-                case SELECT, ENUM, STRING, EMAIL -> current.toString();
+                case SELECT, STRING, EMAIL -> current.toString();
                 case SECRET -> {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");

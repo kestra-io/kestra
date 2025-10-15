@@ -274,16 +274,6 @@ class FlowServiceTest {
         FlowWithSource flow = FlowWithSource.builder()
             .id("flowId")
             .namespace(TEST_NAMESPACE)
-            .inputs(List.of(
-                StringInput.builder()
-                    .id("inputWithId")
-                    .type(Type.STRING)
-                    .build(),
-                StringInput.builder()
-                    .name("inputWithName")
-                    .type(Type.STRING)
-                    .build()
-            ))
             .tasks(Collections.singletonList(Echo.builder()
                 .id("taskId")
                 .type(Return.class.getName())
@@ -291,7 +281,7 @@ class FlowServiceTest {
                 .build()))
             .build();
 
-        assertThat(flowService.deprecationPaths(flow)).containsExactlyInAnyOrder("inputs[1].name", "tasks[0]");
+        assertThat(flowService.deprecationPaths(flow)).containsExactlyInAnyOrder("tasks[0]");
     }
 
     @Test

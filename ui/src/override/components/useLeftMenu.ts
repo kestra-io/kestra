@@ -1,12 +1,10 @@
 import {computed} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
-import {useMiscStore} from "override/stores/misc";
 
 import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
-import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
 import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
 import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
 import BallotOutline from "vue-material-design-icons/BallotOutline.vue";
@@ -34,7 +32,6 @@ export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
     const $route = useRoute();
     const $router = useRouter();
-    const miscStore = useMiscStore();
 
     /**
      * Returns all route names that start with the given route
@@ -88,16 +85,6 @@ export function useLeftMenu() {
                 attributes: {
                     locked: true,
                 },
-            },
-            {
-                href: {name: "templates/list"},
-                routes: routeStartWith("templates"),
-                title: t("templates"),
-                icon: {
-                    element: ContentCopy,
-                    class: "menu-icon",
-                },
-                hidden: !miscStore.configs?.isTemplateEnabled,
             },
             {
                 href: {name: "executions/list"},

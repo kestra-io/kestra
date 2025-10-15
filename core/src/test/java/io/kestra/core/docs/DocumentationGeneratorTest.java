@@ -5,7 +5,6 @@ import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
-import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.flow.Subflow;
@@ -123,22 +122,6 @@ class DocumentationGeneratorTest {
         String render = DocumentationGenerator.render(doc);
 
         assertThat(render).contains("* **Default:** `false`");
-    }
-
-    @SuppressWarnings({"unchecked", "deprecation"})
-    @Test
-    void echo() throws IOException {
-        PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
-        RegisteredPlugin scan = pluginScanner.scan();
-        Class<Echo> bash = scan.findClass(Echo.class.getName()).orElseThrow();
-
-        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, bash, Task.class, null);
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, scan.version(), false);
-
-        String render = DocumentationGenerator.render(doc);
-
-        assertThat(render).contains("Echo");
-        assertThat(render).contains("This feature is deprecated and will be removed in the future");
     }
 
     @SuppressWarnings("unchecked")

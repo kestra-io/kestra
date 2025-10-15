@@ -3,8 +3,8 @@ namespace: system
 
 tasks:
   - id: deprecated
-    type: io.kestra.plugin.core.debug.Echo
-    format: Hello World
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World
   - id: alias
     type: io.kestra.core.tasks.log.Log
     message: I'm an alias

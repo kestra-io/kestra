@@ -36,7 +36,7 @@
         clearable?: boolean
     }>();
 
-    defineEmits<{
+    const emit = defineEmits<{
         (e: "change", value: string): void
     }>();
 </script>

@@ -141,13 +141,14 @@ class DockerTest extends AbstractTaskRunnerTest {
                 // override the kill method to not kill the container
             });
             initialContainerThread.interrupt();
+            initialContainerThread.join();
 
             // Create a new RunContext with the same taskRunId to maintain labels AND the same method to get a similar context
             RunContext anotherRunContext = runContext(this.runContextFactory, null, taskRunId);
 
             var anotherTaskRunner = ((Docker) taskRunner())
                 .toBuilder()
-                .delete(Property.ofValue(false))
+                .delete(Property.ofValue(true)) // Delete the container after the second run
                 .resume(Property.ofValue(true))
                 .build();
 
@@ -194,10 +195,11 @@ class DockerTest extends AbstractTaskRunnerTest {
             assertThat(resumeContainerId).isEqualTo(createContainerId);
 
             // Kill the container and verify cleanup
-            anotherTaskRunner.kill();
             resumeContainerThread.interrupt();
+            resumeContainerThread.join();
 
             List<Container> existingContainers = client.listContainersCmd()
+                .withShowAll(true)
                 .withLabelFilter(labels)
                 .exec();
             MatcherAssert.assertThat(existingContainers.isEmpty(), is(true));

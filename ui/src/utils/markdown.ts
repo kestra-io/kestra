@@ -28,6 +28,13 @@ interface RenderOptions {
 }
 
 export async function render(markdown: string, options: RenderOptions = {}) {
+    // Convert ::alert{type="..."} ... :: to ::: type ... :::
+    const markdownWithAlerts = typeof markdown === "string"
+        ? markdown.replace(
+            /(\n)?:\s*:\s*alert\{type="(.*?)"\}\s*\n([\s\S]*?)\n:\s*:(\n)?/g,
+            (_: string, newLine1: string, type: string, content: string, newLine2: string) => `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
+        )
+        : markdown;
     const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, mila, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import( "./markdownDeps")
     const highlighter = await getHighlighter(createHighlighterCore as any, Object.values(langs), onigurumaEngine, githubDark, githubLight);
 
@@ -73,7 +80,7 @@ export async function render(markdown: string, options: RenderOptions = {}) {
         md.renderer.rules.table_open = () => "<table class=\"table\">\n";
     }
 
-    return md.render(markdown);
+    return md.render(markdownWithAlerts);
 }
 
 function applyEnhancedRenderers(md: any) {

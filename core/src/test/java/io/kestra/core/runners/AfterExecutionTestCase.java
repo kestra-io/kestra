@@ -72,24 +72,4 @@ public class AfterExecutionTestCase {
         Map<String, Object> outputs = (Map<String, Object> ) afterExecution.getOutputs().get("values");
         assertThat(outputs.get("state")).isEqualTo("FAILED");
     }
-
-    @SuppressWarnings("unchecked")
-    public void shouldCallTasksAfterListener(Execution execution) {
-        assertThat(execution.getState().getCurrent()).isEqualTo(SUCCESS);
-        assertThat(execution.getTaskRunList()).hasSize(3);
-
-        TaskRun taskRun = execution.getTaskRunList().getFirst();
-        assertThat(taskRun.getState().getCurrent()).isEqualTo(SUCCESS);
-
-        TaskRun listenerTaskRun = execution.getTaskRunList().get(1);
-        assertThat(taskRun.getState().getCurrent()).isEqualTo(SUCCESS);
-        assertThat(listenerTaskRun.getState().getStartDate()).isAfterOrEqualTo(taskRun.getState().getEndDate().orElseThrow());
-
-        TaskRun afterExecution = execution.getTaskRunList().getLast();
-        assertThat(afterExecution.getState().getCurrent()).isEqualTo(SUCCESS);
-        assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(listenerTaskRun.getState().getEndDate().orElseThrow());
-        assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(execution.getState().getEndDate().orElseThrow());
-        Map<String, Object> outputs = (Map<String, Object> ) afterExecution.getOutputs().get("values");
-        assertThat(outputs.get("state")).isEqualTo("SUCCESS");
-    }
 }

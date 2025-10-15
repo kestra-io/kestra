@@ -8,11 +8,11 @@ inputs:
 
 tasks:
   - id: before
-    type: io.kestra.plugin.core.debug.Echo
-    format: I'm before the fail on condition
+    type: io.kestra.plugin.core.log.Log
+    message: I'm before the fail on condition
   - id: fail
     type: io.kestra.plugin.core.execution.Fail
     condition: '{{inputs.param == "fail"}}'
   - id: after
-    type: io.kestra.plugin.core.debug.Echo
-    format: I'm after the fail on condition
+    type: io.kestra.plugin.core.log.Log
+    message: I'm after the fail on condition

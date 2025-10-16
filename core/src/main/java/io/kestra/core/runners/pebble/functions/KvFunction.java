@@ -11,6 +11,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
+import io.kestra.core.utils.JacksonMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.List;
 import java.util.Map;
@@ -69,7 +71,21 @@ public class KvFunction implements Function {
 
         Object result = value.map(KVValue::value).orElse(null);
 
-        return result == null ? "" : result;
+        
+        if(result === null)
+        {
+            return "";
+        }
+
+        if (result instanceof String) {
+            try {
+                return JacksonMapper.ofJson().writeValueAsString(result);
+            } catch (JsonProcessingException e) {
+                throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
+            }
+        }
+
+        return result;
     }
 
     private Optional<KVValue> getValueWithInheritance(String flowNamespace, String key, String tenantId)

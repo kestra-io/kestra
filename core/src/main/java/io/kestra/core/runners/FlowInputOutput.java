@@ -95,7 +95,7 @@ public class FlowInputOutput {
         if (ListUtils.isEmpty(inputs)) return Mono.just(Collections.emptyList());
         
         return readData(inputs, execution, data, false)
-            .map(inputData -> resolveInputs(inputs, flow, execution, inputData, false));
+            .map(inputData -> resolveInputs(inputs, flow, execution, inputData, true));
     }
     
     /**

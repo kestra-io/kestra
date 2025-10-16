@@ -315,7 +315,7 @@ class FlowInputOutputTest {
         List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
         
         // Then
-        Assertions.assertEquals("******", results.getFirst().value());
+        Assertions.assertEquals(TEST_SECRET_VALUE, results.getFirst().value());
     }
     
     @Test

@@ -36,44 +36,6 @@ public final class FileSerde {
         }
     }
 
-    /**
-     * @deprecated use the {@link #readAll(Reader)} method instead.
-     */
-    @Deprecated(since = "0.19", forRemoval = true)
-    public static Consumer<FluxSink<Object>> reader(BufferedReader input) {
-        return s -> {
-            String row;
-
-            try {
-                while ((row = input.readLine()) != null) {
-                    s.next(convert(row));
-                }
-                s.complete();
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        };
-    }
-
-    /**
-     * @deprecated use the {@link #readAll(Reader, Class)} method instead.
-     */
-    @Deprecated(since = "0.19", forRemoval = true)
-    public static <T> Consumer<FluxSink<T>> reader(BufferedReader input, Class<T> cls) {
-        return s -> {
-            String row;
-
-            try {
-                while ((row = input.readLine()) != null) {
-                    s.next(convert(row, cls));
-                }
-                s.complete();
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        };
-    }
-
     public static void reader(BufferedReader input, Consumer<Object> consumer) throws IOException {
         String row;
         while ((row = input.readLine()) != null) {

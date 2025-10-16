@@ -125,7 +125,7 @@
         }
     }, {immediate: true});
 
-    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useFilesPanels(panels)
+    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useFilesPanels(panels, (uid: string) => editorView.value?.focusTab(uid))
 
     function onRemoveTab(tab: string){
         onRemoveCodeTab(tab)

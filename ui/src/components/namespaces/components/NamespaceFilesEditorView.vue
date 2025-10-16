@@ -82,7 +82,14 @@
 
     );
 
-    const {onRemoveTab} = useFilesPanels(panels, true);
+    function focusTab(tabValue: string){
+        for(const panel of panels.value){
+            const t = panel.tabs.find(e => e.uid === tabValue);
+            if(t) panel.activeTab = t;
+        }
+    }
+
+    const {onRemoveTab} = useFilesPanels(panels, focusTab)
 
     const actions = useFileExplorer();
 </script>

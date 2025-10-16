@@ -2,7 +2,7 @@ import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 import {trackBlueprintSelection} from "../utils/tabTracking";
 
-export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
+const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
 
 interface Blueprint {
     [key: string]: any;

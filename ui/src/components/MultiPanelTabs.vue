@@ -177,7 +177,6 @@
     import {useI18n} from "vue-i18n";
 
     import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys";
-    import {CODE_PREFIX} from "./flows/useFilesPanels";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
 
     import Empty from "./layout/empty/Empty.vue";
@@ -191,7 +190,6 @@
     import Close from "vue-material-design-icons/Close.vue";
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
 
-    import {useEditorStore} from "../stores/editor";
     import {trackTabOpen, trackTabClose} from "../utils/tabTracking";
     import {Panel, Tab} from "../utils/multiPanelTypes";
 
@@ -237,23 +235,10 @@
     const leftPanelDragover = ref(false);
     const rightPanelDragover = ref(false);
 
-    const editorStore = useEditorStore()
-
     const handleTabClick = (panel: Panel, tab: Tab) => {
         trackTabOpen(tab);
 
         panel.activeTab = tab
-
-        if(tab.uid.startsWith(CODE_PREFIX)){
-            editorStore.current = {
-                dirty: tab.dirty ?? false,
-                extension: tab.uid.split(".").pop(),
-                flow: tab.uid === CODE_PREFIX,
-                name: tab.uid,
-                path: tab.uid,
-                persistent: tab.uid === CODE_PREFIX,
-            }
-        }
     };
 
     const showDropZones = computed(() =>

@@ -111,6 +111,8 @@
     })
 
     async function loadFile() {
+        editorStore.openTab(props)
+
         if (props.dirty || props.flow) return;
 
         const fileNamespace = namespace.value ?? route.params?.namespace;

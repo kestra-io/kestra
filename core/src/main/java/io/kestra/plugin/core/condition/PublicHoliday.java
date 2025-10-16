@@ -16,6 +16,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -82,7 +83,7 @@ public class PublicHoliday extends Condition implements ScheduleCondition {
     )
     @NotNull
     @Builder.Default
-    private Property<String> date = Property.ofExpression("{{ trigger.date }}");
+    private Property<String> date = Property.ofExpression("{{ trigger.date}}");
 
     @Schema(
         title = "[ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code. If not set, it uses the country code from the default locale.",
@@ -98,11 +99,12 @@ public class PublicHoliday extends Condition implements ScheduleCondition {
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
+        Map<String, Object> variables=conditionContext.getVariables();
         var renderedCountry = conditionContext.getRunContext().render(this.country).as(String.class).orElse(null);
         var renderedSubDivision = conditionContext.getRunContext().render(this.subDivision).as(String.class).orElse(null);
 
         HolidayManager holidayManager = renderedCountry != null ? HolidayManager.getInstance(ManagerParameters.create(renderedCountry)) : HolidayManager.getInstance();
-        LocalDate currentDate = DateUtils.parseLocalDate(conditionContext.getRunContext().render(date).as(String.class).orElseThrow());
+        LocalDate currentDate = DateUtils.parseLocalDate(conditionContext.getRunContext().render(date).as(String.class,variables).orElseThrow());
         return renderedSubDivision == null ? holidayManager.isHoliday(currentDate) : holidayManager.isHoliday(currentDate, renderedSubDivision);
     }
 }

@@ -1,7 +1,6 @@
 package io.kestra.cli.commands.flows;
 
 import io.kestra.cli.AbstractValidateCommand;
-import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.services.FlowService;
@@ -23,8 +22,6 @@ public class FlowValidateCommand extends AbstractValidateCommand {
     @Inject
     private FlowService flowService;
 
-    @Inject
-    private TenantIdSelectorService tenantService;
 
     @Override
     public Integer call() throws Exception {
@@ -39,7 +36,7 @@ public class FlowValidateCommand extends AbstractValidateCommand {
                 FlowWithSource flow = (FlowWithSource) object;
                 List<String> warnings = new ArrayList<>();
                 warnings.addAll(flowService.deprecationPaths(flow).stream().map(deprecation -> deprecation + " is deprecated").toList());
-                warnings.addAll(flowService.warnings(flow, tenantService.getTenantId(tenantId)));
+                warnings.addAll(flowService.warnings(flow, tenantId));
                 return warnings;
             },
             (Object object) -> {

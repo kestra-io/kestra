@@ -4,6 +4,7 @@
             <div class="d-flex align-items-end gap-2">
                 <SidebarToggleButton
                     v-if="layoutStore.sideMenuCollapsed"
+                    class="d-none d-lg-inline-flex"
                     @toggle="layoutStore.setSideMenuCollapsed(false)"
                 />
                 <!-- Mobile hamburger button -->

@@ -11,7 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
-import io.kestra.core.utils.JacksonMapper;
+import io.kestra.core.serializers.JacksonMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.List;

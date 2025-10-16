@@ -17,6 +17,7 @@ import jakarta.inject.Inject;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
+import java.util.HashMap;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -143,7 +144,7 @@ public class KvFunctionTest {
         KVStore kv = new InternalKVStore(tenant, "io.kestra.tests", storageInterface);
         kv.put("existing-key", new KVValueAndMetadata(null, "existing-value"));
 
-        Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
+        Map<String, Object> variables = new HashMap<>(getVariables(tenant, "io.kestra.tests"));
         variables.put(KvFunction.INSIDE_KV_TASK, true);
 
         String rendered = variableRenderer.render("{{ kv('existing-key') }}", variables);

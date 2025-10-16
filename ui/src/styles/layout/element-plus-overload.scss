@@ -1098,10 +1098,10 @@ form.ks-horizontal {
     width: 62px;
 
     .el-dialog__close { 
-        // This is your working default color rule
+       
         color: var(--ks-dialog-headerbtn) !important; 
         
-        // 👇 ADD THIS BLOCK FOR THE HOVER COLOR
+       
         &:hover {
             color: var(--ks-dialog-headerbtn-hover) !important;
         }

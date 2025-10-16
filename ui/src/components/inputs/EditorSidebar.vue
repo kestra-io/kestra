@@ -347,10 +347,10 @@
 </template>
 
 <script lang="ts" setup>
-    import {ref, computed, watch, onMounted, onBeforeUnmount, nextTick} from "vue";
+    import {ref, computed, onMounted, onBeforeUnmount, nextTick} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
-    import {ItemWithChildren, useEditorStore} from "../../stores/editor";
+    import {ItemWithChildren} from "../../stores/editor";
     import Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -382,9 +382,14 @@
         currentNS?: string | null;
     }>();
 
+    const emit = defineEmits<{
+        (e: "file-clicked", file: { name: string; path: string; extension?: string; flow: boolean }): void;
+        (e: "file-created", file: { name: string; path: string; extension?: string; flow: boolean }): void;
+        (e: "file-deleted", file: { name: string }): void;
+    }>();
+
     const route = useRoute();
     const namespacesStore = useNamespacesStore();
-    const editorStore = useEditorStore();
 
     const filter = ref<string>("");
     const dialog = ref({...DIALOG_DEFAULTS});
@@ -498,7 +503,7 @@
             selectedNodes.value = [node.data.id];
             lastClickedIndex.value = currentIndex;
             if (data.leaf) {
-                editorStore.openTab({
+                emit("file-clicked", {
                     name: data.fileName,
                     path: path,
                     extension: data.fileName.split(".").pop(),
@@ -609,7 +614,7 @@
     function chooseSearchResults(item: string) {
         const name = item.split("/").pop()
         if(!name) return;
-        editorStore.openTab({
+        emit("file-clicked", {
             name,
             extension: item.split(".").pop(),
             path: item,
@@ -827,7 +832,7 @@
                 path,
                 content,
             });
-            editorStore.openTab({
+            emit("file-created", {
                 name: NAME,
                 path,
                 extension: extension,
@@ -887,7 +892,7 @@
                     path: getPath(node),
                 });
                 tree.value.remove(node.id);
-                editorStore.closeTab({
+                emit("file-deleted", {
                     name: node.fileName,
                 });
             } catch (error) {
@@ -1007,17 +1012,6 @@
     onBeforeUnmount(() => {
         document.removeEventListener("click", clearSelection);
     });
-
-    watch(() => editorStore.treeRefresh, async () => {
-        if (tree.value) {
-            items.value = [];
-            const itemsArr = await namespacesStore.readDirectory({
-                namespace: namespaceId.value
-            });
-            renderNodes(itemsArr);
-            items.value = sorted(items.value!);
-        }
-    }, {immediate: true});
 
 </script>
 

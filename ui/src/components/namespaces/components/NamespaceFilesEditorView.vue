@@ -5,7 +5,13 @@
             key="sideBar"
             :size="sideBarSize"
         >
-            <EditorSidebar :currentNS="namespace" style="width: 100%;height: 100%;" />
+            <EditorSidebar
+                :currentNS="namespace"
+                style="width: 100%;height: 100%;"
+                @file-clicked="actions.fileClicked"
+                @file-created="actions.fileCreated"
+                @file-deleted="actions.fileDeleted"
+            />
         </el-splitter-panel>
         <el-splitter-panel
             min="20%"
@@ -26,6 +32,7 @@
     import {useFlowStore} from "../../../stores/flow";
     import {useEditorStore} from "../../../stores/editor";
     import {useStoredPanels} from "../../../composables/useStoredPanels";
+    import {useFileExplorer} from "../../../composables/useFileExplorer";
 
     const mounted = useMounted()
 
@@ -76,4 +83,6 @@
     );
 
     const {onRemoveTab} = useFilesPanels(panels, true);
+
+    const actions = useFileExplorer();
 </script>

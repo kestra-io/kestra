@@ -31,7 +31,6 @@ export const useEditorStore = defineStore("editor", () => {
     const current = ref<EditorTabProps | undefined>(undefined)
     const tabs = ref([] as EditorTabProps[])
     const view = ref<any>()
-    const treeRefresh = ref(0)
 
     const namespaceStore = useNamespacesStore();
     function saveAllTabs({namespace}: {namespace: string}) {
@@ -170,11 +169,6 @@ export const useEditorStore = defineStore("editor", () => {
         tabs.value.splice(to, 0, tab);
     }
 
-    function refreshTree() {
-        explorerVisible.value = true;
-        treeRefresh.value = Date.now();
-    }
-
     return {
         onboarding,
         explorerVisible,
@@ -182,7 +176,6 @@ export const useEditorStore = defineStore("editor", () => {
         current,
         tabs,
         view,
-        treeRefresh,
         saveAllTabs,
         openTab,
         closeTab,
@@ -194,7 +187,6 @@ export const useEditorStore = defineStore("editor", () => {
         setTabDirty,
         closeTabs,
         closeAllTabs,
-        reorderTabs,
-        refreshTree
+        reorderTabs
     }
 })

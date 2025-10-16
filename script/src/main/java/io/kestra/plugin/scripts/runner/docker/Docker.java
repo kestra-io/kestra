@@ -320,7 +320,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         description = "If enabled, the runner will search for an existing container labeled with the current execution/task identifiers and reattach to it instead of creating a new container."
     )
     @PluginProperty
-    private Property<Boolean> resume = Property.ofValue(false);
+    private Property<Boolean> resume = Property.ofValue(true);
 
     /**
      * Convenient default instance to be used as task default value for a 'taskRunner' property.

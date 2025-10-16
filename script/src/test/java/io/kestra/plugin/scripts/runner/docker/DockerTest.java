@@ -120,7 +120,11 @@ class DockerTest extends AbstractTaskRunnerTest {
         var taskRunner = ((Docker) taskRunner())
             .toBuilder()
             .delete(Property.ofValue(false))
-            .resume(Property.ofValue(true)).build();
+            .build();
+        // Assert that the resume property is set to true by default
+        Boolean resume =runContext.render(taskRunner.getResume()).as(Boolean.class).orElseThrow();
+        assertThat(resume).isEqualTo(Boolean.TRUE);
+
         Thread initialContainerThread = new Thread(throwRunnable(() -> taskRunner.run(runContext, commands, Collections.emptyList())));
         initialContainerThread.start();
 
@@ -149,7 +153,6 @@ class DockerTest extends AbstractTaskRunnerTest {
             var anotherTaskRunner = ((Docker) taskRunner())
                 .toBuilder()
                 .delete(Property.ofValue(true)) // Delete the container after the second run
-                .resume(Property.ofValue(true))
                 .build();
 
             // Start resume in a new thread

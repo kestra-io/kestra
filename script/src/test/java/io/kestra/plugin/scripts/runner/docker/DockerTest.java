@@ -122,7 +122,7 @@ class DockerTest extends AbstractTaskRunnerTest {
             .delete(Property.ofValue(false))
             .build();
         // Assert that the resume property is set to true by default
-        Boolean resume =runContext.render(taskRunner.getResume()).as(Boolean.class).orElseThrow();
+        Boolean resume = runContext.render(taskRunner.getResume()).as(Boolean.class).orElseThrow();
         assertThat(resume).isEqualTo(Boolean.TRUE);
 
         Thread initialContainerThread = new Thread(throwRunnable(() -> taskRunner.run(runContext, commands, Collections.emptyList())));

@@ -32,7 +32,7 @@ public class PluginDefaultsCaseTest {
     @Inject
     private TestRunnerUtils runnerUtils;
 
-    public void taskDefaults() throws TimeoutException, QueueException {
+    public void pluginDefaults() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "plugin-defaults", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList()).hasSize(8);

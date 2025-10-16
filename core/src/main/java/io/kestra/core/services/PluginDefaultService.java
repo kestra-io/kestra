@@ -24,7 +24,6 @@ import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.MapUtils;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -68,10 +67,6 @@ public class PluginDefaultService {
 
     @Nullable
     @Inject
-    protected TaskGlobalDefaultConfiguration taskGlobalDefault;
-
-    @Nullable
-    @Inject
     protected PluginGlobalDefaultConfiguration pluginGlobalDefault;
 
     @Inject
@@ -85,18 +80,12 @@ public class PluginDefaultService {
     @Inject
     protected Provider<LogService> logService; // lazy-init
 
-    @Value("{kestra.templates.enabled:false}")
-    private boolean templatesEnabled;
-
 
     private final AtomicBoolean warnOnce = new AtomicBoolean(false);
 
     @PostConstruct
     void validateGlobalPluginDefault() {
         List<PluginDefault> mergedDefaults = new ArrayList<>();
-        if (taskGlobalDefault != null && taskGlobalDefault.getDefaults() != null) {
-            mergedDefaults.addAll(taskGlobalDefault.getDefaults());
-        }
 
         if (pluginGlobalDefault != null && pluginGlobalDefault.getDefaults() != null) {
             mergedDefaults.addAll(pluginGlobalDefault.getDefaults());
@@ -144,13 +133,6 @@ public class PluginDefaultService {
      */
     protected List<PluginDefault> getGlobalDefaults() {
         List<PluginDefault> defaults = new ArrayList<>();
-
-        if (taskGlobalDefault != null && taskGlobalDefault.getDefaults() != null) {
-            if (warnOnce.compareAndSet(false, true)) {
-                log.warn("Global Task Defaults are deprecated, please use Global Plugin Defaults instead via the 'kestra.plugins.defaults' configuration property.");
-            }
-            defaults.addAll(taskGlobalDefault.getDefaults());
-        }
 
         if (pluginGlobalDefault != null && pluginGlobalDefault.getDefaults() != null) {
             defaults.addAll(pluginGlobalDefault.getDefaults());

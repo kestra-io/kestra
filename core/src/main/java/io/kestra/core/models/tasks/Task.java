@@ -25,17 +25,15 @@ import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
-@SuperBuilder(toBuilder = true)
+@SuperBuilder
+@ToString
+@EqualsAndHashCode
 @Getter
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @Plugin
 abstract public class Task implements TaskInterface {
     @Size(max = 256, message = "Task id must be at most 256 characters")
-    @jakarta.validation.constraints.Pattern(
-        regexp = "^$|^[\\s\\S]*$",
-        message = "Task id can be empty or any string up to 256 characters"
-    )
     protected String id;
 
     protected String type;

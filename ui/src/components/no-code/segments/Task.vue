@@ -25,6 +25,7 @@
     import TaskEditor from "../components/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import {useFlowStore} from "../../../stores/flow";
+    import {generateUniqueId} from "../utils/idGenerator";
 
     const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
@@ -120,11 +121,29 @@
                     newContent: yaml.value,
                 });
             }
-        } else if(!hasMovedToEdit.value ){
+        } else if(!hasMovedToEdit.value) {
             const currentSection = section.value as keyof typeof SECTIONS_MAP;
 
             if(!currentSection) {
                 return;
+            }
+
+            if (yaml.value) {
+                try {
+                    const parsedYaml = YAML_UTILS.parse(yaml.value);
+                    if (!parsedYaml.id) {
+                        const id = generateUniqueId(
+                            currentSection,
+                            result,
+                            currentSection
+                        );
+                        
+                        parsedYaml.id = id;
+                        yaml.value = YAML_UTILS.stringify(parsedYaml);
+                    }
+                } catch (e) {
+                    console.error("Error parsing task YAML for ID generation", e);
+                }
             }
 
             const task = {
@@ -138,7 +157,6 @@
                 source: result,
                 ...task,
             });
-
 
             const currentRefPath = (refPath !== undefined && refPath !== null) ? refPath + (position === "after" ? 1 : 0) : 0;
             editTask(

@@ -26,10 +26,18 @@ import java.util.Map;
 
 @Plugin
 @SuperBuilder
+@ToString
+@EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
-abstract public class AbstractTrigger implements TriggerInterface {
+@Schema(
+    title = "Base definition for a trigger.",
+    description = "A trigger allows to launch a flow execution based on events."
+)
+public abstract class AbstractTrigger {
+    @Schema(title = "Unique identifier for the trigger")
+    @NotNull(groups = {Create.class}, message = "Trigger ID is required.")  // Change to optional for Create
+    @Pattern(regexp = "[a-zA-Z0-9_-]+")
     protected String id;
 
     protected String type;

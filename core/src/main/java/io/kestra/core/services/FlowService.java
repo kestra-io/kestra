@@ -27,10 +27,10 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -71,6 +71,8 @@ public class FlowService {
 
         // Inject plugin default versions, and perform parsing validation when strictValidation = true (i.e., checking unknown and duplicated properties).
         FlowWithSource parsed = pluginDefaultService.parseFlowWithVersionDefaults(flow.getTenantId(), flow.getSource(), strictValidation);
+        
+        generateMissingIds(parsed);
 
         // Validate Flow with defaults values
         // Do not perform a strict parsing validation to ignore unknown
@@ -78,6 +80,57 @@ public class FlowService {
         modelValidator.validate(pluginDefaultService.injectAllDefaults(parsed, false));
 
         return repository().create(flow);
+    }
+
+    /**
+     * Generate IDs for tasks and triggers that don't have them.
+     * 
+     * @param flow The flow to check and update
+     */
+    private void generateMissingIds(Flow flow) {
+        if (flow.getTasks() != null) {
+            AtomicInteger taskCounter = new AtomicInteger(1);
+            flow.getTasks().forEach(task -> {
+                if (task.getId() == null || task.getId().isBlank()) {
+                    ((Task) task).setId("task" + taskCounter.getAndIncrement());
+                }
+                
+                if (task instanceof FlowableTask flowableTask && flowableTask.getTasks() != null) {
+                    generateMissingIdsForSubtasks(flowableTask.getTasks(), "subtask", 1);
+                }
+            });
+        }
+        
+        if (flow.getTriggers() != null) {
+            AtomicInteger triggerCounter = new AtomicInteger(1);
+            flow.getTriggers().forEach(trigger -> {
+                if (trigger.getId() == null || trigger.getId().isBlank()) {
+                    ((AbstractTrigger) trigger).setId("trigger" + triggerCounter.getAndIncrement());
+                }
+            });
+        }
+    }
+
+    /**
+     * Generate IDs for subtasks that don't have them.
+     * 
+     * @param tasks The subtasks to check and update
+     * @param prefix The prefix to use for the generated IDs
+     * @param startCounter The starting counter value
+     */
+    private void generateMissingIdsForSubtasks(List<Task> tasks, String prefix, int startCounter) {
+        if (tasks != null) {
+            AtomicInteger counter = new AtomicInteger(startCounter);
+            tasks.forEach(task -> {
+                if (task.getId() == null || task.getId().isBlank()) {
+                    ((Task) task).setId(prefix + counter.getAndIncrement());
+                }
+                
+                if (task instanceof FlowableTask flowableTask && flowableTask.getTasks() != null) {
+                    generateMissingIdsForSubtasks(flowableTask.getTasks(), prefix + "_nested", 1);
+                }
+            });
+        }
     }
 
     private FlowRepositoryInterface repository() {
@@ -104,6 +157,9 @@ public class FlowService {
 
                 try {
                     FlowWithSource flow = pluginDefaultService.parseFlowWithVersionDefaults(tenantId, source, true);
+                    
+                    generateMissingIds(flow);
+                    
                     Integer sentRevision = flow.getRevision();
                     if (sentRevision != null) {
                         Integer lastRevision = Optional.ofNullable(repository().lastRevision(tenantId, flow.getNamespace(), flow.getId()))
@@ -120,7 +176,6 @@ public class FlowService {
                     // Do not perform a strict parsing validation to ignore unknown
                     // properties that might be injecting through default values.
                     modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
-
                 } catch (ConstraintViolationException e) {
                     validateConstraintViolationBuilder.constraints(e.getMessage());
                 } catch (FlowProcessingException e) {

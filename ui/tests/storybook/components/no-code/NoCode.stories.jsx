@@ -100,6 +100,22 @@ tasks:
     `.trim(),
 };
 
+export const EmptyTask = Template.bind({});
+EmptyTask.args = {
+    flow: `
+id: flow1
+namespace: namespace1
+tasks:
+  - type: io.kestra.plugin.core.debug.Return
+    message: "Auto-generated ID task"
+    `.trim(),
+    props: {
+       creatingTask: true,
+       parentPath: "tasks",
+       refPath: 0,
+    },
+};
+
 export const EditTask = Template.bind({});
 EditTask.decorators = [vueRouter([
     {

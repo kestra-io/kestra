@@ -45,6 +45,7 @@
         SCHEMA_DEFINITIONS_INJECTION_KEY,
         DATA_TYPES_MAP_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
+        CREATING_TASK_INJECTION_KEY,
     } from "../injectionKeys";
     import {removeNullAndUndefined} from "../utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins";
@@ -52,7 +53,7 @@
     import {getValueAtJsonPath, resolve$ref} from "../../../utils/utils";
     import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue";
     import isEqual from "lodash/isEqual";
-    import {generateElementId} from "../utils/idGenerator";
+    import {generateUniqueId} from "../utils/idGenerator";
 
     const {t} = useI18n();
 
@@ -74,7 +75,8 @@
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const fieldName = inject(FIELDNAME_INJECTION_KEY, undefined);
-
+    const fullSource = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
 
     const blockSchemaPath = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""));
 
@@ -333,19 +335,26 @@
     function onTaskInput(val: PartialCodeElement | undefined) {
         if (val) {
             if (!val.id && isPlugin.value) {
-                const isNewTask = !taskObject.value?.id;
-                const userClearedId = taskObject.value?.id === "" || val.id === "";
-
-                if (isNewTask && !userClearedId)
-                {
-                    const flowSource = fullSource.value;
-                    val.id = generateElementId(flowSource, parentPath);
-                }
-                
+                const flowSource = fullSource.value;
+                val.id = generateUniqueId(
+                    parentPath,
+                    flowSource,
+                    parentPath
+                );
             }
         }
         
         taskObject.value = val;
+        
+        if (creatingTask && val?.type && !val.id && !isPluginDefaults.value) {
+            val.id = generateUniqueId(
+                parentPath,
+                fullSource.value,
+                parentPath
+            );
+            taskObject.value = val;
+        }
+        
         if(fieldName){
             val = {
                 [fieldName]: val,
@@ -373,13 +382,20 @@
     function onTaskTypeSelect() {
         const value: PartialCodeElement = {
             type: selectedTaskType.value ?? "",
-            id: generateElementId(fullSource.value, parentPath)
+            id: generateUniqueId(parentPath, fullSource.value, parentPath)
         };
+        
+        if (creatingTask && !taskObject.value?.id) {
+            value.id = generateUniqueId(
+                parentPath,
+                fullSource.value,
+                parentPath
+            );
+        }
 
         onTaskInput(value);
     }
 
-    const fullSource = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
 </script>
 
 <style scoped lang="scss">

@@ -1,44 +1,40 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
 /**
  * Generates a unique ID for a task or trigger based on existing elements
- * 
- * @param flowYaml - The full flow YAML as string
- * @param parentPath - The path where the task/trigger will be added (e.g., "tasks", "triggers")
- * @returns A unique ID following the pattern "task1", "task2", "trigger1", etc.
+ * @param type The type of element ("task" or "trigger")
+ * @param source The flow source YAML
+ * @param parentPath The parent path where to look for existing IDs
+ * @returns A unique ID like "task1", "task2", "trigger1", etc.
  */
-export function generateElementId(flowYaml: string, parentPath: string): string {
-    if (!flowYaml) {
-        return parentPath === "triggers" ? "trigger1" : "task1";
-    }
-
+export function generateUniqueId(type: string, source: string, parentPath: string): string {
+    const baseId = type === "triggers" ? "trigger" : "task";
+    
+    let elements: Record<string, any>[] = [];
     try {
-        const flowObj = YAML_UTILS.parse(flowYaml);
-        const elements = flowObj[parentPath] || [];
-        
-        if (!elements.length) {
-            return parentPath === "triggers" ? "trigger1" : "task1";
-        }
-        
-        const prefix = parentPath === "triggers" ? "trigger" : "task";
-        const pattern = new RegExp(`^${prefix}(\\d+)$`);
-        
-        let maxNumber = 0;
-        elements.forEach((element: any) => {
-            if (element.id) {
-                const match = element.id.match(pattern);
-                if (match) {
-                    const num = parseInt(match[1], 10);
-                    if (num > maxNumber) {
-                        maxNumber = num;
-                    }
+        const flowObj = YAML_UTILS.parse(source);
+        elements = flowObj[parentPath] || [];
+    } catch (e) {
+        console.error("Error parsing YAML for ID generation", e);
+        return `${baseId}1`;
+    }
+    
+    const existingIds = elements
+        .map(element => element.id || "")
+        .filter(Boolean);
+    
+    let highestNumber = 0;
+    existingIds.forEach(id => {
+        if (id.startsWith(baseId)) {
+            const numberPart = id.substring(baseId.length);
+            if (/^\d+$/.test(numberPart)) {
+                const num = parseInt(numberPart);
+                if (num > highestNumber) {
+                    highestNumber = num;
                 }
             }
-        });
-        
-        return `${prefix}${maxNumber + 1}`;
-    } catch (e) {
-        return parentPath === "triggers" ? "trigger1" : "task1";
-    }
+        }
+    });
+    
+    return `${baseId}${highestNumber + 1}`;
 }

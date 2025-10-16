@@ -86,6 +86,15 @@
 
         const currentFlow = parsedFlow.value;
 
+        if ((key === "tasks" || key === "triggers") && Array.isArray(realValue)) {
+            for (let i = 0; i < realValue.length; i++) {
+                const item = realValue[i];
+                if (item && item.type && !item.id) {
+                    item.id = `${key === "triggers" ? "trigger" : "task"}${i + 1}`;
+                }
+            }
+        }
+
         currentFlow[key] = realValue;
 
         editorUpdate(YAML_UTILS.stringify(currentFlow));

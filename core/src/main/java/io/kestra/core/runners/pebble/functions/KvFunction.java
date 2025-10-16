@@ -72,7 +72,7 @@ public class KvFunction implements Function {
         Object result = value.map(KVValue::value).orElse(null);
 
         
-        if(result === null)
+        if(result == null)
         {
             return "";
         }

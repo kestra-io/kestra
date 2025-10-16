@@ -2,6 +2,8 @@ import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 import {trackBlueprintSelection} from "../utils/tabTracking";
 
+export const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
+
 interface Blueprint {
     [key: string]: any;
 }
@@ -66,7 +68,7 @@ export const useBlueprintsStore = defineStore("blueprints", {
             const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
             const response = await this.$http.get(
                 `${apiUrl(this.vuexStore)}/blueprints/${options.type}${kind}`,
-                {params: options.params}
+                {params: options.params, ...VALIDATE}
             );
             this.blueprints = response.data;
             return response.data;
@@ -76,7 +78,7 @@ export const useBlueprintsStore = defineStore("blueprints", {
             const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
             const response = await this.$http.get(
                 `${apiUrl(this.vuexStore)}/blueprints/${options.type}${kind}/tags`,
-                {params: options.params}
+                {params: options.params, ...VALIDATE}
             );
             return response.data;
         },

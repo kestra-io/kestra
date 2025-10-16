@@ -1010,6 +1010,8 @@ form.ks-horizontal {
 
     .el-notification__content {
         text-align: left;
+        max-height: 200px;
+        overflow-y: auto;
     }
 
     &.large {

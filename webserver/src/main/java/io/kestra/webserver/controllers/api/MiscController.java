@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.plugins.PluginRegistry;
@@ -15,6 +14,7 @@ import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -28,7 +28,10 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Value;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -157,7 +160,7 @@ public class MiscController {
     public HttpResponse<Void> createBasicAuth(
         @RequestBody @Body BasicAuthCredentials basicAuthCredentials
     ) {
-        basicAuthService.save(basicAuthCredentials.getUid(), new BasicAuthService.BasicAuthConfiguration(basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()));
+        basicAuthService.save(basicAuthCredentials);
 
         return HttpResponse.noContent();
     }
@@ -225,14 +228,6 @@ public class MiscController {
     public static class Preview {
         Integer initial;
         Integer max;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static class BasicAuthCredentials {
-        private String uid;
-        private String username;
-        private String password;
     }
 
     @SuperBuilder(toBuilder = true)

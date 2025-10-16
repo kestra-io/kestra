@@ -1,13 +1,13 @@
 <template>
     <div
         class="p-2 sidebar"
-        @click="$refs.tree.setCurrentKey(undefined)"
+        @click="tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
     >
         <div class="flex-row d-flex">
             <el-select
                 v-model="filter"
-                :placeholder="$t('namespace files.filter')"
+                :placeholder="t('namespace files.filter')"
                 filterable
                 remote
                 :remoteMethod="searchFilesList"
@@ -27,7 +27,7 @@
             <el-button-group class="d-flex">
                 <el-tooltip
                     effect="light"
-                    :content="$t('namespace files.create.file')"
+                    :content="t('namespace files.create.file')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -39,7 +39,7 @@
                 </el-tooltip>
                 <el-tooltip
                     effect="light"
-                    :content="$t('namespace files.create.folder')"
+                    :content="t('namespace files.create.folder')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -76,20 +76,20 @@
                     </el-button>
                     <template #dropdown>
                         <el-dropdown-menu>
-                            <el-dropdown-item @click="$refs.filePicker.click()">
-                                {{ $t("namespace files.import.files") }}
+                            <el-dropdown-item @click="filePicker?.click()">
+                                {{ t("namespace files.import.files") }}
                             </el-dropdown-item>
                             <el-dropdown-item
-                                @click="$refs.folderPicker.click()"
+                                @click="folderPicker?.click()"
                             >
-                                {{ $t("namespace files.import.folder") }}
+                                {{ t("namespace files.import.folder") }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
                 <el-tooltip
                     effect="light"
-                    :content="$t('namespace files.export')"
+                    :content="t('namespace files.export')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -128,13 +128,14 @@
             <template #empty>
                 <div class="m-4 empty">
                     <img :src="FileExplorerEmpty">
-                    <h3>{{ $t("namespace files.no_items.heading") }}</h3>
-                    <p>{{ $t("namespace files.no_items.paragraph") }}</p>
+                    <h3>{{ t("namespace files.no_items.heading") }}</h3>
+                    <p>{{ t("namespace files.no_items.paragraph") }}</p>
                 </div>
             </template>
             <template #default="{data, node}">
                 <el-dropdown
-                    :ref="`dropdown__${data.id}`"
+                    ref="dropdown"
+                    :data-dropdown-id="`dropdown__${data.id}`"
                     @contextmenu.prevent.stop="
                         toggleDropdown(`dropdown__${data.id}`);
                         if(selectedNodes.length === 0) {
@@ -165,19 +166,19 @@
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'File', node)"
                             >
-                                {{ $t("namespace files.create.file") }}
+                                {{ t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'Directory', node)"
                             >
-                                {{ $t("namespace files.create.folder") }}
+                                {{ t("namespace files.create.folder") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
-                                {{ $t("namespace files.path.copy") }}
+                                {{ t("namespace files.path.copy") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
-                                {{ $t("namespace files.export_single") }}
+                                {{ t("namespace files.export_single") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="data.leaf && !multiSelected"
@@ -191,7 +192,7 @@
                                 "
                             >
                                 {{
-                                    $t(
+                                    t(
                                         `namespace files.rename.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
@@ -200,11 +201,11 @@
                             </el-dropdown-item>
                             <el-dropdown-item @click="removeSelectedFiles()">
                                 {{
-                                    selectedNodes.length <= 1 ? $t(
+                                    selectedNodes.length <= 1 ? t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
-                                    ) : $t(
+                                    ) : t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folders" : "files"
                                         }`
@@ -222,15 +223,15 @@
             v-model="dialog.visible"
             :title="
                 dialog.type === 'File'
-                    ? $t('namespace files.create.file')
-                    : $t('namespace files.create.folder')
+                    ? t('namespace files.create.file')
+                    : t('namespace files.create.folder')
             "
             width="500"
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
         >
             <div class="pb-1">
                 <span>
-                    {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
+                    {{ t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
             </div>
             <el-input
@@ -242,7 +243,7 @@
 
             <div class="py-1">
                 <span>
-                    {{ $t("namespace files.dialog.parent_folder") }}
+                    {{ t("namespace files.dialog.parent_folder") }}
                 </span>
             </div>
             <el-select
@@ -261,14 +262,14 @@
             <template #footer>
                 <div>
                     <el-button @click="toggleDialog(false)">
-                        {{ $t("cancel") }}
+                        {{ t("cancel") }}
                     </el-button>
                     <el-button
                         type="primary"
                         :disabled="!dialog.name"
                         @click="dialogHandler"
                     >
-                        {{ $t("namespace files.create.label") }}
+                        {{ t("namespace files.create.label") }}
                     </el-button>
                 </div>
             </template>
@@ -277,13 +278,13 @@
         <!-- Renaming dialog -->
         <el-dialog
             v-model="renameDialog.visible"
-            :title="$t(`namespace files.rename.${renameDialog.type}`)"
+            :title="t(`namespace files.rename.${renameDialog.type}`)"
             width="500"
             @keydown.enter.prevent="renameItem()"
         >
             <div class="pb-1">
                 <span>
-                    {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
+                    {{ t(`namespace files.rename.new_${renameDialog.type}`) }}
                 </span>
             </div>
             <el-input
@@ -295,14 +296,14 @@
             <template #footer>
                 <div>
                     <el-button @click="toggleRenameDialog(false)">
-                        {{ $t("cancel") }}
+                        {{ t("cancel") }}
                     </el-button>
                     <el-button
                         type="primary"
                         :disabled="!renameDialog.name"
                         @click="renameItem()"
                     >
-                        {{ $t("namespace files.rename.label") }}
+                        {{ t("namespace files.rename.label") }}
                     </el-button>
                 </div>
             </template>
@@ -318,10 +319,10 @@
             <template #footer>
                 <div>
                     <el-button @click="confirmation.visible = false">
-                        {{ $t("cancel") }}
+                        {{ t("cancel") }}
                     </el-button>
                     <el-button type="primary" @click="removeItems()">
-                        {{ $t("namespace files.dialog.deletion.confirm") }}
+                        {{ t("namespace files.dialog.deletion.confirm") }}
                     </el-button>
                 </div>
             </template>
@@ -336,17 +337,17 @@
             class="tabs-context"
         >
             <el-menu-item @click="toggleDialog(true, 'File')">
-                {{ $t("namespace files.create.file") }}
+                {{ t("namespace files.create.file") }}
             </el-menu-item>
             <el-menu-item @click="toggleDialog(true, 'Directory')">
-                {{ $t("namespace files.create.folder") }}
+                {{ t("namespace files.create.folder") }}
             </el-menu-item>
         </el-menu>
     </div>
 </template>
 
 <script lang="ts" setup>
-    import {ref, computed, watch, onMounted, onBeforeUnmount, nextTick, getCurrentInstance} from "vue";
+    import {ref, computed, watch, onMounted, onBeforeUnmount, nextTick} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {ItemWithChildren, useEditorStore} from "../../stores/editor";
@@ -359,6 +360,8 @@
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
     import TypeIcon from "../utils/icons/Type.vue";
+    import {useI18n} from "vue-i18n";
+    import {useToast} from "../../utils/toast";
 
     const DIALOG_DEFAULTS = {
         visible: false,
@@ -388,8 +391,11 @@
     const filter = ref<string>("");
     const dialog = ref({...DIALOG_DEFAULTS});
     const renameDialog = ref({...RENAME_DEFAULTS});
-    const dropdownRef = ref<string>("");
-    const tree = ref<any>({allExpanded: false});
+    const tree = ref<any>();
+    const filePicker = ref<HTMLInputElement>();
+    const folderPicker = ref<HTMLInputElement>();
+    const dropdowns = ref<{handleClose: () => void; handleOpen: () => void, $el: HTMLElement}[]>([]);
+    const dropdownRef = ref<{handleClose: () => void; handleOpen: () => void}>();
     const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
     const items = ref<ItemWithChildren[]>([]);
     const nodeBeforeDrag = ref<any>(undefined);
@@ -399,9 +405,8 @@
     const selectedNodes = ref<any[]>([]);
     const lastClickedIndex = ref<number | null>(null);
 
-    const $refs = (getCurrentInstance() as any).proxy.$refs;
-    const $t = (getCurrentInstance() as any).proxy.$t;
-    const $toast = () => (getCurrentInstance() as any).proxy.$toast();
+    const {t} = useI18n();
+    const toast = useToast();
 
     const namespaceId = computed<string>(() => props.currentNS ?? route.params.namespace as string);
 
@@ -423,10 +428,10 @@
     const confirmationLabels = computed(() => {
         const files = confirmation.value.nodes?.filter(n => n.type === "File").length ?? 0;
         const foldersCount = confirmation.value.nodes?.filter(n => n.type === "Directory").length ?? 0;
-        const labels = {title: $t("namespace files.dialog.deletion.title"), message: ""};
-        if (foldersCount > 0 && files > 0) labels.message = $t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files});
-        else if (foldersCount > 0) labels.message = $t("namespace files.dialog.deletion.folders", {count: foldersCount});
-        else labels.message = $t("namespace files.dialog.deletion.files", {count: files});
+        const labels = {title: t("namespace files.dialog.deletion.title"), message: ""};
+        if (foldersCount > 0 && files > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files});
+        else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount});
+        else labels.message = t("namespace files.dialog.deletion.files", {count: files});
         return labels;
     });
 
@@ -618,10 +623,10 @@
 
     function toggleDropdown(reference: string) {
         if (dropdownRef.value) {
-            $refs[dropdownRef.value]?.handleClose();
+            dropdownRef.value?.handleClose();
         }
-        dropdownRef.value = reference;
-        $refs[reference].handleOpen();
+        dropdownRef.value = dropdowns.value.find(d => d.$el.getAttribute("data-dropdown-id") === reference);
+        dropdownRef.value?.handleOpen();
     }
 
     function dialogHandler() {
@@ -638,7 +643,7 @@
             if (node?.data?.leaf === false) {
                 folder = getPath(node.data.id);
             } else {
-                const selectedNode = $refs.tree.getCurrentNode();
+                const selectedNode = tree.value.getCurrentNode();
                 if (selectedNode?.leaf === false) {
                     node = selectedNode.id;
                     folder = getPath(selectedNode.id);
@@ -678,7 +683,7 @@
             old: `${start}${renameDialog.value.old}`,
             new: `${start}${renameDialog.value.name}`,
         });
-        $refs.tree.getNode(renameDialog.value.node).data.fileName = renameDialog.value.name;
+        tree.value.getNode(renameDialog.value.node).data.fileName = renameDialog.value.name;
         renameDialog.value = {...RENAME_DEFAULTS};
     }
 
@@ -690,20 +695,23 @@
                 new: getPath(draggedNode.data.id),
             });
         } catch {
-            $refs.tree.remove(draggedNode.data.id);
-            $refs.tree.append(draggedNode.data, nodeBeforeDrag.value.parent);
+            tree.value.remove(draggedNode.data.id);
+            tree.value.append(draggedNode.data, nodeBeforeDrag.value.parent);
         }
     }
 
+    const creation_name = ref<any>();
+    const renaming_name = ref<any>();
+
     function focusCreationInput() {
         nextTick(() => {
-            $refs.creation_name?.focus();
+            creation_name.value?.focus();
         });
     }
 
     function focusRenamingInput() {
         nextTick(() => {
-            $refs.renaming_name?.focus();
+            renaming_name.value?.focus();
         });
     }
 
@@ -778,9 +786,9 @@
                     });
                 }
             }
-            $toast().success($t("namespace files.import.success"));
+            toast.success(t("namespace files.import.success"));
         } catch {
-            $toast().error($t("namespace files.import.error"));
+            toast.error(t("namespace files.import.error"));
         } finally {
             (event.target as HTMLInputElement).value = "";
             dialog.value = {...DIALOG_DEFAULTS};
@@ -814,7 +822,7 @@
         const path = `${dialog.value.folder ? `${dialog.value.folder}/` : ""}${NAME}`;
         if (creation) {
             if ((await searchFilesList(path))?.includes(path)) {
-                $toast().error($t("namespace files.create.file_already_exists"));
+                toast.error(t("namespace files.create.file_already_exists"));
                 return;
             }
             await namespacesStore.createFile({
@@ -881,17 +889,17 @@
                     namespace: props.currentNS ?? route.params.namespace as string,
                     path: getPath(node),
                 });
-                $refs.tree.remove(node.id);
+                tree.value.remove(node.id);
                 editorStore.closeTab({
                     name: node.fileName,
                 });
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error);
-                $toast().error(`Failed to delete file: ${node.fileName}`);
+                toast.error(`Failed to delete file: ${node.fileName}`);
             }
         }
         confirmation.value = {visible: false, nodes: []};
-        $toast().success("Selected files deleted successfully.");
+        toast.success("Selected files deleted successfully.");
     }
 
     async function addFolder(folder?: any, creation?: boolean) {
@@ -906,7 +914,7 @@
         if (creation) {
             try {
                 await namespacesStore.readDirectory({namespace: namespaceId.value, path});
-                $toast().error($t("namespace files.create.folder_already_exists"));
+                toast.error(t("namespace files.create.folder_already_exists"));
                 return;
             } catch {
                 // Folder does not exist, we can create it
@@ -919,10 +927,10 @@
                 } else {
                     pushToParentFolder(parentPath, NEW);
                 }
-                $toast().success(`Folder "${fileName}" created successfully.`);
+                toast.success(`Folder "${fileName}" created successfully.`);
             } catch (error) {
                 console.error(`Failed to create folder: ${fileName}`, error);
-                $toast().error($t("namespace files.create.folder_error"));
+                toast.error(t("namespace files.create.folder_error"));
                 return;
             }
             dialog.value = {...DIALOG_DEFAULTS};
@@ -952,7 +960,7 @@
     }
 
     function getPath(nameOrNode: any): string {
-        const nodes = $refs.tree.getNodePath(nameOrNode);
+        const nodes = tree.value.getNodePath(nameOrNode);
         return nodes.map((obj: any) => obj.fileName).join("/");
     }
 
@@ -960,9 +968,9 @@
         const path = getPath(name);
         try {
             Utils.copy(path);
-            $toast().success($t("namespace files.path.success"));
+            toast.success(t("namespace files.path.success"));
         } catch {
-            $toast().error($t("namespace files.path.error"));
+            toast.error(t("namespace files.path.error"));
         }
     }
 
@@ -1015,7 +1023,7 @@
     }, {immediate: true, deep: true});
 
     watch(() => editorStore.treeRefresh, async () => {
-        if ($refs.tree) {
+        if (tree.value) {
             items.value = [];
             const itemsArr = await namespacesStore.readDirectory({
                 namespace: namespaceId.value

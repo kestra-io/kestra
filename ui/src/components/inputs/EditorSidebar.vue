@@ -351,7 +351,6 @@
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {ItemWithChildren, useEditorStore} from "../../stores/editor";
-    import {useFlowStore} from "../../stores/flow";
     import Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -386,7 +385,6 @@
     const route = useRoute();
     const namespacesStore = useNamespacesStore();
     const editorStore = useEditorStore();
-    const flowStore = useFlowStore();
 
     const filter = ref<string>("");
     const dialog = ref({...DIALOG_DEFAULTS});
@@ -1010,17 +1008,6 @@
     onBeforeUnmount(() => {
         document.removeEventListener("click", clearSelection);
     });
-
-    watch(() => flowStore.flow, (flow) => {
-        if (flow) {
-            editorStore.openTab({
-                name: "Flow",
-                path: "Flow.yaml",
-                persistent: true,
-                flow: true,
-            });
-        }
-    }, {immediate: true, deep: true});
 
     watch(() => editorStore.treeRefresh, async () => {
         if (tree.value) {

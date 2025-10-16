@@ -1,5 +1,5 @@
 import {useStorage} from "@vueuse/core";
-import {DeserializableEditorElement, Panel, Tab} from "../utils/multiPanelTypes";
+import {EditorElement, Panel, Tab} from "../utils/multiPanelTypes";
 
 interface PreSerializedPanel {
     tabs: string[];
@@ -7,7 +7,7 @@ interface PreSerializedPanel {
     size: number;
 }
 
-export function useStoredPanels(key: string, editorElements: Pick<DeserializableEditorElement, "deserialize">[], defaultPanels: string[] = [], preSerializePanels?: (panels: Panel[]) => PreSerializedPanel[]) {
+export function useStoredPanels(key: string, editorElements: Pick<EditorElement, "deserialize">[], defaultPanels: string[] = [], preSerializePanels?: (panels: Panel[]) => PreSerializedPanel[]) {
     const preSerializePanelsFn = preSerializePanels ?? ((ps: Panel[]) => ps.map(p => ({
         tabs: p.tabs.map(t => t.uid),
         activeTab: p.activeTab?.uid,
@@ -20,10 +20,10 @@ export function useStoredPanels(key: string, editorElements: Pick<Deserializable
      * hence the "allowCreate = false".
      * @param tags
      */
-    function deserializeTabTags(tags: string[]): Tab[] {
-        return tags.map(tag => {
+    function deserializeTabTags(uids: string[]): Tab[] {
+        return uids.map(uid => {
             for (const element of editorElements) {
-                const deserializedTab = element.deserialize(tag, false);
+                const deserializedTab = element.deserialize(uid, false);
                 if (deserializedTab) {
                     return deserializedTab;
                 }

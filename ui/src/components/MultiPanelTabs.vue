@@ -191,7 +191,7 @@
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
 
     import {trackTabOpen, trackTabClose} from "../utils/tabTracking";
-    import {Panel, Tab} from "../utils/multiPanelTypes";
+    import {Panel, Tab, TabLive} from "../utils/multiPanelTypes";
 
     const {t} = useI18n();
     const {showKeyShortcuts} = useKeyShortcuts();
@@ -213,10 +213,10 @@
         panelIndex: number,
         tabId: string,
         tabIndex: number,
-        tab: Tab
+        tab: TabLive
     }
 
-    const panels = defineModel<Panel[]>({
+    const panels = defineModel<Panel<TabLive>[]>({
         required: true,
     })
 

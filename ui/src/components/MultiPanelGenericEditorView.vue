@@ -21,11 +21,11 @@
     import {computed, useSlots} from "vue";
     import MultiPanelEditorTabs from "./MultiPanelEditorTabs.vue";
     import MultiPanelTabs from "./MultiPanelTabs.vue";
-    import {DeserializableEditorElement, Panel} from "../utils/multiPanelTypes";
+    import {EditorElement, Panel} from "../utils/multiPanelTypes";
     import {useStoredPanels} from "../composables/useStoredPanels";
 
     const props = withDefaults(defineProps<{
-        editorElements: DeserializableEditorElement[];
+        editorElements: EditorElement[];
         defaultActiveTabs: string[];
         saveKey: string;
         bottomVisible?: boolean;

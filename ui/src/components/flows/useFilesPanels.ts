@@ -2,20 +2,19 @@ import {computed, h, markRaw, Ref, watch} from "vue"
 import EditorWrapper from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 import {EditorTabProps, useEditorStore} from "../../stores/editor";
-import {DeserializableEditorElement, Panel} from "../../utils/multiPanelTypes";
+import {EditorElement, Panel, Tab} from "../../utils/multiPanelTypes";
 
 export const CODE_PREFIX = "code"
 
-export function getTabFromFilesTab(tab: EditorTabProps) {
+export function getTabFromFilesTab(tab: EditorTabProps): Tab {
     return {
-        value: `${CODE_PREFIX}-${tab.path}`,
+        uid: `${CODE_PREFIX}-${tab.path}`,
         button: {
             label: tab.name,
             icon: () => h(TypeIcon, {name:tab.name}),
         },
-        component: () => h(markRaw(EditorWrapper), {...tab}),
-        dirty: tab.dirty,
-    }
+        component: () => h(markRaw(EditorWrapper), tab)
+    } satisfies Tab
 }
 
 export function getTabPropsFromFilePath(filePath: string, flow: boolean = false): EditorTabProps {
@@ -28,13 +27,13 @@ export function getTabPropsFromFilePath(filePath: string, flow: boolean = false)
     }
 }
 
-export function useInitialFilesTabs(EDITOR_ELEMENTS: DeserializableEditorElement[]){
+export function useInitialFilesTabs(EDITOR_ELEMENTS: EditorElement[]){
     const editorStore = useEditorStore()
 
-    const codeElement = EDITOR_ELEMENTS.find(e => e.value === CODE_PREFIX)!
+    const codeElement = EDITOR_ELEMENTS.find(e => e.uid === CODE_PREFIX)!
     codeElement.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
 
-    function setupInitialCodeTab(tab: string, codeElement: DeserializableEditorElement){
+    function setupInitialCodeTab(tab: string, codeElement: EditorElement){
         const flow = CODE_PREFIX === tab
         if(!flow && !tab.startsWith(`${CODE_PREFIX}-`)){
             return
@@ -81,28 +80,11 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespaceFiles = false) {
         }
     })
 
-    const dirtyTabs = computed(() => codeEditorTabs.value.filter(t => t.dirty).map(t => t.path))
-
-    // maintain sync between dirty states of tabs
-    watch(dirtyTabs, (newVal) => {
-        for(const p of panels.value) {
-            for(const t of p.tabs) {
-                if(t.uid.startsWith("code-")){
-                    if(newVal.includes(t.uid.substring(5))){
-                        t.dirty = true
-                    }else{
-                        t.dirty = false
-                    }
-                }
-            }
-        }
-    })
-
     watch(codeEditorTabs, (newVal) => {
         const codeTabs = getPanelsFromCodeEditorTabs(newVal.map(tab => ({...tab, namespaceFiles})))
 
         // Loop through tabs to see if any code tab should be removed due to file deletion
-        const openedTabs = new Set(codeTabs.tabs.map(tab => tab.value))
+        const openedTabs = new Set(codeTabs.tabs.map(tab => tab.uid))
         panels.value.forEach((panel) => {
             panel.tabs = panel.tabs.filter(tab => {
                 return !tab.uid.startsWith("code-") || openedTabs.has(tab.uid)
@@ -110,7 +92,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespaceFiles = false) {
         })
 
         // get all the tabs to add since they are not already part of the panels tabs
-        const toAdd = codeTabs.tabs.filter(t => !panels.value.some(p => p.tabs.some(pt => t.value === pt.uid)))
+        const toAdd = codeTabs.tabs.filter(t => !panels.value.some(p => p.tabs.some(pt => t.uid === pt.uid)))
 
         if(toAdd.length === 0){
             return

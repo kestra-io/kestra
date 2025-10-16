@@ -196,6 +196,12 @@
     .information-icon {
         color: var(--ks-content-secondary);
         cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+            color: var(--ks-content-link-hover);
+            background-color: var(--ks-button-background-secondary-hover);
+        }
     }
 }
 </style>

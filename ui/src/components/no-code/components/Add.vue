@@ -33,5 +33,11 @@ button {
     cursor: pointer;
     color: var(--ks-content-secondary);
     font-size: $code-font-sm;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background-color: var(--ks-button-background-secondary-hover);
+        color: var(--ks-content-link-hover);
+    }
 }
 </style>

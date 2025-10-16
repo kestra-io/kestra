@@ -54,8 +54,7 @@ class FileSerdeTest {
 
         BufferedReader inputStream = new BufferedReader(new FileReader(tempFile));
 
-        Map<String, Object> result = Flux
-            .create(FileSerde.reader(inputStream), FluxSink.OverflowStrategy.BUFFER)
+        Map<String, Object> result = FileSerde.readAll(inputStream)
             .map(o -> (Map<String, Object>) o)
             .blockFirst();
 

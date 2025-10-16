@@ -5,14 +5,12 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
-import jakarta.inject.Singleton;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Singleton
 public class StatefulTriggerService {
     public record Entry(String uri, String version, Instant modifiedAt, Instant lastSeenAt) {
         public static Entry candidate(String uri, String version, Instant modifiedAt) {
@@ -22,7 +20,7 @@ public class StatefulTriggerService {
 
     public record StateUpdate(boolean fire, boolean isNew) {}
 
-    public Map<String, Entry> readState(RunContext runContext, String key, Optional<Duration> ttl) {
+    public static Map<String, Entry> readState(RunContext runContext, String key, Optional<Duration> ttl) {
         try {
             var kv = runContext.namespaceKv(runContext.flowInfo().namespace()).getValue(key);
             if (kv.isEmpty()) {
@@ -42,7 +40,7 @@ public class StatefulTriggerService {
         }
     }
 
-    public void writeState(RunContext runContext, String key, Map<String, Entry> state, Optional<Duration> ttl) {
+    public static void writeState(RunContext runContext, String key, Map<String, Entry> state, Optional<Duration> ttl) {
         try {
             var bytes = JacksonMapper.ofJson().writeValueAsBytes(state.values());
             var meta = new KVMetadata("trigger state", ttl.orElse(null));
@@ -53,7 +51,7 @@ public class StatefulTriggerService {
         }
     }
 
-    public StateUpdate computeAndUpdateState(Map<String, Entry> state, Entry candidate, StatefulTriggerInterface.On on) {
+    public static StateUpdate computeAndUpdateState(Map<String, Entry> state, Entry candidate, StatefulTriggerInterface.On on) {
         var prev = state.get(candidate.uri());
         var isNew = prev == null;
         var fire = shouldFire(prev, candidate.version(), on);
@@ -77,7 +75,7 @@ public class StatefulTriggerService {
         return new StatefulTriggerService.StateUpdate(fire, isNew);
     }
 
-    public boolean shouldFire(Entry prev, String version, StatefulTriggerInterface.On on) {
+    public static boolean shouldFire(Entry prev, String version, StatefulTriggerInterface.On on) {
         if (prev == null) {
             return on == StatefulTriggerInterface.On.CREATE || on == StatefulTriggerInterface.On.CREATE_OR_UPDATE;
         }
@@ -87,7 +85,7 @@ public class StatefulTriggerService {
         return false;
     }
 
-    public String defaultKey(String ns, String flowId, String triggerId) {
+    public static String defaultKey(String ns, String flowId, String triggerId) {
         return String.join("_", ns, flowId, triggerId);
     }
 }

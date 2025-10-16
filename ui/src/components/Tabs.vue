@@ -208,7 +208,6 @@ section.container.mt-4:has(> section.empty) {
 .maximized {
     margin: 0 !important;
     padding: 0;
-    display: flex;
     flex-grow: 1;
 }
 

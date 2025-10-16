@@ -72,7 +72,7 @@ jobs:
     steps:
       - run: echo "debug repo ${{github.repository}} ref ${{github.ref}} res ${{needs.publish-develop-maven.result}} jobStatus ${{job.status}} isNotFork ${{github.repository == 'kestra-io/kestra'}} isDevelop ${{github.ref == 'refs/heads/develop'}}"
       - name: Trigger EE Workflow
-        uses: peter-evans/repository-dispatch@v4
+        uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4
         if: github.ref == 'refs/heads/develop' && needs.publish-develop-maven == 'success'
         with:
           token: ${{ secrets.GH_PERSONAL_TOKEN }}

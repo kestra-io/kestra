@@ -62,7 +62,7 @@ public class MiscController {
     FeatureUsageReport featureUsageReport;
 
     @Inject
-    BasicAuthService basicAuthService;
+    Optional<BasicAuthService> basicAuthService = Optional.empty();
 
     @Inject
     Optional<TemplateRepositoryInterface> templateRepository;
@@ -124,7 +124,7 @@ public class MiscController {
                 .max(this.maxPreviewRows)
                 .build())
             .isAiEnabled(applicationContext.containsBean(AiController.class))
-            .isBasicAuthInitialized(basicAuthService.isBasicAuthInitialized())
+            .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
@@ -160,7 +160,9 @@ public class MiscController {
     public HttpResponse<Void> createBasicAuth(
         @RequestBody @Body BasicAuthCredentials basicAuthCredentials
     ) {
-        basicAuthService.save(basicAuthCredentials);
+        basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
+            .save(basicAuthCredentials);
 
         return HttpResponse.noContent();
     }
@@ -170,7 +172,9 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
     public List<String> getBasicAuthConfigErrors() {
-        return basicAuthService.validationErrors();
+        return basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
+            .validationErrors();
     }
 
     @Getter

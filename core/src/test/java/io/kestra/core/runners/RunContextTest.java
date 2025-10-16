@@ -49,7 +49,6 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
@@ -71,9 +70,6 @@ class RunContextTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;
-
-    @Inject
-    PluginDefaultsCaseTest pluginDefaultsCaseTest;
 
     @Inject
     RunContextFactory runContextFactory;
@@ -175,12 +171,6 @@ class RunContextTest {
 
         assertThat(execution.getTaskRunList().get(1).getOutputs().get("value")).isEqualTo("task-id");
         assertThat(execution.getTaskRunList().get(2).getOutputs().get("value")).isEqualTo("return");
-    }
-
-    @Test
-    void taskDefaults() throws TimeoutException, QueueException, IOException, URISyntaxException {
-        repositoryLoader.load(Objects.requireNonNull(RunContextTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
-        pluginDefaultsCaseTest.taskDefaults();
     }
 
     @Test

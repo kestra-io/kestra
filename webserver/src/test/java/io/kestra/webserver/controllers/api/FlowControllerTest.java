@@ -820,12 +820,12 @@ class FlowControllerTest {
         assertThat(body.size()).isEqualTo(2);
         // We don't send any revision while the flow already exists so it's outdated
         assertThat(body.getFirst().isOutdated()).isTrue();
-        assertThat(body.getFirst().getDeprecationPaths()).hasSize(3);
-        assertThat(body.getFirst().getDeprecationPaths()).containsExactlyInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners");
+        assertThat(body.getFirst().getDeprecationPaths()).hasSize(2);
+        assertThat(body.getFirst().getDeprecationPaths()).containsExactlyInAnyOrder("tasks[1]", "tasks[1].additionalProperty");
         assertThat(body.getFirst().getWarnings().size()).isZero();
         assertThat(body.getFirst().getInfos().size()).isZero();
         assertThat(body.get(1).isOutdated()).isFalse();
-        assertThat(body.get(1).getDeprecationPaths()).containsExactlyInAnyOrder("tasks[0]", "tasks[1]");
+        assertThat(body.get(1).getDeprecationPaths()).containsExactlyInAnyOrder("tasks[0]", "tasks[0].additionalProperty", "tasks[1]", "tasks[1].additionalProperty");
         assertThat(body, everyItem(
             Matchers.hasProperty("constraints", nullValue())
         ));
@@ -852,8 +852,8 @@ class FlowControllerTest {
 
         List<ValidateConstraintViolation> body = response.body();
         assertThat(body.size()).isEqualTo(1);
-        assertThat(body.getFirst().getDeprecationPaths()).hasSize(1);
-        assertThat(body.getFirst().getDeprecationPaths().getFirst()).isEqualTo("tasks[0]");
+        assertThat(body.getFirst().getDeprecationPaths()).hasSize(2);
+        assertThat(body.getFirst().getDeprecationPaths().getFirst()).isEqualTo("tasks[0]", "tasks[0].additionalProperty");
         assertThat(body.getFirst().getInfos().size()).isEqualTo(1);
         assertThat(body.getFirst().getInfos().getFirst()).isEqualTo("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log");
     }

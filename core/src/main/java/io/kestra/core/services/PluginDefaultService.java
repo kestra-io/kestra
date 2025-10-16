@@ -549,49 +549,4 @@ public class PluginDefaultService {
 
         return result;
     }
-
-    // -----------------------------------------------------------------------------------------------------------------
-    // DEPRECATED
-    // -----------------------------------------------------------------------------------------------------------------
-
-    /**
-     * @deprecated use {@link #injectAllDefaults(FlowInterface, Logger)} instead
-     */
-    @Deprecated(forRemoval = true, since = "0.20")
-    public Flow injectDefaults(Flow flow, Logger logger) {
-        try {
-            return this.injectDefaults(flow);
-        } catch (Exception e) {
-            logger.warn(
-                "Can't inject plugin defaults on tenant {}, namespace '{}', flow '{}' with errors '{}'",
-                flow.getTenantId(),
-                flow.getNamespace(),
-                flow.getId(),
-                e.getMessage(),
-                e
-            );
-            return flow;
-        }
-    }
-
-    /**
-     * @deprecated use {@link #injectAllDefaults(FlowInterface, boolean)} instead
-     */
-    @Deprecated(forRemoval = true, since = "0.20")
-    public Flow injectDefaults(Flow flow) throws ConstraintViolationException {
-        if (flow instanceof FlowWithSource flowWithSource) {
-            try {
-                return this.injectAllDefaults(flowWithSource, false);
-            } catch (FlowProcessingException e) {
-                if (e.getCause() instanceof ConstraintViolationException cve) {
-                    throw cve;
-                }
-                throw new KestraRuntimeException(e);
-            }
-        }
-
-        Map<String, Object> mapFlow = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
-        mapFlow = innerInjectDefault(flow.getTenantId(), flow.getNamespace(), mapFlow, false);
-        return YamlParser.parse(mapFlow, Flow.class, false);
-    }
 }

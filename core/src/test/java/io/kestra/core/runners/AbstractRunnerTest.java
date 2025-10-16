@@ -276,7 +276,7 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows({"flows/tests/plugin-defaults.yaml"})
     void taskDefaults() throws Exception {
-        pluginDefaultsCaseTest.taskDefaults();
+        pluginDefaultsCaseTest.pluginDefaults();
     }
 
     @Test

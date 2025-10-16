@@ -25,11 +25,25 @@
             <slot name="footer" />
         </template>
     </SidebarMenu>
+    <el-button
+        v-if="isSmallScreen && collapsed"
+        class="reopenSidebarBtn"
+        circle
+        @click="onToggleCollapse(false)"
+        aria-label="Open sidebar"
+        title="Open sidebar"
+    >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 5L15 12L8 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+    </el-button>
 </template>
 
 <script setup lang="ts">
     import {
         onUpdated,
+        onMounted,
+        onBeforeUnmount,
         ref,
         computed, h
     } from "vue";
@@ -62,6 +76,9 @@
 
     const layoutStore = useLayoutStore();
 
+    const BREAKPOINT = 992; // px
+    const isSmallScreen = ref(false);
+
     function onToggleCollapse(folded: boolean) {
         collapsed.value = folded;
         layoutStore.setSideMenuCollapsed(folded);
@@ -69,6 +86,31 @@
 
         return folded;
     }
+
+    function evaluateScreenSize() {
+        const small = window.innerWidth < BREAKPOINT;
+        // If entering small screen, force collapse
+        if (small && !collapsed.value) {
+            onToggleCollapse(true);
+        }
+        // If leaving small screen, restore from stored preference
+        if (!small) {
+            const stored = localStorage.getItem("menuCollapsed") === "true";
+            if (stored !== collapsed.value) {
+                onToggleCollapse(stored);
+            }
+        }
+        isSmallScreen.value = small;
+    }
+
+    onMounted(() => {
+        evaluateScreenSize();
+        window.addEventListener("resize", evaluateScreenSize);
+    });
+
+    onBeforeUnmount(() => {
+        window.removeEventListener("resize", evaluateScreenSize);
+    });
 
     function disabledCurrentRoute(items: MenuItem[]) {
         return items
@@ -177,6 +219,20 @@
                 }
             }
         }
+    }
+}
+
+.reopenSidebarBtn {
+    position: fixed;
+    left: 8px;
+    top: 72px;
+    z-index: 2000;
+    background: var(--ks-surface-primary);
+    color: var(--ks-text-secondary);
+    border: 1px solid var(--ks-border-primary);
+
+    &:hover {
+        color: var(--ks-content-link);
     }
 }
 </style>

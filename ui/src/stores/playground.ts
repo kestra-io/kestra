@@ -9,6 +9,7 @@ import {State} from "@kestra-io/ui-libs";
 import {useToast} from "../utils/toast";
 import {useI18n} from "vue-i18n";
 import {useFlowStore} from "./flow";
+import {useEditorStore} from "./editor";
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
@@ -161,6 +162,21 @@ export const usePlaygroundStore = defineStore("playground", () => {
     });
 
     const toast = useToast();
+
+    // Ensure Files panel reflects changes after Playground executions (e.g., Namespace/Tenant sync tasks)
+    // When an execution transitions from a non-final state to a final state, refresh the files tree
+    const editorStore = useEditorStore();
+    watch(() => executionState.value, (newState, oldState) => {
+        if (!latestExecution.value) return;
+
+        const wasRunning = oldState ? nonFinalStates.includes(oldState) : false;
+        const isFinalNow = newState ? !nonFinalStates.includes(newState) : false;
+
+        if (wasRunning && isFinalNow) {
+            // Trigger a refresh of the namespace files tree in the editor sidebar
+            editorStore.refreshTree();
+        }
+    });
 
     function runFromQuery(){
         if(route.query.runUntilTaskId) {

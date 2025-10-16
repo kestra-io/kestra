@@ -1,11 +1,11 @@
 export interface Tab {
+    uid: string,
     button: {
         icon: any,
         label: string
     },
     potential?: boolean
     fromPanel?: boolean
-    value: string,
     dirty?: boolean,
     component: any
 }

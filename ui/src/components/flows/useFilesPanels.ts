@@ -74,7 +74,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespaceFiles = false) {
         // the corresponding tab is active
         for(const p of panels.value){
             for(const t of p.tabs){
-                if(t.value === `${CODE_PREFIX}-${newVal}`){
+                if(t.uid === `${CODE_PREFIX}-${newVal}`){
                     p.activeTab = t
                 }
             }
@@ -87,8 +87,8 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespaceFiles = false) {
     watch(dirtyTabs, (newVal) => {
         for(const p of panels.value) {
             for(const t of p.tabs) {
-                if(t.value.startsWith("code-")){
-                    if(newVal.includes(t.value.substring(5))){
+                if(t.uid.startsWith("code-")){
+                    if(newVal.includes(t.uid.substring(5))){
                         t.dirty = true
                     }else{
                         t.dirty = false
@@ -105,26 +105,26 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespaceFiles = false) {
         const openedTabs = new Set(codeTabs.tabs.map(tab => tab.value))
         panels.value.forEach((panel) => {
             panel.tabs = panel.tabs.filter(tab => {
-                return !tab.value.startsWith("code-") || openedTabs.has(tab.value)
+                return !tab.uid.startsWith("code-") || openedTabs.has(tab.uid)
             })
         })
 
         // get all the tabs to add since they are not already part of the panels tabs
-        const toAdd = codeTabs.tabs.filter(t => !panels.value.some(p => p.tabs.some(pt => t.value === pt.value)))
+        const toAdd = codeTabs.tabs.filter(t => !panels.value.some(p => p.tabs.some(pt => t.value === pt.uid)))
 
         if(toAdd.length === 0){
             return
         }
 
         // find the first panel where there is already a code tab
-        const firstPanelWithCodeTab = panels.value.find(p => p.tabs.some(t => t.value.startsWith("code")))
+        const firstPanelWithCodeTab = panels.value.find(p => p.tabs.some(t => t.uid.startsWith("code")))
         if(firstPanelWithCodeTab){
             // add the tabs to the first panel with a code tab
             firstPanelWithCodeTab.tabs.push(...toAdd)
             firstPanelWithCodeTab.activeTab = toAdd[0]
         }else{
             // find the panel where the files tab is
-            const filesPanel = panels.value.findIndex(p => p.tabs.some(t => t.value === "files"))
+            const filesPanel = panels.value.findIndex(p => p.tabs.some(t => t.uid === "files"))
             if(filesPanel >= 0){
                 // add the code panel after the files tab
                 panels.value.splice(filesPanel + 1, 0, codeTabs)

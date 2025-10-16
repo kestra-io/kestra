@@ -46,9 +46,9 @@
     import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue";
 
     function isTabFlowRelated(element: Tab){
-        return ["code", "nocode", "topology"].includes(element.value)
+        return ["code", "nocode", "topology"].includes(element.uid)
             // when the flow file is dirty all the nocode tabs get splashed
-            || element.value.startsWith("nocode-")
+            || element.uid.startsWith("nocode-")
     }
 
     const RawNoCode = markRaw(NoCode)
@@ -97,8 +97,8 @@
 
     function preSerializePanels(v:Panel[]){
         return v.map(p => ({
-            tabs: p.tabs.map(t => t.value),
-            activeTab: cleanupNoCodeTabKey(p.activeTab?.value),
+            tabs: p.tabs.map(t => t.uid),
+            activeTab: cleanupNoCodeTabKey(p.activeTab?.uid),
             size: p.size,
         }))
     }

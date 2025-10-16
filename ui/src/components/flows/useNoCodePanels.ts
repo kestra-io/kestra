@@ -300,7 +300,7 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
             return
         }
         const tab = openerPanel.tabs[opener.tabIndex]
-        if (tab?.value.startsWith(NOCODE_PREFIX)) {
+        if (tab?.uid.startsWith(NOCODE_PREFIX)) {
             trackTabClose(tab);
             openerPanel.tabs.splice(opener.tabIndex, 1)
             if (openerPanel.activeTab === tab) {

@@ -32,22 +32,22 @@
                     >
                         <template
                             v-for="tab in panel.tabs"
-                            :key="tab.value"
+                            :key="tab.uid"
                         >
                             <button
                                 v-if="!tab.potential"
                                 class="editor-tab"
                                 role="tab"
-                                :class="{active: tab.value === panel.activeTab?.value}"
+                                :class="{active: tab.uid === panel.activeTab?.uid}"
                                 draggable="true"
                                 @dragstart="(e) => {
                                     if(e.dataTransfer){
                                         e.dataTransfer.effectAllowed = 'move';
                                     }
-                                    dragstart(panelIndex, tab.value);
+                                    dragstart(panelIndex, tab.uid);
                                 }"
                                 @dragleave.prevent
-                                :data-tab-id="tab.value"
+                                :data-tab-id="tab.uid"
                                 @click="handleTabClick(panel, tab)"
                                 @mouseup="middleMouseClose($event, panelIndex, tab)"
                             >
@@ -111,7 +111,7 @@
                                         </span>
                                     </el-dropdown-item>
                                     <el-dropdown-item
-                                        v-if="panel.activeTab?.value === 'code'"
+                                        v-if="panel.activeTab?.uid === 'code'"
                                         :icon="Keyboard"
                                         @click="showKeyShortcuts()"
                                     >
@@ -134,10 +134,10 @@
                 >
                     <KeepAlive v-if="panel.activeTab">
                         <component
-                            :key="panel.activeTab.value"
+                            :key="panel.activeTab.uid"
                             :is="panel.activeTab.component"
                             :panelIndex="panelIndex"
-                            :tabIndex="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
+                            :tabIndex="panel.tabs.findIndex(t => t.uid === panel.activeTab.uid)"
                         />
                     </KeepAlive>
                     <div
@@ -244,14 +244,14 @@
 
         panel.activeTab = tab
 
-        if(tab.value.startsWith(CODE_PREFIX)){
+        if(tab.uid.startsWith(CODE_PREFIX)){
             editorStore.current = {
                 dirty: tab.dirty ?? false,
-                extension: tab.value.split(".").pop(),
-                flow: tab.value === CODE_PREFIX,
-                name: tab.value,
-                path: tab.value,
-                persistent: tab.value === CODE_PREFIX,
+                extension: tab.uid.split(".").pop(),
+                flow: tab.uid === CODE_PREFIX,
+                name: tab.uid,
+                path: tab.uid,
+                persistent: tab.uid === CODE_PREFIX,
             }
         }
     };
@@ -282,7 +282,7 @@
 
     function dragstart(panelIndex: number, tabId: string) {
         dragging.value = true;
-        const tabIndex = panels.value[panelIndex].tabs.findIndex((tab) => tab.value === tabId);
+        const tabIndex = panels.value[panelIndex].tabs.findIndex((tab) => tab.uid === tabId);
         movedTabInfo.value = {panelIndex, tabId, tabIndex, tab: panels.value[panelIndex].tabs[tabIndex]}
     }
 
@@ -379,14 +379,14 @@
         // then insert the potential tab in the right place
         panels.value[panelIndex].tabs.splice(insertTabAfterIndex + 1, 0, {
             ...movedTabInfo.value.tab,
-            value: `potential-${movedTabInfo.value.tab.value}`,
+            uid: `potential-${movedTabInfo.value.tab.uid}`,
             potential: true,
             fromPanel: panelIndex === movedTabInfo.value.panelIndex
         });
     }
 
     function getTargetTabIndex(targetPanelIndex: number, targetTabId?: string): number {
-        const targetTabIndex = panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.value === targetTabId)
+        const targetTabIndex = panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.uid === targetTabId)
         if(targetTabIndex === -1){
             return panels.value[targetPanelIndex].tabs.length;
         }
@@ -400,7 +400,7 @@
 
         // find potential tab in panels.value tabs
         const potentialTabPanelIndex = panels.value.findIndex((panel) => panel.tabs.some((tab) => tab.potential));
-        const potentialTabId = panels.value[potentialTabPanelIndex]?.tabs.find((tab) => tab.potential)?.value;
+        const potentialTabId = panels.value[potentialTabPanelIndex]?.tabs.find((tab) => tab.potential)?.uid;
 
         if(potentialTabId){
             moveTab(movedTabInfo.value, potentialTabPanelIndex, potentialTabId);
@@ -433,7 +433,7 @@
 
             // if the tab has been removed from the panel
             // we need to select another active tab
-            if(panels.value[originalPanelIndex].activeTab.value === movedTab.value){
+            if(panels.value[originalPanelIndex].activeTab.uid === movedTab.uid){
                 // if the tab at the same index is available, select it
                 if(tabIndex >= 0 && panels.value[originalPanelIndex].tabs.length > tabIndex){
                     panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex];
@@ -482,7 +482,7 @@
         // Find it again by looking for the tab in all panels
         for (let i = 0; i < panels.value.length; i++) {
             const panel = panels.value[i];
-            const tabIndex = panel.tabs.findIndex(t => t.value === movedTab.value);
+            const tabIndex = panel.tabs.findIndex(t => t.uid === movedTab.uid);
 
             if (i === 0 && direction === "left") continue;
             if (i === panels.value.length - 1 && direction === "right") continue;
@@ -490,7 +490,7 @@
             if (tabIndex !== -1) {
                 panel.tabs.splice(tabIndex, 1);
 
-                if (panel.activeTab.value === movedTab.value && panel.tabs.length > 0) {
+                if (panel.activeTab.uid === movedTab.uid && panel.tabs.length > 0) {
                     panel.activeTab = tabIndex > 0
                         ? panel.tabs[tabIndex - 1]
                         : panel.tabs[0];
@@ -519,12 +519,12 @@
         trackTabClose(tab);
 
         const panel = panels.value[panelIndex];
-        const tabIndex = panel.tabs.findIndex((t) => t.value === tab.value);
+        const tabIndex = panel.tabs.findIndex((t) => t.uid === tab.uid);
         panel.tabs.splice(tabIndex, 1);
-        if (panel.activeTab.value === tab.value) {
+        if (panel.activeTab.uid === tab.uid) {
             panel.activeTab = panel.tabs[tabIndex - 1] ?? panel.tabs[0];
         }
-        emit("removeTab", tab.value)
+        emit("removeTab", tab.uid)
     }
 
     watch(panels, () => {
@@ -547,7 +547,7 @@
         panels.value.splice(panelIndex + 1, 0, newPanel)
 
         // get index of active tab in the original panel
-        const activeTabIndex = panel.tabs.findIndex((tab) => tab.value === panel.activeTab.value)
+        const activeTabIndex = panel.tabs.findIndex((tab) => tab.uid === panel.activeTab.uid)
 
         // set the active tab to the previous tab in the original panel
         panel.activeTab = panel.tabs[activeTabIndex - 1] ?? panel.tabs[activeTabIndex + 1]

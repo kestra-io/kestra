@@ -26,15 +26,33 @@
     </el-table>
 </template>
 
-<script setup>
-    import {onMounted} from "vue";
+<script setup lang="ts">
+import { onMounted } from "vue";
+import { useNamespacesStore } from "override/stores/namespaces";
 
-    import {useNamespacesStore} from "override/stores/namespaces";
+/**
+ * Props definition
+ * ----------------
+ * The component receives a single required prop: `namespace`.
+ */
+interface Props {
+  namespace: string;
+}
 
-    const props = defineProps({namespace: {type: String, required: true}});
+// Define props using TypeScript interface
+const props = defineProps<Props>();
 
-    const store = useNamespacesStore();
+// Use the Namespaces store from Pinia
+const store = useNamespacesStore();
 
-    const loadItem = () => store.loadInheritedKVs(props.namespace);
-    onMounted(() => loadItem());
+/**
+ * Loads inherited key-values for the given namespace.
+ * Called once when the component mounts.
+ */
+const loadItem = (): void => {
+  store.loadInheritedKVs(props.namespace);
+};
+
+// Lifecycle hook
+onMounted(loadItem);
 </script>

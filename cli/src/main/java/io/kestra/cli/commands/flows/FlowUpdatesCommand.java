@@ -21,6 +21,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static io.kestra.core.utils.Rethrow.throwFunction;
+
 @CommandLine.Command(
     name = "updates",
     description = "Create or update flows from a folder, and optionally delete the ones not present",
@@ -41,7 +43,6 @@ public class FlowUpdatesCommand extends AbstractApiCommand {
     @Inject
     private TenantIdSelectorService tenantIdSelectorService;
 
-    @SuppressWarnings("deprecation")
     @Override
     public Integer call() throws Exception {
         super.call();
@@ -50,13 +51,7 @@ public class FlowUpdatesCommand extends AbstractApiCommand {
             List<String> flows = files
                 .filter(Files::isRegularFile)
                 .filter(YamlParser::isValidExtension)
-                .map(path -> {
-                    try {
-                        return IncludeHelperExpander.expand(Files.readString(path, Charset.defaultCharset()), path.getParent());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
+                .map(throwFunction(path -> Files.readString(path, Charset.defaultCharset())))
                 .toList();
 
             String body = "";

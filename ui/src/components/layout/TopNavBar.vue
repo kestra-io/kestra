@@ -6,6 +6,14 @@
                     v-if="layoutStore.sideMenuCollapsed"
                     @toggle="layoutStore.setSideMenuCollapsed(false)"
                 />
+                <!-- Mobile hamburger button -->
+                <button
+                    class="icon-btn d-lg-none"
+                    aria-label="Open menu"
+                    @click="layoutStore.setSideMenuCollapsed(false)"
+                >
+                    <MenuIcon />
+                </button>
                 <div class="d-flex flex-column gap-2">
                     <el-breadcrumb v-if="breadcrumb">
                         <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
@@ -64,6 +72,7 @@
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
     import Information from "vue-material-design-icons/Information.vue";
+    import MenuIcon from "vue-material-design-icons/Menu.vue";
     import Badge from "../global/Badge.vue";
     import {useLogsStore} from "../../stores/logs";
     import {useBookmarksStore} from "../../stores/bookmarks";
@@ -204,6 +213,16 @@
                 gap: .5rem;
                 align-items: center;
             }
+        }
+        .icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.08);
+            border: 1px solid var(--ks-border-primary);
+            color: var(--ks-text-secondary);
         }
         @media (max-width: 768px) {
             .mycontainer {

@@ -94,20 +94,6 @@ public class Flow extends AbstractFlow implements HasUID {
     List<PluginDefault> pluginDefaults;
 
     @Valid
-    List<PluginDefault> taskDefaults;
-
-    @Deprecated
-    public void setTaskDefaults(List<PluginDefault> taskDefaults) {
-        this.pluginDefaults = taskDefaults;
-        this.taskDefaults = taskDefaults;
-    }
-
-    @Deprecated
-    public List<PluginDefault> getTaskDefaults() {
-        return this.taskDefaults;
-    }
-
-    @Valid
     Concurrency concurrency;
 
     @Schema(

@@ -104,6 +104,10 @@
         border-color: var(--ks-border-active);
     }
 
+    &:hover {
+        background-color: var(--ks-button-background-secondary-hover);
+    }
+
     .playground-run-task{
         color: $base-white;
         background-color: $base-blue-400;
@@ -116,6 +120,23 @@
         margin-top: 4px;
         padding: 0;
         border: none;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+
+        &:hover {
+            background-color: var(--ks-button-background-secondary-hover);
+        }
+    }
+
+    .d-flex.flex-column {
+        :deep(svg) {
+            cursor: pointer;
+            transition: color 0.2s ease;
+
+            &:hover {
+                color: var(--ks-content-link-hover);
+            }
+        }
     }
 }
 

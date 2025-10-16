@@ -23,6 +23,13 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background-color: var(--ks-button-background-secondary-hover);
+            color: var(--ks-content-link-hover);
+        }
     }
 
     .clear-icon * {

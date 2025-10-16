@@ -571,7 +571,6 @@
             const itemsArr = await namespacesStore.readDirectory(payload);
             renderNodes(itemsArr);
             items.value = sorted(items.value!);
-            editorStore.treeData = items.value;
             resolve(items.value!);
         } else if (node.level >= 1) {
             const payload = {namespace: namespaceId.value, path: getPath(node)};

@@ -21,22 +21,8 @@
         </el-tab-pane>
     </el-tabs>
     <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
-        <el-splitter v-if="isEditorActiveTab" class="editor-splitter" @resize="onSplitterResize">
-            <el-splitter-panel v-if="editorStore.explorerVisible" :size="editorStore.explorerWidth" min="15%" max="30%">
-                <EditorSidebar ref="sidebar" :currentNS="namespace" class="sidebar" />
-            </el-splitter-panel>
-            <el-splitter-panel :size="editorStore.explorerVisible ? 100 - editorStore.explorerWidth : 100">
-                <component
-                    v-bind="{...activeTab.props, ...attrsWithoutClass}"
-                    v-on="activeTab['v-on'] ?? {}"
-                    ref="tabContent"
-                    :is="activeTab.component"
-                    embed
-                />
-            </el-splitter-panel>
-        </el-splitter>
         <BlueprintDetail
-            v-else-if="selectedBlueprintId"
+            v-if="selectedBlueprintId"
             :blueprintId="selectedBlueprintId"
             blueprintType="community"
             @back="selectedBlueprintId = undefined"
@@ -58,14 +44,11 @@
 </template>
 
 <script>
-    import EditorSidebar from "./inputs/EditorSidebar.vue";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
     import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
-    import {useEditorStore} from "../stores/editor";
-    import {mapStores} from "pinia";
 
     export default {
-        components: {EditorSidebar, EnterpriseBadge,BlueprintDetail},
+        components: {EnterpriseBadge,BlueprintDetail},
         props: {
             tabs: {
                 type: Array,
@@ -160,7 +143,6 @@
             },
         },
         computed: {
-            ...mapStores(useEditorStore),
             containerClass() {
                 return this.getTabClasses(this.activeTab);
             },
@@ -178,9 +160,6 @@
                     ["namespaces/update", "namespaces/create"].includes(ROUTE)
                 ) {
                     if (TAB === "files") return true;
-
-                    this.editorStore.closeExplorer();
-                    return false;
                 }
 
                 return false;

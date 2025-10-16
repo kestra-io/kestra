@@ -20,7 +20,6 @@
 <script setup lang="ts">
     import {watch} from "vue";
     import {useMounted, useStorage} from "@vueuse/core";
-    // @ts-expect-error no types on editor sidebar
     import EditorSidebar from "../../inputs/EditorSidebar.vue";
     import MultiPanelTabs from "../../MultiPanelTabs.vue";
     import {getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels";

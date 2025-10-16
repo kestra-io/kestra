@@ -31,7 +31,6 @@ export const useEditorStore = defineStore("editor", () => {
     const current = ref<EditorTabProps | undefined>(undefined)
     const tabs = ref([] as EditorTabProps[])
     const view = ref<any>()
-    const treeData = ref<ItemWithChildren[]>([])
     const treeRefresh = ref(0)
 
     const namespaceStore = useNamespacesStore();
@@ -183,7 +182,6 @@ export const useEditorStore = defineStore("editor", () => {
         current,
         tabs,
         view,
-        treeData,
         treeRefresh,
         saveAllTabs,
         openTab,

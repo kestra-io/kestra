@@ -14,6 +14,16 @@ export interface EditorTabProps {
     namespaceFiles?: boolean;
 }
 
+export interface ItemWithChildren {
+    id: string;
+    fileName: string;
+    type: "File" | "Directory";
+    extension?: string;
+    children?: ItemWithChildren[];
+    leaf?: boolean;
+    content?: ArrayBuffer;
+}
+
 export const useEditorStore = defineStore("editor", () => {
     const onboarding = ref(false)
     const explorerVisible = ref(false)
@@ -21,7 +31,7 @@ export const useEditorStore = defineStore("editor", () => {
     const current = ref<EditorTabProps | undefined>(undefined)
     const tabs = ref([] as EditorTabProps[])
     const view = ref<any>()
-    const treeData = ref([])
+    const treeData = ref<ItemWithChildren[]>([])
     const treeRefresh = ref(0)
 
     const namespaceStore = useNamespacesStore();

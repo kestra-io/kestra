@@ -618,13 +618,12 @@ public class FlowController {
     @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_JSON)
     @Operation(tags = {"Flows"}, summary = "Validate task")
     public ValidateConstraintViolation validateTask(
-        @RequestBody(description = "The task") @Body String task
+        @RequestBody(description = "The task") @Schema(implementation = Object.class) @Body Task task
     ) {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
 
         try {
-            var taskParse = parseTaskTrigger(task, Task.class);
-            modelValidator.validate(taskParse);
+            modelValidator.validate(task);
         } catch (ConstraintViolationException e) {
             validateConstraintViolationBuilder.constraints(e.getMessage());
         } catch (RuntimeException re) {
@@ -643,13 +642,12 @@ public class FlowController {
     @Post(uri = "/validate/trigger", consumes = MediaType.APPLICATION_JSON)
     @Operation(tags = {"Flows"}, summary = "Validate trigger")
     public ValidateConstraintViolation validateTrigger(
-        @RequestBody(description = "The trigger") @Body String trigger
+        @RequestBody(description = "The trigger") @Schema(implementation = Object.class) @Body AbstractTrigger trigger
     ) {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
 
         try {
-            var triggerParse = parseTaskTrigger(trigger, AbstractTrigger.class);
-            modelValidator.validate(triggerParse);
+            modelValidator.validate(trigger);
         } catch (ConstraintViolationException e) {
             validateConstraintViolationBuilder.constraints(e.getMessage());
         } catch (RuntimeException re) {

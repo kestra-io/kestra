@@ -32,7 +32,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
- 
+
 
 class DockerTest extends AbstractTaskRunnerTest {
     @Inject
@@ -170,9 +170,9 @@ class DockerTest extends AbstractTaskRunnerTest {
 
             receive.blockLast(timeout);
             // Assert that the log messages are present
-            assertThat(createContainerLog).isNotNull().withFailMessage("create container log should not be null");
+            assertThat(createContainerLog).withFailMessage("create container log should not be null").isNotNull();
             assertThat(createContainerLog.getMessage()).contains("Container created:");
-            assertThat(awaitLog).isNotNull().withFailMessage("await log should not be null");
+            assertThat(awaitLog).withFailMessage("await log should not be null").isNotNull();
             assertThat(awaitLog.getMessage()).contains("Resuming existing container:");
 
             // Get container id from the logs using regex

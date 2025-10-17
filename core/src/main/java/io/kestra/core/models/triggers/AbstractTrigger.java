@@ -55,7 +55,6 @@ public abstract class AbstractTrigger {
     @Valid
     protected List<@Valid @NotNull Condition> conditions;
 
-    @NotNull
     @Builder.Default
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     @Schema(defaultValue = "false")

@@ -3,10 +3,11 @@ import EditorWrapper from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 import {EditorTabProps} from "../../stores/editor";
 import {EditorElement, Panel, Tab} from "../../utils/multiPanelTypes";
+import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/EditorSidebar.vue";
 
 export const CODE_PREFIX = "code"
 
-function generateUid(tab: EditorTabProps){
+function generateUid(tab: Pick<EditorTabProps, "path">){
     return `${CODE_PREFIX}-${tab.path}`
 }
 
@@ -48,11 +49,18 @@ export function useInitialFilesTabs(EDITOR_ELEMENTS: EditorElement[]){
     return {setupInitialCodeTab}
 }
 
-export function useFilesPanels(panels: Ref<Panel[]>, focusTab: (tabId: string) => void) {
+export function useFilesPanels(panels: Ref<Panel[]>) {
+
+    function focusTab(tabValue: string){
+        for(const panel of panels.value){
+            const t = panel.tabs.find(e => e.uid === tabValue);
+            if(t) panel.activeTab = t;
+        }
+    }
 
     const codeEditorTabs = ref<EditorTabProps[]>([])
 
-    provide("openTab", (tab: EditorTabProps) => {
+    provide(FILES_OPEN_TAB_INJECTION_KEY, (tab: EditorTabProps) => {
         if(!tab.path){
             return
         }
@@ -71,8 +79,8 @@ export function useFilesPanels(panels: Ref<Panel[]>, focusTab: (tabId: string) =
         focusTab(generateUid(tab))
     })
 
-    provide("closeTab", (tabId: string) => {
-        onRemoveTab(tabId)
+    provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
+        onRemoveTab(generateUid(tab))
     })
 
     /**

@@ -8,9 +8,6 @@
             <EditorSidebar
                 :currentNS="namespace"
                 style="width: 100%;height: 100%;"
-                @file-clicked="actions.fileClicked"
-                @file-created="actions.fileCreated"
-                @file-deleted="actions.fileDeleted"
             />
         </el-splitter-panel>
         <el-splitter-panel
@@ -32,7 +29,6 @@
     import {useFlowStore} from "../../../stores/flow";
     import {useEditorStore} from "../../../stores/editor";
     import {useStoredPanels} from "../../../composables/useStoredPanels";
-    import {useFileExplorer} from "../../../composables/useFileExplorer";
 
     const mounted = useMounted()
 
@@ -82,14 +78,5 @@
 
     );
 
-    function focusTab(tabValue: string){
-        for(const panel of panels.value){
-            const t = panel.tabs.find(e => e.uid === tabValue);
-            if(t) panel.activeTab = t;
-        }
-    }
-
-    const {onRemoveTab} = useFilesPanels(panels, focusTab)
-
-    const actions = useFileExplorer();
+    const {onRemoveTab} = useFilesPanels(panels)
 </script>

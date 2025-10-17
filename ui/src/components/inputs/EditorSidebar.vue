@@ -33,7 +33,7 @@
                     :persistent="false"
                     popperClass="text-base"
                 >
-                    <el-button class="px-2" @click="toggleDialog(true, 'File')">
+                    <el-button class="px-2" @click="toggleDialog(true, 'file')">
                         <FilePlus />
                     </el-button>
                 </el-tooltip>
@@ -47,7 +47,7 @@
                 >
                     <el-button
                         class="px-2"
-                        @click="toggleDialog(true, 'Directory')"
+                        @click="toggleDialog(true, 'folder')"
                     >
                         <FolderPlus />
                     </el-button>
@@ -164,13 +164,13 @@
                         <el-dropdown-menu>
                             <el-dropdown-item
                                 v-if="!data.leaf && !multiSelected"
-                                @click="toggleDialog(true, 'File', node)"
+                                @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="!data.leaf && !multiSelected"
-                                @click="toggleDialog(true, 'Directory', node)"
+                                @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ t("namespace files.create.folder") }}
                             </el-dropdown-item>
@@ -185,7 +185,7 @@
                                 @click="
                                     toggleRenameDialog(
                                         true,
-                                        !data.leaf ? 'Directory' : 'File',
+                                        !data.leaf ? 'folder' : 'file',
                                         data.fileName,
                                         node,
                                     )
@@ -222,7 +222,7 @@
         <el-dialog
             v-model="dialog.visible"
             :title="
-                dialog.type === 'File'
+                dialog.type === 'file'
                     ? t('namespace files.create.file')
                     : t('namespace files.create.folder')
             "
@@ -336,21 +336,26 @@
             }"
             class="tabs-context"
         >
-            <el-menu-item @click="toggleDialog(true, 'File')">
+            <el-menu-item @click="toggleDialog(true, 'file')">
                 {{ t("namespace files.create.file") }}
             </el-menu-item>
-            <el-menu-item @click="toggleDialog(true, 'Directory')">
+            <el-menu-item @click="toggleDialog(true, 'folder')">
                 {{ t("namespace files.create.folder") }}
             </el-menu-item>
         </el-menu>
     </div>
 </template>
 
+<script lang="ts">
+    export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>;
+    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>;
+</script>
+
 <script lang="ts" setup>
-    import {ref, computed, onMounted, onBeforeUnmount, nextTick} from "vue";
+    import {ref, computed, onMounted, onBeforeUnmount, nextTick, InjectionKey, inject} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
-    import {ItemWithChildren} from "../../stores/editor";
+    import {EditorTabProps, ItemWithChildren} from "../../stores/editor";
     import Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -362,38 +367,43 @@
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
 
-    const DIALOG_DEFAULTS = {
+    const DIALOG_DEFAULTS:Dialog = {
         visible: false,
-        type: "File" as "File" | "Directory",
-        name: undefined as string | undefined,
-        folder: undefined as string | undefined,
-        path: undefined as string | undefined,
+        type: "file",
+        name: undefined,
+        folder: undefined,
+        path: undefined,
     };
 
-    const RENAME_DEFAULTS = {
+    const RENAME_DEFAULTS:Dialog = {
         visible: false,
-        type: "File" as "File" | "Directory",
-        name: undefined as string | undefined,
-        old: undefined as string | undefined,
-        node: undefined as any,
+        type: "file",
+        name: undefined,
+        old: undefined,
     };
 
     const props = defineProps<{
         currentNS?: string | null;
     }>();
 
-    const emit = defineEmits<{
-        (e: "file-clicked", file: { name: string; path: string; extension?: string; flow: boolean }): void;
-        (e: "file-created", file: { name: string; path: string; extension?: string; flow: boolean }): void;
-        (e: "file-deleted", file: { name: string }): void;
-    }>();
+    const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY);
 
     const route = useRoute();
     const namespacesStore = useNamespacesStore();
 
+    interface Dialog{
+        visible: boolean;
+        type: "file" | "folder";
+        name?: string;
+        folder?: string;
+        path?: string;
+        old?: string;
+        node?: any;
+    }
+
     const filter = ref<string>("");
-    const dialog = ref({...DIALOG_DEFAULTS});
-    const renameDialog = ref({...RENAME_DEFAULTS});
+    const dialog = ref<Dialog>({...DIALOG_DEFAULTS});
+    const renameDialog = ref<Dialog>({...RENAME_DEFAULTS});
     const tree = ref<any>();
     const filePicker = ref<HTMLInputElement>();
     const folderPicker = ref<HTMLInputElement>();
@@ -503,7 +513,7 @@
             selectedNodes.value = [node.data.id];
             lastClickedIndex.value = currentIndex;
             if (data.leaf) {
-                emit("file-clicked", {
+                openTab?.({
                     name: data.fileName,
                     path: path,
                     extension: data.fileName.split(".").pop(),
@@ -570,7 +580,16 @@
         }
     }
 
-    async function loadNodes(node: any, resolve: (children: any[]) => void) {
+    interface TreeNode{
+        id: string;
+        fileName: string;
+        children?: TreeNode[];
+        type: "File" | "Directory";
+        leaf?: boolean;
+        level: number;
+    }
+
+    async function loadNodes(node: TreeNode, resolve: (children: ItemWithChildren[]) => void) {
         if (node.level === 0) {
             const payload = {namespace: namespaceId.value};
             const itemsArr = await namespacesStore.readDirectory(payload);
@@ -614,7 +633,7 @@
     function chooseSearchResults(item: string) {
         const name = item.split("/").pop()
         if(!name) return;
-        emit("file-clicked", {
+        openTab?.({
             name,
             extension: item.split(".").pop(),
             path: item,
@@ -632,14 +651,14 @@
     }
 
     function dialogHandler() {
-        if (dialog.value.type === "File") {
+        if (dialog.value.type === "file") {
             addFile({creation: true});
         } else {
             addFolder(undefined, true);
         }
     }
 
-    function toggleDialog(isShown: boolean, type?: "File" | "Directory", node?: any) {
+    function toggleDialog(isShown: boolean, type?: "file" | "folder", node?: any) {
         if (isShown) {
             let folder;
             if (node?.data?.leaf === false) {
@@ -662,7 +681,7 @@
         }
     }
 
-    function toggleRenameDialog(isShown: boolean, type?: "File" | "Directory", name?: string, node?: any) {
+    function toggleRenameDialog(isShown: boolean, type?: "file" | "folder", name?: string, node?: any) {
         if (isShown && type) {
             renameDialog.value = {
                 visible: true,
@@ -832,7 +851,7 @@
                 path,
                 content,
             });
-            emit("file-created", {
+            openTab?.({
                 name: NAME,
                 path,
                 extension: extension,
@@ -883,6 +902,8 @@
         };
     }
 
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY);
+
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return;
         for (const node of confirmation.value.nodes) {
@@ -892,8 +913,8 @@
                     path: getPath(node),
                 });
                 tree.value.remove(node.id);
-                emit("file-deleted", {
-                    name: node.fileName,
+                closeTab?.({
+                    path: getPath(node),
                 });
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error);
@@ -1005,8 +1026,16 @@
         lastClickedIndex.value = null;
     }
 
-    onMounted(() => {
+    onMounted(async () => {
         document.addEventListener("click", clearSelection);
+        // if (tree.value) {
+        items.value = [];
+        const _items = await namespacesStore.readDirectory({
+            namespace: namespaceId.value
+        });
+        renderNodes(_items);
+        items.value = sorted(_items);
+        // }
     });
 
     onBeforeUnmount(() => {

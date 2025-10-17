@@ -1,7 +1,6 @@
 import {computed, h, markRaw, provide, Ref} from "vue"
-import EditorWrapper, {FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue";
+import EditorWrapper, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
-import {EditorTabProps} from "../../stores/editor";
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
 import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/EditorSidebar.vue";
 import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue";

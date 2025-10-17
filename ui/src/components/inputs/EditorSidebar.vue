@@ -355,7 +355,6 @@
     import {ref, computed, onMounted, onBeforeUnmount, nextTick, InjectionKey, inject} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
-    import {EditorTabProps} from "../../stores/editor";
     import Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -366,6 +365,7 @@
     import TypeIcon from "../utils/icons/Type.vue";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
+    import {EditorTabProps} from "./EditorWrapper.vue";
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,

@@ -55,6 +55,17 @@
 <script lang="ts">
     export const FILES_SET_DIRTY_INJECTION_KEY = Symbol("files-set-dirty-injection-key") as InjectionKey<(payload: { path: string; dirty: boolean }) => void>;
     export const FILES_UPDATE_CONTENT_INJECTION_KEY = Symbol("files-update-content-injection-key") as InjectionKey<(payload: { path: string; content: string }) => void>;
+
+    export interface EditorTabProps {
+        name: string;
+        extension?: string;
+        persistent?: boolean;
+        path?: string;
+        flow?: boolean;
+        content?: string;
+        dirty?: boolean;
+        namespaceFiles?: boolean;
+    }
 </script>
 
 <script setup lang="ts">
@@ -63,7 +74,6 @@
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
-    import {EditorTabProps} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
@@ -212,7 +222,6 @@
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
                 source: newValue,
-                currentIsFlow: props.flow,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
                 topologyVisible: true,
             });

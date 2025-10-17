@@ -132,7 +132,6 @@
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
                 source,
-                currentIsFlow: true,
                 topologyVisible: true,
             });
         }, 1000);

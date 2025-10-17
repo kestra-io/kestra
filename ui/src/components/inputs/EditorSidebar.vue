@@ -134,7 +134,7 @@
             </template>
             <template #default="{data, node}">
                 <el-dropdown
-                    ref="dropdown"
+                    ref="dropdowns"
                     :data-dropdown-id="`dropdown__${data.id}`"
                     @contextmenu.prevent.stop="
                         toggleDropdown(`dropdown__${data.id}`);

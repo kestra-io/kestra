@@ -124,7 +124,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         for(const panel of panels.value){
             for(const tab of panel.tabs as TabLiveWithContent[]){
                 if(!tab.content || !tab.path){
-                    return
+                    continue
                 }
                 if(namespace.value === undefined){
                     throw new Error("Cannot save file, namespace is undefined")

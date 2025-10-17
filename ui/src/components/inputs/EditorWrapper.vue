@@ -52,13 +52,17 @@
     </div>
 </template>
 
+<script lang="ts">
+    export const FILES_SET_DIRTY_INJECTION_KEY = Symbol("files-set-dirty-injection-key") as InjectionKey<(payload: { path: string; dirty: boolean }) => void>;
+</script>
+
 <script setup lang="ts">
-    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch} from "vue";
+    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue";
     import {useRoute, useRouter} from "vue-router";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
-    import {EditorTabProps, useEditorStore} from "../../stores/editor";
+    import {EditorTabProps} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
@@ -77,7 +81,6 @@
     const route = useRoute();
     const router = useRouter();
 
-    const editorStore = useEditorStore();
     const flowStore = useFlowStore();
 
     const cursor = ref();
@@ -104,25 +107,37 @@
 
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
-    const source = computed<string>(() => {
-        return (props.flow
-            ? flowStore.flowYaml
-            : editorStore.tabs.find((t: any) => t.path === props.path)?.content) ?? "";
-    })
+    const source = ref("")
+    const savedSource = ref("")
 
     async function loadFile() {
-        editorStore.openTab(props)
+        if (props.dirty) return;
+        if(props.flow) {
+            source.value = flowStore.flowYaml || "";
+            return;
+        }else{
+            const fileNamespace = namespace.value ?? route.params?.namespace;
+            if (!fileNamespace) return;
+            source.value = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
+        }
 
-        if (props.dirty || props.flow) return;
-
-        const fileNamespace = namespace.value ?? route.params?.namespace;
-
-        if (!fileNamespace) return;
-
-        const content = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
-        editorStore.setTabContent({path: props.path, content})
+        savedSource.value = source.value;
     }
 
+    const isDirty = computed(() => source.value !== savedSource.value);
+
+    watch(() => props.dirty, (newVal) => {
+        if (!newVal) {
+            savedSource.value = source.value;
+        }
+    });
+
+    const setDirty = inject(FILES_SET_DIRTY_INJECTION_KEY);
+    watch(isDirty, (newVal) => {
+        if(props.path){
+            setDirty?.({path: props.path, dirty: newVal});
+        }
+    });
 
     onMounted(() => {
         loadPluginsHash();
@@ -187,14 +202,7 @@
                 flowStore.flowYaml = newValue;
             }
         }
-        editorStore.setTabContent({
-            content: newValue,
-            path: props.path
-        });
-        editorStore.setTabDirty({
-            path: props.path,
-            dirty: true
-        });
+        source.value = newValue;
 
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
@@ -248,10 +256,7 @@
             ? await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
             : await flowStore.saveAll();
 
-        editorStore.setTabDirty({
-            path: props.path,
-            dirty: false
-        });
+        savedSource.value = source.value;
 
         if (result === "redirect_to_update") {
             await router.push({
@@ -274,10 +279,7 @@
             path: props.path,
             content: editorContent.value || "",
         });
-        editorStore.setTabDirty({
-            path: props.path,
-            dirty: false
-        });
+        savedSource.value = source.value;
     }
 
     const handleGlobalSave = (event: KeyboardEvent) => {

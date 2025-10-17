@@ -4,6 +4,7 @@ import TypeIcon from "../utils/icons/Type.vue";
 import {EditorTabProps} from "../../stores/editor";
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
 import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/EditorSidebar.vue";
+import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue";
 
 export const CODE_PREFIX = "code"
 
@@ -97,6 +98,14 @@ export function useFilesPanels(panels: Ref<Panel[]>) {
         }
     })
 
+    // on save all files, set all tabs as not dirty
+    provide(FILES_SAVE_ALL_INJECTION_KEY, () => {
+        panels.value.forEach(panel => {
+            panel.tabs.forEach((tab: TabLive) => {
+                tab.dirty = false;
+            });
+        });
+    });
 
     /**
      * If the flow tab has recorded changes, show all representations as dirty

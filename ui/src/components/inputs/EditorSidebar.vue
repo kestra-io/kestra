@@ -135,13 +135,13 @@
             <template #default="{data, node}">
                 <el-dropdown
                     ref="dropdowns"
-                    @contextmenu.prevent.stop="(event: MouseEvent) => {
-                        toggleDropdown(event.target);
+                    @contextmenu.prevent.stop="
+                        toggleDropdown();
                         if(selectedNodes.length === 0) {
                             selectedNodes.push(data.id);
                             selectedFiles.push(getPath(data.id));
                         }
-                    }"
+                    "
                     trigger="contextmenu"
                     class="w-100"
                 >
@@ -659,7 +659,7 @@
         filter.value = "";
     }
 
-    function toggleDropdown(reference: HTMLElement) {
+    function toggleDropdown() {
         if (dropdownRef.value) {
             dropdownRef.value?.handleClose();
         }

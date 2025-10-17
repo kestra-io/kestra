@@ -154,6 +154,19 @@ public class JsonSchemaGenerator {
         }
     }
 
+        private void removeNullValues(ObjectNode objectNode) {
+        System.out.println("Main " + objectNode + "\n\n");
+        objectNode.get("$defs").forEach(jsonNode -> {
+            System.out.println(jsonNode + "\n\n");
+            if(jsonNode.get("properties") instanceof ObjectNode properties) {
+                properties.forEach(field -> {
+                    // Work on filter here
+                    System.out.println(field.get("type"));
+                });
+            }
+        });
+    }
+
     // This hack exists because for Property we generate a anyOf for properties that are not strings.
     // By default, the 'default' is in each anyOf which Monaco editor didn't take into account.
     // So, we pull off the 'default' from any of the anyOf to the parent.
@@ -801,7 +814,8 @@ public class JsonSchemaGenerator {
             replaceOneOfWithAnyOf(objectNode);
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
-
+            removeNullValues(objectNode);
+            
             objectNode.forEach(map -> map.forEach(field -> System.out.println(field)));
 
             return MAPPER.convertValue(extractMainRef(objectNode), MAP_TYPE_REFERENCE);

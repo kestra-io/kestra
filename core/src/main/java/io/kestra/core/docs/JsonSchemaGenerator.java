@@ -155,17 +155,32 @@ public class JsonSchemaGenerator {
     }
 
         private void removeNullValues(ObjectNode objectNode) {
-        System.out.println("Main " + objectNode + "\n\n");
-        objectNode.get("$defs").forEach(jsonNode -> {
-            System.out.println(jsonNode + "\n\n");
-            if(jsonNode.get("properties") instanceof ObjectNode properties) {
-                properties.forEach(field -> {
-                    // Work on filter here
-                    System.out.println(field.get("type"));
-                });
-            }
-        });
-    }
+            System.out.println("Main " + objectNode + "\n\n");
+            objectNode.get("$defs").forEach(jsonNode -> {
+                System.out.println("Main node: " + jsonNode + "\n\n");
+                if(jsonNode.get("properties") instanceof ObjectNode properties) {
+                    properties.forEach(field -> {
+                        // // Work on filter here
+                        // if(field.get("type") != null)
+                        //     System.out.println(field.get("type").getClass().getName());
+                        // else
+                        //     System.out.println("Empty type field: " + field);
+                        // if(field.get("type") instanceof List typeList && typeList.contains("null"))
+                        //     typeList.remove(typeList.indexOf("null"));
+                        if(field.get("anyOf") instanceof ArrayNode fieldProperties) {
+                            for(int i = 0; i < fieldProperties.size(); i++) {
+                                JsonNode fieldProperty = fieldProperties.get(i);
+                                if(fieldProperty.get("type").equals("null")) {
+                                    fieldProperties.remove(i);
+                                    i--;
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    
 
     // This hack exists because for Property we generate a anyOf for properties that are not strings.
     // By default, the 'default' is in each anyOf which Monaco editor didn't take into account.

@@ -461,7 +461,7 @@ public abstract class AbstractExecutionRepositoryTest {
             startDate,
             endDate,
             null,
-            null);
+            Collections.emptyList());
 
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
@@ -480,7 +480,7 @@ public abstract class AbstractExecutionRepositoryTest {
             startDate,
             endDate,
             null,
-            null);
+            Collections.emptyList());
 
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
@@ -494,7 +494,7 @@ public abstract class AbstractExecutionRepositoryTest {
             startDate,
             endDate,
             null,
-            null);
+            Collections.emptyList());
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
 
@@ -507,7 +507,7 @@ public abstract class AbstractExecutionRepositoryTest {
             startDate,
             endDate,
             null,
-            null);
+            Collections.emptyList());
         assertThat(result.size()).isEqualTo(11);
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
     }

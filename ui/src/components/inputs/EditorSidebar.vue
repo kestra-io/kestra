@@ -355,7 +355,7 @@
     import {ref, computed, onMounted, onBeforeUnmount, nextTick, InjectionKey, inject} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
-    import {EditorTabProps, ItemWithChildren} from "../../stores/editor";
+    import {EditorTabProps} from "../../stores/editor";
     import Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
     import Magnify from "vue-material-design-icons/Magnify.vue";
@@ -410,7 +410,7 @@
     const dropdowns = ref<{handleClose: () => void; handleOpen: () => void, $el: HTMLElement}[]>([]);
     const dropdownRef = ref<{handleClose: () => void; handleOpen: () => void}>();
     const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
-    const items = ref<ItemWithChildren[]>([]);
+    const items = ref<TreeNode[]>([]);
     const nodeBeforeDrag = ref<any>(undefined);
     const searchResults = ref<string[]>([]);
     const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0});
@@ -425,10 +425,10 @@
 
     const multiSelected = computed(() => selectedNodes.value.length > 1);
 
-    function extractPaths(basePath = "", array: ItemWithChildren[] = []) {
+    function extractPaths(basePath = "", array: TreeNode[] = []) {
         const paths: string[] = [];
         array?.forEach((item) => {
-            if (item.type === "Directory") {
+            if (isDirectory(item)) {
                 const folderPath = `${basePath}${item.fileName}`;
                 paths.push(folderPath);
                 paths.push(...extractPaths(`${folderPath}/`, item.children ?? []));
@@ -474,19 +474,19 @@
         traverseAndInsert("", items.value);
     }
 
-    function flattenTree(itemsArr: ItemWithChildren[], parentPath = ""): any[] {
+    function flattenTree(itemsArr: TreeNode[], parentPath = ""): any[] {
         const result: any[] = [];
         for (const item of itemsArr) {
             const fullPath = `${parentPath}${item.fileName}`;
             result.push({path: fullPath, fileName: item.fileName, id: item.id});
-            if (item.children && item.children.length > 0) {
+            if (isDirectory(item) && item.children.length > 0) {
                 result.push(...flattenTree(item.children, `${fullPath}/`));
             }
         }
         return result.filter(i => i.path);
     }
 
-    function handleNodeClick(data: any, node: any, event: MouseEvent | null = null) {
+    function handleNodeClick(data: any, node: TreeNode, event: MouseEvent | null = null) {
         const path = getPath(node);
         const flatList = flattenTree(items.value);
         const currentIndex = flatList.findIndex(item => item.path === path);
@@ -530,13 +530,17 @@
         confirmRemove(nodes);
     }
 
-    function findNodeByPath(path: string, itemsArr: any[] = items.value, parentPath = ""): any {
+    function isDirectory(node: TreeNode): node is TreeNodeDirectory {
+        return node.type === "Directory";
+    }
+
+    function findNodeByPath(path: string, itemsArr: TreeNode[] = items.value, parentPath = ""): any {
         for (const item of itemsArr) {
             const fullPath = `${parentPath}${item.fileName}`;
             if (fullPath === path) {
                 return item;
             }
-            if (item.children && item.children.length > 0) {
+            if (isDirectory(item) && item.children.length > 0) {
                 const foundNode = findNodeByPath(path, item.children, `${fullPath}/`);
                 if (foundNode) {
                     return foundNode;
@@ -546,7 +550,7 @@
         return null;
     }
 
-    function sorted(itemsArr: any[]) {
+    function sorted(itemsArr: TreeNode[]) {
         return itemsArr.sort((a, b) => {
             if (a.type === "Directory" && b.type !== "Directory") return -1;
             else if (a.type !== "Directory" && b.type === "Directory") return 1;
@@ -580,23 +584,34 @@
         }
     }
 
-    interface TreeNode{
+    interface TreeNodeFile{
         id: string;
         fileName: string;
-        children?: TreeNode[];
-        type: "File" | "Directory";
-        leaf?: boolean;
-        level: number;
-        data: any;
+        type: "File";
+        leaf: true;
+        extension?: string;
+        data?: any;
+        content?: ArrayBuffer;
     }
 
-    async function loadNodes(node: TreeNode, resolve: (children: ItemWithChildren[]) => void) {
+    interface TreeNodeDirectory{
+        id: string;
+        fileName: string;
+        type: "Directory";
+        data?: any;
+        leaf: false;
+        children: TreeNode[];
+    }
+
+    type TreeNode = TreeNodeFile | TreeNodeDirectory;
+
+    async function loadNodes(node: TreeNode & { level: number , leaf: boolean }, resolve: (children: TreeNode[]) => void) {
         if (node.level === 0) {
             const payload = {namespace: namespaceId.value};
             const itemsArr = await namespacesStore.readDirectory(payload);
             renderNodes(itemsArr);
-            items.value = sorted(items.value!);
-            resolve(items.value!);
+            items.value = sorted(items.value);
+            resolve(items.value);
         } else if (node.level >= 1) {
             const payload = {namespace: namespaceId.value, path: getPath(node)};
             let children = await namespacesStore.readDirectory(payload);
@@ -754,7 +769,7 @@
                 if ((file as any).webkitRelativePath) {
                     const filePath: string = (file as any).webkitRelativePath;
                     const pathParts = filePath.split("/");
-                    let currentFolder: ItemWithChildren[] | undefined = items.value;
+                    let currentFolder: TreeNode[] | undefined = items.value;
                     let folderPath: string[] = [];
                     for (let i = 0; i < pathParts.length - 1; i++) {
                         const folderName = pathParts[i];
@@ -764,17 +779,18 @@
                             (item: any) => typeof item === "object" && item.fileName === folderName,
                         );
                         if (folderIndex === -1) {
-                            const newFolder: ItemWithChildren = {
+                            const newFolder: TreeNodeDirectory = {
                                 id: Utils.uid(),
                                 fileName: folderName,
                                 children: [],
                                 type: "Directory",
+                                leaf: false,
                             };
                             currentFolder.push(newFolder);
                             sorted(currentFolder);
                             currentFolder = newFolder.children;
                         } else {
-                            currentFolder = currentFolder[folderIndex].children;
+                            currentFolder = (currentFolder[folderIndex] as TreeNodeDirectory).children;
                         }
                     }
                     const fileName = pathParts[pathParts.length - 1];
@@ -790,6 +806,7 @@
                         fileName: `${name}${extension ? `.${extension}` : ""}`,
                         extension,
                         type: "File",
+                        leaf: true,
                     });
                 } else {
                     const content = await readFile(file);
@@ -803,8 +820,8 @@
                         id: Utils.uid(),
                         fileName: `${name}${extension ? `.${extension}` : ""}`,
                         extension,
-                        leaf: !!extension,
                         type: "File",
+                        leaf: true,
                     });
                 }
             }
@@ -833,13 +850,13 @@
         }
         const {fileName, extension, content, leaf} = FILE;
         const NAME = `${fileName}${extension ? `.${extension}` : ""}`;
-        const NEW: ItemWithChildren = {
+        const NEW: TreeNodeFile = {
             id: Utils.uid(),
             fileName: NAME,
             extension,
             content,
-            leaf,
             type: "File",
+            leaf,
         };
         const path = `${dialog.value.folder ? `${dialog.value.folder}/` : ""}${NAME}`;
         if (creation) {
@@ -864,21 +881,21 @@
             items.value.push(NEW);
             items.value = sorted(items.value);
         } else {
-            (function pushItemToFolder(basePath: string = "", array: ItemWithChildren[], pathParts: string[]): boolean {
+            (function pushItemToFolder(basePath: string = "", array: TreeNode[], pathParts: string[]): boolean {
                 for (const item of array) {
                     const folderPath = `${basePath}${item.fileName}`;
-                    if (folderPath === dialog.value.folder && Array.isArray(item.children)) {
+                    if (folderPath === dialog.value.folder && isDirectory(item)) {
                         item.children = sorted([...item.children, NEW]);
                         return true;
                     }
-                    if (Array.isArray(item.children) && pushItemToFolder(`${folderPath}/`, item.children, pathParts.slice(1))) {
+                    if (isDirectory(item) && pushItemToFolder(`${folderPath}/`, item.children, pathParts.slice(1))) {
                         return true;
                     }
                 }
                 if (pathParts && pathParts.length > 0 && pathParts[0]) {
                     const folderPath = `${basePath}${pathParts[0]}`;
                     if (folderPath === dialog.value.folder) {
-                        const newFolder: ItemWithChildren = folderNode(pathParts[0], [NEW]);
+                        const newFolder = folderNode(pathParts[0], [NEW]);
                         array.push(newFolder);
                         array = sorted(array);
                         return true;
@@ -973,13 +990,13 @@
         dialog.value = {...DIALOG_DEFAULTS};
     }
 
-    function folderNode(fileName: string, children: ItemWithChildren[]): ItemWithChildren {
+    function folderNode(fileName: string, children: TreeNode[]): TreeNodeDirectory {
         return {
             id: Utils.uid(),
             fileName,
-            leaf: false,
             children: children ?? [],
             type: "Directory",
+            leaf: false,
         };
     }
 
@@ -1029,14 +1046,6 @@
 
     onMounted(async () => {
         document.addEventListener("click", clearSelection);
-        // if (tree.value) {
-        items.value = [];
-        const _items = await namespacesStore.readDirectory({
-            namespace: namespaceId.value
-        });
-        renderNodes(_items);
-        items.value = sorted(_items);
-        // }
     });
 
     onBeforeUnmount(() => {

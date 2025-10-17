@@ -1,102 +1,94 @@
 <template>
-  <div
-    class="d-flex w-100 mb-2"
-    v-for="(label, index) in locals"
-    :key="index"
-  >
-    <div class="flex-grow-1 d-flex align-items-center">
-      <el-input
-        class="form-control me-2"
-        :placeholder="$t('key')"
-        v-model="label.key"
-        :disabled="localExisting.includes(label.key)"
-        @update:model-value="update(index, $event, 'key')"
-      />
-      <el-input
-        class="form-control me-2"
-        :placeholder="$t('value')"
-        v-model="label.value"
-        @update:model-value="update(index, $event, 'value')"
-      />
+    <div
+        class="d-flex w-100 mb-2"
+        v-for="(label, index) in locals"
+        :key="index"
+    >
+        <div class="flex-grow-1 d-flex align-items-center">
+            <el-input
+                class="form-control me-2"
+                :placeholder="$t('key')"
+                v-model="label.key"
+                :disabled="localExisting.includes(label.key)"
+                @update:model-value="update(index, $event, 'key')"
+            />
+            <el-input
+                class="form-control me-2"
+                :placeholder="$t('value')"
+                v-model="label.value"
+                @update:model-value="update(index, $event, 'value')"
+            />
+        </div>
+        <div class="flex-shrink-1">
+            <el-button-group class="d-flex">
+                <el-button :icon="Plus" @click="addItem" />
+                <el-button :icon="Minus" @click="removeItem(index)" />
+            </el-button-group>
+        </div>
     </div>
-    <div class="flex-shrink-1">
-      <el-button-group class="d-flex">
-        <el-button :icon="Plus" @click="addItem" />
-        <el-button :icon="Minus" @click="removeItem(index)" />
-      </el-button-group>
-    </div>
-  </div>
 </template>
 
-<script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
-import Plus from "vue-material-design-icons/Plus.vue";
-import Minus from "vue-material-design-icons/Minus.vue";
-import { useMiscStore } from "override/stores/misc";
-
-// ✅ Props
-interface Label {
-  key: string | null;
-  value: string | null;
-}
-
-const props = defineProps<{
-  labels: Label[];
-  existingLabels?: Label[];
-}>();
-
-const emit = defineEmits<{
-  (e: "update:labels", value: Label[]): void;
-}>();
-
-// ✅ Store
-const miscStore = useMiscStore();
-
-// ✅ State
-const locals = ref<Label[]>([]);
-const localExisting = ref<string[]>([]);
-
-// ✅ Functions
-function addItem() {
-  locals.value.push({ key: null, value: null });
-  emit("update:labels", locals.value);
-}
-
-function removeItem(index: number) {
-  locals.value.splice(index, 1);
-  if (locals.value.length === 0) {
-    addItem();
-  }
-  emit("update:labels", locals.value);
-}
-
-function update(index: number, value: string | null, prop: "key" | "value") {
-  locals.value[index][prop] = value;
-  emit("update:labels", locals.value);
-}
-
-// ✅ Lifecycle
-onMounted(() => {
-  if (!props.labels || props.labels.length === 0) {
-    addItem();
-  } else {
-    locals.value = [...props.labels];
-    if (locals.value.length === 0) addItem();
-  }
-
-  localExisting.value = (props.existingLabels ?? []).map((l) => l.key ?? "");
-});
-
-// ✅ Keep locals in sync if props.labels changes externally
-watch(
-  () => props.labels,
-  (newLabels) => {
-    locals.value = [...newLabels];
-  },
-  { deep: true }
-);
+<script setup>
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import Minus from "vue-material-design-icons/Minus.vue";
 </script>
 
-<style scoped>
-/* Optional: same styling as before */
-</style>
+<script>
+    import {mapStores} from "pinia";
+    import {useMiscStore} from "override/stores/misc";
+
+    export default {
+        props: {
+            labels: {
+                type: Array,
+                required: true,
+                default: () => [],
+            },
+            existingLabels: {
+                type: Array,
+                default: () => [],
+            },
+        },
+        data() {
+            return {
+                locals: [],
+                localExisting: [],
+            };
+        },
+        emits: ["update:labels"],
+        computed: {
+            ...mapStores(useMiscStore),
+        },
+        created() {
+            if (this.labels.length === 0) {
+                this.addItem();
+            } else {
+                this.locals = this.labels;
+
+                if (this.locals.length === 0) {
+                    this.addItem();
+                }
+            }
+            this.localExisting = this.existingLabels.map((label) => label.key);
+        },
+        methods: {
+            addItem() {
+                this.locals.push({key: null, value: null});
+                this.$emit("update:labels", this.locals);
+            },
+            removeItem(index) {
+                this.locals.splice(index, 1);
+
+                if (this.locals.length === 0) {
+                    this.addItem();
+                }
+
+                this.$emit("update:labels", this.locals);
+            },
+            update(index, value, prop) {
+                this.locals[index][prop] = value;
+                this.$emit("update:labels", this.locals);
+            },
+        },
+    };
+</script>

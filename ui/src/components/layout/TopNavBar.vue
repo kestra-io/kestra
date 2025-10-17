@@ -21,12 +21,12 @@
                         <slot name="title">
                             {{ title }}
                             <el-tooltip v-if="description" :content="description">
-                                <Information class="ms-2" />
+                                <Information class="title-icon" />
                             </el-tooltip>
                             <Badge v-if="beta" label="Beta" />
                         </slot>
                         <el-button
-                            class="star-button"
+                            class="star-button title-icon"
                             :class="{'star-active': bookmarked}"
                             :icon="bookmarked ? StarIcon : StarOutlineIcon"
                             circle
@@ -164,8 +164,17 @@
         }
 
         .star-button {
-            margin-left: 1rem;
             border: none;
+        }
+
+        .title-icon {
+            color: var(--ks-content-tertiary);
+            margin-left: 0.5rem;
+        }
+
+        .title-icon :deep(svg) {
+            fill: currentColor;
+            stroke: currentColor;
         }
 
         .star-active {

@@ -10,7 +10,7 @@
         @set-tab-value="setTabValue"
     >
         <template #actions>
-            <EditorButtonsWrapper />
+            <EditorButtonsWrapper :haveChange />
         </template>
         <template #bottom-panel>
             <FlowPlayground v-if="playgroundMode" />
@@ -100,6 +100,9 @@
         }))
     }
 
+    const haveChange = computed(() => flowStore.haveChange || panels.value.some(panel =>
+        panel.tabs.some(tab => tab.dirty)
+    ))
 
     const {panels, actions} = useNoCodePanelsFull({
         RawNoCode,

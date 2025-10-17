@@ -28,7 +28,6 @@
     import Utils from "../../utils/utils";
     import {useCoreStore} from "../../stores/core";
     import {usePlaygroundStore} from "../../stores/playground";
-    import {useEditorStore} from "../../stores/editor";
 
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
@@ -61,7 +60,6 @@
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
 
     onMounted(() => {
-        useEditorStore().explorerVisible = false
         // Ensure the Flow Code panel is open and focused when arriving with ai=open
         if(route.query.ai === "open"){
             editorView.value?.setTabValue("code")
@@ -125,7 +123,7 @@
         }
     }, {immediate: true});
 
-    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useFilesPanels(panels, (uid: string) => editorView.value?.focusTab(uid))
+    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useFilesPanels(panels)
 
     function onRemoveTab(tab: string){
         onRemoveCodeTab(tab)

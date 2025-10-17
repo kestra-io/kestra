@@ -1,13 +1,13 @@
 <template>
-    <template v-if="flowStore.flow.concurrency">
+    <template v-if="hasConcurrency">
         <div v-if="totalCount > 0 || !runningCountSet" :class="{'d-none': !runningCountSet}">
             <el-card class="mb-3">
                 <div class="row mb-3">
                     <span class="col d-flex align-items-center">
-                        <h5 class="m-3">RUNNING</h5> {{ runningCount }}/{{ flowStore.flow.concurrency.limit }} {{ $t('active-slots') }}
+                        <h5 class="m-3">RUNNING</h5> {{ runningCount }}/{{ limit }} {{ $t('active-slots') }}
                     </span>
                     <span class="col d-flex justify-content-end align-items-center">
-                        {{ $t('behavior') }}: <Status class="mx-2" :status="flowStore.flow.concurrency.behavior" size="small" />
+                        {{ $t('behavior') }}: <Status class="mx-2" :status="behavior ?? ''" size="small" />
                     </span>
                 </div>
                 <div class="progressbar mb-3">
@@ -18,8 +18,8 @@
                 <Executions
                     :restoreUrl="false"
                     :topbar="false"
-                    :namespace="flowStore.flow.namespace"
-                    :flowId="flowStore.flow.id"
+                    :namespace="namespace ?? ''"
+                    :flowId="flowId ?? ''"
                     isConcurrency
                     :statuses="[State.QUEUED, State.RUNNING, State.PAUSED]"
                     @state-count="setRunningCount"
@@ -32,51 +32,70 @@
     <Empty v-else type="concurrency_limit" />
 </template>
 
-<script>
-    import {mapStores} from "pinia";
+<script setup lang="ts">
+    import {computed, ref} from "vue";
     import Executions from "../executions/Executions.vue";
     import Empty from "../layout/empty/Empty.vue";
     import {State} from "@kestra-io/ui-libs";
     import Status from "../Status.vue";
     import {useFlowStore} from "../../stores/flow";
 
-    export default {
-        inheritAttrs: false,
-        components: {
-            Status,
-            Executions,
-            Empty
-        },
-        emits: ["expand-subflow"],
-        data() {
-            return {
-                runningCount: 0,
-                totalCount: 0,
-                runningCountSet: false,
-            }
-        },
-        methods: {
-            setRunningCount(count) {
-                if (typeof count === "object") {
-                    this.runningCount = count.runningCount;
-                    this.totalCount = count.totalCount;
-                } else {
-                    this.runningCount = count;
-                    this.totalCount = count;
-                }
-                this.runningCountSet = true;
-            }
-        },
-        computed: {
-            ...mapStores(useFlowStore),
-            State() {
-                return State
-            },
-            progress() {
-                return this.runningCount / this.flowStore.flow.concurrency.limit * 100
-            }
-        }
+    defineOptions({inheritAttrs: false})
+
+    defineEmits<{
+        (e: "expand-subflow", payload?: unknown): void
+    }>()
+
+    const flowStore = useFlowStore()
+    type FlowLike = { id?: string; namespace?: string; concurrency?: { limit?: number; behavior?: string } }
+    function isFlowLike(flow: unknown): flow is FlowLike {
+        if (flow === null || typeof flow !== "object") return false
+        const f = flow as Record<string, unknown>
+        const hasId = !("id" in f) || typeof f.id === "string"
+        const hasNamespace = !("namespace" in f) || typeof f.namespace === "string"
+        const concurrency = (f as any).concurrency
+        const hasConcurrency = concurrency === undefined || (
+            typeof concurrency === "object" &&
+            (concurrency?.limit === undefined || typeof concurrency.limit === "number") &&
+            (concurrency?.behavior === undefined || typeof concurrency.behavior === "string")
+        )
+        return hasId && hasNamespace && hasConcurrency
     }
+    const currentFlow = computed<FlowLike | undefined>(() => {
+        const flow = (flowStore as any).flow
+        return isFlowLike(flow) ? flow : undefined
+    })
+
+    const runningCount = ref<number>(0)
+    const totalCount = ref<number>(0)
+    const runningCountSet = ref<boolean>(false)
+
+    type RunningCountPayload = number | { runningCount: number; totalCount: number }
+
+    function setRunningCount(count: RunningCountPayload) {
+        if (typeof count === "object") {
+            runningCount.value = count.runningCount
+            totalCount.value = count.totalCount
+        } else {
+            runningCount.value = count
+            totalCount.value = count
+        }
+        runningCountSet.value = true
+    }
+
+    const hasConcurrency = computed(() => Boolean(currentFlow.value?.concurrency))
+    const limit = computed(() => currentFlow.value?.concurrency?.limit ?? 0)
+    const behavior = computed(() => currentFlow.value?.concurrency?.behavior ?? undefined)
+    const flowId = computed(() => currentFlow.value?.id ?? undefined)
+    const namespace = computed(() => currentFlow.value?.namespace ?? undefined)
+    const progress = computed(() => {
+        const max = limit.value
+        if (!max || max <= 0) return 0
+        const raw = Number(runningCount.value)
+        const safe = Number.isFinite(raw) && raw > 0 ? raw : 0
+        const clamped = Math.max(0, Math.min(safe, max))
+        return Math.min(100, (clamped / max) * 100)
+    })
 </script>
 
 <style scoped lang="scss">

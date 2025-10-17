@@ -4,7 +4,7 @@
             data-test-id="time-selector"
             :modelValue="value"
             :placeholder="placeholder"
-            @change="$emit('change', $event)"
+            @change="emit('change', $event)"
             :clearable="clearable"
         >
             <template #prefix>
@@ -36,7 +36,7 @@
         clearable?: boolean
     }>();
 
-    defineEmits<{
+    const emit = defineEmits<{
         (e: "change", value: string): void
     }>();
 </script>

@@ -118,11 +118,16 @@
 
     const dashboardID = (route: RouteLocation) => getDashboard(route, "id") as string;
 
-    const handlePageChange = (options: { page: number; size: number }) => {
+    const handlePageChange = (options: { page?: number; size?: number | string }) => {
         if (pageNumber.value === options.page && pageSize.value === options.size) return;
 
-        pageNumber.value = options.page;
-        pageSize.value = options.size;
+        pageNumber.value = options.page ?? 1;
+        const sizeNumber = typeof options.size === "string" ? parseInt(options.size, 10) : options.size;
+        if (sizeNumber && isNaN(sizeNumber)) {
+            pageSize.value = 25;
+            return;
+        };
+        pageSize.value = sizeNumber ?? 25;
 
         return getData(dashboardID(route));
     };
@@ -139,3 +144,9 @@
         refresh();
     }, {deep: true, immediate: true});
 </script>
+
+<style lang="scss" scoped>
+section#table :deep(.el-scrollbar__thumb) {
+    background-color: var(--ks-button-background-primary) !important;
+}
+</style>

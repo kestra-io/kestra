@@ -9,7 +9,7 @@
             :lang="extension === undefined ? 'yaml' : undefined"
             :extension="extension"
             :navbar="false"
-            :readOnly="!namespaceFiles && flowStore.isReadOnly"
+            :readOnly="flow && flowStore.isReadOnly"
             :creating="isCreating"
             :path="props.path"
             :diffOverviewBar="false"
@@ -58,13 +58,10 @@
 
     export interface EditorTabProps {
         name: string;
-        extension?: string;
-        persistent?: boolean;
-        path?: string;
-        flow?: boolean;
-        content?: string;
-        dirty?: boolean;
-        namespaceFiles?: boolean;
+        extension: string;
+        path: string;
+        flow: boolean;
+        dirty: boolean;
     }
 </script>
 
@@ -110,11 +107,7 @@
 
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
 
-    const props = withDefaults(defineProps<EditorTabProps>(), {
-        extension: undefined,
-        dirty: false,
-        flow: true,
-    });
+    const props = defineProps<EditorTabProps>();
 
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 

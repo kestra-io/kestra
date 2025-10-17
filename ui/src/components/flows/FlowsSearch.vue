@@ -46,80 +46,117 @@
     </section>
 </template>
 
-<script>
-    import {mapStores} from "pinia";
-    import {useFlowStore} from "../../stores/flow";
-    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
-    import RouteContext from "../../mixins/routeContext";
-    import DataTableActions from "../../mixins/dataTableActions";
-    import RestoreUrl from "../../mixins/restoreUrl";
-    import DataTable from "../layout/DataTable.vue";
-    import SearchField from "../layout/SearchField.vue";
-    import NoData from "../layout/NoData.vue";
-    import _escape from "lodash/escape"
-    import _merge from "lodash/merge";
-    import TopNavBar from "../layout/TopNavBar.vue";
+<script setup lang="ts">
+import {computed, type Ref} from "vue";
+import {useRoute, useRouter, type LocationQuery} from "vue-router";
+import {useFlowStore} from "../../stores/flow";
+import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+import DataTable from "../layout/DataTable.vue";
+import SearchField from "../layout/SearchField.vue";
+import NoData from "../layout/NoData.vue";
+import _escape from "lodash/escape";
+import _merge from "lodash/merge";
+import TopNavBar from "../layout/TopNavBar.vue";
 
-    export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions],
-        components: {
-            NamespaceSelect,
-            DataTable,
-            SearchField,
-            TopNavBar,
-            NoData
-        },
-        data() {
-            return {
-                isDefaultNamespaceAllow: true
-            };
-        },
-        computed: {
-            ...mapStores(useFlowStore),
-            routeInfo() {
-                return {
-                    title: this.$t("source search"),
-                    breadcrumb: [
-                        {
-                            label: this.$t("flows"),
-                            link: {
-                                name: "flows/list",
-                            }
-                        },
-                    ]
-                };
-            }
-        },
-        methods: {
-            sanitize(content) {
-                return _escape(content)
-                    .replaceAll("[mark]", "<mark>")
-                    .replaceAll("[/mark]", "</mark>")
-            },
-            loadQuery(base) {
-                let queryFilter = this.queryWithFilter();
+import useRouteContext from "../../composables/useRouteContext";
+import useRestoreUrl from "../../composables/useRestoreUrl";
+import {useDataTableActions} from "../../composables/useDataTableActions";
 
-                return _merge(base, queryFilter)
-            },
-            loadData(callback) {
-                if (this.$route.query["q"] !== undefined) {
-                    this.flowStore
-                        .searchFlows(this.loadQuery({
-                            size: parseInt(this.$route.query.size || 25),
-                            page: parseInt(this.$route.query.page || 1),
-                            sort: this.$route.query.sort
-                        }))
-                        .finally(() => {
-                            this.saveRestoreUrl();
-                        })
-                        .finally(callback)
-                } else {
-                    this.flowStore.total = 0;
-                    this.flowStore.search = undefined;
-                    callback();
-                }
+// Type definitions
+interface FlowModel {
+    id: string;
+    namespace: string;
+}
 
-            }
+interface SearchResult {
+    model: FlowModel;
+    fragments: string[];
+}
+
+interface RouteInfo {
+    title: string;
+    breadcrumb: Array<{
+        label: string;
+        link: { name: string };
+    }>;
+}
+
+interface LoadQueryParams {
+    size: number;
+    page: number;
+    sort?: string;
+}
+
+const route = useRoute();
+const router = useRouter();
+
+const flowStore = useFlowStore();
+
+// Provide route info for TopNavBar and document title handling
+const routeInfo = computed<RouteInfo>(() => ({
+    title: (route.meta?.title as string) || (window as Window & { $t?: (key: string) => string }).$t?.("source search") || "source search",
+    breadcrumb: [
+        {
+            label: (window as Window & { $t?: (key: string) => string }).$t?.("flows") || "flows",
+            link: { name: "flows/list" }
         }
-    };
+    ]
+}));
+
+// use composables
+useRouteContext(routeInfo as Ref<{title: string}>);
+const { loadInit, localStorageName, localStorageValue, saveRestoreUrl, goToRestoreUrl } = useRestoreUrl({ restoreUrl: true, isDefaultNamespaceAllow: true });
+
+// wire data table actions
+const dataTableActions = useDataTableActions({
+    loadData: loadData,
+    saveRestoreUrl: saveRestoreUrl
+});
+
+const {
+    onPageChanged,
+    onDataTableValue,
+    queryWithFilter,
+    ready
+} = dataTableActions;
+
+function sanitize(content: string) {
+    return _escape(content)
+        .replaceAll("[mark]", "<mark>")
+        .replaceAll("[/mark]", "</mark>");
+}
+
+function loadQuery(base: LoadQueryParams): Record<string, string | number | undefined> {
+    const queryFilter = queryWithFilter();
+    return _merge(base, queryFilter);
+}
+
+function loadData(callback?: () => void) {
+    const query = route.query as LocationQuery;
+    
+    if (query.q !== undefined) {
+        const size = typeof query.size === 'string' ? parseInt(query.size) : 25;
+        const page = typeof query.page === 'string' ? parseInt(query.page) : 1;
+        const sort = typeof query.sort === 'string' ? query.sort : undefined;
+        
+        flowStore
+            .searchFlows(loadQuery({
+                size,
+                page,
+                sort
+            }))
+            .finally(() => {
+                saveRestoreUrl();
+            })
+            .finally(() => {
+                if (callback) callback();
+            });
+    } else {
+        flowStore.total = 0;
+        // @ts-ignore - allow undefined
+        flowStore.search = undefined;
+        if (callback) callback();
+    }
+}
+
 </script>

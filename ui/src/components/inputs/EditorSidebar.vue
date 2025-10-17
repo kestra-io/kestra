@@ -135,14 +135,13 @@
             <template #default="{data, node}">
                 <el-dropdown
                     ref="dropdowns"
-                    :data-dropdown-id="`dropdown__${data.id}`"
-                    @contextmenu.prevent.stop="
-                        toggleDropdown(`dropdown__${data.id}`);
+                    @contextmenu.prevent.stop="(event: MouseEvent) => {
+                        toggleDropdown(event.target);
                         if(selectedNodes.length === 0) {
                             selectedNodes.push(data.id);
                             selectedFiles.push(getPath(data.id));
                         }
-                    "
+                    }"
                     trigger="contextmenu"
                     class="w-100"
                 >
@@ -407,7 +406,7 @@
     const tree = ref<any>();
     const filePicker = ref<HTMLInputElement>();
     const folderPicker = ref<HTMLInputElement>();
-    const dropdowns = ref<{handleClose: () => void; handleOpen: () => void, $el: HTMLElement}[]>([]);
+    const dropdowns = ref<{handleClose: () => void; handleOpen: () => void}>();
     const dropdownRef = ref<{handleClose: () => void; handleOpen: () => void}>();
     const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
     const items = ref<TreeNode[]>([]);
@@ -518,6 +517,7 @@
                     path: path,
                     extension: data.fileName.split(".").pop(),
                     flow: false,
+                    dirty: false
                 });
             }
         }
@@ -651,18 +651,19 @@
         if(!name) return;
         openTab?.({
             name,
-            extension: item.split(".").pop(),
+            extension: item.split(".").pop()!,
             path: item,
             flow: false,
+            dirty: false
         });
         filter.value = "";
     }
 
-    function toggleDropdown(reference: string) {
+    function toggleDropdown(reference: HTMLElement) {
         if (dropdownRef.value) {
             dropdownRef.value?.handleClose();
         }
-        dropdownRef.value = dropdowns.value.find(d => d.$el.getAttribute("data-dropdown-id") === reference);
+        dropdownRef.value = dropdowns.value
         dropdownRef.value?.handleOpen();
     }
 
@@ -874,6 +875,7 @@
                 path,
                 extension: extension,
                 flow: false,
+                dirty: false
             });
             dialog.value.folder = path.substring(0, path.lastIndexOf("/"));
         }

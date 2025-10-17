@@ -11,19 +11,110 @@ import net.thisptr.jackson.jq.BuiltinFunctionLoader;
 import net.thisptr.jackson.jq.JsonQuery;
 import net.thisptr.jackson.jq.Scope;
 import net.thisptr.jackson.jq.Versions;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
+@Slf4j
 public class JqFilter implements Filter {
-    private final Scope scope;
+    private static final AtomicReference<Scope> CACHED_SCOPE = new AtomicReference<>();
     private final List<String> argumentNames = new ArrayList<>();
 
     public JqFilter() {
-        scope = Scope.newEmptyScope();
-        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, scope);
         this.argumentNames.add("expression");
+    }
+
+    private static Scope getScope() {
+        if (CACHED_SCOPE.get() == null) {
+            synchronized (CACHED_SCOPE) {
+                if (CACHED_SCOPE.get() == null) {
+                    try {
+                        Scope scope = Scope.newEmptyScope();
+                        try {
+                            BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, scope);
+                            log.debug("Successfully loaded JQ functions using standard loader");
+                        } catch (Exception e) {
+                            log.warn("Standard JQ function loading failed, attempting fallback loading method", e);
+                            try {
+                                loadJqFunctionsManually(scope);
+                                log.debug("Successfully loaded JQ functions using manual loader");
+                            } catch (Exception manualEx) {
+                                log.warn("Manual JQ function loading also failed", manualEx);
+                                try {
+                                    log.info("Using empty JQ scope as fallback - only basic operations will be available");
+                                } catch (Exception fallbackEx) {
+                                    log.error("All JQ function loading methods failed", fallbackEx);
+                                }
+                            }
+                        }
+                        CACHED_SCOPE.set(scope);
+                    } catch (Exception e) {
+                        log.error("Failed to initialize JQ filter", e);
+                        CACHED_SCOPE.set(Scope.newEmptyScope());
+                    }
+                }
+            }
+        }
+        return CACHED_SCOPE.get();
+    }
+    
+    private static void loadJqFunctionsManually(Scope scope) throws IOException {
+        final String resourcePath = "net/thisptr/jackson/jq/jq.json";
+        InputStream is = null;
+        
+        try {
+            is = JqFilter.class.getResourceAsStream("/net/thisptr/jackson/jq/jq.json");
+            log.debug("Attempting to load jq.json using direct resource path: {}", is != null);
+            
+            if (is == null) {
+                is = JqFilter.class.getClassLoader().getResourceAsStream(resourcePath);
+                log.debug("Attempting to load jq.json using class loader: {}", is != null);
+            }
+            
+            if (is == null) {
+                ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+                if (contextClassLoader != null) {
+                    is = contextClassLoader.getResourceAsStream(resourcePath);
+                    log.debug("Attempting to load jq.json using thread context class loader: {}", is != null);
+                }
+            }
+            
+            if (is == null) {
+                is = ClassLoader.getSystemResourceAsStream(resourcePath);
+                log.debug("Attempting to load jq.json using system class loader: {}", is != null);
+            }
+            
+            if (is != null) {
+                try {
+                    BuiltinFunctionLoader.loadFunctions(Versions.JQ_1_6, is, scope);
+                    log.info("Successfully loaded JQ functions from {}", resourcePath);
+                } catch (Exception e) {
+                    log.warn("Error loading jq functions from stream", e);
+                    throw e;
+                } finally {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        log.warn("Failed to close jq.json input stream", e);
+                    }
+                }
+            } else {
+                log.warn("Could not find jq.json resource file in any classloader");
+                throw new IOException("Resource not found: " + resourcePath);
+            }
+        } catch (Exception e) {
+            log.error("Exception during jq function loading", e);
+            throw new IOException("Failed to load jq functions", e);
+        }
     }
 
     @Override
@@ -42,16 +133,21 @@ public class JqFilter implements Filter {
         }
 
         String pattern = (String) args.get("expression");
-
-        Scope rootScope = Scope.newEmptyScope();
-        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, rootScope);
+        
         try {
-
+            Scope scope = getScope();
             JsonQuery q = JsonQuery.compile(pattern, Versions.JQ_1_6);
 
             JsonNode in;
             if (input instanceof String stringValue) {
-                in = JacksonMapper.ofJson().readTree(stringValue);
+                try {
+                    in = JacksonMapper.ofJson().readTree(stringValue);
+                } catch (Exception e) {
+                    log.debug("Failed to parse input as JSON string, trying as raw value: {}", e.getMessage());
+                    ObjectNode objectNode = JacksonMapper.ofJson().createObjectNode();
+                    objectNode.put("value", stringValue);
+                    in = objectNode;
+                }
             } else {
                 in = JacksonMapper.ofJson().valueToTree(input);
             }
@@ -77,12 +173,14 @@ public class JqFilter implements Filter {
                     }
                 });
             } catch (Exception e) {
-                throw new Exception("Failed to resolve JQ expression '" + pattern + "' and value '" + input + "'", e);
+                throw new Exception("Failed to resolve JQ expression '" + pattern + "' with input type '" + 
+                    (input != null ? input.getClass().getName() : "null") + "'", e);
             }
 
             return out;
         } catch (Exception e) {
-            throw new PebbleException(e, "Unable to parse jq value '" + input + "' with type '" + input.getClass().getName() + "'", lineNumber, self.getName());
+            throw new PebbleException(e, "Unable to parse jq value '" + input + "' with type '" + 
+                (input != null ? input.getClass().getName() : "null") + "'", lineNumber, self.getName());
         }
     }
 }

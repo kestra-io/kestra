@@ -1,2 +1,6 @@
 playwright-report
 test-results
+tests/.env
+tests/data/
+tests/e2e/.env
+tests/e2e/data/application-secrets.yml

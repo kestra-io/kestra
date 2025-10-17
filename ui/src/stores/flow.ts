@@ -465,8 +465,16 @@ export const useFlowStore = defineStore("flow", () => {
                     return Promise.reject(new Error("Server error on flow save"))
                 } else {
                     flow.value = response.data;
-                    useEditorStore().setTabDirty({
-                        name: "Flow",
+
+                    const editorStore = useEditorStore();
+                    const currentTab = editorStore.current;
+                    
+                    // The dirty flag for the flow tab was cleared using a hardcoded name,
+                    // which failed if the tab's actual name and path was different.
+                    // update the dirty flag clearing logic to target the actual current flow tab (using its real name and path), ensuring the Save button disables after a successful save.
+                    editorStore.setTabDirty({
+                        name: currentTab?.name ?? "Flow",
+                        path: currentTab?.path ?? "Flow.yaml",
                         dirty: false,
                     });
 

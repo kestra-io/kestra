@@ -404,6 +404,7 @@
                 currentFolder: undefined,
                 confirmation: {visible: false, data: {}},
                 items: undefined,
+                reloading: false, // Prevent duplicate renders while reloading the root
                 nodeBeforeDrag: undefined,
                 searchResults: [],
                 tabContextMenu: {visible: false, x: 0, y: 0},
@@ -455,6 +456,33 @@
             },
         },
         methods: {
+            dedupeTree(items) {
+                if (!Array.isArray(items)) return items;
+
+                const map = new Map();
+                for (const item of items) {
+                    const key = `${item.type}:${item.fileName}`;
+                    if (!map.has(key)) {
+                        const cloned = {...item};
+                        if (Array.isArray(cloned.children)) {
+                            cloned.children = this.dedupeTree(cloned.children);
+                        }
+                        map.set(key, cloned);
+                    } else if (item.type === "Directory") {
+                        // Merge children of duplicate directories
+                        const existing = map.get(key);
+                        const merged = [
+                            ...(existing.children ?? []),
+                            ...(item.children ?? [])
+                        ];
+                        existing.children = this.dedupeTree(merged);
+                        map.set(key, existing);
+                    }
+                }
+
+                const result = Array.from(map.values());
+                return this.sorted(result);
+            },
             nodeClass(data) {
                 // Use data.id to match the structure used in handleNodeClick
                 if (this.selectedNodes.includes(data.id)) {
@@ -611,13 +639,19 @@
             },
             async loadNodes(node, resolve) {
                 if (node.level === 0) {
+                    // If a manual refresh is in progress or root items are already loaded,
+                    // avoid re-fetching/rendering to prevent duplicates
+                    if (this.reloading || (Array.isArray(this.items) && this.items.length > 0)) {
+                        return resolve(this.items);
+                    }
+
                     const payload = {
                         namespace: this.namespaceId,
                     };
                     const items = await this.namespacesStore.readDirectory(payload);
 
                     this.renderNodes(items);
-                    this.items = this.sorted(this.items);
+                    this.items = this.dedupeTree(this.items);
                     this.editorStore.treeData = this.items;
                     resolve(this.items);
                 } else if (node.level >= 1) {
@@ -937,7 +971,14 @@
                 }
 
                 if (!this.dialog.folder) {
-                    this.items.push(NEW);
+                    // Root-level file: avoid duplicates by fileName
+                    const existingIdx = this.items.findIndex((it) => it.type === "File" && it.fileName === NAME);
+                    if (existingIdx === -1) {
+                        this.items.push(NEW);
+                    } else {
+                        // Update existing entry to keep a single node
+                        this.items.splice(existingIdx, 1, {...this.items[existingIdx], ...NEW});
+                    }
                     this.items = this.sorted(this.items);
                 } else {
                     const SELF = this;
@@ -949,10 +990,17 @@
                                 folderPath === SELF.dialog.folder &&
                                 Array.isArray(item.children)
                             ) {
-                                item.children = SELF.sorted([
-                                    ...item.children,
-                                    NEW,
-                                ]);
+                                // Deduplicate inside target folder by fileName
+                                const childIdx = item.children.findIndex((child) => child.type === "File" && child.fileName === NAME);
+                                if (childIdx === -1) {
+                                    item.children = SELF.sorted([
+                                        ...item.children,
+                                        NEW,
+                                    ]);
+                                } else {
+                                    item.children.splice(childIdx, 1, {...item.children[childIdx], ...NEW});
+                                    item.children = SELF.sorted(item.children);
+                                }
                                 return true; // Return true if the folder is found and item is pushed
                             }
 
@@ -1171,13 +1219,18 @@
             },
             "editorStore.treeRefresh": {
                 async handler() {
+                    // Ignore the initial immediate call (treeRefresh is 0 at mount)
+                    if (!this.editorStore.treeRefresh) return;
+                    // Manual refresh of root directory; guard against el-tree's own root load
                     if (this.$refs.tree) {
-                        this.items = undefined;
+                        this.reloading = true;
+                        this.items = [];
                         const items = await this.namespacesStore.readDirectory({
                             namespace: this.namespaceId
                         });
                         this.renderNodes(items);
-                        this.items = this.sorted(this.items);
+                        this.items = this.dedupeTree(this.items);
+                        this.reloading = false;
                     }
                 },
                 immediate: true,

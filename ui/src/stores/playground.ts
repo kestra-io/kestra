@@ -174,7 +174,7 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         if (wasRunning && isFinalNow) {
             // Trigger a refresh of the namespace files tree in the editor sidebar
-            editorStore.refreshTree();
+            editorStore.refreshTree({showExplorer: false});
         }
     });
 

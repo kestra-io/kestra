@@ -161,8 +161,11 @@ export const useEditorStore = defineStore("editor", () => {
         tabs.value.splice(to, 0, tab);
     }
 
-    function refreshTree() {
-        explorerVisible.value = true;
+    function refreshTree({showExplorer}: {showExplorer?: boolean} = {}) {
+       
+        if (showExplorer === true) {
+            explorerVisible.value = true;
+        }
         treeRefresh.value = Date.now();
     }
 

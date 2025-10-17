@@ -88,7 +88,8 @@ public class JqFilter implements Filter {
             
             if (is != null) {
                 try {
-                    BuiltinFunctionLoader.loadFunctions(Versions.JQ_1_6, scope);
+                    BuiltinFunctionLoader loader = BuiltinFunctionLoader.getInstance();
+                    loader.loadFunctions(Versions.JQ_1_6, scope);
                     log.info("Successfully loaded JQ functions from {}", resourcePath);
                 } catch (Exception e) {
                     log.warn("Error loading jq functions from stream", e);
@@ -157,9 +158,19 @@ public class JqFilter implements Filter {
                     } else if (v instanceof BooleanNode) {
                         out.add(v.booleanValue());
                     } else if (v instanceof ObjectNode) {
-                        out.add(JacksonMapper.ofJson().convertValue(v, Map.class));
+                        Object mapObj = JacksonMapper.ofJson().convertValue(v, Map.class);
+                        if (mapObj instanceof Map<?, ?> nestedMap) {
+                            out.add(nestedMap);
+                        } else {
+                            out.add(Map.of());
+                        }
                     } else if (v instanceof ArrayNode) {
-                        out.add(JacksonMapper.ofJson().convertValue(v, List.class));
+                        Object listObj = JacksonMapper.ofJson().convertValue(v, List.class);
+                        if (listObj instanceof List<?> nestedList) {
+                            out.add(nestedList);
+                        } else {
+                            out.add(List.of());
+                        }
                     } else {
                         out.add(v);
                     }

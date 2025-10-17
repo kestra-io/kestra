@@ -587,6 +587,7 @@
         type: "File" | "Directory";
         leaf?: boolean;
         level: number;
+        data: any;
     }
 
     async function loadNodes(node: TreeNode, resolve: (children: ItemWithChildren[]) => void) {

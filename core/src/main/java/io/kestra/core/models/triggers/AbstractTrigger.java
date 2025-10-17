@@ -47,7 +47,6 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @Valid
     protected List<@Valid @NotNull Condition> conditions;
 
-    @NotNull
     @Builder.Default
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     @Schema(defaultValue = "false")

@@ -72,30 +72,23 @@ public class JqFilter implements Filter {
         InputStream is = null;
         
         try {
-            is = JqFilter.class.getResourceAsStream("/net/thisptr/jackson/jq/jq.json");
-            log.debug("Attempting to load jq.json using direct resource path: {}", is != null);
+            is = JqFilter.class.getResourceAsStream("/" + resourcePath);
             
             if (is == null) {
                 is = JqFilter.class.getClassLoader().getResourceAsStream(resourcePath);
-                log.debug("Attempting to load jq.json using class loader: {}", is != null);
             }
             
             if (is == null) {
-                ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-                if (contextClassLoader != null) {
-                    is = contextClassLoader.getResourceAsStream(resourcePath);
-                    log.debug("Attempting to load jq.json using thread context class loader: {}", is != null);
-                }
+                is = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
             }
             
             if (is == null) {
                 is = ClassLoader.getSystemResourceAsStream(resourcePath);
-                log.debug("Attempting to load jq.json using system class loader: {}", is != null);
             }
             
             if (is != null) {
                 try {
-                    BuiltinFunctionLoader.loadFunctions(Versions.JQ_1_6, is, scope);
+                    BuiltinFunctionLoader.loadFunctions(JqFilter.class.getClassLoader(), is, scope);
                     log.info("Successfully loaded JQ functions from {}", resourcePath);
                 } catch (Exception e) {
                     log.warn("Error loading jq functions from stream", e);
@@ -108,7 +101,6 @@ public class JqFilter implements Filter {
                     }
                 }
             } else {
-                log.warn("Could not find jq.json resource file in any classloader");
                 throw new IOException("Resource not found: " + resourcePath);
             }
         } catch (Exception e) {

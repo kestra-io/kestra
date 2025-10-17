@@ -106,11 +106,6 @@
             this.setActiveName();
         },
         methods: {
-            onSplitterResize(sizes) {
-                if (sizes?.length >= 1) {
-                    this.editorStore.changeExplorerWidth(sizes[0]);
-                }
-            },
             embeddedTabChange(tab) {
                 this.$emit("changed", tab);
             },

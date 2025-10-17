@@ -8,7 +8,6 @@
         :preSerializePanels="preSerializePanels"
         :bottomVisible="playgroundMode"
         @set-tab-value="setTabValue"
-        @remove-tab="onRemoveTab"
     >
         <template #actions>
             <EditorButtonsWrapper />
@@ -123,11 +122,7 @@
         }
     }, {immediate: true});
 
-    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useFilesPanels(panels)
-
-    function onRemoveTab(tab: string){
-        onRemoveCodeTab(tab)
-    }
+    const {isFlowDirty} = useFilesPanels(panels)
 
     useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab)
 

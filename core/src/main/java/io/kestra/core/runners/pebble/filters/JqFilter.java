@@ -88,7 +88,7 @@ public class JqFilter implements Filter {
             
             if (is != null) {
                 try {
-                    BuiltinFunctionLoader.loadFunctions(JqFilter.class.getClassLoader(), is, scope);
+                    BuiltinFunctionLoader.loadFunctions(Versions.JQ_1_6, scope);
                     log.info("Successfully loaded JQ functions from {}", resourcePath);
                 } catch (Exception e) {
                     log.warn("Error loading jq functions from stream", e);

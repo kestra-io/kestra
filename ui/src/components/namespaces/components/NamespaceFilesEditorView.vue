@@ -15,7 +15,7 @@
             key="editor"
             :size="editorSize"
         >
-            <MultiPanelTabs v-if="mounted" v-model="panels" @remove-tab="onRemoveTab" />
+            <MultiPanelTabs v-if="mounted" v-model="panels" />
         </el-splitter-panel>
     </el-splitter>
 </template>
@@ -27,7 +27,6 @@
     import MultiPanelTabs from "../../MultiPanelTabs.vue";
     import {getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels";
     import {useFlowStore} from "../../../stores/flow";
-    import {useEditorStore} from "../../../stores/editor";
     import {useStoredPanels} from "../../../composables/useStoredPanels";
 
     const mounted = useMounted()
@@ -56,8 +55,6 @@
         editorSize.value = sizes[1]
     }
 
-    const editorStore = useEditorStore();
-
     const panels = useStoredPanels(
         `namespace-files-editor-view-panels-${props.namespace}`,
         [{
@@ -69,7 +66,6 @@
                     return
                 }
                 const tabProps = getTabPropsFromFilePath(value, false);
-                editorStore.openTab(tabProps)
                 if(!tabProps) return
 
                 return getTabFromFilesTab(tabProps)
@@ -78,5 +74,5 @@
 
     );
 
-    const {onRemoveTab} = useFilesPanels(panels)
+    useFilesPanels(panels)
 </script>

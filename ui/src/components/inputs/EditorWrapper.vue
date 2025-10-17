@@ -5,7 +5,7 @@
             ref="editorRefElement"
             class="flex-1"
             :modelValue="hasDraft ? draftSource : source"
-            :schemaType="isCurrentTabFlow ? 'flow': undefined"
+            :schemaType="flow ? 'flow': undefined"
             :lang="extension === undefined ? 'yaml' : undefined"
             :extension="extension"
             :navbar="false"
@@ -15,7 +15,7 @@
             :diffOverviewBar="false"
             @update:model-value="editorUpdate"
             @cursor="updatePluginDocumentation"
-            @save="isCurrentTabFlow ? save(): saveFileContent()"
+            @save="flow ? saveFlowYaml(): saveFileContent()"
             @execute="execute"
             @mouse-move="(e) => highlightHoveredTask(e.target?.position?.lineNumber)"
             @mouse-leave="() => highlightHoveredTask(-1)"
@@ -24,11 +24,11 @@
         >
             <template #absolute>
                 <AITriggerButton
-                    :show="isCurrentTabFlow"
+                    :show="flow"
                     :opened="aiCopilotOpened"
                     @click="draftSource = undefined; aiCopilotOpened = true"
                 />
-                <ContentSave v-if="!isCurrentTabFlow" @click="saveFileContent" />
+                <ContentSave v-if="!flow" @click="saveFileContent" />
             </template>
             <template v-if="playgroundStore.enabled" #widget-content>
                 <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
@@ -54,6 +54,7 @@
 
 <script lang="ts">
     export const FILES_SET_DIRTY_INJECTION_KEY = Symbol("files-set-dirty-injection-key") as InjectionKey<(payload: { path: string; dirty: boolean }) => void>;
+    export const FILES_UPDATE_CONTENT_INJECTION_KEY = Symbol("files-update-content-injection-key") as InjectionKey<(payload: { path: string; content: string }) => void>;
 </script>
 
 <script setup lang="ts">
@@ -86,7 +87,7 @@
     const cursor = ref();
 
     const toggleAiShortcut = (event: KeyboardEvent) => {
-        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && isCurrentTabFlow.value) {
+        if (event.code === "KeyK" && (event.ctrlKey || event.metaKey) && event.altKey && event.shiftKey && props.flow) {
             event.preventDefault();
             event.stopPropagation();
             event.stopImmediatePropagation();
@@ -107,28 +108,27 @@
 
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
 
-    const source = ref("")
-    const savedSource = ref("")
+    const sourceNS = ref("")
+    const savedSourceNS = ref("")
+
+    const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value);
+    const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
 
     async function loadFile() {
-        if (props.dirty) return;
-        if(props.flow) {
-            source.value = flowStore.flowYaml || "";
-            return;
-        }else{
-            const fileNamespace = namespace.value ?? route.params?.namespace;
-            if (!fileNamespace) return;
-            source.value = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
-        }
+        if (props.dirty || props.flow) return;
 
-        savedSource.value = source.value;
+        const fileNamespace = namespace.value ?? route.params?.namespace;
+        if (!fileNamespace) return;
+        sourceNS.value = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
+
+        savedSourceNS.value = source.value;
     }
 
     const isDirty = computed(() => source.value !== savedSource.value);
 
     watch(() => props.dirty, (newVal) => {
-        if (!newVal) {
-            savedSource.value = source.value;
+        if (!newVal && !props.flow) {
+            savedSourceNS.value = sourceNS.value;
         }
     });
 
@@ -172,7 +172,6 @@
 
     const namespace = computed(() => flowStore.flow?.namespace);
     const isCreating = computed(() => flowStore.isCreating);
-    const isCurrentTabFlow = computed(() => props.flow);
 
     const timeout = ref<any>(null);
     const hash = ref<any>(null);
@@ -191,25 +190,29 @@
         });
     }
 
+    const updateContent = inject(FILES_UPDATE_CONTENT_INJECTION_KEY);
+
     function editorUpdate(newValue: string){
         if (editorContent.value === newValue) {
             return;
         }
-        if (isCurrentTabFlow.value) {
+        if (props.flow) {
             if (hasDraft.value) {
                 draftSource.value = newValue;
             } else {
                 flowStore.flowYaml = newValue;
             }
         }
-        source.value = newValue;
-
+        sourceNS.value = newValue;
+        if(props.path){
+            updateContent?.({path: props.path, content: newValue});
+        }
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
                 source: newValue,
-                currentIsFlow: isCurrentTabFlow.value,
+                currentIsFlow: props.flow,
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
                 topologyVisible: true,
             });
@@ -246,7 +249,7 @@
         pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
     };
 
-    const save = async () => {
+    const saveFlowYaml = async () => {
         clearTimeout(timeout.value);
         const editorRef = editorRefElement.value
         if(!editorRef?.$refs.monacoEditor) return
@@ -255,8 +258,6 @@
         const result = flowStore.isCreating
             ? await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
             : await flowStore.saveAll();
-
-        savedSource.value = source.value;
 
         if (result === "redirect_to_update") {
             await router.push({
@@ -273,20 +274,20 @@
 
     const saveFileContent = async () => {
         clearTimeout(timeout.value);
-        if(!namespace.value || !props.path) return
+        if(!namespace.value || !props.path || props.flow) return
         await namespacesStore.createFile({
             namespace: namespace.value,
             path: props.path,
             content: editorContent.value || "",
         });
-        savedSource.value = source.value;
+        savedSourceNS.value = source.value;
     }
 
     const handleGlobalSave = (event: KeyboardEvent) => {
         if ((event.ctrlKey || event.metaKey) && event.key === "s") {
             event.preventDefault();
-            if (isCurrentTabFlow.value) {
-                save();
+            if (props.flow) {
+                saveFlowYaml();
             } else {
                 saveFileContent();
             }
@@ -327,7 +328,7 @@
         playgroundStore,
         highlightHoveredTask,
         highlightedLines,
-    } = useFlowEditorRunTaskButton(isCurrentTabFlow, editorRefElement, source);
+    } = useFlowEditorRunTaskButton(computed(() => props.flow), editorRefElement, source);
 </script>
 
 <style scoped lang="scss">

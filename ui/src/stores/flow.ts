@@ -89,7 +89,6 @@ export const useFlowStore = defineStore("flow", () => {
     const flowYamlOrigin = ref<string>("")
     const flowYamlBeforeAdd = ref<string>("")
     const confirmOutdatedSaveDialog = ref<boolean>(false)
-    const haveChange = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>();
@@ -106,20 +105,16 @@ export const useFlowStore = defineStore("flow", () => {
     function onSaveMetadata() {
         flowYaml.value = YAML_UTILS.updateMetadata(flowYaml.value ?? "", metadata.value ?? {});
         metadata.value = undefined;
-        haveChange.value = true;
     }
 
-    async function saveAll() {
-        const editorStore = useEditorStore()
-        const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
-        const hasChanges = haveChange.value || hasAnyDirtyTabs;
+    const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value);
 
-        if (flowErrors.value?.length || !hasChanges && !isCreating.value) {
+    async function saveAll() {
+        if ((!haveChange.value && !isCreating.value) || flowErrors.value?.length) {
             return;
         }
 
         if (!flow.value) return;
-        await editorStore.saveAllTabs({namespace: flow.value.namespace});
         flowYamlOrigin.value = flowYaml.value;
         return saveWithoutRevisionGuard();
     }
@@ -216,7 +211,6 @@ export const useFlowStore = defineStore("flow", () => {
             }
         }
 
-        haveChange.value = true;
         if (editorViewType === "YAML") {
             const coreStore = useCoreStore();
             coreStore.unsavedChange = true;
@@ -301,7 +295,6 @@ export const useFlowStore = defineStore("flow", () => {
                     const coreStore = useCoreStore();
                     coreStore.unsavedChange = false;
                     isCreating.value = false;
-                    haveChange.value = false;
                 });
         } else {
             await saveFlow({flow: flowSource})
@@ -316,7 +309,6 @@ export const useFlowStore = defineStore("flow", () => {
             return "redirect_to_update";
         }
 
-        haveChange.value = false;
         await validateFlow({
             flow: (isCreatingBackup ? flowSource : yamlWithNextRevision.value) ?? ""
         });

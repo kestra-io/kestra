@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-    import {watch} from "vue";
+    import {computed, watch} from "vue";
     import {useMounted, useStorage} from "@vueuse/core";
     import EditorSidebar from "../../inputs/EditorSidebar.vue";
     import MultiPanelTabs from "../../MultiPanelTabs.vue";
@@ -74,5 +74,5 @@
 
     );
 
-    useFilesPanels(panels)
+    useFilesPanels(panels, computed(() => props.namespace))
 </script>

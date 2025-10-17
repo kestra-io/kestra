@@ -122,11 +122,11 @@
         }
     }, {immediate: true});
 
-    const {isFlowDirty} = useFilesPanels(panels)
+    useFilesPanels(panels, computed(() => flowStore.flowParsed?.namespace))
 
     useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab)
 
-    watch(isFlowDirty, (dirty) => {
+    watch(() => flowStore.haveChange, (dirty) => {
         for(const panel of panels.value){
             if(panel.activeTab && isTabFlowRelated(panel.activeTab)){
                 panel.activeTab.dirty = dirty

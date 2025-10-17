@@ -25,7 +25,13 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
             label: "Flow Code"
         },
         uid: "code",
-        component: () => h(EditorWrapper, {path: "Flow.yaml", name: "Flow.yaml"}),
+        component: () => h(EditorWrapper, {
+            path: "Flow.yaml",
+            name: "Flow.yaml",
+            dirty: false,
+            extension: "yaml",
+            flow: true,
+        }),
     },
     {
         button: {

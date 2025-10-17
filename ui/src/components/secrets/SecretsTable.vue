@@ -4,6 +4,7 @@
             <template #top>
                 <KestraFilter
                     :placeholder="$t('search')"
+                    :language="SecretFilterLanguage"
                 />
             </template>
             <template #table>
@@ -210,6 +211,7 @@
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
     import MultilineSecret from "./MultilineSecret.vue";
     import DataTable from "../layout/DataTable.vue";
+    import SecretFilterLanguage from "../../composables/monaco/languages/filters/impl/secretFilterLanguage.ts";
 </script>
 
 <script lang="ts">

@@ -1,15 +1,19 @@
 package io.kestra.core.secret;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.Strings;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -50,11 +54,25 @@ public class SecretService<META> {
         return secret;
     }
 
-    public ArrayListTotal<META> searchByName(Pageable pageable, String tenantId, String query) throws IOException {
+    public ArrayListTotal<META> list(Pageable pageable, String tenantId, List<QueryFilter> filters) throws IOException {
+        final Predicate<String> queryPredicate = filters.stream()
+            .filter(filter -> filter.field().equals(QueryFilter.Field.QUERY) && filter.value() != null)
+            .findFirst()
+            .map(filter -> {
+                if (filter.operation().equals(QueryFilter.Op.EQUALS)) {
+                    return (Predicate<String>) s -> Strings.CI.contains(s, (String) filter.value());
+                } else if (filter.operation().equals(QueryFilter.Op.NOT_EQUALS)) {
+                    return (Predicate<String>) s -> !Strings.CI.contains(s, (String) filter.value());
+                } else {
+                    throw new IllegalArgumentException("Unsupported operation for QUERY filter: " + filter.operation());
+                }
+            })
+            .orElse(s -> true);
+
         //noinspection unchecked
         return ArrayListTotal.of(
             pageable,
-            decodedSecrets.keySet().stream().filter(s -> query == null || s.toLowerCase().contains(query.toLowerCase())).map(s -> (META) s).toList()
+            decodedSecrets.keySet().stream().filter(queryPredicate).map(s -> (META) s).toList()
         );
     }
 

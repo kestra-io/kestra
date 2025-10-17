@@ -44,16 +44,9 @@ public class SecretController<META extends ApiSecretMeta> {
     ) throws IllegalArgumentException, IOException {
         final String tenantId = this.tenantService.resolveTenant();
 
-        final String query = filters.stream()
-            .filter(filter -> filter.field().equals(QueryFilter.Field.QUERY))
-            .map(QueryFilter::value)
-            .map(Object::toString)
-            .findFirst()
-            .orElse(null);
-
         Pageable pageable = PageableUtils.from(page, size, sort, null);
 
-        ArrayListTotal<String> items = secretService.searchByName(pageable, tenantId, query);
+        ArrayListTotal<String> items = secretService.list(pageable, tenantId, filters);
         //noinspection unchecked
         return HttpResponse.ok((ApiSecretListResponse<META>) new ApiSecretListResponse<>(
                 true,

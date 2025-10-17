@@ -686,7 +686,7 @@
                     folder = getPath(selectedNode.id);
                 }
             }
-            if(!type || !folder) return
+            if(!type) return
             dialog.value.visible = true;
             dialog.value.type = type;
             dialog.value.folder = folder;

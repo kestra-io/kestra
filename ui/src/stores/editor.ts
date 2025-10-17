@@ -14,16 +14,6 @@ export interface EditorTabProps {
     namespaceFiles?: boolean;
 }
 
-export interface ItemWithChildren {
-    id: string;
-    fileName: string;
-    type: "File" | "Directory";
-    extension?: string;
-    children?: ItemWithChildren[];
-    leaf?: boolean;
-    content?: ArrayBuffer;
-}
-
 export const useEditorStore = defineStore("editor", () => {
     const onboarding = ref(false)
     const explorerVisible = ref(false)

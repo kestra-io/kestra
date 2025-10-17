@@ -179,11 +179,13 @@
     };
 
     // avoid using browser libs in ts worker added by default
-    monaco.languages.typescript?.typescriptDefaults.setCompilerOptions({
-        target: monaco.languages.typescript.ScriptTarget.ES2020,
-        lib: ["es2020"], // Exclude 'dom' to remove browser types
-        allowNonTsExtensions: true
-    });
+    if (monaco.languages.typescript) {
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+            target: monaco.languages.typescript.ScriptTarget.ES2020,
+            lib: ["es2020"], // Exclude 'dom' to remove browser types
+            allowNonTsExtensions: true
+        });
+    }
 
     export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
     const props = withDefaults(defineProps<{

@@ -1,29 +1,33 @@
 <template>
-    <el-table :data="store.inheritedKVs" tableLayout="auto">
-        <el-table-column prop="key" :label="$t('key')">
-            <template #default="scope">
-                <code>{{ scope.row.key }}</code>
-            </template>
-        </el-table-column>
+  <el-table :data="store.inheritedKVs" table-layout="auto">
+    <!-- Key Column -->
+    <el-table-column prop="key" :label="$t('key')">
+      <template #default="{ row }">
+        <code>{{ row.key }}</code>
+      </template>
+    </el-table-column>
 
-        <el-table-column prop="description" :label="$t('description')">
-            <template #default="scope">
-                <span>{{ scope.row.description }}</span>
-            </template>
-        </el-table-column>
+    <!-- Description Column -->
+    <el-table-column prop="description" :label="$t('description')">
+      <template #default="{ row }">
+        <span>{{ row.description }}</span>
+      </template>
+    </el-table-column>
 
-        <el-table-column prop="updateDate" :label="$t('last modified')">
-            <template #default="scope">
-                <span>{{ scope.row.updateDate }}</span>
-            </template>
-        </el-table-column>
+    <!-- Last Modified Column -->
+    <el-table-column prop="updateDate" :label="$t('last modified')">
+      <template #default="{ row }">
+        <span>{{ row.updateDate }}</span>
+      </template>
+    </el-table-column>
 
-        <el-table-column prop="creationDate" :label="$t('created date')">
-            <template #default="scope">
-                <span>{{ scope.row.creationDate }}</span>
-            </template>
-        </el-table-column>
-    </el-table>
+    <!-- Created Date Column -->
+    <el-table-column prop="creationDate" :label="$t('created date')">
+      <template #default="{ row }">
+        <span>{{ row.creationDate }}</span>
+      </template>
+    </el-table-column>
+  </el-table>
 </template>
 
 <script setup lang="ts">
@@ -33,26 +37,25 @@ import { useNamespacesStore } from "override/stores/namespaces";
 /**
  * Props definition
  * ----------------
- * The component receives a single required prop: `namespace`.
+ * The component expects a `namespace` string to load inherited key-values.
  */
 interface Props {
   namespace: string;
 }
 
-// Define props using TypeScript interface
 const props = defineProps<Props>();
 
-// Use the Namespaces store from Pinia
+// Access the Namespaces Pinia store
 const store = useNamespacesStore();
 
 /**
  * Loads inherited key-values for the given namespace.
- * Called once when the component mounts.
+ * Executed once when the component mounts.
  */
-const loadItem = (): void => {
+const loadInheritedKVs = (): void => {
   store.loadInheritedKVs(props.namespace);
 };
 
-// Lifecycle hook
-onMounted(loadItem);
+// Lifecycle: trigger data load on mount
+onMounted(loadInheritedKVs);
 </script>

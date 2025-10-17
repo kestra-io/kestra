@@ -16,7 +16,6 @@
     import {editorViewTypes} from "../../utils/constants";
 
     import {getRandomID} from "../../../scripts/id";
-    import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {defaultNamespace} from "../../composables/useNamespaces";
 
@@ -35,7 +34,6 @@
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
-            this.editorStore.closeAllTabs()
         },
         beforeUnmount() {
             this.flowStore.flowValidation = undefined;
@@ -68,7 +66,7 @@ tasks:
             }
         },
         computed: {
-            ...mapStores(useBlueprintsStore, useCoreStore, useEditorStore, useFlowStore),
+            ...mapStores(useBlueprintsStore, useCoreStore, useFlowStore),
             routeInfo() {
                 return {
                     title: this.$t("flows")

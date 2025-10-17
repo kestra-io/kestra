@@ -15,7 +15,7 @@
             :isReadOnly="isReadOnly"
             :canDelete="true"
             :isAllowedEdit="isAllowedEdit"
-            :haveChange="flowStore.haveChange || tabs.some(t => t.dirty === true)"
+            :haveChange="haveChange"
             :flowHaveTasks="Boolean(flowHaveTasks)"
             :errors="flowErrors"
             :warnings="flowWarnings"
@@ -50,8 +50,11 @@
 
     import localUtils from "../../utils/utils";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
-    import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
+
+    defineProps<{
+        haveChange: boolean;
+    }>();
 
     const {t} = useI18n();
 
@@ -65,7 +68,6 @@
     };
 
     const flowStore = useFlowStore();
-    const editorStore = useEditorStore();
     const router = useRouter()
     const route = useRoute()
     const routeParams = computed(() => route.params)
@@ -81,7 +83,6 @@
     const flowHaveTasks = computed(() => flowStore.flowHaveTasks)
     const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
     const flowInfos = computed(() => flowStore.flowInfos)
-    const tabs = computed<{dirty?:boolean}[]>(() => editorStore.tabs)
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
     const flowWarnings = computed(() => {
 

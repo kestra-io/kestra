@@ -256,7 +256,7 @@
 
         // Use saveAll() for consistency with the Save button behavior
         const result = flowStore.isCreating
-            ? await flowStore.save({content:(editorRef.$refs.monacoEditor as any).value})
+            ? await flowStore.save()
             : await flowStore.saveAll();
 
         if (result === "redirect_to_update") {

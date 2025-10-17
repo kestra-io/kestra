@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
+import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.secret.SecretNotFoundException;
@@ -317,6 +318,24 @@ class FlowInputOutputTest {
         // Then
         Assertions.assertEquals("******", results.getFirst().value());
     }
+    
+    @Test
+    void shouldNotObfuscateSecretsInSelectWhenValidatingInputs() {
+        // Given
+        MultiselectInput input = MultiselectInput.builder()
+            .id("input")
+            .type(Type.MULTISELECT)
+            .expression("{{ [secret('???')] }}")
+            .required(false)
+            .build();
+        
+        // When
+        List<InputAndValue> results = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, Mono.empty()).block();
+        
+        // Then
+        Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput)results.getFirst().input()).getValues().getFirst());
+    }
+    
     
     @Test
     void shouldNotObfuscateSecretsWhenReadingInputs() {

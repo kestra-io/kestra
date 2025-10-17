@@ -1,25 +1,25 @@
 <template>
     <KestraFilter
         :placeholder="$t('search')"
-        legacy-query
+        legacyQuery
     />
 
     <SelectTable
         :data="filteredKvs"
         ref="selectTable"
-        :default-sort="{prop: 'id', order: 'ascending'}"
-        table-layout="auto"
+        :defaultSort="{prop: 'id', order: 'ascending'}"
+        tableLayout="auto"
         fixed
         @selection-change="handleSelectionChange"
         @sort-change="handleSort"
-        :infinite-scroll-load="namespace === undefined ? fetchKvs : undefined"
+        :infiniteScrollLoad="namespace === undefined ? fetchKvs : undefined"
         :no-data-text="$t('no_results.kv_pairs')"
         class="fill-height"
-        :show-selection="!paneView"
+        :showSelection="!paneView"
     >
         <template #select-actions>
             <BulkSelect
-                :select-all="queryBulkAction"
+                :selectAll="queryBulkAction"
                 :selections="selection"
                 @update:select-all="toggleAllSelection"
                 @unselect="toggleAllUnselected"
@@ -33,10 +33,10 @@
             v-if="namespace === undefined && !paneView"
             prop="namespace"
             sortable="custom"
-            :sort-orders="['ascending', 'descending']"
+            :sortOrders="['ascending', 'descending']"
             :label="$t('namespace')"
         />
-        <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
+        <el-table-column prop="key" sortable="custom" :sortOrders="['ascending', 'descending']" :label="$t('key')">
             <template #default="scope">
                 <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
             </template>
@@ -45,24 +45,24 @@
             v-if="!paneView"
             prop="description"
             sortable="custom"
-            :sort-orders="['ascending', 'descending']"
+            :sortOrders="['ascending', 'descending']"
             :label="$t('description')"
         />
         <el-table-column
             prop="updateDate"
             sortable="custom"
-            :sort-orders="['ascending', 'descending']"
+            :sortOrders="['ascending', 'descending']"
             :label="$t('last modified')"
         />
         <el-table-column
             v-if="!paneView"
             prop="expirationDate"
             sortable="custom"
-            :sort-orders="['ascending', 'descending']"
+            :sortOrders="['ascending', 'descending']"
             :label="$t('expiration date')"
         />
 
-        <el-table-column column-key="copy" class-name="row-action">
+        <el-table-column columnKey="copy" className="row-action">
             <template #default="scope">
                 <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
                     <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)" />
@@ -70,18 +70,18 @@
             </template>
         </el-table-column>
 
-        <el-table-column v-if="!paneView" column-key="update" class-name="row-action">
+        <el-table-column v-if="!paneView" columnKey="update" className="row-action">
             <template #default="scope">
                 <el-button
                     v-if="canUpdate(scope.row)"
                     :icon="FileDocumentEdit"
                     link
-                    @click="updateKvModal(scope.row.namespace, scope.row.key)"
+                    @click="updateKvModal(scope.row)"
                 />
             </template>
         </el-table-column>
 
-        <el-table-column v-if="!paneView" column-key="delete" class-name="row-action">
+        <el-table-column v-if="!paneView" columnKey="delete" className="row-action">
             <template #default="scope">
                 <el-button
                     v-if="canDelete(scope.row)"
@@ -103,7 +103,7 @@
                 <NamespaceSelect
                     v-model="kv.namespace"
                     :readonly="kv.update"
-                    :include-system-namespace="true"
+                    :includeSystemNamespace="true"
                     all
                 />
             </el-form-item>
@@ -132,10 +132,10 @@
                 <el-input v-else-if="kv.type === 'NUMBER'" type="number" v-model="kv.value" />
                 <el-switch
                     v-else-if="kv.type === 'BOOLEAN'"
-                    :active-text="$t('true')"
+                    :activeText="$t('true')"
                     v-model="kv.value"
                     class="switch-text"
-                    :active-action-icon="Check"
+                    :activeActionIcon="Check"
                 />
                 <el-date-picker
                     v-else-if="kv.type === 'DATETIME'"
@@ -149,14 +149,14 @@
                 />
                 <TimeSelect
                     v-else-if="kv.type === 'DURATION'"
-                    :from-now="false"
-                    :time-range="kv.value"
+                    :fromNow="false"
+                    :timeRange="kv.value"
                     clearable
-                    allow-custom
+                    allowCustom
                     @update:model-value="kv.value = $event.timeRange"
                 />
                 <Editor
-                    :full-height="false"
+                    :fullHeight="false"
                     :input="true"
                     :navbar="false"
                     v-else-if="kv.type === 'JSON'"
@@ -171,13 +171,13 @@
 
             <el-form-item :label="$t('expiration')" prop="ttl">
                 <TimeSelect
-                    :from-now="false"
-                    allow-infinite
-                    allow-custom
+                    :fromNow="false"
+                    allowInfinite
+                    allowCustom
                     :placeholder="kv.ttl ? $t('datepicker.custom') : $t('datepicker.never')"
-                    :time-range="kv.ttl"
+                    :timeRange="kv.ttl"
                     clearable
-                    include-never
+                    includeNever
                     @update:model-value="onTtlChange"
                 />
             </el-form-item>
@@ -190,13 +190,13 @@
         </template>
     </Drawer>
 
-    <drawer
+    <Drawer
         v-if="namespacesStore.inheritedKVModalVisible"
         v-model="namespacesStore.inheritedKVModalVisible"
         :title="$t('kv.inherited')"
     >
         <InheritedKVs :namespace="namespacesStore?.namespace?.id" />
-    </drawer>
+    </Drawer>
 </template>
 
 <script setup lang="ts">
@@ -221,7 +221,7 @@
 
 <script lang="ts">
     import {mapStores} from "pinia";
-    import {groupBy} from "lodash";
+    import _groupBy from "lodash/groupBy";
     import {useNamespacesStore} from "override/stores/namespaces";
     import useNamespaces from "../../composables/useNamespaces";
     import {NamespaceIterator} from "../../composables/useNamespaces";
@@ -242,7 +242,7 @@
                 return this.kvs?.filter(kv =>
                     !this.searchQuery ||
                     kv.key.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                    kv.description.toLowerCase().includes(this.searchQuery.toLowerCase())
+                    kv.description?.toLowerCase().includes(this.searchQuery.toLowerCase())
                 );
             },
             kvModalTitle() {
@@ -297,7 +297,8 @@
                     type: "STRING",
                     value: undefined,
                     ttl: undefined,
-                    update: undefined
+                    update: undefined,
+                    description: undefined
                 },
                 kvs: undefined,
                 namespaceIterator: undefined,
@@ -357,7 +358,7 @@
                 let kvFetch;
                 if (this.namespace === undefined) {
                     if (this.namespaceIterator === undefined) {
-                        this.namespaceIterator = useNamespaces(this.$store, 20);
+                        this.namespaceIterator = useNamespaces(20);
                     }
 
                     const namespaces = (await ((this.namespaceIterator as NamespaceIterator).next())).map(n => n.id);
@@ -399,10 +400,10 @@
                     callback();
                 }
             },
-            async updateKvModal(namespace, key) {
-                this.kv.namespace = namespace;
-                this.kv.key = key;
-                const {type, value} = await this.namespacesStore.kv({namespace, key});
+            async updateKvModal(entry: any) {
+                this.kv.namespace = entry.namespace;
+                this.kv.key = entry.key;
+                const {type, value} = await this.namespacesStore.kv({namespace: entry.namespace, key: entry.key});
                 this.kv.type = type;
                 if (type === "JSON") {
                     this.kv.value = JSON.stringify(value);
@@ -412,6 +413,7 @@
                     this.kv.value = value.toString();
                 }
                 this.kv.update = true;
+                this.kv.description = entry.description;
                 this.addKvDrawerVisible = true;
             },
             removeKv(namespace, key) {
@@ -425,7 +427,7 @@
                 });
             },
             removeKvs() {
-                const groupedByNamespace = groupBy(this.selection, "namespace");
+                const groupedByNamespace = _groupBy(this.selection, "namespace");
                 const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => this.authStore.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
                 const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
                 const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));

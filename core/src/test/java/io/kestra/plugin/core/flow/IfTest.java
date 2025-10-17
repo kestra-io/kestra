@@ -6,7 +6,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -20,27 +20,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest(startRunner = true)
 class IfTest {
 
+    private static final String TENANT_ID = "true";
+
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows({"flows/valids/if-condition.yaml"})
+    @LoadFlows(value = {"flows/valids/if-condition.yaml"}, tenantId = TENANT_ID)
     void ifTruthy() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
+        Execution execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
+        execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", "true") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
+        execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", 1) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);

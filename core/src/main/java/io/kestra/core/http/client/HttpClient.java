@@ -19,6 +19,7 @@ import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.ContextBuilder;
 import org.apache.hc.client5.http.auth.*;
 import org.apache.hc.client5.http.config.ConnectionConfig;
@@ -37,7 +38,6 @@ import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
-import org.codehaus.plexus.util.StringUtils;
 
 import java.io.Closeable;
 import java.io.IOException;

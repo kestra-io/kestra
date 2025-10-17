@@ -49,6 +49,8 @@ micronaut:
           - /ui/.+
           - /health
           - /health/.+
+          - /metrics
+          - /metrics/.+
           - /prometheus
     http-version: HTTP_1_1
   caches:
@@ -167,6 +169,9 @@ kestra:
       open-urls:
         - "/ping"
         - "/api/v1/executions/webhook/"
+        - "/api/v1/main/executions/webhook/"
+        - "/api/v1/*/executions/webhook/"
+        - "/api/v1/basicAuthValidationErrors"
 
     preview:
       initial-rows: 100

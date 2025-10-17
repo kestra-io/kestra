@@ -1,5 +1,5 @@
 <template>
-    <el-dialog v-model="isKeyShortcutsDialogShown" top="25vh" header-class="p-3" body-class="p-2">
+    <el-dialog v-model="isKeyShortcutsDialogShown" top="25vh" headerClass="p-3" bodyClass="p-2">
         <template #header>
             <div class="d-flex align-items-center gap-2 fw-normal">
                 <el-icon :size="30">

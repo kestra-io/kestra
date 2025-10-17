@@ -2,17 +2,19 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
+import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -26,7 +28,6 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -61,7 +62,7 @@ public class MiscController {
     FeatureUsageReport featureUsageReport;
 
     @Inject
-    BasicAuthService basicAuthService;
+    Optional<BasicAuthService> basicAuthService = Optional.empty();
 
     @Inject
     Optional<TemplateRepositoryInterface> templateRepository;
@@ -96,6 +97,12 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
     private List<String> hiddenLabelsPrefixes;
 
+    @Inject
+    private PluginRegistry pluginRegistry;
+
+    @Inject
+    protected EditionProvider editionProvider;
+
 
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
@@ -104,12 +111,11 @@ public class MiscController {
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
-            .edition(Edition.OSS)
+            .edition(editionProvider.get())
             .version(versionProvider.getVersion())
             .commitId(versionProvider.getRevision())
             .commitDate(versionProvider.getDate())
             .isCustomDashboardsEnabled(dashboardRepository.isEnabled())
-            .isTaskRunEnabled(executionRepository.isTaskRunEnabled())
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .isTemplateEnabled(templateRepository.isPresent())
@@ -118,11 +124,11 @@ public class MiscController {
                 .max(this.maxPreviewRows)
                 .build())
             .isAiEnabled(applicationContext.containsBean(AiController.class))
-            .isBasicAuthInitialized(basicAuthService.isBasicAuthInitialized())
+            .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
-            .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
-            .url(kestraUrl);
+            .url(kestraUrl)
+            .pluginsHash(pluginRegistry.hash());
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -134,11 +140,6 @@ public class MiscController {
         }
 
         return builder.build();
-    }
-
-    public enum Edition {
-        OSS,
-        EE
     }
 
     @Get("/{tenant}/usages/all")
@@ -157,9 +158,11 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
     public HttpResponse<Void> createBasicAuth(
-        @RequestBody(description = "") @Body BasicAuthCredentials basicAuthCredentials
+        @RequestBody @Body BasicAuthCredentials basicAuthCredentials
     ) {
-        basicAuthService.save(basicAuthCredentials.getUid(), new BasicAuthService.BasicAuthConfiguration(basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()));
+        basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
+            .save(basicAuthCredentials);
 
         return HttpResponse.noContent();
     }
@@ -169,7 +172,9 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
     public List<String> getBasicAuthConfigErrors() {
-        return basicAuthService.validationErrors();
+        return basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
+            .validationErrors();
     }
 
     @Getter
@@ -180,7 +185,7 @@ public class MiscController {
 
         String version;
 
-        Edition edition;
+        EditionProvider.Edition edition;
 
         String commitId;
 
@@ -188,9 +193,6 @@ public class MiscController {
 
         @JsonInclude
         Boolean isCustomDashboardsEnabled;
-
-        @JsonInclude
-        Boolean isTaskRunEnabled;
 
         @JsonInclude
         Boolean isAnonymousUsageEnabled;
@@ -210,12 +212,12 @@ public class MiscController {
         String systemNamespace;
 
         List<String> hiddenLabelsPrefixes;
-        // List of filter by component
-        List<QueryFilter.ResourceField> resourceToFilters;
 
         Boolean isAiEnabled;
 
         Boolean isBasicAuthInitialized;
+
+        Long pluginsHash;
     }
 
     @Value
@@ -230,14 +232,6 @@ public class MiscController {
     public static class Preview {
         Integer initial;
         Integer max;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static class BasicAuthCredentials {
-        private String uid;
-        private String username;
-        private String password;
     }
 
     @SuperBuilder(toBuilder = true)

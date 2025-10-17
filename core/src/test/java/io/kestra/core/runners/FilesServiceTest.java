@@ -9,6 +9,7 @@ import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -18,11 +19,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(rebuildContext = true)
+@Execution(ExecutionMode.SAME_THREAD)
 class FilesServiceTest {
     @Inject
     private TestRunContextFactory runContextFactory;
@@ -95,6 +99,35 @@ class FilesServiceTest {
 
         Map<String, URI> outputs = FilesService.outputFiles(runContext, List.of("*.{{extension}}"));
         assertThat(outputs.size()).isEqualTo(1);
+    }
+
+    @Test
+    void testOutputFilesWithSpecialCharacters(@TempDir Path tempDir) throws Exception {
+        var runContext = runContextFactory.of();
+
+        Path fileWithSpace = tempDir.resolve("with space.txt");
+        Path fileWithUnicode = tempDir.resolve("สวัสดี.txt");
+
+        Files.writeString(fileWithSpace, "content");
+        Files.writeString(fileWithUnicode, "content");
+
+        Path targetFileWithSpace = runContext.workingDir().path().resolve("with space.txt");
+        Path targetFileWithUnicode = runContext.workingDir().path().resolve("สวัสดี.txt");
+
+        Files.copy(fileWithSpace, targetFileWithSpace);
+        Files.copy(fileWithUnicode, targetFileWithUnicode);
+
+        Map<String, URI> outputFiles = FilesService.outputFiles(
+            runContext,
+            List.of("with space.txt", "สวัสดี.txt")
+        );
+
+        assertThat(outputFiles).hasSize(2);
+        assertThat(outputFiles).containsKey("with space.txt");
+        assertThat(outputFiles).containsKey("สวัสดี.txt");
+
+        assertThat(runContext.storage().getFile(outputFiles.get("with space.txt"))).isNotNull();
+        assertThat(runContext.storage().getFile(outputFiles.get("สวัสดี.txt"))).isNotNull();
     }
 
     private URI createFile() throws IOException {

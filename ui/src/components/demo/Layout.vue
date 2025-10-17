@@ -23,7 +23,7 @@
     </EmptyTemplate>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
     import DemoButtons from "./DemoButtons.vue";
 
@@ -40,7 +40,7 @@
     }>();
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
     .img {

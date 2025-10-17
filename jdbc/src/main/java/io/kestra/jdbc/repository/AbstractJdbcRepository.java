@@ -43,7 +43,7 @@ public abstract class AbstractJdbcRepository {
     private String systemFlowNamespace;
 
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
-    
+
     protected Condition defaultFilter() {
         return field("deleted", Boolean.class).eq(false);
     }
@@ -309,6 +309,9 @@ public abstract class AbstractJdbcRepository {
                 throw new InvalidQueryFiltersException("Label field value must but instance of Map");
             }
         }
+        if (field == QueryFilter.Field.KIND) {
+            return applyKindCondition(value,operation);
+        }
 
         // Convert the field name to lowercase and quote it
         Name columnName = DSL.quotedName(field.name().toLowerCase());
@@ -431,6 +434,14 @@ public abstract class AbstractJdbcRepository {
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
         };
     }
+    private Condition applyKindCondition(Object value, QueryFilter.Op operation) {
+        String kind =  value.toString();
+        return switch (operation) {
+            case EQUALS -> field("kind").eq(kind);
+            case NOT_EQUALS -> field("kind").ne(kind);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for KIND: " + operation);
+        };
+    }
 
 
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
@@ -442,13 +453,15 @@ public abstract class AbstractJdbcRepository {
         Map<F, String> fieldsMapping,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        Set<F> dateFields
+        Set<F> dateFields,
+        @Nullable DateUtils.GroupType groupType
     ) {
         return descriptors.getColumns().entrySet().stream()
             .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
             .map(entry -> {
                 Duration duration = Duration.between(startDate, endDate == null ? ZonedDateTime.now() : endDate);
-                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
+                DateUtils.GroupType effectiveGroupType = groupType != null ? groupType : DateUtils.groupByType(duration);
+                return formatDateField(fieldsMapping.get(entry.getValue().getField()), effectiveGroupType).as(entry.getKey());
             })
             .toList();
 

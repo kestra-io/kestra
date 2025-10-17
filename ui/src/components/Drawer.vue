@@ -1,11 +1,10 @@
 <template>
     <el-drawer
-        data-component="FILENAME_PLACEHOLDER"
         v-model="modelValue"
-        destroy-on-close
-        lock-scroll
+        destroyOnClose
+        lockScroll
         size=""
-        :append-to-body="true"
+        :appendToBody="true"
         :class="{'full-screen': fullScreen}"
         ref="editorDomElement"
     >
@@ -29,7 +28,7 @@
     </el-drawer>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {ref} from "vue";
     import {useI18n} from "vue-i18n";
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"

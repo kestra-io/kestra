@@ -1,0 +1,16 @@
+id: foreach-iteration
+namespace: io.kestra.tests
+
+tasks:
+  - id: foreach
+    type: io.kestra.plugin.core.flow.ForEach
+    values: [1, 2]
+    tasks:
+      - id: first
+        type: io.kestra.plugin.core.output.OutputValues
+        values:
+          iteration : "{{ taskrun.iteration }}"
+      - id: second
+        type: io.kestra.plugin.core.output.OutputValues
+        values:
+          iteration : "{{ taskrun.iteration }}"

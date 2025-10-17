@@ -222,6 +222,7 @@ public class State {
     @Introspected
     public enum Type {
         CREATED,
+        SUBMITTED,
         RUNNING,
         PAUSED,
         RESTARTED,

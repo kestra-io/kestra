@@ -4,7 +4,9 @@ import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.storages.StorageContext;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -104,8 +106,33 @@ public interface KVStore {
     default boolean exists(String key) throws IOException {
         return list().stream().anyMatch(kvEntry -> kvEntry.key().equals(key));
     }
-
-
+    
+    /**
+     * Finds a KV entry with associated metadata for a given key.
+     *
+     * @param key   the KV entry key.
+     * @return an optional of {@link KVValueAndMetadata}.
+     * 
+     * @throws UncheckedIOException if an error occurred while executing the operation on the K/V store.
+     */
+    default Optional<KVValueAndMetadata> findMetadataAndValue(final String key) throws UncheckedIOException {
+        try {
+            return get(key).flatMap(entry ->
+                {
+                    try {
+                        return getValue(entry.key()).map(current -> new KVValueAndMetadata(new KVMetadata(entry.description(), entry.expirationDate()), current.value()));
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    } catch (ResourceExpiredException e) {
+                        return Optional.empty();
+                    }
+                }
+            );
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+    
     Pattern KEY_VALIDATOR_PATTERN = Pattern.compile("[a-zA-Z0-9][a-zA-Z0-9._-]*");
 
     /**

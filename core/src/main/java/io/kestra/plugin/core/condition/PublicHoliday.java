@@ -5,19 +5,18 @@ import de.focus_shift.jollyday.core.ManagerParameters;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -31,7 +30,7 @@ import java.time.LocalDate;
     examples = {
         @Example(
             full = true,
-            title = "Trigger condition to excute the flow only on public holidays.",
+            title = "Trigger condition to execute the flow only on public holidays.",
             code = """
                 id: schedule_condition_public-holiday
                 namespace: company.team
@@ -52,7 +51,7 @@ import java.time.LocalDate;
         ),
         @Example(
             full = true,
-            title = "Trigger condition to excute the flow only on work days in France.",
+            title = "Trigger condition to execute the flow only on work days in France.",
             code = """
                 id: schedule-condition-work-days
                 namespace: company.team
@@ -84,7 +83,7 @@ public class PublicHoliday extends Condition implements ScheduleCondition {
     )
     @NotNull
     @Builder.Default
-    private Property<String> date = Property.ofExpression("{{ trigger.date }}");
+    private Property<String> date = Property.ofExpression("{{ trigger.date}}");
 
     @Schema(
         title = "[ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code. If not set, it uses the country code from the default locale.",
@@ -100,11 +99,12 @@ public class PublicHoliday extends Condition implements ScheduleCondition {
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
+        Map<String, Object> variables=conditionContext.getVariables();
         var renderedCountry = conditionContext.getRunContext().render(this.country).as(String.class).orElse(null);
         var renderedSubDivision = conditionContext.getRunContext().render(this.subDivision).as(String.class).orElse(null);
 
         HolidayManager holidayManager = renderedCountry != null ? HolidayManager.getInstance(ManagerParameters.create(renderedCountry)) : HolidayManager.getInstance();
-        LocalDate currentDate = DateUtils.parseLocalDate(conditionContext.getRunContext().render(date).as(String.class).orElseThrow());
+        LocalDate currentDate = DateUtils.parseLocalDate(conditionContext.getRunContext().render(date).as(String.class,variables).orElseThrow());
         return renderedSubDivision == null ? holidayManager.isHoliday(currentDate) : holidayManager.isHoliday(currentDate, renderedSubDivision);
     }
 }

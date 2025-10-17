@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.KestraRuntimeException;
@@ -49,15 +48,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -73,31 +64,28 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 public class FlowInputOutput {
     private static final Pattern URI_PATTERN = Pattern.compile("^[a-z]+:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$");
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml();
-
+    
     private final StorageInterface storageInterface;
     private final Optional<String> secretKey;
     private final RunContextFactory runContextFactory;
-    private final VariableRenderer variableRenderer;
-
+    
     @Inject
     public FlowInputOutput(
         StorageInterface storageInterface,
         RunContextFactory runContextFactory,
-        VariableRenderer variableRenderer,
         @Nullable @Value("${kestra.encryption.secret-key}") String secretKey
     ) {
         this.storageInterface = storageInterface;
         this.runContextFactory = runContextFactory;
         this.secretKey = Optional.ofNullable(secretKey);
-        this.variableRenderer = variableRenderer;
     }
-
+    
     /**
      * Validate all the inputs of a given execution of a flow.
      *
-     * @param inputs                  The Flow's inputs.
-     * @param execution               The Execution.
-     * @param data                    The Execution's inputs data.
+     * @param inputs    The Flow's inputs.
+     * @param execution The Execution.
+     * @param data      The Execution's inputs data.
      * @return The list of {@link InputAndValue}.
      */
     public Mono<List<InputAndValue>> validateExecutionInputs(final List<Input<?>> inputs,
@@ -105,10 +93,11 @@ public class FlowInputOutput {
                                                              final Execution execution,
                                                              final Publisher<CompletedPart> data) {
         if (ListUtils.isEmpty(inputs)) return Mono.just(Collections.emptyList());
-
-        return readData(inputs, execution, data, false).map(inputData -> resolveInputs(inputs, flow, execution, inputData));
+        
+        return readData(inputs, execution, data, false)
+            .map(inputData -> resolveInputs(inputs, flow, execution, inputData, false));
     }
-
+    
     /**
      * Reads all the inputs of a given execution of a flow.
      *
@@ -122,7 +111,7 @@ public class FlowInputOutput {
                                                          final Publisher<CompletedPart> data) {
         return this.readExecutionInputs(flow.getInputs(), flow, execution, data);
     }
-
+    
     /**
      * Reads all the inputs of a given execution of a flow.
      *
@@ -137,7 +126,7 @@ public class FlowInputOutput {
                                                          final Publisher<CompletedPart> data) {
         return readData(inputs, execution, data, true).map(inputData -> this.readExecutionInputs(inputs, flow, execution, inputData));
     }
-
+    
     private Mono<Map<String, Object>> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
         return Flux.from(data)
             .publishOn(Schedulers.boundedElastic())
@@ -220,7 +209,7 @@ public class FlowInputOutput {
         final Execution execution,
         final Map<String, ?> data
     ) {
-        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data)
+        Map<String, Object> resolved = this.resolveInputs(inputs, flow, execution, data, true)
             .stream()
             .filter(InputAndValue::enabled)
             .map(it -> {
@@ -231,9 +220,22 @@ public class FlowInputOutput {
                 return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
             })
             .collect(HashMap::new, (m,v)-> m.put(v.getKey(), v.getValue()), HashMap::putAll);
+        if (resolved.size() < data.size()) {
+            RunContext runContext = runContextFactory.of(flow, execution);
+            for (var inputKey : data.keySet()) {
+                if (!resolved.containsKey(inputKey)) {
+                    runContext.logger().warn(
+                        "Input {} was provided for workflow {}.{} but isn't declared in the workflow inputs",
+                        inputKey,
+                        flow.getNamespace(),
+                        flow.getId()
+                    );
+                }
+            }
+        }
         return MapUtils.flattenToNestedMap(resolved);
     }
-
+    
     /**
      * Utility method for retrieving types inputs.
      *
@@ -242,12 +244,21 @@ public class FlowInputOutput {
      * @param data      The Execution's inputs data.
      * @return The Map of typed inputs.
      */
-    @VisibleForTesting
     public List<InputAndValue> resolveInputs(
         final List<Input<?>> inputs,
         final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data
+    ) {
+        return resolveInputs(inputs, flow, execution, data, true);
+    }
+    
+    public List<InputAndValue> resolveInputs(
+        final List<Input<?>> inputs,
+        final FlowInterface flow,
+        final Execution execution,
+        final Map<String, ?> data,
+        final boolean decryptSecrets
     ) {
         if (inputs == null) {
             return Collections.emptyList();
@@ -257,7 +268,7 @@ public class FlowInputOutput {
             .map(input -> ResolvableInput.of(input,data.get(input.getId())))
             .collect(Collectors.toMap(it -> it.get().input().getId(), Function.identity(), (o1, o2) -> o1, LinkedHashMap::new)));
 
-        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap));
+        resolvableInputMap.values().forEach(input -> resolveInputValue(input, flow, execution, resolvableInputMap, decryptSecrets));
 
         return resolvableInputMap.values().stream().map(ResolvableInput::get).toList();
     }
@@ -267,7 +278,8 @@ public class FlowInputOutput {
         final @NotNull ResolvableInput resolvable,
         final FlowInterface flow,
         final @NotNull Execution execution,
-        final @NotNull Map<String, ResolvableInput> inputs) {
+        final @NotNull Map<String, ResolvableInput> inputs,
+        final boolean decryptSecrets) {
 
         // return immediately if the input is already resolved
         if (resolvable.isResolved()) return resolvable.get();
@@ -275,9 +287,10 @@ public class FlowInputOutput {
         Input<?> input = resolvable.get().input();
 
         try {
-            //  resolve all input dependencies and check whether input is enabled
-            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs);
-            final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies);
+            // Resolve all input dependencies and check whether input is enabled
+            // Note: Secrets are always decrypted here because they can be part of expressions used to render inputs such as SELECT & MULTI_SELECT.
+            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, true);
+            final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, true);
 
             boolean isInputEnabled = dependencies.isEmpty() || dependencies.values().stream().allMatch(InputAndValue::enabled);
 
@@ -312,16 +325,16 @@ public class FlowInputOutput {
                 }
             });
             resolvable.setInput(input);
-
             
             Object value = resolvable.get().value();
-            
+
             // resolve default if needed
             if (value == null && input.getDefaults() != null) {
-                value = resolveDefaultValue(input, runContext);
+                RunContext runContextForDefault = decryptSecrets ? runContext : buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
+                value = resolveDefaultValue(input, runContextForDefault);
                 resolvable.isDefault(true);
             }
-            
+
             // validate and parse input value
             if (value == null) {
                 if (input.getRequired()) {
@@ -350,7 +363,7 @@ public class FlowInputOutput {
 
         return resolvable.get();
     }
-    
+
     public static Object resolveDefaultValue(Input<?> input, PropertyContext renderer) throws IllegalVariableEvaluationException {
         return switch (input.getType()) {
             case STRING, ENUM, SELECT, SECRET, EMAIL -> resolveDefaultPropertyAs(input, renderer, String.class);
@@ -367,7 +380,7 @@ public class FlowInputOutput {
             case MULTISELECT -> resolveDefaultPropertyAsList(input, renderer, String.class);
         };
     }
-    
+
     @SuppressWarnings("unchecked")
     private static <T> Object resolveDefaultPropertyAs(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
         return Property.as((Property<T>) input.getDefaults(), renderer, clazz);
@@ -376,16 +389,25 @@ public class FlowInputOutput {
     private static <T> Object resolveDefaultPropertyAsList(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
         return Property.asList((Property<List<T>>) input.getDefaults(), renderer, clazz);
     }
-    
-    private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies) {
+
+    private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies, final boolean decryptSecrets) {
         Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(dependencies.entrySet()
             .stream()
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll)
         );
-        return runContextFactory.of(flow, execution, vars -> vars.withInputs(flattenInputs));
+        // Hack: Pre-inject all inputs that have a default value with 'null' to prevent
+        // RunContextFactory from attempting to render them when absent, which could
+        // otherwise cause an exception if a Pebble expression is involved.
+        List<Input<?>> inputs = Optional.ofNullable(flow).map(FlowInterface::getInputs).orElse(List.of());
+        for (Input<?> input : inputs) {
+            if (input.getDefaults() != null && !flattenInputs.containsKey(input.getId())) {
+                flattenInputs.put(input.getId(), null);
+            }
+        }
+        return runContextFactory.of(flow, execution, vars -> vars.withInputs(flattenInputs), decryptSecrets);
     }
 
-    private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs) {
+    private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs, final boolean decryptSecrets) {
         return Optional.ofNullable(input.getDependsOn())
             .map(DependsOn::inputs)
             .stream()
@@ -393,7 +415,7 @@ public class FlowInputOutput {
             .filter(id -> !id.equals(input.getId()))
             .map(inputs::get)
             .filter(Objects::nonNull) // input may declare unknown or non-necessary dependencies. Let's ignore.
-            .map(it -> resolveInputValue(it, flow, execution, inputs))
+            .map(it -> resolveInputValue(it, flow, execution, inputs, decryptSecrets))
             .collect(Collectors.toMap(it -> it.input().getId(), Function.identity()));
     }
 
@@ -444,7 +466,7 @@ public class FlowInputOutput {
         if (data.getType() == null) {
             return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
         }
-        
+
         final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
@@ -521,17 +543,17 @@ public class FlowInputOutput {
             throw new Exception("Expected `" + type + "` but received `" + current + "` with errors:\n```\n" + e.getMessage() + "\n```");
         }
     }
-    
+
     public static Map<String, Object> renderFlowOutputs(List<Output> outputs, RunContext runContext) throws IllegalVariableEvaluationException {
         if (outputs == null) return Map.of();
-        
+
         // render required outputs
         Map<String, Object> outputsById = outputs
             .stream()
             .filter(output -> output.getRequired() == null || output.getRequired())
             .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
         outputsById = runContext.render(outputsById);
-        
+
         // render optional outputs one by one to catch, log, and skip any error.
         for (io.kestra.core.models.flows.Output output : outputs) {
             if (Boolean.FALSE.equals(output.getRequired())) {
@@ -574,9 +596,9 @@ public class FlowInputOutput {
         }
 
         public void isDefault(boolean isDefault) {
-            this.input = new InputAndValue(this.input.input(), this.input.value(), this.input.enabled(), isDefault, this.input.exception());  
+            this.input = new InputAndValue(this.input.input(), this.input.value(), this.input.enabled(), isDefault, this.input.exception());
         }
-        
+
         public void setInput(final Input<?> input) {
             this.input = new InputAndValue(input, this.input.value(), this.input.enabled(), this.input.isDefault(), this.input.exception());
         }

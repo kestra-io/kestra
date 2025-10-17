@@ -23,12 +23,14 @@ import org.jooq.TransactionalCallable;
 import org.jooq.TransactionalRunnable;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
+import static java.util.stream.Collectors.toCollection;
 import static org.jooq.impl.DSL.using;
 
 @Getter
@@ -186,7 +188,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
     public int purgeEmptyInstances(Instant until) {
         return jdbcRepository.getDslContextWrapper().transactionResult(
             configuration -> using(configuration).delete(table())
-                .where(STATE.eq(Service.ServiceState.EMPTY.name()))
+                .where(STATE.in(Service.ServiceState.INACTIVE.name(), "EMPTY"))
                 .and(UPDATED_AT.lessOrEqual(until))
                 .execute()
         );
@@ -259,7 +261,12 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
                 DSLContext context = using(configuration);
                 SelectConditionStep<Record1<Object>> select = context.select(VALUE).from(table()).where("1=1");
                 if (states != null && !states.isEmpty()) {
-                    select = select.and(STATE.in(states.stream().map(Enum::name).toList()));
+                    List<String> stateStrings = states.stream().map(Enum::name).collect(toCollection(ArrayList::new));
+                    // backward-compatibility: EMPTY was renamed to INACTIVE in Kestra 1.0
+                    if (stateStrings.contains(Service.ServiceState.INACTIVE.name())) {
+                        stateStrings.add("EMPTY");
+                    }
+                    select = select.and(STATE.in(stateStrings));
                 }
                 if (types != null && !types.isEmpty()) {
                     select = select.and(TYPE.in(types.stream().map(Enum::name).toList()));

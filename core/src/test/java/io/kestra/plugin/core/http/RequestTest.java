@@ -23,6 +23,8 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
@@ -42,6 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
+@Execution(ExecutionMode.SAME_THREAD)
 class RequestTest {
     @Inject
     private TestRunContextFactory runContextFactory;

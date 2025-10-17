@@ -3,54 +3,31 @@ package io.kestra.core.runners;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import reactor.core.publisher.Flux;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
 public class ScheduleDateCaseTest {
     @Inject
     private FlowRepositoryInterface flowRepository;
-
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
+    private TestRunnerUtils runnerUtils;
 
-    public void shouldScheduleOnDate() throws QueueException, InterruptedException {
+    public void shouldScheduleOnDate(String tenantId) throws QueueException {
         ZonedDateTime scheduleOn = ZonedDateTime.now().plusSeconds(1);
-        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        Flow flow = flowRepository.findById(tenantId, "io.kestra.tests", "minimal").orElseThrow();
         Execution execution = Execution.newExecution(flow, null, null, Optional.of(scheduleOn));
-        this.executionQueue.emit(execution);
-
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CREATED);
         assertThat(execution.getScheduleDate()).isEqualTo(scheduleOn.toInstant());
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
-        CountDownLatch latch1 = new CountDownLatch(1);
-
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
-            if (e.getLeft().getId().equals(execution.getId())) {
-                if (e.getLeft().getState().getCurrent() == State.Type.SUCCESS) {
-                    latch1.countDown();
-                }
-            }
-        });
-
-        assertTrue(latch1.await(1, TimeUnit.MINUTES));
-        receive.blockLast();
+        runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution);
     }
 }

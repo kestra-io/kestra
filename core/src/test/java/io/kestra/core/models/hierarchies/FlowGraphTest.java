@@ -7,12 +7,11 @@ import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.GraphService;
 import io.kestra.core.utils.GraphUtils;
@@ -45,7 +44,7 @@ class FlowGraphTest {
     private TriggerRepositoryInterface triggerRepositoryInterface;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     void simple() throws IllegalVariableEvaluationException, IOException {
@@ -261,10 +260,10 @@ class FlowGraphTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-flow.yaml",
-        "flows/valids/switch.yaml"})
+    @LoadFlows(value = {"flows/valids/task-flow.yaml",
+        "flows/valids/switch.yaml"}, tenantId = "tenant1")
     void subflow() throws IllegalVariableEvaluationException, IOException, FlowProcessingException {
-        FlowWithSource flow = this.parse("flows/valids/task-flow.yaml");
+        FlowWithSource flow = this.parse("flows/valids/task-flow.yaml", "tenant1");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
         assertThat(flowGraph.getNodes().size()).isEqualTo(6);
@@ -293,15 +292,15 @@ class FlowGraphTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-flow-dynamic.yaml",
-        "flows/valids/switch.yaml"})
+    @LoadFlows(value = {"flows/valids/task-flow-dynamic.yaml",
+        "flows/valids/switch.yaml"}, tenantId = "tenant2")
     void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException, QueueException, IOException, FlowProcessingException {
-        FlowWithSource flow = this.parse("flows/valids/task-flow-dynamic.yaml").toBuilder().revision(1).build();
+        FlowWithSource flow = this.parse("flows/valids/task-flow-dynamic.yaml", "tenant2").toBuilder().revision(1).build();
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> graphService.flowGraph(flow, Collections.singletonList("root.launch")));
         assertThat(illegalArgumentException.getMessage()).isEqualTo("Can't expand subflow task 'launch' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution.");
 
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "task-flow-dynamic", 1, (f, e) -> Map.of(
+        Execution execution = runnerUtils.runOne("tenant2", "io.kestra.tests", "task-flow-dynamic", 1, (f, e) -> Map.of(
             "namespace", f.getNamespace(),
             "flowId", "switch"
         ));
@@ -373,13 +372,17 @@ class FlowGraphTest {
     }
 
     private FlowWithSource parse(String path) throws IOException {
+        return parse(path, MAIN_TENANT);
+    }
+
+    private FlowWithSource parse(String path, String tenantId) throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;
 
         File file = new File(resource.getFile());
 
         return YamlParser.parse(file, FlowWithSource.class).toBuilder()
-            .tenantId(MAIN_TENANT)
+            .tenantId(tenantId)
             .source(Files.readString(file.toPath()))
             .build();
     }

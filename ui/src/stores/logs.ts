@@ -15,13 +15,13 @@ export const useLogsStore = defineStore("logs", {
     }),
     actions: {
         findLogs(options: any) {
-            return this.$http.get(`${apiUrl(this.vuexStore)}/logs/search`, {params: options}).then(response => {
+            return this.$http.get(`${apiUrl()}/logs/search`, {params: options}).then(response => {
                 this.logs = response.data.results
                 this.total = response.data.total
             })
         },
         deleteLogs(log: { namespace: string, flowId: string, triggerId?: string }) {
-            const URL = `${apiUrl(this.vuexStore)}/logs/${log.namespace}/${log.flowId}${log.triggerId ? `?triggerId=${log.triggerId}` : ""}`;
+            const URL = `${apiUrl()}/logs/${log.namespace}/${log.flowId}${log.triggerId ? `?triggerId=${log.triggerId}` : ""}`;
             return this.$http.delete(URL).then(() => (this.logs = undefined))
         }
     }

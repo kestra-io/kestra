@@ -1,6 +1,7 @@
 package io.kestra.core.tasks.test;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -32,6 +33,7 @@ class SanityCheckTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    @FlakyTest
     @Test
     @ExecuteFlow("sanity-checks/kv.yaml")
     void qaKv(Execution execution) {
@@ -109,6 +111,13 @@ class SanityCheckTest {
     @ExecuteFlow("sanity-checks/purge_kv.yaml")
     void qaPurgeKv(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(6);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("sanity-checks/output_values.yaml")
+    void qaOutputValues(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

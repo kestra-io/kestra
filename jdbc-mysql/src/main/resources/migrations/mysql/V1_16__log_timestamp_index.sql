@@ -1,0 +1,1 @@
+CREATE INDEX ix_timestamp ON logs (`timestamp`);

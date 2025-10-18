@@ -46,7 +46,7 @@
             class="w-100 disabled-field"
         />
         <Editor
-            v-if="pebble || !schema.format"
+            v-else-if="pebble || !schema.format"
             :modelValue="editorValue"
             :navbar="false"
             :fullHeight="false"

@@ -27,6 +27,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -88,6 +89,8 @@ public class LocalFlowRepositoryLoader {
             .filter(flow -> tenantId.equals(flow.getTenantId()))
             .collect(Collectors.toMap(FlowId::uidWithoutRevision, Function.identity()));
 
+        Map<String, FlowInterface> processedInSameRun = new HashMap<>();    
+
         try (Stream<Path> pathStream = Files.walk(basePath.toPath())) {
             pathStream.filter(YamlParser::isValidExtension)
                 .forEach(Rethrow.throwConsumer(file -> {
@@ -97,7 +100,13 @@ public class LocalFlowRepositoryLoader {
 
                         FlowWithSource flowWithSource = pluginDefaultService.injectAllDefaults(parsed, false);
                         modelValidator.validate(flowWithSource);
-
+                        
+                        String flowUid = flowWithSource.uidWithoutRevision();
+                        if (processedInSameRun.containsKey(flowUid)) {
+                            log.trace("already processed in this execution", 
+                                    parsed.getNamespace(), parsed.getId());
+                            return; 
+                        }
                         FlowInterface existing = flowByUidInRepository.get(flowWithSource.uidWithoutRevision());
 
                         if (existing == null) {
@@ -107,6 +116,8 @@ public class LocalFlowRepositoryLoader {
                             flowRepository.update(parsed, existing);
                             log.trace("Updated flow {}.{}", parsed.getNamespace(), parsed.getId());
                         }
+
+                        processedInSameRun.put(flowUid, parsed);
                     } catch (FlowProcessingException | ConstraintViolationException e) {
                         log.warn("Unable to create flow {}", file, e);
                     }

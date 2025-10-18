@@ -15,43 +15,39 @@
     </el-button-group>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import FileDocumentEditOutline from "vue-material-design-icons/FileDocumentEditOutline.vue";
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
     import FileTableOutline from "vue-material-design-icons/FileTableOutline.vue";
     import BallotOutline from "vue-material-design-icons/BallotOutline.vue";
     import {editorViewTypes} from "../../utils/constants";
-</script>
-
-<script>
-    import {mapStores} from "pinia";
+    import {computed} from "vue";
     import {useEditorStore} from "../../stores/editor";
 
-    export default {
-        props: {
-            type: {
-                type: String,
-                required: true
-            }
-        },
-        emits: ["switch-view"],
-        computed: {
-            ...mapStores(useEditorStore),
-            isFlow(){
-                return !this.editorStore.current || this.editorStore.current.name === "Flow"
-            }
-        },
-        methods: {
-            switchView(view) {
-                this.editorStore.view = view
-                this.$emit("switch-view", view)
-            },
-            buttonType(view) {
-                return view === this.type ? "primary" : "default";
-            }
-        }
+    const props = defineProps<{
+        type: string;
+    }>();
+
+    const emit = defineEmits<{
+        (e: "switch-view", view: string): void;
+    }>();
+
+    const editorStore = useEditorStore();
+
+    const isFlow = computed(() => {
+        return !editorStore.current || editorStore.current.name === "Flow";
+    });
+
+    function switchView(view: string) {
+        editorStore.view = view;
+        emit("switch-view", view);
+    }
+
+    function buttonType(view: string) {
+        return view === props.type ? "primary" : "default";
     }
 </script>
+
 
 <style scoped lang="scss">
     :deep(.el-button) {

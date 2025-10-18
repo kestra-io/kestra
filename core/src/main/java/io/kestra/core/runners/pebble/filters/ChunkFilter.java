@@ -1,13 +1,14 @@
 package io.kestra.core.runners.pebble.filters;
 
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.collect.Lists;
+
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-
-import java.util.List;
-import java.util.Map;
 
 public class ChunkFilter implements Filter {
     @Override
@@ -30,6 +31,10 @@ public class ChunkFilter implements Filter {
             throw new PebbleException(null, "'chunk' filter can only be applied to List. Actual type was: " + input.getClass().getName(), lineNumber, self.getName());
         }
 
-        return Lists.partition((List) input, ((Long) args.get("size")).intValue());
+        Object sizeObj = args.get("size");
+        if (!(sizeObj instanceof Number)) {
+            throw new PebbleException(null, "'chunk' filter argument 'size' must be a number. Actual type was: " + sizeObj.getClass().getName(), lineNumber, self.getName());
+        }
+        return Lists.partition((List) input, ((Number) sizeObj).intValue());
     }
 }

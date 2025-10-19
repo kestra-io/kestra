@@ -333,7 +333,6 @@ public class ExecutorService {
 
     private List<TaskRun> childNextsTaskRun(Executor executor, TaskRun parentTaskRun) throws InternalException {
         Task parent = executor.getFlow().findTaskByTaskId(parentTaskRun.getTaskId());
-//////////////////////////////////////case X
         if (parent instanceof FlowableTask<?> flowableParent) {
             // Count the number of flowable tasks executions, some flowable are being called multiple times,
             // so this is not exactly the number of flowable taskruns but the number of times they are executed.

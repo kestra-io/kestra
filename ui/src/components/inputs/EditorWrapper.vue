@@ -34,10 +34,20 @@
                 <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
             </template>
         </Editor>
-        <Transition name="el-zoom-in-center">
+        <!-- Backdrop overlay -->
+        <Transition name="backdrop-fade">
+            <div 
+                v-if="aiCopilotOpened" 
+                class="ai-copilot-backdrop"
+                @click="closeAiCopilot"
+            />
+        </Transition>
+        
+        <!-- AI Copilot with enhanced animations -->
+        <Transition name="copilot-slide">
             <AiCopilot
                 v-if="aiCopilotOpened"
-                class="position-absolute prompt"
+                class="position-absolute prompt ai-copilot-popup"
                 @close="closeAiCopilot"
                 :flow="editorContent"
                 :conversationId="conversationId"
@@ -335,5 +345,68 @@
         max-width: 700px;
         background-color: var(--ks-background-panel);
         box-shadow: 0 2px 4px 0 var(--ks-card-shadow);
+    }
+
+    // Enhanced AI Copilot animations
+    .ai-copilot-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        z-index: 1000;
+    }
+
+    .ai-copilot-popup {
+        z-index: 1001;
+        transform-origin: center bottom;
+    }
+
+    // Backdrop fade transition
+    .backdrop-fade-enter-active,
+    .backdrop-fade-leave-active {
+        transition: opacity 0.3s ease;
+    }
+
+    .backdrop-fade-enter-from,
+    .backdrop-fade-leave-to {
+        opacity: 0;
+    }
+
+    // Copilot slide transition with spring physics
+    .copilot-slide-enter-active {
+        transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .copilot-slide-leave-active {
+        transition: all 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+    }
+
+    .copilot-slide-enter-from {
+        opacity: 0;
+        transform: translateY(100px) scale(0.5);
+    }
+
+    .copilot-slide-leave-to {
+        opacity: 0;
+        transform: translateY(100px) scale(0.8);
+    }
+
+    // Responsive design
+    @media (max-width: 768px) {
+        .prompt {
+            width: calc(100% - 2rem);
+            left: 1rem;
+            bottom: 5%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .prompt {
+            width: calc(100% - 1rem);
+            left: 0.5rem;
+            bottom: 2%;
+        }
     }
 </style>

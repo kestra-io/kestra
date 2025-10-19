@@ -1,6 +1,6 @@
 <template>
     <div class="tabs-wrapper">
-        <div class="tabs">
+        <div class="tabs" @wheel="onWheel">
             <button
                 v-for="element of tabs"
                 :key="element.value"
@@ -34,6 +34,16 @@
     function setTabValue(tabValue: string) {
         emit("update:tabs", tabValue);
     }
+
+    function onWheel(e: WheelEvent){
+        const el = e.currentTarget as HTMLElement;
+        if(!el){ return; }
+        const overflows = el.scrollWidth > el.clientWidth;
+        if(!overflows){ return; }
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        el.scrollLeft += delta;
+        e.preventDefault();
+    }
 </script>
 
 <style scoped lang="scss">
@@ -65,6 +75,10 @@
     }
     .tabs{
         padding: .5rem 1rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        white-space: nowrap;
+        scrollbar-width: thin;
 
         > button{
             background: none;
@@ -78,6 +92,11 @@
             transition: opacity .2s;
             gap: .25rem;
             opacity: .5;
+            flex: 0 0 auto;
+            min-width: 90px;
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
 
             &:hover{
                 color: var(--ks-color-text-secondary);
@@ -95,4 +114,8 @@
         margin-right: .25rem;
         vertical-align: bottom;
     }
+
+    .tabs::-webkit-scrollbar { height: 6px; }
+    .tabs::-webkit-scrollbar-track { background: transparent; }
+    .tabs::-webkit-scrollbar-thumb { background-color: var(--ks-border-primary); border-radius: 3px; }
 </style>

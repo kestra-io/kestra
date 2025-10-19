@@ -154,32 +154,33 @@ public class JsonSchemaGenerator {
         }
     }
 
-        private void removeNullValues(ObjectNode objectNode) {
-            System.out.println("Main " + objectNode + "\n\n");
-            objectNode.get("$defs").forEach(jsonNode -> {
-                System.out.println("Main node: " + jsonNode + "\n\n");
-                if(jsonNode.get("properties") instanceof ObjectNode properties) {
-                    properties.forEach(field -> {
-                        // // Work on filter here
-                        // if(field.get("type") != null)
-                        //     System.out.println(field.get("type").getClass().getName());
-                        // else
-                        //     System.out.println("Empty type field: " + field);
-                        // if(field.get("type") instanceof List typeList && typeList.contains("null"))
-                        //     typeList.remove(typeList.indexOf("null"));
-                        if(field.get("anyOf") instanceof ArrayNode fieldProperties) {
-                            for(int i = 0; i < fieldProperties.size(); i++) {
-                                JsonNode fieldProperty = fieldProperties.get(i);
-                                if(fieldProperty.get("type").equals("null")) {
-                                    fieldProperties.remove(i);
-                                    i--;
-                                }
-                            }
-                        }
-                    });
+    private void findArraysAndFilterOutNullValues(ObjectNode objectNode) {
+        System.out.println("The function is being run! " + objectNode);
+        objectNode.get("$defs").forEach(jsonNode -> {
+            System.out.println("Main node: " + jsonNode + "\n\n");
+            if(jsonNode.get("properties") instanceof ObjectNode properties) {
+                filterNullValues(properties);
+            }
+        });
+    }
+
+    private void filterNullValues(JsonNode properties) {
+        properties.forEach(field -> {
+            if(field.get("anyOf") instanceof ArrayNode fieldProperties) {
+                for(int i = 0; i < fieldProperties.size(); i++) {
+                    JsonNode fieldProperty = fieldProperties.get(i);
+                    System.out.println("Filtering " + fieldProperty);
+                    if(fieldProperty.get("type").equals("object"))
+                        filterNullValues(fieldProperty.get("properties"));
+                    else if(fieldProperty.get("type").equals("null")) {
+                        fieldProperties.remove(i);
+                        i--;
+                    }
                 }
-            });
-        }
+            }
+        });
+    }
+
     
 
     // This hack exists because for Property we generate a anyOf for properties that are not strings.
@@ -829,9 +830,7 @@ public class JsonSchemaGenerator {
             replaceOneOfWithAnyOf(objectNode);
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
-            removeNullValues(objectNode);
-            
-            objectNode.forEach(map -> map.forEach(field -> System.out.println(field)));
+            findArraysAndFilterOutNullValues(objectNode);
 
             return MAPPER.convertValue(extractMainRef(objectNode), MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {

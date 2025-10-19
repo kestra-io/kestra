@@ -75,25 +75,53 @@ export const useExecutionsStore = defineStore("executions", () => {
             `${apiUrl()}/executions/${options.executionId}/restart`,
             null,
             {
-                params: {
-                    revision: options.revision
-                }
-            })
-    }
-
-    const bulkRestartExecution = (options: { executionsId: string[] }) => {
-        return axios.post(
-            `${apiUrl()}/executions/restart/by-ids`,
-            options.executionsId
+            params: {
+                revision: options.revision
+            }
+            }
         )
     }
 
-    const queryRestartExecution = (options: Record<string, any>) => {
+
+    const bulkRestartExecution = async (options: {
+        executionsId: string[],
+        revision?: number
+        }) => {
+        const {executionsId, revision} = options;
+
+        const results = await Promise.all(
+            executionsId.map((id) => restartExecution({
+                executionId: id,
+                revision: revision
+            }))
+        );
+
+        return {data: {count: results.length}} as any;
+    }
+
+    const queryRestartExecution = async (options: {
+    revision?: number
+    } & Record<string, any>) => {
+        if (options.revision != null) {
+            const pageSize = Math.min(500, Number(options.size) || 500);
+            const response = await findExecutions({...options, size: pageSize, page: 1, commit: false});
+            const ids = response.results?.map((e: any) => e.id) ?? [];
+
+            if (!ids.length) return {data: {count: 0}} as any;
+
+            return bulkRestartExecution({
+                executionsId: ids,
+                revision: options.revision
+            });
+        }
+
         return axios.post(
             `${apiUrl()}/executions/restart/by-query`,
             {},
-            {params: options}
-        )
+            {
+                params: options,
+            }
+        );
     }
 
     const bulkResumeExecution = (options: { executionsId: string[] }) => {
@@ -111,13 +139,33 @@ export const useExecutionsStore = defineStore("executions", () => {
         )
     }
 
-    const bulkReplayExecution = (options: { executionsId: string[] } & Record<string, any>) => {
+    const bulkReplayExecution = (options: {
+        executionsId: string[];
+        revision?: number;
+        latestRevision?: boolean;
+        }) => {
+        if (options.revision !== undefined && !options.latestRevision) {
+            return Promise.all(
+            options.executionsId.map((id) =>
+                axios.post(
+                `${apiUrl()}/executions/${id}/replay`,
+                null,
+                {params: {revision: options.revision}}
+                )
+            )
+            ).then((res) => ({data: {count: res.length}}));
+        }
+
+        const params: Record<string, any> = {};
+        if (options.latestRevision) params.latestRevision = true;
+
         return axios.post(
             `${apiUrl()}/executions/replay/by-ids`,
             options.executionsId,
-            {params: options}
-        )
-    }
+            {params}
+        );
+    };
+
 
     const bulkChangeExecutionStatus = (options: { executionsId: string[]; newStatus: string }) => {
         return axios.post(

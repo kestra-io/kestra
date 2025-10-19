@@ -361,19 +361,64 @@
 
         <template #default>
             <p v-html="changeReplayToast()" />
+
+            <el-form v-if="revisionsOptions && revisionsOptions.length > 0">
+                <p class="execution-description">
+                    {{ $t("restart change revision") }}
+                </p>
+                <ElFormItem :label="$t('revisions')">
+                    <el-select v-model="revisionsSelected">
+                        <el-option
+                            v-for="item in revisionsOptions"
+                            :key="item.value"
+                            :label="item.text"
+                            :value="item.value"
+                        />
+                    </el-select>
+                </ElFormItem>
+            </el-form>
         </template>
 
         <template #footer>
             <el-button @click="isOpenReplayModal = false">
                 {{ $t('cancel') }}
             </el-button>
-            <el-button @click="replayExecutions(true)">
-                {{ $t('replay latest revision') }}
+            <el-button type="primary" @click="submitBulkReplay()">
+                {{ $t('ok') }}
             </el-button>
-            <el-button
-                type="primary"
-                @click="replayExecutions(false)"
-            >
+        </template>
+    </el-dialog>
+
+    <el-dialog v-if="isOpenRestartModal" v-model="isOpenRestartModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="$t('bulk restart', {'executionCount': queryBulkAction ? executionsStore.total : selection.length})" />
+
+            <el-form v-if="revisionsOptions && revisionsOptions.length > 0">
+                <p class="execution-description">
+                    {{ $t("restart change revision") }}
+                </p>
+                <ElFormItem :label="$t('revisions')">
+                    <el-select v-model="revisionsSelected">
+                        <el-option
+                            v-for="item in revisionsOptions"
+                            :key="item.value"
+                            :label="item.text"
+                            :value="item.value"
+                        />
+                    </el-select>
+                </ElFormItem>
+            </el-form>
+        </template>
+
+        <template #footer>
+            <el-button @click="isOpenRestartModal = false">
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button type="primary" @click="submitBulkRestart()">
                 {{ $t('ok') }}
             </el-button>
         </template>
@@ -492,6 +537,7 @@
     const recomputeInterval = ref(false);
     const isOpenLabelsModal = ref(false);
     const isOpenReplayModal = ref(false);
+    const isOpenRestartModal = ref(false);
     const selectedStatus = ref(undefined);
     const lastRefreshDate = ref(new Date());
     const unqueueDialogVisible = ref(false);
@@ -500,6 +546,8 @@
     const actionOptions = ref<Record<string, any>>({});
     const dblClickRouteName = ref("executions/update");
     const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false");
+    const revisionsOptions = ref<{value: number; text: string}[]>([]);
+    const revisionsSelected = ref<number | undefined>(undefined);
 
     const optionalColumns = ref([
         {
@@ -872,22 +920,89 @@
     };
 
     const restartExecutions = () => {
-        genericConfirmAction(
-            "bulk restart",
-            "queryRestartExecution",
-            "bulkRestartExecution",
-            "executions restarted"
-        );
+        isOpenRestartModal.value = true;
     };
 
-    const replayExecutions = (latestRevision: boolean) => {
+    const prepareRevisionsForBulk = async () => {
+        revisionsOptions.value = [];
+        revisionsSelected.value = undefined;
+
+        if (queryBulkAction.value) {
+            return;
+        }
+
+        const rows = (executionsStore.executions || []).filter((e: any) =>
+            (selection.value || []).includes(e.id)
+        );
+        const uniquePairs = [...new Set(rows.map((e: any) => `${e.namespace}/${e.flowId}`))];
+
+        if (uniquePairs.length !== 1) {
+            return;
+        }
+
+        const [namespace, id] = uniquePairs[0].split("/");
+
+        await flowStore.loadRevisions({namespace, id});
+        
+        const revs = (flowStore.revisions || [])
+            .map((r: any) => Number(r.revision))
+            .filter((n: number) => !Number.isNaN(n))
+            .sort((a: number, b: number) => a - b);
+
+        const latestRevision = revs.length ? revs[revs.length - 1] : undefined;
+        const isCurrent = (n: number) => rows.every((x: any) => x.flowRevision === n);
+        const isLatest = (n: number) => n === latestRevision;
+
+        revisionsOptions.value = revs.map((n: number) => {
+            const current = isCurrent(n);
+            const latest = isLatest(n);
+
+            if (latest && current) {
+                return {
+                    value: n,
+                    text: `${n} (${t("latest")})`
+                };
+            }
+
+            let text = String(n);
+            if (latest) text += ` (${t("latest")})`;
+            if (current) text += ` (${t("current")})`;
+
+            return {value: n, text};
+        });
+
+        revisionsSelected.value = latestRevision;
+    };
+
+    const submitBulkReplay = () => {
         isOpenReplayModal.value = false;
+        const params: Record<string, any> = revisionsSelected.value ? {revision: revisionsSelected.value} : {};
 
         genericConfirmCallback(
             "queryReplayExecution",
             "bulkReplayExecution",
             "executions replayed",
-            {latestRevision: latestRevision}
+            params
+        );
+    };
+
+    const submitBulkRestart = () => {
+        isOpenRestartModal.value = false;
+
+        const rows = (executionsStore.executions || []).filter((e: any) =>
+            (selection.value || []).includes(e.id)
+        );
+        const currentRevision = rows.length > 0 ? rows[0].flowRevision : undefined;
+
+        const params: Record<string, any> = (revisionsSelected.value && revisionsSelected.value !== currentRevision)
+            ? {revision: revisionsSelected.value}
+            : {};
+
+        genericConfirmCallback(
+            "queryRestartExecution",
+            "bulkRestartExecution",
+            "executions restarted",
+            params
         );
     };
 
@@ -1070,6 +1185,18 @@
     watch(isOpenLabelsModal, (opening) => {
         if (opening) {
             executionLabels.value = [];
+        }
+    });
+
+    watch(isOpenReplayModal, (open) => {
+        if (open) {
+            prepareRevisionsForBulk();
+        }
+    });
+
+    watch(isOpenRestartModal, (open) => {
+        if (open) {
+            prepareRevisionsForBulk();
         }
     });
 </script>

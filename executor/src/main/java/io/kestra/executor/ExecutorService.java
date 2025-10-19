@@ -247,7 +247,31 @@ public class ExecutorService {
             // first find the normal ended child tasks and send result
             Optional<State.Type> state;
             try {
-                state = flowableParent.resolveState(runContext, execution, parentTaskRun);
+                 state = Optional.of(flowableParent.resolveState(runContext, execution, parentTaskRun)
+                     .orElse(State.Type.RUNNING));
+
+                List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
+                    .map(ArrayList::new)
+                    .orElseGet(ArrayList::new);
+
+                if (attempts.isEmpty()) {
+                    attempts.add(
+                        TaskRunAttempt.builder()
+                            .state(new State().withState(state.get()))
+                            .build()
+                    );
+                    parentTaskRun = parentTaskRun
+                        .withAttempts(attempts);
+                    execution = execution.withTaskRun(parentTaskRun);
+                } else if (!attempts.getLast().getState().getCurrent().equals(state.get())){
+                        TaskRunAttempt updated = attempts.getLast().withState(state.get());
+                        attempts.set( attempts.size() - 1, updated);
+
+                        parentTaskRun = parentTaskRun
+                            .withAttempts(attempts)
+                            .withState(state.get());
+                    execution = execution.withTaskRun(parentTaskRun);
+                    }
             } catch (Exception e) {
                 // This will lead to the next task being still executed, but at least Kestra will not crash.
                 // This is the best we can do, Flowable task should not fail, so it's a kind of panic mode.

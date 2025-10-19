@@ -247,31 +247,20 @@ public class ExecutorService {
             // first find the normal ended child tasks and send result
             Optional<State.Type> state;
             try {
-                 state = Optional.of(flowableParent.resolveState(runContext, execution, parentTaskRun)
-                     .orElse(State.Type.RUNNING));
-
-                List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
-                    .map(ArrayList::new)
-                    .orElseGet(ArrayList::new);
-
-                if (attempts.isEmpty()) {
-                    attempts.add(
-                        TaskRunAttempt.builder()
-                            .state(new State().withState(state.get()))
-                            .build()
-                    );
-                    parentTaskRun = parentTaskRun
-                        .withAttempts(attempts);
-                    execution = execution.withTaskRun(parentTaskRun);
-                } else if (!attempts.getLast().getState().getCurrent().equals(state.get())){
-                        TaskRunAttempt updated = attempts.getLast().withState(state.get());
-                        attempts.set( attempts.size() - 1, updated);
-
-                        parentTaskRun = parentTaskRun
-                            .withAttempts(attempts)
-                            .withState(state.get());
-                    execution = execution.withTaskRun(parentTaskRun);
-                    }
+                 state = flowableParent.resolveState(runContext, execution, parentTaskRun);
+                 /// flowable attempt state transition to terminal
+                 if(state.isPresent())
+                 {
+                     List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
+                         .map(ArrayList::new)
+                         .orElseGet(ArrayList::new);
+                     TaskRunAttempt updated = attempts.getLast().withState(state.get());
+                     attempts.set( attempts.size() - 1, updated);
+                     parentTaskRun = parentTaskRun
+                         .withAttempts(attempts)
+                         .withState(state.get());
+                     execution = execution.withTaskRun(parentTaskRun);
+                 }
             } catch (Exception e) {
                 // This will lead to the next task being still executed, but at least Kestra will not crash.
                 // This is the best we can do, Flowable task should not fail, so it's a kind of panic mode.
@@ -344,7 +333,7 @@ public class ExecutorService {
 
     private List<TaskRun> childNextsTaskRun(Executor executor, TaskRun parentTaskRun) throws InternalException {
         Task parent = executor.getFlow().findTaskByTaskId(parentTaskRun.getTaskId());
-
+//////////////////////////////////////case X
         if (parent instanceof FlowableTask<?> flowableParent) {
             // Count the number of flowable tasks executions, some flowable are being called multiple times,
             // so this is not exactly the number of flowable taskruns but the number of times they are executed.
@@ -399,6 +388,20 @@ public class ExecutorService {
                     Output outputs = flowableTask.outputs(runContext);
                     Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
                     taskRun = taskRun.withOutputs(variables);
+                    /// flowable attempt creation
+                    List<TaskRunAttempt> attempts = Optional.ofNullable(taskRun.getAttempts())
+                        .map(ArrayList::new)
+                        .orElseGet(ArrayList::new);
+
+                    if (taskRun.getState().isCreated()) {
+                        attempts.add(
+                            TaskRunAttempt.builder()
+                                .state(new State().withState(State.Type.CREATED))
+                                .build()
+                        );
+                        taskRun = taskRun.withAttempts(attempts);
+                    }
+
                 } catch (Exception e) {
                     runContext.logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }
@@ -468,11 +471,10 @@ public class ExecutorService {
         if (nextTaskRuns.isEmpty()) {
             return executor;
         }
-
-        return executor.withTaskRun(
-            this.saveFlowableOutput(nextTaskRuns, executor),
-            "handleNext"
-        );
+return executor.withTaskRun(
+    this.saveFlowableOutput(nextTaskRuns, executor),
+    "handleNext"
+);
     }
 
     private Executor handleChildNext(Executor executor) throws InternalException {

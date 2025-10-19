@@ -658,8 +658,18 @@ public class JdbcExecutor implements ExecutorInterface {
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
+                                            /// flowable attempt state transition to running
                                             if (workerTask.getTask().isFlowable()) {
-                                                workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
+                                                List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
+                                                    .map(ArrayList::new)
+                                                    .orElseGet(ArrayList::new);
+
+                                                TaskRunAttempt updated = attempts.getLast().withState(State.Type.RUNNING);
+                                                attempts.set( attempts.size() - 1, updated);
+                                                TaskRun updatedTaskRun = workerTask.getTaskRun()
+                                                    .withAttempts(attempts)
+                                                    .withState(State.Type.RUNNING);
+                                                workerTaskResults.add(new WorkerTaskResult(updatedTaskRun));
                                             }
                                         }
                                     } catch (Exception e) {

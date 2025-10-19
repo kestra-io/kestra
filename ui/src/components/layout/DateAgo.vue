@@ -1,19 +1,11 @@
 <template>
-    <el-tooltip
-        :key="uid('tooltip')"
-        v-if="date"
-        :content="inverted ? from : full"
-        :persistent="false"
-        transition=""
-        :hideAfter="0"
-        effect="light"
-    >
-        <span :class="className">{{ inverted ? full : from }}</span>
-    </el-tooltip>
+    <span v-if="date" :class="className">
+        {{ inverted ? full : from }}
+    </span>
 </template>
+
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
-    import Utils from "../../utils/utils";
 
     const props = defineProps({
         date: {
@@ -34,9 +26,6 @@
         }
     })
 
-    function uid(key: string) {
-        return key + "-" + Utils.uid();
-    }
     const {$moment, $filters} = getCurrentInstance()?.appContext.config.globalProperties || {} as any;
 
     const from = computed(() => {

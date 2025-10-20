@@ -165,7 +165,6 @@ public class JsonSchemaGenerator {
         objectNode.get("$defs").forEach(jsonNode -> {
             // If a node has a properties section, the code will go through it and begin filtering out any null data types.
             Optional<ObjectNode> properties = Optional.ofNullable((ObjectNode) jsonNode.get("properties"));
-            System.out.println(properties.isPresent());
             if(properties.isPresent()) {
                 filterNullValues(properties.get());
             }

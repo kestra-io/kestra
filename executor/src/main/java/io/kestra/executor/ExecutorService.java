@@ -470,10 +470,11 @@ public class ExecutorService {
         if (nextTaskRuns.isEmpty()) {
             return executor;
         }
-return executor.withTaskRun(
-    this.saveFlowableOutput(nextTaskRuns, executor),
-    "handleNext"
-);
+
+        return executor.withTaskRun(
+            this.saveFlowableOutput(nextTaskRuns, executor),
+            "handleNext"
+        );
     }
 
     private Executor handleChildNext(Executor executor) throws InternalException {

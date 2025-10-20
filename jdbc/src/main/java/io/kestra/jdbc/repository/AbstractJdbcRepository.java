@@ -58,7 +58,9 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
         var tenant = buildTenantCondition(tenantId);
-        return allowDeleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
+        return allowDeleted ?
+            tenant.and(field("deleted", Boolean.class).in(true, false)) :
+            tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     protected Condition defaultFilterWithNoACL(String tenantId) {
@@ -67,7 +69,9 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition defaultFilterWithNoACL(String tenantId, boolean deleted) {
         var tenant = buildTenantCondition(tenantId);
-        return deleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
+        return deleted ?
+            tenant.and(field("deleted", Boolean.class).in(true, false)) :
+            tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     protected Condition buildTenantCondition(String tenantId) {

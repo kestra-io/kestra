@@ -1,6 +1,8 @@
 name: Main Workflow
 
 on:
+  # TODO remove
+  pull_request:
   push:
     branches:
       - releases/*
@@ -25,12 +27,9 @@ jobs:
   backend-tests:
     name: Backend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
 
   frontend-tests:
     name: Frontend tests
@@ -73,7 +72,8 @@ jobs:
       - run: echo "debug repo ${{github.repository}} ref ${{github.ref}} res ${{needs.publish-develop-maven.result}} jobStatus ${{job.status}} isNotFork ${{github.repository == 'kestra-io/kestra'}} isDevelop ${{github.ref == 'refs/heads/develop'}}"
       - name: Trigger EE Workflow
         uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4
-        if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
+#        if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
+        if: "!contains(needs.*.result, 'failure')"
         with:
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
           repository: kestra-io/kestra-ee
@@ -81,7 +81,7 @@ jobs:
 
       # Slack
       - name: Slack - Notification
-        if: "failure()"
+        if: ${{ contains(needs.*.result, 'failure') }}
         uses: kestra-io/actions/composite/slack-status@main
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}

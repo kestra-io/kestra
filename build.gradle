@@ -99,6 +99,8 @@ allprojects {
             micronaut
         }
 
+        def lombokVersion = '1.18.32'
+
         // dependencies
         dependencies {
             // Platform
@@ -108,7 +110,6 @@ allprojects {
             micronaut enforcedPlatform(project(":platform"))
 
             // lombok
-            def lombokVersion = '1.18.32'
             annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
             compileOnly "org.projectlombok:lombok:${lombokVersion}"
 
@@ -185,7 +186,6 @@ subprojects {subProj ->
             testImplementation enforcedPlatform(project(":platform"))
 
             // lombok
-            def lombokVersion = '1.18.32'
             testAnnotationProcessor "org.projectlombok:lombok:${lombokVersion}"
             testCompileOnly "org.projectlombok:lombok:${lombokVersion}"
 

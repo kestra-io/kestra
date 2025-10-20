@@ -41,11 +41,9 @@
     $icon-color: currentColor,
 );
 
-// third
 @use "nprogress/nprogress.css";
 
-//noinspection CssUnknownTarget
-@import url("https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;700;800&family=Source+Code+Pro:wght@400;700;800&display=swap");
+@import "./fonts.scss";
 
 // skiki
 .shiki {

@@ -525,43 +525,6 @@ public class FlowController {
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, allowNamespaceChild);
     }
 
-    /**
-     * @deprecated should not be used anymore
-     */
-    @Patch(uri = "{namespace}/{id}/{taskId}")
-    @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Flows"}, summary = "Update a single task on a flow", deprecated = true)
-    @Deprecated(forRemoval = true, since = "0.18")
-    @SuppressWarnings("deprecated")
-    public HttpResponse<Flow> updateTask(
-        @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @Parameter(description = "The flow id") @PathVariable String id,
-        @Parameter(description = "The task id") @PathVariable String taskId,
-        @RequestBody(description = "The task") @Valid @Body Task task
-    ) throws ConstraintViolationException {
-        log.warn("This endpoint is deprecated: updating a single task is not longer supported and will be removed in a future release.");
-
-        Optional<Flow> existingFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
-
-        if (existingFlow.isEmpty()) {
-            return HttpResponse.status(HttpStatus.NOT_FOUND);
-        }
-
-        if (!taskId.equals(task.getId())) {
-            throw new IllegalArgumentException("Invalid taskId, previous '" + taskId + "' & current '" + task.getId() + "'");
-        }
-
-        Flow flow = existingFlow.get();
-        try {
-            Flow newValue = flow.updateTask(taskId, task);
-            String newSource = newValue.sourceOrGenerateIfNull();
-            return HttpResponse.ok(flowRepository.update(parseFlowSource(newSource), flow).toFlow());
-        } catch (InternalException e) {
-            return HttpResponse.status(HttpStatus.NOT_FOUND);
-        }
-    }
-
-
     @Delete(uri = "{namespace}/{id}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Delete a flow")

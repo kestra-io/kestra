@@ -180,6 +180,9 @@ public class JsonSchemaGenerator {
                 // Initiate iterator
                 Iterator<JsonNode> it = fieldProperties.elements();
                 while(it.hasNext()) {
+                // Initiate iterator
+                Iterator<JsonNode> it = fieldProperties.elements();
+                while(it.hasNext()) {
                     // Saves the element into a readable JsonNode object.
                     JsonNode fieldProperty = it.next();
                     // Turns the data type into a String value.

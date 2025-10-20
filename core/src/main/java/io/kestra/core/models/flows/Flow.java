@@ -235,48 +235,6 @@ public class Flow extends AbstractFlow implements HasUID {
             .orElse(null);
     }
 
-    /**
-     * @deprecated should not be used
-     */
-    @Deprecated(forRemoval = true, since = "0.21.0")
-    public Flow updateTask(String taskId, Task newValue) throws InternalException {
-        Task task = this.findTaskByTaskId(taskId);
-        Flow flow = this instanceof FlowWithSource flowWithSource ? flowWithSource.toFlow() : this;
-
-        Map<String, Object> map = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);
-
-        return NON_DEFAULT_OBJECT_MAPPER.convertValue(
-            recursiveUpdate(map, task, newValue),
-            Flow.class
-        );
-    }
-
-    private static Object recursiveUpdate(Object object, Task previous, Task newValue) {
-        if (object instanceof Map<?, ?> value) {
-            if (value.containsKey("id") && value.get("id").equals(previous.getId()) &&
-                value.containsKey("type") && value.get("type").equals(previous.getType())
-            ) {
-                return NON_DEFAULT_OBJECT_MAPPER.convertValue(newValue, JacksonMapper.MAP_TYPE_REFERENCE);
-            } else {
-                return value
-                    .entrySet()
-                    .stream()
-                    .map(e -> new AbstractMap.SimpleEntry<>(
-                        e.getKey(),
-                        recursiveUpdate(e.getValue(), previous, newValue)
-                    ))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-            }
-        } else if (object instanceof Collection<?> value) {
-            return value
-                .stream()
-                .map(r -> recursiveUpdate(r, previous, newValue))
-                .toList();
-        } else {
-            return object;
-        }
-    }
-
     public boolean equalsWithoutRevision(FlowInterface o) {
         try {
             return WITHOUT_REVISION_OBJECT_MAPPER.writeValueAsString(this).equals(WITHOUT_REVISION_OBJECT_MAPPER.writeValueAsString(o));

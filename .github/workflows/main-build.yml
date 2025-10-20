@@ -1,6 +1,8 @@
 name: Main Workflow
 
 on:
+  # TODO remove
+  pull_request:
   push:
     branches:
       - releases/*

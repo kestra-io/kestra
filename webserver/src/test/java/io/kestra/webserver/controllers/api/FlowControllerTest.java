@@ -460,43 +460,7 @@ class FlowControllerTest {
         assertThat(withSource.getId()).isEqualTo(flow.getId());
         assertThat(withSource.getSource()).contains("format: |2-");
     }
-
-    @Test
-    void updateFlowTaskFlowFromJson() throws InternalException {
-        String flowId = IdUtils.create();
-
-        Flow flow = generateFlowWithFlowable(flowId, TEST_NAMESPACE, "a");
-
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Flow.class);
-        assertThat(result.getId()).isEqualTo(flow.getId());
-
-        Task task = generateTask("test2", "updated task");
-
-        Flow get = client.toBlocking().retrieve(
-            PATCH("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId() + "/" + task.getId(), task),
-            Flow.class
-        );
-
-        assertThat(get.getId()).isEqualTo(flow.getId());
-        assertThat(((Return) get.findTaskByTaskId("test2")).getFormat().toString()).isEqualTo("updated task");
-
-        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(
-                PATCH("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId() + "/test6", task),
-                Flow.class
-            );
-        });
-        assertThat(e.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
-
-        e = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().retrieve(
-                PATCH("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId() + "/test6", generateTask("test6", "updated task")),
-                Flow.class
-            );
-        });
-        assertThat(e.getStatus().getCode()).isEqualTo(NOT_FOUND.getCode());
-    }
-
+    
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     void invalidUpdateFlowFlowFromJson() {

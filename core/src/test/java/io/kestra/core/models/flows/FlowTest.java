@@ -109,22 +109,6 @@ class FlowTest {
     }
 
     @Test
-    void updateTask() throws InternalException {
-        Flow flow = this.parse("flows/valids/each-sequential-nested.yaml");
-
-        Flow updated = flow.updateTask("1-2-2_return", Return.builder()
-            .id("1-2-2_return")
-            .type(Return.class.getName())
-            .format(Property.ofExpression("{{task.id}}"))
-            .build()
-        );
-
-        Task findUpdated = updated.findTaskByTaskId("1-2-2_return");
-
-        assertThat(((Return) findUpdated).getFormat().toString()).isEqualTo("{{task.id}}");
-    }
-
-    @Test
     void allTasksWithChildsAndTriggerIds() {
         Flow flow = this.parse("flows/valids/trigger-flow-listener-no-inputs.yaml");
         List<String> all = flow.allTasksWithChildsAndTriggerIds();

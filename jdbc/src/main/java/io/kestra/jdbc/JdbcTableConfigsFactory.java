@@ -1,5 +1,6 @@
 package io.kestra.jdbc;
 
+import io.kestra.core.lock.Lock;
 import io.kestra.core.models.Setting;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
@@ -129,6 +130,12 @@ public class JdbcTableConfigsFactory {
     @Named("kvmetadata")
     public InstantiableJdbcTableConfig kvMetadata() {
         return new InstantiableJdbcTableConfig("kvmetadata", PersistedKvMetadata.class, "kv_metadata");
+    }
+
+    @Bean
+    @Named("locks")
+    public InstantiableJdbcTableConfig locks() {
+        return new InstantiableJdbcTableConfig("locks", Lock.class, "locks");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

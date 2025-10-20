@@ -35,7 +35,7 @@ import jakarta.validation.constraints.Size;
     description = """
         Webhook trigger allows you to create a unique URL that you can use to trigger a Kestra flow execution based on events in another application such as GitHub or Amazon EventBridge. In order to use that URL, you have to add a secret key to secure your webhook URL.
 
-        The URL will then follow the following format: `https://{your_hostname}/api/v1/executions/webhook/{namespace}/{flowId}/{key}`. Replace the templated values according to your workflow setup.
+        The URL will then follow the following format: `https://{your_hostname}/api/v1/{tenant}/executions/webhook/{namespace}/{flowId}/{key}`. Replace the templated values according to your workflow setup.
 
         The webhook URL accepts `GET`, `POST`, and `PUT` requests.
 

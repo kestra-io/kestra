@@ -116,6 +116,7 @@ public class JsonSchemaGenerator {
             replaceOneOfWithAnyOf(objectNode);
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
+            findArraysAndFilterOutNullValues(objectNode);
 
             return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {
@@ -170,10 +171,13 @@ public class JsonSchemaGenerator {
                 for(int i = 0; i < fieldProperties.size(); i++) {
                     JsonNode fieldProperty = fieldProperties.get(i);
                     System.out.println("Filtering " + fieldProperty);
-                    if(fieldProperty.get("type").equals("object"))
+                    String type = fieldProperty.get("type").asText();
+                    if(type.equals("object"))
                         filterNullValues(fieldProperty.get("properties"));
-                    else if(fieldProperty.get("type").equals("null")) {
+                    else if(type.equals("null")) {
                         fieldProperties.remove(i);
+                        System.out.println("removed");
+                        System.out.println(fieldProperties + "\n");
                         i--;
                     }
                 }
@@ -831,7 +835,7 @@ public class JsonSchemaGenerator {
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
             findArraysAndFilterOutNullValues(objectNode);
-
+            
             return MAPPER.convertValue(extractMainRef(objectNode), MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);

@@ -66,6 +66,7 @@ class ScheduleTest {
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .revision(1)
+            .variables(Map.of("custom_var", "VARIABLE VALUE"))
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
@@ -101,7 +102,7 @@ class ScheduleTest {
         assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getLabels()).hasSize(3);
         assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
-
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
         var vars = evaluate.get().getTrigger().getVariables();
         var inputs = evaluate.get().getInputs();
 
@@ -135,7 +136,7 @@ class ScheduleTest {
         assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getLabels()).hasSize(3);
         assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
-
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
         var inputs = evaluate.get().getInputs();
 
         assertThat(inputs.size()).isEqualTo(2);
@@ -167,6 +168,7 @@ class ScheduleTest {
         Optional<Execution> evaluate = scheduleTrigger.evaluate(conditionContext, triggerContext);
 
         assertThat(evaluate.isPresent()).isTrue();
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-1", "trigger-label-1"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-2", "trigger-label-2"));
         assertThat(evaluate.get().getLabels()).doesNotContain(new Label("trigger-label-3", ""));
@@ -188,8 +190,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-
-        var vars = evaluate.get().getTrigger().getVariables();;
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
+        var vars = evaluate.get().getTrigger().getVariables();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plus(Duration.ofMinutes(1)));
@@ -210,8 +212,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-
-        var vars = evaluate.get().getTrigger().getVariables();;
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
+        var vars = evaluate.get().getTrigger().getVariables();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plus(Duration.ofSeconds(1)));
@@ -232,7 +234,6 @@ class ScheduleTest {
             ).build();
         // When
         Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
-
         // Then
         assertThat(result.isEmpty()).isTrue();
     }
@@ -296,8 +297,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-
-        var vars = evaluate.get().getTrigger().getVariables();;
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
+        var vars = evaluate.get().getTrigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), expexted)).isEqualTo(expexted);
         assertThat(dateFromVars((String) vars.get("next"), expexted)).isEqualTo(expexted.plusMonths(1));
         assertThat(dateFromVars((String) vars.get("previous"), expexted)).isEqualTo(expexted.minusMonths(1));
@@ -330,8 +331,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-
-        var vars = evaluate.get().getTrigger().getVariables();;
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
+        var vars = evaluate.get().getTrigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("next"), next)).isEqualTo(next);
         assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
@@ -362,8 +363,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-
-        var vars = evaluate.get().getTrigger().getVariables();;
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
+        var vars = evaluate.get().getTrigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars((String) vars.get("previous"), previous)).isEqualTo(previous);
         assertThat(vars.containsKey("next")).isFalse();
@@ -412,7 +413,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-        var vars = evaluate.get().getTrigger().getVariables();;
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
+        var vars = evaluate.get().getTrigger().getVariables();
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
     }
 
@@ -437,8 +439,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent()).isTrue();
-
-        var vars = evaluate.get().getTrigger().getVariables();;
+        assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
+        var vars = evaluate.get().getTrigger().getVariables();
 
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
         assertThat(ZonedDateTime.parse((String) vars.get("date")).getZone().getId()).isEqualTo("-04:00");
@@ -467,6 +469,7 @@ class ScheduleTest {
 
         // Then
         assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
     }
 
     private ConditionContext conditionContext(AbstractTrigger trigger) {
@@ -479,6 +482,7 @@ class ScheduleTest {
                     new Label("flow-label-2", "flow-label-2")
                 )
             )
+            .variables(Map.of("custom_var", "VARIABLE VALUE"))
             .inputs(List.of(
                 StringInput.builder().id("input1").type(Type.STRING).required(false).build(),
                 StringInput.builder().id("input2").type(Type.STRING).defaults(Property.ofValue("default")).build()

@@ -16,4 +16,11 @@ public class TenantIdSelectorService {
         }
         return MAIN_TENANT;
     }
+
+    public String getTenantIdAndAllowEETenants(String tenantId) {
+        if (StringUtils.isNotBlank(tenantId)){
+            return tenantId;
+        }
+        return MAIN_TENANT;
+    }
 }

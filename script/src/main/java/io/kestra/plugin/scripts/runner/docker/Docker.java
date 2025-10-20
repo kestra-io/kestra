@@ -50,6 +50,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -313,6 +314,14 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     )
     private Duration killGracePeriod = Duration.ZERO;
 
+    @Builder.Default
+    @Schema(
+        title = "Whether to resume an existing matching container on restart.",
+        description = "If enabled, the runner will search for an existing container labeled with the current execution/task identifiers and reattach to it instead of creating a new container."
+    )
+    @PluginProperty
+    private Property<Boolean> resume = Property.ofValue(true);
+
     /**
      * Convenient default instance to be used as task default value for a 'taskRunner' property.
      **/
@@ -364,18 +373,25 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         String image = runContext.render(this.image, additionalVars);
 
         String resolvedHost = DockerService.findHost(runContext, this.host);
-        try (DockerClient dockerClient = dockerClient(runContext, image, resolvedHost)) {
-            // pull image
-            var renderedPolicy = runContext.render(this.getPullPolicy()).as(PullPolicy.class).orElseThrow();
-            if (!PullPolicy.NEVER.equals(renderedPolicy)) {
-                pullImage(dockerClient, image, renderedPolicy, logger);
-            }
+        Map<String, String> labels = ScriptService.labels(runContext, "kestra.io/");
 
-            // create container
-            CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars);
-            CreateContainerResponse exec = container.exec();
-            if (logger.isTraceEnabled()) {
-                logger.trace("Container created: {}", exec.getId());
+        try (DockerClient dockerClient = dockerClient(runContext, image, resolvedHost)) {
+            // evaluate resume (task property overrides plugin configuration if set)
+            Boolean resumeProp = runContext.render(this.resume).as(Boolean.class).orElse(Boolean.FALSE);
+            boolean resumeEnabled = Boolean.TRUE.equals(resumeProp);
+
+            String containerId = null;
+
+            if (resumeEnabled) {
+                List<Container> existing = dockerClient.listContainersCmd()
+                    .withShowAll(true)
+                    .withLabelFilter(labels)
+                    .exec();
+
+                if (!existing.isEmpty()) {
+                    containerId = existing.get(0).getId();
+                    logger.debug("Resuming existing container: {}", containerId);
+                }
             }
 
             List<Path> relativeWorkingDirectoryFilesPaths = taskCommands.relativeWorkingDirectoryFilesPaths(true);
@@ -384,94 +400,134 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             boolean outputDirectoryEnabled = taskCommands.outputDirectoryEnabled();
             boolean needVolume = hasFilesToDownload || hasFilesToUpload || outputDirectoryEnabled;
             String filesVolumeName = null;
-
-            // create a volume if we need to handle files
             var strategy = runContext.render(this.fileHandlingStrategy).as(FileHandlingStrategy.class).orElse(null);
-            if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
-                CreateVolumeCmd files = dockerClient.createVolumeCmd()
-                    .withLabels(ScriptService.labels(runContext, "kestra.io/"));
-                filesVolumeName = files.exec().getName();
+
+            // pull image only if we will create a new container
+            if (containerId == null) {
+                var renderedPolicy = runContext.render(this.getPullPolicy()).as(PullPolicy.class).orElseThrow();
+                if (!PullPolicy.NEVER.equals(renderedPolicy)) {
+                    pullImage(dockerClient, image, renderedPolicy, logger);
+                }
+
+                // create container
+                CreateContainerCmd container = configure(taskCommands, dockerClient, runContext, additionalVars);
+                CreateContainerResponse exec = container.exec();
+                containerId = exec.getId();
                 if (logger.isTraceEnabled()) {
-                    logger.trace("Volume created: {}", filesVolumeName);
+                    logger.trace("Container created: {}", containerId);
                 }
 
-                String remotePath = windowsToUnixPath(taskCommands.getWorkingDirectory().toString());
-
-                // first, create an archive
-                Path fileArchive = runContext.workingDir().createFile("inputFiles.tar");
-                try (FileOutputStream fos = new FileOutputStream(fileArchive.toString());
-                     TarArchiveOutputStream out = new TarArchiveOutputStream(fos)) {
-                    out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
-                    out.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX); // allow large archive name
-
-                    for (Path file: relativeWorkingDirectoryFilesPaths) {
-                        Path resolvedFile = runContext.workingDir().resolve(file);
-                        TarArchiveEntry entry = out.createArchiveEntry(resolvedFile.toFile(), file.toString());
-                        // Preserve POSIX permissions if supported
-                        try {
-                            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(resolvedFile);
-                            entry.setMode(UnixModeToPosixFilePermissions.fromPosixFilePermissions(perms));
-                        } catch (UnsupportedOperationException | IOException ignore) {
-                            // Skipping unix file permission
-                        }
-                        out.putArchiveEntry(entry);
-                        if (!Files.isDirectory(resolvedFile)) {
-                            try (InputStream fis = Files.newInputStream(resolvedFile)) {
-                                IOUtils.copy(fis, out);
-                            }
-                        }
-                        out.closeArchiveEntry();
+                // create a volume if we need to handle files
+                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
+                    CreateVolumeCmd files = dockerClient.createVolumeCmd()
+                        .withLabels(labels);
+                    filesVolumeName = files.exec().getName();
+                    if (logger.isTraceEnabled()) {
+                        logger.trace("Volume created: {}", filesVolumeName);
                     }
-                    out.finish();
+
+                    String remotePath = windowsToUnixPath(taskCommands.getWorkingDirectory().toString());
+
+                    // first, create an archive
+                    Path fileArchive = runContext.workingDir().createFile("inputFiles.tar");
+                    try (FileOutputStream fos = new FileOutputStream(fileArchive.toString());
+                         TarArchiveOutputStream out = new TarArchiveOutputStream(fos)) {
+                        out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
+                        out.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_POSIX); // allow large archive name
+
+                        for (Path file: relativeWorkingDirectoryFilesPaths) {
+                            Path resolvedFile = runContext.workingDir().resolve(file);
+                            TarArchiveEntry entry = out.createArchiveEntry(resolvedFile.toFile(), file.toString());
+                            // Preserve POSIX permissions if supported
+                            try {
+                                Set<PosixFilePermission> perms = Files.getPosixFilePermissions(resolvedFile);
+                                entry.setMode(UnixModeToPosixFilePermissions.fromPosixFilePermissions(perms));
+                            } catch (UnsupportedOperationException | IOException ignore) {
+                                // Skipping unix file permission
+                            }
+                            out.putArchiveEntry(entry);
+                            if (!Files.isDirectory(resolvedFile)) {
+                                try (InputStream fis = Files.newInputStream(resolvedFile)) {
+                                    IOUtils.copy(fis, out);
+                                }
+                            }
+                            out.closeArchiveEntry();
+                        }
+                        out.finish();
+                    }
+
+                    // then send it to the container
+                    try (InputStream is = new FileInputStream(fileArchive.toString())) {
+                        CopyArchiveToContainerCmd copyArchiveToContainerCmd = dockerClient.copyArchiveToContainerCmd(containerId)
+                            .withTarInputStream(is)
+                            .withRemotePath(remotePath);
+                        copyArchiveToContainerCmd.exec();
+                    }
+
+                    Files.delete(fileArchive);
+
+                    // create the outputDir if needed
+                    if (taskCommands.outputDirectoryEnabled()) {
+                        CopyArchiveToContainerCmd copyArchiveToContainerCmd = dockerClient.copyArchiveToContainerCmd(containerId)
+                            .withHostResource(taskCommands.getOutputDirectory().toString())
+                            .withRemotePath(remotePath);
+                        copyArchiveToContainerCmd.exec();
+                    }
                 }
 
-                // then send it to the container
-                try (InputStream is = new FileInputStream(fileArchive.toString())) {
-                    CopyArchiveToContainerCmd copyArchiveToContainerCmd = dockerClient.copyArchiveToContainerCmd(exec.getId())
-                        .withTarInputStream(is)
-                        .withRemotePath(remotePath);
-                    copyArchiveToContainerCmd.exec();
-                }
+                // start container
+                dockerClient.startContainerCmd(containerId).exec();
 
-                Files.delete(fileArchive);
+                List<String> renderedCommands = runContext.render(taskCommands.getCommands()).asList(String.class);
 
-                // create the outputDir if needed
-                if (taskCommands.outputDirectoryEnabled()) {
-                    CopyArchiveToContainerCmd copyArchiveToContainerCmd = dockerClient.copyArchiveToContainerCmd(exec.getId())
-                        .withHostResource(taskCommands.getOutputDirectory().toString())
-                        .withRemotePath(remotePath);
-                    copyArchiveToContainerCmd.exec();
+                if (logger.isDebugEnabled()) {
+                    logger.debug(
+                        "Starting command with container id {} [{}]",
+                        containerId,
+                        String.join(" ", renderedCommands)
+                    );
                 }
+            } else {
+                // resumed path: do not re-create or start the container, just attach and wait
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Attaching to logs of container {}", containerId);
+                }
+                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)) {
+                    List<String> labelsList = labels.entrySet()
+                        .stream()
+                        .map(entry -> String.join("=", entry.getKey(), entry.getValue()))
+                        .toList();
+                    var volumes = dockerClient.listVolumesCmd()
+                        .withFilter("label", labelsList).exec();
+                    if (volumes.getVolumes() == null || volumes.getVolumes().isEmpty()) {
+                        logger.error("No volume found for resumed container {}", containerId);
+                        throw new TaskException(1, defaultLogConsumer);
+                    } else {
+                        var volume = volumes.getVolumes().get(0);
+                        filesVolumeName = volume.getName();
+                        logger.debug("Volume found with name {} for resumed container {}", filesVolumeName, containerId);
+                    }
+                }
+                
             }
 
-            // start container
-            dockerClient.startContainerCmd(exec.getId()).exec();
-
-            List<String> renderedCommands = runContext.render(taskCommands.getCommands()).asList(String.class);
-
-            if (logger.isDebugEnabled()) {
-                logger.debug(
-                    "Starting command with container id {} [{}]",
-                    exec.getId(),
-                    String.join(" ", renderedCommands)
-                );
-            }
+            final String runContainerId = containerId;
 
             if (!Boolean.TRUE.equals(runContext.render(wait).as(Boolean.class).orElseThrow())) {
                 return TaskRunnerResult.<DockerTaskRunnerDetailResult>builder()
                     .exitCode(0)
                     .logConsumer(defaultLogConsumer)
-                    .details(DockerTaskRunnerDetailResult.builder().containerId(exec.getId()).build())
+                    .details(DockerTaskRunnerDetailResult.builder().containerId(runContainerId).build())
                     .build();
             }
 
             // register the runnable to be used for killing the container.
-            onKill(() -> kill(dockerClient, exec.getId(), logger));
+            onKill(() -> kill(dockerClient, runContainerId, logger));
 
             AtomicBoolean ended = new AtomicBoolean(false);
 
             try {
-                dockerClient.logContainerCmd(exec.getId())
+                dockerClient.logContainerCmd(runContainerId)
                     .withFollowStream(true)
                     .withStdErr(true)
                     .withStdOut(true)
@@ -527,14 +583,15 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                         }
                     });
 
-                WaitContainerResultCallback result = dockerClient.waitContainerCmd(exec.getId()).start();
+                WaitContainerResultCallback result = dockerClient.waitContainerCmd(runContainerId).start();
 
                 Integer exitCode = result.awaitStatusCode();
                 Await.until(ended::get);
 
                 if (exitCode != 0) {
-                    if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
-                        downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
+                    if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
+                        // On failure, still attempt to download outputs if VOLUME strategy is used
+                        downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands);
                     }
 
                     throw new TaskException(exitCode, defaultLogConsumer);
@@ -542,14 +599,14 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     logger.debug("Command succeed with exit code {}", exitCode);
                 }
 
-                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
-                    downloadOutputFiles(exec.getId(), dockerClient, runContext, taskCommands);
+                if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
+                    downloadOutputFiles(runContainerId, dockerClient, runContext, taskCommands);
                 }
 
                 return TaskRunnerResult.<DockerTaskRunnerDetailResult>builder()
                     .exitCode(exitCode)
                     .logConsumer(defaultLogConsumer)
-                    .details(DockerTaskRunnerDetailResult.builder().containerId(exec.getId()).build())
+                    .details(DockerTaskRunnerDetailResult.builder().containerId(runContainerId).build())
                     .build();
             } finally {
                 try {
@@ -558,12 +615,12 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     kill();
 
                     if (Boolean.TRUE.equals(renderedDelete)) {
-                        dockerClient.removeContainerCmd(exec.getId()).exec();
+                        dockerClient.removeContainerCmd(runContainerId).exec();
                         if (logger.isTraceEnabled()) {
-                            logger.trace("Container deleted: {}", exec.getId());
+                            logger.trace("Container deleted: {}", runContainerId);
                         }
 
-                        if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy)  && filesVolumeName != null) {
+                        if (needVolume && FileHandlingStrategy.VOLUME.equals(strategy) && filesVolumeName != null) {
                             dockerClient.removeVolumeCmd(filesVolumeName).exec();
 
                             if (logger.isTraceEnabled()) {

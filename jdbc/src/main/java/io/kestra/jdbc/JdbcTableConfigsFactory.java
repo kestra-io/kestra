@@ -1,5 +1,6 @@
 package io.kestra.jdbc;
 
+import io.kestra.core.lock.Lock;
 import io.kestra.core.models.Setting;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
@@ -136,6 +137,12 @@ public class JdbcTableConfigsFactory {
     @Named("namespacefilemetadata")
     public InstantiableJdbcTableConfig namespaceFileMetadata() {
         return new InstantiableJdbcTableConfig("namespacefilemetadata", NamespaceFileMetadata.class, "namespace_file_metadata");
+    }
+
+    @Bean
+    @Named("locks")
+    public InstantiableJdbcTableConfig locks() {
+        return new InstantiableJdbcTableConfig("locks", Lock.class, "locks");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

@@ -41,7 +41,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .big-card-grid{
     display: grid;
     grid-template-columns: repeat(2, 1fr);

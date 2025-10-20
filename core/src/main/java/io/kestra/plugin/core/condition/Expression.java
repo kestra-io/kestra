@@ -35,7 +35,7 @@ import jakarta.validation.constraints.NotNull;
             code = """
                 id: myflow
                 namespace: company.team
-                
+
                 tasks:
                   - id: hello
                     type: io.kestra.plugin.core.log.Log

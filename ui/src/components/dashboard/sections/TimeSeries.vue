@@ -5,10 +5,10 @@
         effect="light"
         placement="top"
         :persistent="false"
-        :hide-after="0"
-        :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
+        :hideAfter="0"
+        :popperClass="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         :content="tooltipContent"
-        raw-content
+        rawContent
     >
         <div>
             <Bar
@@ -23,7 +23,7 @@
     <NoData v-else-if="!props.short" />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, ref, watch, PropType} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import moment from "moment";
@@ -31,9 +31,13 @@
     import NoData from "../../layout/NoData.vue";
     import {Chart, getDashboard, useChartGenerator} from "../composables/useDashboards";
     import {customBarLegend} from "../composables/useLegend";
-    import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts.js";
-    import {cssVariable, Utils} from "@kestra-io/ui-libs";
+    import {defaultConfig, getConsistentHEXColor, chartClick, tooltip} from "../composables/charts";
+    import {cssVariable} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../utils/utils";
+    import {FilterObject} from "../../../utils/filters";
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n();
 
     const route = useRoute();
     const router = useRouter();
@@ -41,7 +45,7 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<string[]>, default: () => []},
+        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
     });
@@ -53,7 +57,7 @@
     const {data, chartOptions} = props.chart;
 
     const aggregator = computed(() => {
-        return Object.entries(data.columns)
+        return Object.entries(data?.columns ?? {})
             .filter(([_, v]) => v.agg)
             .sort((a, b) => {
                 const aStyle = a[1].graphStyle || "";
@@ -125,7 +129,7 @@
                     display: props.short ? false : true,
                     ticks: {
                         ...DEFAULTS.ticks,
-                        callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? Utils.humanDuration(value) : value
+                        callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
                     }
                 },
                 ...(yBShown.value && {
@@ -139,7 +143,7 @@
                         display: props.short ? false : true,
                         ticks: {
                             ...DEFAULTS.ticks,
-                            callback: (value: any) => isDuration(aggregator.value[1]?.[1]?.field) ? Utils.humanDuration(value) : value
+                            callback: (value: any) => isDuration(aggregator.value[1]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
                         }
                     },
                 }),
@@ -165,7 +169,7 @@
     const parsedData = computed(() => {
         const rawData = generated.value.results;
         const xAxis = (() => {
-            const values = rawData.map((v) => {
+            const values = rawData?.map((v) => {
                 return parseValue(v[chartOptions.column]);
             });
 
@@ -175,7 +179,7 @@
         const aggregatorKeys = aggregator.value.map(([key]) => key);
 
         const reducer = (array, field, yAxisID) => {
-            if (!array.length) return;
+            if (!array?.length) return;
 
             const {columns} = data;
             const {column, colorByColumn} = chartOptions;
@@ -186,7 +190,10 @@
                 .filter(key => key !== column);
 
             return array.reduce((acc: any, {...params}) => {
-                const stack = `(${fields.map(field => params[field]).join(", ")}): ${aggregator.value.map(agg => agg[0] + " = " + (isDuration(agg[1].field) ? Utils.humanDuration(params[agg[0]]) : params[agg[0]])).join(", ")}`;
+                const stack = [
+                    fields.map((field) => params[field]).join(", "),
+                    aggregator.value.map((agg) => isDuration(agg[1].field) ? `${t("total_duration")}: ${KestraUtils.humanDuration(params[agg[0]])}` : params[agg[0]]).join(", "),
+                ].join(": ");
 
                 if (!acc[stack]) {
                     acc[stack] = {
@@ -253,11 +260,11 @@
 
         let duration: number[] = [];
         if(yBShown.value){
-            const helper = Array.from(new Set(rawData.map((v) => parseValue(v.date)))).sort();
+            const helper = Array.from(new Set(rawData?.map((v) => parseValue(v.date)))).sort();
 
             // Step 1: Group durations by formatted date
             const groupedDurations = {};
-            rawData.forEach(item => {
+            rawData?.forEach(item => {
                 const formattedDate = parseValue(item.date);
                 groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration;
             });
@@ -300,7 +307,7 @@
     }, {deep: true});
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .chart {
     #{--chart-height}: 200px;
 

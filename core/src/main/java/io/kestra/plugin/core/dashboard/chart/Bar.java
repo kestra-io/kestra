@@ -25,7 +25,7 @@ import lombok.experimental.SuperBuilder;
 @Plugin(
     examples = {
         @Example(
-            title = "Display a bar chart with with Executions per Namespace.",
+            title = "Display a bar chart with Executions per Namespace.",
             full = true,
             code = { """
                 charts:

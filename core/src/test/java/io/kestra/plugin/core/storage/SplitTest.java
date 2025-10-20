@@ -1,10 +1,11 @@
 package io.kestra.plugin.core.storage;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Rethrow;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -28,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 class SplitTest {
     @Inject
-    RunContextFactory runContextFactory;
+    TestRunContextFactory runContextFactory;
 
     @Inject
     StorageInterface storageInterface;
@@ -82,6 +83,26 @@ class SplitTest {
         assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(12288)) + "\n");
     }
 
+    @Test
+    void regexPattern() throws Exception {
+        RunContext runContext = runContextFactory.of();
+        URI put = storageUploadWithRegexContent();
+
+        Split result = Split.builder()
+            .from(Property.ofValue(put.toString()))
+            .regexPattern(Property.ofValue("\\[(\\w+)\\]"))
+            .build();
+
+        Split.Output run = result.run(runContext);
+        assertThat(run.getUris().size()).isEqualTo(3);
+        
+        String allContent = readAll(run.getUris());
+        assertThat(allContent).contains("[ERROR] Error message 1");
+        assertThat(allContent).contains("[WARN] Warning message 1");
+        assertThat(allContent).contains("[INFO] Info message 1");
+        assertThat(allContent).contains("[ERROR] Error message 2");
+    }
+
     private List<String> content(int count) {
         return IntStream
             .range(0, count)
@@ -105,7 +126,31 @@ class SplitTest {
         return storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/file/storage/get.yml"),
+            new URI("/file/storage/%s/get.yml".formatted(IdUtils.create())),
+            new FileInputStream(tempFile)
+        );
+    }
+
+    URI storageUploadWithRegexContent() throws URISyntaxException, IOException {
+        File tempFile = File.createTempFile("unit", "");
+
+        List<String> regexContent = List.of(
+            "[ERROR] Error message 1",
+            "[WARN] Warning message 1", 
+            "[INFO] Info message 1",
+            "[ERROR] Error message 2",
+            "[WARN] Warning message 2",
+            "[INFO] Info message 2",
+            "Line without pattern",
+            "[ERROR] Error message 3"
+        );
+
+        Files.write(tempFile.toPath(), regexContent);
+
+        return storageInterface.put(
+            MAIN_TENANT,
+            null,
+            new URI("/file/storage/%s/get.yml".formatted(IdUtils.create())),
             new FileInputStream(tempFile)
         );
     }

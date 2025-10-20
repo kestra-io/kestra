@@ -1,0 +1,63 @@
+// Coloring
+$code-primary: var(--ks-content-link);
+$code-secondary: var(--ks-content-secondary);
+$code-gray: var(--ks-content-primary);
+$code-card-color: var(--ks-background-card);
+$code-border-color: var(--ks-border-primary);
+
+// Typography
+$code-font-sm: var(--el-font-size-small);
+
+.collapse {
+    & * {
+        font-size: $code-font-sm;
+    }
+
+    :deep(*) {
+        --el-collapse-header-bg-color: initial;
+        --el-collapse-header-text-color: #{--ks-content-secondary};
+        --el-collapse-content-bg-color: initial;
+
+        .el-collapse-item__header,
+        .el-collapse-item__content {
+            padding: 0.5rem 0;
+        }
+
+        .el-collapse-item__header {
+            justify-content: space-between;
+            color: $code-secondary;
+        }
+    }
+}
+
+.label {
+    color: $code-gray;
+    font-size: $code-font-sm;
+}
+
+.delete,
+.reorder {
+    height: 32px;
+    cursor: pointer;
+    padding-left: 0;
+    color: $code-gray;
+    text-align: right;
+}
+
+.wrapper {
+    :deep(*) {
+        --el-disabled-text-color: #{$code-gray};
+
+        .el-input__inner,
+        .el-textarea__inner {
+            color: $code-gray;
+            font-size: $code-font-sm;
+        }
+    }
+}
+
+:deep(.is-disabled) {
+    .el-input__inner{
+        -webkit-text-fill-color: var(--ks-content-inactive);
+    }
+}

@@ -1,8 +1,8 @@
 <template>
-    <top-nav-bar v-if="!embed" :title="routeInfo.title" />
+    <TopNavBar v-if="!embed" :title="routeInfo.title" />
     <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
-            <data-table @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="pageSize" :page="pageNumber" :embed="embed">
+            <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="pageSize" :page="pageNumber" :embed="embed">
                 <template #navbar v-if="!embed || showFilters">
                     <KestraFilter
                         prefix="logs"
@@ -15,24 +15,24 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" show-default />
+                    <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault />
                 </template>
 
                 <template #table v-if="logsStore.logs !== undefined && logsStore.logs.length > 0">
                     <div v-loading="isLoading">
                         <div class="logs-wrapper">
-                            <log-line
+                            <LogLine
                                 v-for="(log, i) in logsStore.logs"
                                 :key="`${log.taskRunId}-${i}`"
                                 level="TRACE"
                                 filter=""
-                                :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
+                                :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
                                 :log="log"
                             />
                         </div>
                     </div>
                 </template>
-            </data-table>
+            </DataTable>
         </div>
     </section>
 </template>
@@ -57,8 +57,10 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
     import {useLogsStore} from "../../stores/logs";
+    import {defaultNamespace} from "../../composables/useNamespaces";
+    import {defineComponent} from "vue";
 
-    export default {
+    export default defineComponent({
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         props: {
             logLevel: {
@@ -81,6 +83,10 @@
                 type: Object,
                 default: null
             },
+            reloadLogs: {
+                type: Number,
+                default: undefined
+            }
         },
         data() {
             return {
@@ -109,8 +115,8 @@
                 return this.$route.name === "namespaces/update"
             },
             selectedLogLevel() {
-                const decodedParams = decodeSearchParams(this.$route.query, ["level"], []);
-                const levelFilters = decodedParams.filter(item => item.label === "level");
+                const decodedParams = decodeSearchParams(this.$route.query);
+                const levelFilters = decodedParams.filter(item => item.field === "level");
                 const decoded = levelFilters.length > 0 ? levelFilters[0].value : "INFO";
                 return this.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
             },
@@ -146,16 +152,13 @@
                 ];
             }
         },
-        beforeRouteEnter(to, _, next) {
-            const defaultNamespace = localStorage.getItem(
-                storageKeys.DEFAULT_NAMESPACE,
-            );
+        beforeRouteEnter(to: any, _: any, next: (route?: any) => void) {
             const query = {...to.query};
             let queryHasChanged = false;
 
             const queryKeys = Object.keys(query);
-            if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][PREFIX]"] = defaultNamespace;
+            if (defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][PREFIX]"] = defaultNamespace();
                 queryHasChanged = true;
             }
 
@@ -170,18 +173,12 @@
             }
         },
         methods: {
-            LogFilterLanguage() {
-                return LogFilterLanguage
-            },
-            onDateFilterTypeChange(event) {
-                this.canAutoRefresh = event;
-            },
             showStatChart() {
                 return this.showChart;
             },
-            onShowChartChange(value) {
+            onShowChartChange(value: boolean) {
                 this.showChart = value;
-                localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value);
+                localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value.toString());
                 if (this.showStatChart()) {
                     this.loadStats();
                 }
@@ -191,7 +188,7 @@
                 this.$refs.dashboard.refreshCharts();
                 this.load();
             },
-            loadQuery(base) {
+            loadQuery(base: any) {
                 let queryFilter = this.filters ?? this.queryWithFilter();
 
                 if (this.isFlowEdit) {
@@ -213,7 +210,6 @@
             load() {
                 this.isLoading = true
 
-
                 const data = {
                     page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
                     size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
@@ -231,9 +227,14 @@
 
             },
         },
-    };
+        watch: {
+            reloadLogs(newValue) {
+                if(newValue) this.refresh();
+            },
+        }
+    });
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .shadow {

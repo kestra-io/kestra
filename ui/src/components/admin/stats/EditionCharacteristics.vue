@@ -11,7 +11,7 @@
             </div>
         </template>
         <div class="features-container">
-            <div 
+            <div
                 v-for="feature in features"
                 :key="feature"
                 class="feature-row"
@@ -56,7 +56,7 @@
     defineProps<Props>()
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .edition-card {
     padding: 1rem 2rem;
     background-color: var(--ks-background-body);
@@ -140,6 +140,9 @@
     .action-button {
         margin-top: auto;
         width: 100%;
+        white-space: normal;
+        height: auto;
+        box-sizing: border-box;
     }
 }
 </style>

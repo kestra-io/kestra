@@ -32,7 +32,7 @@ public class SkipExecutionCaseTest {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
@@ -64,7 +64,7 @@ public class SkipExecutionCaseTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format(new Property<>("{{ inputs.testInputs }}"))
+                .format(Property.ofExpression("{{ inputs.testInputs }}"))
                 .build()))
             .build();
     }

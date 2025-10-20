@@ -1,15 +1,16 @@
 <template>
     <MetricsTable
+        v-if="executionsStore.execution"
         ref="table"
-        :task-run-id="route.query.metric?.[0] ?? undefined"
-        :show-task="true"
+        :taskRunId="route.query.metric?.[0] ?? undefined"
+        :showTask="true"
         :execution="executionsStore.execution"
     >
         <template #navbar>
             <KestraFilter
                 :language="metricFilterLang"
                 :placeholder="`${t('display metric for specific task')}...`"
-                legacy-query
+                legacyQuery
             />
         </template>
     </MetricsTable>
@@ -19,7 +20,7 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {useExecutionsStore} from "../../stores/executions";
-    import {MetricFilterLanguage} from "../../composables/monaco/languages/filters/impl/metricFilterLanguage.ts";
+    import {MetricFilterLanguage} from "../../composables/monaco/languages/filters/impl/metricFilterLanguage";
     import MetricsTable from "../executions/MetricsTable.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
 

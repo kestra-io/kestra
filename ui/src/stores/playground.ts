@@ -208,7 +208,19 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {};
 
-        const {data: execution} = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph);
+        let execution;
+        try {
+            const response = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph);
+            execution = response?.data;
+        } catch (error: any) {
+            if (error?.response?.status === 422) {
+                // Invalid entity, most likely due to invalid inputs - allow triggering the task again
+                // See: https://github.com/kestra-io/kestra/issues/11109
+                readyToStart.value = true;
+            }
+
+            throw error;
+        }
 
         // don't keep taskRunIds from previous executions
         // because of https://github.com/kestra-io/kestra/issues/10462
@@ -216,7 +228,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         executionsStore.execution = execution;
 
-        addExecution(execution, graph);
+        if(execution)
+            addExecution(execution, graph);
     }
 
     function updateExecution(execution: ExecutionWithGraph) {

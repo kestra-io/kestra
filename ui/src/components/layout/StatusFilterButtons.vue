@@ -1,12 +1,11 @@
 <template>
     <el-select
-        data-component="FILENAME_PLACEHOLDER"
-        :model-value="value"
+        :modelValue="value"
         @update:model-value="onInput"
         filterable
         clearable
         multiple
-        collapse-tags
+        collapseTags
         :persistent="false"
         :placeholder="$t('state')"
     >
@@ -16,7 +15,7 @@
             :label="item.name"
             :value="item.key"
         >
-            <status :status="item.key" size="small" />
+            <Status :status="item.key" size="small" />
         </el-option>
     </el-select>
 </template>

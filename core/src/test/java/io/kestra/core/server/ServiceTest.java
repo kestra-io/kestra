@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class ServiceTest {
 
     @Test
@@ -57,7 +59,7 @@ class ServiceTest {
 
     @Test
     void shouldReturnValidTransitionForNotRunning() {
-        List<Service.ServiceState> states = List.of(Service.ServiceState.EMPTY);
+        List<Service.ServiceState> states = List.of(Service.ServiceState.INACTIVE);
         states.forEach(status -> Assertions.assertTrue(Service.ServiceState.NOT_RUNNING.isValidTransition(status)));
     }
 
@@ -65,5 +67,10 @@ class ServiceTest {
     void shouldReturnTrueForDisconnectedOrPendingShutDown() {
         Assertions.assertTrue(Service.ServiceState.DISCONNECTED.isDisconnectedOrTerminating());
         Assertions.assertTrue(Service.ServiceState.TERMINATING.isDisconnectedOrTerminating());
+    }
+    
+    @Test
+    void shouldMapRenamedEmptyStateToInactive() {
+        assertThat(Service.ServiceState.fromString("EMPTY")).isEqualTo(Service.ServiceState.INACTIVE);
     }
 }

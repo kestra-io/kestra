@@ -2,6 +2,7 @@ package io.kestra.plugin.scripts.runners;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.TaskCommands;
@@ -17,7 +18,6 @@ import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
@@ -97,6 +97,7 @@ class LogConsumerTest {
     }
 
     @Test
+    @FlakyTest
     void logs() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));

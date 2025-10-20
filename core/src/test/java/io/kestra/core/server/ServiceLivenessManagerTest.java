@@ -1,6 +1,7 @@
 package io.kestra.core.server;
 
 import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.models.ServerType;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;
 import org.junit.jupiter.api.Assertions;
@@ -25,6 +26,7 @@ import java.util.Set;
 import static io.kestra.core.server.ServiceStateTransition.Result.ABORTED;
 import static io.kestra.core.server.ServiceStateTransition.Result.FAILED;
 import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEEDED;
+import static org.mockito.Mockito.when;
 
 @ExtendWith({MockitoExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -59,6 +61,8 @@ public class ServiceLivenessManagerTest {
         );
 
         KestraContext context = Mockito.mock(KestraContext.class);
+        KestraContext.setContext(context);
+        when(context.getServerType()).thenReturn(ServerType.INDEXER);
         this.serviceLivenessManager = new ServiceLivenessManager(
             config,
             new ServiceRegistry(),
@@ -100,8 +104,7 @@ public class ServiceLivenessManagerTest {
         );
 
         // mock the state transition result
-        Mockito
-            .when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
             .thenReturn(response);
 
         // When
@@ -127,8 +130,7 @@ public class ServiceLivenessManagerTest {
         );
 
         // mock the state transition result
-        Mockito
-            .when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
             .thenReturn(response);
 
         // When
@@ -147,8 +149,7 @@ public class ServiceLivenessManagerTest {
         serviceLivenessManager.updateServiceInstance(running, serviceInstanceFor(running));
 
         // mock the state transition result
-        Mockito
-            .when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
+        when(serviceLivenessUpdater.update(Mockito.any(ServiceInstance.class), Mockito.any(Service.ServiceState.class)))
             .thenReturn(new ServiceStateTransition.Response(ABORTED));
 
         // When

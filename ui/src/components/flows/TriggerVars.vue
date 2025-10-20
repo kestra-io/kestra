@@ -1,18 +1,18 @@
 <template>
-    <el-table stripe table-layout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+    <el-table tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
         <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
-                <code>{{ scope.row.key }}</code>
+                {{ getHumanizeLabel(scope.row.key) }}
             </template>
         </el-table-column>
 
         <el-table-column prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.key === 'description'">
-                    <markdown :source="scope.row.value" />
+                    <Markdown :source="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.key === 'cron'">
-                    <cron :cron-expression="scope.row.value" />
+                    <Cron :cronExpression="scope.row.value" />
                 </template>
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
@@ -21,48 +21,50 @@
                     </el-button>
                 </template>
                 <template v-else>
-                    <var-value :value="scope.row.value" :execution="execution" :restrict-uri="true" />
+                    <VarValue :value="scope.row.value" :execution="execution" :restrictUri="true" />
                 </template>
             </template>
         </el-table-column>
     </el-table>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {useI18n} from "vue-i18n";
     import VarValue from "../executions/VarValue.vue";
     import Markdown from "../layout/Markdown.vue";
     import Cron from "../layout/Cron.vue";
 
-    export default {
-        emits: ["on-copy"],
-        components: {
-            VarValue,
-            Markdown,
-            Cron
-        },
-        props: {
-            data: {
-                type: Object,
-                required: true
-            },
-            execution: {
-                type: Object,
-                required: false,
-                default: undefined
-            }
-        },
-        methods: {
-            emit(type, event) {
-                this.$emit(type, event);
-            }
-        }
+    const {t} = useI18n();
+
+    defineProps<{
+        data: Record<string, any>;
+        execution?: Record<string, any>;
+    }>();
+    
+    const emit = defineEmits<{ (e: "on-copy", event: any): void }>();
+
+    const getHumanizeLabel = (key: string): string => {
+        const mappings: Record<string, string> = {
+            "flowId": "flow",
+            "executionId": "current execution",
+            "nextExecutionDate": "next evaluation date",
+            "date": "last trigger date",
+            "updatedDate": "context updated date",
+            "evaluateRunningDate": "evaluation lock date",
+        };
+        const translationKey = mappings[key] ?? key;
+        return t(translationKey);
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     :deep(.markdown) {
         p {
             margin-bottom: auto;
         }
+    }
+
+    :deep(.el-table__cell:nth-child(2) span) {
+        color: var(--ks-content-secondary);
     }
 </style>

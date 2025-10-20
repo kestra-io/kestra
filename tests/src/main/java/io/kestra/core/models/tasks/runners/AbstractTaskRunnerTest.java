@@ -211,6 +211,10 @@ public abstract class AbstractTaskRunnerTest {
     }
 
     protected RunContext runContext(RunContextFactory runContextFactory, Map<String, Object> additionalVars) {
+        return this.runContext(runContextFactory, additionalVars, IdUtils.create());
+    }
+
+    protected RunContext runContext(RunContextFactory runContextFactory, Map<String, Object> additionalVars, String taskRunId) {
         // create a fake flow and execution
         Task task = new Task() {
             @Override
@@ -223,7 +227,7 @@ public abstract class AbstractTaskRunnerTest {
                 return "Task";
             }
         };
-        TaskRun taskRun = TaskRun.builder().id(IdUtils.create()).taskId("task").flowId("flow").namespace("namespace").executionId("execution")
+        TaskRun taskRun = TaskRun.builder().id(taskRunId).taskId("task").flowId("flow").namespace("namespace").executionId("execution")
             .state(new State().withState(State.Type.RUNNING))
             .build();
         Flow flow = Flow.builder().id("flow").namespace("namespace").revision(1)

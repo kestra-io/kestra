@@ -14,10 +14,12 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.Await;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Pause;
+import io.kestra.plugin.core.log.Log;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
@@ -85,19 +87,28 @@ class ExecutionServiceTest {
         assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
-        FlowWithSource flow = flowRepository.findByIdWithSource(TENANT_1, "io.kestra.tests", "restart_last_failed").orElseThrow();
+        String updatedSource = """
+            id: restart_last_failed
+            namespace: io.kestra.tests
+
+            tasks:
+            - id: a
+              type: io.kestra.plugin.core.debug.Return
+              format: replace
+            - id: b
+              type: io.kestra.plugin.core.log.Log
+              message: "{{ task.id }}"
+            - id: c
+              type: io.kestra.plugin.core.log.Log
+              message: "{{taskrun.attemptsCount == 1 ? 'ok' : ko}}"
+            - id: d
+              type: io.kestra.plugin.core.log.Log
+              message: "{{ task.id }}\"""";
+        Flow flow = YamlParser.parse(updatedSource, Flow.class);
         flowRepository.update(
             GenericFlow.of(flow),
-            flow.updateTask(
-                "a",
-                Return.builder()
-                    .id("a")
-                    .type(Return.class.getName())
-                    .format(Property.ofValue("replace"))
-                    .build()
-            )
+            flow
         );
-
 
         Execution restart = executionService.restart(execution, 2);
 

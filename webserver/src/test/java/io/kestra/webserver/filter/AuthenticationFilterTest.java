@@ -4,7 +4,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.webserver.controllers.api.MiscController;
+import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -55,7 +55,7 @@ class AuthenticationFilterTest {
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
 
         httpClientResponseException = assertThrows(HttpClientResponseException.class, () -> client.toBlocking()
-            .exchange(HttpRequest.POST("/api/v1/basicAuth", new MiscController.BasicAuthCredentials(
+            .exchange(HttpRequest.POST("/api/v1/basicAuth", new BasicAuthCredentials(
                 IdUtils.create(),
                 "anonymous",
                 "hacker"
@@ -63,7 +63,7 @@ class AuthenticationFilterTest {
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNAUTHORIZED.getCode());
 
         HttpResponse<?> response = client.toBlocking()
-            .exchange(HttpRequest.POST("/api/v1/basicAuth", new MiscController.BasicAuthCredentials(
+            .exchange(HttpRequest.POST("/api/v1/basicAuth", new BasicAuthCredentials(
                 IdUtils.create(),
                 "anonymous@hacker",
                 "hackerPassword1"
@@ -88,7 +88,7 @@ class AuthenticationFilterTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         response = client.toBlocking()
-            .exchange(HttpRequest.POST("/api/v1/basicAuth",  new MiscController.BasicAuthCredentials(
+            .exchange(HttpRequest.POST("/api/v1/basicAuth", new BasicAuthCredentials(
                 IdUtils.create(),
                 basicAuthConfiguration.getUsername(),
                 basicAuthConfiguration.getPassword()

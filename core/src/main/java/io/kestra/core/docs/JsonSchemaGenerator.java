@@ -164,17 +164,15 @@ public class JsonSchemaGenerator {
     private void findArraysAndFilterOutNullValues(ObjectNode objectNode) {
         objectNode.get("$defs").forEach(jsonNode -> {
             // If a node has a properties section, the code will go through it and begin filtering out any null data types.
-            if(jsonNode.get("properties") instanceof ObjectNode properties) {
-                filterNullValues(properties);
+            Optional<ObjectNode> properties = Optional.ofNullable((ObjectNode) jsonNode.get("properties"));
+            if(properties.isPresent()) {
+                filterNullValues(properties.get());
             }
         });
     }
 
     private void filterNullValues(JsonNode properties) {
         // Checks if properties is null. If so, stop the function.
-        if(properties == null)
-            return;
-
         // Iterate through each property in the node.
         properties.forEach(field -> {
             if(field.get("anyOf") instanceof ArrayNode fieldProperties) {
@@ -183,11 +181,13 @@ public class JsonSchemaGenerator {
                     JsonNode fieldProperty = fieldProperties.get(i);
                     // Turns the data type into a String value.
                     String type = fieldProperty.get("type").asText();
-                    if(type.equals("object"))
+                    if(type.equals("object")) {
                         // If the String is equal to object, it implies that the value is a definition.
                         // As a result, the code goes through the definitions in this step.
-                        filterNullValues(fieldProperty.get("properties"));
-                    else if(type.equals("null")) {
+                        Optional<ObjectNode> innerProperty = Optional.ofNullable((ObjectNode) fieldProperty.get("properties"));
+                        if(innerProperty.isPresent())
+                            filterNullValues(innerProperty.get());
+                    } else if(type.equals("null")) {
                         // If it detects a null data type, it removes the element from the array node.
                         fieldProperties.remove(i);
                         i--;
@@ -862,8 +862,6 @@ public class JsonSchemaGenerator {
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
             findArraysAndFilterOutNullValues(objectNode);
-
-            System.out.println(objectNode.get("def$"));
             
             return MAPPER.convertValue(extractMainRef(objectNode), MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {

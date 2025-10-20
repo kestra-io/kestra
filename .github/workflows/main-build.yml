@@ -1,8 +1,6 @@
 name: Main Workflow
 
 on:
-  # TODO remove
-  pull_request:
   push:
     branches:
       - releases/*
@@ -64,8 +62,7 @@ jobs:
       - run: echo "end CI of failed or success"
       - name: Trigger EE Workflow
         uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f # v4
-#        if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
-        if: "!contains(needs.*.result, 'failure')"
+        if: "!contains(needs.*.result, 'failure') && github.ref == 'refs/heads/develop'"
         with:
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
           repository: kestra-io/kestra-ee

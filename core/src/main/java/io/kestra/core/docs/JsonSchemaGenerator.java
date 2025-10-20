@@ -158,26 +158,47 @@ public class JsonSchemaGenerator {
     private void findArraysAndFilterOutNullValues(ObjectNode objectNode) {
         objectNode.get("$defs").forEach(jsonNode -> {
             if(jsonNode.get("properties") instanceof ObjectNode properties) {
-                filterNullValues(properties);
+                if(jsonNode.findParents("required") instanceof ArrayNode required)
+                    filterNullValues(properties, required);
+                else
+                    filterNullValues(properties, null);
             }
         });
     }
 
-    private void filterNullValues(JsonNode properties) {
+    private void filterNullValues(JsonNode properties, ArrayNode required) {
+        if(properties == null)
+            return;
+
+        System.out.println(required);
+
         properties.forEach(field -> {
             if(field.get("anyOf") instanceof ArrayNode fieldProperties) {
                 for(int i = 0; i < fieldProperties.size(); i++) {
                     JsonNode fieldProperty = fieldProperties.get(i);
                     String type = fieldProperty.get("type").asText();
                     if(type.equals("object"))
-                        filterNullValues(fieldProperty.get("properties"));
+                        filterNullValues(fieldProperty.get("properties"), required);
                     else if(type.equals("null")) {
                         fieldProperties.remove(i);
                         i--;
+                        removeFromRequired(field.asText(), required);
                     }
                 }
             }
         });
+    }
+
+    private void removeFromRequired(String fieldName, ArrayNode required) {
+        if(required == null)
+            return;
+
+        for (int i = 0; i < required.size(); i++) {
+            if (required.get(i).asText().equals(fieldName)) {
+                required.remove(i);
+                i--;
+            }
+        }
     }
 
     
@@ -830,6 +851,8 @@ public class JsonSchemaGenerator {
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
             findArraysAndFilterOutNullValues(objectNode);
+
+            System.out.println(objectNode.get("def$"));
             
             return MAPPER.convertValue(extractMainRef(objectNode), MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {

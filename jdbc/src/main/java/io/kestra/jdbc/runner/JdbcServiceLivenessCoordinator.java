@@ -1,6 +1,8 @@
 package io.kestra.jdbc.runner;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.lock.Lock;
+import io.kestra.core.lock.LockService;
 import io.kestra.core.server.AbstractServiceLivenessCoordinator;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.Service.ServiceState;
@@ -8,6 +10,7 @@ import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.repository.AbstractJdbcServiceInstanceRepository;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
@@ -39,6 +42,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
 
     private final AtomicReference<JdbcExecutor> executor = new AtomicReference<>();
     private final AbstractJdbcServiceInstanceRepository serviceInstanceRepository;
+    private final LockService lockService;
     private final Duration purgeRetention;
 
     /**
@@ -49,11 +53,13 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
      */
     @Inject
     public JdbcServiceLivenessCoordinator(final AbstractJdbcServiceInstanceRepository serviceInstanceRepository,
+                                          final LockService lockService,
                                           final ServiceRegistry serviceRegistry,
                                           final ServerConfig serverConfig,
                                           @Value("${kestra.server.service.purge.retention}") final Duration purgeRetention) {
         super(serviceInstanceRepository, serviceRegistry, serverConfig);
         this.serviceInstanceRepository = serviceInstanceRepository;
+        this.lockService = lockService;
         this.purgeRetention = purgeRetention;
     }
 
@@ -145,6 +151,12 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
                 log.info("Trigger task restart for non-responding workers after timeout: {}.", workerIdsHavingTasksToRestart);
                 executor.get().reEmitWorkerJobsForWorkers(configuration, workerIdsHavingTasksToRestart);
             }
+
+            // Eventually release all owned locks
+            nonRespondingServices.forEach(instance -> {
+                List<Lock> released = lockService.releaseAllLocks(instance.uid());
+                released.forEach(l -> log.info("Released lock {} for non-responding service instance {}", IdUtils.fromParts(l.getCategory(), l.getId()), instance.uid()));
+            });
         });
     }
 

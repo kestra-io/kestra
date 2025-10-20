@@ -4,7 +4,6 @@ import permission from "../models/permission";
 import action from "../models/action";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
-import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {defineStore} from "pinia";
@@ -61,7 +60,7 @@ interface Flow {
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
     inputs?: Input[];
-    errors: { message: string; code?: string, id?: string }[];
+    errors?: { message: string; code?: string, id?: string }[];
 }
 
 export const useFlowStore = defineStore("flow", () => {
@@ -85,7 +84,6 @@ export const useFlowStore = defineStore("flow", () => {
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
-    const flowYamlBeforeAdd = ref<string>("")
     const confirmOutdatedSaveDialog = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
@@ -282,22 +280,13 @@ export const useFlowStore = defineStore("flow", () => {
         });
     }
 
-    async function initYamlSource({viewType}: { viewType: string }) {
+    async function initYamlSource() {
         if (!flow.value) return;
         const {source} = flow.value;
         flowYaml.value = source;
         flowYamlOrigin.value = source;
         if (flowHaveTasks.value) {
-            if (
-                [
-                    editorViewTypes.TOPOLOGY,
-                    editorViewTypes.SOURCE_TOPOLOGY,
-                ].includes(viewType)
-            ) {
-                await fetchGraph();
-            } else {
-                fetchGraph();
-            }
+            fetchGraph();
         }
 
         // validate flow on first load
@@ -378,7 +367,6 @@ export const useFlowStore = defineStore("flow", () => {
                 flow.value = response.data;
                 flowYaml.value = response.data.source;
                 flowYamlOrigin.value = response.data.source;
-                flowYamlBeforeAdd.value = response.data.source;
                 overallTotal.value = 1;
 
                 return response.data;
@@ -836,7 +824,6 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
-        flowYamlBeforeAdd,
         confirmOutdatedSaveDialog,
         haveChange,
         expandedSubflows,

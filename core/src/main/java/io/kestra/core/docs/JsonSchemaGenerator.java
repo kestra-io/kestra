@@ -156,9 +156,7 @@ public class JsonSchemaGenerator {
     }
 
     private void findArraysAndFilterOutNullValues(ObjectNode objectNode) {
-        System.out.println("The function is being run! " + objectNode);
         objectNode.get("$defs").forEach(jsonNode -> {
-            System.out.println("Main node: " + jsonNode + "\n\n");
             if(jsonNode.get("properties") instanceof ObjectNode properties) {
                 filterNullValues(properties);
             }
@@ -170,14 +168,11 @@ public class JsonSchemaGenerator {
             if(field.get("anyOf") instanceof ArrayNode fieldProperties) {
                 for(int i = 0; i < fieldProperties.size(); i++) {
                     JsonNode fieldProperty = fieldProperties.get(i);
-                    System.out.println("Filtering " + fieldProperty);
                     String type = fieldProperty.get("type").asText();
                     if(type.equals("object"))
                         filterNullValues(fieldProperty.get("properties"));
                     else if(type.equals("null")) {
                         fieldProperties.remove(i);
-                        System.out.println("removed");
-                        System.out.println(fieldProperties + "\n");
                         i--;
                     }
                 }

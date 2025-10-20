@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, onBeforeUnmount} from "vue";
+    import {computed, onBeforeUnmount} from "vue";
     import {useRoute, onBeforeRouteLeave} from "vue-router";
     import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -14,16 +14,16 @@
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {useCoreStore} from "../../stores/core";
-    import {editorViewTypes} from "../../utils/constants";
     import {getRandomID} from "../../../scripts/id";
     import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {defaultNamespace} from "../../composables/useNamespaces";
-    import {useTour} from "vue-tour";
+    import {useVueTour} from "../../composables/useVueTour";
 
     const route = useRoute();
     const {t} = useI18n();
-    const tour = useTour("guidedTour");
+
+    const tour = useVueTour("guidedTour");
 
     const blueprintsStore = useBlueprintsStore();
     const coreStore = useCoreStore();
@@ -34,6 +34,8 @@
         const blueprintId = route.query.blueprintId as string;
         const blueprintSource = route.query.blueprintSource as string;
         let flowYaml = "";
+        const id = getRandomID();
+        const selectedNamespace = (route.query.namespace as string) || defaultNamespace() || "company.team";
 
         if (route.query.copy && flowStore.flow) {
             flowYaml = flowStore.flow.source;
@@ -44,15 +46,24 @@
                 id: blueprintId
             });
         } else {
-            const selectedNamespace = (route.query.namespace as string) || defaultNamespace() || "company.team";
-            flowYaml = `id: ${getRandomID()}\nnamespace: ${selectedNamespace}\n\ntasks:\n  - id: hello\n    type: io.kestra.plugin.core.log.Log\n    message: Hello World! 🚀`;
+            flowYaml = `
+id: ${id}
+namespace: ${selectedNamespace}
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀`.trim();
         }
 
-        flowStore.flowYaml = flowYaml;
-        flowStore.flowYamlBeforeAdd = flowYaml;
+        flowStore.flow = {
+            id,
+            namespace: selectedNamespace,
+            ...YAML_UTILS.parse(flowYaml),
+            source: flowYaml,
+        };
 
-        flowStore.flow = {...YAML_UTILS.parse(flowStore.flowYaml), source: flowStore.flowYaml};
-        flowStore.initYamlSource({viewTypes: editorViewTypes.SOURCE_DOC});
+        flowStore.initYamlSource();
     };
 
     const routeInfo = computed(() => {
@@ -61,16 +72,17 @@
         };
     });
 
-    onMounted(() => {
-        flowStore.isCreating = true;
-        if (route.query.reset) {
-            localStorage.setItem("tourDoneOrSkip", "");
-            coreStore.guidedProperties = {...coreStore.guidedProperties, tourStarted: true};
-            tour.start();
-        }
-        setupFlow();
-        editorStore.closeAllTabs();
-    });
+    flowStore.isCreating = true;
+    if (route.query.reset) {
+        localStorage.setItem("tourDoneOrSkip", "");
+        coreStore.guidedProperties = {
+            ...coreStore.guidedProperties,
+            tourStarted: true,
+        };
+        tour.start();
+    }
+    setupFlow();
+    editorStore.closeAllTabs();
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined;

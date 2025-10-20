@@ -1,6 +1,8 @@
 name: Main Workflow
 
 on:
+  # TODO remove
+  pull_request:
   push:
     branches:
       - releases/*
@@ -25,20 +27,16 @@ jobs:
   backend-tests:
     name: Backend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 1
 
   frontend-tests:
     name: Frontend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
 
   publish-develop-docker:
     name: Publish Docker
@@ -80,8 +78,10 @@ jobs:
           event-type: "oss-updated"
 
       # Slack
-      - name: Slack - Notification
+      - run: echo "mark job as failure to forward error to Slack action" && exit 1
         if: ${{ contains(needs.*.result, 'failure') }}
+      - name: Slack - Notification
+        if: ${{ always() && contains(needs.*.result, 'failure') }}
         uses: kestra-io/actions/composite/slack-status@main
         with:
           webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}

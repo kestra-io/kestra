@@ -395,7 +395,7 @@ public class ExecutorService {
                     if (taskRun.getState().isCreated()) {
                         attempts.add(
                             TaskRunAttempt.builder()
-                                .state(new State().withState(State.Type.CREATED))
+                                .state(new State())
                                 .build()
                         );
                         taskRun = taskRun.withAttempts(attempts);

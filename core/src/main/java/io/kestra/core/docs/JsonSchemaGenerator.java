@@ -165,6 +165,7 @@ public class JsonSchemaGenerator {
         objectNode.get("$defs").forEach(jsonNode -> {
             // If a node has a properties section, the code will go through it and begin filtering out any null data types.
             Optional<ObjectNode> properties = Optional.ofNullable((ObjectNode) jsonNode.get("properties"));
+            System.out.println(properties.isPresent());
             if(properties.isPresent()) {
                 filterNullValues(properties.get());
             }
@@ -175,11 +176,13 @@ public class JsonSchemaGenerator {
         // Checks if properties is null. If so, stop the function.
         // Iterate through each property in the node.
         properties.forEach(field -> {
-            if(field.get("anyOf") instanceof ArrayNode fieldProperties) {
-                for(int i = 0; i < fieldProperties.size(); i++) {
+            JsonNode anyOf = field.get("anyOf");
+            if(anyOf instanceof ArrayNode fieldProperties) {
+                // Initiate iterator
+                Iterator<JsonNode> it = fieldProperties.elements();
+                while(it.hasNext()) {
                     // Saves the element into a readable JsonNode object.
-                    JsonNode fieldProperty = fieldProperties.get(i);
-                    System.out.println(fieldProperty.getNodeType());
+                    JsonNode fieldProperty = it.next();
                     // Turns the data type into a String value.
                     String type = fieldProperty.get("type").asText();
                     if(type.equals("object")) {
@@ -190,8 +193,7 @@ public class JsonSchemaGenerator {
                             filterNullValues(innerProperty.get());
                     } else if(type.equals("null")) {
                         // If it detects a null data type, it removes the element from the array node.
-                        fieldProperties.remove(i);
-                        i--;
+                        it.remove();
                     }
                 }
             }

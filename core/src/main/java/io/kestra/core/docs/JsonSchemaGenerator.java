@@ -179,6 +179,7 @@ public class JsonSchemaGenerator {
                 for(int i = 0; i < fieldProperties.size(); i++) {
                     // Saves the element into a readable JsonNode object.
                     JsonNode fieldProperty = fieldProperties.get(i);
+                    System.out.println(fieldProperty.getNodeType());
                     // Turns the data type into a String value.
                     String type = fieldProperty.get("type").asText();
                     if(type.equals("object")) {

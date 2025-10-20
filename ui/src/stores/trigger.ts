@@ -37,7 +37,9 @@ interface TriggerBulkOptions {
 }
 
 export const useTriggerStore = defineStore("trigger", {
-    state: () => ({}),
+    state: () => ({
+        showTriggerTooltip: false
+    }),
 
     actions: {
         async search(options: TriggerSearchOptions) {

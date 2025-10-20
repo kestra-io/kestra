@@ -24,14 +24,21 @@
         </el-table-column>
         <el-table-column prop="id" :label="$t('id')">
             <template #default="scope">
-                <el-tooltip>
-                    <template #content>
-                        <TimeSeriesChart :flowId="scope.row.flowId" :namespace="scope.row.namespace" />
-                    </template>
+                <template v-if="showTriggerTooltip">
+                    <el-tooltip>
+                        <template #content>
+                            <TimeSeriesChart :flowId="scope.row.flowId" :namespace="scope.row.namespace" />
+                        </template>
+                        <code>
+                            {{ scope.row.id }}
+                        </code>
+                    </el-tooltip>
+                </template>
+                <template v-else>
                     <code>
                         {{ scope.row.id }}
                     </code>
-                </el-tooltip>
+                </template>
             </template>
         </el-table-column>
 
@@ -344,6 +351,10 @@
             },
             triggerDefinition() {
                 return this.flowStore.flow.triggers.find(trigger => trigger.id === this.triggerId);
+            },
+            showTriggerTooltip(){
+                const store = useTriggerStore()                
+                return store.showTriggerTooltip
             },
             triggersWithType() {
                 if(!this.flowStore.flow.triggers) return [];

@@ -35,9 +35,11 @@
     import {cssVariable} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
+    import {useTriggerStore} from "../../../stores/trigger"
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n();
+    const store = useTriggerStore()
 
     const route = useRoute();
     const router = useRouter();
@@ -293,6 +295,13 @@
         };
     });
     const {data: generated, generate} = useChartGenerator(props);
+    watch(generated, async (newValue)=>{
+        if(newValue.total !== 0 ){
+            store.showTriggerTooltip = true
+        }else{
+            store.showTriggerTooltip = false
+        }
+    })
 
     function refresh() {
         return generate(getDashboard(route, "id")!);

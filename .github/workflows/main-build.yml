@@ -1,8 +1,6 @@
 name: Main Workflow
 
 on:
-  # TODO remove
-  pull_request:
   push:
     branches:
       - releases/*
@@ -29,7 +27,7 @@ jobs:
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     runs-on: ubuntu-latest
     steps:
-      - run: exit 1
+      - run: exit 0
 
   frontend-tests:
     name: Frontend tests
@@ -42,26 +40,18 @@ jobs:
     name: Publish Docker
     needs: [backend-tests, frontend-tests]
     if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
-    with:
-      plugin-version: 'LATEST-SNAPSHOT'
-    secrets:
-      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
 
 
   publish-develop-maven:
     name: Publish develop Maven
     needs: [ backend-tests, frontend-tests ]
     if: "!failure() && !cancelled() && github.ref == 'refs/heads/develop'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-maven.yml@main
-    secrets:
-      SONATYPE_USER: ${{ secrets.SONATYPE_USER }}
-      SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
-      SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
-      SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
-      SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: exit 0
 
   end:
     runs-on: ubuntu-latest

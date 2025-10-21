@@ -1,0 +1,7 @@
+id: failure-then-success
+namespace: company.team
+
+tasks:
+  - id: fail-and-recover
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ taskrun.attemptsCount < 1}}"

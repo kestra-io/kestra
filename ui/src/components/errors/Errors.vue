@@ -49,7 +49,7 @@
     );
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .img {
         margin-top: 7rem;
         max-height: 156px;

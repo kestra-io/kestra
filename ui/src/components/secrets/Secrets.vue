@@ -11,12 +11,11 @@
         </template>
     </Navbar>
     <section
-        data-component="FILENAME_PLACEHOLDER"
         class="d-flex flex-column fill-height padding-bottom"
         :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
     >
         <EmptyTemplate v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
-            <div class="no-secret-manager-block d-flex flex-column gap-6">
+            <div class="no-secret-manager-block d-flex flex-column gap-6 mt-3">
                 <div class="header-block d-flex align-items-center">
                     <div class="d-flex flex-column">
                         <div class="d-flex flex-row gap-2">
@@ -77,7 +76,7 @@
     </section>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Navbar from "../layout/TopNavBar.vue";
@@ -107,7 +106,7 @@
     useRouteContext(routeInfo);
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .no-secret-manager-block {
         padding: 0 10.75rem;
 

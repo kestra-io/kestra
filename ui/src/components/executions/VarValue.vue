@@ -49,35 +49,34 @@
         id: string;
     }
 
-    const props = defineProps({
-        value: {
-            type: [String, Object, Boolean, Number],
-            required: false,
-            default: undefined
-        },
-        execution: {
-            type: Object as () => Execution,
-            required: false,
-            default: undefined
-        },
-        restrictUri: {
-            type: Boolean,
-            required: false,
-            default: false
-        }
+    interface FileMetadata {
+        size: number;
+    }
+
+    const props = withDefaults(defineProps<{
+        value?: string | object | boolean | number;
+        execution?: Execution;
+        restrictUri?: boolean;
+    }>(), {
+        value: undefined,
+        execution: undefined,
+        restrictUri: false,
     });
 
     const humanSize = ref<string>("");
 
-    const isFile = (value: any): boolean => {
+    const isFile = (value: unknown): value is string => {
         return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
     };
 
-    const isFileValid = (value: any): boolean => {
-        return isFile(value) && humanSize.value?.length > 0 && humanSize.value !== "0B";
+    const isFileValid = (value: unknown): boolean => {
+        return isFile(value) && humanSize.value.length > 0 && humanSize.value !== "0B";
     };
 
-    const isURI = (value: any): boolean => {
+    const isURI = (value: unknown): value is string => {
+        if (typeof value !== "string") {
+            return false;
+        }
         try {
             const url = new URL(value);
             if (props.restrictUri) {
@@ -93,17 +92,19 @@
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;
     };
 
-    const getFileSize = (): void => {
-        if (isFile(props.value)) {
-            fetch(`${apiUrl()}/executions/${props.execution?.id}/file/metas?path=${props.value}`, {
-                method: "GET"
-            })
-                .then(async (response) => {
-                    if (response.ok) {
-                        const data = await response.json();
-                        humanSize.value = Utils.humanFileSize(data.size);
-                    }
+    const getFileSize = async (): Promise<void> => {
+        if (isFile(props.value) && props.execution?.id) {
+            try {
+                const response = await fetch(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`, {
+                    method: "GET"
                 });
+                if (response.ok) {
+                    const data: FileMetadata = await response.json();
+                    humanSize.value = Utils.humanFileSize(data.size);
+                }
+            } catch (error) {
+                console.error("Failed to fetch file size:", error);
+            }
         }
     };
 

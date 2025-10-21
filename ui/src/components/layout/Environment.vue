@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER" v-if="name" id="environment">
+    <div v-if="name" id="environment">
         <strong>{{ name }}</strong>
     </div>
 </template>
@@ -31,7 +31,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 #environment {
     margin-bottom: 1.5rem;
     text-align: center;

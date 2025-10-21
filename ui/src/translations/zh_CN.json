@@ -530,7 +530,7 @@
     "execution not found": "未找到执行 <code>{executionId}</code>",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
     "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
-    "execution replay": "此执行是对<code>{originalId}</code>的重放。",
+    "execution replay": "此执行是以下内容的重放",
     "execution replayed": "此执行已被重放。",
     "execution restarted": "此执行已重新启动{nbRestart}次。",
     "execution statistics": "执行统计",
@@ -778,6 +778,7 @@
     "missingSource": "缺少源",
     "monogram": "字母组合",
     "months": "月份",
+    "more_actions": "更多操作",
     "multi_panel_editor": {
       "close_all_panels": "关闭所有面板",
       "close_all_tabs": "关闭所有标签页",
@@ -790,9 +791,12 @@
     "namespace and id readonly": "属性 `namespace` 和 `id` 不能更改——它们现在被设置为初始值。如果你想重命名一个流程或更改其命名空间，可以创建一个新流程并删除旧的。",
     "namespace files": {
       "create": {
-        "already_exists": "文件名已存在",
         "file": "创建文件",
+        "file_already_exists": "已存在同名文件",
+        "file_error": "创建文件时发生错误",
         "folder": "创建文件夹",
+        "folder_already_exists": "已存在同名文件夹",
+        "folder_error": "创建文件夹时发生错误",
         "label": "创建"
       },
       "delete": {
@@ -803,11 +807,13 @@
         "label": "删除"
       },
       "dialog": {
-        "confirm": "确认",
-        "file_deletion": "确认删除文件",
-        "file_deletion_description": "确定要删除此文件吗？",
-        "folder_deletion": "确认删除文件夹",
-        "folder_deletion_description": "确定要删除此文件夹及其所有内容吗？",
+        "deletion": {
+          "confirm": "确认",
+          "files": "您确定要删除 <code>{count}</code> 个文件吗？",
+          "folders": "您确定要删除 <code>{count}</code> 个文件夹及其所有内容吗？",
+          "mixed": "您确定要删除 <code>{folders}</code> 个文件夹和 <code>{files}</code> 个文件吗？",
+          "title": "确认删除内容"
+        },
         "name": {
           "file": "文件名（带扩展名）：",
           "folder": "文件夹名："
@@ -897,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "添加执行后块",
+        "charts": "添加图表",
         "conditions": "添加条件",
         "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
         "inputs": "添加一个input字段",
+        "numerator": "添加分子",
         "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
-        "triggers": "添加一个trigger"
+        "triggers": "添加一个trigger",
+        "where": "筛选您的数据"
       },
       "fields": {
         "general": {
@@ -946,14 +955,17 @@
       },
       "select": {
         "afterExecution": "选择一个task",
+        "charts": "选择图表类型",
         "conditions": "选择条件",
         "errors": "选择一个task",
         "finally": "选择一个task",
         "inputs": "选择一个input字段类型",
+        "numerator": "选择一个分子",
         "pluginDefaults": "选择插件",
         "task": "选择一个task",
         "tasks": "选择一个task",
-        "triggers": "选择一个trigger"
+        "triggers": "选择一个trigger",
+        "where": "选择筛选器类型"
       },
       "toggle_pebble": "切换Pebble编辑器",
       "unnamed": "无名称",

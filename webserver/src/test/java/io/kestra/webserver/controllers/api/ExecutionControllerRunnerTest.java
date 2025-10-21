@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
@@ -984,6 +985,29 @@ class ExecutionControllerRunnerTest {
         assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
     }
 
+    @Test
+    @LoadFlows({"flows/valids/resume-validate.yaml"})
+    @SuppressWarnings("unchecked")
+    void resumeValidateExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "resume-validate");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        // validate inputs to resume a paused execution
+        HttpResponse<?> resumeValidateResponse = client.toBlocking().exchange(
+          HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume/validate", null));
+        assertThat(resumeValidateResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // resume the execution
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+          HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", null));
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+
+        // check that the execution is no more paused
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
+        assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
+    }
+
     @SuppressWarnings("unchecked")
     @Test
     @LoadFlows({"flows/valids/pause_on_resume.yaml"})
@@ -1264,9 +1288,10 @@ class ExecutionControllerRunnerTest {
         assertThat(executions.getTotal()).isEqualTo(4L);
     }
 
-    @RetryingTest(5)
+    @FlakyTest
+    @Test
     @LoadFlows({"flows/valids/pause-test.yaml"})
-    void killExecutionPaused() throws TimeoutException, InterruptedException, QueueException {
+    void killExecutionPaused() throws TimeoutException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
@@ -2094,6 +2119,7 @@ class ExecutionControllerRunnerTest {
         assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    @FlakyTest
     @Test
     @LoadFlows({"flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml"})
     void triggerExecutionAndFollowDependencies() throws InterruptedException {

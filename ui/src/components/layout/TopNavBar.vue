@@ -1,78 +1,98 @@
 <template>
-    <nav class="d-flex w-100 gap-3 top-bar">
-        <div class="d-flex flex-grow-1 flex-shrink-1 overflow-hidden top-title align-items-center gap-2">
-            <SidebarToggleButton 
-                v-if="layoutStore.sideMenuCollapsed"
-                @toggle="layoutStore.setSideMenuCollapsed(false)" 
-            />
-            <div class="breadcrumb-container d-flex align-items-center">
-                <template v-if="visibleBreadcrumbs && visibleBreadcrumbs.length > 0">
-                    <template v-for="(item, x) in visibleBreadcrumbs" :key="x">
-                        <el-dropdown v-if="item.label === '...'" placement="bottom-start" popperClass="breadcrumb-dropdown">
-                            <span class="breadcrumb-link breadcrumb-ellipsis">...</span>
-                            <template #dropdown>
-                                <el-dropdown-menu>
-                                    <el-dropdown-item v-for="(hiddenItem, y) in item.hidden" :key="y">
-                                        <router-link
-                                            v-if="!hiddenItem.disabled && hiddenItem.link"
-                                            :to="hiddenItem.link"
-                                            class="breadcrumb-link"
-                                        >
-                                            {{ hiddenItem.label }}
-                                        </router-link>
-                                        <span v-else class="breadcrumb-link" :class="{'disabled': hiddenItem.disabled}">
-                                            {{ hiddenItem.label }}
-                                        </span>
-                                    </el-dropdown-item>
-                                </el-dropdown-menu>
+    <nav class="d-flex align-items-center w-100 gap-3 top-bar">
+        <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
+            <div class="d-flex align-items-end gap-2">
+                <SidebarToggleButton
+                    v-if="layoutStore.sideMenuCollapsed"
+                    @toggle="layoutStore.setSideMenuCollapsed(false)"
+                />
+                <div class="d-flex flex-column gap-2">
+                    <div class="breadcrumb-container d-flex align-items-center">
+                        <template v-if="visibleBreadcrumbs && visibleBreadcrumbs.length > 0">
+                            <template v-for="(item, x) in visibleBreadcrumbs" :key="x">
+                                <el-dropdown
+                                    v-if="item.label === '...'"
+                                    placement="bottom-start"
+                                    popperClass="breadcrumb-dropdown"
+                                >
+                                    <span class="breadcrumb-link breadcrumb-ellipsis">...</span>
+                                    <template #dropdown>
+                                        <el-dropdown-menu>
+                                            <el-dropdown-item
+                                                v-for="(hiddenItem, y) in item.hidden"
+                                                :key="y"
+                                            >
+                                                <router-link
+                                                    v-if="!hiddenItem.disabled && hiddenItem.link"
+                                                    :to="hiddenItem.link"
+                                                    class="breadcrumb-link"
+                                                >
+                                                    {{ hiddenItem.label }}
+                                                </router-link>
+                                                <span
+                                                    v-else
+                                                    class="breadcrumb-link"
+                                                    :class="{'disabled': hiddenItem.disabled}"
+                                                >
+                                                    {{ hiddenItem.label }}
+                                                </span>
+                                            </el-dropdown-item>
+                                        </el-dropdown-menu>
+                                    </template>
+                                </el-dropdown>
+                                <router-link
+                                    v-else-if="!item.disabled && item.link"
+                                    :to="item.link"
+                                    class="breadcrumb-link"
+                                >
+                                    {{ item.label }}
+                                </router-link>
+                                <span
+                                    v-else
+                                    class="breadcrumb-link"
+                                    :class="{'disabled': item.disabled}"
+                                >
+                                    {{ item.label }}
+                                </span>
+                                <span
+                                    v-if="x < visibleBreadcrumbs.length - 1"
+                                    class="breadcrumb-separator"
+                                >/</span>
                             </template>
-                        </el-dropdown>
-                        <router-link 
-                            v-else-if="!item.disabled && item.link" 
-                            :to="item.link" 
-                            class="breadcrumb-link"
-                        >
-                            {{ item.label }}
-                        </router-link>
-                        <span 
-                            v-else 
-                            class="breadcrumb-link" 
-                            :class="{'disabled': item.disabled}"
-                        >
-                            {{ item.label }}
-                        </span>
-                        <span v-if="x < visibleBreadcrumbs.length - 1" class="breadcrumb-separator">/</span>
-                    </template>
-                </template>
-                <span class="h5 fw-semibold m-0 d-inline-flex align-items-center">
-                    <slot name="title">
-                        <span class="title-span">{{ title }}</span>
-                        <el-tooltip v-if="description" :content="description">
-                            <Information class="ms-2" />
-                        </el-tooltip>
-                        <Badge v-if="beta" label="Beta" />
-                    </slot>
-                    <el-button
-                        class="star-button"
-                        :class="{'star-active': bookmarked}"
-                        :icon="bookmarked ? StarIcon : StarOutlineIcon"
-                        circle
-                        @click="onStarClick"
-                    />
-                </span>
+                        </template>
+                    </div>
+
+                    <h1 class="h5 fw-semibold m-0 d-inline-flex align-items-center">
+                        <slot name="title">
+                            <span class="title-span">{{ title }}</span>
+                            <el-tooltip v-if="description" :content="description">
+                                <Information class="ms-2" />
+                            </el-tooltip>
+                            <Badge v-if="beta" label="Beta" />
+                        </slot>
+                        <el-button
+                            class="star-button"
+                            :class="{'star-active': bookmarked}"
+                            :icon="bookmarked ? StarIcon : StarOutlineIcon"
+                            circle
+                            @click="onStarClick"
+                        />
+                    </h1>
+                </div>
             </div>
         </div>
+
         <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
             <div class="d-none d-lg-flex align-items-center">
                 <GlobalSearch class="trigger-flow-guided-step" />
             </div>
             <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
-                <el-button 
-                    v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" 
+                <el-button
+                    v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0"
                     @click="deleteLogs"
                 >
                     <TrashCan class="me-2" />
-                    <span>{{ $t("delete logs") }}</span>
+                    <span>{{ $t('delete logs') }}</span>
                 </el-button>
             </div>
             <slot name="additional-right" />
@@ -84,110 +104,105 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
-    import {useRoute} from "vue-router";
-    import GlobalSearch from "./GlobalSearch.vue";
-    import Impersonating from "override/components/auth/Impersonating.vue";
-    import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
-    import StarIcon from "vue-material-design-icons/Star.vue";
-    import Information from "vue-material-design-icons/Information.vue";
-    import Badge from "../global/Badge.vue";
-    import {useLogsStore} from "../../stores/logs";
-    import {useBookmarksStore} from "../../stores/bookmarks";
-    import {useToast} from "../../utils/toast";
-    import {useFlowStore} from "../../stores/flow";
-    import {useLayoutStore} from "../../stores/layout";
-    import SidebarToggleButton from "./SidebarToggleButton.vue";
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { useRoute, RouterLink } from "vue-router";
+import GlobalSearch from "./GlobalSearch.vue";
+import Impersonating from "override/components/auth/Impersonating.vue";
+import TrashCan from "vue-material-design-icons/TrashCan.vue";
+import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
+import StarIcon from "vue-material-design-icons/Star.vue";
+import Information from "vue-material-design-icons/Information.vue";
+import Badge from "../global/Badge.vue";
+import { useLogsStore } from "../../stores/logs";
+import { useBookmarksStore } from "../../stores/bookmarks";
+import { useToast } from "../../utils/toast";
+import { useFlowStore } from "../../stores/flow";
+import { useLayoutStore } from "../../stores/layout";
+import SidebarToggleButton from "./SidebarToggleButton.vue";
 
-    const props = defineProps<{
-        title: string;
-        description?: string;
-        breadcrumb?: { label: string; link?: string; disabled?: boolean, hidden?: any[] }[];
-        beta?: boolean;
-    }>();
+type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"];
 
-    const logsStore = useLogsStore();
-    const bookmarksStore = useBookmarksStore();
-    const flowStore = useFlowStore();
-    const route = useRoute();
-    const layoutStore = useLayoutStore();
+const props = defineProps<{
+    title: string;
+    description?: string;
+    breadcrumb?: { label: string; link?: RouterLinkTo; disabled?: boolean; hidden?: any[] }[];
+    beta?: boolean;
+}>();
 
-    const visibleBreadcrumbs = computed(() => {
-        if (!props.breadcrumb || props.breadcrumb.length <= 3) {
-            return props.breadcrumb;
-        }
+const logsStore = useLogsStore();
+const bookmarksStore = useBookmarksStore();
+const flowStore = useFlowStore();
+const route = useRoute();
+const layoutStore = useLayoutStore();
 
-        const hiddenItems = props.breadcrumb.slice(1, -1);
-        return [
-            props.breadcrumb[0],
-            {
-                label: "...",
-                hidden: hiddenItems,
-                disabled: true
-            },
-            props.breadcrumb[props.breadcrumb.length - 1]
-        ];
-    });
+const visibleBreadcrumbs = computed(() => {
+    if (!props.breadcrumb || props.breadcrumb.length <= 3) {
+        return props.breadcrumb;
+    }
 
-    const shouldDisplayDeleteButton = computed(() => {
-        return route.name === "flows/update" && route.params?.tab === "logs";
-    });
+    const hiddenItems = props.breadcrumb.slice(1, -1);
+    return [
+        props.breadcrumb[0],
+        {
+            label: "...",
+            hidden: hiddenItems,
+            disabled: true,
+        },
+        props.breadcrumb[props.breadcrumb.length - 1],
+    ];
+});
 
-    const bookmarked = computed(() => {
-        return bookmarksStore.pages.some((page) => page.path === currentFavURI.value);
-    });
+const shouldDisplayDeleteButton = computed(() => {
+    return route.name === "flows/update" && route.params?.tab === "logs";
+});
 
-    const currentFavURI = computed(() => {
-        if (route) {
-            return (
-                window.location.pathname +
-                window.location.search
-                    .replace(/&?page=[^&]*/gi, "")
-                    .replace(/\?&/, "?")
-            );
-        }
-        return "";
-    });
-
-    const toast = useToast();
-    const {t} = useI18n();
-
-    const deleteLogs = () => {
-        if (!flowStore.flow) {
-            throw new Error("No flow selected");
-        }
-    
-        toast.confirm(
-            t("delete_all_logs"),
-            async () => {
-                if (!flowStore.flow) {
-                    return;
-                }
-                return logsStore.deleteLogs({
-                    namespace: flowStore.flow?.namespace,
-                    flowId: flowStore.flow?.id
-                });
-            },
+const currentFavURI = computed(() => {
+    if (route) {
+        return (
+            window.location.pathname +
+            window.location.search
+                .replace(/&?page=[^&]*/gi, "")
+                .replace(/\?&/, "?")
         );
-    };
+    }
+    return "";
+});
 
-    const onStarClick = () => {
-        if (bookmarked.value) {
-            bookmarksStore.remove({path: currentFavURI.value});
-        } else {
-            bookmarksStore.add({
-                path: currentFavURI.value,
-                label: props.breadcrumb?.length
-                    ? `${props.breadcrumb[props.breadcrumb.length - 1].label}: ${props.title}`
-                    : props.title,
-            });
-        }
-    };
+const bookmarked = computed(() => {
+    return bookmarksStore.pages.some((page) => page.path === currentFavURI.value);
+});
+
+const toast = useToast();
+const { t } = useI18n();
+
+const deleteLogs = () => {
+    if (!flowStore.flow) throw new Error("No flow selected");
+
+    toast.confirm(t("delete_all_logs"), async () => {
+        if (!flowStore.flow) return;
+        return logsStore.deleteLogs({
+            namespace: flowStore.flow?.namespace,
+            flowId: flowStore.flow?.id,
+        });
+    });
+};
+
+const onStarClick = () => {
+    if (bookmarked.value) {
+        bookmarksStore.remove({ path: currentFavURI.value });
+    } else {
+        bookmarksStore.add({
+            path: currentFavURI.value,
+            label: props.breadcrumb?.length
+                ? `${props.breadcrumb[props.breadcrumb.length - 1].label}: ${props.title}`
+                : props.title,
+        });
+    }
+};
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 nav {
     top: 0;
     position: sticky;
@@ -196,9 +211,12 @@ nav {
     border-bottom: 1px solid var(--ks-border-primary);
     background: var(--ks-background-card);
 
-    .top-title {
+    .top-title,
+    h1,
+    .el-breadcrumb {
         white-space: nowrap;
         max-width: 100%;
+        text-overflow: ellipsis;
         overflow: hidden;
     }
 
@@ -309,7 +327,7 @@ nav {
 :deep(.breadcrumb-dropdown) {
     .el-dropdown-menu__item {
         padding: 0;
-        
+
         .breadcrumb-link {
             padding: 0.5rem 1rem;
             display: block;

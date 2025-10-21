@@ -35,8 +35,8 @@ class DeleteTest {
         Delete delete = Delete.builder()
             .id(Delete.class.getSimpleName())
             .type(Delete.class.getName())
-            .namespace(new Property<>("{{ inputs.namespace }}"))
-            .key(new Property<>("{{ inputs.key }}"))
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
             .build();
 
         final KVStore kv = runContext.namespaceKv(namespaceId);
@@ -61,8 +61,8 @@ class DeleteTest {
         Delete delete = Delete.builder()
             .id(Delete.class.getSimpleName())
             .type(Delete.class.getName())
-            .namespace(new Property<>(namespaceId))
-            .key(new Property<>("my-key"))
+            .namespace(Property.ofValue(namespaceId))
+            .key(Property.ofValue("my-key"))
             .build();
 
         // When

@@ -272,7 +272,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {
-        ArrayList<TaskRun> newTaskRunList = new ArrayList<>(this.taskRunList);
+        ArrayList<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
 
         boolean b = Collections.replaceAll(
             newTaskRunList,
@@ -496,7 +496,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         }
 
         if (resolvedFinally != null && (
-            this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailed(resolvedTasks, parentTaskRun
+            this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailedNoRetry(resolvedTasks, parentTaskRun
         ))) {
             return resolvedFinally;
         }
@@ -581,6 +581,13 @@ public class Execution implements DeletedInterface, TenantInterface {
         return Streams.findLast(taskRuns
             .stream()
             .filter(t -> t.getState().isCreated())
+        );
+    }
+
+    public Optional<TaskRun> findLastSubmitted(List<TaskRun> taskRuns) {
+        return Streams.findLast(taskRuns
+            .stream()
+            .filter(t -> t.getState().getCurrent() == State.Type.SUBMITTED)
         );
     }
 

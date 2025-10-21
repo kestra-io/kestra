@@ -3,10 +3,10 @@ import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
 import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
 import {TopologyClickParams} from "../no-code/utils/types";
-import {Panel} from "../MultiPanelTabs.vue";
 import {useFlowStore} from "../../stores/flow";
 import {usePluginsStore} from "../../stores/plugins";
 import {useNoCodePanels} from "./useNoCodePanels";
+import {Panel} from "../../utils/multiPanelTypes";
 
 export function useTopologyPanels(
     panels: Ref<Panel[]>,

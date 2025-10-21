@@ -109,16 +109,7 @@ tasks:
           "\\")) | (.key + \\"->\\" + .value)"
         }} {{myFunc(my-param_1='value1', my-param_2="value2", myK`
         expect([...(regex.exec(shouldMatchLastFunction) ?? [])]).toEqual([
-            `id: breaking-ui
-namespace: io.kestra.blx
-description: "Upload multiple files to s3 sequentially"
-
-
-tasks:
-  - id: placeholder
-    type: io.kestra.plugin.core.log.Log
-    message: |-
-        {{
+            `{{
           "to_entries[] | select(.key | startswith(\\"" +
           inputs.selector +
           "\\")) | (.key + \\"->\\" + .value)"

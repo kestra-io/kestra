@@ -11,6 +11,7 @@ export interface EditorTabProps {
     flow?: boolean;
     content?: string;
     dirty?: boolean;
+    namespaceFiles?: boolean;
 }
 
 export const useEditorStore = defineStore("editor", () => {

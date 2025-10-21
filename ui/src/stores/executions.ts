@@ -28,6 +28,7 @@ export interface Execution{
         duration: string;
     }
     inputs?: Record<string, any>;
+    namespace: string;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {

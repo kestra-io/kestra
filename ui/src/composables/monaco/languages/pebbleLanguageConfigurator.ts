@@ -6,6 +6,13 @@ import RegexProvider from "../../../utils/regex";
 import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import {useI18n} from "vue-i18n";
 import {ComputedRef} from "vue";
+
+// Import parent language modules to ensure they're registered
+import "monaco-editor/esm/vs/language/typescript/monaco.contribution";
+import "monaco-editor/esm/vs/basic-languages/python/python.contribution";
+import "monaco-editor/esm/vs/basic-languages/go/go.contribution";
+import "monaco-editor/esm/vs/basic-languages/php/php.contribution";
+
 import IPosition = monaco.IPosition;
 import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
@@ -189,28 +196,51 @@ export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
             registeredLanguages.add(this.language);
             monaco.languages.register({id: this.language});
 
-            // FIXME: get the tokenizer from the root language
-            const rootLanguageTokenizer = {root: []} as  {
-                [name: string]: monaco.languages.IMonarchLanguageRule[];
+            // Get the tokenizer from the root language
+            const languagesService = monaco.languages.getLanguages();
+            const rootLanguageDefinition = languagesService.find(l => l.id === this._rootLanguage);
+            const customTokenizer: Record<string, any> = {
+                tokenizer: {
+                    root: [
+                        [/\{\{/, {token: "delimiter.bracket", next: "@pebbleInDoubleCurly"}],
+                    ],
+                    pebbleInDoubleCurly: [
+                        [/-?\}\}/, {token: "delimiter.bracket", next: "@pop"}],
+                    ],
+                }
             };
 
-            // Register a tokens provider for the language
-            // extending the root language
-            monaco.languages.setMonarchTokensProvider(this.language, {
-                tokenizer: {
-                    ...rootLanguageTokenizer,
-                    root: [
-                        // put the pebble tokenizer before the root language tokenizer
-                        [/\{\{/, {token: "delimiter.pebble", next: "@pebble"}],
+            // Load the parent language to ensure its tokenizer is available
+            if (rootLanguageDefinition && (rootLanguageDefinition as any).loader) {
+                (rootLanguageDefinition as any).loader().then((loaded: any) => {
+                    const {language: rootLanguageDefsLoaded} = loaded;
+                    if(rootLanguageDefsLoaded === undefined) return
+                    for (const key in rootLanguageDefsLoaded) {
+                        const value = rootLanguageDefsLoaded[key];
+                        if (key === "tokenizer") {
+                            for (const category in value) {
+                            const tokenDefs = value[category];
+                                // eslint-disable-next-line no-prototype-builtins
+                                if (!customTokenizer.tokenizer.hasOwnProperty(category)) {
+                                    customTokenizer.tokenizer[category] = [];
+                                }
+                                if (Array.isArray(tokenDefs)) {
+                                    customTokenizer.tokenizer[category].push(...rootLanguageDefsLoaded.tokenizer[category], ...tokenDefs)
+                                }
+                            }
+                        } else if (Array.isArray(value)) {
+                            // eslint-disable-next-line no-prototype-builtins
+                            if (!customTokenizer.hasOwnProperty(key)) {
+                                customTokenizer[key] = [];
+                            }
 
-                        // include the root language tokenizer
-                        ...rootLanguageTokenizer.root,
-                    ],
-                    pebble: [
-                        [/\}\}/, {token: "delimiter.pebble", next: "@pop"}],
-                    ],
-                },
-            });
+                            customTokenizer[key].push(...rootLanguageDefsLoaded[key], ...value)
+                        }
+                    }
+
+                    monaco.languages.setMonarchTokensProvider(this.language, rootLanguageDefsLoaded);
+                })
+            }
         }
 
         registerPebbleAutocompletion(autoCompletionProviders, autoCompletion, [this.language]);

@@ -248,19 +248,6 @@ public class ExecutorService {
             Optional<State.Type> state;
             try {
                  state = flowableParent.resolveState(runContext, execution, parentTaskRun);
-                 /// flowable attempt state transition to terminal
-                 if(state.isPresent())
-                 {
-                     List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
-                         .map(ArrayList::new)
-                         .orElseGet(ArrayList::new);
-                     TaskRunAttempt updated = attempts.getLast().withState(state.get());
-                     attempts.set( attempts.size() - 1, updated);
-                     parentTaskRun = parentTaskRun
-                         .withAttempts(attempts)
-                         .withState(state.get());
-                     execution = execution.withTaskRun(parentTaskRun);
-                 }
             } catch (Exception e) {
                 // This will lead to the next task being still executed, but at least Kestra will not crash.
                 // This is the best we can do, Flowable task should not fail, so it's a kind of panic mode.
@@ -281,9 +268,17 @@ public class ExecutorService {
                         Output outputs = flowableParent.outputs(runContext);
                         Map<String, Object> outputMap = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), outputs == null ? null : outputs.toMap());
                         Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
+                        /// flowable attempt state transition to terminated
+                            List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
+                                .map(ArrayList::new)
+                                .orElseGet(ArrayList::new);
+                            State.Type endedState=endedTask.get().getTaskRun().getState().getCurrent();
+                            TaskRunAttempt updated = attempts.getLast().withState(endedState);
+                            attempts.set( attempts.size() - 1, updated);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
                             .withOutputs(variables)
+                            .withAttempts(attempts)
                         ));
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);

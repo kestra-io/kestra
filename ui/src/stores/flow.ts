@@ -4,7 +4,6 @@ import permission from "../models/permission";
 import action from "../models/action";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
-import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useEditorStore} from "./editor";
@@ -63,7 +62,7 @@ interface Flow {
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
     inputs?: Input[];
-    errors: { message: string; code?: string, id?: string }[];
+    errors?: { message: string; code?: string, id?: string }[];
 }
 
 export const useFlowStore = defineStore("flow", () => {
@@ -87,7 +86,6 @@ export const useFlowStore = defineStore("flow", () => {
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
-    const flowYamlBeforeAdd = ref<string>("")
     const confirmOutdatedSaveDialog = ref<boolean>(false)
     const haveChange = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
@@ -336,22 +334,13 @@ export const useFlowStore = defineStore("flow", () => {
         });
     }
 
-    async function initYamlSource({viewType}: { viewType: string }) {
+    async function initYamlSource() {
         if (!flow.value) return;
         const {source} = flow.value;
         flowYaml.value = source;
         flowYamlOrigin.value = source;
         if (flowHaveTasks.value) {
-            if (
-                [
-                    editorViewTypes.TOPOLOGY,
-                    editorViewTypes.SOURCE_TOPOLOGY,
-                ].includes(viewType)
-            ) {
-                await fetchGraph();
-            } else {
-                fetchGraph();
-            }
+            fetchGraph();
         }
 
         // validate flow on first load
@@ -367,7 +356,7 @@ export const useFlowStore = defineStore("flow", () => {
             if (options.onlyTotal) {
                 return response.data.total;
             }
-            
+
             else {
                 flows.value = response.data.results
                 total.value = response.data.total
@@ -432,7 +421,6 @@ export const useFlowStore = defineStore("flow", () => {
                 flow.value = response.data;
                 flowYaml.value = response.data.source;
                 flowYamlOrigin.value = response.data.source;
-                flowYamlBeforeAdd.value = response.data.source;
                 overallTotal.value = 1;
 
                 return response.data;
@@ -468,7 +456,7 @@ export const useFlowStore = defineStore("flow", () => {
 
                     const editorStore = useEditorStore();
                     const currentTab = editorStore.current;
-                    
+
                     // The dirty flag for the flow tab was cleared using a hardcoded name,
                     // which failed if the tab's actual name and path was different.
                     // update the dirty flag clearing logic to target the actual current flow tab (using its real name and path), ensuring the Save button disables after a successful save.
@@ -909,7 +897,6 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
-        flowYamlBeforeAdd,
         confirmOutdatedSaveDialog,
         haveChange,
         expandedSubflows,

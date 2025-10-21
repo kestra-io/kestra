@@ -28,9 +28,9 @@ export default async function configure(
             yamlAutocompletion = new YamlAutoCompletion();
         }
         await new YamlLanguageConfigurator(yamlAutocompletion).configure(pluginsStore, t, editorInstance);
-    } else if(language.endsWith("-pebble")) {
+    } else if(language === "plaintext-pebble") {
         const autoCompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, computed(() => flowStore.flowYaml));
-        await new PebbleLanguageConfigurator(language, autoCompletion, computed(() => flowStore.flowYaml))
+        await new PebbleLanguageConfigurator(autoCompletion, computed(() => flowStore.flowYaml))
             .configure(pluginsStore, t, editorInstance);
     } else if (filterLanguages.some(languageRegex => languageRegex.test(language))) {
         await new FilterLanguageConfigurator(language, domain)

@@ -935,6 +935,7 @@
 </script>
 
 <style scoped lang="scss">
+    @import "../../styles/layout/root-dark";
     .ks-monaco-editor {
         position: absolute;
         width: 100%;
@@ -945,19 +946,15 @@
     .main-editor > #editorWrapper .monaco-editor {
         padding: 1rem 0 0 1rem;
     }
-</style>
 
-<style lang="scss">
-    @import "../../styles/layout/root-dark";
-
-    .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
+    .custom-dark-vs-theme .ks-monaco-editor :deep(.sticky-widget) {
         background-color: var(--ks-background-input);
     }
 
     .monaco-editor {
-        .monaco-scrollable-element {
-            > .scrollbar {
-                .slider {
+        :deep(.monaco-scrollable-element) {
+            :deep(> .scrollbar) {
+                :deep(.slider) {
                     width: 13px !important;
                     background: var(--ks-border-primary) !important;
                     border-radius: 8px !important;
@@ -965,7 +962,7 @@
                 }
             }
 
-            .monaco-list-row[aria-label="_DATE_PICKER_"] {
+            :deep(.monaco-list-row[aria-label="_DATE_PICKER_"]) {
                 padding-right: 0 !important;
             }
         }

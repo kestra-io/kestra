@@ -10,11 +10,11 @@ tasks:
         - "*.txt"
     tasks:
       - id: exists
-        type: io.kestra.plugin.core.storage.LocalFiles
+        type: io.kestra.plugin.core.flow.WorkingDirectoryTest$LocalFiles
         outputs:
           - hello.txt
       - id: inputFiles
-        type: io.kestra.plugin.core.storage.LocalFiles
+        type: io.kestra.plugin.core.flow.WorkingDirectoryTest$LocalFiles
         inputs:
           hello.txt: |
             HELLO WORLD

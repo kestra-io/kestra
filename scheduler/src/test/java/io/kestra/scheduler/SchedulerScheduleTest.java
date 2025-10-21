@@ -499,7 +499,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 List.of(
                     Expression.builder()
                         .type(Expression.class.getName())
-                        .expression(new Property<>("{{ trigger.date | date() < now() }}"))
+                        .expression(Property.ofExpression("{{ trigger.date | date() < now() }}"))
                         .build()
                 )
             )

@@ -1081,7 +1081,7 @@ class FlowControllerTest {
         return Return.builder()
             .id(id)
             .type(Return.class.getName())
-            .format(new Property<>(format))
+            .format(Property.ofValue(format))
             .build();
     }
 

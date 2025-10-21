@@ -307,19 +307,19 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/each-parallel-nested.yaml"})
+    @LoadFlows({"flows/valids/foreach-concurrent-no-limit.yaml"})
     void replayEachPara() throws Exception {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-parallel-nested");
-        assertThat(execution.getTaskRunList()).hasSize(11);
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "foreach-concurrent-no-limit");
+        assertThat(execution.getTaskRunList()).hasSize(7);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), null);
+        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("log", List.of("value 1")).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList()).hasSize(8);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getHistories()).hasSize(4);
+        assertThat(restart.getTaskRunList()).hasSize(2);
+        assertThat(restart.findTaskRunByTaskIdAndValue("for_each", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        assertThat(restart.findTaskRunByTaskIdAndValue("for_each", List.of()).getState().getHistories()).hasSize(4);
 
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());
@@ -327,35 +327,23 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/each-parallel-nested.yaml"}, tenantId = TENANT_1)
+    @LoadFlows(value = {"flows/valids/foreach-concurrent-no-limit.yaml"}, tenantId = TENANT_1)
     void markAsEachPara() throws Exception {
-        Execution execution = runnerUtils.runOne(TENANT_1, "io.kestra.tests", "each-parallel-nested");
+        Execution execution = runnerUtils.runOne(TENANT_1, "io.kestra.tests", "foreach-concurrent-no-limit");
         Flow flow = flowRepository.findByExecution(execution);
 
-        assertThat(execution.getTaskRunList()).hasSize(11);
+        assertThat(execution.getTaskRunList()).hasSize(7);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.markAs(execution, flow, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), State.Type.FAILED);
+        Execution restart = executionService.markAs(execution, flow, execution.findTaskRunByTaskIdAndValue("log", List.of("value 1")).getId(), State.Type.FAILED);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getMetadata().getAttemptNumber()).isEqualTo(2);
         assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList()).hasSize(11);
-        assertThat(restart.findTaskRunByTaskIdAndValue("1_each", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getHistories()).hasSize(4);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-
-        restart = executionService.markAs(execution, flow, execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId(), State.Type.FAILED);
-
-        assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList()).hasSize(11);
-        assertThat(restart.findTaskRunByTaskIdAndValue("1_each", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getHistories()).hasSize(5);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(restart.getTaskRunList()).hasSize(7);
+        assertThat(restart.findTaskRunByTaskIdAndValue("for_each", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        assertThat(restart.findTaskRunByTaskIdAndValue("log", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(restart.findTaskRunByTaskIdAndValue("log", List.of("value 1")).getState().getHistories()).hasSize(5);
     }
 
     @Test

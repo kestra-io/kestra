@@ -25,6 +25,33 @@
     </div>
 </template>
 
+<script lang="ts">
+    import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+    const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, as: "raw"});
+
+    let tries = 10
+    const intervalId = setInterval(() => {
+        if(monaco.languages.typescript) {
+            for(const path in NodeTypesRaw){
+                const NodeTypesRawContent = NodeTypesRaw[path].toString();
+                // We add every .d.ts file to Monaco
+                monaco.languages.typescript.typescriptDefaults.addExtraLib(
+                    NodeTypesRawContent,
+                    `file://${path}`
+                );
+            }
+            clearInterval(intervalId);
+        } else if(tries-- <= 0) {
+            // only give it a second to try initialization
+            clearInterval(intervalId);
+        }
+    }, 100);
+
+    export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
+
+    export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
+</script>
+
 <script setup lang="ts">
     import {
         computed,
@@ -46,7 +73,7 @@
     import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess";
     import "monaco-editor/esm/vs/language/json/monaco.contribution";
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution";
-    import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+
     import {editor} from "monaco-editor/esm/vs/editor/editor.api";
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
@@ -69,11 +96,13 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useFlowStore} from "../../stores/flow";
     import EditorType = editor.EditorType;
+    import {useRoute} from "vue-router";
+    import {useEditorStore} from "../../stores/editor";
 
     const currentInstance = getCurrentInstance()!;
     const {t} = useI18n();
 
-    export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
+
 
     window.MonacoEnvironment = {
         getWorker(_moduleId, label) {
@@ -102,8 +131,6 @@
         }
     });
 
-    import {useRoute} from "vue-router";
-    import {useEditorStore} from "../../stores/editor";
     const route = useRoute();
 
     const highlightLine = () => {
@@ -187,7 +214,6 @@
         });
     }
 
-    export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
     const props = withDefaults(defineProps<{
         path?: string,
         original?: string,

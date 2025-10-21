@@ -1,100 +1,92 @@
+import {ref} from "vue";
 import {defineStore} from "pinia";
-import {apiUrl} from "override/utils/route";
+
+import {useAxios} from "../utils/axios";
+
+import {useMiscStore} from "override/stores/misc";
+
 import {trackBlueprintSelection} from "../utils/tabTracking";
 
-const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
+export type Type = "community" | "custom";
+export type Kind = "flow" | "dashboard" | "app";
 
-interface Blueprint {
-    [key: string]: any;
-}
+interface Options {
+    type: Type;
 
-interface BlueprintOptions {
-    kind?: string;
-    type: string;
+    kind?: Kind;
     id?: string;
     params?: Record<string, any>;
 }
 
-interface State {
-    blueprint: Blueprint | undefined;
-    blueprints: Blueprint[];
-    source: string | undefined;
-    graph: any | undefined;
+interface Blueprint {
+    id: string;
+    [key: string]: any;
 }
 
-export const useBlueprintsStore = defineStore("blueprints", {
-    state: (): State => ({
-        blueprint: undefined,
-        blueprints: [],
-        source: undefined,
-        graph: undefined
-    }),
-    actions: {
-        async getBlueprint(options: BlueprintOptions) {
-            const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
-            const response = await this.$http.get(
-                `${apiUrl()}/blueprints/${options.type}${kind}/${options.id}`
-            );
-            this.blueprint = response.data;
+const API_URL = "https://api.kestra.io/v1";
+const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
 
-            if (response.data?.id) {
-                trackBlueprintSelection(response.data.id);
-            }
+const getKind = ({kind, type}: Options) => kind && type !== "custom" ? `${kind === "flow" ? "FLOW" : kind}` : "";
 
-            return response.data;
-        },
+export const useBlueprintsStore = defineStore("blueprints", () => {
+    const axios = useAxios();
 
-        async getBlueprintSource(options: BlueprintOptions) {
-            const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
-            const response = await this.$http.get(
-                `${apiUrl()}/blueprints/${options.type}${kind}/${options.id}/source`
-            );
-            this.source = response.data;
-            return response.data;
-        },
+    const miscStore = useMiscStore();
+    const {edition, version} = miscStore.configs || {};
 
-        async getBlueprintGraph(options: BlueprintOptions) {
-            const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
-            const response = await this.$http.get(
-                `${apiUrl()}/blueprints/${options.type}${kind}/${options.id}/graph`
-            );
-            this.graph = response.data;
-            return response.data;
-        },
+    const blueprints = ref<Blueprint[]>([]);
+    const blueprint = ref<Blueprint | undefined>(undefined);
+    const source = ref<string | undefined>(undefined);
+    const graph = ref<any | undefined>(undefined);
 
-        async getBlueprintsForQuery(options: BlueprintOptions) {
-            const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
-            const response = await this.$http.get(
-                `${apiUrl()}/blueprints/${options.type}${kind}`,
-                {params: options.params, ...VALIDATE}
-            );
-            this.blueprints = response.data;
-            return response.data;
-        },
+    const getBlueprints = async (options: Options) => {
+        const response = await axios.get(`${API_URL}/blueprints/kinds/${getKind(options)}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`, {params: options.params, ...VALIDATE});
 
-        async getBlueprintTagsForQuery(options: BlueprintOptions) {
-            const kind = options.kind && options.type !== "custom" ? `/${options.kind}` : "";
-            const response = await this.$http.get(
-                `${apiUrl()}/blueprints/${options.type}${kind}/tags`,
-                {params: options.params, ...VALIDATE}
-            );
-            return response.data;
-        },
+        blueprints.value = response.data;
+        return response.data;
+    };
 
-        setBlueprints(blueprints: Blueprint[]) {
-            this.blueprints = blueprints;
-        },
+    const getBlueprint = async (options: Options) => {
+        const response = await axios.get(`${API_URL}/blueprints/kinds/${getKind(options)}/${options.id}/versions/${version}`);
 
-        setBlueprint(blueprint: Blueprint) {
-            this.blueprint = blueprint;
-        },
-
-        setSource(source: string) {
-            this.source = source;
-        },
-
-        setGraph(graph: any) {
-            this.graph = graph;
+        if (response.data?.id) {
+            trackBlueprintSelection(response.data.id);
         }
-    }
+
+        blueprint.value = response.data;
+        return response.data;
+    };
+
+    const getBlueprintSource = async (options: Options) => {
+        const response = await axios.get(`${API_URL}/blueprints/kinds/${getKind(options)}/${options.id}/versions/${version}/source`);
+
+        source.value = response.data;
+        return response.data;
+    };
+
+    const getBlueprintGraph = async (options: Options) => {
+        const response = await axios.get(`${API_URL}/blueprints/kinds/${getKind(options).toLowerCase()}/${options.id}/versions/${version}/graph`);
+
+        graph.value = response.data;
+        return response.data;
+    };
+
+    const getBlueprintTags = async (options: Options) => {
+        const response = await axios.get(`${API_URL}/blueprints/kinds/${getKind(options)}/versions/${version}/tags`, {params: options.params, ...VALIDATE});
+
+        return response.data;
+    };
+
+    return {
+        blueprint,
+        blueprints,
+        source,
+        graph,
+
+        getBlueprints,
+        getBlueprint,
+        getBlueprintSource,
+        getBlueprintGraph,
+        getBlueprintTags,
+    };
 });

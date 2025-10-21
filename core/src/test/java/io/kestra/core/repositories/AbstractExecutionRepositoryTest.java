@@ -512,6 +512,71 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
     }
 
+    @Test
+    protected void dailyStatisticsEuropePragueMidnight() throws InterruptedException {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        
+        // Create executions around midnight in Europe/Prague timezone
+        ZoneId pragueZone = ZoneId.of("Europe/Prague");
+        
+        // Execution at 23:30 Prague time (should be in previous day)
+        ZonedDateTime beforeMidnight = ZonedDateTime.of(2025, 1, 15, 23, 30, 0, 0, pragueZone);
+        Execution execution1 = Execution.builder()
+            .id(IdUtils.create())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId("midnight-test")
+            .flowRevision(1)
+            .state(new State(State.Type.SUCCESS, List.of(
+                new State.History(State.Type.CREATED, beforeMidnight.minusMinutes(1).toInstant()),
+                new State.History(State.Type.SUCCESS, beforeMidnight.toInstant())
+            )))
+            .taskRunList(List.of())
+            .build();
+        executionRepository.save(execution1);
+        
+        // Execution at 00:30 Prague time (should be in next day)
+        ZonedDateTime afterMidnight = ZonedDateTime.of(2025, 1, 16, 0, 30, 0, 0, pragueZone);
+        Execution execution2 = Execution.builder()
+            .id(IdUtils.create())
+            .namespace(NAMESPACE)
+            .tenantId(tenant)
+            .flowId("midnight-test")
+            .flowRevision(1)
+            .state(new State(State.Type.SUCCESS, List.of(
+                new State.History(State.Type.CREATED, afterMidnight.minusMinutes(1).toInstant()),
+                new State.History(State.Type.SUCCESS, afterMidnight.toInstant())
+            )))
+            .taskRunList(List.of())
+            .build();
+        executionRepository.save(execution2);
+
+        // mysql need some time ...
+        Thread.sleep(500);
+
+        // Query with Prague timezone - should show both days
+        ZonedDateTime startDate = ZonedDateTime.of(2025, 1, 15, 0, 0, 0, 0, pragueZone);
+        ZonedDateTime endDate = ZonedDateTime.of(2025, 1, 17, 0, 0, 0, 0, pragueZone);
+        
+        List<DailyExecutionStatistics> result = executionRepository.dailyStatistics(
+            null,
+            tenant,
+            null,
+            null,
+            null,
+            startDate,
+            endDate,
+            null,
+            Collections.emptyList());
+
+        // Should have 2 days of data
+        assertThat(result.size()).isEqualTo(2);
+        
+        // Both days should have 1 execution each
+        assertThat(result.get(0).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
+        assertThat(result.get(1).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
+    }
+
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     protected void executionsCount() throws InterruptedException {

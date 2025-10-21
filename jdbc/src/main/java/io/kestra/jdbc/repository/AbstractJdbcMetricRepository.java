@@ -361,7 +361,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     ) {
         List<MetricAggregation> filledResult = new ArrayList<>();
         ZonedDateTime currentDate = startDate;
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(ZoneId.systemDefault());
+        ZoneId zone = startDate != null ? startDate.getZone() : ZoneId.systemDefault();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format).withZone(zone);
         while (currentDate.isBefore(endDate)) {
             String finalCurrentDate = currentDate.format(formatter);
             MetricAggregation metricStat = result.stream()

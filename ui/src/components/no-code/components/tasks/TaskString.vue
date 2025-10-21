@@ -52,7 +52,7 @@
             :fullHeight="false"
             :shouldFocus="false"
             schemaType="flow"
-            :lang="editorLanguage"
+            :lang="`${editorLanguage}-pebble`"
             input
             @update:model-value="onInput"
             :largeSuggestions="false"
@@ -84,11 +84,11 @@
     // Function to detect programming language from task type
     function detectLanguageFromTaskType(): string {
         if (!props.task?.type) {
-            return "plaintext-pebble";
+            return "plaintext";
         }
 
         const taskType = props.task.type;
-        
+
         // Check for script tasks and extract language
         if (taskType.includes("io.kestra.plugin.scripts.")) {
             if (taskType.includes(".python.")) {
@@ -122,18 +122,18 @@
             }
         }
 
-        return "plaintext-pebble";
+        return "plaintext";
     }
 
     // Computed property for editor language
     const editorLanguage = computed(() => {
         // Only apply syntax highlighting for script and commands fields
-        if (props.root === "script" || props.root === "commands" || 
+        if (props.root === "script" || props.root === "commands" ||
             props.root?.endsWith(".script") || props.root?.endsWith(".commands")) {
             return detectLanguageFromTaskType();
         }
-        
-        return "plaintext-pebble";
+
+        return "plaintext";
     });
 
     const values = computed(() => {

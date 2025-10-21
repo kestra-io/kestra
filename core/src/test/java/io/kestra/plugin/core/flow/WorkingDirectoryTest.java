@@ -10,18 +10,27 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.FilesService;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import java.io.ByteArrayInputStream;
@@ -36,6 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -344,6 +355,44 @@ public class WorkingDirectoryTest {
 
         private void put(String path, String content, String namespace) throws IOException, URISyntaxException {
             namespaceFactory.of(MAIN_TENANT, namespace, storageInterface).putFile(Path.of(path), new ByteArrayInputStream(content.getBytes()));
+        }
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFilesOutput> {
+        @Schema(
+            title = "The files to be created on the local filesystem; it can be a map or a JSON object.",
+            oneOf = { Map.class, String.class }
+        )
+        @PluginProperty(dynamic = true)
+        private Object inputs;
+
+        @Schema(
+            title = "The files from the local filesystem to be sent to the Kestra's internal storage",
+            description = "Must be a list of [glob](https://en.wikipedia.org/wiki/Glob_(programming)) expressions relative to the current working directory, some examples: `my-dir/**`, `my-dir/*/**` or `my-dir/my-file.txt`."
+        )
+        private Property<List<String>> outputs;
+
+        @Override
+        public LocalFiles.LocalFilesOutput run(RunContext runContext) throws Exception {
+            FilesService.inputFiles(runContext, this.inputs);
+            Map<String, URI> outputFiles = FilesService.outputFiles(runContext, runContext.render(this.outputs).asList(String.class));
+
+            return LocalFiles.LocalFilesOutput.builder()
+                .uris(outputFiles)
+                .build();
+        }
+
+        @Builder
+        @Getter
+        public static class LocalFilesOutput implements Output {
+            @Schema(title = "The URI of the files that have been sent to the Kestra's internal storage")
+            private Map<String, URI> uris;
         }
     }
 }

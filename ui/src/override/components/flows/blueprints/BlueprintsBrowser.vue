@@ -23,7 +23,7 @@
                             <el-col :xs="24">
                                 <el-input
                                     v-model="searchText"
-                                    :placeholder="$t('search.blueprint')"
+                                    :placeholder="$t('search blueprint')"
                                     clearable
                                     @input="updateSearch"
                                 />

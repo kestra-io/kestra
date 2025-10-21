@@ -2,7 +2,7 @@
     <template v-if="ready">
         <ExecutionRootTopBar :routeInfo="routeInfo" />
         <Tabs
-            :routeName="$route.params && $route.params.id ? 'executions/update': ''"
+            :routeName="routeName"
             @follow="follow"
             :tabs="tabs"
         />
@@ -12,196 +12,22 @@
     </div>
 </template>
 
-<script>
-    import {mapStores} from "pinia";
-
-    import Gantt from "./Gantt.vue";
-    import Overview from "./Overview.vue";
-    import Logs from "./Logs.vue";
-    import Topology from "./Topology.vue";
-    import ExecutionOutput from "./outputs/Wrapper.vue";
-    import ExecutionMetric from "./ExecutionMetric.vue";
-    import RouteContext from "../../mixins/routeContext";
-    import {useCoreStore} from "../../stores/core";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import Tabs from "../../components/Tabs.vue";
-    import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
-    import DemoAuditLogs from "../demo/AuditLogs.vue";
-    import Dependencies from "../dependencies/Dependencies.vue";
-
+<script setup lang="ts">
     import {useExecutionsStore} from "../../stores/executions";
-    import {useAuthStore} from "override/stores/auth"
-    import {useFlowStore} from "../../stores/flow";
+    import {useExecutionRoot} from "./composables/useExecutionRoot";
+    import useRouteContext from "../../composables/useRouteContext";
+    //@ts-expect-error no declaration file
+    import Tabs from "../../components/Tabs.vue";
+    //@ts-expect-error no declaration file
+    import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
 
-    export default {
-        mixins: [RouteContext],
-        components: {
-            Tabs,
-            ExecutionRootTopBar,
-        },
-        data() {
-            return {
-                sse: undefined,
-                previousExecutionId: undefined,
-                dependenciesCount: undefined
-            };
-        },
-        async created() {
-            if(!this.$route.params.tab) {
-                const tab = localStorage.getItem("executeDefaultTab") || undefined;
-                this.$router.replace({name: "executions/update", params: {...this.$route.params, tab}});
-            }
+    const executionsStore = useExecutionsStore();
 
-            this.follow();
-            window.addEventListener("popstate", this.follow)
+    const {routeInfo, routeName, ready, follow, tabs, setupLifecycle} = useExecutionRoot();
 
-            this.dependenciesCount = (await this.flowStore.loadDependencies({namespace: this.$route.params.namespace, id: this.$route.params.flowId})).count;
-        },
-        mounted() {
-            this.previousExecutionId = this.$route.params.id
-        },
-        watch: {
-            $route() {
-                this.executionsStore.taskRun = undefined;
-                if (this.previousExecutionId !== this.$route.params.id) {
-                    this.flowStore.flow = undefined;
-                    this.flowStore.flowGraph = undefined;
-                    this.follow();
-                }
-            },
-        },
-        methods: {
-            follow() {
-                this.previousExecutionId = this.$route.params.id;
-                this.executionsStore.followExecution(this.$route.params, this.$t);
-            },
-            getTabs() {
-                return [
-                    {
-                        name: undefined,
-                        component: Overview,
-                        title: this.$t("overview"),
-                    },
-                    {
-                        name: "gantt",
-                        component: Gantt,
-                        title: this.$t("gantt")
-                    },
-                    {
-                        name: "logs",
-                        component: Logs,
-                        title: this.$t("logs")
-                    },
-                    {
-                        name: "topology",
-                        component: Topology,
-                        title: this.$t("topology")
-                    },
-                    {
-                        name: "outputs",
-                        component: ExecutionOutput,
-                        title: this.$t("outputs"),
-                        maximized: true
-                    },
-                    {
-                        name: "metrics",
-                        component: ExecutionMetric,
-                        title: this.$t("metrics")
-                    },
-                    {
-                        name: "dependencies",
-                        component: Dependencies,
-                        title: this.$t("dependencies"),
-                        count: this.dependenciesCount,
-                        maximized: true,
-                        props: {
-                            isReadOnly: true,
-                        },
-                    },
-                    {
-                        name: "auditlogs",
-                        component: DemoAuditLogs,
-                        title: this.$t("auditlogs"),
-                        maximized: true,
-                        locked: true
-                    }
-                ];
-            }
-        },
-        computed: {
-            ...mapStores(useCoreStore, useExecutionsStore, useFlowStore, useAuthStore),
-            tabs() {
-                return this.getTabs();
-            },
-            routeInfo() {
-                const ns = this.$route.params.namespace;
-                const flowId = this.$route.params.flowId;
+    useRouteContext(routeInfo as any, false);
 
-                if (!ns || !flowId) {
-                    return {};
-                }
-
-                return {
-                    title: this.$route.params.id,
-                    breadcrumb: [
-                        {
-                            label: this.$t("flows"),
-                            link: {
-                                name: "flows/list",
-                                query: {
-                                    namespace: ns
-                                }
-                            }
-                        },
-                        {
-                            label: `${ns}.${flowId}`,
-                            link: {
-                                name: "flows/update",
-                                params: {
-                                    namespace: ns,
-                                    id: flowId
-                                }
-                            }
-                        },
-                        {
-                            label: this.$t("executions"),
-                            link: {
-                                name: "flows/update",
-                                params: {
-                                    namespace: ns,
-                                    id: flowId,
-                                    tab: "executions"
-                                }
-                            }
-                        }
-                    ]
-                };
-            },
-            isAllowedTrigger() {
-                return this.executionsStore.execution
-                    && this.authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, this.executionsStore.execution.namespace);
-            },
-            isAllowedEdit() {
-                return this.executionsStore.execution
-                    && this.authStore.user?.isAllowed(permission.FLOW, action.UPDATE, this.executionsStore.execution.namespace);
-            },
-            canDelete() {
-                return this.executionsStore.execution
-                    && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.executionsStore.execution.namespace);
-            },
-            ready() {
-                return this.executionsStore.execution !== undefined;
-            }
-        },
-        beforeUnmount() {
-            this.executionsStore.closeSSE();
-            window.removeEventListener("popstate", this.follow)
-            this.executionsStore.execution = undefined;
-            this.flowStore.flow = undefined;
-            this.flowStore.flowGraph = undefined;
-        }
-    };
+    setupLifecycle();
 </script>
 <style scoped lang="scss">
     .full-space {

@@ -97,7 +97,6 @@ public class Extension extends AbstractExtension {
         filters.put("timestampNano", new TimestampNanoFilter());
         filters.put("jq", new JqFilter());
         filters.put("escapeChar", new EscapeCharFilter());
-        filters.put("json", new JsonFilter());
         filters.put("toJson", new ToJsonFilter());
         filters.put("distinct", new DistinctFilter());
         filters.put("keys", new KeysFilter());
@@ -138,7 +137,6 @@ public class Extension extends AbstractExtension {
         Map<String, Function> functions = new HashMap<>();
 
         functions.put("now", new NowFunction());
-        functions.put("json", new JsonFunction());
         functions.put("fromJson", new FromJsonFunction());
         functions.put("currentEachOutput", new CurrentEachOutputFunction());
         functions.put(SecretFunction.NAME, secretFunction);

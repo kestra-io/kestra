@@ -1081,22 +1081,9 @@ public class ExecutorService {
                         return false;
                     }
 
-                    List<TaskRunAttempt> attempts = workerTask.getTaskRun().getAttempts();
-                    if (attempts == null || attempts.isEmpty()) {
-                        attempts = new ArrayList<>();
-                        attempts.add(TaskRunAttempt.builder().state(new State()).build());
-                    } else {
-                        attempts = new ArrayList<>(attempts);
-                    }
-
-                    // Update attempt to RUNNING before task execution
-                    int lastIndex = attempts.size() - 1;
-                    TaskRunAttempt runningAttempt = attempts.getLast().withState(State.Type.RUNNING);
-                    attempts.set(lastIndex, runningAttempt);
-
                     TaskRun runningTaskRun = workerTask
                         .getTaskRun()
-                        .withAttempts(attempts)
+                        .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()))
                         .withState(State.Type.RUNNING);
 
                     executor.withExecution(
@@ -1109,14 +1096,12 @@ public class ExecutorService {
                         .resolveState(workerTask.getRunContext(), executor.getExecution())
                         .orElse(State.Type.SUCCESS);
 
-                    lastIndex = attempts.size() - 1;
-                    TaskRunAttempt terminalAttempt = attempts.getLast().withState(terminalState);
-                    attempts.set(lastIndex, terminalAttempt);
+                    TaskRunAttempt terminalAttempt = runningTaskRun.lastAttempt().withState(terminalState);
 
                     workerTaskResults.add(
                         WorkerTaskResult.builder()
                             .taskRun(runningTaskRun
-                                .withAttempts(attempts)
+                                .withAttempts(List.of(terminalAttempt))
                                 .withState(terminalState)
                             )
                             .build()

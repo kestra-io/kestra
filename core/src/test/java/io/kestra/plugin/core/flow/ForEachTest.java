@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 @KestraTest(startRunner = true)
@@ -72,5 +73,41 @@ class ForEachTest {
         assertThat(seconds).hasSize(2);
         assertThat(seconds.get(0).getIteration()).isEqualTo(0);
         assertThat(seconds.get(1).getIteration()).isEqualTo(1);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/each-object.yaml")
+    void object(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(8);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value")).contains("json > JSON > [\"my-complex\"]");
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/each-object-in-list.yaml")
+    void objectInList(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(8);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value")).contains("json > JSON > [\"my-complex\"]");
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/each-empty.yaml")
+    void eachEmpty(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/each-switch.yaml")
+    void eachSwitch(Execution execution) throws InternalException {
+        assertThat(execution.getTaskRunList()).hasSize(12);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        TaskRun switchNumber1 = execution.findTaskRunByTaskIdAndValue("2-1-1_switch-number-1", Arrays.asList("b", "1"));
+        assertThat((String) switchNumber1.getOutputs().get("value")).isEqualTo("1");
+
+        TaskRun switchNumber2 = execution.findTaskRunByTaskIdAndValue("2-1-1_switch-number-2", Arrays.asList("b", "2"));
+        assertThat((String) switchNumber2.getOutputs().get("value")).isEqualTo("2 b");
     }
 }

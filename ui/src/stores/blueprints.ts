@@ -26,7 +26,7 @@ interface Blueprint {
 const API_URL = "https://api.kestra.io/v1";
 const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
 
-const getKind = ({kind, type}: Options) => kind && type !== "custom" ? `${kind === "flow" ? "FLOW" : kind}` : "";
+const getKind = ({kind, type}: Options) => kind && type !== "custom" ? kind : "";
 
 export const useBlueprintsStore = defineStore("blueprints", () => {
     const axios = useAxios();
@@ -65,7 +65,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     };
 
     const getBlueprintGraph = async (options: Options) => {
-        const response = await axios.get(`${API_URL}/blueprints/kinds/${getKind(options).toLowerCase()}/${options.id}/versions/${version}/graph`);
+        const response = await axios.get(`${API_URL}/blueprints/kinds/${getKind(options)}/${options.id}/versions/${version}/graph`);
 
         graph.value = response.data;
         return response.data;

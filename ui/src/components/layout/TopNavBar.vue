@@ -6,56 +6,47 @@
                 @toggle="layoutStore.setSideMenuCollapsed(false)" 
             />
             <div class="breadcrumb-container d-flex align-items-center">
-                <template v-if="breadcrumb && breadcrumb.length > 0">
-                    <template v-if="breadcrumb.length <= 2">
-                        <template v-for="(item, x) in breadcrumb" :key="x">
-                            <router-link 
-                                v-if="!item.disabled && item.link" 
-                                :to="item.link" 
-                                class="breadcrumb-link"
-                            >
-                                {{ item.label }}
-                            </router-link>
-                            <span 
-                                v-else 
-                                class="breadcrumb-link" 
-                                :class="{'disabled': item.disabled}"
-                            >
-                                {{ item.label }}
-                            </span>
-                            <span class="breadcrumb-separator">/</span>
-                        </template>
-                    </template>
-                    <template v-else>
+                <template v-if="visibleBreadcrumbs && visibleBreadcrumbs.length > 0">
+                    <template v-for="(item, x) in visibleBreadcrumbs" :key="x">
+                        <el-dropdown v-if="item.label === '...'" placement="bottom-start" popperClass="breadcrumb-dropdown">
+                            <span class="breadcrumb-link breadcrumb-ellipsis">...</span>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item v-for="(hiddenItem, y) in item.hidden" :key="y">
+                                        <router-link
+                                            v-if="!hiddenItem.disabled && hiddenItem.link"
+                                            :to="hiddenItem.link"
+                                            class="breadcrumb-link"
+                                        >
+                                            {{ hiddenItem.label }}
+                                        </router-link>
+                                        <span v-else class="breadcrumb-link" :class="{'disabled': hiddenItem.disabled}">
+                                            {{ hiddenItem.label }}
+                                        </span>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
                         <router-link 
-                            v-if="!breadcrumb[0].disabled && breadcrumb[0].link" 
-                            :to="breadcrumb[0].link" 
+                            v-else-if="!item.disabled && item.link" 
+                            :to="item.link" 
                             class="breadcrumb-link"
                         >
-                            {{ breadcrumb[0].label }}
+                            {{ item.label }}
                         </router-link>
-                        <span v-else class="breadcrumb-link">
-                            {{ breadcrumb[0].label }}
-                        </span>
-                        <span class="breadcrumb-separator">/</span>
-                        <span class="breadcrumb-ellipsis">...</span>
-                        <span class="breadcrumb-separator">/</span>
-                        <router-link 
-                            v-if="!breadcrumb[breadcrumb.length - 1].disabled && breadcrumb[breadcrumb.length - 1].link" 
-                            :to="breadcrumb[breadcrumb.length - 1].link" 
-                            class="breadcrumb-link"
+                        <span 
+                            v-else 
+                            class="breadcrumb-link" 
+                            :class="{'disabled': item.disabled}"
                         >
-                            {{ breadcrumb[breadcrumb.length - 1].label }}
-                        </router-link>
-                        <span v-else class="breadcrumb-link">
-                            {{ breadcrumb[breadcrumb.length - 1].label }}
+                            {{ item.label }}
                         </span>
-                        <span class="breadcrumb-separator">/</span>
+                        <span v-if="x < visibleBreadcrumbs.length - 1" class="breadcrumb-separator">/</span>
                     </template>
                 </template>
-                <h1 class="h5 fw-semibold m-0 d-inline-flex align-items-center">
+                <span class="h5 fw-semibold m-0 d-inline-flex align-items-center">
                     <slot name="title">
-                        {{ title }}
+                        <span class="title-span">{{ title }}</span>
                         <el-tooltip v-if="description" :content="description">
                             <Information class="ms-2" />
                         </el-tooltip>
@@ -68,7 +59,7 @@
                         circle
                         @click="onStarClick"
                     />
-                </h1>
+                </span>
             </div>
         </div>
         <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
@@ -113,7 +104,7 @@
     const props = defineProps<{
         title: string;
         description?: string;
-        breadcrumb?: { label: string; link?: string; disabled?: boolean }[];
+        breadcrumb?: { label: string; link?: string; disabled?: boolean, hidden?: any[] }[];
         beta?: boolean;
     }>();
 
@@ -122,6 +113,23 @@
     const flowStore = useFlowStore();
     const route = useRoute();
     const layoutStore = useLayoutStore();
+
+    const visibleBreadcrumbs = computed(() => {
+        if (!props.breadcrumb || props.breadcrumb.length <= 3) {
+            return props.breadcrumb;
+        }
+
+        const hiddenItems = props.breadcrumb.slice(1, -1);
+        return [
+            props.breadcrumb[0],
+            {
+                label: "...",
+                hidden: hiddenItems,
+                disabled: true
+            },
+            props.breadcrumb[props.breadcrumb.length - 1]
+        ];
+    });
 
     const shouldDisplayDeleteButton = computed(() => {
         return route.name === "flows/update" && route.params?.tab === "logs";
@@ -208,6 +216,7 @@ nav {
         overflow: hidden;
         text-overflow: ellipsis;
         min-width: 0;
+        font-size: var(--font-size-small);
 
         &:hover:not(.disabled) {
             color: var(--ks-text-primary);
@@ -228,17 +237,11 @@ nav {
     .breadcrumb-ellipsis {
         color: var(--ks-text-secondary, #999);
         flex-shrink: 0;
+        cursor: pointer;
     }
 
-    h1 {
-        line-height: 1.6;
-        display: flex !important;
-        align-items: center;
-        white-space: nowrap;
-        flex-shrink: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        min-width: 0;
+    .title-span {
+        font-size: var(--font-size-small);
     }
 
     .star-button {
@@ -299,6 +302,18 @@ nav {
             grid-template-rows: repeat(2, auto);
             gap: 10px;
             overflow: hidden;
+        }
+    }
+}
+
+:deep(.breadcrumb-dropdown) {
+    .el-dropdown-menu__item {
+        padding: 0;
+        
+        .breadcrumb-link {
+            padding: 0.5rem 1rem;
+            display: block;
+            width: 100%;
         }
     }
 }

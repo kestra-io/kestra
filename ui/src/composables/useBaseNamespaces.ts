@@ -72,7 +72,10 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function kv(this: any, payload: {namespace: string; key: string}) {
-        const response = await axios.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`);
+        const response = await axios.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`, VALIDATE);
+        if (response.status === 404) {
+            throw new Error(response.data.message);
+        }
         const data = response.data;
         const contentLength = response.headers?.["content-length"];
         if (contentLength === (data.length + 2).toString()) {

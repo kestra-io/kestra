@@ -3,7 +3,9 @@ package io.kestra.core.models.executions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -152,7 +154,8 @@ public class TaskRun implements TenantInterface {
     }
 
     public static TaskRun of(Execution execution, ResolvedTask resolvedTask) {
-        return TaskRun.builder()
+
+       TaskRun taskRun= TaskRun.builder()
             .tenantId(execution.getTenantId())
             .id(IdUtils.create())
             .executionId(execution.getId())
@@ -164,6 +167,17 @@ public class TaskRun implements TenantInterface {
             .iteration(resolvedTask.getIteration())
             .state(new State())
             .build();
+
+        if(resolvedTask.getTask().isFlowable()){
+                List <TaskRunAttempt> attempts = new ArrayList<>();
+                attempts.add(
+                    TaskRunAttempt.builder()
+                        .state(new State())
+                        .build()
+                );
+               taskRun= taskRun.withAttempts(attempts);
+        }
+        return taskRun;
     }
 
     public int attemptNumber() {

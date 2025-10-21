@@ -7,13 +7,13 @@ import {useMiscStore} from "override/stores/misc";
 
 import {trackBlueprintSelection} from "../utils/tabTracking";
 
-export type Type = "community" | "custom";
-export type Kind = "flow" | "dashboard" | "app";
+export type BlueprintType = "community" | "custom";
+export type BlueprintKind = "flow" | "dashboard" | "app";
 
 interface Options {
-    type: Type;
+    type: BlueprintType;
 
-    kind?: Kind;
+    kind?: BlueprintKind;
     id?: string;
     params?: Record<string, any>;
 }

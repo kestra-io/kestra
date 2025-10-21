@@ -20,7 +20,7 @@
     import {defaultNamespace} from "../../composables/useNamespaces";
     import {useVueTour} from "../../composables/useVueTour";
 
-    import type {Type as BlueprintType} from "../../stores/blueprints"
+    import type {BlueprintType} from "../../stores/blueprints"
 
     const route = useRoute();
     const {t} = useI18n();

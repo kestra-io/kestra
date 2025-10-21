@@ -73,6 +73,6 @@ public class Gauge extends AbstractMetricEntry<Double> {
 
     @Override
     public void increment(Double value) {
-
+        this.value = value;
     }
 }

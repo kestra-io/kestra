@@ -37,11 +37,14 @@ $code-font-sm: var(--el-font-size-small);
 
 .delete,
 .reorder {
-    height: 32px;
     cursor: pointer;
     padding-left: 0;
     color: $code-gray;
     text-align: right;
+}
+
+.reorder {
+    height: 32px;
 }
 
 .wrapper {

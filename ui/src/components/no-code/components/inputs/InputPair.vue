@@ -143,7 +143,7 @@
 
 .wrapper {
     :deep(.el-textarea__inner) {
-        height: 33px !important;
+        height: 34px !important;
     }
 }
 

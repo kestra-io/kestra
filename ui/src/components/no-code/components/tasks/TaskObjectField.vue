@@ -58,7 +58,7 @@
             :is="type"
             v-bind="componentProps"
             :disabled
-            class="mt-1 mb-2 wrapper"
+            class="wrapper"
         />
     </el-form-item>
 </template>

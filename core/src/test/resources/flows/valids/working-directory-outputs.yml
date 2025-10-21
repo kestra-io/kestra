@@ -8,6 +8,6 @@ tasks:
       - output.txt
     tasks:
       - id: outputFiles
-        type: io.kestra.plugin.core.storage.LocalFiles
+        type: io.kestra.plugin.core.flow.WorkingDirectoryTest$LocalFiles
         inputs:
           output.txt: "Hello World"

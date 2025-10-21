@@ -28,7 +28,21 @@ interface RenderOptions {
 }
 
 export async function render(markdown: string, options: RenderOptions = {}) {
-    const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, mila, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import( "./markdownDeps")
+    const markdownWithAlerts = typeof markdown === "string"
+        ? markdown
+            .replace(
+                /(\n)?::\s*alert\{type="(.*?)"\}\s*\n([\s\S]*?)\n::\s*(\n)?/g,
+                (_: string, newLine1: string, type: string, content: string, newLine2: string) => 
+                    `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
+            )
+            .replace(
+                /::\s*alert\{type="(.*?)"\}\s*([^\n]*)\s*::/g,
+                (_: string, type: string, content: string) => 
+                    `::: ${type}\n${content}\n:::`
+            )
+        : markdown;
+
+    const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, mila, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import("./markdownDeps")
     const highlighter = await getHighlighter(createHighlighterCore as any, Object.values(langs), onigurumaEngine, githubDark, githubLight);
 
     if(githubDark["colors"] && githubLight["colors"]) {
@@ -54,6 +68,9 @@ export async function render(markdown: string, options: RenderOptions = {}) {
         .use(anchor, {permalink: options.permalink ? anchor.permalink.ariaHidden({placement: "before"}) : undefined})
         .use(container, "warning")
         .use(container, "info")
+        .use(container, "danger")
+        .use(container, "success")
+        .use(container, "tip")
         .use(fromHighlighter(highlighter, {theme: darkTheme ? "github-dark" : "github-light"}))
         .use(linkTag);
 
@@ -72,8 +89,7 @@ export async function render(markdown: string, options: RenderOptions = {}) {
     } else {
         md.renderer.rules.table_open = () => "<table class=\"table\">\n";
     }
-
-    return md.render(markdown);
+    return md.render(markdownWithAlerts);
 }
 
 function applyEnhancedRenderers(md: any) {

@@ -196,7 +196,6 @@
                 .then((response:any) => {
                     toast.saved(response.id);
                     flowStore.flowYaml = response.source;
-                    flowStore.flowYamlBeforeAdd = response.source;
                     load()
                 })
                 .then(() => {

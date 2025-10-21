@@ -1,10 +1,11 @@
-id: each-parallel-pause
+id: foreach-concurrent-pause
 namespace: io.kestra.tests
 
 tasks:
-  - id: each
-    type: io.kestra.plugin.core.flow.EachParallel
-    value: ["toto", "tata", "titi"]
+  - id: for_each
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["value 1", "value 2", "value 3"]
+    concurrencyLimit: 2
     tasks:
       - id: pause
         type: io.kestra.plugin.core.flow.Pause

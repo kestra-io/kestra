@@ -70,7 +70,7 @@ public class PauseTest {
 
     @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
     @Test
-    @LoadFlows("flows/valids/each-parallel-pause.yml")
+    @LoadFlows("flows/valids/foreach-concurrent-pause.yaml")
     void parallelDelay() throws Exception {
         suite.runParallelDelay(runnerUtils);
     }
@@ -219,7 +219,7 @@ public class PauseTest {
         }
 
         public void runParallelDelay(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
-            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-parallel-pause", Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "foreach-concurrent-pause", Duration.ofSeconds(30));
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
             assertThat(execution.getTaskRunList()).hasSize(7);

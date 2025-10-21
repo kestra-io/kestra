@@ -240,8 +240,6 @@
     const leftPanelDragover = ref(false);
     const rightPanelDragover = ref(false);
 
-    const editorStore = useEditorStore()
-
     const handleTabClick = (panelIndex: number, panel: Panel, tab: Tab) => {
         trackTabOpen(tab);
 
@@ -627,13 +625,13 @@
         if(!el){
             return;
         }
-        
+
         const overflows = el.scrollWidth > el.clientWidth;
         if(!overflows){
             return;
         }
 
-        
+
         const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
         el.scrollLeft += delta;
         e.preventDefault();

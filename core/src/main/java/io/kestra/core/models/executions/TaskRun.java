@@ -154,8 +154,7 @@ public class TaskRun implements TenantInterface {
     }
 
     public static TaskRun of(Execution execution, ResolvedTask resolvedTask) {
-
-       TaskRun taskRun= TaskRun.builder()
+        return TaskRun.builder()
             .tenantId(execution.getTenantId())
             .id(IdUtils.create())
             .executionId(execution.getId())
@@ -167,17 +166,6 @@ public class TaskRun implements TenantInterface {
             .iteration(resolvedTask.getIteration())
             .state(new State())
             .build();
-
-        if(resolvedTask.getTask().isFlowable()){
-                List <TaskRunAttempt> attempts = new ArrayList<>();
-                attempts.add(
-                    TaskRunAttempt.builder()
-                        .state(new State())
-                        .build()
-                );
-               taskRun= taskRun.withAttempts(attempts);
-        }
-        return taskRun;
     }
 
     public int attemptNumber() {

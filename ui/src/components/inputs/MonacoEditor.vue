@@ -27,6 +27,10 @@
 
 <script lang="ts">
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+    import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+    import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
+    import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
+    import YamlWorker from "./yaml.worker.js?worker";
     const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, as: "raw"});
 
     let tries = 10
@@ -50,6 +54,24 @@
     export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
 
     export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
+
+    window.MonacoEnvironment = {
+        getWorker(_moduleId, label) {
+            switch (label) {
+            case "editorWorkerService":
+                return new EditorWorker();
+            case "yaml":
+                return new YamlWorker();
+            case "json":
+                return new JsonWorker();
+            case "javascript":
+            case "typescript":
+                return new TypeScriptWorker();
+            default:
+                throw new Error(`Unknown label ${label}`);
+            }
+        },
+    };
 </script>
 
 <script setup lang="ts">
@@ -75,14 +97,10 @@
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution";
 
     import {editor} from "monaco-editor/esm/vs/editor/editor.api";
-    import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-    import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-    import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
     import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
 
-    import YamlWorker from "./yaml.worker.js?worker";
     import Utils from "../../utils/utils";
     import {STATES, TaskIcon} from "@kestra-io/ui-libs";
     import uniqBy from "lodash/uniqBy";
@@ -101,26 +119,6 @@
 
     const currentInstance = getCurrentInstance()!;
     const {t} = useI18n();
-
-
-
-    window.MonacoEnvironment = {
-        getWorker(_moduleId, label) {
-            switch (label) {
-            case "editorWorkerService":
-                return new EditorWorker();
-            case "yaml":
-                return new YamlWorker();
-            case "json":
-                return new JsonWorker();
-            case "javascript":
-            case "typescript":
-                return new TypeScriptWorker();
-            default:
-                throw new Error(`Unknown label ${label}`);
-            }
-        },
-    };
 
     const textAreaValue = computed({
         get() {

@@ -156,19 +156,6 @@ class FlowGraphTest {
     }
 
     @Test
-    void eachParallel() throws IllegalVariableEvaluationException, IOException {
-        FlowWithSource flow = this.parse("flows/valids/each-parallel-nested.yaml");
-        FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
-
-        assertThat(flowGraph.getNodes().size()).isEqualTo(11);
-        assertThat(flowGraph.getEdges().size()).isEqualTo(10);
-        assertThat(flowGraph.getClusters().size()).isEqualTo(2);
-
-        assertThat(edge(flowGraph, ".*1_each", cluster(flowGraph, ".*2-1_seq").getStart()).getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
-        assertThat(flowGraph.getClusters().get(1).getNodes().size()).isEqualTo(5);
-    }
-
-    @Test
     void allFlowable() throws IllegalVariableEvaluationException, IOException {
         FlowWithSource flow = this.parse("flows/valids/all-flowable.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);

@@ -1,0 +1,14 @@
+id: foreach-concurrent-subflow-notfound
+namespace: io.kestra.tests
+
+tasks:
+  - id: for_each
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["value 1", "value 2", "value 3"]
+    concurrencyLimit: 2
+    tasks:
+      - id: subflow-not-exist
+        type: io.kestra.plugin.core.flow.Subflow
+        flowId: "{{ taskrun.value }}"
+        namespace: dev
+        wait: true

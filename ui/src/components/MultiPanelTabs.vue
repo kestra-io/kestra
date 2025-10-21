@@ -26,6 +26,7 @@
                         @dragover.prevent="dragover"
                         @dragleave.prevent="throttle(removeAllPotentialTabs, 300)"
                         @drop="drop"
+                        @wheel="onWheelTabScroll"
                         :data-panel-index="panelIndex"
                         :class="{dragover: panel.dragover}"
                         ref="tabContainerRefs"
@@ -48,13 +49,17 @@
                                 }"
                                 @dragleave.prevent
                                 :data-tab-id="tab.value"
-                                @click="handleTabClick(panel, tab)"
+                                @click="handleTabClick(panelIndex, panel, tab)"
                                 @mouseup="middleMouseClose($event, panelIndex, tab)"
                             >
                                 <component :is="tab.button.icon" class="tab-icon" />
-                                {{ tab.button.label }}
+                                <span class="tab-title">{{ tab.button.label }}</span>
                                 <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
-                                <CloseIcon @click.stop="destroyTab(panelIndex, tab)" class="tab-icon" />
+                                <CloseIcon
+                                    @click.stop="destroyTab(panelIndex, tab)"
+                                    class="tab-icon close-icon"
+                                    :title="t('close')"
+                                />
                             </button>
                             <div v-else class="potential-container">
                                 <div class="potential" />
@@ -239,7 +244,7 @@
 
     const editorStore = useEditorStore()
 
-    const handleTabClick = (panel: Panel, tab: Tab) => {
+    const handleTabClick = (panelIndex: number, panel: Panel, tab: Tab) => {
         trackTabOpen(tab);
 
         panel.activeTab = tab
@@ -254,6 +259,7 @@
                 persistent: tab.value === CODE_PREFIX,
             }
         }
+        nextTick(() => ensureActiveTabVisible(panelIndex, tab.value));
     };
 
     const showDropZones = computed(() =>
@@ -626,6 +632,46 @@
             destroyTab(panelIndex, tab);
         }
     }
+
+    function onWheelTabScroll(e: WheelEvent){
+        // Make vertical wheel scroll the tab list horizontally (VS Code behavior)
+        const el = e.currentTarget as HTMLElement;
+        if(!el){
+            return;
+        }
+        
+        const overflows = el.scrollWidth > el.clientWidth;
+        if(!overflows){
+            return;
+        }
+
+        
+        const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        el.scrollLeft += delta;
+        e.preventDefault();
+    }
+
+    function ensureActiveTabVisible(panelIndex: number, tabId: string){
+        const container = tabContainerRefs.value[panelIndex];
+        if(!container){
+            return;
+        }
+        const safeId = (globalThis as any).CSS?.escape ? (globalThis as any).CSS.escape(tabId) : tabId.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+        const el = container.querySelector(`.editor-tab[data-tab-id="${safeId}"]`) as HTMLElement | null;
+        if(!el){
+            return;
+        }
+        const left = el.offsetLeft;
+        const right = left + el.offsetWidth;
+        const cLeft = container.scrollLeft;
+        const cRight = cLeft + container.clientWidth;
+
+        if (left < cLeft){
+            container.scrollLeft = left - 16; // small padding
+        } else if (right > cRight){
+            container.scrollLeft = right - container.clientWidth + 16;
+        }
+    }
 </script>
 
 <style scoped lang="scss">
@@ -685,6 +731,7 @@
         border-left: 1px solid var(--ks-border-primary);
         line-height: 1.5rem;
         overflow-x: auto;
+        overflow-y: hidden;
         scrollbar-width: none;
         &.dragover {
             background-color: var(--ks-background-card-hover);
@@ -711,7 +758,13 @@
         border-bottom: none;
         background-color: var(--ks-background-card);
         display: flex;
-        flex-wrap:nowrap;
+        flex-wrap: nowrap;
+        /* Prevent shrinking so tabs overflow and the container can scroll */
+        flex: 0 0 auto;
+        min-width: 120px;
+        max-width: 240px;
+        overflow: hidden;
+        text-overflow: ellipsis;
         white-space: nowrap;
         align-items: center;
         gap: .5rem;
@@ -723,9 +776,37 @@
             color: var(--ks-content-primary);
         }
 
-        &.dirty-icon{
-            font-size: 16px;
+        .tab-title{
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1 1 auto;
         }
+
+        .dirty-icon{
+            font-size: 16px;
+            flex: 0 0 auto;
+        }
+
+        .close-icon{
+            flex: 0 0 auto;
+            opacity: .6;
+            cursor: pointer;
+        }
+        &:hover .close-icon{
+            opacity: 1;
+        }
+    }
+
+    .editor-tabs::-webkit-scrollbar {
+        height: 6px;
+    }
+    .editor-tabs::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .editor-tabs::-webkit-scrollbar-thumb {
+        background-color: var(--ks-border-primary);
+        border-radius: 3px;
     }
 
     .potential-container{

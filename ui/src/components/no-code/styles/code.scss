@@ -61,24 +61,3 @@ $code-font-sm: var(--el-font-size-small);
         -webkit-text-fill-color: var(--ks-content-inactive);
     }
 }
-
-// Hover effect: subtly lighten the row (use a tiny inset white overlay + slight brightness)
-.tasks-wrapper .element:hover,
-.tasks-wrapper .element:focus-visible,
-.triggers-wrapper .element:hover,
-.triggers-wrapper .element:focus-visible {
-    /* keep existing hover token if defined */  
-    background-color: var(--ks-button-secondary-hover, transparent);
-    /* subtle light overlay so it doesn't become fully transparent */
-    box-shadow: inset 0 0 0 1000px rgba(255,255,255,0.03);
-    filter: brightness(1.03);
-    transition: box-shadow 120ms ease-in-out, filter 120ms ease-in-out, background-color 120ms ease-in-out;
-}
-
-// Also apply subtle hover to collapse headers (section rows)
-.collapse :deep(.el-collapse-item__header):hover {
-    background-color: var(--ks-button-secondary-hover, transparent);
-    box-shadow: inset 0 0 0 1000px rgba(255,255,255,0.03);
-    filter: brightness(1.03);
-    transition: box-shadow 120ms ease-in-out, filter 120ms ease-in-out, background-color 120ms ease-in-out;
-}

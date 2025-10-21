@@ -65,6 +65,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     };
 
     const getBlueprintGraph = async (options: Options) => {
+        // TODO: Ask the BE team to standardize the expected casing for the `kind` parameter in the API, as here it's expected to be lowercase.
         const response = await axios.get(`${API_URL}/blueprints/kinds/${getKind(options).toLowerCase()}/${options.id}/versions/${version}/graph`);
 
         graph.value = response.data;

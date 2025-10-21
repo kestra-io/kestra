@@ -245,7 +245,7 @@
 
         panel.activeTab = tab
 
-        nextTick(() => ensureActiveTabVisible(panelIndex, tab.value));
+        nextTick(() => ensureActiveTabVisible(panelIndex, tab.uid));
     };
 
     const showDropZones = computed(() =>

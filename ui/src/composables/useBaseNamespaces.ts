@@ -131,9 +131,15 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function listSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
-        const response = await axios.get(`${apiUrl()}/namespaces/${id}/secrets`, {
+        const response = await axios.get(`${apiUrl()}/secrets`, {
             ...VALIDATE,
-            params
+            params: {
+                ...params,
+                filters: {
+                    namespace: {EQUALS: id},
+                    ...params.filters
+                }
+            }
         });
         if (response.status === 200 && shouldCommit !== false) {
             secrets.value = response.data.results;

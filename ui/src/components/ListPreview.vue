@@ -2,20 +2,14 @@
     <el-table :data="value" stripe>
         <el-table-column v-for="(column, index) in generateTableColumns" :key="index" :prop="column" :label="column">
             <template #default="scope">
-                <template v-if="isComplex(scope.row[column])">
-                    <el-input
-                        type="textarea"
-                        :modelValue="truncate(JSON.stringify(scope.row[column], null, 2))"
-                        readonly
-                        :rows="3"
-                        autosize
-                        class="ks-editor"
-                        resize="none"
-                    />
-                </template>
-                <template v-else>
-                    {{ truncate(scope.row[column]) }}
-                </template>
+                <span v-if="isComplex(scope.row[column])">
+                    <el-tooltip :content="JSON.stringify(scope.row[column], null, 2)">
+                        <span class="preview-row">{{ truncate(JSON.stringify(scope.row[column])) }}</span>
+                    </el-tooltip>
+                </span>
+                <span v-else>
+                    {{ scope.row[column] }}
+                </span>
             </template>
         </el-table-column>
     </el-table>
@@ -64,5 +58,14 @@
                 background-color: transparent;
             }
         }
+    }
+
+    .preview-row {
+        height: 24px;
+        overflow: hidden;
+        white-space: pre;
+        text-overflow: ellipsis;
+        display: inline-block;
+        max-width: 100%;
     }
 </style>

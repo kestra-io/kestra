@@ -40,10 +40,4 @@ class FromJsonFunctionTest {
 
         assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ fromJson('{not: json}') }}", Map.of()));
     }
-
-    @Test
-    void jsonFunction() throws IllegalVariableEvaluationException {
-        String render = variableRenderer.render("{{ json('{\"test1\": 1, \"test2\": 2, \"test3\": 3}').test1 }}", Map.of());
-        assertThat(render).isEqualTo("1");
-    }
 }

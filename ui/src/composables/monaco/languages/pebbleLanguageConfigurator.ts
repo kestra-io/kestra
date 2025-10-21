@@ -156,16 +156,23 @@ export function registerNestedValueAutoCompletion(
     }));
 }
 
-
+const registeredLanguages = new Set<string>();
 
 export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
     private readonly _autoCompletion: PebbleAutoCompletion;
     private readonly _completionSource: ComputedRef<string | undefined>;
+    private readonly _rootLanguage: string;
 
-    constructor(autoCompletion: PebbleAutoCompletion, completionSource: ComputedRef<string | undefined>) {
-        super("plaintext-pebble");
+    constructor(language: string, autoCompletion: PebbleAutoCompletion, completionSource: ComputedRef<string | undefined>) {
+        if(!language.endsWith("-pebble")) {
+            throw new Error("Pebble language must have a '-pebble' suffix");
+        }
+        super(language);
         this._autoCompletion = autoCompletion;
         this._completionSource = completionSource;
+        this._rootLanguage = language.slice(0, -7); // remove -pebble suffix
+
+
     }
 
     configureAutoCompletion(_: ReturnType<typeof useI18n>["t"], ___: monaco.editor.ICodeEditor | undefined) {
@@ -176,11 +183,41 @@ export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
         const autoCompletion = this._autoCompletion;
         const completionSource = this._completionSource
 
-        registerPebbleAutocompletion(autoCompletionProviders, autoCompletion, ["plaintext-pebble"]);
 
-        registerFunctionParametersAutoCompletion(autoCompletionProviders, autoCompletion, ["plaintext-pebble"]);
+                // Register a new language
+        if(!registeredLanguages.has(this.language)) {
+            registeredLanguages.add(this.language);
+            monaco.languages.register({id: this.language});
 
-        registerNestedValueAutoCompletion(autoCompletionProviders, autoCompletion, ["plaintext-pebble"], completionSource);
+            // FIXME: get the tokenizer from the root language
+            const rootLanguageTokenizer = {root: []} as  {
+                [name: string]: monaco.languages.IMonarchLanguageRule[];
+            };
+
+            // Register a tokens provider for the language
+            // extending the root language
+            monaco.languages.setMonarchTokensProvider(this.language, {
+                tokenizer: {
+                    ...rootLanguageTokenizer,
+                    root: [
+                        // put the pebble tokenizer before the root language tokenizer
+                        [/\{\{/, {token: "delimiter.pebble", next: "@pebble"}],
+
+                        // include the root language tokenizer
+                        ...rootLanguageTokenizer.root,
+                    ],
+                    pebble: [
+                        [/\}\}/, {token: "delimiter.pebble", next: "@pop"}],
+                    ],
+                },
+            });
+        }
+
+        registerPebbleAutocompletion(autoCompletionProviders, autoCompletion, [this.language]);
+
+        registerFunctionParametersAutoCompletion(autoCompletionProviders, autoCompletion, [this.language]);
+
+        registerNestedValueAutoCompletion(autoCompletionProviders, autoCompletion, [this.language], completionSource);
 
         return autoCompletionProviders;
     }

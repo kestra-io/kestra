@@ -1,14 +1,12 @@
 <template>
     <section class="row empty">
         <div class="col-sm-12 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
-            <div class="d-flex flex-column align-items-center gap-2 px-2">
-                <img :src>
+            <img :src="src" :alt="t(`empty.${props.type}.title`)" class="empty-visual">
 
-                <h2>{{ t(`empty.${props.type}.title`) }}</h2>
-                <p v-html="t(`empty.${props.type}.content`)" />
+            <h2>{{ t(`empty.${props.type}.title`) }}</h2>
+            <p class="empty-description" v-html="t(`empty.${props.type}.content`)" />
 
-                <slot name="button" />
-            </div>
+            <slot name="button" />
             <slot name="content" />
         </div>
     </section>
@@ -45,12 +43,21 @@
         font-weight: 600;
     }
 
-    p {
+    .empty-visual {
+        max-width: clamp(180px, 20vw, 240px);
+        width: 100%;
+        height: auto;
+        margin: 0 auto 1rem;
+    }
+
+    .empty-description {
         width: 100%;
         max-width: 553px;
         font-size: 1rem;
         color: var(--ks-content-secondary);
         line-height: 1.5rem;
+        margin: 0 auto;
+        text-align: center;
     }
 }
 </style>

@@ -84,16 +84,4 @@ class ToJsonFilterTest {
 
         assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ {not: json} | toJson }}", Map.of()));
     }
-
-    @Test
-    void jsonFilter() throws IllegalVariableEvaluationException {
-        ImmutableMap<String, Object> vars = ImmutableMap.of(
-            "vars", ImmutableMap.of("second", Map.of(
-                "string", "string"
-            ))
-        );
-
-        String render = variableRenderer.render("{{ vars.second.string | json }}", vars);
-        assertThat(render).isEqualTo("\"string\"");
-    }
 }

@@ -664,8 +664,12 @@ public class JdbcExecutor implements ExecutorInterface {
                                                     .map(ArrayList::new)
                                                     .orElseGet(ArrayList::new);
 
-                                                TaskRunAttempt updated = attempts.getLast().withState(State.Type.RUNNING);
-                                                attempts.set( attempts.size() - 1, updated);
+                                                    attempts.add(
+                                                        TaskRunAttempt.builder()
+                                                            .state(new State().withState(State.Type.RUNNING))
+                                                            .build()
+                                                    );
+
                                                 TaskRun updatedTaskRun = workerTask.getTaskRun()
                                                     .withAttempts(attempts)
                                                     .withState(State.Type.RUNNING);

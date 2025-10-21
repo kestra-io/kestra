@@ -387,7 +387,7 @@ public class ExecutorService {
                     Output outputs = flowableTask.outputs(runContext);
                     Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
                     taskRun = taskRun.withOutputs(variables);
-                    /// flowable attempt creation
+                /*    /// flowable attempt creation
                     List<TaskRunAttempt> attempts = Optional.ofNullable(taskRun.getAttempts())
                         .map(ArrayList::new)
                         .orElseGet(ArrayList::new);
@@ -399,7 +399,7 @@ public class ExecutorService {
                                 .build()
                         );
                         taskRun = taskRun.withAttempts(attempts);
-                    }
+                    }*/
 
                 } catch (Exception e) {
                     runContext.logger().warn("Unable to save output on taskRun '{}'", taskRun, e);

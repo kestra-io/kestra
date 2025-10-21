@@ -9,7 +9,7 @@
                 class="form-control me-2"
                 :placeholder="$t('key')"
                 v-model="label.key"
-                :disabled="localExisting.includes(label.key)"
+                :disabled="localExisting.includes(label.key || '')"
                 @update:model-value="update(index, $event, 'key')"
             />
             <el-input
@@ -28,67 +28,56 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {ref, onMounted} from "vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
-</script>
 
-<script>
-    import {mapStores} from "pinia";
-    import {useMiscStore} from "override/stores/misc";
+    interface Label {
+        key: string | null;
+        value: string | null;
+    }
 
-    export default {
-        props: {
-            labels: {
-                type: Array,
-                required: true,
-                default: () => [],
-            },
-            existingLabels: {
-                type: Array,
-                default: () => [],
-            },
-        },
-        data() {
-            return {
-                locals: [],
-                localExisting: [],
-            };
-        },
-        emits: ["update:labels"],
-        computed: {
-            ...mapStores(useMiscStore),
-        },
-        created() {
-            if (this.labels.length === 0) {
-                this.addItem();
-            } else {
-                this.locals = this.labels;
+    const props = defineProps<{
+        labels: Label[];
+        existingLabels?: Label[];
+    }>();
 
-                if (this.locals.length === 0) {
-                    this.addItem();
-                }
-            }
-            this.localExisting = this.existingLabels.map((label) => label.key);
-        },
-        methods: {
-            addItem() {
-                this.locals.push({key: null, value: null});
-                this.$emit("update:labels", this.locals);
-            },
-            removeItem(index) {
-                this.locals.splice(index, 1);
+    const emit = defineEmits<{
+        (e: "update:labels", value: Label[]): void;
+    }>();
 
-                if (this.locals.length === 0) {
-                    this.addItem();
-                }
+    const locals = ref<Label[]>([]);
+    const localExisting = ref<string[]>([]);
 
-                this.$emit("update:labels", this.locals);
-            },
-            update(index, value, prop) {
-                this.locals[index][prop] = value;
-                this.$emit("update:labels", this.locals);
-            },
-        },
+    const addItem = () => {
+        locals.value.push({key: null, value: null});
+        emit("update:labels", locals.value);
     };
+
+    const removeItem = (index: number) => {
+        locals.value.splice(index, 1);
+        if (locals.value.length === 0) {
+            addItem();
+        }
+        emit("update:labels", locals.value);
+    };
+
+    const update = (index: number, value: string | null, prop: keyof Label) => {
+        locals.value[index][prop] = value;
+        emit("update:labels", locals.value);
+    };
+
+    onMounted(() => {
+        if (props.labels.length === 0) {
+            addItem();
+        } else {
+            locals.value = [...props.labels];
+            if (locals.value.length === 0) {
+                addItem();
+            }
+        }
+
+        localExisting.value = props.existingLabels?.map((label) => label.key ?? "") || [];
+    });
 </script>

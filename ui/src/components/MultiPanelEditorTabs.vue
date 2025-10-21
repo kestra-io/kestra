@@ -65,6 +65,9 @@
     }
     .tabs{
         padding: .5rem 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .25rem .5rem;
 
         > button{
             background: none;

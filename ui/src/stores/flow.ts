@@ -4,7 +4,6 @@ import permission from "../models/permission";
 import action from "../models/action";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
-import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
 import {useEditorStore} from "./editor";
@@ -63,7 +62,7 @@ interface Flow {
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
     inputs?: Input[];
-    errors: { message: string; code?: string, id?: string }[];
+    errors?: { message: string; code?: string, id?: string }[];
 }
 
 export const useFlowStore = defineStore("flow", () => {
@@ -82,11 +81,11 @@ export const useFlowStore = defineStore("flow", () => {
     const aggregatedMetrics = ref<any>()
     const tasksWithMetrics = ref<any[]>()
     const executeFlow = ref<boolean>(false)
+    const openAiCopilot = ref<boolean>(false)
     const lastSaveFlow = ref<string>()
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
-    const flowYamlBeforeAdd = ref<string>("")
     const confirmOutdatedSaveDialog = ref<boolean>(false)
     const haveChange = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
@@ -143,8 +142,8 @@ export const useFlowStore = defineStore("flow", () => {
         const source = flowYaml.value;
         const currentTab = editorStore.current;
 
-        if (isFlow.value && source) {
-            return onEdit({source, currentIsFlow: true}).then((validation: any) => {
+        if (source) {
+            return onEdit({source, currentIsFlow: isFlow.value}).then((validation: any) => {
                 if (validation?.outdated && !isCreating.value) {
                     return "confirmOutdatedSaveDialog";
                 }
@@ -335,22 +334,13 @@ export const useFlowStore = defineStore("flow", () => {
         });
     }
 
-    async function initYamlSource({viewType}: { viewType: string }) {
+    async function initYamlSource() {
         if (!flow.value) return;
         const {source} = flow.value;
         flowYaml.value = source;
         flowYamlOrigin.value = source;
         if (flowHaveTasks.value) {
-            if (
-                [
-                    editorViewTypes.TOPOLOGY,
-                    editorViewTypes.SOURCE_TOPOLOGY,
-                ].includes(viewType)
-            ) {
-                await fetchGraph();
-            } else {
-                fetchGraph();
-            }
+            fetchGraph();
         }
 
         // validate flow on first load
@@ -363,11 +353,17 @@ export const useFlowStore = defineStore("flow", () => {
         return axios.get(`${apiUrl()}/flows/search${sortString}`, {
             params: options
         }).then(response => {
-            flows.value = response.data.results
-            total.value = response.data.total
-            overallTotal.value = response.data.results.filter((f: any) => f.namespace !== "tutorial").length
+            if (options.onlyTotal) {
+                return response.data.total;
+            }
 
-            return response.data;
+            else {
+                flows.value = response.data.results
+                total.value = response.data.total
+                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== "tutorial").length
+
+                return response.data;
+            }
         })
     }
     function searchFlows(options: { [key: string]: any }) {
@@ -425,7 +421,6 @@ export const useFlowStore = defineStore("flow", () => {
                 flow.value = response.data;
                 flowYaml.value = response.data.source;
                 flowYamlOrigin.value = response.data.source;
-                flowYamlBeforeAdd.value = response.data.source;
                 overallTotal.value = 1;
 
                 return response.data;
@@ -458,8 +453,16 @@ export const useFlowStore = defineStore("flow", () => {
                     return Promise.reject(new Error("Server error on flow save"))
                 } else {
                     flow.value = response.data;
-                    useEditorStore().setTabDirty({
-                        name: "Flow",
+
+                    const editorStore = useEditorStore();
+                    const currentTab = editorStore.current;
+
+                    // The dirty flag for the flow tab was cleared using a hardcoded name,
+                    // which failed if the tab's actual name and path was different.
+                    // update the dirty flag clearing logic to target the actual current flow tab (using its real name and path), ensuring the Save button disables after a successful save.
+                    editorStore.setTabDirty({
+                        name: currentTab?.name ?? "Flow",
+                        path: currentTab?.path ?? "Flow.yaml",
                         dirty: false,
                     });
 
@@ -663,19 +666,19 @@ function deleteFlowAndDependencies() {
             return response;
         });
     }
-    function disableFlowByIds(options: { ids: string[] }) {
+    function disableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
         return axios.post(`${apiUrl()}/flows/disable/by-ids`, options.ids)
     }
     function disableFlowByQuery(options: { namespace: string, id: string }) {
         return axios.post(`${apiUrl()}/flows/disable/by-query`, options, {params: options})
     }
-    function enableFlowByIds(options: { ids: string[] }) {
+    function enableFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
         return axios.post(`${apiUrl()}/flows/enable/by-ids`, options.ids)
     }
     function enableFlowByQuery(options: { namespace: string, id: string }) {
         return axios.post(`${apiUrl()}/flows/enable/by-query`, options, {params: options})
     }
-    function deleteFlowByIds(options: { ids: string[] }) {
+    function deleteFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
         return axios.delete(`${apiUrl()}/flows/delete/by-ids`, {data: options.ids})
     }
     function deleteFlowByQuery(options: { namespace: string, id: string }) {
@@ -754,6 +757,10 @@ function deleteFlowAndDependencies() {
         executeFlow.value = value;
     }
 
+    function setOpenAiCopilot(value: boolean) {
+        openAiCopilot.value = value;
+    }
+
     function addTrigger(trigger: Trigger) {
         const flowVar = flow.value ?? {} as Flow;
 
@@ -779,6 +786,7 @@ function deleteFlowAndDependencies() {
         const currentTab = useEditorStore().current;
         return currentTab?.flow !== undefined || isCreating.value;
     })
+
     const isAllowedEdit = computed((): boolean => {
         if (!flow.value || !authStore.user) {
             return false;
@@ -809,38 +817,30 @@ function deleteFlowAndDependencies() {
     })
 
     const flowErrors = computed((): string[] | undefined => {
-        if (isFlow.value) {
-            const flowExistsError =
-                flowValidation.value?.outdated && isCreating.value
-                    ? [`>>>>${baseOutdatedTranslationKey.value}`] // because translating is impossible here
-                    : [];
+        const flowExistsError =
+            flowValidation.value?.outdated && isCreating.value
+                ? [`>>>>${baseOutdatedTranslationKey.value}`] // because translating is impossible here
+                : [];
 
-            const constraintsError =
-                flowValidation.value?.constraints?.split(/, ?/) ?? [];
+        const constraintsError =
+            flowValidation.value?.constraints?.split(/, ?/) ?? [];
 
-            const errors = [...flowExistsError, ...constraintsError];
+        const errors = [...flowExistsError, ...constraintsError];
 
-            return errors.length === 0 ? undefined : errors;
-        }
-
-        return undefined;
+        return errors.length === 0 ? undefined : errors;
     })
 
     const flowInfos = computed(() => {
-        if (isFlow.value) {
-            const infos = flowValidation.value?.infos ?? [];
+        const infos = flowValidation.value?.infos ?? [];
 
-            return infos.length === 0 ? undefined : infos;
-        }
+        return infos.length === 0 ? undefined : infos;
 
         return undefined;
     })
 
     const flowHaveTasks = computed((): boolean => {
-        if (isFlow.value) {
-            const flowVar = isCreating.value ? flow.value?.source : flowYaml.value;
-            return flowVar ? YAML_UTILS.flowHaveTasks(flowVar) : false;
-        } else return false;
+        const flowVar = isCreating.value ? flow.value?.source : flowYaml.value;
+        return flowVar ? YAML_UTILS.flowHaveTasks(flowVar) : false;
     })
 
     const nextRevision = computed((): number => {
@@ -892,11 +892,11 @@ function deleteFlowAndDependencies() {
         aggregatedMetrics,
         tasksWithMetrics,
         executeFlow,
+        openAiCopilot,
         lastSaveFlow,
         isCreating,
         flowYaml,
         flowYamlOrigin,
-        flowYamlBeforeAdd,
         confirmOutdatedSaveDialog,
         haveChange,
         expandedSubflows,
@@ -905,6 +905,7 @@ function deleteFlowAndDependencies() {
         setTrigger,
         removeTrigger,
         setExecuteFlow,
+        setOpenAiCopilot,
         onSaveMetadata,
         saveAll,
         save,

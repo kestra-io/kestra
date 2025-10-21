@@ -72,7 +72,10 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function kv(this: any, payload: {namespace: string; key: string}) {
-        const response = await axios.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`);
+        const response = await axios.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`, VALIDATE);
+        if (response.status === 404) {
+            throw new Error(response.data.message);
+        }
         const data = response.data;
         const contentLength = response.headers?.["content-length"];
         if (contentLength === (data.length + 2).toString()) {
@@ -167,8 +170,17 @@ export const useBaseNamespacesStore = () => {
 
     async function readDirectory(this: any, payload: {namespace: string; path?: string}) {
         const URL = `${base(payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(safePath(payload.path))}` : ""}`;
-        const request = await axios.get(URL);
-        return request.data ?? [];
+        // Accept 200 or 404 so axios doesn't treat 404 as an error (which would set coreStore.error globally)
+        const response = await axios.get(URL, VALIDATE);
+
+        // If directory not found, mimic previous behavior (throw) without triggering global 404 page
+        if (response.status === 404) {
+            const notFoundError: any = new Error("Directory not found");
+            notFoundError.status = 404;
+            throw notFoundError;
+        }
+
+        return response.data ?? [];
     }
 
     async function createFile(this: any, payload: {namespace: string; path: string; content: string}) {

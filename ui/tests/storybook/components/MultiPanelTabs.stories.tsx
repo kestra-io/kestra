@@ -8,7 +8,8 @@ import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
 
-import MultiPanelTabs, {Panel} from "../../../src/components/MultiPanelTabs.vue";
+import MultiPanelTabs from "../../../src/components/MultiPanelTabs.vue";
+import {Panel} from "../../../src/utils/multiPanelTypes";
 
 const meta: Meta<typeof MultiPanelTabs> = {
     title: "Components/MultiPanelTabs",
@@ -242,7 +243,7 @@ export const TabReorderTest: Story = {
 
             // Verify the tabs have been reordered
             await userEvent.click(firstTab);
-            expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 2", "Tab 3", "Tab 1"]);
+            expect(canvas.getAllByRole("tab").map(tab => tab.querySelector(".tab-title")?.textContent?.trim())).toMatchObject(["Tab 2", "Tab 3", "Tab 1"]);
         }
 
         const dropBetweenTwoTabs = async () => {
@@ -263,7 +264,7 @@ export const TabReorderTest: Story = {
 
             // Verify the tabs have been reordered
             await userEvent.click(firstTab);
-            expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 3", "Tab 2", "Tab 1"]);
+            expect(canvas.getAllByRole("tab").map(tab => tab.querySelector(".tab-title")?.textContent?.trim())).toMatchObject(["Tab 3", "Tab 2", "Tab 1"]);
         }
 
         const dragEnterOnPanelDropOnPanel = async () => {
@@ -282,7 +283,7 @@ export const TabReorderTest: Story = {
              // Wait for the reorder to complete
              await new Promise(resolve => setTimeout(resolve, 100));
 
-            expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 3", "Tab 1", "Tab 2"]);
+            expect(canvas.getAllByRole("tab").map(tab => tab.querySelector(".tab-title")?.textContent?.trim())).toMatchObject(["Tab 3", "Tab 1", "Tab 2"]);
         }
 
         await waitFor(dropBetweenTabs);
@@ -325,7 +326,7 @@ export const TabMoveBetweenPanelsTest: Story = {
             // Verify the tabs have been reordered
             expect(
                 within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
-                    .map(tab => tab.textContent?.trim())
+                    .map(tab => tab.querySelector(".tab-title")?.textContent?.trim())
             ).toMatchObject(["Tab 4", "Tab 5", "Tab 6", "Tab 2"]);
         }
 
@@ -351,7 +352,7 @@ export const TabMoveBetweenPanelsTest: Story = {
             // Verify the tabs have been reordered
             expect(
                 within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
-                    .map(tab => tab.textContent?.trim())
+                    .map(tab => tab.querySelector(".tab-title")?.textContent?.trim())
             ).toMatchObject(["Tab 1", "Tab 4", "Tab 5", "Tab 6", "Tab 2"]);
 
             // Verify that the original active tab is now changed

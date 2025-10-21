@@ -339,7 +339,7 @@
         },
     };
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .gray-700 {
     color: var(--ks-content-secondary-color);
 }

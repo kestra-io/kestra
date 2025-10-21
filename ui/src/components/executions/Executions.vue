@@ -29,7 +29,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section data-component="FILENAME_PLACEHOLDER" :class="{'container padding-bottom': topbar}" v-if="ready">
+    <section :class="{'container padding-bottom': topbar}" v-if="ready">
         <DataTable
             @page-changed="onPageChanged"
             ref="dataTable"
@@ -504,7 +504,7 @@
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
     import Utils from "../../utils/utils";
 
-    import {filterLabels} from "./utils"
+    import {filterValidLabels} from "./utils"
     import {useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
@@ -1055,9 +1055,9 @@
                 );
             },
             setLabels() {
-                const filtered = filterLabels(this.executionLabels)
+                const filtered = filterValidLabels(this.executionLabels)
 
-                if(filtered.error) {
+                if (filtered.error) {
                     this.$toast().error(this.$t("wrong labels"))
                     return;
                 }

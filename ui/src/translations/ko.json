@@ -530,7 +530,7 @@
     "execution not found": "실행 <code>{executionId}</code>을(를) 찾을 수 없습니다",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
     "execution not in state PAUSED": "실행 <code>{executionId}</code>이(가) PAUSED 상태가 아닙니다",
-    "execution replay": "이 실행은 <code>{originalId}</code>의 재실행입니다.",
+    "execution replay": "이 실행은 다음의 재실행입니다:",
     "execution replayed": "이 실행은 재실행되었습니다.",
     "execution restarted": "이 실행은 {nbRestart}번 다시 시작되었습니다.",
     "execution statistics": "실행 통계",
@@ -778,6 +778,7 @@
     "missingSource": "소스 누락",
     "monogram": "모노그램",
     "months": "개월",
+    "more_actions": "추가 작업",
     "multi_panel_editor": {
       "close_all_panels": "모든 패널 닫기",
       "close_all_tabs": "모든 탭 닫기",
@@ -790,9 +791,12 @@
     "namespace and id readonly": "`namespace`와 `id` 속성은 변경할 수 없습니다 — 초기 값으로 설정되었습니다. flow의 이름을 변경하거나 namespace를 변경하려면 새 flow를 만들고 기존 flow를 삭제하세요.",
     "namespace files": {
       "create": {
-        "already_exists": "파일 이름이 이미 존재합니다",
         "file": "파일 생성",
+        "file_already_exists": "이 이름의 파일이 이미 존재합니다",
+        "file_error": "파일 생성 중 오류 발생",
         "folder": "폴더 생성",
+        "folder_already_exists": "이 이름의 폴더가 이미 존재합니다",
+        "folder_error": "폴더 생성 중 오류가 발생했습니다",
         "label": "생성"
       },
       "delete": {
@@ -803,11 +807,13 @@
         "label": "삭제"
       },
       "dialog": {
-        "confirm": "확인",
-        "file_deletion": "파일 삭제 확인",
-        "file_deletion_description": "이 파일을 삭제하시겠습니까?",
-        "folder_deletion": "폴더 삭제 확인",
-        "folder_deletion_description": "이 폴더와 모든 내용을 삭제하시겠습니까?",
+        "deletion": {
+          "confirm": "확인",
+          "files": "<code>{count}</code>개의 파일을 삭제하시겠습니까?",
+          "folders": "<code>{count}</code>개의 폴더와 모든 내용을 삭제하시겠습니까?",
+          "mixed": "<code>{folders}</code> 폴더와 <code>{files}</code> 파일을 삭제하시겠습니까?",
+          "title": "콘텐츠 삭제 확인"
+        },
         "name": {
           "file": "확장자를 포함한 이름:",
           "folder": "폴더 이름:"
@@ -897,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "실행 후 블록 추가",
+        "charts": "차트 추가",
         "conditions": "조건 추가",
         "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
         "inputs": "입력 필드 추가",
+        "numerator": "분자를 추가하세요",
         "pluginDefaults": "플러그인 기본값 추가",
         "tasks": "작업 추가",
-        "triggers": "트리거 추가"
+        "triggers": "트리거 추가",
+        "where": "데이터 필터링"
       },
       "fields": {
         "general": {
@@ -946,14 +955,17 @@
       },
       "select": {
         "afterExecution": "작업 선택",
+        "charts": "차트 유형 선택",
         "conditions": "조건 선택",
         "errors": "작업 선택",
         "finally": "작업 선택",
         "inputs": "입력 필드 유형 선택",
+        "numerator": "분자를 선택하세요",
         "pluginDefaults": "플러그인 선택",
         "task": "작업 선택",
         "tasks": "작업 선택",
-        "triggers": "트리거 선택"
+        "triggers": "트리거 선택",
+        "where": "필터 유형 선택"
       },
       "toggle_pebble": "Pebble 편집기 전환",
       "unnamed": "이름 없음",

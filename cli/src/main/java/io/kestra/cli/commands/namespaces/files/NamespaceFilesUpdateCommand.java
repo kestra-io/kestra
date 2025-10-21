@@ -49,7 +49,7 @@ public class NamespaceFilesUpdateCommand extends AbstractApiCommand {
 
         try (var files = Files.walk(from); DefaultHttpClient client = client()) {
             if (delete) {
-                client.toBlocking().exchange(this.requestOptions(HttpRequest.DELETE(apiUri("/namespaces/", tenantService.getTenantId(tenantId)) + namespace + "/files?path=" + to, null)));
+                client.toBlocking().exchange(this.requestOptions(HttpRequest.DELETE(apiUri("/namespaces/", tenantService.getTenantIdAndAllowEETenants(tenantId)) + namespace + "/files?path=" + to, null)));
             }
 
             KestraIgnore kestraIgnore = new KestraIgnore(from);
@@ -67,7 +67,7 @@ public class NamespaceFilesUpdateCommand extends AbstractApiCommand {
                 client.toBlocking().exchange(
                     this.requestOptions(
                         HttpRequest.POST(
-                            apiUri("/namespaces/", tenantService.getTenantId(tenantId)) + namespace + "/files?path=" + destination,
+                            apiUri("/namespaces/", tenantService.getTenantIdAndAllowEETenants(tenantId)) + namespace + "/files?path=" + destination,
                             body
                         ).contentType(MediaType.MULTIPART_FORM_DATA)
                     )

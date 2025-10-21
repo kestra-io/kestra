@@ -1,0 +1,9 @@
+id: polling-flow
+namespace: io.kestra.tests
+
+variables:
+  custom_var: VARIABLE VALUE
+
+triggers:
+  - id: polling-trigger-1
+    type: io.kestra.core.tasks.test.PollingTrigger

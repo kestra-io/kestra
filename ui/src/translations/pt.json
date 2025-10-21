@@ -530,7 +530,7 @@
     "execution not found": "Execução <code>{executionId}</code> não encontrada",
     "execution not in state FAILED": "Execução <code>{executionId}</code> não está no estado FAILED",
     "execution not in state PAUSED": "Execução <code>{executionId}</code> não está no estado PAUSED",
-    "execution replay": "Esta execução é uma repetição de <code>{originalId}</code>.",
+    "execution replay": "Esta execução é uma repetição de",
     "execution replayed": "Esta execução foi reproduzida.",
     "execution restarted": "Esta execução foi reiniciada {nbRestart} vez(es).",
     "execution statistics": "Estatísticas de execução",
@@ -778,6 +778,7 @@
     "missingSource": "Fonte ausente",
     "monogram": "Monograma",
     "months": "Meses",
+    "more_actions": "Mais Ações",
     "multi_panel_editor": {
       "close_all_panels": "Fechar todos os painéis",
       "close_all_tabs": "Fechar todas as abas",
@@ -790,9 +791,12 @@
     "namespace and id readonly": "As propriedades `namespace` e `id` não podem ser alteradas — elas estão definidas para seus valores iniciais. Se você quiser renomear um flow ou alterar seu namespace, você pode criar um novo flow e remover o antigo.",
     "namespace files": {
       "create": {
-        "already_exists": "Um arquivo com este nome já existe",
         "file": "Criar arquivo",
+        "file_already_exists": "Um arquivo com este nome já existe",
+        "file_error": "Ocorreu um erro ao criar o arquivo",
         "folder": "Criar pasta",
+        "folder_already_exists": "Uma pasta com este nome já existe",
+        "folder_error": "Ocorreu um erro ao criar a pasta",
         "label": "Criar"
       },
       "delete": {
@@ -803,11 +807,13 @@
         "label": "Deletar"
       },
       "dialog": {
-        "confirm": "Confirmar",
-        "file_deletion": "Confirmar deleção de arquivo",
-        "file_deletion_description": "Tem certeza de que deseja deletar este arquivo?",
-        "folder_deletion": "Confirmar deleção de pasta",
-        "folder_deletion_description": "Tem certeza de que deseja deletar esta pasta e todo o seu conteúdo?",
+        "deletion": {
+          "confirm": "Confirmar",
+          "files": "Tem certeza de que deseja excluir <code>{count}</code> arquivo(s)?",
+          "folders": "Tem certeza de que deseja excluir <code>{count}</code> pasta(s) e todo o seu conteúdo?",
+          "mixed": "Tem certeza de que deseja excluir a(s) pasta(s) <code>{folders}</code> e o(s) arquivo(s) <code>{files}</code>?",
+          "title": "Confirmar exclusão de conteúdo"
+        },
         "name": {
           "file": "Nome com extensão:",
           "folder": "Nome da pasta:"
@@ -897,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Adicionar um bloco após a execução",
+        "charts": "Adicionar um gráfico",
         "conditions": "Adicionar uma condição",
         "errors": "Adicionar um manipulador de erro",
         "finally": "Adicionar um bloco finally",
         "inputs": "Adicionar um campo de input",
+        "numerator": "Adicionar um numerador",
         "pluginDefaults": "Adicionar um padrão de plugin",
         "tasks": "Adicionar uma task",
-        "triggers": "Adicionar um trigger"
+        "triggers": "Adicionar um trigger",
+        "where": "Filtrar seus dados"
       },
       "fields": {
         "general": {
@@ -946,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Selecione uma task",
+        "charts": "Selecione um tipo de gráfico",
         "conditions": "Selecione uma condição",
         "errors": "Selecione uma task",
         "finally": "Selecione uma task",
         "inputs": "Selecione um tipo de campo de input",
+        "numerator": "Selecione um numerador",
         "pluginDefaults": "Selecione um plugin",
         "task": "Selecione uma task",
         "tasks": "Selecione uma task",
-        "triggers": "Selecione um trigger"
+        "triggers": "Selecione um trigger",
+        "where": "Selecione um tipo de filtro"
       },
       "toggle_pebble": "Alternar editor Pebble",
       "unnamed": "Sem Nome",

@@ -1,13 +1,15 @@
 <template>
-    <section class="row empty">
-        <div class="col-sm-12 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
-            <img :src="src" :alt="t(`empty.${props.type}.title`)" class="empty-visual">
+    <section class="empty">
+        <div class="row">
+            <div class="col-sm-12 col-md-8 offset-md-2 col-lg-6 offset-lg-3">
+                <img :src="src" :alt="t(`empty.${props.type}.title`)" class="empty-visual">
 
-            <h2>{{ t(`empty.${props.type}.title`) }}</h2>
-            <p class="empty-description" v-html="t(`empty.${props.type}.content`)" />
+                <h2>{{ t(`empty.${props.type}.title`) }}</h2>
+                <p class="empty-description" v-html="t(`empty.${props.type}.content`)" />
 
-            <slot name="button" />
-            <slot name="content" />
+                <slot name="button" />
+                <slot name="content" />
+            </div>
         </div>
     </section>
 </template>

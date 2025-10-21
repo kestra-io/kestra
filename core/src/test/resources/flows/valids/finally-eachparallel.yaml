@@ -8,8 +8,9 @@ inputs:
 
 tasks:
   - id: each
-    type: io.kestra.plugin.core.flow.EachParallel
-    value: '["1", "2", "3"]'
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["1", "2", "3"]'
+    concurrencyLimit: 0
     tasks:
       - id: if
         type: io.kestra.plugin.core.flow.If

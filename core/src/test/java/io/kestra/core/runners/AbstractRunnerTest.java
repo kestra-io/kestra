@@ -119,7 +119,7 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-parallel-subflow-notfound.yml")
+    @ExecuteFlow("flows/valids/foreach-concurrent-subflow-notfound.yaml")
     void eachParallelWithSubflowMissing(Execution execution) {
         assertThat(execution).isNotNull();
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
@@ -138,15 +138,10 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-parallel.yaml")
+    @ExecuteFlow("flows/valids/foreach-concurrent-no-limit.yaml")
     void eachParallel(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(8);
-    }
-
-    @Test
-    @ExecuteFlow("flows/valids/each-parallel-nested.yaml")
-    void eachParallelNested(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(11);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(7);
     }
 
     @Test
@@ -370,7 +365,7 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/each-parallel-pause.yml"})
+    @LoadFlows({"flows/valids/foreach-concurrent-pause.yaml"})
     public void pauseRunParallelDelay() throws Exception {
         pauseTest.runParallelDelay(runnerUtils);
     }

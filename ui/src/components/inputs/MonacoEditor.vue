@@ -26,11 +26,13 @@
 </template>
 
 <script lang="ts">
+    import Utils, {parsePebbleBlocks} from "../../utils/utils";
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
     import YamlWorker from "./yaml.worker.js?worker";
+
     const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, as: "raw"});
 
     let tries = 10
@@ -72,6 +74,24 @@
             }
         },
     };
+
+    function isCursorInPebbleBlock(editor: monaco.editor.ICodeEditor) {
+        const pebbleBlockPositions = parsePebbleBlocks(editor.getValue());
+
+        const pos = editor.getPosition();
+
+        if(!pos){
+            return false;
+        }
+
+        // check if current position is within a pebble block
+        return pebbleBlockPositions.some(block =>
+            pos.lineNumber >= block.startPos.lineNumber &&
+            pos.lineNumber <= block.endPos.lineNumber &&
+            (pos.lineNumber !== block.startPos.lineNumber || pos.column > block.startPos.column) &&
+            (pos.lineNumber !== block.endPos.lineNumber || pos.column <= block.endPos.column)
+        )
+    }
 </script>
 
 <script setup lang="ts">
@@ -101,7 +121,6 @@
 
     import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
 
-    import Utils from "../../utils/utils";
     import {STATES, TaskIcon} from "@kestra-io/ui-libs";
     import uniqBy from "lodash/uniqBy";
     import {useI18n} from "vue-i18n";
@@ -284,8 +303,6 @@
     const suggestWidgetResizeObserver = ref<MutationObserver>()
     const suggestWidgetObserver = ref<MutationObserver>()
     const suggestWidget = ref<HTMLElement>()
-
-
 
     defineExpose({
         focus,
@@ -739,6 +756,10 @@
                     if (e.keyCode === monaco.KeyCode.Backspace) {
                         if (modifiedBackspaceTimeout) clearTimeout(modifiedBackspaceTimeout);
 
+                        if(!isCursorInPebbleBlock(modifiedEditor)) {
+                            return;
+                        }
+
                         modifiedBackspaceTimeout = window.setTimeout(() => {
                             modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
                         }, 250);
@@ -785,8 +806,12 @@
                     if (e.keyCode === monaco.KeyCode.Backspace) {
                         if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout);
 
+                        if(!localEditor.value || !isCursorInPebbleBlock(localEditor.value)) {
+                            return;
+                        }
+
                         localBackspaceTimeout = window.setTimeout(() => {
-                            localEditor.value!.trigger("keyboard", "editor.action.triggerSuggest", {});
+                            localEditor.value?.trigger("keyboard", "editor.action.triggerSuggest", {});
                         }, 250);
                     }
                 });

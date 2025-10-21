@@ -351,3 +351,74 @@ export function deepEqual(x: any, y: any): boolean {
         ok(x).every(key => deepEqual(x[key], y[key]))
     ) : (x === y);
 }
+
+export function getNumberOfNewLinesBetweenIndices(value: string, start: number, end: number): number {
+    // count the number of lines between endSearchIndex and startSearchIndex
+    return end - start // count the number of characters between the two indices
+        - value.substring(start, end).replace(/\n/g, "").length // count the number of new lines
+}
+
+
+export function parsePebbleBlocks(value: string) {
+    let startSearchIndex = 0;
+    let endSearchIndex = 0;
+    let line = 1;
+    let blockStartLine = 0;
+    const pebbleBlocks: {
+        startPos: { lineNumber: number; column: number };
+        endPos: { lineNumber: number; column: number };
+    }[] = [];
+
+    let safetyCounter = 4000;
+
+    while((startSearchIndex = value.indexOf("{{", startSearchIndex)) > -1 && safetyCounter-- > 0) {
+        line += getNumberOfNewLinesBetweenIndices(value, endSearchIndex, startSearchIndex);
+        blockStartLine = line;
+        // get the index of the last new line before startSearchIndex
+        const lastNewLineIndex = value.lastIndexOf("\n", startSearchIndex);
+        const blockStartColumn = (startSearchIndex - lastNewLineIndex) + 2;
+
+        if ((endSearchIndex = value.indexOf("}}", startSearchIndex)) > -1) {
+            const numberOfEndlineInBlock = getNumberOfNewLinesBetweenIndices(value, startSearchIndex, endSearchIndex);
+            line += numberOfEndlineInBlock;
+            // get the index of the last new line before startSearchIndex
+            const lastNewLineIndex = value.lastIndexOf("\n", endSearchIndex);
+            const blockEndColumn = (endSearchIndex - lastNewLineIndex);
+            pebbleBlocks.push({
+                startPos: {
+                    lineNumber: blockStartLine,
+                    column: blockStartColumn
+                },
+                endPos: {
+                    lineNumber: line,
+                    column: blockEndColumn
+                }
+            });
+            startSearchIndex = endSearchIndex;
+        }else{
+            startSearchIndex += 2; // move past {{
+            break; // no closing }} found
+        }
+    }
+
+    // we want to consider an unclosed pebble block at the end of the file
+    if(endSearchIndex < startSearchIndex){
+        // get the index of the last new line before startSearchIndex
+        const lastNewLineIndex = value.lastIndexOf("\n", startSearchIndex);
+        const blockStartColumn = (startSearchIndex - lastNewLineIndex) + 2;
+        const veryLastNewLineIndex = value.lastIndexOf("\n", startSearchIndex);
+        const blockEndColumn = value.length - veryLastNewLineIndex + 1;
+        pebbleBlocks.push({
+            startPos: {
+                lineNumber: blockStartLine,
+                column: blockStartColumn
+            },
+            endPos: {
+                lineNumber: line,
+                column: blockEndColumn
+            }
+        });
+    }
+
+    return pebbleBlocks;
+}

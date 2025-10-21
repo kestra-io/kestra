@@ -21,11 +21,11 @@ tasks:
               type: io.kestra.plugin.core.flow.WorkingDirectory
               tasks:
               - id: first
-                type: io.kestra.plugin.core.storage.LocalFiles
+                type: io.kestra.plugin.core.flow.WorkingDirectoryTest$LocalFiles
                 inputs:
                   out/stay.txt: "{{ taskrun.id }}"
               - id: second
-                type: io.kestra.plugin.core.storage.LocalFiles
+                type: io.kestra.plugin.core.flow.WorkingDirectoryTest$LocalFiles
                 outputs:
                   - out/*
   - id: 2_end

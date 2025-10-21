@@ -26,7 +26,6 @@
 </template>
 
 <script lang="ts">
-    import Utils, {parsePebbleBlocks} from "../../utils/utils";
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
@@ -35,8 +34,8 @@
 
     const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, as: "raw"});
 
-    let tries = 10
-    const intervalId = setInterval(() => {
+    let tries = 0
+    function loadNodeTypes(){
         if(monaco.languages.typescript) {
             for(const path in NodeTypesRaw){
                 const NodeTypesRawContent = NodeTypesRaw[path].toString();
@@ -46,12 +45,14 @@
                     `file://${path}`
                 );
             }
-            clearInterval(intervalId);
-        } else if(tries-- <= 0) {
-            // only give it a second to try initialization
-            clearInterval(intervalId);
+        } else if(tries <= 15) {
+            // Retry loading types up to 15 times with increasing delay
+            setTimeout(loadNodeTypes, ++tries * 100)
         }
-    }, 100);
+    }
+
+    loadNodeTypes();
+
 
     export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
 
@@ -76,21 +77,20 @@
     };
 
     function isCursorInPebbleBlock(editor: monaco.editor.ICodeEditor) {
-        const pebbleBlockPositions = parsePebbleBlocks(editor.getValue());
+        const editorValue = editor.getValue()
+        const cursorPos = editor.getPosition()
 
-        const pos = editor.getPosition();
-
-        if(!pos){
+        if(!cursorPos){
             return false;
         }
 
-        // check if current position is within a pebble block
-        return pebbleBlockPositions.some(block =>
-            pos.lineNumber >= block.startPos.lineNumber &&
-            pos.lineNumber <= block.endPos.lineNumber &&
-            (pos.lineNumber !== block.startPos.lineNumber || pos.column > block.startPos.column) &&
-            (pos.lineNumber !== block.endPos.lineNumber || pos.column <= block.endPos.column)
-        )
+        // get the absolute index in the string
+        const absoluteOffset = editor.getModel()?.getOffsetAt(cursorPos) ?? 0
+
+        // if the previous token is {{ it means we are in a pebble block -> true
+        // if a }} comes after the {{ we have come out of the block and are not -> false
+        // if both are empty, they both return -1 -> false
+        return editorValue.lastIndexOf("{{", absoluteOffset) > editorValue.lastIndexOf("}}", absoluteOffset);
     }
 </script>
 
@@ -122,11 +122,13 @@
     import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
 
     import {STATES, TaskIcon} from "@kestra-io/ui-libs";
+
     import uniqBy from "lodash/uniqBy";
     import {useI18n} from "vue-i18n";
     import {ElDatePicker} from "element-plus";
     import {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget";
+    import Utils from "../../utils/utils";
     import {hashCode} from "../../utils/global";
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";

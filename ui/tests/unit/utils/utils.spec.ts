@@ -22,13 +22,85 @@ describe("parsePebbleBlocks", () => {
         expect(blocks).toHaveLength(1);
         expect(blocks[0]).toMatchObject({
             startPos: {
-                column: 13,
+                column: 11,
                 lineNumber: 1,
             },
             endPos: {
-                column: 27,
+                column: 25,
                 lineNumber: 1,
             },
         })
+    });
+
+    it("should correctly parse multiple pebble blocks", () => {
+        const text = "Start {{block.one}} middle {{block.two}} end";
+        const blocks = parsePebbleBlocks(text);
+        expect(blocks).toHaveLength(2);
+        expect(blocks[0]).toMatchObject({
+            startPos: {
+                column: 7,
+                lineNumber: 1,
+            },
+            endPos: {
+                column: 18,
+                lineNumber: 1,
+            },
+        });
+        expect(blocks[1]).toMatchObject({
+            startPos: {
+                column: 28,
+                lineNumber: 1,
+            },
+            endPos: {
+                column: 39,
+                lineNumber: 1,
+            },
+        });
+    });
+
+    it("should correctly parse pebble blocks across multiple lines", () => {
+        const text = `Line 1
+                        {{block.one}}
+                        Line 3
+                        {{block.two}}
+                        Line 5`;
+        const blocks = parsePebbleBlocks(text);
+        expect(blocks).toHaveLength(2);
+        expect(blocks[0]).toMatchObject({
+            startPos: {
+                column: 25,
+                lineNumber: 2,
+            },
+            endPos: {
+                column: 36,
+                lineNumber: 2,
+            },
+        });
+        expect(blocks[1]).toMatchObject({
+            startPos: {
+                column: 25,
+                lineNumber: 4,
+            },
+            endPos: {
+                column: 36,
+                lineNumber: 4,
+            },
+        });
+    });
+
+    it("should handle unclosed pebble blocks", () => {
+        const text = "Some text {{pebble.block more text";
+        const blocks = parsePebbleBlocks(text);
+        expect(blocks).toHaveLength(1);
+        expect(blocks[0]).toMatchObject({
+            startPos: {
+                column: 11,
+                lineNumber: 1,
+            },
+            endPos: {
+                column: 35,
+                lineNumber: 1,
+            },
+        });
     });
 })

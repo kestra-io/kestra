@@ -250,18 +250,18 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @ExecuteFlow(value = "flows/valids/each-sequential-nested.yaml", tenantId = TENANT_2)
+    @ExecuteFlow(value = "flows/valids/foreach-nested.yaml", tenantId = TENANT_2)
     void replayEachSeq(Execution execution) throws Exception {
-        assertThat(execution.getTaskRunList()).hasSize(23);
+        assertThat(execution.getTaskRunList()).hasSize(16);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getId(), null);
+        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList()).hasSize(5);
-        assertThat(restart.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getState().getHistories()).hasSize(4);
+        assertThat(restart.getTaskRunList()).hasSize(2);
+        assertThat(restart.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        assertThat(restart.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getState().getHistories()).hasSize(4);
 
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());
@@ -269,18 +269,18 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @ExecuteFlow(value = "flows/valids/each-sequential-nested.yaml", tenantId = TENANT_1)
+    @ExecuteFlow(value = "flows/valids/foreach-nested.yaml", tenantId = TENANT_1)
     void replayEachSeq2(Execution execution) throws Exception {
-        assertThat(execution.getTaskRunList()).hasSize(23);
+        assertThat(execution.getTaskRunList()).hasSize(16);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("1-2-1_return", List.of("s1", "a a")).getId(), null);
+        Execution restart = executionService.replay(execution, execution.findTaskRunByTaskIdAndValue("p1", List.of("l1", "d1")).getId(), null);
 
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList()).hasSize(6);
-        assertThat(restart.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-        assertThat(restart.findTaskRunByTaskIdAndValue("1-2_each", List.of("s1")).getState().getHistories()).hasSize(4);
+        assertThat(restart.getTaskRunList()).hasSize(3);
+        assertThat(restart.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
+        assertThat(restart.findTaskRunByTaskIdAndValue("each1", List.of("l1")).getState().getHistories()).hasSize(4);
 
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());

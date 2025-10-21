@@ -9,13 +9,18 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.flow.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import reactor.core.publisher.Flux;
 
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -126,9 +131,10 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-sequential-nested.yaml")
-    void eachSequentialNested(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(23);
+    @ExecuteFlow("flows/valids/foreach-nested.yaml")
+    void nested(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(16);
     }
 
     @Test
@@ -279,7 +285,16 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows({"flows/valids/each-null.yaml"})
     void eachWithNull() throws Exception {
-        EachSequentialTest.eachNullTest(runnerUtils, logsQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        Flux<LogEntry> receive = TestsUtils.receive(logsQueue, either -> logs.add(either.getLeft()));
+
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-null", Duration.ofSeconds(60));
+
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
+        receive.blockLast();
+        assertThat(matchingLog).isNotNull();
     }
 
     @Test

@@ -461,7 +461,7 @@ class FlowControllerTest {
         assertThat(withSource.getId()).isEqualTo(flow.getId());
         assertThat(withSource.getSource()).contains("format: |2-");
     }
-    
+
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
     void invalidUpdateFlowFlowFromJson() {

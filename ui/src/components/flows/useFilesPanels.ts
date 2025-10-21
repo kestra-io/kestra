@@ -127,7 +127,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
                     continue
                 }
                 if(namespace.value === undefined){
-                    throw new Error("Cannot save file, namespace is undefined")
+                    throw new Error(`Cannot save file "${tab.path}": namespace is undefined`)
                 }
                 await namespacesStore.createFile({
                     namespace: namespace.value,

@@ -13,5 +13,6 @@ ALTER TABLE executions MODIFY COLUMN `state_current` ENUM (
     'RETRYING',
     'RETRIED',
     'SKIPPED',
+    'BREAKPOINT',
     'SUBMITTED'
     ) GENERATED ALWAYS AS (value ->> '$.state.current') STORED NOT NULL;

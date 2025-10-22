@@ -15,7 +15,7 @@
         :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
     >
         <EmptyTemplate v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
-            <div class="no-secret-manager-block d-flex flex-column gap-6">
+            <div class="no-secret-manager-block d-flex flex-column gap-6 mt-3">
                 <div class="header-block d-flex align-items-center">
                     <div class="d-flex flex-column">
                         <div class="d-flex flex-row gap-2">
@@ -28,7 +28,7 @@
                             <img :src="sourceImg" :alt="$t('demos.secrets.title')" class="img-wrapper">
                         </div>
                         <div>
-                            <div class="video-container">
+                            <div v-if="isOnline" class="video-container">
                                 <iframe
                                     src="https://www.youtube.com/embed/u0yuOYG-qMI"
                                 />
@@ -77,6 +77,9 @@
 </template>
 
 <script setup lang="ts">
+    import {useNetwork} from "@vueuse/core"
+    const {isOnline} = useNetwork()
+
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Navbar from "../layout/TopNavBar.vue";

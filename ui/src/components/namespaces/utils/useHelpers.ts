@@ -121,15 +121,11 @@ export function useHelpers() {
             maximized: true,
         },
         {
-            maximized: true,
             name: "files",
             title: t("files"),
             component: NamespaceFilesEditorView,
-            props: {
-                namespace: namespace.value,
-                isNamespace: true,
-                isReadOnly: false,
-            },
+            props: {namespace: namespace.value},
+            maximized: true,
         },
     ];
 

@@ -6,6 +6,7 @@
         :defaultActiveTabs="TABS"
         :saveKey="`el-fl-${flowStore.flow?.namespace ?? `creation-${flowStore.creationId}`}${flowStore.flow?.id ? `-${flowStore.flow?.id}` : ''}`"
         :preSerializePanels="preSerializePanels"
+        :bottomVisible="playgroundMode"
         @set-tab-value="setTabValue"
         @remove-tab="onRemoveTab"
     >

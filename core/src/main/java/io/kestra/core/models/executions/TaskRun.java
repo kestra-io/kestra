@@ -3,7 +3,9 @@ package io.kestra.core.models.executions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -52,6 +54,7 @@ public class TaskRun implements TenantInterface {
 
     @With
     @JsonInclude(JsonInclude.Include.ALWAYS)
+    @Nullable
     Variables outputs;
 
     @NotNull
@@ -64,7 +67,6 @@ public class TaskRun implements TenantInterface {
     Boolean dynamic;
 
     // Set it to true to force execution even if the execution is killed
-    @Nullable
     @With
     Boolean forceExecution;
 
@@ -217,7 +219,7 @@ public class TaskRun implements TenantInterface {
     public boolean isSame(TaskRun taskRun) {
         return this.getId().equals(taskRun.getId()) &&
             ((this.getValue() == null && taskRun.getValue() == null) || (this.getValue() != null && this.getValue().equals(taskRun.getValue()))) &&
-            ((this.getIteration() == null && taskRun.getIteration() == null) || (this.getIteration() != null && this.getIteration().equals(taskRun.getIteration()))) ;
+            ((this.getIteration() == null && taskRun.getIteration() == null) || (this.getIteration() != null && this.getIteration().equals(taskRun.getIteration())));
     }
 
     public String toString(boolean pretty) {
@@ -249,7 +251,7 @@ public class TaskRun implements TenantInterface {
      * This method is used when the retry is apply on a task
      * but the retry type is NEW_EXECUTION
      *
-     * @param retry Contains the retry configuration
+     * @param retry     Contains the retry configuration
      * @param execution Contains the attempt number and original creation date
      * @return The next retry date, null if maxAttempt || maxDuration is reached
      */
@@ -270,6 +272,7 @@ public class TaskRun implements TenantInterface {
 
     /**
      * This method is used when the Retry definition comes from the flow
+     *
      * @param retry The retry configuration
      * @return The next retry date, null if maxAttempt || maxDuration is reached
      */

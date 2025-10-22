@@ -57,6 +57,10 @@ function readFile(file: File): Promise<ArrayBuffer> {
     });
 }
 
+function isNotRootTreeNode(node: (TreeNode & { level: number}) | {level: 0}): node is (TreeNode & { level: number}) {
+    return node.level > 0;
+}
+
 export const useFilesStore = defineStore("files", () => {
     const fileTree = ref<TreeNode[]>([]);
     const searchResults = ref<string[]>([]);
@@ -252,7 +256,7 @@ export const useFilesStore = defineStore("files", () => {
         return findPath(fileTree.value);
     }
 
-    async function loadNodes(node: TreeNode & { level: number}, resolve: (children: TreeNode[]) => void) {
+    async function loadNodes(node: (TreeNode & { level: number}) | {level: 0}, resolve: (children: TreeNode[]) => void = () => {}) {
         if(namespaceId.value === undefined) return;
         if (node.level === 0) {
             const payload = {namespace: namespaceId.value};
@@ -260,7 +264,7 @@ export const useFilesStore = defineStore("files", () => {
             renderNodes(itemsArr);
             fileTree.value = sorted(fileTree.value);
             resolve(fileTree.value);
-        } else if (node.level >= 1) {
+        } else if (isNotRootTreeNode(node)) {
             const payload = {
                 namespace: namespaceId.value, 
                 path: getPath(node)
@@ -388,9 +392,6 @@ export const useFilesStore = defineStore("files", () => {
     return {
         addFolder,
         addFile,
-        folderNode,
-        renderNodes,
-        pushToParentFolder,
         searchFilesList,
         loadNodes,
         findNodeByPath,

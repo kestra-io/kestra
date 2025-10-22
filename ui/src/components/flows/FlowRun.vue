@@ -184,7 +184,7 @@
                                 formRef,
                                 id: this.flow.id,
                                 namespace: this.flow.namespace,
-                                inputs: this.selectedTrigger?.inputs ? { ...this.selectedTrigger.inputs, ...this.inputsNoDefaults } : this.inputsNoDefaults,
+                                inputs: this.selectedTrigger?.inputs ? {...this.selectedTrigger.inputs, ...this.inputsNoDefaults} : this.inputsNoDefaults,
                                 labels: [...new Set(
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
@@ -193,7 +193,7 @@
                                 scheduleDate: this.scheduleDate
                             });
                         } else {
-                            executeTask(this, this.flow, this.selectedTrigger?.inputs ? { ...this.selectedTrigger.inputs, ...this.inputsNoDefaults } : this.inputsNoDefaults, {
+                            executeTask(this, this.flow, this.selectedTrigger?.inputs ? {...this.selectedTrigger.inputs, ...this.inputsNoDefaults} : this.inputsNoDefaults, {
                                 redirect: this.redirect,
                                 newTab: this.newTab,
                                 id: this.flow.id,

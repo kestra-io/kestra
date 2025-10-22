@@ -4,81 +4,85 @@
     </component>
 </template>
 
-<script setup>
-    import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue";
-</script>
-
-<script>
-    import {mapStores} from "pinia";
+<script setup lang="ts">
+    import {computed} from "vue";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useRouter, useRoute} from "vue-router";
+    import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue";
 
-    export default {
-        props: {
-            component: {
-                type: String,
-                default: "el-button"
-            },
-            executionId: {
-                type: String,
-                default: undefined
-            },
-            namespace: {
-                type: String,
-                default: undefined
-            },
-            flowId: {
-                type: String,
-                default: undefined
-            },
-            tabFlow: {
-                type: String,
-                default: "overview"
-            },
-            tabExecution: {
-                type: String,
-                default: "topology"
+    const props = withDefaults(defineProps<{
+        component?: string;
+        executionId?: string;
+        namespace?: string;
+        flowId?: string;
+        tabFlow?: string;
+        tabExecution?: string;
+    }>(), {
+        component: "el-button",
+        tabFlow: "overview",
+        tabExecution: "topology",
+        executionId: undefined,
+        namespace: undefined,
+        flowId: undefined
+    });
+
+    const router = useRouter();
+    const route = useRoute();
+    const executionsStore = useExecutionsStore();
+
+    const routeName = computed(() => {
+        return props.executionId ? "executions/update" : "flows/update"
+    });
+
+    const tab = computed(() => {
+        return props.executionId ? props.tabExecution : props.tabFlow
+    });
+
+    interface Execution {
+        id: string;
+        namespace: string;
+        flowId: string;
+    }
+
+    const params = (execution?: Execution) => {
+        if (execution) {
+            return {
+                namespace: execution.namespace, 
+                flowId: execution.flowId, 
+                id: execution.id, 
+                tab: tab.value
             }
-        },
-        methods: {
-            click() {
-                if (this.executionId && this.namespace && this.flowId) {
-                    this.$router.push({
-                        name: this.routeName,
-                        params: {
-                            namespace: this.namespace,
-                            flowId: this.flowId,
-                            id: this.executionId,
-                            tab: this.tab,
-                            tenant: this.$route.params.tenant
-                        },
-                    });
-                } else if (this.executionId) {
-                    this.executionsStore
-                        .loadExecution({id: this.executionId})
-                        .then(value => {
-                            this.executionsStore.execution = value;
-                            this.$router.push({name: this.routeName, params: this.params(value)})
-                        })
-                } else {
-                    this.$router.push({name: this.routeName, params: this.params()})
-                }
-            },
-            params (execution) {
-                if (execution) {
-                    return {namespace: execution.namespace, flowId: execution.flowId, id: execution.id, tab: this.tab}
-                } else {
-                    return {namespace: this.namespace, id: this.flowId, tab: this.tab}
-                }
-            },
-        },
-        computed : {
-            ...mapStores(useExecutionsStore),
-            routeName () {
-                return this.executionId ? "executions/update" : "flows/update"
-            },
-            tab () {
-                return this.executionId ? this.tabExecution : this.tabFlow
+        } else {
+            return {
+                namespace: props.namespace, 
+                id: props.flowId, 
+                tab: tab.value
             }
         }
     }
+
+    const click = () => {
+        if (props.executionId && props.namespace && props.flowId) {
+            router.push({
+                name: routeName.value,
+                params: {
+                    namespace: props.namespace,
+                    flowId: props.flowId,
+                    id: props.executionId,
+                    tab: tab.value,
+                    tenant: route.params.tenant
+                },
+            });
+        } else if (props.executionId) {
+            executionsStore
+                .loadExecution({id: props.executionId})
+                .then(value => {
+                    executionsStore.execution = value;
+                    router.push({name: routeName.value, params: params(value)})
+                })
+        } else {
+            router.push({name: routeName.value, params: params()})
+        }
+    }
+
 </script>

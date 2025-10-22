@@ -80,7 +80,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format(new Property<>("{{ inputs.testInputs }}"))
+                .format(Property.ofExpression("{{ inputs.testInputs }}"))
                 .build())
             )
             .build();

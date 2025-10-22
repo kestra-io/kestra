@@ -46,6 +46,29 @@ public class LogRecordMapperTest {
     }
 
     @Test
+    public void should_map_with_truncate(){
+        LogEntry logEntry = LogEntry.builder()
+            .tenantId("tenantId")
+            .namespace("namespace")
+            .flowId("flowId")
+            .taskId("taskId")
+            .executionId("executionId")
+            .taskRunId("taskRunId")
+            .attemptNumber(1)
+            .triggerId("triggerId")
+            .timestamp(Instant.parse("2011-12-03T10:15:30.123456789Z"))
+            .level(Level.INFO)
+            .thread("thread")
+            .message("message")
+            .build();
+        LogRecord logRecord = LogRecordMapper.mapToLogRecord(logEntry, 1);
+        assertThat(logRecord.getBodyValue()).isEqualTo("2011-12-03T10:15:30.123456789Z INFO m");
+
+        logRecord = LogRecordMapper.mapToLogRecord(logEntry, 0);
+        assertThat(logRecord.getBodyValue()).isEqualTo("2011-12-03T10:15:30.123456789Z INFO message");
+    }
+
+    @Test
     public void should_convert_instant_in_nanos(){
         Instant instant = Instant.parse("2011-12-03T10:15:30.123456789Z");
         assertThat(LogRecordMapper.instantInNanos(instant)).isEqualTo(1322907330123456789L);

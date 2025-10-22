@@ -194,8 +194,8 @@ class SetTest {
         KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
             .overwrite(Property.ofValue(false))
             .build().run(runContext));
         assertThat(exception.getMessage()).isEqualTo("Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.".formatted(key));

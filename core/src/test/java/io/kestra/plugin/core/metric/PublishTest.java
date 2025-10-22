@@ -4,6 +4,7 @@ import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.metrics.CounterMetric;
+import io.kestra.core.models.tasks.metrics.GaugeMetric;
 import io.kestra.core.models.tasks.metrics.TimerMetric;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TestsUtils;
@@ -35,6 +36,10 @@ public class PublishTest {
                     TimerMetric.builder()
                         .value(Property.ofValue(Duration.parse("PT5H")))
                         .name(Property.ofValue("timer"))
+                        .build(),
+                    GaugeMetric.builder()
+                        .value(Property.ofValue(1.0))
+                        .name(Property.ofValue("gauge"))
                         .build()
                 ))
             )
@@ -44,7 +49,7 @@ public class PublishTest {
 
         publish.run(runContext);
 
-        assertThat(runContext.metrics().size()).isEqualTo(2);
+        assertThat(runContext.metrics().size()).isEqualTo(3);
     }
 
 }

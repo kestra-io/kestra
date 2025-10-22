@@ -85,7 +85,7 @@
         "@rushstack/eslint-patch": "^1.13.0",
         "@shikijs/markdown-it": "^3.13.0",
         "@storybook/addon-themes": "^9.1.10",
-        "@storybook/addon-vitest": "^9.1.10",
+        "@storybook/addon-vitest": "^9.1.13",
         "@storybook/test-runner": "^0.23.0",
         "@storybook/vue3-vite": "^9.1.10",
         "@types/humanize-duration": "^3.27.4",

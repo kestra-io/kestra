@@ -8,7 +8,7 @@
     >
         <el-row class="my-4 px-3" justify="center">
             <KSFilter
-                :configuration="pluginFilter(countPlugin)"
+                :configuration="pluginFilter()"
                 :buttons="{
                     savedFilters: {shown: false}, 
                     tableOptions: {shown: false}
@@ -94,10 +94,6 @@
     };
 
     const searchInput = computed(() => searchText.value.toLowerCase());
-
-    const countPlugin = computed(() => {
-        return new Set(props.plugins.flatMap(plugin => allElements(plugin))).size;
-    });
 
     const pluginsList = computed(() => {
         // Show subgroups only if exist, else show main group - GH-8940

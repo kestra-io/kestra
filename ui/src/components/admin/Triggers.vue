@@ -281,7 +281,7 @@
                     :redirect="false"
                     :embed="true"
                 />
-                <template #footer>                  
+                <template #footer>
                     <el-button
                         type="primary"
                         @click="postBackfill()"
@@ -352,7 +352,7 @@
     const selectTable = ref();
 
     const total = ref();
-    const triggers = ref();
+    const triggers = ref<any[]>([]);
     const triggerToUnlock = ref();
     const isBackfillOpen = ref(false);
     const selectedTrigger = ref(null);
@@ -742,7 +742,7 @@
                 codeDisabled: t?.abstractTrigger?.disabled,
                 missingSource: !t?.abstractTrigger
             };
-        }) || [];
+        }) ?? [];
 
         if (!route.query?.["filters[trigger_state][EQUALS]"]) return all;
 

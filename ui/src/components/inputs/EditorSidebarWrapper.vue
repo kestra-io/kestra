@@ -1,10 +1,12 @@
 <template>
-    <EditorSidebar :currentNS="namespace" style="width: 100%;height: 100%;" />
+    <EditorSidebar
+        :currentNS="namespace"
+        style="width: 100%;height: 100%;"
+    />
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue";
-    // @ts-expect-error no types on editor sidebar
     import EditorSidebar from "./EditorSidebar.vue";
     import {useFlowStore} from "../../stores/flow";
 

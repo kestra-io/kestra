@@ -6,6 +6,12 @@
             </template>
         </el-table-column>
 
+        <el-table-column prop="value" :label="$t('value')">
+            <template #default="scope">
+                <code>{{ scope.row.value }}</code>
+            </template>
+        </el-table-column>
+
         <el-table-column prop="description" :label="$t('description')">
             <template #default="scope">
                 <span>{{ scope.row.description }}</span>
@@ -26,15 +32,21 @@
     </el-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {onMounted} from "vue";
 
     import {useNamespacesStore} from "override/stores/namespaces";
 
-    const props = defineProps({namespace: {type: String, required: true}});
+    interface Props {
+        namespace: string;
+    }
+
+    const props = defineProps<Props>();
 
     const store = useNamespacesStore();
 
-    const loadItem = () => store.loadInheritedKVs(props.namespace);
+    const loadItem = (): void => {
+        store.loadInheritedKVs(props.namespace);
+    };
     onMounted(() => loadItem());
 </script>

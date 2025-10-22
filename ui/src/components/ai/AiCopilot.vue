@@ -194,27 +194,27 @@
         }
     }
 
-    // Staggered animations for children elements
+    // Staggered animations for children elements (scaleX only, faster)
     :deep(.el-card__header) {
-        animation: slideInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s both;
+        animation: scaleInX 0.30s cubic-bezier(0.2, 0.8, 0.2, 1) 0.04s both;
     }
 
     :deep(.el-card__body) {
-        animation: slideInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.2s both;
+        animation: scaleInX 0.30s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both;
     }
 
     :deep(.el-card__footer) {
-        animation: slideInUp 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.3s both;
+        animation: scaleInX 0.30s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s both;
     }
 
-    @keyframes slideInUp {
+    @keyframes scaleInX {
         from {
             opacity: 0;
-            transform: translateY(30px);
+            transform: scaleX(0.85);
         }
         to {
             opacity: 1;
-            transform: translateY(0);
+            transform: scaleX(1);
         }
     }
 </style>

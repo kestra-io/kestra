@@ -363,10 +363,10 @@
         transform-origin: center bottom;
     }
 
-    // Backdrop fade transition
+    // Backdrop fade transition (faster)
     .backdrop-fade-enter-active,
     .backdrop-fade-leave-active {
-        transition: opacity 0.3s ease;
+        transition: opacity 0.2s ease;
     }
 
     .backdrop-fade-enter-from,
@@ -374,23 +374,22 @@
         opacity: 0;
     }
 
-    // Copilot slide transition with spring physics
+    // Copilot transition (scaleX only, no vertical movement)
     .copilot-slide-enter-active {
-        transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.15s ease;
     }
 
     .copilot-slide-leave-active {
-        transition: all 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53);
+        transition: transform 0.35s cubic-bezier(0.4, 0.0, 1, 1);
     }
 
     .copilot-slide-enter-from {
         opacity: 0;
-        transform: translateY(100px) scale(0.5);
+        transform: scaleX(0.85);
     }
 
     .copilot-slide-leave-to {
-        opacity: 0;
-        transform: translateY(100px) scale(0.8);
+        transform: scaleX(0.95);
     }
 
     // Responsive design

@@ -90,6 +90,10 @@
     border: 1px solid $code-border-color;
     transition: all 0.2s ease-in-out;
 
+    &:hover {
+        background-color: var(--ks-button-background-secondary-hover);
+    }
+
     & > .icon {
         width: 1.25rem;
     }
@@ -117,7 +121,13 @@
         padding: 0;
         border: none;
     }
+
+    :deep(.el-button) {
+        background-color: transparent;
+
+        &:hover {
+            color: var(--ks-content-alert);
+        }
+    }
 }
-
-
 </style>

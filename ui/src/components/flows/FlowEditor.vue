@@ -4,7 +4,7 @@
     />
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {onBeforeUnmount} from "vue"
     import {useFlowStore} from "../../stores/flow";
     import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";

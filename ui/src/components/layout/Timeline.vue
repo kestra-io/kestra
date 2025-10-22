@@ -27,14 +27,15 @@
     </div>
 </template>
 
-<script setup>
-    import {ref, computed, onMounted, onUnmounted} from "vue"
+<script setup lang="ts">
+    import {ref, computed, onMounted, onUnmounted, type PropType} from "vue"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
 
+   
     const props = defineProps({
         histories: {
-            type: Array,
+            type: Array as PropType<{date: string, state: string }[]>,
             default: () => []
         }
     })
@@ -59,21 +60,25 @@
         const maxWidth = 960
         return windowWidth.value >= minWidth && 
             windowWidth.value <= maxWidth && 
-            props.histories.length > 1
+            props.histories?.length > 1;
     })
 
     const displayedHistories = computed(() => {
-        if (!isToggle.value || showStates.value) {
-            return props.histories
+        if (!props.histories || props.histories.length === 0) {
+            return [];
         }
-        return [props.histories[props.histories.length - 1]]
+        if (!isToggle.value || showStates.value) {
+            return props.histories;
+        }
+        return [props.histories[props.histories.length - 1]];
     })
+    
 
     const toggleStates = () => {
         showStates.value = !showStates.value
     }
 
-    const getStyle = (state) => ({
+    const getStyle = (state: string) => ({
         backgroundColor: `var(--ks-chart-${state.toLowerCase()})`
     })
 </script>

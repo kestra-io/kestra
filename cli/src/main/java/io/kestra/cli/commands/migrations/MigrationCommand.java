@@ -13,6 +13,7 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     subcommands = {
         TenantMigrationCommand.class,
+        MetadataMigrationCommand.class
     }
 )
 @Slf4j

@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public record ApiSecretListResponse(boolean readOnly, List<ApiSecretMeta> results, long total) {
+public record ApiSecretListResponse<META extends ApiSecretMeta>(boolean readOnly, List<META> results, long total) {
     public ApiSecretListResponse(
         @NotNull
         @Parameter(
@@ -18,7 +18,7 @@ public record ApiSecretListResponse(boolean readOnly, List<ApiSecretMeta> result
             name = "results",
             description = "List of secrets",
             required = true)
-        List<ApiSecretMeta> results,
+        List<META> results,
         @Parameter(
             name = "total",
             description = "Total number of available secrets",

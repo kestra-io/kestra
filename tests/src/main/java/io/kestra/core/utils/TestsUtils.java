@@ -54,18 +54,32 @@ abstract public class TestsUtils {
         queueConsumersCancellations.get().clear();
     }
 
+    public static String randomNamespace(String... prefix) {
+        return TestsUtils.randomString(prefix);
+    }
+
+    public static String randomTenant(String... prefix) {
+        return TestsUtils.randomString(prefix);
+    }
+
+    private static String[] stackTraceToParts() {
+        // We take the stacktrace from the util caller to troubleshoot more easily
+        StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[4];
+        String[] packageSplit = stackTraceElement.getClassName().split("\\.");
+        return new String[]{packageSplit[packageSplit.length - 1].toLowerCase(), stackTraceElement.getMethodName().toLowerCase()};
+    }
+
     /**
      * there is at least one bug in {@link io.kestra.cli.services.FileChangedEventListener#getTenantIdFromPath(Path)} forbidding use to use '_' character
      * @param prefix
      * @return
      */
-    public static String randomTenant(String... prefix) {
-        var list = List.of(prefix);
-        if (list.isEmpty()) {
-            throw new IllegalArgumentException("tenant prefix must not be empty");
+    private static String randomString(String... prefix) {
+        if (prefix.length == 0) {
+            prefix = new String[]{String.join("-", stackTraceToParts())};
         }
         var tenantRegex = "^[a-z0-9][a-z0-9_-]*";
-        var validTenantPrefixes = list.stream()
+        var validTenantPrefixes = Arrays.stream(prefix)
             .map(s -> s.replace(".", "-"))
             .map(String::toLowerCase)
             .peek(p -> {

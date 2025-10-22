@@ -55,6 +55,19 @@
                     this.load();
                 }
             },
+            "$route.params.tab": {
+                immediate: true,
+                handler: function (newTab) {
+                    if (newTab === "overview") {
+                        const dateTimeKeys = ["startDate", "endDate", "timeRange"];
+
+                        if (!Object.keys(this.$route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+                            const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": "PT168H"};
+                            this.$router.replace({name: this.$route.name, params: this.$route.params, query: newQuery});
+                        }
+                    }
+                }
+            },
             "coreStore.guidedProperties": {
                 deep: true,
                 immediate: true,
@@ -83,8 +96,12 @@
         },
         created() {
             if(!this.$route.params.tab) {
-                const tab = localStorage.getItem("flowDefaultTab") || undefined;
-                this.$router.replace({name: "flows/update", params: {...this.$route.params, tab}});
+                const tab = localStorage.getItem("flowDefaultTab") || "overview";
+                this.$router.replace({
+                    name: "flows/update", 
+                    params: {...this.$route.params, tab}, 
+                    query: {...this.$route.query}
+                });
             }
             // since this component is only used in edition
             // we need to set the flag as editing in the store.
@@ -138,7 +155,7 @@
 
                     tabs = [
                         {
-                            name: undefined,
+                            name: "overview",
                             component: Overview,
                             title: this.$t("overview"),
                             containerClass: "full-container flex-grow-0 flex-shrink-0 flex-basis-0",

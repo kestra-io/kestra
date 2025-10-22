@@ -1,6 +1,6 @@
 <template>
     <el-dropdown trigger="click" hideOnClick placement="bottom-end">
-        <el-button :icon="Menu">
+        <el-button :icon="Menu" class="selected">
             <span class="text-truncate">
                 {{ selected ?? t("dashboards.default") }}
             </span>
@@ -157,6 +157,19 @@
 </script>
 
 <style scoped lang="scss">
+.selected {
+    span{
+        font-size: 14px;
+    }
+
+    :deep(svg){
+        color: var(--ks-content-tertiary);
+        font-size: 1.10rem;
+        position: absolute;
+        bottom: -0.10rem;
+        right: 0.08rem;
+    }
+}
 .dropdown {
     width: 300px;
 

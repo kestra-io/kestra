@@ -17,19 +17,19 @@ export function useSelectTableActions({
     const handleSelectionChange = (value: any[]) => {
         selection.value = value.map(selectionMapper)
 
-        if (queryBulkAction.value && elTable?.value && value?.length < elTable.value.data?.length) {
+        if (queryBulkAction.value && elTable?.value && value?.length < elTable.value?.data?.length) {
             queryBulkAction.value = false
         }
     }
 
     const toggleAllUnselected = () => {
-        elTable.value.clearSelection()
+        elTable.value?.clearSelection()
         queryBulkAction.value = false
     }
 
     const toggleAllSelection = () => {
-        if (elTable.value.getSelectionRows().length < elTable.value.data.length) {
-            elTable.value.toggleAllSelection()
+        if (elTable.value?.getSelectionRows().length < elTable.value?.data?.length) {
+            elTable.value?.toggleAllSelection()
         }
         queryBulkAction.value = true
     }

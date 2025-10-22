@@ -101,11 +101,12 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
         internalPageNumber.value = item.page;
 
         if (!embed.value) {
+            const {size: _size, page: _page, ...otherQuery} = route.query;
             router.push({
                 query: {
-                    ...route.query,
                     size: item.size,
-                    page: item.page
+                    page: item.page,
+                    ...otherQuery
                 }
             });
         } else {
@@ -163,9 +164,9 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
     };
 
     watch(
-        () => route,
+        () => route.query,
         (newValue, oldValue) => {
-            if (oldValue?.name === newValue?.name && !_isEqual(newValue.query, oldValue.query)) {
+            if (!_isEqual(newValue, oldValue)) {
                 refreshPaging();
                 load(onDataLoaded);
             }

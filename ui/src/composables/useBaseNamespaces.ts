@@ -89,7 +89,7 @@ export const useBaseNamespacesStore = () => {
         inheritedKVs.value = response.data;
     }
 
-    async function createKv(this: any, payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl: string}) {
+    async function createKv(this: any, payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl?: string}) {
         await axios.put(
             `${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`,
             payload.value,

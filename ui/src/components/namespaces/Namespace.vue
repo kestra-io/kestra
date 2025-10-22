@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
     import {computed, Ref, watch, onMounted} from "vue";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {useTabs} from "override/components/namespaces/useTabs";
     import {useHelpers} from "./utils/useHelpers";
     import useRouteContext from "../../composables/useRouteContext";
@@ -23,6 +23,7 @@
     const {details} = useHelpers();
 
     const route = useRoute();
+    const router = useRouter();
 
     const context = computed(() => ({title:details.value.title}));
     useRouteContext(context);
@@ -36,6 +37,17 @@
             namespacesStore.load(newID);
         }
     });
+
+    watch(() => route.params.tab, (newTab) => {
+        if (newTab === "overview") {
+            const dateTimeKeys = ["startDate", "endDate", "timeRange"];
+
+            if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+                const newQuery = {...route.query, "filters[timeRange][EQUALS]": "PT168H"};
+                router.replace({name: route.name, params: route.params, query: newQuery});
+            }
+        }
+    }, {immediate: true});
 
     onMounted(() => {
         const main = document.querySelector("main");

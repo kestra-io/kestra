@@ -29,17 +29,18 @@ import java.util.function.Function;
 
 @Validated
 @Controller("/api/v1/{tenant}/namespaces")
-public class NamespaceSecretController {
+public class NamespaceSecretController<META extends ApiSecretMeta> {
     @Inject
     protected TenantService tenantService;
 
     @Inject
-    protected SecretService secretService;
+    protected SecretService<String> secretService;
 
     @Get(uri = "{namespace}/secrets")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Namespaces"}, summary = "Get secrets for a namespace")
-    public HttpResponse<ApiSecretListResponse> listNamespaceSecrets(
+    @Deprecated
+    public HttpResponse<ApiSecretListResponse<META>> listNamespaceSecrets(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
@@ -67,7 +68,8 @@ public class NamespaceSecretController {
                 .build()
             );
 
-        return HttpResponse.ok(new ApiSecretListResponse(
+        //noinspection unchecked
+        return HttpResponse.ok((ApiSecretListResponse<META>) new ApiSecretListResponse<>(
                 true,
                 results.map(ApiSecretMeta::new),
                 results.getTotal()

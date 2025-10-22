@@ -12,7 +12,7 @@ import NoCode from "../../../components/no-code/NoCode.vue";
 import EditorWrapper from "../../../components/inputs/EditorWrapper.vue";
 import PluginListWrapper from "../../../components/plugins/PluginListWrapper.vue";
 import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrapper.vue";
-import EditorSidebarWrapper from "../../../components/inputs/EditorSidebarWrapper.vue";
+import FileExplorerWrapper from "../../../components/inputs/FileExplorerWrapper.vue";
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue";
 import {EditorElement} from "../../../utils/multiPanelTypes";
 
@@ -64,7 +64,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         },
         uid: "files",
         prepend: true,
-        component: markRaw(EditorSidebarWrapper),
+        component: markRaw(FileExplorerWrapper),
     },
     {
         button: {

@@ -35,15 +35,16 @@ $code-font-sm: var(--el-font-size-small);
     font-size: $code-font-sm;
 }
 
-.delete,
-.reorder {
+.base-icon {
     cursor: pointer;
     padding-left: 0;
     color: $code-gray;
     text-align: right;
 }
 
+.delete,
 .reorder {
+    @extend .base-icon;
     height: 32px;
 }
 

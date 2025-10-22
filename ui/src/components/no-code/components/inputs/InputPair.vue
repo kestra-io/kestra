@@ -33,7 +33,7 @@
                         @update:model-value="(changed) => updateValue(index, changed)"
                     />
                 </slot>
-                <DeleteOutline @click="removePair(index)" class="delete" />
+                <DeleteOutline @click="removePair(index)" class="base-icon" />
             </el-col>
         </el-row>
 

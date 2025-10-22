@@ -36,7 +36,7 @@
                 </SchemaToHtml>
             </Suspense>
         </template>
-        <EnhancedMarkdown
+        <Markdown
             v-else
             :source="introContent"
             :class="{'position-absolute': absolute}"

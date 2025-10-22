@@ -10,14 +10,14 @@
                 :placeholder="t('namespace files.filter')"
                 filterable
                 remote
-                :remoteMethod="searchFilesList"
+                :remoteMethod="filesStore.searchFilesList"
                 class="filter"
             >
                 <template #prefix>
                     <Magnify />
                 </template>
                 <el-option
-                    v-for="item in searchResults"
+                    v-for="item in filesStore.searchResults"
                     :key="item"
                     :label="item"
                     :value="item"
@@ -105,15 +105,15 @@
         <el-tree
             ref="tree"
             lazy
-            :load="loadNodes"
-            :data="items"
+            :load="filesStore.loadNodes"
+            :data="filesStore.fileTree"
             highlightCurrent
             :allowDrop="
                 (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
             "
             draggable
             nodeKey="id"
-            v-loading="items === undefined"
+            v-loading="filesStore.fileTree === undefined"
             :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
             @node-drag-start="
@@ -252,7 +252,7 @@
                 class="mb-3"
             >
                 <el-option
-                    v-for="folder in folders"
+                    v-for="folder in filesStore.folders"
                     :key="folder"
                     :value="folder"
                     :label="folder"
@@ -351,7 +351,7 @@
 </script>
 
 <script lang="ts" setup>
-    import {ref, computed, onMounted, onBeforeUnmount, nextTick, InjectionKey, inject} from "vue";
+    import {ref, computed, onMounted, onBeforeUnmount, nextTick, InjectionKey, inject, watch} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
     import Utils from "../../utils/utils";
@@ -365,7 +365,13 @@
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
     import {EditorTabProps} from "./EditorWrapper.vue";
-    import {isDirectory, TreeNode, TreeNodeDirectory, TreeNodeFile, useFilesStore} from "../../stores/files";
+    import {
+        getFileNameWithExtension,
+        isDirectory, 
+        TreeNode,
+        TreeNodeFile,
+        useFilesStore
+    } from "../../stores/files";
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -392,6 +398,16 @@
     const namespacesStore = useNamespacesStore();
     const filesStore = useFilesStore();
 
+    watch(
+        () => props.currentNS,
+        (newNS) => {
+            if(newNS){
+                filesStore.namespaceId = newNS
+            }
+        },
+        {immediate: true},
+    );
+
     interface Dialog{
         visible: boolean;
         type: "file" | "folder";
@@ -411,14 +427,7 @@
     const dropdowns = ref<{handleClose: () => void; handleOpen: () => void}>();
     const dropdownRef = ref<{handleClose: () => void; handleOpen: () => void}>();
     const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
-    const items = computed<TreeNode[]>({
-        get: () => filesStore.fileTree,
-        set: (value: TreeNode[]) => {
-            filesStore.fileTree = value;
-        },
-    });
     const nodeBeforeDrag = ref<any>(undefined);
-    const searchResults = ref<string[]>([]);
     const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0});
     const selectedFiles = ref<string[]>([]);
     const selectedNodes = ref<any[]>([]);
@@ -430,19 +439,6 @@
     const namespaceId = computed<string>(() => props.currentNS ?? route.params.namespace as string);
 
     const multiSelected = computed(() => selectedNodes.value.length > 1);
-
-    function extractPaths(basePath = "", array: TreeNode[] = []) {
-        const paths: string[] = [];
-        array?.forEach((item) => {
-            if (isDirectory(item)) {
-                const folderPath = `${basePath}${item.fileName}`;
-                paths.push(folderPath);
-                paths.push(...extractPaths(`${folderPath}/`, item.children ?? []));
-            }
-        });
-        return paths;
-    }
-    const folders = computed(() => extractPaths(undefined, items.value));
 
     const confirmationLabels = computed(() => {
         const files = confirmation.value.nodes?.filter(n => n.type === "File").length ?? 0;
@@ -461,25 +457,6 @@
         return "node";
     }
 
-    function pushToParentFolder(parentPath: string, newNode: any) {
-        const traverseAndInsert = (basePath = "", array: any[]) => {
-            for (const item of array) {
-                const folderPath = `${basePath}${item.fileName}`;
-                if (folderPath === parentPath && Array.isArray(item.children)) {
-                    if (!item.children.find((child: any) => child.fileName === newNode.fileName)) {
-                        item.children.push(newNode);
-                        item.children = sorted(item.children);
-                    }
-                    return true;
-                } else if (Array.isArray(item.children)) {
-                    if (traverseAndInsert(`${folderPath}/`, item.children)) return true;
-                }
-            }
-            return false;
-        };
-        traverseAndInsert("", items.value);
-    }
-
     function flattenTree(itemsArr: TreeNode[], parentPath = ""): any[] {
         const result: any[] = [];
         for (const item of itemsArr) {
@@ -494,7 +471,7 @@
 
     function handleNodeClick(data: any, node: TreeNode, event: MouseEvent | null = null) {
         const path = getPath(node);
-        const flatList = flattenTree(items.value);
+        const flatList = flattenTree(filesStore.fileTree);
         const currentIndex = flatList.findIndex(item => item.path === path);
         const isCtrl = event && (event.ctrlKey || (event as any).metaKey);
         const isShift = event && event.shiftKey;
@@ -532,104 +509,9 @@
 
     async function removeSelectedFiles() {
         const nodes = selectedFiles.value.map((filePath) => {
-            return findNodeByPath(filePath);
+            return filesStore.findNodeByPath(filePath);
         });
         confirmRemove(nodes);
-    }
-
-
-
-    function findNodeByPath(path: string, itemsArr: TreeNode[] = items.value, parentPath = ""): any {
-        for (const item of itemsArr) {
-            const fullPath = `${parentPath}${item.fileName}`;
-            if (fullPath === path) {
-                return item;
-            }
-            if (isDirectory(item) && item.children.length > 0) {
-                const foundNode = findNodeByPath(path, item.children, `${fullPath}/`);
-                if (foundNode) {
-                    return foundNode;
-                }
-            }
-        }
-        return null;
-    }
-
-    function sorted(itemsArr: TreeNode[]) {
-        return itemsArr.sort((a, b) => {
-            if (a.type === "Directory" && b.type !== "Directory") return -1;
-            else if (a.type !== "Directory" && b.type === "Directory") return 1;
-            return a.fileName.localeCompare(b.fileName);
-        });
-    }
-
-    function getFileNameWithExtension(fileNameWithExtension: string): [string, string] {
-        const lastDotIdx = fileNameWithExtension.lastIndexOf(".");
-        return lastDotIdx !== -1
-            ? [
-                fileNameWithExtension.slice(0, lastDotIdx),
-                fileNameWithExtension.slice(lastDotIdx + 1),
-            ]
-            : [fileNameWithExtension, ""];
-    }
-
-    function renderNodes(itemsArr: any[]) {
-        if (items.value === undefined) {
-            items.value = [];
-        }
-        for (let i = 0; i < itemsArr.length; i++) {
-            const {type, fileName} = itemsArr[i];
-            if (type === "Directory") {
-                addFolder({fileName});
-            } else if (type === "File") {
-                const [fileName, extension] = getFileNameWithExtension(itemsArr[i].fileName);
-                const file = {fileName, extension, leaf: true};
-                addFile({file});
-            }
-        }
-    }
-
-    
-
-    async function loadNodes(node: TreeNode & { level: number , leaf: boolean }, resolve: (children: TreeNode[]) => void) {
-        if (node.level === 0) {
-            const payload = {namespace: namespaceId.value};
-            const itemsArr = await namespacesStore.readDirectory(payload);
-            renderNodes(itemsArr);
-            items.value = sorted(items.value);
-            resolve(items.value);
-        } else if (node.level >= 1) {
-            const payload = {namespace: namespaceId.value, path: getPath(node)};
-            let children = await namespacesStore.readDirectory(payload);
-            children = sorted(
-                children.map((item: any) => ({
-                    ...item,
-                    id: Utils.uid(),
-                    leaf: item.type === "File",
-                }))
-            );
-            const updateChildren = (itemsArr: any[], path: string, newChildren: any[]) => {
-                itemsArr.forEach((item, index) => {
-                    if (getPath(item.id) === path) {
-                        itemsArr[index].children = newChildren;
-                    } else if (Array.isArray(item.children)) {
-                        updateChildren(item.children, path, newChildren);
-                    }
-                });
-            };
-            updateChildren(items.value!, getPath(node.data.id), children);
-            resolve(children);
-        }
-    }
-
-    async function searchFilesList(value: string) {
-        if (!value) return;
-        const results = await namespacesStore.searchFiles({
-            namespace: namespaceId.value,
-            query: value,
-        });
-        searchResults.value = results.map((result: string) => result.replace(/^\/*/, ""));
-        return searchResults.value;
     }
 
     function chooseSearchResults(item: string) {
@@ -739,79 +621,11 @@
         });
     }
 
-    function readFile(file: File): Promise<ArrayBuffer> {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as ArrayBuffer);
-            reader.onerror = reject;
-            reader.readAsArrayBuffer(file);
-        });
-    }
-
     async function importFiles(event: Event) {
         const importedFiles = (event.target as HTMLInputElement).files;
         if (!importedFiles) return;
         try {
-            for (const file of Array.from(importedFiles)) {
-                if ((file as any).webkitRelativePath) {
-                    const filePath: string = (file as any).webkitRelativePath;
-                    const pathParts = filePath.split("/");
-                    let currentFolder: TreeNode[] | undefined = items.value;
-                    let folderPath: string[] = [];
-                    for (let i = 0; i < pathParts.length - 1; i++) {
-                        const folderName = pathParts[i];
-                        folderPath.push(folderName);
-                        if(!currentFolder) continue
-                        const folderIndex = currentFolder.findIndex(
-                            (item: any) => typeof item === "object" && item.fileName === folderName,
-                        );
-                        if (folderIndex === -1) {
-                            const newFolder: TreeNodeDirectory = {
-                                id: Utils.uid(),
-                                fileName: folderName,
-                                children: [],
-                                type: "Directory",
-                                leaf: false,
-                            };
-                            currentFolder.push(newFolder);
-                            sorted(currentFolder);
-                            currentFolder = newFolder.children;
-                        } else {
-                            currentFolder = (currentFolder[folderIndex] as TreeNodeDirectory).children;
-                        }
-                    }
-                    const fileName = pathParts[pathParts.length - 1];
-                    const [name, extension] = getFileNameWithExtension(fileName);
-                    const content = await readFile(file);
-                    namespacesStore.importFileDirectory({
-                        namespace: namespaceId.value,
-                        content,
-                        path: `${folderPath}/${fileName}`,
-                    });
-                    currentFolder?.push({
-                        id: Utils.uid(),
-                        fileName: `${name}${extension ? `.${extension}` : ""}`,
-                        extension,
-                        type: "File",
-                        leaf: true,
-                    });
-                } else {
-                    const content = await readFile(file);
-                    const [name, extension] = getFileNameWithExtension(file.name);
-                    namespacesStore.importFileDirectory({
-                        namespace: namespaceId.value,
-                        content,
-                        path: file.name,
-                    });
-                    items.value.push({
-                        id: Utils.uid(),
-                        fileName: `${name}${extension ? `.${extension}` : ""}`,
-                        extension,
-                        type: "File",
-                        leaf: true,
-                    });
-                }
-            }
+            filesStore.importFiles(importedFiles);
             toast.success(t("namespace files.import.success"));
         } catch {
             toast.error(t("namespace files.import.error"));
@@ -827,15 +641,16 @@
         });
     }
 
-    async function addFile({file, creation, shouldReset = true}: { file?: any; creation?: boolean; shouldReset?: boolean }) {
-        let FILE;
+    async function addFile({file, creation, shouldReset = true}: { file?: Partial<TreeNodeFile>; creation?: boolean; shouldReset?: boolean }) {
+        let FILE: Partial<TreeNodeFile>;
         if (creation && dialog.value.name) {
             const [fileName, extension] = getFileNameWithExtension(dialog.value.name);
             FILE = {fileName, extension, content: "", leaf: true};
         } else {
+            if(!file) return;
             FILE = file;
         }
-        const {fileName, extension, content, leaf} = FILE;
+        const {fileName, extension, content} = FILE;
         const NAME = `${fileName}${extension ? `.${extension}` : ""}`;
         const NEW: TreeNodeFile = {
             id: Utils.uid(),
@@ -843,59 +658,22 @@
             extension,
             content,
             type: "File",
-            leaf,
+            leaf: true,
         };
-        const path = `${dialog.value.folder ? `${dialog.value.folder}/` : ""}${NAME}`;
+
+        const {path} = await filesStore.addFile(NEW, dialog.value.folder, creation)
         if (creation) {
-            if ((await searchFilesList(path))?.includes(path)) {
-                toast.error(t("namespace files.create.file_already_exists"));
-                return;
-            }
-            await namespacesStore.createFile({
-                namespace: namespaceId.value,
-                path,
-                content,
-            });
+            if(path === undefined) return;
             openTab?.({
                 name: NAME,
                 path,
-                extension: extension,
+                extension: extension ?? "",
                 flow: false,
                 dirty: false
             });
             dialog.value.folder = path.substring(0, path.lastIndexOf("/"));
         }
-        if (!dialog.value.folder) {
-            items.value.push(NEW);
-            items.value = sorted(items.value);
-        } else {
-            (function pushItemToFolder(basePath: string = "", array: TreeNode[], pathParts: string[]): boolean {
-                for (const item of array) {
-                    const folderPath = `${basePath}${item.fileName}`;
-                    if (folderPath === dialog.value.folder && isDirectory(item)) {
-                        item.children = sorted([...item.children, NEW]);
-                        return true;
-                    }
-                    if (isDirectory(item) && pushItemToFolder(`${folderPath}/`, item.children, pathParts.slice(1))) {
-                        return true;
-                    }
-                }
-                if (pathParts && pathParts.length > 0 && pathParts[0]) {
-                    const folderPath = `${basePath}${pathParts[0]}`;
-                    if (folderPath === dialog.value.folder) {
-                        const newFolder = folderNode(pathParts[0], [NEW]);
-                        array.push(newFolder);
-                        array = sorted(array);
-                        return true;
-                    }
-                    const newFolder = folderNode(pathParts[0], []);
-                    array.push(newFolder);
-                    array = sorted(array);
-                    return newFolder.children ? pushItemToFolder(`${basePath}${pathParts[0]}/`, newFolder.children, pathParts.slice(1)) : false;
-                }
-                return false;
-            })(undefined, items.value, path.split("/"));
-        }
+
         if (shouldReset) {
             dialog.value = {...DIALOG_DEFAULTS};
         }
@@ -931,69 +709,22 @@
         toast.success("Selected files deleted successfully.");
     }
 
-    async function addFolder(folder?: any, creation?: boolean) {
-        const {fileName} = folder
-            ? folder
-            : {
-                fileName: dialog.value.name,
-            };
-        const NEW = folderNode(fileName, folder?.children ?? []);
+    async function addFolder(folder?: {fileName: string, children?: TreeNode[]}, creation?: boolean) {
         const parentPath = dialog.value.folder || "";
-        const path = parentPath ? `${parentPath}/${fileName}` : fileName;
-        if (creation) {
-            try {
-                await namespacesStore.readDirectory({namespace: namespaceId.value, path});
-                toast.error(t("namespace files.create.folder_already_exists"));
-                return;
-            } catch {
-                // Folder does not exist, we can create it
-            }
-            try {
-                await namespacesStore.createDirectory({namespace: namespaceId.value, path});
-                if (!parentPath) {
-                    items.value.push(NEW);
-                    items.value = sorted(items.value);
-                } else {
-                    pushToParentFolder(parentPath, NEW);
-                }
-                toast.success(`Folder "${fileName}" created successfully.`);
-            } catch (error) {
-                console.error(`Failed to create folder: ${fileName}`, error);
-                toast.error(t("namespace files.create.folder_error"));
-                return;
-            }
-            dialog.value = {...DIALOG_DEFAULTS};
-            return;
-        }
-        if (!parentPath) {
-            const firstFolder = NEW.fileName.split("/")[0];
-            if (!items.value.find(item => item.fileName === firstFolder)) {
-                NEW.fileName = firstFolder;
-                items.value.push(NEW);
-                items.value = sorted(items.value);
-            }
-        } else {
-            pushToParentFolder(parentPath, NEW);
-        }
+        filesStore.addFolder({
+            fileName: dialog.value.name ?? "unknown",
+            parentPath,
+            ...folder,
+        }, creation)
         dialog.value = {...DIALOG_DEFAULTS};
     }
 
-    function folderNode(fileName: string, children: TreeNode[]): TreeNodeDirectory {
-        return {
-            id: Utils.uid(),
-            fileName,
-            children: children ?? [],
-            type: "Directory",
-            leaf: false,
-        };
-    }
-
-    function getPath(nameOrNode: any): string {
+    function getPath(nameOrNode: string | TreeNode): string {
         const nodes = tree.value.getNodePath(nameOrNode);
         return nodes.map((obj: any) => obj.fileName).join("/");
     }
 
-    function copyPath(name: any) {
+    function copyPath(name: TreeNode) {
         const path = getPath(name);
         try {
             Utils.copy(path);
@@ -1003,7 +734,7 @@
         }
     }
 
-    async function exportFile(node: any, data: any) {
+    async function exportFile(node: TreeNode, data: {fileName: string}) {
         const content = await namespacesStore.readFile({
             path: getPath(node),
             namespace: namespaceId.value,

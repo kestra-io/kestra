@@ -6,6 +6,7 @@ import RegexProvider from "../../../utils/regex";
 import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import {useI18n} from "vue-i18n";
 import {ComputedRef} from "vue";
+
 import IPosition = monaco.IPosition;
 import IDisposable = monaco.IDisposable;
 import IModel = monaco.editor.IModel;
@@ -156,14 +157,69 @@ export function registerNestedValueAutoCompletion(
     }));
 }
 
+const registeredLanguages = new Set<string>();
 
+function registerPebbleLanguage(language: string) {
+    if(registeredLanguages.has(language)) return
+    registeredLanguages.add(language);
+
+    const rootLanguage = language.slice(0, -7); // remove -pebble suffix
+
+    monaco.languages.register({id: language});
+
+    const customTokenizer: monaco.languages.IMonarchLanguage = {
+        tokenizer: {
+            root: [
+                [/\{\{/, {token: "delimiter.bracket", next: "@pebbleInDoubleCurly"}],
+            ],
+            pebbleInDoubleCurly: [
+                [/-?\}\}/, {token: "delimiter.bracket", next: "@pop"}],
+            ],
+        }
+    };
+
+    // Get the tokenizer from the root language
+    const rootLanguageDefinition: any = monaco.languages.getLanguages().find(l => l.id === rootLanguage);
+    // Load the parent language to ensure its tokenizer is available
+    if (rootLanguageDefinition?.loader) {
+        rootLanguageDefinition.loader().then((loaded: {language: monaco.languages.IMonarchLanguage}) => {
+            const {language: rootLanguageDefsLoaded} = loaded;
+            if(rootLanguageDefsLoaded === undefined) return
+            for (const key in rootLanguageDefsLoaded) {
+                const value = rootLanguageDefsLoaded[key];
+                if (key === "tokenizer") {
+                    for (const category in value) {
+                    const tokenDefs = value[category];
+                        if (!Object.prototype.hasOwnProperty.call(customTokenizer.tokenizer, category)) {
+                            customTokenizer.tokenizer[category] = [];
+                        }
+                        if (Array.isArray(tokenDefs)) {
+                            customTokenizer.tokenizer[category].push(...rootLanguageDefsLoaded.tokenizer[category], ...tokenDefs)
+                        }
+                    }
+                } else if (Array.isArray(value)) {
+                    if (!Object.prototype.hasOwnProperty.call(customTokenizer, key)) {
+                        customTokenizer[key] = [];
+                    }
+
+                    customTokenizer[key].push(...rootLanguageDefsLoaded[key], ...value)
+                }
+            }
+
+            monaco.languages.setMonarchTokensProvider(language, rootLanguageDefsLoaded);
+        })
+    }
+}
 
 export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
     private readonly _autoCompletion: PebbleAutoCompletion;
     private readonly _completionSource: ComputedRef<string | undefined>;
 
-    constructor(autoCompletion: PebbleAutoCompletion, completionSource: ComputedRef<string | undefined>) {
-        super("plaintext-pebble");
+    constructor(language: string, autoCompletion: PebbleAutoCompletion, completionSource: ComputedRef<string | undefined>) {
+        if(!language.endsWith("-pebble")) {
+            throw new Error("Pebble language must have a '-pebble' suffix");
+        }
+        super(language);
         this._autoCompletion = autoCompletion;
         this._completionSource = completionSource;
     }
@@ -176,11 +232,14 @@ export class PebbleLanguageConfigurator extends AbstractLanguageConfigurator {
         const autoCompletion = this._autoCompletion;
         const completionSource = this._completionSource
 
-        registerPebbleAutocompletion(autoCompletionProviders, autoCompletion, ["plaintext-pebble"]);
+        // Register a new language
+        registerPebbleLanguage(this.language);
 
-        registerFunctionParametersAutoCompletion(autoCompletionProviders, autoCompletion, ["plaintext-pebble"]);
+        registerPebbleAutocompletion(autoCompletionProviders, autoCompletion, [this.language]);
 
-        registerNestedValueAutoCompletion(autoCompletionProviders, autoCompletion, ["plaintext-pebble"], completionSource);
+        registerFunctionParametersAutoCompletion(autoCompletionProviders, autoCompletion, [this.language]);
+
+        registerNestedValueAutoCompletion(autoCompletionProviders, autoCompletion, [this.language], completionSource);
 
         return autoCompletionProviders;
     }

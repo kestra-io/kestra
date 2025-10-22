@@ -63,7 +63,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
         List<String> violations = new ArrayList<>();
 
-        if (RESERVED_FLOW_IDS.contains(value.getId())) {
+        if (value.getId() != null && RESERVED_FLOW_IDS.contains(value.getId())) {
             violations.add("Flow id is a reserved keyword: " + value.getId() + ". List of reserved keywords: " + String.join(", ", RESERVED_FLOW_IDS));
         }
 

@@ -25,7 +25,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {
         computed,
         getCurrentInstance,
@@ -50,6 +50,7 @@
     import {editor} from "monaco-editor/esm/vs/editor/editor.api";
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
+    import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
     import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
@@ -83,6 +84,9 @@
                 return new YamlWorker();
             case "json":
                 return new JsonWorker();
+            case "javascript":
+            case "typescript":
+                return new TypeScriptWorker();
             default:
                 throw new Error(`Unknown label ${label}`);
             }
@@ -153,6 +157,7 @@
             ],
             colors: {
                 "minimap.background": "#161822",
+                "diffEditor.insertedLineBackground": "#029E734D",
             }
         },
         light: {
@@ -168,9 +173,19 @@
                 "editorLineNumber.foreground": "#444444",
                 "editor.selectionBackground": "#E8E5FF",
                 "editor.wordHighlightBackground": "#E8E5FF",
+                "diffEditor.insertedLineBackground": "#BEEFE2",
             }
         }
     };
+
+    // avoid using browser libs in ts worker added by default
+    if (monaco.languages.typescript) {
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+            target: monaco.languages.typescript.ScriptTarget.ES2020,
+            lib: ["es2020"], // Exclude 'dom' to remove browser types
+            allowNonTsExtensions: true
+        });
+    }
 
     export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
     const props = withDefaults(defineProps<{
@@ -702,7 +717,7 @@
 
                         modifiedBackspaceTimeout = window.setTimeout(() => {
                             modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
-                        }, 250); 
+                        }, 250);
                     }
                 });
             }
@@ -741,7 +756,7 @@
                     fixedOverflowWidgets: true // Helps suggestion widget render above other elements
                 });
                 let localBackspaceTimeout: number | null = null;
-                
+
                 localEditor.value.onKeyDown((e) => {
                     if (e.keyCode === monaco.KeyCode.Backspace) {
                         if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout);

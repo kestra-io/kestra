@@ -56,7 +56,7 @@ export const InputTypes = {
             expect(can.getByTestId("test-content").textContent).to.include("foo@example.com");
         });
 
-        const input = await waitFor(() => can.getByLabelText("Single select input"));
+        const input = await waitFor(() => can.getByLabelText("Single select input"), {timeout: 2000, interval: 500});
 
         await userEvent.click(input);
         await userEvent.click(popups.getByText("Second value"));
@@ -106,6 +106,11 @@ export const InputTypes = {
                     "Seventh value",
                     "Eighth value"
                 ]
+            },
+            {
+                id: "duration_field",
+                type: "DURATION",
+                displayName: "Duration select input",
             }]}
         />;
     }

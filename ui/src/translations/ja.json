@@ -530,7 +530,7 @@
     "execution not found": "実行<code>{executionId}</code>が見つかりません",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
     "execution not in state PAUSED": "実行<code>{executionId}</code>はPAUSED状態ではありません",
-    "execution replay": "この実行は<code>{originalId}</code>のリプレイです。",
+    "execution replay": "この実行は次のリプレイです",
     "execution replayed": "この実行は再実行されました。",
     "execution restarted": "この実行は{nbRestart}回再開されました。",
     "execution statistics": "実行統計",
@@ -778,6 +778,7 @@
     "missingSource": "ソースが見つかりません",
     "monogram": "モノグラム",
     "months": "月",
+    "more_actions": "その他のアクション",
     "multi_panel_editor": {
       "close_all_panels": "すべてのパネルを閉じる",
       "close_all_tabs": "すべてのタブを閉じる",
@@ -790,9 +791,12 @@
     "namespace and id readonly": "プロパティ`namespace`と`id`は変更できません — 初期値に設定されています。flowの名前を変更したりnamespaceを変更したい場合は、新しいflowを作成して古いものを削除してください。",
     "namespace files": {
       "create": {
-        "already_exists": "この名前のファイルは既に存在します",
         "file": "ファイルを作成",
+        "file_already_exists": "この名前のファイルはすでに存在します",
+        "file_error": "ファイルの作成中にエラーが発生しました",
         "folder": "フォルダーを作成",
+        "folder_already_exists": "この名前のフォルダーはすでに存在します",
+        "folder_error": "フォルダーの作成中にエラーが発生しました",
         "label": "作成"
       },
       "delete": {
@@ -803,11 +807,13 @@
         "label": "削除"
       },
       "dialog": {
-        "confirm": "確認",
-        "file_deletion": "ファイル削除の確認",
-        "file_deletion_description": "このファイルを削除してもよろしいですか？",
-        "folder_deletion": "フォルダー削除の確認",
-        "folder_deletion_description": "このフォルダーとそのすべての内容を削除してもよろしいですか？",
+        "deletion": {
+          "confirm": "確認",
+          "files": "<code>{count}</code> 個のファイルを削除してもよろしいですか？",
+          "folders": "<code>{count}</code> 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
+          "mixed": "<code>{folders}</code> フォルダーと <code>{files}</code> ファイルを削除してもよろしいですか？",
+          "title": "コンテンツの削除を確認"
+        },
         "name": {
           "file": "拡張子付きの名前:",
           "folder": "フォルダー名:"
@@ -897,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "実行後ブロックを追加",
+        "charts": "チャートを追加",
         "conditions": "条件を追加",
         "errors": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "inputs": "入力フィールドを追加",
+        "numerator": "分子を追加",
         "pluginDefaults": "プラグインのデフォルトを追加",
         "tasks": "タスクを追加",
-        "triggers": "トリガーを追加"
+        "triggers": "トリガーを追加",
+        "where": "データをフィルタリングする"
       },
       "fields": {
         "general": {
@@ -946,14 +955,17 @@
       },
       "select": {
         "afterExecution": "タスクを選択",
+        "charts": "チャートタイプを選択",
         "conditions": "条件を選択",
         "errors": "タスクを選択",
         "finally": "タスクを選択",
         "inputs": "入力フィールドタイプを選択",
+        "numerator": "分子を選択",
         "pluginDefaults": "プラグインを選択",
         "task": "タスクを選択",
         "tasks": "タスクを選択",
-        "triggers": "トリガーを選択"
+        "triggers": "トリガーを選択",
+        "where": "フィルタータイプを選択"
       },
       "toggle_pebble": "ペブルエディタを切り替え",
       "unnamed": "名前なし",

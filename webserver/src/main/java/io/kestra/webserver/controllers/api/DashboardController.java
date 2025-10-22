@@ -8,7 +8,6 @@ import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
@@ -230,20 +229,17 @@ public class DashboardController {
 
         ZonedDateTime endDate = timeLineSearch.getEndDate();
         ZonedDateTime startDate = timeLineSearch.getStartDate();
-        if (endDate == null) {
-            endDate = ZonedDateTime.now();
-        }
 
         if (startDate == null) {
             // If no start date is provided, we use the default duration of the dashboard's time
             startDate = endDate.minus(dashboard.getTimeWindow().getDefaultDuration());
         }
 
-        if (endDate.isBefore(startDate)) {
+        if (endDate != null && endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("`endDate` must be after `startDate`.");
         }
 
-        Duration windowDuration = Duration.ofSeconds(endDate.minus(Duration.ofSeconds(startDate.toEpochSecond())).toEpochSecond());
+        Duration windowDuration = Duration.ofSeconds((endDate != null ? endDate : ZonedDateTime.now()).minus(Duration.ofSeconds(startDate.toEpochSecond())).toEpochSecond());
         if (windowDuration.compareTo(dashboard.getTimeWindow().getMax()) > 0) {
             throw new IllegalArgumentException("The queried window is larger than the max allowed one.");
         }

@@ -1,23 +1,24 @@
 import {h, markRaw} from "vue";
+import {storageKeys} from "../../../utils/constants";
 
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
+import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
+import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
-import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
-import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
 
-import EditorSidebarWrapper from "../../../components/inputs/EditorSidebarWrapper.vue";
-import EditorWrapper from "../../../components/inputs/EditorWrapper.vue";
 import NoCode from "../../../components/no-code/NoCode.vue";
+import EditorWrapper from "../../../components/inputs/EditorWrapper.vue";
+import PluginListWrapper from "../../../components/plugins/PluginListWrapper.vue";
 import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrapper.vue";
-import PluginDocumentationWrapper from "../../../components/plugins/PluginDocumentationWrapper.vue";
+import EditorSidebarWrapper from "../../../components/inputs/EditorSidebarWrapper.vue";
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue";
-import {storageKeys} from "../../../utils/constants";
+import {DeserializableEditorElement} from "../../../utils/multiPanelTypes";
 
 export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
 
-export const EDITOR_ELEMENTS = [
+export const EDITOR_ELEMENTS: DeserializableEditorElement[] = [
     {
         button: {
             icon: markRaw(CodeTagsIcon),
@@ -42,13 +43,13 @@ export const EDITOR_ELEMENTS = [
         value: "topology",
         component: markRaw(LowCodeEditorWrapper),
     },
-    {
+        {
         button: {
             icon: markRaw(FileDocumentIcon),
             label: "Documentation"
         },
         value: "doc",
-        component: markRaw(PluginDocumentationWrapper),
+        component: markRaw(PluginListWrapper),
     },
     {
         button: {
@@ -56,6 +57,7 @@ export const EDITOR_ELEMENTS = [
             label: "Files"
         },
         value: "files",
+        prepend: true,
         component: markRaw(EditorSidebarWrapper),
     },
     {
@@ -66,4 +68,13 @@ export const EDITOR_ELEMENTS = [
         value: "blueprints",
         component: markRaw(BlueprintsWrapper),
     }
-]
+].map((e): DeserializableEditorElement => ({
+    // add a default deserializer
+    deserialize: (value: string) => {
+        if(e.value === value){
+            return e;
+        }
+        return undefined;
+    },
+    ...e,
+}));

@@ -4,10 +4,7 @@ import com.google.common.collect.ImmutableList;
 import io.kestra.core.Helpers;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.property.Property;
@@ -334,6 +331,40 @@ class FlowControllerTest {
     }
 
     @Test
+    void bulk() {
+        // initial création
+        String flows = String.join("---\n", Arrays.asList(
+            generateFlowAsString("flow1","io.kestra.bulk","a"),
+            generateFlowAsString("flow2","io.kestra.bulk","a"),
+            generateFlowAsString("flow3","io.kestra.bulk","a")
+        ));
+
+        List<FlowWithSource> updated = client.toBlocking()
+            .retrieve(
+                HttpRequest.POST("/api/v1/main/flows/bulk?namespace=io.kestra.bulk", flows)
+                    .contentType(MediaType.APPLICATION_YAML),
+                Argument.listOf(FlowWithSource.class)
+            );
+        assertThat(updated.size()).isEqualTo(3);
+
+        // resend the same request, should not add revision
+        updated = client.toBlocking()
+            .retrieve(
+                HttpRequest.POST("/api/v1/main/flows/bulk?namespace=io.kestra.bulk", flows)
+                    .contentType(MediaType.APPLICATION_YAML),
+                Argument.listOf(FlowWithSource.class)
+            );
+        assertThat(updated.size()).isEqualTo(3);
+
+        assertThat(updated.stream().map(AbstractFlow::getRevision).distinct().toList().size()).isEqualTo(1);
+        assertThat(updated.stream().map(AbstractFlow::getRevision).distinct().toList().getFirst()).isEqualTo(1);
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk/flow1"));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk/flow2"));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.bulk/flow3"));
+    }
+
+    @Test
     void createFlowFromJsonFlow() {
         Flow flow = generateFlow(TEST_NAMESPACE, "a");
 
@@ -499,7 +530,7 @@ class FlowControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size()).isEqualTo(9);
+        assertThat(namespaces.size()).isEqualTo(10);
     }
 
     @Test
@@ -1050,7 +1081,7 @@ class FlowControllerTest {
         return Return.builder()
             .id(id)
             .type(Return.class.getName())
-            .format(new Property<>(format))
+            .format(Property.ofValue(format))
             .build();
     }
 

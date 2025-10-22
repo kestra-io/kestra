@@ -36,7 +36,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
     .tabs-wrapper{
         display:flex;
@@ -65,6 +65,9 @@
     }
     .tabs{
         padding: .5rem 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: .25rem .5rem;
 
         > button{
             background: none;

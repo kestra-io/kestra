@@ -4,7 +4,7 @@ import {useFlowStore} from "../../../stores/flow";
 export function useKeyboardSave(flowSource: ComputedRef<string>) {
     const flowStore = useFlowStore();
     const handleKeyboardSave = (e: KeyboardEvent) => {
-        if (e.type === "keydown" && e.key === "s" && e.ctrlKey) {
+        if (e.type === "keydown" && e.key === "s" && (e.ctrlKey || e.metaKey)) {
             e.preventDefault();
             flowStore.save({
                 content: flowSource.value

@@ -1,0 +1,50 @@
+import type {Page} from "@playwright/test";
+import {expect} from "@playwright/test";
+import {shared} from "../fixtures/shared";
+
+export class BasePage {
+    constructor(public readonly page: Page) { }
+
+    async login() {
+        await this.page.goto("/ui");
+        await this.page.getByRole("textbox", {name: "Email"}).fill(shared.username);
+        await this.page.getByRole("textbox", {name: "Password"}).fill(shared.password);
+        await this.page.getByRole("button", {name: "Login"}).click();
+
+        await expect(this.page.getByRole("heading", {name: "Overview"})).toBeVisible();
+    }
+
+    async addQueryParam(page: Page, key: string, value: string) {
+        // Get the current URL
+        const url = new URL(page.url());
+
+        // Change query params
+        url.searchParams.set(key, value);
+
+        // Navigate to the new URL
+        await page.goto(url.toString());
+    }
+
+    async removeQueryParam(page: Page, key: string) {
+        // Get the current URL
+        const url = new URL(page.url());
+
+        // Change query params
+        url.searchParams.delete(key);
+
+        // Navigate to the new URL
+        await page.goto(url.toString());
+    }
+}
+
+export enum ExecutionState {
+    FAILED = "FAILED",
+    SUCCESS = "SUCCESS"
+}
+
+export enum Pagination {
+    ITEMS_10 = 10,
+    ITEMS_25 = 25,
+    ITEMS_50 = 50,
+    ITEMS_100 = 100
+}

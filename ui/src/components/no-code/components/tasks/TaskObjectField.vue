@@ -3,7 +3,7 @@
         v-if="simpleType === 'list'"
         ref="taskComponent"
         :is="type"
-        v-bind="{...componentProps}"
+        v-bind="componentProps"
         :disabled
         class="mt-1 mb-2 wrapper"
     />
@@ -56,7 +56,7 @@
             v-if="!isBoolean"
             ref="taskComponent"
             :is="type"
-            v-bind="{...componentProps}"
+            v-bind="componentProps"
             :disabled
             class="mt-1 mb-2 wrapper"
         />
@@ -141,7 +141,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .el-form-item {
     width: 100%;
 

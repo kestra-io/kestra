@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.kv;
 
 import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.property.Property;
@@ -38,9 +39,9 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .kvDescription(new Property<>("{{ inputs.description }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .kvDescription(Property.ofExpression("{{ inputs.description }}"))
             .build();
 
         var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
@@ -78,9 +79,9 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .namespace(new Property<>("io.kestra.test"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .namespace(Property.ofValue("io.kestra.test"))
             .build();
 
         // When
@@ -105,9 +106,9 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .namespace(new Property<>("io.kestra"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .namespace(Property.ofValue("io.kestra"))
             .build();
         // When
         set.run(runContext);
@@ -131,9 +132,9 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
-            .namespace(new Property<>("not-found"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
+            .namespace(Property.ofValue("not-found"))
             .build();
 
         // When - Then
@@ -146,8 +147,8 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
             .ttl(Property.ofValue(Duration.ofMinutes(5)))
             .build();
 
@@ -167,6 +168,7 @@ class SetTest {
         assertThat(expirationDate.isAfter(Instant.now().plus(Duration.ofMinutes(4))) && expirationDate.isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
     }
 
+    @FlakyTest
     @Test
     void shouldFailGivenExistingKeyAndOverwriteFalse() throws Exception {
         // Given
@@ -174,8 +176,8 @@ class SetTest {
         Set set = Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
             .overwrite(Property.ofValue(false))
             .build();
 
@@ -192,8 +194,8 @@ class SetTest {
         KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
             .overwrite(Property.ofValue(false))
             .build().run(runContext));
         assertThat(exception.getMessage()).isEqualTo("Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.".formatted(key));

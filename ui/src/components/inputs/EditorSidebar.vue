@@ -530,9 +530,7 @@
         confirmRemove(nodes);
     }
 
-    function isDirectory(node: TreeNode): node is TreeNodeDirectory {
-        return node.type === "Directory";
-    }
+
 
     function findNodeByPath(path: string, itemsArr: TreeNode[] = items.value, parentPath = ""): any {
         for (const item of itemsArr) {
@@ -604,6 +602,10 @@
     }
 
     type TreeNode = TreeNodeFile | TreeNodeDirectory;
+
+    function isDirectory(node: TreeNode): node is TreeNodeDirectory {
+        return node.type === "Directory";
+    }
 
     async function loadNodes(node: TreeNode & { level: number , leaf: boolean }, resolve: (children: TreeNode[]) => void) {
         if (node.level === 0) {

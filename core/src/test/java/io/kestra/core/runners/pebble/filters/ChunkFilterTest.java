@@ -38,4 +38,32 @@ class ChunkFilterTest {
             }).get();
         });
     }
+    @Test
+    void chunkWithIntegerVariable() throws IllegalVariableEvaluationException {
+        // Reproducer for issue: Integer variable causing ClassCastException
+        Map<String, Object> vars = Map.of(
+            "max_items", 2,  // This is an Integer, not a Long
+            "list", Arrays.asList(1, 2, 3, 4, 5)
+        );
+
+        String render = variableRenderer.render("{{ list | chunk(max_items) }}", vars);
+
+        assertThat(render).isEqualTo("[[1,2],[3,4],[5]]");
+    }
+
+    @Test
+    void chunkWithVariableFromOriginalIssue() throws IllegalVariableEvaluationException {
+        // Exact reproducer from the original issue report
+        Map<String, Object> vars = Map.of(
+            "max_items", 2
+        );
+
+        String render = variableRenderer.render(
+            "{% set x = [1,2,3,4,5] | chunk(max_items) %}{{ x }}", 
+            vars
+        );
+
+        assertThat(render).isEqualTo("[[1,2],[3,4],[5]]");
+    }
+
 }

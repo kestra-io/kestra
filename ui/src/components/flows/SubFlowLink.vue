@@ -10,16 +10,14 @@
     import {useRouter, useRoute} from "vue-router";
     import AxisYArrow from "vue-material-design-icons/AxisYArrow.vue";
 
-    interface Props {
+    const props = withDefaults(defineProps<{
         component?: string;
         executionId?: string;
         namespace?: string;
         flowId?: string;
         tabFlow?: string;
         tabExecution?: string;
-    }
-
-    const props = withDefaults(defineProps<Props>(), {
+    }>(), {
         component: "el-button",
         tabFlow: "overview",
         tabExecution: "topology",

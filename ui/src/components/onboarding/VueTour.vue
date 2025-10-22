@@ -161,14 +161,12 @@
     import {useApiStore} from "../../stores/api";
     import {usePluginsStore} from "../../stores/plugins";
     import {useCoreStore} from "../../stores/core";
-    import {useEditorStore} from "../../stores/editor";
 
     const router = useRouter();
 
     const coreStore = useCoreStore();
     const apiStore = useApiStore();
     const pluginsStore = usePluginsStore();
-    const editorStore = useEditorStore()
 
     const {t} = useI18n({useScope: "global"});
 
@@ -318,8 +316,6 @@
                 };
             },
             before: () => {
-                editorStore.updateOnboarding()
-
                 coreStore.guidedProperties = {
                     ...coreStore.guidedProperties,
                     tourStarted: true,
@@ -346,9 +342,6 @@
             target: "#topologyWrapper",
             highlightElement: "#topologyWrapper",
             params: {...STEP_OPTIONS, placement: "left"},
-            before: () => {
-                // editorStore.changeView(editorViewTypes.SOURCE_TOPOLOGY)
-            }
         },
         {
             ...properties(4, true, false),

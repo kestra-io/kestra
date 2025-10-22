@@ -1,21 +1,29 @@
-import {computed, h, markRaw, Ref, watch} from "vue"
-import EditorWrapper from "../inputs/EditorWrapper.vue";
+import {computed, h, markRaw, provide, Ref} from "vue"
+import EditorWrapper, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
-import {EditorTabProps, useEditorStore} from "../../stores/editor";
-import {DeserializableEditorElement, Panel} from "../../utils/multiPanelTypes";
+import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
+import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/EditorSidebar.vue";
+import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue";
+import {useNamespacesStore} from "../../override/stores/namespaces";
 
 export const CODE_PREFIX = "code"
 
-export function getTabFromFilesTab(tab: EditorTabProps) {
+function generateUid(tab: Pick<EditorTabProps, "path">){
+    if(tab.path === "Flow.yaml"){
+        return CODE_PREFIX
+    }
+    return `${CODE_PREFIX}-${tab.path}`
+}
+
+export function getTabFromFilesTab(tab: EditorTabProps): Tab {
     return {
-        value: `${CODE_PREFIX}-${tab.path}`,
+        uid: generateUid(tab),
         button: {
             label: tab.name,
             icon: () => h(TypeIcon, {name:tab.name}),
         },
-        component: () => h(markRaw(EditorWrapper), {...tab}),
-        dirty: tab.dirty,
-    }
+        component: () => h(markRaw(EditorWrapper), tab)
+    } satisfies Tab
 }
 
 export function getTabPropsFromFilePath(filePath: string, flow: boolean = false): EditorTabProps {
@@ -28,120 +36,108 @@ export function getTabPropsFromFilePath(filePath: string, flow: boolean = false)
     }
 }
 
-export function useInitialFilesTabs(EDITOR_ELEMENTS: DeserializableEditorElement[]){
-    const editorStore = useEditorStore()
+interface TabLiveWithContent extends TabLive {
+    content?: string
+    namespace?: string
+    path?: string
+}
 
-    const codeElement = EDITOR_ELEMENTS.find(e => e.value === CODE_PREFIX)!
+export function useInitialFilesTabs(EDITOR_ELEMENTS: EditorElement[]){
+    const codeElement = EDITOR_ELEMENTS.find(e => e.uid === CODE_PREFIX)!
     codeElement.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
 
-    function setupInitialCodeTab(tab: string, codeElement: DeserializableEditorElement){
+    function setupInitialCodeTab(tab: string, codeElement: EditorElement){
         const flow = CODE_PREFIX === tab
         if(!flow && !tab.startsWith(`${CODE_PREFIX}-`)){
             return
         }
         const filePath = flow ? "Flow.yaml" : tab.substring(5)
         const editorTab = getTabPropsFromFilePath(filePath, flow)
-        editorStore.openTab(editorTab)
         return flow ? codeElement : getTabFromFilesTab(editorTab)
     }
 
     return {setupInitialCodeTab}
 }
 
-export function useFilesPanels(panels: Ref<Panel[]>, namespaceFiles = false) {
-    const editorStore = useEditorStore()
-
-    const codeEditorTabs = computed(() => editorStore.tabs.filter((t) => !t.flow))
-    /**
-     * If the flow tab has recorded changes, show all representations as dirty
-     */
-    const isFlowDirty = computed(() => editorStore.tabs.some((t:any) => t.flow && t.dirty))
-    const currentTab = computed(() => editorStore.current?.path)
-    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, p) => acc + (p.size ?? 0), 0) * 100 / panels.value.length))
-
-    function getPanelsFromCodeEditorTabs(codeTabs: EditorTabProps[]){
-        const tabs = codeTabs.map(getTabFromFilesTab)
-
-        return {
-            activeTab: tabs[0],
-            tabs,
-            size: defaultSize.value,
+export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | undefined>) {
+    function focusTab(tabValue: string){
+        for(const panel of panels.value){
+            const t = panel.tabs.find(e => e.uid === tabValue);
+            if(t) panel.activeTab = t;
         }
     }
 
-    watch(currentTab, (newVal) => {
-        // when the current tab changes make sure
-        // the corresponding tab is active
-        for(const p of panels.value){
-            for(const t of p.tabs){
-                if(t.value === `${CODE_PREFIX}-${newVal}`){
-                    p.activeTab = t
-                }
-            }
-        }
-    })
-
-    const dirtyTabs = computed(() => codeEditorTabs.value.filter(t => t.dirty).map(t => t.path))
-
-    // maintain sync between dirty states of tabs
-    watch(dirtyTabs, (newVal) => {
-        for(const p of panels.value) {
-            for(const t of p.tabs) {
-                if(t.value.startsWith("code-")){
-                    if(newVal.includes(t.value.substring(5))){
-                        t.dirty = true
-                    }else{
-                        t.dirty = false
-                    }
-                }
-            }
-        }
-    })
-
-    watch(codeEditorTabs, (newVal) => {
-        const codeTabs = getPanelsFromCodeEditorTabs(newVal.map(tab => ({...tab, namespaceFiles})))
-
-        // Loop through tabs to see if any code tab should be removed due to file deletion
-        const openedTabs = new Set(codeTabs.tabs.map(tab => tab.value))
-        panels.value.forEach((panel) => {
-            panel.tabs = panel.tabs.filter(tab => {
-                return !tab.value.startsWith("code-") || openedTabs.has(tab.value)
-            })
-        })
-
-        // get all the tabs to add since they are not already part of the panels tabs
-        const toAdd = codeTabs.tabs.filter(t => !panels.value.some(p => p.tabs.some(pt => t.value === pt.value)))
-
-        if(toAdd.length === 0){
+    provide(FILES_OPEN_TAB_INJECTION_KEY, (tab) => {
+        if(!tab.path){
             return
         }
-
-        // find the first panel where there is already a code tab
-        const firstPanelWithCodeTab = panels.value.find(p => p.tabs.some(t => t.value.startsWith("code")))
-        if(firstPanelWithCodeTab){
-            // add the tabs to the first panel with a code tab
-            firstPanelWithCodeTab.tabs.push(...toAdd)
-            firstPanelWithCodeTab.activeTab = toAdd[0]
-        }else{
-            // find the panel where the files tab is
-            const filesPanel = panels.value.findIndex(p => p.tabs.some(t => t.value === "files"))
-            if(filesPanel >= 0){
-                // add the code panel after the files tab
-                panels.value.splice(filesPanel + 1, 0, codeTabs)
+        const uid = generateUid(tab)
+        const existing = panels.value.some(p => p.tabs.some(t => t.uid === uid))
+        if(!existing){
+            const panelTab = getTabFromFilesTab(tab)
+            const firstPanelWithCodeTab = panels.value.find(p => p.tabs.some(t => t.uid.startsWith("code")))
+            if(firstPanelWithCodeTab){
+                firstPanelWithCodeTab.tabs.push(panelTab)
+                firstPanelWithCodeTab.activeTab = panelTab
             }else{
-                // add the code tabs at the end
-                panels.value.push(codeTabs)
+                panels.value.push({
+                    activeTab: panelTab,
+                    tabs: [panelTab],
+                    size: defaultSize.value,
+                })
+            }
+        }
+        focusTab(generateUid(tab))
+    })
+
+    provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
+        const uid = generateUid(tab)
+        for(const panel of panels.value){
+            if(panel.tabs.some(e => e.uid === uid)){
+                panel.tabs = panel.tabs.filter(e => e.uid !== uid);
             }
         }
     })
 
-    function onRemoveTab(tabId: string){
-        if(tabId.startsWith(`${CODE_PREFIX}-`)){
-            editorStore.closeTab({
-                path: tabId.substring(5),
-            });
+    provide(FILES_SET_DIRTY_INJECTION_KEY, ({path, dirty}) => {
+        const uid = generateUid({path})
+        const tab = panels.value.flatMap(p => p.tabs).find(t => t.uid === uid) as TabLive
+        if(tab){
+            tab.dirty = dirty
         }
-    }
+    })
 
-    return {onRemoveTab, isFlowDirty}
+    provide(FILES_UPDATE_CONTENT_INJECTION_KEY, ({path, content}) => {
+        const uid = generateUid({path})
+        const tab = panels.value.flatMap(p => p.tabs).find(t => t.uid === uid) as TabLiveWithContent
+        if(tab){
+            tab.content = content
+            tab.path = path
+        }
+    })
+
+    const namespacesStore = useNamespacesStore();
+
+    // on save all files, save all files
+    // and set all tabs as not dirty
+    provide(FILES_SAVE_ALL_INJECTION_KEY, async () => {
+        for(const panel of panels.value){
+            for(const tab of panel.tabs as TabLiveWithContent[]){
+                if(!tab.content || !tab.path){
+                    continue
+                }
+                if(namespace.value === undefined){
+                    throw new Error(`Cannot save file "${tab.path}": namespace is undefined`)
+                }
+                await namespacesStore.createFile({
+                    namespace: namespace.value,
+                    path: tab.path,
+                    content: tab.content
+                });
+                tab.dirty = false;
+            }
+        }
+    });
+
+    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, p) => acc + (p.size ?? 0), 0) * 100 / panels.value.length))
 }

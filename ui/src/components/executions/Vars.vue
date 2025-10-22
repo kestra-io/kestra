@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-    import { computed } from "vue"; 
+    import {computed} from "vue"; 
     import Utils from "../../utils/utils";
     import VarValue from "./VarValue.vue";
     import DateAgo from "../../components/layout/DateAgo.vue";

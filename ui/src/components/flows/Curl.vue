@@ -16,28 +16,13 @@
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import {useI18n} from "vue-i18n";
     import moment from "moment";
-
-    // Props definition
-    interface FlowInput {
-        id: string;
-        type: string;
-    }
-
-    interface ExecutionLabel {
-        key: string | null;
-        value: string | null;
-    }
-
-    interface Flow {
-        id: string;
-        namespace: string;
-        inputs?: FlowInput[];
-    }
+    import {Flow} from "../../stores/flow";
+    import {Label} from "../../stores/executions";
 
     const props = withDefaults(defineProps<{
         flow: Flow;
         inputs?: Record<string, any>;
-        executionLabels?: ExecutionLabel[];
+        executionLabels?: Label[];
         verbose?: boolean;
     }>(),{
         inputs: () => ({}),
@@ -49,7 +34,7 @@
 
     const exampleFileName = ref("kestra.json");
 
-    const exampleFileInputUrl = computed(() => 
+    const exampleFileInputUrl = computed(() =>
         `https://huggingface.co/datasets/kestra/datasets/resolve/main/json/${exampleFileName.value}`
     );
 
@@ -95,48 +80,42 @@
         return `labels=${encodeURIComponent(key)}:${encodeURIComponent(value)}`;
     }
 
-    function generateUrl() {
+    const url = computed(() => {
         const queryParams = (props.executionLabels || [])
             .filter((label) => label.key && label.value)
-            .map((label) => generateExecutionLabel(label.key!, label.value!));
+            .map((label) => generateExecutionLabel(label.key, label.value));
 
         const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`;
-        let url = `${origin}/executions/${props.flow.namespace}/${props.flow.id}`;
+        let ret = `${origin}/executions/${props.flow.namespace}/${props.flow.id}`;
 
         if (queryParams.length > 0) {
-            url += `?${queryParams.join("&")}`;
+            ret += `?${queryParams.join("&")}`;
         }
 
-        return url;
-    }
+        return ret;
+    })
 
-    function generateCurlCommand() {
-        const command = ["curl"];
-
-        if (props.verbose) command.push("-v");
-
-        command.push("-X", "POST");
-        addHeader(command, "Content-Type", "multipart/form-data");
-        addInputs(command);
-        command.push(`'${generateUrl()}'`);
-
-        return command;
-    }
-
-    function generatePrefix() {
+    const prefix = computed(() => {
         return ["curl", "-O", `'${exampleFileInputUrl.value}'`];
-    }
+    });
 
     function toShell(command: string[]) {
         return command.join(" ");
     }
 
     const curlCommand = computed(() => {
-        const mainCommand = generateCurlCommand();
+        const mainCommand = ["curl"];
+
+        if (props.verbose) mainCommand.push("-v");
+
+        mainCommand.push("-X", "POST");
+        addHeader(mainCommand, "Content-Type", "multipart/form-data");
+        addInputs(mainCommand);
+        mainCommand.push(`'${url.value}'`);
         const hasFileInput = props.flow.inputs?.some((input) => input.type === "FILE");
 
         if (hasFileInput) {
-            return `${toShell(generatePrefix())} && \\\n${toShell(mainCommand)}`;
+            return `${toShell(prefix.value)} && \\\n${toShell(mainCommand)}`;
         }
         return `${toShell(mainCommand)}`;
     });

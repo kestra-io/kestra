@@ -9,52 +9,48 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class IterationValueFunction implements Function {
+public class ValueFromIterationFunction implements Function {
 
     @Override
     public List<String> getArgumentNames() {
-        return List.of("iteration");
+        return List.of("iteration", "taskId");
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
-        if (!args.containsKey("iteration")) {
-            throw new PebbleException(null, "The 'iterationValue' function expects an argument 'iteration'.", lineNumber, self.getName());
+        if (!args.containsKey("iteration") || !args.containsKey("taskId")) {
+            throw new PebbleException(
+                null,
+                "The 'valueFromIteration' function expects arguments 'iteration' and 'taskId'.",
+                lineNumber,
+                self.getName()
+            );
         }
 
         int iteration = ((Number) args.get("iteration")).intValue();
+        String taskId = (String) args.get("taskId");
+
         if (iteration < 0) {
-            return null;
+            return null; // cannot fetch negative iterations
         }
 
+        // Get all outputs
         Map<String, Object> outputs = (Map<String, Object>) context.getVariable("outputs");
-        if (outputs == null) {
+        if (outputs == null || !outputs.containsKey(taskId)) {
             return null;
         }
 
-        List<Map<String, Object>> parents = (List<Map<String, Object>>) context.getVariable("parents");
-        if (parents != null && !parents.isEmpty()) {
-            Collections.reverse(parents); // closest parent first
-            for (Map<String, Object> parent : parents) {
-                Map<String, Object> taskrun = (Map<String, Object>) parent.get("taskrun");
-                if (taskrun != null) {
-                    Object value = outputs.get(taskrun.get("value"));
-                    if (value instanceof List<?> list && iteration < list.size()) {
-                        return list.get(iteration);
-                    }
-                    outputs = (Map<String, Object>) value; // drill down
-                }
+        Object value = outputs.get(taskId);
+
+        if (value instanceof List<?> list) {
+            // ensure iteration exists
+            if (iteration >= list.size()) {
+                return null;
             }
+            return list.get(iteration);
         }
 
-        // fallback: top-level outputs
-        for (Object output : outputs.values()) {
-            if (output instanceof List<?> list && iteration < list.size()) {
-                return list.get(iteration);
-            }
-        }
-
-        return null;
+        return null; // fallback: value is not a list
     }
 }

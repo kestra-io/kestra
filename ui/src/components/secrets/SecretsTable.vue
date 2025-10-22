@@ -1,90 +1,119 @@
 <template>
     <div class="d-flex flex-column fill-height">
-        <KestraFilter
-            :placeholder="$t('search')"
-            legacyQuery
-        />
-
-        <SelectTable
-            :data="filteredSecrets"
-            ref="selectTable"
-            :defaultSort="{prop: 'key', order: 'ascending'}"
-            tableLayout="auto"
-            fixed
-            :selectable="false"
-            @sort-change="handleSort"
-            :infiniteScrollLoad="namespace === undefined ? fetchSecrets : undefined"
-            :no-data-text="$t('no_results.secrets')"
-            class="fill-height"
-        >
-            <el-table-column
-                v-if="namespace === undefined || namespaceColumn"
-                prop="namespace"
-                sortable="custom"
-                :sortOrders="['ascending', 'descending']"
-                :label="$t('namespace')"
-            >
-                <template #default="scope">
-                    <el-tag
-                        type="info"
-                        class="namespace-tag"
+        <DataTable @page-changed="onPageChanged" ref="dataTable" :total="total">
+            <template #top>
+                <KestraFilter
+                    :placeholder="$t('search')"
+                    :language="SecretFilterLanguage"
+                />
+            </template>
+            <template #table>
+                <SelectTable
+                    :data="secrets"
+                    ref="selectTable"
+                    :defaultSort="{prop: 'key', order: 'ascending'}"
+                    tableLayout="auto"
+                    fixed
+                    :selectable="false"
+                    @sort-change="onSort"
+                    :no-data-text="$t('no_results.secrets')"
+                    class="fill-height"
+                >
+                    <el-table-column
+                        v-if="namespace === undefined || namespaceColumn"
+                        prop="namespace"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('namespace')"
                     >
-                        <DotsSquare />
-                        {{ scope.row.namespace }}
-                    </el-tag>
-                </template>
-            </el-table-column>
-            <el-table-column prop="key" sortable="custom" :sortOrders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
-                <template #default="scope">
-                    <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
-                </template>
-            </el-table-column>
-
-            <el-table-column v-if="!keyOnly" prop="description" :label="$t('description')">
-                <template #default="scope">
-                    {{ scope.row.description }}
-                </template>
-            </el-table-column>
-
-            <el-table-column v-if="!keyOnly && !paneView" prop="tags" :label="$t('tags')">
-                <template #default="scope">
-                    <Labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" readOnly />
-                </template>
-            </el-table-column>
-
-            <el-table-column columnKey="locked" className="row-action">
-                <template #default="scope">
-                    <el-tooltip v-if="scope.row.namespace !== undefined && areNamespaceSecretsReadOnly?.[scope.row.namespace]" transition="" :hideAfter="0" :persistent="false" effect="light">
-                        <template #content>
-                            <span v-html="$t('secret.isReadOnly')" />
+                        <template #default="scope">
+                            <el-tag
+                                type="info"
+                                class="namespace-tag"
+                            >
+                                <DotsSquare />
+                                {{ scope.row.namespace }}
+                            </el-tag>
                         </template>
-                        <el-icon class="d-flex justify-content-center text-base">
-                            <Lock />
-                        </el-icon>
-                    </el-tooltip>
-                </template>
-            </el-table-column>
+                    </el-table-column>
+                    <el-table-column
+                        prop="key"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="keyOnly ? $t('secret.names') : $t('key')"
+                    >
+                        <template #default="scope">
+                            <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                        </template>
+                    </el-table-column>
 
-            <el-table-column columnKey="copy" className="row-action">
-                <template #default="scope">
-                    <el-tooltip :content="$t('copy_to_clipboard')">
-                        <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ secret('${scope.row.key}') \}\}`)" />
-                    </el-tooltip>
-                </template>
-            </el-table-column>
+                    <el-table-column v-if="!keyOnly" prop="description" :label="$t('description')">
+                        <template #default="scope">
+                            {{ scope.row.description }}
+                        </template>
+                    </el-table-column>
 
-            <el-table-column v-if="!keyOnly && !paneView" columnKey="update" className="row-action">
-                <template #default="scope">
-                    <el-button v-if="canUpdate(scope.row)" :icon="FileDocumentEdit" link @click="updateSecretModal(scope.row)" />
-                </template>
-            </el-table-column>
+                    <el-table-column v-if="!keyOnly && !paneView" prop="tags" :label="$t('tags')">
+                        <template #default="scope">
+                            <Labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" readOnly />
+                        </template>
+                    </el-table-column>
 
-            <el-table-column v-if="!keyOnly && !paneView" columnKey="delete" className="row-action">
-                <template #default="scope">
-                    <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeSecret(scope.row)" />
-                </template>
-            </el-table-column>
-        </SelectTable>
+                    <el-table-column columnKey="locked" className="row-action">
+                        <template>
+                            <el-tooltip
+                                v-if="areNamespaceSecretsReadOnly"
+                                transition=""
+                                :hideAfter="0"
+                                :persistent="false"
+                                effect="light"
+                            >
+                                <template #content>
+                                    <span v-html="$t('secret.isReadOnly')" />
+                                </template>
+                                <el-icon class="d-flex justify-content-center text-base">
+                                    <Lock />
+                                </el-icon>
+                            </el-tooltip>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column columnKey="copy" className="row-action">
+                        <template #default="scope">
+                            <el-tooltip :content="$t('copy_to_clipboard')">
+                                <el-button
+                                    :icon="ContentCopy"
+                                    link
+                                    @click="Utils.copy(`\{\{ secret('${scope.row.key}') \}\}`)"
+                                />
+                            </el-tooltip>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column v-if="!keyOnly && !paneView" columnKey="update" className="row-action">
+                        <template #default="scope">
+                            <el-button
+                                v-if="canUpdate(scope.row)"
+                                :icon="FileDocumentEdit"
+                                link
+                                @click="updateSecretModal(scope.row)"
+                            />
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column v-if="!keyOnly && !paneView" columnKey="delete" className="row-action">
+                        <template #default="scope">
+                            <el-button
+                                v-if="canDelete(scope.row)"
+                                :icon="Delete"
+                                link
+                                @click="removeSecret(scope.row)"
+                            />
+                        </template>
+                    </el-table-column>
+                </SelectTable>
+            </template>
+        </DataTable>
 
         <Drawer
             v-if="addSecretDrawerVisible"
@@ -113,7 +142,11 @@
                 </el-form-item>
                 <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
                     <el-col :span="20">
-                        <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" :disabled="!secret.updateValue" />
+                        <MultilineSecret
+                            v-model="secret.value"
+                            :placeholder="secretModalTitle"
+                            :disabled="!secret.updateValue"
+                        />
                     </el-col>
                     <el-col class="px-2" :span="4">
                         <el-switch
@@ -126,7 +159,11 @@
                     </el-col>
                 </el-form-item>
                 <el-form-item :label="$t('secret.description')" prop="description">
-                    <el-input v-model="secret.description" :placeholder="$t('secret.descriptionPlaceholder')" required />
+                    <el-input
+                        v-model="secret.description"
+                        :placeholder="$t('secret.descriptionPlaceholder')"
+                        required
+                    />
                 </el-form-item>
                 <el-form-item :label="$t('secret.tags')" prop="tags">
                     <el-row :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
@@ -173,35 +210,31 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
     import MultilineSecret from "./MultilineSecret.vue";
+    import DataTable from "../layout/DataTable.vue";
+    import SecretFilterLanguage from "../../composables/monaco/languages/filters/impl/secretFilterLanguage.ts";
 </script>
 
 <script lang="ts">
     import {mapStores} from "pinia";
-    import {useNamespaceSecrets, useAllSecrets, SecretIterator} from "../../composables/useSecrets";
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useAuthStore} from "override/stores/auth";
     import action from "../../models/action";
     import permission from "../../models/permission";
+    import DataTableActions from "../../mixins/dataTableActions";
     import SelectTableActions from "../../mixins/selectTableActions";
     import Id from "../Id.vue";
     import Drawer from "../Drawer.vue";
+    import {useSecretsStore} from "../../stores/secrets.ts";
+    import _merge from "lodash/merge";
 
     export default {
-        mixins: [SelectTableActions],
+        mixins: [DataTableActions, SelectTableActions],
         components: {
             Id,
             Drawer
         },
         computed: {
-            ...mapStores(useNamespacesStore, useAuthStore),
-            searchQuery() {
-                return this.$route.query.q;
-            },
-            filteredSecrets() {
-                return this.namespace === undefined
-                    ? this.secrets?.filter((secret: {key: string}) => !this.searchQuery || secret.key.toLowerCase().includes(this.searchQuery.toLowerCase()))
-                    : this.secrets;
-            },
+            ...mapStores(useNamespacesStore, useAuthStore, useSecretsStore),
             secretModalTitle() {
                 return this.secret?.update ? this.$t("secret.update", {name: this.secret.key}) : this.$t("secret.add");
             },
@@ -212,15 +245,6 @@
                 set(newValue) {
                     this.$emit("update:addSecretModalVisible", newValue);
                 }
-            },
-            areNamespaceSecretsReadOnly() {
-                const areNamespaceSecretsReadOnly = this.secretsIterator?.areNamespaceSecretsReadOnly;
-                return this.namespace === undefined ? areNamespaceSecretsReadOnly : {[this.namespace]: areNamespaceSecretsReadOnly};
-            }
-        },
-        mounted() {
-            if (this.namespace !== undefined) {
-                this.fetchSecrets();
             }
         },
         props: {
@@ -261,13 +285,8 @@
                 }
             },
             hasData(newValue, oldValue) {
-                if (oldValue === undefined) {
+                if (oldValue !== newValue) {
                     this.$emit("hasData", newValue);
-                }
-            },
-            searchQuery(newValue, oldValue) {
-                if (newValue !== oldValue) {
-                    this.reloadSecrets();
                 }
             }
         },
@@ -278,12 +297,16 @@
                     key: undefined,
                     value: "",
                     description: undefined,
-                    tags: [{key:undefined,value:undefined}],
+                    tags: [{key: undefined, value: undefined}] as ({
+                        key: string | undefined,
+                        value: string | undefined
+                    }[]),
                     update: undefined,
                     updateValue: undefined
                 },
-                secretsIterator: undefined as SecretIterator | undefined,
                 secrets: undefined,
+                areNamespaceSecretsReadOnly: false,
+                total: 0,
                 rules: {
                     key: [
                         {required: true, trigger: "change"},
@@ -311,64 +334,61 @@
             };
         },
         methods: {
+            loadQuery(base) {
+                let queryFilter = this.queryWithFilter();
+
+                return _merge(base, queryFilter)
+            },
             canUpdate(secret) {
-                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
+                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.UPDATE, secret.namespace) && !this.areNamespaceSecretsReadOnly;
             },
             canDelete(secret) {
-                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.DELETE, secret.namespace) && !this.areNamespaceSecretsReadOnly?.[secret.namespace];
+                return secret.namespace !== undefined && this.authStore.user.isAllowed(permission.SECRET, action.DELETE, secret.namespace) && !this.areNamespaceSecretsReadOnly;
             },
-            async fetchSecrets() {
-                if (this.secretsIterator === undefined) {
-                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.authStore.user, 20) : useNamespaceSecrets(this.namespace, 20, {
-                        sort: this.$route.query.sort || "key:asc",
-                        ...(this.searchQuery === undefined ? {} : {filters: {
-                            q: {
-                                EQUALS: this.searchQuery
+            async loadData(callback) {
+                this.isLoading = true;
+                try {
+                    const secretsResponse = await this.secretsStore.find(this.loadQuery({
+                        size: parseInt(this.$route.query.size || 25),
+                        page: parseInt(this.$route.query.page || 1),
+                        sort: this.$route.query.sort || "name:asc",
+                        ...(this.namespace === undefined ? {} : {
+                            filters: {
+                                namespace: {
+                                    EQUALS: this.namespace
+                                }
                             }
-                        }})
-                    });
-                }
+                        })
+                    }));
 
-                let emitReadOnly = false;
-                if (this.namespace !== undefined && this.secretsIterator.areNamespaceSecretsReadOnly === undefined) {
-                    emitReadOnly = true;
-                }
-                const fetch = await (this.secretsIterator as SecretIterator).next();
-                if (emitReadOnly && this.secretsIterator.areNamespaceSecretsReadOnly !== undefined) {
-                    this.$emit("update:isSecretReadOnly", this.secretsIterator.areNamespaceSecretsReadOnly);
-                }
+                    this.$emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
+                    this.hasData = (secretsResponse.results?.length ?? 0) !== 0
 
-                if (fetch.length === 0) {
-                    this.hasData = false;
-                    return undefined;
+                    this.areNamespaceSecretsReadOnly = secretsResponse.readOnly ?? false;
+                    this.secrets = secretsResponse.results;
+                    this.total = secretsResponse.total;
+                } finally {
+                    this.isLoading = false;
+                    if (callback) callback();
                 }
-
-                this.hasData = true;
-                this.secrets = [...(this.secrets || []), ...fetch];
-
-                if (this.namespace === undefined && this.filteredSecrets.length === 0) {
-                    return this.fetchSecrets();
-                }
-
-                return fetch;
             },
             updateSecretModal(secret) {
                 this.secret.namespace = secret.namespace;
                 this.secret.key = secret.key;
                 this.secret.description = secret.description;
-                this.secret.tags = secret.tags?.map((x) => x) || [{key:undefined,value:undefined}];
+                this.secret.tags = secret.tags?.map((x) => x) || [{key: undefined, value: undefined}];
                 this.secret.update = true;
                 this.secret.updateValue = false;
                 this.addSecretDrawerVisible = true;
             },
-            checkSecretValue(rule, value, callback)  {
+            checkSecretValue(rule, value, callback) {
                 if (this.secret.updateValue && (this.secret.value === undefined || this.secret.value.length === 0)) {
                     callback(new Error("Value must not be empty."));
                 } else {
                     callback();
                 }
             },
-            checkSecretTags(rule, value, callback)  {
+            checkSecretTags(rule, value, callback) {
                 const keys = this.secret.tags.map((it) => it.key);
 
                 if (this.secret.tags.length === 1) {
@@ -390,22 +410,10 @@
                 }
             },
             addSecretTag() {
-                this.secret.tags.push({key:"",value:""});
+                this.secret.tags.push({key: "", value: ""});
             },
             removeSecretTag(index) {
                 this.secret.tags.splice(index, 1);
-            },
-            async reloadSecrets() {
-                this.secretsIterator = undefined;
-
-                const previousLength = this.secrets?.length ?? 0;
-                await this.$refs.selectTable.resetInfiniteScroll();
-                this.secrets = [];
-
-                // If we are in the global Secrets view we let the infinite scroll handling the fetch
-                if (this.namespace !== undefined || previousLength === 0) {
-                    return this.fetchSecrets();
-                }
             },
             removeSecret({key, namespace}) {
                 this.$toast().confirm(this.$t("delete confirm", {name: key}), () => {
@@ -414,7 +422,7 @@
                         .then(() => {
                             this.$toast().deleted(key);
                         })
-                        .then(() => this.reloadSecrets())
+                        .then(() => this.loadData())
                 });
             },
             isSecretValueUpdated() {
@@ -426,11 +434,11 @@
                         return false;
                     }
 
-                    let secret = {
+                    let secret: typeof this.secret = {
                         key: this.secret.key,
                         description: this.secret.description,
                         tags: this.secret.tags
-                            .map(item => item.value !== undefined ? item : {key:item.key,value: ""})
+                            .map(item => item.value !== undefined ? item : {key: item.key, value: ""})
                             .filter(item => item.key !== undefined)
                     };
 
@@ -445,7 +453,7 @@
                             this.$toast().saved(this.secret.key);
                             this.addSecretDrawerVisible = false;
                             this.resetForm();
-                            return this.reloadSecrets();
+                            return this.loadData();
                         })
                 });
             },
@@ -455,40 +463,25 @@
                     key: undefined,
                     value: "",
                     description: undefined,
-                    tags: [{key:undefined,value:undefined}],
+                    tags: [{key: undefined, value: undefined}],
                     update: undefined,
                     updateValue: undefined
-                }
-            },
-            onTtlChange(value) {
-                this.kv.ttl = value.timeRange
-            },
-            handleSort({prop, order}) {
-                if (prop && order) {
-                    this.secrets?.sort((a, b) => {
-                        const [valueA, valueB] = [a[prop] ?? "", b[prop] ?? ""];
-                        const modifier = order === "ascending" ? 1 : -1;
-
-                        return typeof valueA === "string"
-                            ? modifier * valueA.localeCompare(valueB)
-                            : modifier * (valueA - valueB);
-                    });
                 }
             }
         },
     };
 </script>
 <style scoped lang="scss">
-.namespace-tag {
-    background-color: var(--ks-log-background-debug) !important;
-    color: var(--ks-log-content-debug);
-    border: 1px solid var(--ks-log-border-debug);
-    padding: 0 6px;
+    .namespace-tag {
+        background-color: var(--ks-log-background-debug) !important;
+        color: var(--ks-log-content-debug);
+        border: 1px solid var(--ks-log-border-debug);
+        padding: 0 6px;
 
-    :deep(.el-tag__content) {
-        display: flex;
-        align-items: center;
-        gap: 4px;
+        :deep(.el-tag__content) {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
     }
-}
 </style>

@@ -287,9 +287,10 @@ public class FlowInputOutput {
         Input<?> input = resolvable.get().input();
 
         try {
-            //  resolve all input dependencies and check whether input is enabled
-            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, decryptSecrets);
-            final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, decryptSecrets);
+            // Resolve all input dependencies and check whether input is enabled
+            // Note: Secrets are always decrypted here because they can be part of expressions used to render inputs such as SELECT & MULTI_SELECT.
+            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, true);
+            final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, true);
 
             boolean isInputEnabled = dependencies.isEmpty() || dependencies.values().stream().allMatch(InputAndValue::enabled);
 
@@ -329,7 +330,8 @@ public class FlowInputOutput {
 
             // resolve default if needed
             if (value == null && input.getDefaults() != null) {
-                value = resolveDefaultValue(input, runContext);
+                RunContext runContextForDefault = decryptSecrets ? runContext : buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
+                value = resolveDefaultValue(input, runContextForDefault);
                 resolvable.isDefault(true);
             }
 

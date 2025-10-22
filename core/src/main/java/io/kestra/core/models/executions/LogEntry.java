@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.Value;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.event.Level;
 
 import jakarta.validation.constraints.NotNull;
@@ -118,6 +119,16 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     public static String toPrettyString(LogEntry logEntry) {
         return logEntry.getTimestamp().toString() + " " + logEntry.getLevel() + " " + logEntry.getMessage();
+    }
+
+    public static String toPrettyString(LogEntry logEntry, Integer maxMessageSize) {
+        String message;
+        if (maxMessageSize != null && maxMessageSize > 0) {
+            message = StringUtils.truncate(logEntry.getMessage(), maxMessageSize);
+        } else {
+            message = logEntry.getMessage();
+        }
+        return logEntry.getTimestamp().toString() + " " + logEntry.getLevel() + " " + message;
     }
 
     public Map<String, String> toMap() {

@@ -15,6 +15,13 @@
             }
         }
 
+        // Make Plugins icon appear as outline
+        .vsm--link[href*="plugins"] .vsm--icon svg {
+            fill: none !important;
+            stroke: currentColor !important;
+            stroke-width: 1.5 !important;
+        }
+
         .vsm--item {
             padding: 0 30px;
             transition: padding 0.2s ease;

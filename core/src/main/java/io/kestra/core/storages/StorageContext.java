@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Slugify;
 import jakarta.annotation.Nullable;
@@ -61,11 +62,11 @@ public class StorageContext {
             taskRun.getValue()
         );
     }
-
+    
     /**
      * Factory method for constructing a new {@link StorageContext} scoped to a given {@link Flow}.
      */
-    public static StorageContext forFlow(Flow flow) {
+    public static StorageContext forFlow(FlowId flow) {
         return new StorageContext(flow.getTenantId(), flow.getNamespace(), flow.getId());
     }
 

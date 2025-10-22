@@ -25,6 +25,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         const dashboard = ref<Dashboard>();
         const chartErrors = ref<string[]>([]);
+        const isCreating = ref<boolean>(false);
 
         const axios = useAxios();
 
@@ -106,6 +107,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return {
             dashboard,
             chartErrors,
+            isCreating,
             setDashboard,
             setChartErrors,
             list,

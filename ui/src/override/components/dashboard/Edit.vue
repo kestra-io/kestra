@@ -45,6 +45,8 @@
     };
 
     onMounted(() => {
+        dashboardStore.isCreating = false;
+        
         dashboardStore.load(route.params.dashboard as string).then((response) => {
             dashboard.value = response;
         });

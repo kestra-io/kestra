@@ -68,6 +68,8 @@
     }
 
     onMounted(async () => {
+        dashboardStore.isCreating = true;
+        
         const {blueprintId, name, params} = route.query;
 
         if (blueprintId) {

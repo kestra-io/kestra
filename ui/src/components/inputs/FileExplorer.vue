@@ -365,6 +365,7 @@
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
     import {EditorTabProps} from "./EditorWrapper.vue";
+    import {isDirectory, TreeNode, TreeNodeDirectory, TreeNodeFile, useFilesStore} from "../../stores/files";
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -389,6 +390,7 @@
 
     const route = useRoute();
     const namespacesStore = useNamespacesStore();
+    const filesStore = useFilesStore();
 
     interface Dialog{
         visible: boolean;
@@ -409,7 +411,12 @@
     const dropdowns = ref<{handleClose: () => void; handleOpen: () => void}>();
     const dropdownRef = ref<{handleClose: () => void; handleOpen: () => void}>();
     const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
-    const items = ref<TreeNode[]>([]);
+    const items = computed<TreeNode[]>({
+        get: () => filesStore.fileTree,
+        set: (value: TreeNode[]) => {
+            filesStore.fileTree = value;
+        },
+    });
     const nodeBeforeDrag = ref<any>(undefined);
     const searchResults = ref<string[]>([]);
     const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0});
@@ -582,30 +589,7 @@
         }
     }
 
-    interface TreeNodeFile{
-        id: string;
-        fileName: string;
-        type: "File";
-        leaf: true;
-        extension?: string;
-        data?: any;
-        content?: ArrayBuffer;
-    }
-
-    interface TreeNodeDirectory{
-        id: string;
-        fileName: string;
-        type: "Directory";
-        data?: any;
-        leaf: false;
-        children: TreeNode[];
-    }
-
-    type TreeNode = TreeNodeFile | TreeNodeDirectory;
-
-    function isDirectory(node: TreeNode): node is TreeNodeDirectory {
-        return node.type === "Directory";
-    }
+    
 
     async function loadNodes(node: TreeNode & { level: number , leaf: boolean }, resolve: (children: TreeNode[]) => void) {
         if (node.level === 0) {

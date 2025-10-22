@@ -1,6 +1,5 @@
 import EditorSidebar from "../../../../src/components/inputs/EditorSidebar.vue";
 import {useAxios} from "../../../../src/utils/axios";
-import {useEditorStore} from "../../../../src/stores/editor";
 
 const meta = {
     title: "inputs/EditorSidebar",
@@ -12,9 +11,7 @@ export default meta;
 export const Default = {
     render: () => ({
         setup() {
-            const editorStore = useEditorStore()
             const axios = useAxios()
-            editorStore.toggleExplorerVisibility(true)
 
             axios.get = () => {
                     return  Promise.resolve({data: [

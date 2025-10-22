@@ -256,7 +256,7 @@ export const useFilesStore = defineStore("files", () => {
         return findPath(fileTree.value);
     }
 
-    async function loadNodes(node: (TreeNode & { level: number}) | {level: 0}, resolve: (children: TreeNode[]) => void = () => {}) {
+    async function loadNodes(node: (TreeNode & { level: number}) | {level: 0} = {level: 0}, resolve: (children: TreeNode[]) => void = () => {}) {
         if(namespaceId.value === undefined) return;
         if (node.level === 0) {
             const payload = {namespace: namespaceId.value};

@@ -5,143 +5,141 @@
         <CopyToClipboard :text="curlCommand" />
 
         <el-alert class="mt-3" type="info" showIcon :closable="false">
-            {{ $t('curl.note') }}
+            {{ t('curl.note') }}
         </el-alert>
     </div>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {computed, ref} from "vue";
     import {baseUrl, basePath, apiUrl} from "override/utils/route";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
+    import {useI18n} from "vue-i18n";
+    import moment from "moment";
 
-    export default {
-        components: {CopyToClipboard},
-        props: {
-            flow: {
-                type: Object,
-                required: true
-            },
-            inputs: {
-                type: Object,
-                default: () => {}
-            },
-            executionLabels: {
-                type: Array,
-                default: () => []
-            },
-            verbose: {
-                type: Boolean,
-                default: true
-            }
-        },
-        data() {
-            return {
-                exampleFileName: "kestra.json"
-            }
-        },
-        computed: {
-            curlCommand() {
-                const mainCommand = this.generateCurlCommand();
-
-                if (this.flow.inputs && this.flow.inputs.find((input) => input.type === "FILE")) {
-                    return `${this.toShell(this.generatePrefix())} && \\\n${this.toShell(mainCommand)}`;
-                } else {
-                    return `${this.toShell(mainCommand)}`;
-                }
-            },
-            exampleFileInputUrl() {
-                return `https://huggingface.co/datasets/kestra/datasets/resolve/main/json/${this.exampleFileName}`;
-            }
-        },
-        methods: {
-            addHeader(command, name, value) {
-                command.push("-H", `'${name}: ${value}'`);
-            },
-            addInputs(command) {
-                if (!this.flow.inputs) {
-                    return;
-                }
-
-                this.flow.inputs.forEach((input) => {
-                    let inputValue;
-
-                    switch (input.type) {
-                    case "FILE": {
-                        inputValue = this.exampleFileName;
-                        break;
-                    }
-                    case "SECRET": {
-                        inputValue = this.inputs[input.id] ? "******" : undefined;
-                        break;
-                    }
-                    case "DATE": {
-                        inputValue = this.$moment(this.inputs[input.id]).format("YYYY-MM-DD");
-                        break;
-                    }
-                    case "TIME": {
-                        inputValue = this.$moment(this.inputs[input.id]).format("hh:mm:ss");
-                        break;
-                    }
-                    default:
-                        inputValue = this.inputs[input.id];
-                    }
-
-                    if (inputValue === undefined) {
-                        return;
-                    }
-
-                    command.push("-F");
-
-                    if (input.type === "FILE") {
-                        command.push(`'${input.id}=@${inputValue};filename=${inputValue}'`);
-                    } else {
-                        command.push(`'${input.id}=${inputValue}'`);
-                    }
-                });
-            },
-            generateExecutionLabel(key, value) {
-                return `labels=${encodeURIComponent(key)}:${encodeURIComponent(value)}`;
-            },
-            generateUrl() {
-                const queryParams = this.executionLabels
-                    .filter((label) => label.key !== null && label.value !== null && label.key !== "" && label.value !== "")
-                    .map((label) => this.generateExecutionLabel(label.key, label.value));
-
-                const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`;
-
-                var url = `${origin}/executions/${this.flow.namespace}/${this.flow.id}`;
-
-                if (queryParams.length > 0) {
-                    url += `?${queryParams.join("&")}`;
-                }
-
-                return url;
-            },
-            generateCurlCommand() {
-                const command = ["curl"];
-
-                if (this.verbose) {
-                    command.push("-v");
-                }
-
-                command.push("-X", "POST");
-
-                this.addHeader(command, "Content-Type", "multipart/form-data");
-
-                this.addInputs(command);
-
-                command.push(`'${this.generateUrl()}'`);
-
-                return command
-            },
-            generatePrefix() {
-                return ["curl", "-O", `'${this.exampleFileInputUrl}'`];
-            },
-            toShell(command) {
-                return command.join(" ");
-            }
-        }
+    // Props definition
+    interface FlowInput {
+        id: string;
+        type: string;
     }
+
+    interface ExecutionLabel {
+        key: string | null;
+        value: string | null;
+    }
+
+    interface Flow {
+        id: string;
+        namespace: string;
+        inputs?: FlowInput[];
+    }
+
+    const props = withDefaults(defineProps<{
+        flow: Flow;
+        inputs?: Record<string, any>;
+        executionLabels?: ExecutionLabel[];
+        verbose?: boolean;
+    }>(),{
+        inputs: () => ({}),
+        executionLabels: () => [],
+        verbose: true
+    });
+
+    const {t} = useI18n();
+
+    const exampleFileName = ref("kestra.json");
+
+    const exampleFileInputUrl = computed(() => 
+        `https://huggingface.co/datasets/kestra/datasets/resolve/main/json/${exampleFileName.value}`
+    );
+
+    function addHeader(command: string[], name: string, value: string) {
+        command.push("-H", `'${name}: ${value}'`);
+    }
+
+    function addInputs(command: string[]) {
+        if (!props.flow.inputs) return;
+
+        props.flow.inputs.forEach((input) => {
+            let inputValue: string | undefined;
+
+            switch (input.type) {
+            case "FILE":
+                inputValue = exampleFileName.value;
+                break;
+            case "SECRET":
+                inputValue = props.inputs?.[input.id] ? "******" : undefined;
+                break;
+            case "DATE":
+                inputValue = moment(props.inputs?.[input.id]).format("YYYY-MM-DD");
+                break;
+            case "TIME":
+                inputValue = moment(props.inputs?.[input.id]).format("hh:mm:ss");
+                break;
+            default:
+                inputValue = props.inputs?.[input.id];
+            }
+
+            if (inputValue === undefined) return;
+
+            command.push("-F");
+            if (input.type === "FILE") {
+                command.push(`'${input.id}=@${inputValue};filename=${inputValue}'`);
+            } else {
+                command.push(`'${input.id}=${inputValue}'`);
+            }
+        });
+    }
+
+    function generateExecutionLabel(key: string, value: string) {
+        return `labels=${encodeURIComponent(key)}:${encodeURIComponent(value)}`;
+    }
+
+    function generateUrl() {
+        const queryParams = (props.executionLabels || [])
+            .filter((label) => label.key && label.value)
+            .map((label) => generateExecutionLabel(label.key!, label.value!));
+
+        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`;
+        let url = `${origin}/executions/${props.flow.namespace}/${props.flow.id}`;
+
+        if (queryParams.length > 0) {
+            url += `?${queryParams.join("&")}`;
+        }
+
+        return url;
+    }
+
+    function generateCurlCommand() {
+        const command = ["curl"];
+
+        if (props.verbose) command.push("-v");
+
+        command.push("-X", "POST");
+        addHeader(command, "Content-Type", "multipart/form-data");
+        addInputs(command);
+        command.push(`'${generateUrl()}'`);
+
+        return command;
+    }
+
+    function generatePrefix() {
+        return ["curl", "-O", `'${exampleFileInputUrl.value}'`];
+    }
+
+    function toShell(command: string[]) {
+        return command.join(" ");
+    }
+
+    const curlCommand = computed(() => {
+        const mainCommand = generateCurlCommand();
+        const hasFileInput = props.flow.inputs?.some((input) => input.type === "FILE");
+
+        if (hasFileInput) {
+            return `${toShell(generatePrefix())} && \\\n${toShell(mainCommand)}`;
+        }
+        return `${toShell(mainCommand)}`;
+    });
 </script>
 
 <style scoped lang="scss">

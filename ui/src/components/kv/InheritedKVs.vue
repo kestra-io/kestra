@@ -6,12 +6,6 @@
             </template>
         </el-table-column>
 
-        <el-table-column prop="value" :label="$t('value')">
-            <template #default="scope">
-                <code>{{ scope.row.value }}</code>
-            </template>
-        </el-table-column>
-
         <el-table-column prop="description" :label="$t('description')">
             <template #default="scope">
                 <span>{{ scope.row.description }}</span>

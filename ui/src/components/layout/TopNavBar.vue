@@ -21,13 +21,13 @@
                         <slot name="title">
                             {{ title }}
                             <el-tooltip v-if="description" :content="description">
-                                <Information class="title-icon" />
+                                <Information class="ms-2 icon" />
                             </el-tooltip>
                             <Badge v-if="beta" label="Beta" />
                         </slot>
                         <el-button
-                            class="star-button title-icon"
-                            :class="{'star-active': bookmarked}"
+                            class="icon"
+                            :class="{'active': bookmarked}"
                             :icon="bookmarked ? StarIcon : StarOutlineIcon"
                             circle
                             @click="onStarClick"
@@ -144,6 +144,8 @@
 </script>
 
 <style scoped lang="scss">
+    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
+
     nav {
         top: 0;
         position: sticky;
@@ -165,22 +167,18 @@
             align-items: center;
         }
 
-        .star-button {
+        .icon {
             border: none;
-        }
-
-        .title-icon {
             color: var(--ks-content-tertiary);
-            margin-left: 0.5rem;
-        }
 
-        .title-icon :deep(svg) {
-            fill: currentColor;
-            stroke: currentColor;
-        }
+            &:deep(svg) {
+                fill: currentColor;
+                stroke: currentColor;
+            }
 
-        .star-active {
-            color: #9470FF;
+            &.active {
+                color: $base-purple-300;
+            }
         }
 
         :deep(.el-breadcrumb__item) {

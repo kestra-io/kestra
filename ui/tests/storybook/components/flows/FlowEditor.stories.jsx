@@ -5,7 +5,6 @@ import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.js
 import flowSchema from "../../../../src/stores/flow-schema.json";
 import {useAxios} from "../../../../src/utils/axios";
 import {useFlowStore} from "../../../../src/stores/flow";
-import {useEditorStore} from "../../../../src/stores/editor";
 
 
 export default {
@@ -31,7 +30,6 @@ const Template = (args) => ({
     setup() {
         const axios = useAxios()
         const flowStore = useFlowStore()
-        const editorStore = useEditorStore()
         axios.get = async (uri) => {
             if (uri.endsWith("/plugins")) {
                 return {data: []}
@@ -60,13 +58,6 @@ const Template = (args) => ({
         flow.source = args.flow
         flowStore.flow = flow
         flowStore.flowYaml = args.flow
-
-        editorStore.openTab({
-            flow: true,
-            name: "Flow",
-            path: "Flow.yaml",
-            persistent: true,
-        })
 
         return () =>
             <div style="height: 100vh">

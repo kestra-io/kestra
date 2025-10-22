@@ -27,6 +27,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         const selectedChart = ref<Chart>();
         const dashboard = ref<Dashboard>();
         const chartErrors = ref<string[]>([]);
+        const isCreating = ref<boolean>(false);
 
         const sourceCode = ref("")
         const parsedSource = computed<{ id?: string, [key:string]: any } | undefined>((previous) => {
@@ -142,6 +143,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return {
             dashboard,
             chartErrors,
+            isCreating,
             selectedChart,
             list,
             load,

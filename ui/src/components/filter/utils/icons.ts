@@ -1,6 +1,6 @@
 import AccountCheck from "vue-material-design-icons/AccountCheck.vue";
 import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
-import AutoRenew from "vue-material-design-icons/AutoRenew.vue";
+import AutoRenew from "vue-material-design-icons/Autorenew.vue";
 import BookmarkCheckOutline from "vue-material-design-icons/BookmarkCheckOutline.vue";
 import CalendarEndOutline from "vue-material-design-icons/CalendarEndOutline.vue";
 import CalendarRangeOutline from "vue-material-design-icons/CalendarRangeOutline.vue";

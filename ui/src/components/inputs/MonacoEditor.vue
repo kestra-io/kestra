@@ -712,8 +712,6 @@
         }
     }
 
-    const editorStore = useEditorStore();
-
     async function initMonaco() {
         let options: EditorOptions = {
             value: props.value,
@@ -866,13 +864,6 @@
 
             if (props.value !== value) {
                 emit("change", value, event);
-
-                if (!props.input && editorStore.current?.name) {
-                    editorStore.setTabDirty({
-                        ...editorStore.current,
-                        dirty: true,
-                    });
-                }
             }
         });
 

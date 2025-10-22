@@ -147,7 +147,7 @@
                 top: 50%;
                 left: 50%;
                 transform: translateY(-50%);
-                width: calc(100% - 15px);
+                width: calc(100% - 6px);
                 height: 1px;
             }
         }

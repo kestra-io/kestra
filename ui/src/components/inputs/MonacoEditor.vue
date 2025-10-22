@@ -25,6 +25,75 @@
     </div>
 </template>
 
+<script lang="ts">
+    import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+    import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
+    import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
+    import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
+    import YamlWorker from "./yaml.worker.js?worker";
+
+    const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, as: "raw"});
+
+    let tries = 0
+    function loadNodeTypes(){
+        if(monaco.languages.typescript) {
+            for(const path in NodeTypesRaw){
+                const NodeTypesRawContent = NodeTypesRaw[path].toString();
+                // We add every .d.ts file to Monaco
+                monaco.languages.typescript.typescriptDefaults.addExtraLib(
+                    NodeTypesRawContent,
+                    `file://${path}`
+                );
+            }
+        } else if(tries <= 15) {
+            // Retry loading types up to 15 times with increasing delay
+            setTimeout(loadNodeTypes, ++tries * 100)
+        }
+    }
+
+    loadNodeTypes();
+
+
+    export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
+
+    export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
+
+    window.MonacoEnvironment = {
+        getWorker(_moduleId, label) {
+            switch (label) {
+            case "editorWorkerService":
+                return new EditorWorker();
+            case "yaml":
+                return new YamlWorker();
+            case "json":
+                return new JsonWorker();
+            case "javascript":
+            case "typescript":
+                return new TypeScriptWorker();
+            default:
+                throw new Error(`Unknown label ${label}`);
+            }
+        },
+    };
+
+    function isCursorInPebbleBlock(editor: monaco.editor.ICodeEditor) {
+        const editorValue = editor.getValue()
+        const cursorPos = editor.getPosition()
+
+        if(!cursorPos){
+            return false;
+        }
+
+        // get the absolute index in the string
+        const absoluteOffset = editor.getModel()?.getOffsetAt(cursorPos) ?? 0
+
+        // if the previous token is {{ it means we are in a pebble block -> true
+        // if a }} comes after the {{ we have come out of the block and are not -> false
+        // if both are empty, they both return -1 -> false
+        return editorValue.lastIndexOf("{{", absoluteOffset) > editorValue.lastIndexOf("}}", absoluteOffset);
+    }
+</script>
+
 <script setup lang="ts">
     import {
         computed,
@@ -46,52 +115,31 @@
     import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess";
     import "monaco-editor/esm/vs/language/json/monaco.contribution";
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution";
-    import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+
     import {editor} from "monaco-editor/esm/vs/editor/editor.api";
-    import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-    import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
-    import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
     import configureLanguage from "../../composables/monaco/languages/languagesConfigurator";
 
     import {EDITOR_HIGHLIGHT_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
 
-    import YamlWorker from "./yaml.worker.js?worker";
-    import Utils from "../../utils/utils";
     import {STATES, TaskIcon} from "@kestra-io/ui-libs";
+
     import uniqBy from "lodash/uniqBy";
     import {useI18n} from "vue-i18n";
     import {ElDatePicker} from "element-plus";
     import {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget";
+    import Utils from "../../utils/utils";
     import {hashCode} from "../../utils/global";
     import ICodeEditor = editor.ICodeEditor;
     import debounce from "lodash/debounce";
     import {usePluginsStore} from "../../stores/plugins";
     import {useFlowStore} from "../../stores/flow";
     import EditorType = editor.EditorType;
+    import {useRoute} from "vue-router";
+    import {useEditorStore} from "../../stores/editor";
 
     const currentInstance = getCurrentInstance()!;
     const {t} = useI18n();
-
-    export type ThemeBase = editor.BuiltinTheme | "light" | "dark";
-
-    window.MonacoEnvironment = {
-        getWorker(_moduleId, label) {
-            switch (label) {
-            case "editorWorkerService":
-                return new EditorWorker();
-            case "yaml":
-                return new YamlWorker();
-            case "json":
-                return new JsonWorker();
-            case "javascript":
-            case "typescript":
-                return new TypeScriptWorker();
-            default:
-                throw new Error(`Unknown label ${label}`);
-            }
-        },
-    };
 
     const textAreaValue = computed({
         get() {
@@ -102,8 +150,6 @@
         }
     });
 
-    import {useRoute} from "vue-router";
-    import {useEditorStore} from "../../stores/editor";
     const route = useRoute();
 
     const highlightLine = () => {
@@ -187,7 +233,6 @@
         });
     }
 
-    export type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean };
     const props = withDefaults(defineProps<{
         path?: string,
         original?: string,
@@ -260,8 +305,6 @@
     const suggestWidgetResizeObserver = ref<MutationObserver>()
     const suggestWidgetObserver = ref<MutationObserver>()
     const suggestWidget = ref<HTMLElement>()
-
-
 
     defineExpose({
         focus,
@@ -715,6 +758,10 @@
                     if (e.keyCode === monaco.KeyCode.Backspace) {
                         if (modifiedBackspaceTimeout) clearTimeout(modifiedBackspaceTimeout);
 
+                        if(!isCursorInPebbleBlock(modifiedEditor)) {
+                            return;
+                        }
+
                         modifiedBackspaceTimeout = window.setTimeout(() => {
                             modifiedEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
                         }, 250);
@@ -761,8 +808,12 @@
                     if (e.keyCode === monaco.KeyCode.Backspace) {
                         if (localBackspaceTimeout) clearTimeout(localBackspaceTimeout);
 
+                        if(!localEditor.value || !isCursorInPebbleBlock(localEditor.value)) {
+                            return;
+                        }
+
                         localBackspaceTimeout = window.setTimeout(() => {
-                            localEditor.value!.trigger("keyboard", "editor.action.triggerSuggest", {});
+                            localEditor.value?.trigger("keyboard", "editor.action.triggerSuggest", {});
                         }, 250);
                     }
                 });
@@ -911,6 +962,7 @@
 </script>
 
 <style scoped lang="scss">
+    @import "../../styles/layout/root-dark";
     .ks-monaco-editor {
         position: absolute;
         width: 100%;
@@ -921,19 +973,15 @@
     .main-editor > #editorWrapper .monaco-editor {
         padding: 1rem 0 0 1rem;
     }
-</style>
 
-<style lang="scss">
-    @import "../../styles/layout/root-dark";
-
-    .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
+    .custom-dark-vs-theme .ks-monaco-editor :deep(.sticky-widget) {
         background-color: var(--ks-background-input);
     }
 
     .monaco-editor {
-        .monaco-scrollable-element {
-            > .scrollbar {
-                .slider {
+        :deep(.monaco-scrollable-element) {
+            :deep(> .scrollbar) {
+                :deep(.slider) {
                     width: 13px !important;
                     background: var(--ks-border-primary) !important;
                     border-radius: 8px !important;
@@ -941,7 +989,7 @@
                 }
             }
 
-            .monaco-list-row[aria-label="_DATE_PICKER_"] {
+            :deep(.monaco-list-row[aria-label="_DATE_PICKER_"]) {
                 padding-right: 0 !important;
             }
         }

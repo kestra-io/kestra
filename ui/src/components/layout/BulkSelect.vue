@@ -5,9 +5,9 @@
             @change="toggle"
             :indeterminate="partialCheck"
         >
-            <span v-html="$t('selection.selected', {count: selectAll && total !== undefined ? total : selections.length})" />
+            <span v-if="selections.length > 0" v-html="$t('selection.selected', {count: selectAll && total !== undefined ? total : selections.length})" />
         </el-checkbox>
-        <el-button-group>
+        <el-button-group v-if="selections.length > 0">
             <el-button
                 :type="selectAll ? 'primary' : 'default'"
                 @click="toggleAll"
@@ -31,6 +31,7 @@
     const emit = defineEmits<{
         (e: "update:selectAll", value: boolean): void;
         (e: "unselect"): void;
+        (e: "select"): void;
     }>();
 
     const partialCheck = computed(() => {
@@ -40,6 +41,8 @@
     function toggle(value: boolean) {
         if (!value) {
             emit("unselect");
+        }else{
+            emit("select");
         }
     }
 

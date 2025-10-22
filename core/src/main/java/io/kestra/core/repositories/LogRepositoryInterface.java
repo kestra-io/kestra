@@ -9,6 +9,7 @@ import jakarta.annotation.Nullable;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -93,6 +94,10 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
     Integer purge(List<Execution> executions);
 
     void deleteByQuery(String tenantId, String executionId, String taskId, String taskRunId, Level minLevel, Integer attempt);
+
+    void deleteByQuery(String tenantId, String namespace, String flowId, String taskId, String executionId, String taskRunId, 
+        Integer attemptNumber, Instant timestamp, Level level, String thread, String message
+    );
 
     void deleteByQuery(String tenantId, String namespace, String flowId, String triggerId);
 

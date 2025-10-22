@@ -27,6 +27,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Min;
 import org.slf4j.event.Level;
@@ -196,5 +197,70 @@ public class LogController {
         @Parameter(description = "The trigger id") @Nullable @QueryValue String triggerId
     ) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), namespace, flowId, triggerId);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/bulk-delete")
+    @Operation(tags = {"Logs"}, summary = "Bulk Delete logs")
+    public void deleteBulkLogs(
+        @RequestBody(description = "The logs to be deleted") @Body List<LogEntry> logs
+    ) {
+        for (LogEntry log : logs) {
+            logRepository.deleteByQuery(
+                tenantService.resolveTenant(),
+                log.getNamespace(),
+                log.getFlowId(),
+                log.getTaskId(),
+                log.getExecutionId(),
+                log.getTaskRunId(),
+                log.getAttemptNumber(),
+                log.getTimestamp(),
+                log.getLevel(),
+                log.getThread(),
+                log.getMessage()
+            );
+        }
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/delete-by-filters")
+    @Operation(tags = {"Logs"}, summary = "Delete for logs using filter")
+    public void deleteByFilters(
+        @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
+        @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
+        @Parameter(description = "Filters") @Nullable @QueryFilterFormat List<QueryFilter> filters,
+        // Deprecated params
+        @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix",deprecated = true) @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Parameter(description = "A trigger id filter",deprecated = true) @Nullable @QueryValue String triggerId,
+        @Parameter(description = "The min log level filter", deprecated = true) @Nullable @QueryValue Level minLevel,
+        @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate
+    ) throws HttpStatusException {
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            triggerId,
+            minLevel,
+            startDate,
+            endDate,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
+
+        var logs = logRepository.findAsync(
+            tenantService.resolveTenant(),
+            filters
+        );
+
+        deleteBulkLogs(logs.collectList().block());
     }
 }

@@ -23,6 +23,12 @@ export const useLogsStore = defineStore("logs", {
         deleteLogs(log: { namespace: string, flowId: string, triggerId?: string }) {
             const URL = `${apiUrl()}/logs/${log.namespace}/${log.flowId}${log.triggerId ? `?triggerId=${log.triggerId}` : ""}`;
             return this.$http.delete(URL).then(() => (this.logs = undefined))
+        },
+        deleteBulkLogs(logs: Array<any>){
+            return this.$http.delete(`${apiUrl()}/logs/bulk-delete`,{data: logs}).then(() => (this.logs = undefined));
+        },
+        deleteLogsByFilter(options: any) {
+            return this.$http.delete(`${apiUrl()}/logs/delete-by-filters`, {params: options});
         }
     }
 })

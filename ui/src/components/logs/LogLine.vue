@@ -5,6 +5,8 @@
         v-if="filtered"
         :style="logLineStyle"
     >
+        <el-checkbox @change="handleCheckboxChange" :modelValue="bulkSelect.includes(index)" size="large" />
+    
         <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="25">
             <MenuRight />
         </el-icon>
@@ -79,12 +81,40 @@
                 type: Boolean,
                 default: false,
             },
+            index: {
+                type: Number,
+                required: true,
+            },
+            bulkSelect: {
+                type: Array,
+                required: true,
+            },
+            selectAll: {
+                type: Boolean,
+                required: true,
+            },
+            pageLength: {
+                type: Number,
+                required: true,
+            },
         },
         data() {
             return {
                 renderedMarkdown: undefined,
                 logsFontSize: parseInt(localStorage.getItem("logsFontSize") || "12"),
+                checked: false,
             };
+        },
+        methods: {
+            handleCheckboxChange(value) {
+                if(this.selectAll) {
+                    if(!value) {
+                        this.$emit("update:bulkSelectLength", this.pageLength);
+                    }
+                    this.$emit("update-select-all", false);
+                }
+                this.$emit("update:bulkSelect", this.$props.index, value);
+            },
         },
         async created() {
             this.renderedMarkdown = await Markdown.render(this.message, {onlyLink: true, html: true});

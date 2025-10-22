@@ -19,6 +19,21 @@
                 </template>
 
                 <template #table v-if="logsStore.logs !== undefined && logsStore.logs.length > 0">
+                    <div class="logs-header">
+                        <BulkSelect
+                            :selectAll="selectAll"
+                            :selections="bulkSelect"
+                            :total="logsStore.total"
+                            @update:select-all="toggleSelectAllPages"
+                            @unselect="unselectAll"
+                            @select="toggleSelectAll"
+                        >
+                            <!-- Always visible buttons -->
+                            <el-button :icon="Delete" @click="openConfirmationModal">
+                                {{ $t("delete") }}
+                            </el-button>
+                        </BulkSelect>
+                    </div>
                     <div v-loading="isLoading">
                         <div class="logs-wrapper">
                             <LogLine
@@ -28,11 +43,40 @@
                                 filter=""
                                 :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
                                 :log="log"
+                                :bulkSelect="bulkSelect"
+                                :index="i"
+                                :selectAll="selectAll"
+                                :pageLength="pageSize"
+                                @update-select-all="selectAll = $event"
+                                @update:bulk-select="updateBulkSelect"
+                                @update:bulk-select-length="bulkSelect.length = $event"
                             />
                         </div>
                     </div>
                 </template>
             </DataTable>
+            <template>
+                <el-dialog
+                    v-if="isOpenLabelsModal"
+                    v-model="isOpenLabelsModal"
+                    destroyOnClose
+                    :appendToBody="true"
+                    alignCenter
+                >
+                    <template #header>
+                        <h5>{{ $t("Confirmation") }}</h5>
+                    </template>
+                    <div>Are you sure you want to delete the selected logs?</div>
+                    <template #footer>
+                        <el-button @click="isOpenLabelsModal = false">
+                            {{ $t("cancel") }}
+                        </el-button>
+                        <el-button type="primary" @click="handleBulkDelete()">
+                            {{ $t("ok") }}
+                        </el-button>
+                    </template>
+                </el-dialog>
+            </template>
         </div>
     </section>
 </template>
@@ -43,7 +87,8 @@
     import DataTable from "../../components/layout/DataTable.vue";
     import KestraFilter from "../filter/KestraFilter.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import LogLine from "../logs/LogLine.vue";
+    import LogLine from "./LogLine.vue";
+    import BulkSelect from "../layout/BulkSelect.vue";
 </script>
 
 <script lang="ts">
@@ -90,12 +135,17 @@
         },
         data() {
             return {
+                pageSize: 10,
+                pageNumber: 1,
                 isDefaultNamespaceAllow: true,
                 task: undefined,
                 isLoading: false,
                 lastRefreshDate: new Date(),
                 canAutoRefresh: false,
                 showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_LOGS_CHART)),
+                bulkSelect: [],
+                selectAll: false,
+                isOpenLabelsModal: false,
             };
         },
         computed: {
@@ -226,7 +276,78 @@
                     });
 
             },
+            handleBulkDelete(){
+                if(this.selectAll){
+                    const data = {
+                        page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
+                        size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
+                        ...this.filters
+                    };
+                    this.logsStore.deleteLogsByFilter(this.loadQuery({
+                        ...data,
+                        minLevel: this.filters ? null : this.selectedLogLevel,
+                        sort: "timestamp:desc"
+                    }))
+                        .then(()=>{
+                            this.bulkSelect = [];
+                            this.refresh();
+                        })
+                        .finally(() => {
+                            this.isOpenLabelsModal = false;
+                        });
+                }else{
+                    const logsToDelete = [];
+                    for(let i=0;i<this.bulkSelect.length;i++){
+                        const logIndex = this.bulkSelect[i];
+                        const logToDelete = this.logsStore.logs[logIndex];
+                        logsToDelete.push(logToDelete);
+                    }
+                    this.logsStore.deleteBulkLogs(logsToDelete)
+                        .then(() => {
+                            this.bulkSelect = [];
+                            this.refresh();
+                        })
+                        .finally(() => {
+                            this.isOpenLabelsModal = false;
+                        });
+                }
+            },
+            toggleSelectAll(){
+                this.bulkSelect = [];
+                for(let i=0;i<this.logsStore.logs.length;i++){
+                    this.bulkSelect.push(i);
+                }
+            },
+            unselectAll(){
+                this.bulkSelect = []
+            },
+            openConfirmationModal(){
+                this.isOpenLabelsModal = true;
+            },
+            toggleSelectAllPages(){
+                this.selectAll = !this.selectAll;
+                this.bulkSelect = [];
+                for(let i=0;i<this.logsStore.total;i++){
+                    this.bulkSelect.push(i);
+                }
+            },
+            onPageChanged({page, size}: { page: number; size: number }) {
+                this.pageNumber = page;
+                this.pageSize = size; // this will automatically update <LogLine :pageLength="pageSize">
+                this.load();
+            },
+            updateBulkSelect(index: number, value: boolean) {
+                if (value) {
+                    this.bulkSelect.push(index); 
+                } else {
+                    const idx = this.bulkSelect.indexOf(index);
+                    if (idx > -1) {
+                        this.bulkSelect.splice(idx, 1);
+                    }
+                }
+            }
         },
+        emits:[ "update-select-all", "update:bulkSelect", "update:bulkSelectLength" ],
         watch: {
             reloadLogs(newValue) {
                 if(newValue) this.refresh();
@@ -266,5 +387,29 @@
                 border-top: 1px solid var(--ks-border-primary);
             }
         }
+
+        .logs-header{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: var(--bs-border-radius-lg);
+            overflow: hidden;
+            height: 60px;
+            background-color: var(--ks-background-card);
+            border: 1px solid var(--ks-border-primary);
+            border-bottom-right-radius: 0;
+            border-bottom-left-radius: 0;
+            position: relative;
+            padding-left: 0.7rem;
+            top: 5px;
+            html.dark & {
+                background-color: var(--bs-gray-100);
+            }
+        }
+    }
+
+    .bulk-select-checkbox{
+        margin-left: 1.2rem;
+        align-self: flex-start;
     }
 </style>

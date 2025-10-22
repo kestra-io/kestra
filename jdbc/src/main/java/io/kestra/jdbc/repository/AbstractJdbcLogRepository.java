@@ -24,6 +24,7 @@ import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -381,6 +382,54 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
                 delete.execute();
             });
+    }
+
+    @Override
+    public void deleteByQuery(String tenantId, String namespace, String flowId, String taskId, String executionId, String taskRunId, 
+            Integer attemptNumber, Instant timestamp, Level level, String thread, String message
+    ) {
+        this.jdbcRepository .getDslContextWrapper() 
+        .transaction(configuration -> { DSLContext context = DSL.using(configuration); 
+            var delete = context 
+            .delete(this.jdbcRepository.getTable()) 
+            .where(field("tenant_id").eq(tenantId)) 
+            .and(field("namespace").eq(namespace)) 
+            .and(field("flow_id").eq(flowId)); 
+
+            if(timestamp != null) {
+                delete = delete.and(field("timestamp").lessOrEqual(timestamp));
+            }
+
+            if (taskId != null) {
+                delete = delete.and(field("task_id").eq(taskId)); 
+            } 
+            
+            if (executionId != null) {
+                delete = delete.and(field("execution_id").eq(executionId)); 
+            } 
+            
+            if (taskRunId != null) { 
+                delete = delete.and(field("taskrun_id").eq(taskRunId)); 
+            }
+
+            if (attemptNumber != null) { 
+                delete = delete.and(field("attempt_number").eq(attemptNumber)); 
+            } 
+            
+            if (level != null) { 
+                delete = delete.and(minLevel(level)); 
+            } 
+
+            if (thread != null) { 
+                delete = delete.and(field("thread").eq(thread)); 
+            } 
+
+            if (message != null) {
+                delete = delete.and(field("message").like("%" + message + "%")); 
+            }
+
+            delete.execute();
+        });
     }
 
     @Override

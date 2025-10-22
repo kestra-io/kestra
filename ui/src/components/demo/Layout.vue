@@ -9,7 +9,7 @@
         </div>
         <div class="msg-block">
             <h2>{{ title }}</h2>
-            <div v-if="video" class="video-container">
+            <div v-if="isOnline && video" class="video-container">
                 <iframe
                     v-if="video.source"
                     :src="video.source"
@@ -23,7 +23,10 @@
     </EmptyTemplate>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
+    import {useNetwork} from "@vueuse/core"
+    const {isOnline} = useNetwork()
+    
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
     import DemoButtons from "./DemoButtons.vue";
 
@@ -40,7 +43,7 @@
     }>();
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
     .img {

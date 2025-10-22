@@ -1,12 +1,11 @@
 <template>
-    <el-tabs data-component="FILENAME_PLACEHOLDER" class="router-link" :class="{top: top}" v-model="activeName" :type="type">
+    <el-tabs class="router-link" :class="{top: top}" v-model="activeName" :type="type">
         <el-tab-pane
             v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
             :label="tab.title"
             :name="tab.name || 'default'"
             :disabled="tab.disabled"
-            :data-component="`FILENAME_PLACEHOLDER#${tab}`"
         >
             <template #label>
                 <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
@@ -21,23 +20,9 @@
             </template>
         </el-tab-pane>
     </el-tabs>
-    <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
-        <el-splitter v-if="isEditorActiveTab" class="editor-splitter" @resize="onSplitterResize">
-            <el-splitter-panel v-if="editorStore.explorerVisible" :size="editorStore.explorerWidth" min="15%" max="30%">
-                <EditorSidebar ref="sidebar" :currentNS="namespace" class="sidebar" />
-            </el-splitter-panel>
-            <el-splitter-panel :size="editorStore.explorerVisible ? 100 - editorStore.explorerWidth : 100">
-                <component
-                    v-bind="{...activeTab.props, ...attrsWithoutClass}"
-                    v-on="activeTab['v-on'] ?? {}"
-                    ref="tabContent"
-                    :is="activeTab.component"
-                    embed
-                />
-            </el-splitter-panel>
-        </el-splitter>
+    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
         <BlueprintDetail
-            v-else-if="selectedBlueprintId"
+            v-if="selectedBlueprintId"
             :blueprintId="selectedBlueprintId"
             blueprintType="community"
             @back="selectedBlueprintId = undefined"
@@ -59,14 +44,11 @@
 </template>
 
 <script>
-    import EditorSidebar from "./inputs/EditorSidebar.vue";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
     import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
-    import {useEditorStore} from "../stores/editor";
-    import {mapStores} from "pinia";
 
     export default {
-        components: {EditorSidebar, EnterpriseBadge,BlueprintDetail},
+        components: {EnterpriseBadge,BlueprintDetail},
         props: {
             tabs: {
                 type: Array,
@@ -124,11 +106,6 @@
             this.setActiveName();
         },
         methods: {
-            onSplitterResize(sizes) {
-                if (sizes?.length >= 1) {
-                    this.editorStore.changeExplorerWidth(sizes[0]);
-                }
-            },
             embeddedTabChange(tab) {
                 this.$emit("changed", tab);
             },
@@ -161,7 +138,6 @@
             },
         },
         computed: {
-            ...mapStores(useEditorStore),
             containerClass() {
                 return this.getTabClasses(this.activeTab);
             },
@@ -179,9 +155,6 @@
                     ["namespaces/update", "namespaces/create"].includes(ROUTE)
                 ) {
                     if (TAB === "files") return true;
-
-                    this.editorStore.closeExplorer();
-                    return false;
                 }
 
                 return false;
@@ -203,7 +176,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 section.container.mt-4:has(> section.empty) {
     margin: 0 !important;
     padding: 0 !important;
@@ -230,7 +203,6 @@ section.container.mt-4:has(> section.empty) {
 .maximized {
     margin: 0 !important;
     padding: 0;
-    display: flex;
     flex-grow: 1;
 }
 

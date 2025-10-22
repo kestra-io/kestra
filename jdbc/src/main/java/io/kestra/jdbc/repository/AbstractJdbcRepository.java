@@ -43,7 +43,7 @@ public abstract class AbstractJdbcRepository {
     private String systemFlowNamespace;
 
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
-    
+
     protected Condition defaultFilter() {
         return field("deleted", Boolean.class).eq(false);
     }
@@ -58,7 +58,11 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
         var tenant = buildTenantCondition(tenantId);
-        return allowDeleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
+
+        // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
+        return allowDeleted ?
+            tenant.and(field("deleted", Boolean.class).in(true, false)) :
+            tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     protected Condition defaultFilterWithNoACL(String tenantId) {
@@ -67,7 +71,11 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition defaultFilterWithNoACL(String tenantId, boolean deleted) {
         var tenant = buildTenantCondition(tenantId);
-        return deleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
+
+        // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
+        return deleted ?
+            tenant.and(field("deleted", Boolean.class).in(true, false)) :
+            tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     protected Condition buildTenantCondition(String tenantId) {
@@ -309,6 +317,9 @@ public abstract class AbstractJdbcRepository {
                 throw new InvalidQueryFiltersException("Label field value must but instance of Map");
             }
         }
+        if (field == QueryFilter.Field.KIND) {
+            return applyKindCondition(value,operation);
+        }
 
         // Convert the field name to lowercase and quote it
         Name columnName = DSL.quotedName(field.name().toLowerCase());
@@ -429,6 +440,14 @@ public abstract class AbstractJdbcRepository {
             case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
             case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
+        };
+    }
+    private Condition applyKindCondition(Object value, QueryFilter.Op operation) {
+        String kind =  value.toString();
+        return switch (operation) {
+            case EQUALS -> field("kind").eq(kind);
+            case NOT_EQUALS -> field("kind").ne(kind);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for KIND: " + operation);
         };
     }
 

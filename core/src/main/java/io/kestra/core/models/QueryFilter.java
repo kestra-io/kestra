@@ -91,6 +91,12 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
             }
         },
+        KIND("kind") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS,Op.NOT_EQUALS);
+            }
+        },
         LABELS("labels") {
             @Override
             public List<Op> supportedOp() {
@@ -211,7 +217,7 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
                     Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.CHILD_FILTER,
-                    Field.NAMESPACE
+                    Field.NAMESPACE,Field.KIND
                 );
             }
         },
@@ -244,6 +250,15 @@ public record QueryFilter(
                     Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID
                 );
             }
+        },
+        SECRET_METADATA {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE
+                );
+            }
         };
 
         public abstract List<Field> supportedField();
@@ -254,7 +269,7 @@ public record QueryFilter(
          *
          * @return List of {@code ResourceField} with resource names, fields, and operations.
          */
-        
+
         private static FieldOp toFieldInfo(Field field) {
             List<Operation> operations = field.supportedOp().stream()
                 .map(Resource::toOperation)

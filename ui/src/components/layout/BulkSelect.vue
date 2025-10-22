@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER" class="bulk-select">
+    <div class="bulk-select">
         <el-checkbox
             :modelValue="selections.length > 0"
             @change="toggle"
@@ -19,7 +19,7 @@
         </el-button-group>
     </div>
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed} from "vue";
 
     const props = defineProps<{
@@ -48,7 +48,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .bulk-select {
         height: 100%;
         display: flex;

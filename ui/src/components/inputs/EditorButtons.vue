@@ -50,7 +50,7 @@
         </el-button>
     </div>
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed} from "vue";
 
     import {useI18n} from "vue-i18n";
@@ -61,10 +61,8 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import {usePlaygroundStore} from "../../stores/playground";
-    import {useEditorStore} from "../../stores/editor";
 
     const playgroundStore = usePlaygroundStore();
-    const editorStore = useEditorStore();
 
     const {t} = useI18n();
 
@@ -90,9 +88,6 @@
     const hasErrors = computed(() => props.errors && props.errors.length > 0);
 
     const canSave = computed(() => {
-        if (props.isNamespace) {
-            return editorStore.current?.dirty || false;
-        }
         return props.haveChange || props.isCreating;
     });
 </script>

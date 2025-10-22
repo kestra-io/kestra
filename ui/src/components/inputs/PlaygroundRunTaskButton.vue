@@ -35,7 +35,7 @@
     }>();
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .toggle{
     margin-right: 1rem;
 }

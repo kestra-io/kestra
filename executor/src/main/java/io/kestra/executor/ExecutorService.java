@@ -1065,14 +1065,12 @@ public class ExecutorService {
 
         executor.getWorkerTasks()
             .removeIf(workerTask -> {
-                if (!(workerTask.getTask() instanceof ExecutionUpdatableTask)) {
+                if (!(workerTask.getTask() instanceof ExecutionUpdatableTask executionUpdatingTask)) {
                     return false;
                 }
 
-                var executionUpdatingTask = (ExecutionUpdatableTask) workerTask.getTask();
-
                 try {
-                    // handle runIf
+                    // Skip task if runIf condition is false
                     if (!TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()))) {
                         executor.withExecution(
                             executor
@@ -1083,19 +1081,28 @@ public class ExecutorService {
                         return false;
                     }
 
+                    TaskRun runningTaskRun = workerTask
+                        .getTaskRun()
+                        .withAttempts(List.of(TaskRunAttempt.builder().state(new State().withState(State.Type.RUNNING)).build()))
+                        .withState(State.Type.RUNNING);
+
                     executor.withExecution(
                         executionUpdatingTask.update(executor.getExecution(), workerTask.getRunContext())
-                            .withTaskRun(workerTask.getTaskRun().withState(State.Type.RUNNING)),
+                            .withTaskRun(runningTaskRun),
                         "handleExecutionUpdatingTask.updateExecution"
                     );
 
-                    var taskState = executionUpdatingTask.resolveState(workerTask.getRunContext(), executor.getExecution()).orElse(State.Type.SUCCESS);
+                    var terminalState = executionUpdatingTask
+                        .resolveState(workerTask.getRunContext(), executor.getExecution())
+                        .orElse(State.Type.SUCCESS);
+
+                    TaskRunAttempt terminalAttempt = runningTaskRun.lastAttempt().withState(terminalState);
+
                     workerTaskResults.add(
                         WorkerTaskResult.builder()
-                            .taskRun(workerTask.getTaskRun().withAttempts(
-                                        Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(taskState)).build())
-                                    )
-                                    .withState(taskState)
+                            .taskRun(runningTaskRun
+                                .withAttempts(List.of(terminalAttempt))
+                                .withState(terminalState)
                             )
                             .build()
                     );

@@ -5,8 +5,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.plugin.core.condition.ExecutionFlow;
 import io.kestra.plugin.core.condition.ExecutionStatus;
-import io.kestra.plugin.core.condition.MultipleCondition;
-import io.kestra.plugin.core.condition.Expression;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.topologies.FlowRelation;
@@ -117,65 +115,6 @@ class FlowTopologyServiceTest {
     }
 
     @Test
-    void multipleCondition() {
-        Flow parent = Flow.builder()
-            .namespace("io.kestra.ee")
-            .id("parent")
-            .revision(1)
-            .tasks(List.of(returnTask()))
-            .build();
-
-        Flow noTrigger = Flow.builder()
-            .namespace("io.kestra.exclude")
-            .id("no")
-            .revision(1)
-            .tasks(List.of(returnTask()))
-            .build();
-
-        Flow child = Flow.builder()
-            .namespace("io.kestra.ee")
-            .id("child")
-            .revision(1)
-            .tasks(List.of(returnTask()))
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .conditions(List.of(
-                        ExecutionStatus.builder()
-                            .in(Property.ofValue(List.of(State.Type.SUCCESS)))
-                            .type(ExecutionStatus.class.getName())
-                            .build(),
-                        MultipleCondition.builder()
-                            .type(MultipleCondition.class.getName())
-                            .conditions(Map.of(
-                                "first", ExecutionFlow.builder()
-                                    .namespace(Property.ofValue("io.kestra.ee"))
-                                    .flowId(Property.ofValue("parent"))
-                                    .build(),
-                                "second", ExecutionFlow.builder()
-                                    .namespace(Property.ofValue("io.kestra.others"))
-                                    .flowId(Property.ofValue("invalid"))
-                                    .build(),
-                                "filtered", ExecutionStatus.builder()
-                                    .in(Property.ofValue(List.of(State.Type.SUCCESS)))
-                                    .build(),
-                                "variables", Expression.builder()
-                                    .expression(Property.ofExpression("{{ true }}"))
-                                    .build()
-                            ))
-                            .build()
-
-                    ))
-                    .build()
-            ))
-            .build();
-
-        assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.FLOW_TRIGGER);
-
-        assertThat(flowTopologyService.isChild(noTrigger, child)).isNull();
-    }
-
-    @Test
     void preconditions() {
         Flow parent = Flow.builder()
             .namespace("io.kestra.ee")
@@ -217,13 +156,6 @@ class FlowTopologyServiceTest {
         assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.FLOW_TRIGGER);
 
         assertThat(flowTopologyService.isChild(noTrigger, child)).isNull();
-    }
-
-    @Test
-    void self1() throws IOException {
-        Flow flow = parse("flows/valids/trigger-multiplecondition-listener.yaml").toBuilder().revision(1).build();
-
-        assertThat(flowTopologyService.isChild(flow, flow)).isNull();
     }
 
     @Test

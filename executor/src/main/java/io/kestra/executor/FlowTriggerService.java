@@ -83,7 +83,7 @@ public class FlowTriggerService {
         Map<FlowWithFlowTriggerAndMultipleCondition, MultipleConditionWindow> multipleConditionWindowsByFlow = null;
         if (multipleConditionStorage.isPresent()) {
             List<FlowWithFlowTriggerAndMultipleCondition> flowWithMultipleConditionsToEvaluate = validTriggersBeforeMultipleConditionEval.stream()
-                .flatMap(flowWithFlowTrigger -> flowTriggerMultipleConditions(flowWithFlowTrigger)
+                .flatMap(flowWithFlowTrigger -> Optional.ofNullable(flowWithFlowTrigger.getTrigger().getPreconditions()).stream()
                         .map(multipleCondition -> new FlowWithFlowTriggerAndMultipleCondition(
                                 flowWithFlowTrigger.getFlow(),
                                 multipleConditionStorage.get().getOrCreate(flowWithFlowTrigger.getFlow(), multipleCondition, execution.getOutputs()),
@@ -164,14 +164,6 @@ public class FlowTriggerService {
         }
 
         return executions;
-    }
-
-    private Stream<MultipleCondition> flowTriggerMultipleConditions(FlowWithFlowTrigger flowWithFlowTrigger) {
-        Stream<MultipleCondition> legacyMultipleConditions = ListUtils.emptyOnNull(flowWithFlowTrigger.getTrigger().getConditions()).stream()
-            .filter(MultipleCondition.class::isInstance)
-            .map(MultipleCondition.class::cast);
-        Stream<io.kestra.plugin.core.trigger.Flow.Preconditions> preconditions = Optional.ofNullable(flowWithFlowTrigger.getTrigger().getPreconditions()).stream();
-        return Stream.concat(legacyMultipleConditions, preconditions);
     }
 
     @AllArgsConstructor

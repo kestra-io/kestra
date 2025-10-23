@@ -300,24 +300,14 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @PluginProperty
     private Preconditions preconditions;
 
-    @SuppressWarnings("deprecation")
     public Optional<Execution> evaluate(Optional<MultipleConditionStorageInterface> multipleConditionStorage, RunContext runContext, io.kestra.core.models.flows.Flow flow, Execution current) {
         Logger logger = runContext.logger();
 
         // merge outputs from all the matched executions
         Map<String, Object> outputs = current.getOutputs();
         if (multipleConditionStorage.isPresent()) {
-            List<String> multipleConditionIds = new ArrayList<>();
             if (this.preconditions != null) {
-                multipleConditionIds.add(this.preconditions.getId());
-            }
-            ListUtils.emptyOnNull(this.conditions).stream()
-                .filter(condition -> condition instanceof io.kestra.plugin.core.condition.MultipleCondition)
-                .map(condition -> (io.kestra.plugin.core.condition.MultipleCondition) condition)
-                .forEach(condition -> multipleConditionIds.add(condition.getId()));
-
-            for (String id : multipleConditionIds) {
-                Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, id);
+                Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, this.preconditions.getId());
                 if (multipleConditionWindow.isPresent()) {
                     outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
                 }

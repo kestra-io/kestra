@@ -8,9 +8,15 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance} from "vue";
+    import {computed} from "vue";
     import {useI18n} from "vue-i18n";
     import InputText from "../inputs/InputText.vue";
+
+    import {useMiscStore} from "override/stores/misc";
+    const miscStore = useMiscStore();
+
+    const {edition} = miscStore.configs || {};
+    const disabled = computed(() => edition === "OSS")
 
     const {t} = useI18n()
 
@@ -19,9 +25,5 @@
     defineOptions({
         name: "TaskVersion",
         inheritAttrs: false,
-    })
-
-    const disabled = computed(() => {
-        return Boolean(getCurrentInstance()?.appContext.config.globalProperties.$isOss)
     })
 </script>

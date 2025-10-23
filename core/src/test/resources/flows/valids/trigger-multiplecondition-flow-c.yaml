@@ -1,6 +1,0 @@
-id: trigger-multiplecondition-flow-c
-namespace: io.kestra.tests.trigger
-
-tasks:
-  - id: fail
-    type: io.kestra.plugin.core.execution.Fail

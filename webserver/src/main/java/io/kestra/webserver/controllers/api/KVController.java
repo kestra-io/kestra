@@ -19,6 +19,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 
@@ -192,6 +193,9 @@ public class KVController {
         KVType type,
 
         @Parameter(description = "The value of the KV entry.")
+        @Schema(
+            anyOf = {Object.class, String.class}
+        )
         Object value
     ) {
     }

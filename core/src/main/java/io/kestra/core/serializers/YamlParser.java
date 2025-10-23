@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public final class YamlParser {
     private static final ObjectMapper STRICT_MAPPER = JacksonMapper.ofYaml()
@@ -32,7 +33,8 @@ public final class YamlParser {
     }
 
     public static <T> T parse(String input, Class<T> cls) {
-        return read(input, cls, type(cls));
+        String normalized = preserveEscapes(input);
+        return read(normalized, cls, type(cls));
     }
 
     public static  <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
@@ -56,7 +58,8 @@ public final class YamlParser {
     public static <T> T parse(File file, Class<T> cls) throws ConstraintViolationException {
         try {
             String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
-            return read(input, cls, type(cls));
+            String normalized = preserveEscapes(input);
+            return read(normalized, cls, type(cls));
 
         } catch (IOException e) {
             throw new ConstraintViolationException(
@@ -76,10 +79,46 @@ public final class YamlParser {
 
     private static <T> T read(String input, Class<T> objectClass, String resource) {
         try {
-            return STRICT_MAPPER.readValue(input, objectClass);
+            String normalized = input
+                .replace("\\\\.", "\\\\\\\\.")
+                .replace("\\\\{", "\\\\\\\\{")
+                .replace("\\\\}", "\\\\\\\\}");
+
+            T result = STRICT_MAPPER.readValue(normalized, objectClass);
+
+            if (result instanceof io.kestra.core.models.flows.Flow flow) {
+                restoreEscapesInFlow(flow);
+            }
+
+            return result;
         } catch (JsonProcessingException e) {
             throw toConstraintViolationException(input, resource, e);
         }
+    }
+
+    private static void restoreEscapesInFlow(io.kestra.core.models.flows.Flow flow) {
+        if (flow.getTasks() == null) return;
+
+        flow.getTasks().forEach(task -> {
+            for (var field : task.getClass().getDeclaredFields()) {
+                if (field.getType() == String.class) {
+                    field.setAccessible(true);
+                    try {
+                        String value = (String) field.get(task);
+                        if (value != null && value.contains("split('\\.") && !value.contains("\\\\.")) {
+                            String corrected = value.replace("split('\\.", "split('\\\\.");
+                            field.set(task, corrected);
+                        }
+                    } catch (IllegalAccessException ignored) {
+                    }
+                }
+            }
+        });
+    }
+
+    private static String preserveEscapes(String yaml) {
+        Pattern ESCAPED = Pattern.compile("(?<!\\\\)\\\\([.{}\\[\\]()|?*+^$])");
+        return ESCAPED.matcher(yaml).replaceAll("\\\\\\\\$1");
     }
 
     @SuppressWarnings("unchecked")

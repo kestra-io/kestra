@@ -16,7 +16,7 @@
             class="timeline-item"
         >
             <div class="timeline-content">
-                <span class="timeline-date">{{ $filters.date(history.date, 'iso') }}</span>
+                <span class="timeline-date">{{ date(history.date, 'iso') }}</span>
                 <div 
                     class="timeline-dot" 
                     :style="getStyle(history.state)" 
@@ -28,10 +28,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, onUnmounted, type PropType} from "vue"
+    import {ref, computed, type PropType} from "vue"
+    import {useMediaQuery} from "@vueuse/core"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-
+    import {date} from "../../utils/filters";
    
     const props = defineProps({
         histories: {
@@ -41,26 +42,10 @@
     })
 
     const showStates = ref(false)
-    const windowWidth = ref(window.innerWidth)
-
-    const handleResize = () => {
-        windowWidth.value = window.innerWidth
-    }
-
-    onMounted(() => {
-        window.addEventListener("resize", handleResize)
-    })
-
-    onUnmounted(() => {
-        window.removeEventListener("resize", handleResize)
-    })
+    const isMediumScreen = useMediaQuery("(min-width: 480px) and (max-width: 960px)")
 
     const isToggle = computed(() => {
-        const minWidth = 480
-        const maxWidth = 960
-        return windowWidth.value >= minWidth && 
-            windowWidth.value <= maxWidth && 
-            props.histories?.length > 1;
+        return isMediumScreen.value && props.histories?.length > 1;
     })
 
     const displayedHistories = computed(() => {

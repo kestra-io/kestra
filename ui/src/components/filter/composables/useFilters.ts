@@ -15,6 +15,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
     const route = useRoute();
 
     const appliedFilters = ref<AppliedFilter[]>([]);
+    const preAppliedFilterKeys = ref<Set<string>>(new Set());
     const searchQuery = ref("");
 
     /**
@@ -344,9 +345,15 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
                 (route.query?.q as string) ??
                 "";
         }
-        appliedFilters.value = legacyQuery
+        const parsedFilters = legacyQuery
             ? parseLegacyFilters()
             : parseEncodedFilters();
+
+        if (appliedFilters.value?.length === 0 && parsedFilters.length > 0) {
+            parsedFilters.forEach(filter => preAppliedFilterKeys.value?.add(filter.key));
+        }
+
+        appliedFilters.value = parsedFilters;
     };
 
     watch(() => route.query, initializeFromRoute, {deep: true, immediate: false});
@@ -396,6 +403,15 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         updateRoute();
     };
 
+    /**
+     * Resets user-applied filters while preserving pre-applied filters.
+     */
+    const resetToPreApplied = () => {
+        appliedFilters.value = appliedFilters.value.filter(f => preAppliedFilterKeys.value.has(f.key));
+        searchQuery.value = "";
+        updateRoute();
+    };
+
     return {
         appliedFilters: computed(() => appliedFilters.value),
         searchQuery: computed({
@@ -408,6 +424,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         addFilter,
         removeFilter,
         updateFilter,
-        clearFilters
+        clearFilters,
+        resetToPreApplied,
     };
 }

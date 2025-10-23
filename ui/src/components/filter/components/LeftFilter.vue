@@ -1,14 +1,14 @@
 <template>
-    <div class="filter-container" :class="{'filter-grow': filter.searchInputFullWidth.value}">
+    <div class="filter-container" :class="{'filter-grow': filter.searchInputFullWidth?.value}">
         <el-popover
-            v-if="filter.hasFilterKeys.value"
+            v-if="filter.hasFilterKeys?.value"
             v-model:visible="isCustomizeFiltersVisible"
             placement="bottom-start"
             trigger="click"
             :width="300"
             :popperClass="'p-0'"
             :showArrow="false"
-            :disabled="filter.readOnly.value"
+            :disabled="filter.readOnly?.value"
             @hide="isCustomizeFiltersVisible = false"
         >
             <template #reference>
@@ -16,13 +16,13 @@
                     :icon="FilterOutline"
                     size="default"
                     class="customize-button"
-                    :disabled="filter.readOnly.value"
+                    :disabled="filter.readOnly?.value"
                 >
                     <el-tooltip
                         placement="top"
                         effect="light"
                         :content="$t('filter.customize tooltip')"
-                        :disabled="filter.readOnly.value"
+                        :disabled="filter.readOnly?.value"
                     >
                         <span>{{ $t("filter.customize") }}</span>
                     </el-tooltip>
@@ -30,8 +30,8 @@
             </template>
 
             <CustomizeFilters
-                :configuration="filter.configuration.value"
-                :appliedFilters="filter.appliedFilters.value"
+                :configuration="filter.configuration?.value"
+                :appliedFilters="filter.appliedFilters?.value"
                 @add-filter="handleAddFilter"
                 @remove-filter="filter.removeFilter"
                 @close="isCustomizeFiltersVisible = false"
@@ -39,47 +39,45 @@
         </el-popover>
 
         <el-tooltip
+            v-if="filter.hasFilterKeys?.value"
             placement="top"
             effect="light"
             :content="$t('filter.reset')"
-            :disabled="filter.readOnly.value"
+            :disabled="filter.readOnly?.value"
         >
             <el-button
                 :icon="Restore"
-                circle
                 class="refresh-btn"
                 @click="handleReset"
-                :disabled="
-                    !filter.searchQuery.value && filter.appliedFilters.value.length === 0 || filter.readOnly.value
-                "
+                :disabled="!canReset || filter.readOnly?.value"
             />
         </el-tooltip>
 
         <div
-            v-if="filter.showSearchInput.value"
+            v-if="filter.showSearchInput?.value"
             class="search-container"
             :class="{
-                'search-grow': filter.searchInputFullWidth.value,
-                'read-only': filter.readOnly.value
+                'search-grow': filter.searchInputFullWidth?.value,
+                'read-only': filter.readOnly?.value
             }"
         >
             <SearchInput
-                :modelValue="filter.searchQuery.value"
+                :modelValue="filter.searchQuery?.value"
                 @update:model-value="debouncedUpdateSearch"
-                :placeholder="filter.configuration.value.searchPlaceholder"
-                :fullWidth="filter.searchInputFullWidth.value"
+                :placeholder="filter.configuration?.value?.searchPlaceholder"
+                :fullWidth="filter.searchInputFullWidth?.value"
             />
         </div>
 
         <FilterChip
-            v-for="appliedFilter in filter.appliedFilters.value"
+            v-for="appliedFilter in filter.appliedFilters?.value"
             :key="appliedFilter.id"
             :ref="el => setChipRef(appliedFilter.id, el)"
             :filter="appliedFilter"
             :filterKey="getFilterKeyConfig(appliedFilter)"
             :class="{
-                'filters-hidden': filter.searchInputFullWidth.value,
-                'read-only': filter.readOnly.value
+                'filters-hidden': filter.searchInputFullWidth?.value,
+                'read-only': filter.readOnly?.value
             }"
             class="filter-chip shadow-sm"
             @remove="filter.removeFilter"
@@ -89,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject, nextTick} from "vue";
+    import {ref, inject, nextTick, computed} from "vue";
     import {useDebounceFn} from "@vueuse/core";
     
     import {FilterOutline, Restore} from "../utils/icons";
@@ -104,6 +102,10 @@
     const isCustomizeFiltersVisible = ref(false);
     const chipRefs = ref<Record<string, any>>({});
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
+
+    const canReset = computed(() => {
+        return filter.hasAppliedFilters?.value ?? !!filter.searchQuery?.value;
+    });
 
     const getFilterKeyConfig = (appliedFilter: any) => {
         return filter.configuration.value.keys?.find((key: any) => key.key === appliedFilter.key) ?? null;
@@ -122,10 +124,7 @@
     };
 
     const handleReset = () => {
-        filter.searchQuery.value = "";
-        filter.appliedFilters.value.forEach((appliedFilter: any) => {
-            filter.removeFilter(appliedFilter.id);
-        });
+        filter.resetToPreApplied();
     };
 
     const debouncedUpdateSearch = useDebounceFn((value: string) => {
@@ -172,9 +171,17 @@
 }
 
 .refresh-btn {
-    flex-shrink: 0;
+    background-color: var(--ks-button-background-secondary);
     margin: 0 !important;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+    color: var(--ks-content-primary);
     box-shadow: var(--ks-box-shadow);
+
+    &:hover {
+        background: var(--ks-button-background-secondary-hover);
+    }
 }
 
 .search-container {

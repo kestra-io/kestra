@@ -9,7 +9,9 @@
         </div>
 
         <div class="action-buttons">
-            <el-button size="small" :icon="Restore" @click="emits('reset')" />
+            <el-tooltip :content="$t('filter.reset_tooltip')" placement="top" effect="light">
+                <el-button size="small" :icon="Restore" @click="emits('reset')" />
+            </el-tooltip>
             <el-button
                 type="primary"
                 size="small"

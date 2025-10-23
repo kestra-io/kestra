@@ -6,7 +6,7 @@
                     <span class="option-label">{{ t("filter.show chart") }}</span>
                     <KSSwitch 
                         v-model="localChartVisible" 
-                        showIcon 
+                        :showIcon="false"
                     />
                 </div>
             </div>
@@ -15,7 +15,7 @@
                 <div class="option-item">
                     <KSSwitch 
                         v-model="periodicRefreshEnabled" 
-                        showIcon 
+                        :showIcon="false"
                     />
                     <Kicon :tooltip="refreshTooltip" placement="top">
                         <span class="option-label periodic">{{ t("filter.periodic refresh") }}</span>

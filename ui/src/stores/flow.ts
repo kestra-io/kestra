@@ -51,7 +51,7 @@ interface FlowValidations {
     deprecationPaths?: string[];
 }
 
-interface Flow {
+export interface Flow {
     id: string;
     namespace: string;
     source: string;

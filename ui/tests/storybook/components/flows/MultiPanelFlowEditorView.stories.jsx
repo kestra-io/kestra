@@ -8,7 +8,7 @@ import {useFlowStore} from "../../../../src/stores/flow";
 
 
 export default {
-    title: "Components/FlowEditor",
+    title: "Components/MultiPanelFlowEditorView",
     component: MultiPanelFlowEditorView,
     decorators: [
         vueRouter([
@@ -40,6 +40,9 @@ const Template = (args) => ({
             if (uri.endsWith("/distinct-namespaces")) {
                 return {data: ["sanitychecks.flows.blueprints", "tutorial"]}
             }
+            if (uri.endsWith("/subgroups")) {
+                return {data: []}
+            }
             console.log("get request", uri)
             return {data: {}}
         }
@@ -61,7 +64,7 @@ const Template = (args) => ({
 
         return () =>
             <div style="height: 100vh">
-                <MultiPanelFlowEditorView />
+                <MultiPanelFlowEditorView/>
             </div>
     }
 });

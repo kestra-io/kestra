@@ -40,69 +40,7 @@ public class MultipleConditionTriggerCaseTest {
     @Inject
     protected ApplicationContext applicationContext;
 
-    public void trigger() throws InterruptedException, TimeoutException, QueueException {
-        // first one
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "trigger-multiplecondition-flow-a");
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        // wait a little to be sure that the trigger is not launching execution
-        Thread.sleep(1000);
-        ArrayListTotal<Execution> flowBExecutions = executionRepository.findByFlowId(MAIN_TENANT,
-            NAMESPACE, "trigger-multiplecondition-flow-b", Pageable.UNPAGED);
-        ArrayListTotal<Execution> listenerExecutions = executionRepository.findByFlowId(MAIN_TENANT,
-            NAMESPACE, "trigger-multiplecondition-listener", Pageable.UNPAGED);
-        assertThat(flowBExecutions).isEmpty();
-        assertThat(listenerExecutions).isEmpty();
-
-        // second one
-        execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "trigger-multiplecondition-flow-b");
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        // trigger is done
-        Execution triggerExecution = runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().equals(Type.SUCCESS),
-            MAIN_TENANT, NAMESPACE, "trigger-multiplecondition-listener");
-
-        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        assertThat(triggerExecution.getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
-        assertThat(triggerExecution.getTrigger().getVariables().get("namespace")).isEqualTo(
-            NAMESPACE);
-        assertThat(triggerExecution.getTrigger().getVariables().get("flowId")).isEqualTo("trigger-multiplecondition-flow-b");
-    }
-
-    public void failed(String tenantId) throws InterruptedException, TimeoutException, QueueException {
-        // first one
-        Execution execution = runnerUtils.runOne(tenantId, NAMESPACE,
-            "trigger-multiplecondition-flow-c");
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-
-        // wait a little to be sure that the trigger is not launching execution
-        Thread.sleep(1000);
-        ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(tenantId, NAMESPACE,
-            "trigger-multiplecondition-flow-d", Pageable.UNPAGED);
-        assertThat(byFlowId).isEmpty();
-
-        // second one
-        execution = runnerUtils.runOne(tenantId, NAMESPACE,
-            "trigger-multiplecondition-flow-d");
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        Execution triggerExecution = runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().equals(Type.SUCCESS),
-            tenantId, NAMESPACE, "trigger-flow-listener-namespace-condition");
-
-        // trigger was not done
-        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-    }
-
     public void flowTriggerPreconditions() throws TimeoutException, QueueException {
-
         // flowA
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-a");

@@ -2,12 +2,9 @@ package io.kestra.core.models.triggers.multipleflows;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.utils.TestsUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
-import io.kestra.plugin.core.condition.ExecutionFlow;
-import io.kestra.plugin.core.condition.MultipleCondition;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.models.triggers.TimeWindow.Type;
@@ -242,16 +239,16 @@ public abstract class AbstractMultipleConditionStorageTest {
     }
 
     private static Pair<Flow, MultipleCondition> mockFlow(String tenantId, TimeWindow sla) {
-        var multipleCondition = MultipleCondition.builder()
+        var preconditions = io.kestra.plugin.core.trigger.Flow.Preconditions.builder()
             .id("condition-multiple-%s".formatted(tenantId))
-            .conditions(ImmutableMap.of(
-                "flow-a", ExecutionFlow.builder()
-                    .flowId(Property.ofValue("flow-a"))
-                    .namespace(Property.ofValue(NAMESPACE))
+            .flows(List.of(
+                io.kestra.plugin.core.trigger.Flow.UpstreamFlow.builder()
+                    .flowId("flow-a")
+                    .namespace(NAMESPACE)
                     .build(),
-                "flow-b", ExecutionFlow.builder()
-                    .flowId(Property.ofValue("flow-b"))
-                    .namespace(Property.ofValue(NAMESPACE))
+                io.kestra.plugin.core.trigger.Flow.UpstreamFlow.builder()
+                    .flowId("flow-b")
+                    .namespace(NAMESPACE)
                     .build()
             ))
             .timeWindow(sla)
@@ -264,10 +261,10 @@ public abstract class AbstractMultipleConditionStorageTest {
             .revision(1)
             .triggers(Collections.singletonList(io.kestra.plugin.core.trigger.Flow.builder()
                 .id("trigger-flow")
-                .conditions(Collections.singletonList(multipleCondition))
+                .preconditions(preconditions)
                 .build()))
             .build();
 
-        return Pair.of(flow, multipleCondition);
+        return Pair.of(flow, preconditions);
     }
 }

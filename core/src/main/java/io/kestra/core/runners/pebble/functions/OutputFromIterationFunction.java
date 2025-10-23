@@ -92,18 +92,11 @@ public class OutputFromIterationFunction implements Function {
             
             List<Map<?, ?>> parents = (List<Map<?, ?>>) context.getVariable("parents");
             if (parents != null && !parents.isEmpty()) {
-                List<Map<?, ?>> reversedParents = new ArrayList<>(parents);
-                java.util.Collections.reverse(reversedParents);
-                
-                for (Map<?, ?> parent : reversedParents) {
-                    Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
-                    if (taskrun != null && taskrun.get("value") != null) {
-                        Object value = taskrun.get("value");
-                        if (outputs.containsKey(value)) {
-                            outputs = (Map<?, ?>) outputs.get(value);
-                        }
-                    }
-                }
+                throw new PebbleException(null, 
+                    "The 'outputFromIteration' function does not currently support nested ForEach loops. " +
+                    "This feature is planned for a future release. " +
+                    "Please use this function only in flat (non-nested) ForEach contexts.", 
+                    lineNumber, self.getName());
             }
             
             String iterationKey = String.valueOf(iteration);

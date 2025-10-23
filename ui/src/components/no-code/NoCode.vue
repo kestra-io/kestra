@@ -119,9 +119,17 @@
     const timeout = ref();
 
     const editorUpdate = (source: string) => {
+        let parsedSource: any = {}
+        try {
+            parsedSource = YAML_UTILS.parse(source);
+        } catch {
+            // ignore parse errors here
+            return;
+        }
+        
         // if no-code would not change the structure of the flow,
         // do not trigger an update as it would remove all formatting and comments
-        if(deepEqual(YAML_UTILS.parse(source), flowStore.flowParsed)) {
+        if(deepEqual(parsedSource, flowStore.flowParsed)) {
             return;
         }
         flowStore.flowYaml = source;

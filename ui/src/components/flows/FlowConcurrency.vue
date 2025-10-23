@@ -47,7 +47,23 @@
     }>()
 
     const flowStore = useFlowStore()
-    type FlowLike = { id?: string; namespace?: string; concurrency?: { limit?: number; behavior?: string } }
+    
+    // Interfaces
+    interface FlowLike {
+        id?: string
+        namespace?: string
+        concurrency?: {
+            limit?: number
+            behavior?: string
+        }
+    }
+
+    interface RunningCountPayload {
+        runningCount: number
+        totalCount: number
+    }
+
+    // Type guards
     function isFlowLike(flow: unknown): flow is FlowLike {
         if (flow === null || typeof flow !== "object") return false
         const f = flow as Record<string, unknown>
@@ -61,27 +77,17 @@
         )
         return hasId && hasNamespace && hasConcurrency
     }
-    const currentFlow = computed<FlowLike | undefined>(() => {
-        const flow = (flowStore as any).flow
-        return isFlowLike(flow) ? flow : undefined
-    })
 
+    // Reactive state
     const runningCount = ref<number>(0)
     const totalCount = ref<number>(0)
     const runningCountSet = ref<boolean>(false)
 
-    type RunningCountPayload = number | { runningCount: number; totalCount: number }
-
-    function setRunningCount(count: RunningCountPayload) {
-        if (typeof count === "object") {
-            runningCount.value = count.runningCount
-            totalCount.value = count.totalCount
-        } else {
-            runningCount.value = count
-            totalCount.value = count
-        }
-        runningCountSet.value = true
-    }
+    // Computed properties
+    const currentFlow = computed<FlowLike | undefined>(() => {
+        const flow = (flowStore as any).flow
+        return isFlowLike(flow) ? flow : undefined
+    })
 
     const hasConcurrency = computed(() => Boolean(currentFlow.value?.concurrency))
     const limit = computed(() => currentFlow.value?.concurrency?.limit ?? 0)
@@ -96,6 +102,17 @@
         const clamped = Math.max(0, Math.min(safe, max))
         return Math.min(100, (clamped / max) * 100)
     })
+
+    // Functions
+    function setRunningCount(count: number | RunningCountPayload) {
+        if (typeof count === "object") {
+            runningCount.value = count.runningCount
+            totalCount.value = count.totalCount
+        } else {
+            runningCount.value = totalCount.value = count
+        }
+        runningCountSet.value = true
+    }
 </script>
 
 <style scoped lang="scss">

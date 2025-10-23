@@ -260,6 +260,14 @@ export const usePluginsStore = defineStore("plugins", () => {
         });
     }
 
+    function lazyLoadSchemaType(options: {type: string} = {type: "flow"}) {
+        if(schemaType.value?.[options.type]) {
+            return Promise.resolve(schemaType.value[options.type]);
+        }
+
+        return loadSchemaType(options);
+    }
+
     function loadSchemaType(options: {type: string} = {type: "flow"}) {
         return axios.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
             schemaType.value = schemaType.value || {};
@@ -355,6 +363,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         loadInputsType,
         loadInputSchema,
         loadSchemaType,
+        lazyLoadSchemaType,
         updateDocumentation,
     };
 });

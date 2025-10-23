@@ -2297,6 +2297,20 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getCount()).isEqualTo(1);
     }
 
+    @Test
+    @LoadFlows("flows/valids/webhook-outputs.yaml")
+    void webhookWithOutputs() {
+        Map<String, Object> outputs = client.toBlocking().retrieve(
+            GET(
+                "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS + "/webhook-outputs/webhook-outputs"
+            ),
+            Argument.mapOf(String.class, Object.class)
+        );
+
+        assertThat(outputs).hasFieldOrPropertyWithValue("status", "ok");
+        assertThat(outputs).containsKey("executionId");
+    }
+
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {
         return labels == null ? List.of() :
             labels.stream()

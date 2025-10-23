@@ -66,7 +66,7 @@ public class ConditionService {
     }
 
     /**
-     * Check that all conditions are valid.
+     * Check that all conditions of type {@link ScheduleCondition} are valid.
      * Warning, this method throws if a condition cannot be evaluated.
      */
     public boolean isValid(List<ScheduleCondition> conditions, ConditionContext conditionContext) throws InternalException {

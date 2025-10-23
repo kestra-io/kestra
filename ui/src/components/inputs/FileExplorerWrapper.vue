@@ -11,5 +11,5 @@
     import {useFlowStore} from "../../stores/flow";
 
     const flowStore = useFlowStore();
-    const namespace = computed(() => flowStore.flow?.namespace);
+    const namespace = computed(() => flowStore.flowParsed?.namespace);
 </script>

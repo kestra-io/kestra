@@ -28,7 +28,7 @@ export interface TreeNodeDirectory{
     children: TreeNode[];
 }
 
-interface ElTreeNode {
+export interface ElTreeNode {
     childNodes: ElTreeNode[];
     data: TreeNode;
     level: number;
@@ -92,17 +92,17 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         };
     }
 
-    function pushToParentFolder(parentPath: string, newNode: any) {
-        const traverseAndInsert = (basePath = "", array: any[]) => {
+    function pushToParentFolder(parentPath: string, newNode: TreeNode) {
+        const traverseAndInsert = (basePath = "", array: TreeNode[]) => {
             for (const item of array) {
                 const folderPath = `${basePath}${item.fileName}`;
-                if (folderPath === parentPath && Array.isArray(item.children)) {
-                    if (!item.children.find((child: any) => child.fileName === newNode.fileName)) {
+                if (folderPath === parentPath && isDirectory(item) && Array.isArray(item.children)) {
+                    if (!item.children.find((child) => child.fileName === newNode.fileName)) {
                         item.children.push(newNode);
                         item.children = sorted(item.children);
                     }
                     return true;
-                } else if (Array.isArray(item.children)) {
+                } else if (isDirectory(item) && Array.isArray(item.children)) {
                     if (traverseAndInsert(`${folderPath}/`, item.children)) return true;
                 }
             }
@@ -170,7 +170,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         return searchResults.value;
     }
 
-    function renderNodes(itemsArr: any[]) {
+    function renderNodes(itemsArr: TreeNode[]) {
         fileTree.value = [];
         
         for (const {type, fileName} of itemsArr) {
@@ -322,7 +322,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
 
     const folders = computed(() => extractPaths(undefined, fileTree.value));
 
-    function findNodeByPath(path: string, itemsArr: TreeNode[] = fileTree.value, parentPath = ""): any {
+    function findNodeByPath(path: string, itemsArr: TreeNode[] = fileTree.value, parentPath = ""): TreeNode | null {
         for (const item of itemsArr) {
             const fullPath = `${parentPath}${item.fileName}`;
             if (fullPath === path) {
@@ -410,6 +410,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         loadNodes,
         findNodeByPath,
         importFiles,
+        getPath,
         fileTree,
         folders,
         namespaceId,

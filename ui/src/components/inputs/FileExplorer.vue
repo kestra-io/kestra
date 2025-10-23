@@ -119,7 +119,7 @@
             @node-drag-start="
                 nodeBeforeDrag = {
                     parent: $event.parent.data.id,
-                    path: getPath($event.data.id),
+                    path: filesStore.getPath($event.data.id) ?? '',
                 }
             "
             @node-drop="nodeMoved"
@@ -139,7 +139,7 @@
                         toggleDropdown();
                         if(selectedNodes.length === 0) {
                             selectedNodes.push(data.id);
-                            selectedFiles.push(getPath(data.id));
+                            selectedFiles.push(filesStore.getPath(data.id) ?? '');
                         }
                     "
                     trigger="contextmenu"
@@ -366,6 +366,7 @@
     import {useToast} from "../../utils/toast";
     import {EditorTabProps} from "./EditorWrapper.vue";
     import {
+        ElTreeNode,
         getFileNameWithExtension,
         isDirectory, 
         TreeNode,
@@ -403,10 +404,16 @@
         (newNS) => {
             if(newNS){
                 filesStore.namespaceId = newNS
+                filesStore.loadNodes();
             }
         },
-        {immediate: true},
     );
+
+    onMounted(() => {
+        if(props.currentNS){
+            filesStore.namespaceId = props.currentNS
+        }
+    });
 
     interface Dialog{
         visible: boolean;
@@ -415,7 +422,7 @@
         folder?: string;
         path?: string;
         old?: string;
-        node?: any;
+        node?: ElTreeNode;
     }
 
     const filter = ref<string>("");
@@ -427,7 +434,10 @@
     const dropdowns = ref<{handleClose: () => void; handleOpen: () => void}>();
     const dropdownRef = ref<{handleClose: () => void; handleOpen: () => void}>();
     const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
-    const nodeBeforeDrag = ref<any>(undefined);
+    const nodeBeforeDrag = ref<{
+        parent: string;
+        path: string;
+    }>();
     const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0});
     const selectedFiles = ref<string[]>([]);
     const selectedNodes = ref<any[]>([]);
@@ -469,8 +479,8 @@
         return result.filter(i => i.path);
     }
 
-    function handleNodeClick(data: any, node: TreeNode, event: MouseEvent | null = null) {
-        const path = getPath(node);
+    function handleNodeClick(data: any, node: ElTreeNode, event: MouseEvent | null = null) {
+        const path = filesStore.getPath(node.data.id) ?? "";
         const flatList = flattenTree(filesStore.fileTree);
         const currentIndex = flatList.findIndex(item => item.path === path);
         const isCtrl = event && (event.ctrlKey || (event as any).metaKey);
@@ -547,12 +557,12 @@
         if (isShown) {
             let folder;
             if (node?.data?.leaf === false) {
-                folder = getPath(node.data.id);
+                folder = filesStore.getPath(node.data.id);
             } else {
                 const selectedNode = tree.value.getCurrentNode();
                 if (selectedNode?.leaf === false) {
                     node = selectedNode.id;
-                    folder = getPath(selectedNode.id);
+                    folder = filesStore.getPath(selectedNode.id);
                 }
             }
             if(!type) return
@@ -566,7 +576,7 @@
         }
     }
 
-    function toggleRenameDialog(isShown: boolean, type?: "file" | "folder", name?: string, node?: any) {
+    function toggleRenameDialog(isShown: boolean, type?: "file" | "folder", name?: string, node?: ElTreeNode) {
         if (isShown && type) {
             renameDialog.value = {
                 visible: true,
@@ -582,7 +592,7 @@
     }
 
     function renameItem() {
-        const path = getPath(renameDialog.value.node);
+        const path = renameDialog.value.node?.data.id ? filesStore.getPath(renameDialog.value.node.data.id) ?? "" : "";
         const start = path.substring(0, path.lastIndexOf("/") + 1);
         namespacesStore.renameFileDirectory({
             namespace: namespaceId.value,
@@ -597,12 +607,12 @@
         try {
             await namespacesStore.moveFileDirectory({
                 namespace: namespaceId.value,
-                old: nodeBeforeDrag.value.path,
-                new: getPath(draggedNode.data.id),
+                old: nodeBeforeDrag.value?.path ?? "",
+                new: filesStore.getPath(draggedNode.data.id) ?? "",
             });
         } catch {
             tree.value.remove(draggedNode.data.id);
-            tree.value.append(draggedNode.data, nodeBeforeDrag.value.parent);
+            tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent);
         }
     }
 
@@ -694,11 +704,11 @@
             try {
                 await namespacesStore.deleteFileDirectory({
                     namespace: props.currentNS ?? route.params.namespace as string,
-                    path: getPath(node),
+                    path: filesStore.getPath(node) ?? "",
                 });
                 tree.value.remove(node.id);
                 closeTab?.({
-                    path: getPath(node),
+                    path: filesStore.getPath(node) ?? "",
                 });
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error);
@@ -719,13 +729,8 @@
         dialog.value = {...DIALOG_DEFAULTS};
     }
 
-    function getPath(nameOrNode: string | TreeNode): string {
-        const nodes = tree.value.getNodePath(nameOrNode);
-        return nodes.map((obj: any) => obj.fileName).join("/");
-    }
-
     function copyPath(name: TreeNode) {
-        const path = getPath(name);
+        const path = filesStore.getPath(name.id) ?? "";
         try {
             Utils.copy(path);
             toast.success(t("namespace files.path.success"));
@@ -736,7 +741,7 @@
 
     async function exportFile(node: TreeNode, data: {fileName: string}) {
         const content = await namespacesStore.readFile({
-            path: getPath(node),
+            path: filesStore.getPath(node.id) ?? "",
             namespace: namespaceId.value,
         });
         const blob = new Blob([content], {type: "text/plain"});

@@ -38,7 +38,7 @@ class WeekendTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         Weekend build = Weekend.builder()
-            .date(new Property<>(date))
+            .date(date.startsWith("{{") ? Property.ofExpression(date) : Property.ofValue(date))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

@@ -166,6 +166,18 @@ public class TestRunnerUtils {
         return emitAndAwaitExecution(predicate, execution, Duration.ofSeconds(20));
     }
 
+    public Execution restartExecution(Predicate<Execution> predicate, Execution execution)
+        throws QueueException, InterruptedException {
+        return restartExecution(predicate, execution, Duration.ofSeconds(20));
+    }
+
+    public Execution restartExecution(Predicate<Execution> predicate, Execution execution, Duration duration)
+        throws QueueException, InterruptedException {
+        //We need to wait before restarting to make sure the execution is cleaned before we restart.
+        Thread.sleep(100L);
+        return emitAndAwaitExecution(predicate, execution, duration);
+    }
+
     public Execution emitAndAwaitExecution(Predicate<Execution> predicate, Execution execution, Duration duration)
         throws QueueException {
 
@@ -179,15 +191,17 @@ public class TestRunnerUtils {
     }
 
     public Execution awaitExecution(Predicate<Execution> predicate, Execution execution, Duration duration) {
-        AtomicReference<Execution> receive = new AtomicReference<>();
         try {
 
             if (duration == null){
                 duration = Duration.ofSeconds(20);
             }
-            Await.until(() -> {
-                testExecution(predicate, receive, execution);
-                return receive.get() != null;
+            return Await.until(() -> {
+                Optional<Execution> exec = executionRepository.findById(execution.getTenantId(), execution.getId());
+                if (exec.isPresent() && predicate.test(exec.get())) {
+                    return exec.get();
+                }
+                return null;
             }, Duration.ofMillis(10), duration);
 
         } catch (TimeoutException e) {
@@ -198,15 +212,6 @@ public class TestRunnerUtils {
             } else {
                 throw new RuntimeException("Execution %s doesn't exist in the database".formatted(execution.getId()));
             }
-        }
-
-        return receive.get();
-    }
-
-    private void testExecution(Predicate<Execution> predicate, AtomicReference<Execution> receive, Execution execution){
-        Optional<Execution> exec = executionRepository.findById(execution.getTenantId(), execution.getId());
-        if (exec.isPresent() && predicate.test(exec.get())) {
-            receive.set(exec.get());
         }
     }
 
@@ -223,23 +228,24 @@ public class TestRunnerUtils {
     }
 
     public Execution awaitFlowExecution(Predicate<Execution> predicate, String tenantId, String namespace, String flowId, Duration duration) {
-        AtomicReference<Execution> receive = new AtomicReference<>();
         try {
 
             if (duration == null){
                 duration = Duration.ofSeconds(20);
             }
-            Await.until(() -> {
+            return Await.until(() -> {
                 ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(
                     tenantId, namespace, flowId, Pageable.UNPAGED);
                 if (!byFlowId.isEmpty()) {
-                    Execution first = byFlowId.stream()
+                    List<Execution> matches = byFlowId.stream()
+                        .filter(predicate)
                         .sorted(Comparator.comparing(e -> e.getMetadata().getOriginalCreatedDate()))
-                        .toList().getLast();
-                    testExecution(predicate, receive, first);
-                    return receive.get() != null;
+                        .toList();
+                    if (!matches.isEmpty()) {
+                        return matches.getLast();
+                    }
                 }
-                return false;
+                return null;
             }, Duration.ofMillis(50), duration);
 
         } catch (TimeoutException e) {
@@ -252,8 +258,6 @@ public class TestRunnerUtils {
                 throw new RuntimeException("No execution for flow %s exist in the database".formatted(flowId));
             }
         }
-
-        return receive.get();
     }
 
     public List<Execution> awaitFlowExecutionNumber(int number, String tenantId, String namespace, String flowId) {

@@ -10,6 +10,10 @@ export default defineComponent({
     methods: {
         handleSelectionChange(value: any[]) {
             this.selection = value.map(this.selectionMapper);
+
+            if (this.queryBulkAction && this.elTable && value?.length < this.elTable.data?.length) {
+                this.queryBulkAction = false
+            }
         },
         toggleAllUnselected() {
             this.elTable.clearSelection()

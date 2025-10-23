@@ -3,9 +3,10 @@
         v-for="(element, index) in items"
         :key="'array-' + index"
         :gutter="10"
+        align="top"
         class="w-100"
     >
-        <el-col :span="2" class="d-flex flex-column justify-content-center mt-1 mb-2 reorder" v-if="items.length > 1">
+        <el-col :span="2" class="d-flex flex-column justify-content-center reorder" v-if="items.length > 1">
             <ChevronUp
                 @click.prevent.stop="moveItem(index, 'up')"
                 :class="{disabled: index === 0}"
@@ -32,7 +33,7 @@
                 </template>
             </Wrapper>
         </el-col>
-        <el-col :span="2" class="d-flex align-items-center justify-content-center delete">
+        <el-col :span="2" class="delete">
             <DeleteOutline @click="removeItem(index)" />
         </el-col>
     </el-row>

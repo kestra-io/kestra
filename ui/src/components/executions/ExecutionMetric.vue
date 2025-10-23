@@ -1,5 +1,6 @@
 <template>
     <MetricsTable
+        v-if="executionsStore.execution"
         ref="table"
         :taskRunId="route.query.metric?.[0] ?? undefined"
         :showTask="true"

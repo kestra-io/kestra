@@ -1,0 +1,18 @@
+id: flow-trigger-for-each-item-parent
+namespace: io.kestra.tests.trigger.foreachitem
+
+tasks:
+  - id: manifest
+    type: io.kestra.plugin.core.storage.Write
+    content: |-
+      0
+      1
+      2
+      3
+      4
+    extension: .txt
+  - id: forEachItem
+    type: io.kestra.plugin.core.flow.ForEachItem
+    items: "{{ outputs.manifest.uri }}"
+    namespace: io.kestra.tests.trigger.foreachitem
+    flowId: flow-trigger-for-each-item-child

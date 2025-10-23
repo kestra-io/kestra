@@ -48,6 +48,38 @@ import jakarta.validation.constraints.Size;
         - 200 if the webhook triggers an execution.
         - 204 if the webhook cannot trigger an execution due to a lack of matching event conditions sent by other application.
 
+        The response body will contain the execution ID if the execution is successfully triggered using the following format:
+        ```json
+        {
+          "tenantId": "your_tenant_id",
+          "namespace": "your_namespace",
+          "flowId": "your_flow_id",
+          "flowRevision": 1,
+          "trigger": {
+            "id": "the_trigger_id",
+            "type": "io.kestra.plugin.core.trigger.Webhook",
+            "variables": {
+                # The variables sent by the webhook caller
+            },
+            "logFile": "the_log_file_url"
+          },
+          "outputs": {
+            # The outputs of the flow, only available if `wait` is set to true
+          },
+          "labels": [
+            {"key": "value" }
+          ],
+          "state": {
+            "type": "RUNNING",
+            "histories": [
+              # The state histories of the execution
+            ]
+           },
+           "url": "the_execution_url_inside_ui",
+        }
+        ```
+        If you set the `wait` property to `true` and `returnOutputs` to `true`, the webhook call will wait for the flow to finish and return the flow outputs as response.
+
         A webhook trigger can have conditions, but it doesn't support conditions of type `MultipleCondition`."""
 )
 @Plugin(
@@ -116,7 +148,22 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
 
     @PluginProperty
     @Builder.Default
+    @Schema(
+        title = "Wait for the flow to finish.",
+        description = """
+            If set to `true` the webhook call will wait for the flow to finish and return the flow outputs as response.
+            If set to `false` the webhook call will return immediately after the execution is created.
+           """
+    )
     private Boolean wait = false;
+
+    @PluginProperty
+    @Builder.Default
+    @Schema(
+        title = "Send outputs of the flows as response for webhook caller.",
+        description = "Requires `wait` to be `true`."
+    )
+    private Boolean returnOutputs = false;
 
     public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {
         String body = request.getBody().orElse(null);

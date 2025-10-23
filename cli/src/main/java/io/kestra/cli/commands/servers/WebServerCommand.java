@@ -5,7 +5,7 @@ import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.runners.SkipExecutionService;
+import io.kestra.core.services.SkipExecutionService;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;

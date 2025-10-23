@@ -48,6 +48,13 @@ import java.util.List;
                 "partitions: 8"
             }
         ),
+        @Example(
+            title = "Split a file by regex pattern - group lines by captured value.",
+            code = {
+                "from: \"kestra://long/url/logs.txt\"",
+                "regexPattern: \"\\\\[(\\\\w+)\\\\]\""
+            }
+        ),
     },
     aliases = "io.kestra.core.tasks.storages.Split"
 )
@@ -64,6 +71,13 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
     private Property<Integer> partitions;
 
     private Property<Integer> rows;
+
+    @Schema(
+        title = "Split file by regex pattern. Lines are grouped by the first capture group value.",
+        description = "A regular expression pattern with a capture group. Lines matching this pattern will be grouped by the captured value. For example, `\\[(\\w+)\\]` will group lines by log level (ERROR, WARN, INFO) extracted from log entries."
+    )
+    @PluginProperty(dynamic = true)
+    private Property<String> regexPattern;
 
     @Builder.Default
     private Property<String> separator = Property.ofValue("\n");

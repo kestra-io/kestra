@@ -747,6 +747,7 @@
                     {value: "it", text: "Italian"},
                     {value: "es", text: "Spanish"},
                     {value: "pt", text: "Portuguese"},
+                    {value: "pt_BR", text: "Portuguese (Brazil)"},
                     {value: "ru", text: "Russian"},
                     {value: "zh_CN", text: "Chinese"},
                     {value: "ja", text: "Japanese"},

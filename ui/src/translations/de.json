@@ -530,7 +530,7 @@
     "execution not found": "Ausführung <code>{executionId}</code> nicht gefunden",
     "execution not in state FAILED": "Ausführung <code>{executionId}</code> nicht im Zustand FAILED",
     "execution not in state PAUSED": "Ausführung <code>{executionId}</code> nicht im Zustand PAUSED",
-    "execution replay": "Diese Ausführung ist eine Wiederholung von <code>{originalId}</code>.",
+    "execution replay": "Diese Ausführung ist eine Wiederholung von",
     "execution replayed": "Diese Ausführung wurde erneut abgespielt.",
     "execution restarted": "Diese Ausführung wurde {nbRestart} Mal neu gestartet.",
     "execution statistics": "Ausführungsstatistiken",
@@ -778,6 +778,7 @@
     "missingSource": "Fehlende Quelle",
     "monogram": "Monogramm",
     "months": "Monate",
+    "more_actions": "Weitere Aktionen",
     "multi_panel_editor": {
       "close_all_panels": "Alle Panels schließen",
       "close_all_tabs": "Alle Registerkarten schließen",
@@ -790,9 +791,12 @@
     "namespace and id readonly": "Die Eigenschaften `namespace` und `id` können nicht geändert werden — sie sind jetzt auf ihre Anfangswerte gesetzt. Wenn Sie einen Flow umbenennen oder seinen Namespace ändern möchten, können Sie einen neuen Flow erstellen und den alten entfernen.",
     "namespace files": {
       "create": {
-        "already_exists": "Eine Datei mit diesem Namen existiert bereits",
         "file": "Datei erstellen",
+        "file_already_exists": "Eine Datei mit diesem Namen existiert bereits",
+        "file_error": "Fehler beim Erstellen der Datei aufgetreten",
         "folder": "Ordner erstellen",
+        "folder_already_exists": "Ein Ordner mit diesem Namen existiert bereits",
+        "folder_error": "Beim Erstellen des Ordners ist ein Fehler aufgetreten",
         "label": "Erstellen"
       },
       "delete": {
@@ -803,11 +807,13 @@
         "label": "Löschen"
       },
       "dialog": {
-        "confirm": "Bestätigen",
-        "file_deletion": "Datei-Löschung bestätigen",
-        "file_deletion_description": "Sind Sie sicher, dass Sie diese Datei löschen möchten?",
-        "folder_deletion": "Ordner-Löschung bestätigen",
-        "folder_deletion_description": "Sind Sie sicher, dass Sie diesen Ordner und alle seine Inhalte löschen möchten?",
+        "deletion": {
+          "confirm": "Bestätigen",
+          "files": "Möchten Sie wirklich <code>{count}</code> Datei(en) löschen?",
+          "folders": "Möchten Sie wirklich <code>{count}</code> Ordner und alle seine Inhalte löschen?",
+          "mixed": "Möchten Sie wirklich den Ordner <code>{folders}</code> und die Datei <code>{files}</code> löschen?",
+          "title": "Bestätigen Sie das Löschen des Inhalts"
+        },
         "name": {
           "file": "Name mit Erweiterung:",
           "folder": "Ordnername:"
@@ -897,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Fügen Sie einen Block nach der Ausführung hinzu",
+        "charts": "Ein Diagramm hinzufügen",
         "conditions": "Bedingung hinzufügen",
         "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
         "inputs": "Ein Eingabefeld hinzufügen",
+        "numerator": "Fügen Sie einen Zähler hinzu",
         "pluginDefaults": "Fügen Sie ein Plugin-Default hinzu",
         "tasks": "Aufgabe hinzufügen",
-        "triggers": "Füge einen Trigger hinzu"
+        "triggers": "Füge einen Trigger hinzu",
+        "where": "Filtern Sie Ihre Daten"
       },
       "fields": {
         "general": {
@@ -946,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Wählen Sie eine Task aus",
+        "charts": "Wählen Sie einen Diagrammtyp aus",
         "conditions": "Wählen Sie eine Bedingung aus",
         "errors": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
         "inputs": "Wählen Sie einen Input-Feldtyp aus",
+        "numerator": "Wählen Sie einen Zähler aus",
         "pluginDefaults": "Wählen Sie ein Plugin aus",
         "task": "Wählen Sie eine Task aus",
         "tasks": "Wählen Sie eine Task aus",
-        "triggers": "Wählen Sie einen Trigger aus"
+        "triggers": "Wählen Sie einen Trigger aus",
+        "where": "Wählen Sie einen Filtertyp aus"
       },
       "toggle_pebble": "Pebble-Editor umschalten",
       "unnamed": "Kein Name",

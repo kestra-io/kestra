@@ -12,6 +12,10 @@ import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.SearchResult;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -23,14 +27,19 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.JdbcMapper;
+import io.kestra.jdbc.services.JdbcFilterService;
+import io.kestra.plugin.core.dashboard.data.Flows;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
@@ -38,7 +47,9 @@ import org.jooq.Record;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -59,10 +70,16 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private final NamespaceUtils namespaceUtils;
     private final PluginDefaultService pluginDefaultService;
 
+    private final JdbcFilterService filterService;
+
     protected io.kestra.jdbc.AbstractJdbcRepository<FlowInterface> jdbcRepository;
 
     @SuppressWarnings("unchecked")
-    public AbstractJdbcFlowRepository(io.kestra.jdbc.AbstractJdbcRepository<FlowInterface> jdbcRepository, ApplicationContext applicationContext) {
+    public AbstractJdbcFlowRepository(
+        io.kestra.jdbc.AbstractJdbcRepository<FlowInterface> jdbcRepository,
+        ApplicationContext applicationContext,
+        JdbcFilterService filterService
+    ) {
         this.jdbcRepository = jdbcRepository;
         this.modelValidator = applicationContext.getBean(ModelValidator.class);
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
@@ -75,7 +92,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             String namespace = record.get("namespace", String.class);
             String tenantId = record.get("tenant_id", String.class);
             try {
-                Map<String, Object> map = MAPPER.readValue(source, new TypeReference<>(){});
+                Map<String, Object> map = MAPPER.readValue(source, new TypeReference<>() {
+                });
 
                 // Inject default plugin 'version' props before converting
                 // to flow to correctly resolve to plugin type.
@@ -97,6 +115,24 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 }
             }
         });
+        this.filterService = filterService;
+    }
+
+    @Getter
+    private final Map<Flows.Fields, String> fieldsMapping = Map.of(
+        Flows.Fields.ID, "key",
+        Flows.Fields.NAMESPACE, "namespace",
+        Flows.Fields.REVISION, "revision"
+    );
+
+    @Override
+    public Set<Flows.Fields> dateFields() {
+        return Set.of();
+    }
+
+    @Override
+    public Flows.Fields dateFilterField() {
+        return null;
     }
 
     @Override
@@ -123,7 +159,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .and(field("id", String.class).eq(id))
                 );
 
-                return this.jdbcRepository.fetchOne(from).map(it -> (Flow)it);
+                return this.jdbcRepository.fetchOne(from).map(it -> (Flow) it);
             });
     }
 
@@ -137,21 +173,21 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 from = revision
                     .map(integer -> context
-                    .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
-                    .from(jdbcRepository.getTable())
-                    .where(this.noAclDefaultFilter(tenantId))
-                    .and(NAMESPACE_FIELD.eq(namespace))
-                    .and(field("id", String.class).eq(id))
-                    .and(field("revision", Integer.class).eq(integer))
-                ).orElseGet(() -> context
-                    .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
-                    .from(fromLastRevision(true))
-                    .where(this.noAclDefaultFilter(tenantId))
-                    .and(NAMESPACE_FIELD.eq(namespace))
-                    .and(field("id", String.class).eq(id))
+                        .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                        .from(jdbcRepository.getTable())
+                        .where(this.noAclDefaultFilter(tenantId))
+                        .and(NAMESPACE_FIELD.eq(namespace))
+                        .and(field("id", String.class).eq(id))
+                        .and(field("revision", Integer.class).eq(integer))
+                    ).orElseGet(() -> context
+                        .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                        .from(fromLastRevision(true))
+                        .where(this.noAclDefaultFilter(tenantId))
+                        .and(NAMESPACE_FIELD.eq(namespace))
+                        .and(field("id", String.class).eq(id))
                     );
 
-                return this.jdbcRepository.fetchOne(from).map(it -> (Flow)it);
+                return this.jdbcRepository.fetchOne(from).map(it -> (Flow) it);
             });
     }
 
@@ -256,7 +292,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public List<FlowWithSource> findRevisions(String tenantId, String namespace, String id) {
-         return jdbcRepository
+        return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 Select<Record4<String, String, String, String>> select = DSL
@@ -269,7 +305,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .orderBy(field("revision", Integer.class).asc());
 
                 return select.fetch()
-                    .map(record -> FlowWithSource.of((Flow)jdbcRepository.map(record), record.get(SOURCE_FIELD)));
+                    .map(record -> FlowWithSource.of((Flow) jdbcRepository.map(record), record.get(SOURCE_FIELD)));
             });
     }
 
@@ -301,7 +337,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .from(fromLastRevision(true))
                     .where(this.defaultFilter(tenantId));
 
-                return (List)this.jdbcRepository.fetch(select);
+                return (List) this.jdbcRepository.fetch(select);
             });
     }
 
@@ -326,7 +362,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 select.fetch().forEach(
                     item -> {
                         try {
-                            Flow flow = (Flow)this.jdbcRepository.map(item);
+                            Flow flow = (Flow) this.jdbcRepository.map(item);
                             flows.add(flow);
                         } catch (Exception e) {
                             log.error("Unable to load the following flow:\n{}", item.get("value", String.class), e);
@@ -354,7 +390,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .where(this.defaultFilter(tenantId));
 
                 return select.fetch().map(record -> FlowWithSource.of(
-                    (Flow)jdbcRepository.map(record),
+                    (Flow) jdbcRepository.map(record),
                     record.get(SOURCE_FIELD)
                 ));
             });
@@ -377,7 +413,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .where(this.noAclDefaultFilter(tenantId));
 
                 return select.fetch().map(record -> FlowWithSource.of(
-                    (Flow)jdbcRepository.map(record),
+                    (Flow) jdbcRepository.map(record),
                     record.get(SOURCE_FIELD)
                 ));
             });
@@ -403,7 +439,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 // That's why we will try to deserialize each flow and log an error but not crash in case of exception.
                 return select.fetch().stream().map(record -> {
                     try {
-                        return FlowWithSource.of((Flow)jdbcRepository.map(record), record.get("source_code", String.class));
+                        return FlowWithSource.of((Flow) jdbcRepository.map(record), record.get("source_code", String.class));
                     } catch (Exception e) {
                         log.error("Unable to load the following flow:\n{}", record.get("value", String.class), e);
                         return null;
@@ -420,9 +456,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .transactionResult(configuration -> {
                 SelectConditionStep<Record3<Object, Object, Object>> select =
                     findByNamespaceSelect(namespace)
-                    .and(this.defaultFilter(tenantId));
+                        .and(this.defaultFilter(tenantId));
 
-                return (List)this.jdbcRepository.fetch(select);
+                return (List) this.jdbcRepository.fetch(select);
             });
     }
 
@@ -436,7 +472,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     findByNamespacePrefixSelect(namespacePrefix)
                         .and(this.defaultFilter(tenantId));
 
-                return (List)this.jdbcRepository.fetch(select);
+                return (List) this.jdbcRepository.fetch(select);
             });
     }
 
@@ -447,10 +483,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .transactionResult(configuration -> {
                 SelectConditionStep<Record3<Object, Object, Object>> select =
                     findByNamespaceSelect(namespace)
-                    .and(this.defaultExecutionFilter(tenantId));
+                        .and(this.defaultExecutionFilter(tenantId));
 
                 return this.jdbcRepository.fetch(select);
-            }).stream().map(it -> (Flow)it).map(FlowForExecution::of).toList();
+            }).stream().map(it -> (Flow) it).map(FlowForExecution::of).toList();
     }
 
     private SelectConditionStep<Record3<Object, Object, Object>> findByNamespaceSelect(String namespace) {
@@ -491,7 +527,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .and(this.defaultFilter(tenantId));
 
                 return select.fetch().map(record -> FlowWithSource.of(
-                    (Flow)jdbcRepository.map(record),
+                    (Flow) jdbcRepository.map(record),
                     record.get(SOURCE_FIELD)
                 ));
             });
@@ -515,7 +551,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .and(this.defaultFilter(tenantId));
 
                 return select.fetch().map(record -> FlowWithSource.of(
-                    (Flow)jdbcRepository.map(record),
+                    (Flow) jdbcRepository.map(record),
                     record.get(SOURCE_FIELD)
                 ));
             });
@@ -584,8 +620,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     context,
                     select,
                     pageable,
-                    record ->FlowWithSource.of(
-                        (Flow)jdbcRepository.map(record),
+                    record -> FlowWithSource.of(
+                        (Flow) jdbcRepository.map(record),
                         record.get("source_code", String.class)
                     )
                 );
@@ -793,5 +829,96 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .from(jdbcRepository.getTable())
                     .where(defaultFilterWithNoACL(tenantId, false)));
             });
+    }
+
+    @Override
+    public ArrayListTotal<Map<String, Object>> fetchData(
+        String tenantId,
+        DataFilter<Flows.Fields, ? extends ColumnDescriptor<Flows.Fields>> descriptors,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        Pageable pageable
+    ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                Map<String, ? extends ColumnDescriptor<Flows.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+
+                boolean hasAgg = descriptors.getColumns().entrySet().stream().anyMatch(col -> col.getValue().getAgg() != null);
+                // Generate custom fields for date as they probably need formatting
+                // If they don't have aggs, we format datetime to minutes
+                List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields(), hasAgg ? null : DateUtils.GroupType.MINUTE);
+
+
+                // Init request
+                SelectConditionStep<Record> selectConditionStep = select(
+                    context,
+                    filterService,
+                    columnsWithoutDate,
+                    dateFields,
+                    this.getFieldsMapping(),
+                    this.jdbcRepository.getTable(),
+                    tenantId
+                );
+
+                // Apply Where filter
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
+
+                List<? extends ColumnDescriptor<Flows.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
+                    .filter(column -> column.getAgg() == null)
+                    .toList();
+
+                // Apply GroupBy for aggregation
+                SelectHavingStep<Record> selectHavingStep = groupBy(
+                    selectConditionStep,
+                    columnsWithoutDateWithOutAggs,
+                    dateFields,
+                    fieldsMapping
+                );
+
+                // Apply OrderBy
+                SelectSeekStepN<Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
+
+                // Fetch and paginate if provided
+                return fetchSeekStep(selectSeekStep, pageable);
+            });
+    }
+
+    public Double fetchValue(String tenantId, DataFilterKPI<Flows.Fields, ? extends ColumnDescriptor<Flows.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+            ColumnDescriptor<Flows.Fields> columnDescriptor = dataFilter.getColumns();
+            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
+            Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
+            if (columnDescriptor.getAgg() != null) {
+                field = filterService.buildAggregation(field, columnDescriptor.getAgg());
+            }
+
+            List<AbstractFilter<Flows.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getWhere()));
+            if (numeratorFilter) {
+                filters.addAll(dataFilter.getNumerator());
+            }
+
+            SelectConditionStep selectStep = context
+                .select(field)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId));
+
+            var selectConditionStep = where(
+                selectStep,
+                filterService,
+                filters,
+                getFieldsMapping()
+            );
+
+            Record result = selectConditionStep.fetchOne();
+
+            return result != null ? result.getValue(field, Double.class) : null;
+        });
     }
 }

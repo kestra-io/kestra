@@ -24,13 +24,7 @@ import jakarta.inject.Inject;
 
 import java.io.*;
 import java.time.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Validated
 @Controller("/api/v1/{tenant}/namespaces/{namespace}/kv")
@@ -51,11 +45,13 @@ public class KVController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get("/inheritance")
-    @Operation(tags = {"KV"}, summary = "List all keys for a namespace and parent namespaces")
+    @Operation(tags = {"KV"}, summary = "List all keys for inherited namespaces")
     public List<KVEntry> listKeysWithInheritence(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
-        List<String> namespaces = NamespaceUtils.asTree(namespace);
+        List<String> namespaces = NamespaceUtils.asTree(namespace).stream()
+            .filter(ns -> !ns.equals(namespace))
+            .toList();
         return getKvEntriesWithInheritance(namespaces);
     }
 
@@ -180,7 +176,7 @@ public class KVController {
             return Optional.ofNullable(keys).orElse(List.of());
         }
     }
-    
+
     /**
      * Create a new {@link KVStore} facade for the given namespace.
      *
@@ -190,11 +186,11 @@ public class KVController {
     protected KVStore kvStore(final String namespace) {
         return new InternalKVStore(tenantService.resolveTenant(), namespace, storageInterface);
     }
-    
+
     public record TypedValue(
         @Parameter(description = "The type of the KV entry.")
         KVType type,
-        
+
         @Parameter(description = "The value of the KV entry.")
         Object value
     ) {

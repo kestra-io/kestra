@@ -529,7 +529,7 @@
     watchDebounced(filterQueryString, updateQuery, {immediate: true, debounce: 1000});
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 
     :deep(.ks-monaco-editor) {

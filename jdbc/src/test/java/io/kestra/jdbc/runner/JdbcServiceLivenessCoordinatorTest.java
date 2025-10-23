@@ -2,6 +2,7 @@ package io.kestra.jdbc.runner;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -14,7 +15,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.runners.SkipExecutionService;
+import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
@@ -27,10 +28,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -98,6 +96,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         workerJobRunnings.forEach(workerJobRunning -> workerJobRunningRepository.deleteByKey(workerJobRunning.uid()));
     }
 
+    @FlakyTest
     @Test
     void shouldReEmitTasksWhenWorkerIsDetectedAsNonResponding() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);
@@ -210,6 +209,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         assertThat(receive.blockLast().getTaskRun().getState().getCurrent()).isNotEqualTo(Type.SUCCESS);
     }
 
+    @FlakyTest
     @Test
     void shouldReEmitTriggerWhenWorkerIsDetectedAsNonResponding() throws Exception {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);

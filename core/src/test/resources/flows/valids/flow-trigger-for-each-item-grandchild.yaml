@@ -1,0 +1,30 @@
+id: flow-trigger-for-each-item-grandchild
+namespace: io.kestra.tests.trigger.foreachitem
+
+inputs:
+  - id: testFile
+    type: FILE
+tasks:
+  - id: test_if_empty
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ isFileEmpty(inputs.testFile) }}"
+    then:
+      - id: empty_file
+        type: io.kestra.plugin.core.log.Log
+        message: "I am empty inside"
+    else:
+      - id: not_empty_file
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ read(inputs.testFile) }}"
+
+triggers:
+  - id: 01_complete
+    type: io.kestra.plugin.core.trigger.Flow
+    inputs:
+      testFile: "{{ trigger.outputs.myFile }}"
+    preconditions:
+      id: output_01_success
+      flows:
+        - namespace: io.kestra.tests.trigger.foreachitem
+          flowId: flow-trigger-for-each-item-child
+          states: [SUCCESS]

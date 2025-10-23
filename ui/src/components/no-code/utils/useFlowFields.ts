@@ -23,6 +23,7 @@ export const SECTIONS_IDS = [
     "finally",
     "afterExecution",
     "pluginDefaults",
+    "outputs",
 ]
 
 // once all those fields are displayed, the rest of the fields are displayed

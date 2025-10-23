@@ -28,7 +28,7 @@
     import Overview from "./Overview.vue";
     import Dependencies from "../dependencies/Dependencies.vue";
     import FlowMetrics from "./FlowMetrics.vue";
-    import FlowEditor from "./FlowEditor.vue";
+    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import FlowTriggers from "./FlowTriggers.vue";
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
@@ -173,14 +173,10 @@
                 ) {
                     tabs.push({
                         name: "edit",
-                        component: FlowEditor,
+                        component: MultiPanelFlowEditorView,
                         title: this.$t("edit"),
                         containerClass: "full-container",
                         maximized: true,
-                        props: {
-                            expandedSubflows: this.flowStore.expandedSubflows,
-                            isReadOnly: this.deleted || !this.flowStore.isAllowedEdit || this.flowStore.readOnlySystemLabel,
-                        },
                     });
                 }
 
@@ -339,7 +335,7 @@
         },
     };
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .gray-700 {
     color: var(--ks-content-secondary-color);
 }

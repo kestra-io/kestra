@@ -59,7 +59,7 @@
     })
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     code.link {
         cursor: pointer;
         &:hover {

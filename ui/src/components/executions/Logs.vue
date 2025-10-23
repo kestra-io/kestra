@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div>
         <Collapse>
             <el-form-item>
                 <el-input
@@ -332,7 +332,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
     .attempt-wrapper {
         background-color: var(--ks-background-card);

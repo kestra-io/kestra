@@ -88,7 +88,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     // Core
     import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
 

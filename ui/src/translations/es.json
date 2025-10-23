@@ -530,7 +530,7 @@
     "execution not found": "Ejecución <code>{executionId}</code> no encontrada",
     "execution not in state FAILED": "Ejecución <code>{executionId}</code> no está en estado FAILED",
     "execution not in state PAUSED": "Ejecución <code>{executionId}</code> no está en estado PAUSED",
-    "execution replay": "Esta ejecución es una repetición de <code>{originalId}</code>.",
+    "execution replay": "Esta ejecución es una repetición de",
     "execution replayed": "Esta ejecución ha sido reproducida.",
     "execution restarted": "Esta ejecución se ha reiniciado {nbRestart} vez/veces.",
     "execution statistics": "Estadísticas de ejecución",
@@ -778,6 +778,7 @@
     "missingSource": "Fuente faltante",
     "monogram": "Monograma",
     "months": "Meses",
+    "more_actions": "Más acciones",
     "multi_panel_editor": {
       "close_all_panels": "Cerrar todos los paneles",
       "close_all_tabs": "Cerrar todas las pestañas",
@@ -790,9 +791,12 @@
     "namespace and id readonly": "Las propiedades `namespace` y `id` no se pueden cambiar — ahora están configuradas a sus valores iniciales. Si deseas renombrar un flow o cambiar su namespace, puedes crear un nuevo flow y eliminar el antiguo.",
     "namespace files": {
       "create": {
-        "already_exists": "Un archivo con este nombre ya existe",
         "file": "Crear archivo",
+        "file_already_exists": "Ya existe un archivo con este nombre",
+        "file_error": "Se produjo un error al crear el archivo",
         "folder": "Crear carpeta",
+        "folder_already_exists": "Ya existe una carpeta con este nombre",
+        "folder_error": "Se produjo un error al crear la carpeta",
         "label": "Crear"
       },
       "delete": {
@@ -803,11 +807,13 @@
         "label": "Eliminar"
       },
       "dialog": {
-        "confirm": "Confirmar",
-        "file_deletion": "Confirmar eliminación de archivo",
-        "file_deletion_description": "¿Estás seguro de que quieres eliminar este archivo?",
-        "folder_deletion": "Confirmar eliminación de carpeta",
-        "folder_deletion_description": "¿Estás seguro de que quieres eliminar esta carpeta y todo su contenido?",
+        "deletion": {
+          "confirm": "Confirmar",
+          "files": "¿Está seguro de que desea eliminar <code>{count}</code> archivo(s)?",
+          "folders": "¿Está seguro de que desea eliminar <code>{count}</code> carpeta(s) y todo su contenido?",
+          "mixed": "¿Está seguro de que desea eliminar la(s) carpeta(s) <code>{folders}</code> y el/los archivo(s) <code>{files}</code>?",
+          "title": "Confirmar eliminación de contenido"
+        },
         "name": {
           "file": "Nombre con extensión:",
           "folder": "Nombre de la carpeta:"
@@ -897,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Agregar un bloque después de la ejecución",
+        "charts": "Agregar un gráfico",
         "conditions": "Agregar una condición",
         "errors": "Agregar un manejador de errores",
         "finally": "Agregar un bloque finally",
         "inputs": "Agregar un campo de input",
+        "numerator": "Agregar un numerador",
         "pluginDefaults": "Agregar un plugin predeterminado",
         "tasks": "Agregar una task",
-        "triggers": "Agregar un trigger"
+        "triggers": "Agregar un trigger",
+        "where": "Filtra tus datos"
       },
       "fields": {
         "general": {
@@ -946,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Seleccionar una task",
+        "charts": "Seleccione un tipo de gráfico",
         "conditions": "Seleccione una condición",
         "errors": "Selecciona una task",
         "finally": "Seleccionar una task",
         "inputs": "Seleccione un tipo de campo de input",
+        "numerator": "Seleccione un numerador",
         "pluginDefaults": "Seleccionar un plugin",
         "task": "Selecciona una task",
         "tasks": "Seleccionar una task",
-        "triggers": "Seleccione un trigger"
+        "triggers": "Seleccione un trigger",
+        "where": "Seleccione un tipo de filtro"
       },
       "toggle_pebble": "Alternar editor de Pebble",
       "unnamed": "Sin Nombre",

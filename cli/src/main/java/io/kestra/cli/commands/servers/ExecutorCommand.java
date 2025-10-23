@@ -3,7 +3,7 @@ package io.kestra.cli.commands.servers;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.ExecutorInterface;
-import io.kestra.core.runners.SkipExecutionService;
+import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;

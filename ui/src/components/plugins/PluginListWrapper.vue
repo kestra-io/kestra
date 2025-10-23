@@ -8,7 +8,6 @@
         <PluginList 
             v-else
             :plugins="pluginsData" 
-            :initialView="initialView"
             :key="useMiscStore().theme" 
         />
     </div>
@@ -16,18 +15,14 @@
 
 <script setup lang="ts">
     import {onMounted, ref, computed} from "vue";
-    import {useRoute} from "vue-router";
     import {useMiscStore} from "override/stores/misc";
     import {usePluginsStore} from "../../stores/plugins";
     import PluginList from "./PluginList.vue";
 
-    const route = useRoute();
     const isLoading = ref(false);
     const pluginsStore = usePluginsStore();
 
     const pluginsData = computed(() => pluginsStore.plugins);
-    const isFlowCreateRoute = computed(() => route.name === "flows/create");
-    const initialView = computed(() => isFlowCreateRoute.value ? "documentation" : "list");
 
     onMounted(async () => {
         if (!pluginsData.value?.length) {

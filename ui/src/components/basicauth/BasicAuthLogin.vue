@@ -201,7 +201,7 @@
             }
 
             if (error?.response?.status === 401) {
-                await loadAuthConfigErrors()
+                await loadAuthConfigErrors(true)
             } else if (error?.response?.status === 404) {
                 router.push({name: "setup"})
             } else {
@@ -217,7 +217,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .basic-auth-login {
         flex-shrink: 1;
         width: 400px;

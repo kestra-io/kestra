@@ -10,7 +10,7 @@
     </InputPair>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed} from "vue";
     import {PairField} from "../../utils/types";
     import InputPair from "../inputs/InputPair.vue";

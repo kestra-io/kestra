@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
+
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public interface TaskInterface extends Plugin, PluginVersioning {
     @NotNull
@@ -17,7 +19,7 @@ public interface TaskInterface extends Plugin, PluginVersioning {
 
     @NotNull
     @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     @Schema(title = "The class name of this task.")
     String getType();
 }

@@ -29,7 +29,7 @@
             </ul>
         </template>
     </TopNavBar>
-    <section data-component="FILENAME_PLACEHOLDER" :class="{'container padding-bottom': topbar}" v-if="ready">
+    <section :class="{'container padding-bottom': topbar}" v-if="ready">
         <DataTable
             @page-changed="onPageChanged"
             ref="dataTable"

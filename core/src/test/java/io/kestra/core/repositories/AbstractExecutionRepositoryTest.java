@@ -388,6 +388,21 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
+    protected void purgeExecutions() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var execution1 = ExecutionFixture.EXECUTION_1(tenant);
+        executionRepository.save(execution1);
+        var execution2 = ExecutionFixture.EXECUTION_2(tenant);
+        executionRepository.save(execution2);
+
+        var results = executionRepository.purge(List.of(execution1, execution2));
+        assertThat(results).isEqualTo(2);
+
+        assertThat(executionRepository.findById(tenant, execution1.getId())).isEmpty();
+        assertThat(executionRepository.findById(tenant, execution2.getId())).isEmpty();
+    }
+
+    @Test
     protected void delete() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         var execution1 = ExecutionFixture.EXECUTION_1(tenant);
@@ -676,6 +691,58 @@ inject(tenant);
         assertThat(lastExecutions).isNotEmpty();
         Set<String> flowIds = lastExecutions.stream().map(Execution::getFlowId).collect(Collectors.toSet());
         assertThat(flowIds.size()).isEqualTo(lastExecutions.size());
+    }
+
+    @Test
+    protected void shouldIncludeRunningExecutionsInLastExecutions() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        // Create an older finished execution for flow "full"
+        Instant older = Instant.now().minus(Duration.ofMinutes(10));
+        State finishedState = new State(
+            State.Type.SUCCESS,
+            List.of(
+                new State.History(State.Type.CREATED, older.minus(Duration.ofMinutes(1))),
+                new State.History(State.Type.SUCCESS, older)
+            )
+        );
+        Execution finished = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .namespace(NAMESPACE)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .state(finishedState)
+            .taskRunList(List.of())
+            .build();
+        executionRepository.save(finished);
+
+        // Create a newer running execution for the same flow
+        Instant newer = Instant.now().minus(Duration.ofMinutes(2));
+        State runningState = new State(
+            State.Type.RUNNING,
+            List.of(
+                new State.History(State.Type.CREATED, newer),
+                new State.History(State.Type.RUNNING, newer)
+            )
+        );
+        Execution running = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .namespace(NAMESPACE)
+            .flowId(FLOW)
+            .flowRevision(1)
+            .state(runningState)
+            .taskRunList(List.of())
+            .build();
+        executionRepository.save(running);
+
+        List<Execution> last = executionRepository.lastExecutions(tenant, null);
+
+        // Ensure we have one per flow and that for FLOW it is the running execution
+        Map<String, Execution> byFlow = last.stream().collect(Collectors.toMap(Execution::getFlowId, e -> e));
+        assertThat(byFlow.get(FLOW)).isNotNull();
+        assertThat(byFlow.get(FLOW).getId()).isEqualTo(running.getId());
     }
 
 }

@@ -129,7 +129,6 @@
     const props = defineProps<{
         options: CascaderOption[];
         execution: any;
-        id?: string;
     }>();
 
     const cascader = ref<any>(null);

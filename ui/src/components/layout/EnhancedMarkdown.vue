@@ -1,16 +1,13 @@
 <template>
-    <div class="enhanced-documentation" data-component="EnhancedMarkdown">
-        <div
-            v-if="props.showSearch"
-            class="doc-toolbar"
-        >
+    <div class="enhanced-documentation">
+        <div v-if="showSearch" class="doc-toolbar">
             <el-input
                 v-model="searchQuery"
-                :prefixIcon="Search"
+                :suffixIcon="Magnify"
                 :clearable="true"
                 class="doc-search"
                 size="small"
-                placeholder="Search documentation"
+                :placeholder="$t('search_docs')"
             />
             <transition name="fade">
                 <span
@@ -31,7 +28,7 @@
 
 <script setup lang="ts">
     import {ref, watch, nextTick, onBeforeUnmount, computed} from "vue";
-    import {Search} from "@element-plus/icons-vue";
+    import Magnify from "vue-material-design-icons/Magnify.vue";
     import * as Markdown from "../../utils/markdown";
 
     const props = withDefaults(defineProps<{
@@ -612,7 +609,6 @@
         display: flex;
         flex-direction: column;
         gap: var(--spacer, 1rem);
-        background: var(--ks-background-panel);
         border-radius: var(--el-border-radius-base);
         color: var(--ks-content-primary);
     }
@@ -621,20 +617,22 @@
         display: flex;
         align-items: center;
         gap: var(--spacer-sm, 0.75rem);
-        background: var(--ks-background-card);
-        border: 1px solid var(--ks-border-primary);
-        border-radius: var(--el-border-radius-base);
-        padding: 0.5rem 0.75rem;
+        background: var(--ks-background-panel);
+        border-bottom: 1px solid var(--ks-border-primary);
+        padding: 1rem 2rem;
         position: sticky;
         top: 0;
         z-index: 1;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        width: calc(100% + 2rem);
     }
 
     .doc-search {
         flex: 1 1 auto;
 
         :deep(.el-input__wrapper) {
-            background: transparent;
+            background: var(--ks-background-input);
             box-shadow: none;
             border: 1px solid var(--ks-border-primary);
             border-radius: var(--el-border-radius-base);
@@ -743,6 +741,7 @@
         display: grid;
         gap: var(--spacer, 1rem);
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        align-items: start;
     }
 
     :deep(.doc-card) {
@@ -755,11 +754,6 @@
         flex-direction: column;
         gap: 0;
         transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    :deep(.doc-card:hover) {
-        transform: translateY(-2px);
-        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
     }
 
     :deep(.doc-card.is-hidden) {
@@ -822,7 +816,7 @@
     }
 
     :deep(.doc-card.is-open .doc-card__indicator::before) {
-        transform: rotate(135deg);
+        transform: rotate(225deg);
     }
 
     :deep(.doc-card__body) {

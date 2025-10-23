@@ -13,6 +13,7 @@ import "moment/dist/locale/pl"
 import "moment/dist/locale/pt"
 import "moment/dist/locale/ru"
 import "moment/dist/locale/zh-cn"
+import "moment/dist/locale/pt-br"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
 import {

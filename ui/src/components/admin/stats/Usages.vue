@@ -151,7 +151,7 @@
         },
     ]);
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .usage-card {
     background-color: transparent;
     // min-height: 432px;

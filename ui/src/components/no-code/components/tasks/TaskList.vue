@@ -56,8 +56,16 @@
     import {SECTIONS_MAP} from "../../../../utils/constants";
     import {getValueAtJsonPath} from "../../../../utils/utils";
 
+
     const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
-    const blockSchemaPath = computed(() => [blockSchemaPathInjected.value, "properties", props.root, "items"].join("/"));
+
+    const blockSchemaPath = computed(() => {
+        const rootParts = props.root ? props.root.split(".") : []
+        if(rootParts.length > 1){
+            rootParts.splice(1, 0, "properties")
+        }
+        return [blockSchemaPathInjected.value, "properties", ...rootParts, "items"].join("/");
+    });
 
     defineOptions({
         inheritAttrs: false
@@ -158,11 +166,10 @@
 
     const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref<Record<string, any>>({}));
 
+    const blockSchema = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {});
+
     // resolve parentPathComplete field schema from pluginsStore
-    const typeFieldSchema = computed(() => {
-        const blockSchema = getValueAtJsonPath(fullSchema.value, blockSchemaPath.value)?.properties;
-        return blockSchema?.type ? "type" : blockSchema?.on ? "on" : "type";
-    });
+    const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type");
 </script>
 
 <style scoped lang="scss">

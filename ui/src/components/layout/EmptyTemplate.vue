@@ -4,7 +4,7 @@
     </section>
 </template>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .empty-template {
         margin-top: -0.900rem;
         padding: 3rem 0;

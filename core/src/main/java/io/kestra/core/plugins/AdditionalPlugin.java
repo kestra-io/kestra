@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
+
 @io.kestra.core.models.annotations.Plugin
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -15,6 +17,6 @@ import lombok.experimental.SuperBuilder;
 public abstract class AdditionalPlugin implements Plugin {
     @NotNull
     @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     protected String type;
 }

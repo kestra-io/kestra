@@ -82,7 +82,11 @@
 
                 this.notifications = ElNotification({
                     title: this.title || "Error",
-                    message: h(ErrorToastContainer, {message: this.message, items: this.items}),
+                    message: h(ErrorToastContainer, {
+                        message: this.message,
+                        items: this.items,
+                        onClose: () => this.close()
+                    }),
                     position: "bottom-right",
                     type: this.message.variant,
                     duration: 0,

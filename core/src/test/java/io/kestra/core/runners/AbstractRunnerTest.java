@@ -12,7 +12,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.plugin.core.flow.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -214,7 +213,7 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows(value = {"flows/valids/trigger-flow-listener-with-concurrency-limit.yaml",
         "flows/valids/trigger-flow-with-concurrency-limit.yaml"}, tenantId = "trigger-tenant")
-    void flowTriggerWithConcurrencyLimit() throws Exception {
+    protected void flowTriggerWithConcurrencyLimit() throws Exception {
         flowTriggerCaseTest.triggerWithConcurrencyLimit("trigger-tenant");
     }
 
@@ -242,7 +241,6 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.flowTriggerPreconditions();
     }
 
-    @Disabled
     @Test
     @LoadFlows(value = {"flows/valids/flow-trigger-preconditions-flow-listen.yaml",
         "flows/valids/flow-trigger-preconditions-flow-a.yaml",
@@ -255,6 +253,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({"flows/valids/flow-trigger-paused-listen.yaml", "flows/valids/flow-trigger-paused-flow.yaml"})
     void flowTriggerOnPaused() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerOnPaused();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-for-each-item-parent.yaml", "flows/valids/flow-trigger-for-each-item-child.yaml", "flows/valids/flow-trigger-for-each-item-grandchild.yaml"})
+    void forEachItemWithFlowTrigger() throws Exception {
+        multipleConditionTriggerCaseTest.forEachItemWithFlowTrigger();
     }
 
     @Test
@@ -273,7 +277,7 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({"flows/valids/switch.yaml",
         "flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml"})
-    void flowWaitSuccess() throws Exception {
+    protected void flowWaitSuccess() throws Exception {
         flowCaseTest.waitSuccess();
     }
 
@@ -452,6 +456,12 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = {"flows/valids/flow-concurrency-subflow.yml", "flows/valids/flow-concurrency-cancel.yml"}, tenantId = TENANT_1)
     void flowConcurrencySubflow() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencySubflow(TENANT_1);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-concurrency-parallel-subflow-kill.yaml", "flows/valids/flow-concurrency-parallel-subflow-kill-child.yaml", "flows/valids/flow-concurrency-parallel-subflow-kill-grandchild.yaml"})
+    void flowConcurrencyParallelSubflowKill() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyParallelSubflowKill();
     }
 
     @Test

@@ -530,7 +530,7 @@
     "execution not found": "Exécution <code>{executionId}</code> non trouvée",
     "execution not in state FAILED": "Exécution <code>{executionId}</code> n'est pas dans l'état FAILED",
     "execution not in state PAUSED": "Exécution <code>{executionId}</code> n'est pas dans l'état PAUSED",
-    "execution replay": "Cette exécution est une relecture de <code>{originalId}</code>.",
+    "execution replay": "Cette exécution est une relecture de",
     "execution replayed": "Cette exécution a été rejouée.",
     "execution restarted": "Cette exécution a été redémarrée {nbRestart} fois.",
     "execution statistics": "Statistiques d'exécution ",
@@ -778,6 +778,7 @@
     "missingSource": "Source manquant",
     "monogram": "Monogramme",
     "months": "Mois",
+    "more_actions": "Plus d'actions",
     "multi_panel_editor": {
       "close_all_panels": "Fermer tous les panneaux",
       "close_all_tabs": "Fermer tous les onglets",
@@ -790,9 +791,12 @@
     "namespace and id readonly": "Le namespace et l'id ne sont pas modifiables. Ils ont été réinitialisés à leur valeur initiale.",
     "namespace files": {
       "create": {
-        "already_exists": "Un fichier avec ce nom existe déjà",
         "file": "Créer un fichier",
+        "file_already_exists": "Un fichier avec ce nom existe déjà",
+        "file_error": "Une erreur s'est produite lors de la création du fichier",
         "folder": "Créer un dossier",
+        "folder_already_exists": "Un dossier avec ce nom existe déjà",
+        "folder_error": "Une erreur s'est produite lors de la création du dossier",
         "label": "Créer"
       },
       "delete": {
@@ -803,11 +807,13 @@
         "label": "Supprimer"
       },
       "dialog": {
-        "confirm": "Confirmer",
-        "file_deletion": "Confirmer la suppression du fichier",
-        "file_deletion_description": "Êtes-vous sûr de vouloir supprimer ce fichier ?",
-        "folder_deletion": "Confirmer la suppression du dossier",
-        "folder_deletion_description": "Êtes-vous sûr de vouloir supprimer ce dossier et tous ses contenus ?",
+        "deletion": {
+          "confirm": "Confirmer",
+          "files": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> fichier(s) ?",
+          "folders": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> dossier(s) et tout son contenu ?",
+          "mixed": "Êtes-vous sûr de vouloir supprimer le(s) dossier(s) <code>{folders}</code> et le(s) fichier(s) <code>{files}</code> ?",
+          "title": "Confirmer la suppression du contenu"
+        },
         "name": {
           "file": "Nom avec extension :",
           "folder": "Nom du dossier :"
@@ -897,13 +903,16 @@
       },
       "creation": {
         "afterExecution": "Ajouter un bloc après l'exécution",
+        "charts": "Ajouter un graphique",
         "conditions": "Ajouter une condition",
         "errors": "Ajouter un gestionnaire d'erreurs",
         "finally": "Ajouter un bloc finally",
         "inputs": "Ajouter un champ d'input",
+        "numerator": "Ajouter un numérateur",
         "pluginDefaults": "Ajouter un plugin par défaut",
         "tasks": "Ajouter une tâche",
-        "triggers": "Ajouter un trigger"
+        "triggers": "Ajouter un trigger",
+        "where": "Filtrer vos données"
       },
       "fields": {
         "general": {
@@ -946,14 +955,17 @@
       },
       "select": {
         "afterExecution": "Sélectionnez une task",
+        "charts": "Sélectionner un type de graphique",
         "conditions": "Sélectionner une condition",
         "errors": "Sélectionner une task",
         "finally": "Sélectionnez une task",
         "inputs": "Sélectionnez un type de champ input",
+        "numerator": "Sélectionnez un numérateur",
         "pluginDefaults": "Sélectionner un plugin",
         "task": "Sélectionnez une task",
         "tasks": "Sélectionnez une task",
-        "triggers": "Sélectionner un trigger"
+        "triggers": "Sélectionner un trigger",
+        "where": "Sélectionnez un type de filtre"
       },
       "toggle_pebble": "Basculer l'éditeur Pebble",
       "unnamed": "Aucun Nom",

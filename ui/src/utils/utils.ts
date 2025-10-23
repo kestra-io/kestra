@@ -130,7 +130,7 @@ export default class Utils {
     static humanDuration(value: string | number, options?: humanizeDuration.HumanizerOptions) {
         options = options || {maxDecimalPoints: 2};
         options.spacer = "";
-        options.language = Utils.getLang();
+        options.language = Object.keys(humanizeDurationLanguages).includes(Utils.getLang()) ? Utils.getLang() : "en";
         options.languages = humanizeDurationLanguages;
         options.largest = 2;
 

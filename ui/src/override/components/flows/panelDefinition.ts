@@ -14,24 +14,31 @@ import PluginListWrapper from "../../../components/plugins/PluginListWrapper.vue
 import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrapper.vue";
 import EditorSidebarWrapper from "../../../components/inputs/EditorSidebarWrapper.vue";
 import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue";
+import {EditorElement} from "../../../utils/multiPanelTypes";
 
 export const DEFAULT_ACTIVE_TABS = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE" ? ["nocode", "doc"] : ["code", "doc"]
 
-export const EDITOR_ELEMENTS = [
+export const EDITOR_ELEMENTS: EditorElement[] = [
     {
         button: {
             icon: markRaw(CodeTagsIcon),
             label: "Flow Code"
         },
-        value: "code",
-        component: () => h(EditorWrapper, {path: "Flow.yaml", name: "Flow.yaml"}),
+        uid: "code",
+        component: () => h(EditorWrapper, {
+            path: "Flow.yaml",
+            name: "Flow.yaml",
+            dirty: false,
+            extension: "yaml",
+            flow: true,
+        }),
     },
     {
         button: {
             icon: markRaw(MouseRightClickIcon),
             label: "No-code"
         },
-        value: "nocode",
+        uid: "nocode",
         component: markRaw(NoCode),
     },
     {
@@ -39,7 +46,7 @@ export const EDITOR_ELEMENTS = [
             icon: markRaw(FileTreeOutlineIcon),
             label: "Topology"
         },
-        value: "topology",
+        uid: "topology",
         component: markRaw(LowCodeEditorWrapper),
     },
         {
@@ -47,7 +54,7 @@ export const EDITOR_ELEMENTS = [
             icon: markRaw(FileDocumentIcon),
             label: "Documentation"
         },
-        value: "doc",
+        uid: "doc",
         component: markRaw(PluginListWrapper),
     },
     {
@@ -55,7 +62,8 @@ export const EDITOR_ELEMENTS = [
             icon: markRaw(DotsSquareIcon),
             label: "Files"
         },
-        value: "files",
+        uid: "files",
+        prepend: true,
         component: markRaw(EditorSidebarWrapper),
     },
     {
@@ -63,7 +71,16 @@ export const EDITOR_ELEMENTS = [
             icon: markRaw(BallotOutlineIcon),
             label: "Blueprints"
         },
-        value: "blueprints",
+        uid: "blueprints",
         component: markRaw(BlueprintsWrapper),
     }
-]
+].map((e): EditorElement => ({
+    // add a default deserializer
+    deserialize: (value: string) => {
+        if(e.uid === value){
+            return e;
+        }
+        return undefined;
+    },
+    ...e,
+}));

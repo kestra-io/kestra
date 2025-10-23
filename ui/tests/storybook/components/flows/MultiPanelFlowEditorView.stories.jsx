@@ -1,5 +1,5 @@
 import {vueRouter} from "storybook-vue3-router";
-import FlowEditor from "../../../../src/components/flows/FlowEditor.vue";
+import MultiPanelFlowEditorView from "../../../../src/components/flows/MultiPanelFlowEditorView.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
 import flowSchema from "../../../../src/stores/flow-schema.json";
@@ -8,8 +8,8 @@ import {useFlowStore} from "../../../../src/stores/flow";
 
 
 export default {
-    title: "Components/FlowEditor",
-    component: FlowEditor,
+    title: "Components/MultiPanelFlowEditorView",
+    component: MultiPanelFlowEditorView,
     decorators: [
         vueRouter([
             {
@@ -40,6 +40,9 @@ const Template = (args) => ({
             if (uri.endsWith("/distinct-namespaces")) {
                 return {data: ["sanitychecks.flows.blueprints", "tutorial"]}
             }
+            if (uri.endsWith("/subgroups")) {
+                return {data: []}
+            }
             console.log("get request", uri)
             return {data: {}}
         }
@@ -61,7 +64,7 @@ const Template = (args) => ({
 
         return () =>
             <div style="height: 100vh">
-                <FlowEditor />
+                <MultiPanelFlowEditorView/>
             </div>
     }
 });

@@ -171,9 +171,7 @@ export const useFilesStore = defineStore("files", () => {
     }
 
     function renderNodes(itemsArr: any[]) {
-        if (fileTree.value === undefined) {
-            fileTree.value = [];
-        }
+        fileTree.value = [];
         
         for (const {type, fileName} of itemsArr) {
             if (type === "Directory") {
@@ -275,10 +273,8 @@ export const useFilesStore = defineStore("files", () => {
         if (namespaceId.value === undefined) return;
         if (node.level === 0) {
             const payload = {namespace: namespaceId.value};
-            const itemsArr = await namespacesStore.readDirectory<TreeNode>(payload);
-            const existingRootPaths = fileTree.value.map((item) => item.fileName); 
-            const itemArrFiltered = itemsArr.filter((item) => !existingRootPaths.includes(item.fileName));
-            renderNodes(itemArrFiltered);
+            const rootTreeNodes = await namespacesStore.readDirectory<TreeNode>(payload);
+            renderNodes(rootTreeNodes);
             fileTree.value = sorted(fileTree.value);
             resolve?.(fileTree.value);
         } else if (isNotRootTreeNode(node)) {

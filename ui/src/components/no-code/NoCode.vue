@@ -60,7 +60,6 @@
     import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
     import debounce from "lodash/debounce";
     import {NoCodeProps} from "../flows/noCodeTypes";
-    import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {usePluginsStore} from "../../stores/plugins";
     import {useKeyboardSave} from "./utils/useKeyboardSave";
@@ -108,7 +107,7 @@
         parsedFlow,
     } = useFlowFields(lastValidFlowYaml)
 
-    useKeyboardSave(lastValidFlowYaml)
+    useKeyboardSave()
 
     const flowStore = useFlowStore();
     const flowYaml = computed<string>(() => flowStore.flowYaml ?? "");
@@ -118,7 +117,6 @@
     }, 500);
 
     const timeout = ref();
-    const editorStore = useEditorStore();
 
     const editorUpdate = (source: string) => {
         // if no-code would not change the structure of the flow,
@@ -127,19 +125,13 @@
             return;
         }
         flowStore.flowYaml = source;
-        flowStore.haveChange = true;
         validateFlow();
-        editorStore.setTabDirty({
-            name: "Flow",
-            dirty: true
-        });
 
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
                 source,
-                currentIsFlow: true,
                 topologyVisible: true,
             });
         }, 1000);

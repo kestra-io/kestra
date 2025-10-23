@@ -34,6 +34,7 @@ export function useDashboardFields() {
 
     const getFieldFromKey = (key:string) => ({
         modelValue: parsedSource.value?.[key],
+        disabled: !dashboardStore.isCreating && (key === "id"),
         required: dashboardStore.rootSchema?.required ?? [],
         schema: dashboardStore.rootProperties?.[key] ?? {},
         definitions: dashboardStore.definitions,

@@ -32,13 +32,13 @@
     import TypeScriptWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
     import YamlWorker from "./yaml.worker.js?worker";
 
-    const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, as: "raw"});
+    const NodeTypesRaw = import.meta.glob("/node_modules/@types/node/**/*.d.ts", {eager: true, query: "?raw", import: "default"});
 
     let tries = 0
     function loadNodeTypes(){
         if(monaco.languages.typescript) {
             for(const path in NodeTypesRaw){
-                const NodeTypesRawContent = NodeTypesRaw[path].toString();
+                const NodeTypesRawContent = NodeTypesRaw[path] as string;
                 // We add every .d.ts file to Monaco
                 monaco.languages.typescript.typescriptDefaults.addExtraLib(
                     NodeTypesRawContent,
@@ -136,7 +136,6 @@
     import {useFlowStore} from "../../stores/flow";
     import EditorType = editor.EditorType;
     import {useRoute} from "vue-router";
-    import {useEditorStore} from "../../stores/editor";
 
     const currentInstance = getCurrentInstance()!;
     const {t} = useI18n();

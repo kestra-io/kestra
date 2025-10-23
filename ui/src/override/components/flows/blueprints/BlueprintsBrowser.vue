@@ -343,6 +343,11 @@
                     text-overflow: ellipsis;
                     overflow: hidden;
                 }
+
+                &:hover :deep(span) {
+                    color: var(--ks-content-link-hover);
+                    background-color: var(--ks-button-background-secondary-hover);
+                }
             }
         }
     }

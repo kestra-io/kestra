@@ -1414,6 +1414,11 @@ public class ExecutionController {
     ) throws Exception {
         Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId, true);
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        return resumeFoundExecution(inputs, execution, flow);
+    }
+
+    protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution,
+        Flow flow) {
         Pause.Resumed resumed = createResumed();
 
         return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)

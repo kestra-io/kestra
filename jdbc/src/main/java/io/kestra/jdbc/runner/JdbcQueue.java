@@ -18,10 +18,6 @@ import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.context.annotation.Value;
-import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.Record;
@@ -29,8 +25,6 @@ import org.jooq.exception.DataException;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
-import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -56,7 +50,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final JooqDSLContextWrapper dslContextWrapper;
 
-    protected final Configuration configuration;
+    protected final JdbcQueueConfiguration configuration;
 
     protected final MessageProtectionConfiguration messageProtectionConfiguration;
 
@@ -65,11 +59,10 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     protected final Table<Record> table;
 
     protected final JdbcQueueIndexer jdbcQueueIndexer;
-
-    private final boolean immediateRepoll;
-
+    
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
-    private final AtomicBoolean isPaused = new AtomicBoolean(false);
+    
+    private final List<JdbcQueuePoller> pollers = new ArrayList<>();
 
     private final Counter bigMessageCounter;
 
@@ -81,7 +74,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;
         this.dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
-        this.configuration = applicationContext.getBean(Configuration.class);
+        this.configuration = applicationContext.getBean(JdbcQueueConfiguration.class);
         this.messageProtectionConfiguration = applicationContext.getBean(MessageProtectionConfiguration.class);
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
 
@@ -90,9 +83,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.table = DSL.table(jdbcTableConfigs.tableConfig("queues").table());
 
         this.jdbcQueueIndexer = applicationContext.getBean(JdbcQueueIndexer.class);
-
-        this.immediateRepoll = applicationContext.getProperty("kestra.jdbc.queues.immediate-repoll", Boolean.class).orElse(true);
-
+        
         // init metrics we can at post construct to avoid costly Metric.Id computation
         this.bigMessageCounter = metricRegistry
             .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, queueType());
@@ -248,7 +239,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         var limitSelect = select
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(configuration.getPollSize());
+            .limit(configuration.pollSize());
         ResultQuery<Record2<Object, Object>> configuredSelect = limitSelect;
 
         if (forUpdate) {
@@ -423,57 +414,17 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             queueType.getSimpleName()
         );
     }
-
-    @SuppressWarnings("BusyWait")
+    
     protected Runnable poll(Supplier<Integer> runnable) {
-        AtomicBoolean running = new AtomicBoolean(true);
-
-        poolExecutor.execute(() -> {
-            List<Configuration.Step> steps = configuration.computeSteps();
-            Duration sleep = configuration.minPollInterval;
-            ZonedDateTime lastPoll = ZonedDateTime.now();
-            while (running.get() && !this.isClosed.get()) {
-                if (!this.isPaused.get()) {
-                    try {
-                        Integer count = runnable.get();
-                        if (count > 0) {
-                            lastPoll = ZonedDateTime.now();
-                            sleep = configuration.minPollInterval;
-                            if (immediateRepoll) {
-                                continue;
-                            } else if (count.equals(configuration.pollSize)) {
-                                // Note: this provides better latency on high throughput: when Kestra is a top capacity,
-                                // it will not do a sleep and immediately poll again.
-                                // We can even have better latency at even higher latency by continuing for positive count,
-                                // but at higher database cost.
-                                // Current impl balance database cost with latency.
-                                continue;
-                            }
-                        } else {
-                            ZonedDateTime finalLastPoll = lastPoll;
-                            // get all poll steps which duration is less than the duration between last poll and now
-                            List<Configuration.Step> selectedSteps = steps.stream()
-                                .takeWhile(step -> finalLastPoll.plus(step.switchInterval()).compareTo(ZonedDateTime.now()) < 0)
-                                .toList();
-                            // then select the last one (longest) or minPoll if all are beyond while means we are under the first interval
-                            sleep = selectedSteps.isEmpty() ? configuration.minPollInterval : selectedSteps.getLast().pollInterval();
-                        }
-                    } catch (CannotCreateTransactionException e) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Can't poll on receive", e);
-                        }
-                    }
-                }
-
-                try {
-                    Thread.sleep(sleep);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        });
-
-        return () -> running.set(false);
+        JdbcQueuePoller queuePoller = new JdbcQueuePoller(configuration, runnable::get);
+        pollers.add(queuePoller);
+        
+        poolExecutor.execute(queuePoller);
+        
+        return () -> {
+            pollers.remove(queuePoller);
+            queuePoller.stop();
+        };
     }
 
     protected List<Either<T, DeserializationException>> map(Result<Record> fetch) {
@@ -494,12 +445,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public void pause() {
-        this.isPaused.set(true);
+        this.pollers.forEach(JdbcQueuePoller::pause);
     }
 
     @Override
     public void resume() {
-        this.isPaused.set(false);
+        this.pollers.forEach(JdbcQueuePoller::resume);
     }
 
     @Override
@@ -507,45 +458,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         if (!this.isClosed.compareAndSet(false, true)) {
             return;
         }
+        
+        this.pollers.forEach(JdbcQueuePoller::stop);
         this.poolExecutor.shutdown();
         this.asyncPoolExecutor.shutdown();
-    }
-
-    @ConfigurationProperties("kestra.jdbc.queues")
-    @Getter
-    public static class Configuration {
-        Duration minPollInterval = Duration.ofMillis(25);
-        Duration maxPollInterval = Duration.ofMillis(500);
-        Duration pollSwitchInterval = Duration.ofSeconds(60);
-        Integer pollSize = 100;
-        Integer switchSteps = 5;
-
-        public List<Step> computeSteps() {
-            if (this.maxPollInterval.compareTo(this.minPollInterval) <= 0) {
-                throw new IllegalArgumentException("'maxPollInterval' (" + this.maxPollInterval + ") must be greater than 'minPollInterval' (" + this.minPollInterval + ")");
-            }
-
-            List<Step> steps = new ArrayList<>();
-            Step currentStep = new Step(this.maxPollInterval, this.pollSwitchInterval);
-            steps.add(currentStep);
-            for (int i = 0; i < switchSteps; i++) {
-                Duration stepPollInterval = Duration.ofMillis(currentStep.pollInterval().toMillis() / 2);
-                if (stepPollInterval.compareTo(minPollInterval) < 0) {
-                    stepPollInterval = minPollInterval;
-                }
-                Duration stepSwitchInterval = Duration.ofMillis(currentStep.switchInterval().toMillis() / 2);
-                currentStep = new Step(stepPollInterval, stepSwitchInterval);
-                steps.add(currentStep);
-            }
-            Collections.sort(steps);
-            return steps;
-        }
-
-        public record Step (Duration pollInterval, Duration switchInterval) implements Comparable<Step> {
-            @Override
-            public int compareTo(Step o) {
-                return this.switchInterval.compareTo(o.switchInterval);
-            }
-        }
     }
 }

@@ -51,7 +51,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
 
         var limitSelect = select
             .orderBy(AbstractJdbcRepository.field("offset").asc())
-            .limit(configuration.getPollSize());
+            .limit(configuration.pollSize());
         ResultQuery<Record2<Object, Object>> configuredSelect = limitSelect;
 
         if (forUpdate) {

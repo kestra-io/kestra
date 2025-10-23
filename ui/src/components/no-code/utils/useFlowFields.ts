@@ -41,7 +41,7 @@ export function useFlowFields(flowSource: ComputedRef<string>){
     const {t} = useI18n();
 
     onMounted(() => {
-        pluginsStore.lazyLoadSchemaType();
+        pluginsStore.lazyLoadSchemaType({type: "flow"});
     });
 
     const parsedFlow = computed(() => {

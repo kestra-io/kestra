@@ -154,7 +154,7 @@
 
     onMounted(() => {
         if(props.flow){
-            pluginsStore.lazyLoadSchemaType();
+            pluginsStore.lazyLoadSchemaType({type: "flow"});
             loadFile();
         }
         loadPluginsHash();

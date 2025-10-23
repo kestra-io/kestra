@@ -1,0 +1,6 @@
+modules = ["java-graalvm22.3", "vue-node-20", "nodejs-20", "java-21"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"

@@ -60,7 +60,6 @@
     import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
     import debounce from "lodash/debounce";
     import {NoCodeProps} from "../flows/noCodeTypes";
-    import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {usePluginsStore} from "../../stores/plugins";
     import {useKeyboardSave} from "./utils/useKeyboardSave";
@@ -108,7 +107,7 @@
         parsedFlow,
     } = useFlowFields(lastValidFlowYaml)
 
-    useKeyboardSave(lastValidFlowYaml)
+    useKeyboardSave()
 
     const flowStore = useFlowStore();
     const flowYaml = computed<string>(() => flowStore.flowYaml ?? "");
@@ -118,28 +117,29 @@
     }, 500);
 
     const timeout = ref();
-    const editorStore = useEditorStore();
 
     const editorUpdate = (source: string) => {
+        let parsedSource: any = {}
+        try {
+            parsedSource = YAML_UTILS.parse(source);
+        } catch {
+            // ignore parse errors here
+            return;
+        }
+        
         // if no-code would not change the structure of the flow,
         // do not trigger an update as it would remove all formatting and comments
-        if(deepEqual(YAML_UTILS.parse(source), flowStore.flowParsed)) {
+        if(deepEqual(parsedSource, flowStore.flowParsed)) {
             return;
         }
         flowStore.flowYaml = source;
-        flowStore.haveChange = true;
         validateFlow();
-        editorStore.setTabDirty({
-            name: "Flow",
-            dirty: true
-        });
 
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
                 source,
-                currentIsFlow: true,
                 topologyVisible: true,
             });
         }, 1000);

@@ -13,6 +13,7 @@ import io.kestra.webserver.services.posthog.PosthogService;
 import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -72,7 +73,10 @@ public abstract class AiService<T extends AiConfiguration> implements AiServiceI
 
     public String generateFlow(String ip, FlowGenerationPrompt flowGenerationPrompt) {
         String parentSpanId = IdUtils.create();
-        Map<String, String> inputState = Map.of("flowYaml", flowGenerationPrompt.flowYaml(), "userPrompt", flowGenerationPrompt.userPrompt());
+        Map<String, String> inputState = new HashMap<>();
+        inputState.put("flowYaml", flowGenerationPrompt.flowYaml());
+        inputState.put("userPrompt", flowGenerationPrompt.userPrompt());
+
         this.postHogService.capture(flowGenerationPrompt.conversationId(), "$ai_trace", Map.of(
             "$ai_trace_id", flowGenerationPrompt.conversationId(),
             "$ai_span_name", "FlowGenerationSession",

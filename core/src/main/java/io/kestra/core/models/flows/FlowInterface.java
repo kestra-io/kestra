@@ -136,7 +136,7 @@ public interface FlowInterface extends FlowId, DeletedInterface, TenantInterface
     class SourceGenerator {
         private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofJson()
             .copy()
-            .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+            .setDefaultPropertyInclusion(JsonInclude.Include.NON_DEFAULT);
 
         static String generate(final FlowInterface flow) {
             try {

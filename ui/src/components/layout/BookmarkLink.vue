@@ -66,6 +66,7 @@
 <style scoped>
     .wrapper{
         position: relative;
+
         .buttons {
             color: var(--ks-content-primary);
             position: absolute;
@@ -133,6 +134,7 @@
 
         &:hover{
             background-color: var(--ks-button-background-secondary-hover);
+            border-radius: 0.25rem;
         }
     }
 </style>

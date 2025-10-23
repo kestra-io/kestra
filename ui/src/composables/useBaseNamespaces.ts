@@ -72,7 +72,10 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function kv(this: any, payload: {namespace: string; key: string}) {
-        const response = await axios.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`);
+        const response = await axios.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`, VALIDATE);
+        if (response.status === 404) {
+            throw new Error(response.data.message);
+        }
         const data = response.data;
         const contentLength = response.headers?.["content-length"];
         if (contentLength === (data.length + 2).toString()) {
@@ -128,9 +131,15 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function listSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
-        const response = await axios.get(`${apiUrl()}/namespaces/${id}/secrets`, {
+        const response = await axios.get(`${apiUrl()}/secrets`, {
             ...VALIDATE,
-            params
+            params: {
+                ...params,
+                filters: {
+                    namespace: {EQUALS: id},
+                    ...params.filters
+                }
+            }
         });
         if (response.status === 200 && shouldCommit !== false) {
             secrets.value = response.data.results;
@@ -214,7 +223,7 @@ export const useBaseNamespacesStore = () => {
         return request.data ?? [];
     }
 
-    async function importFileDirectory(this: any, payload: {namespace: string; path: string; content: string}) {
+    async function importFileDirectory(this: any, payload: {namespace: string; path: string; content: ArrayBuffer}) {
         const DATA = new FormData();
         const BLOB = new Blob([payload.content], {type: "text/plain"});
         DATA.append("fileContent", BLOB);

@@ -40,12 +40,8 @@ export function useFlowFields(flowSource: ComputedRef<string>){
 
     const {t} = useI18n();
 
-    onMounted(async () => {
-        if(pluginsStore.schemaType?.flow) {
-            return; // Schema already loaded
-        }
-
-        await pluginsStore.loadSchemaType()
+    onMounted(() => {
+        pluginsStore.lazyLoadSchemaType({type: "flow"});
     });
 
     const parsedFlow = computed(() => {

@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
 
 /**
  * Base class for all task runners.
@@ -36,7 +37,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Plugin, PluginVersioning, WorkerJobLifecycle {
     @NotBlank
-    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     protected String type;
 
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)

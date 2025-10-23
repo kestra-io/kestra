@@ -32,7 +32,7 @@ Watch out for duplicates! If you are creating a new issue, please check existing
 #### Requirements
 The following dependencies are required to build Kestra locally:
 - Java 21+
-- Node 18+ and npm
+- Node 22+ and npm 10+
 - Python 3, pip and python venv
 - Docker & Docker Compose
 - an IDE (Intellij IDEA, Eclipse or VS Code)

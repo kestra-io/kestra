@@ -52,5 +52,9 @@
         color: var(--ks-content-secondary);
         line-height: 1.5rem;
     }
+
+    img {
+        max-width: 222px;
+    }
 }
 </style>

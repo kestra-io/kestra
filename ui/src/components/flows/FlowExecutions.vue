@@ -1,19 +1,18 @@
 <template>
-    <Executions :restoreUrl="false" filter :topbar="false" :namespace="flowStore.flow?.namespace" :flowId="flowStore.flow?.id" />
+    <Executions
+        :namespace="flowStore.flow?.namespace"
+        :flowId="flowStore.flow?.id"
+        :topbar="false"
+        :restoreUrl="false"
+        filter
+    />
 </template>
 
-<script>
-    import {mapStores} from "pinia";
+<script setup lang="ts">
     import Executions from "../executions/Executions.vue";
-    import {useFlowStore} from "../../stores/flow";
 
-    export default {
-        inheritAttrs: false,
-        components: {
-            Executions,
-        },
-        computed: {
-            ...mapStores(useFlowStore)
-        }
-    };
+    import {useFlowStore} from "../../stores/flow";
+    const flowStore = useFlowStore();
+
+    defineOptions({inheritAttrs: false});
 </script>

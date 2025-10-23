@@ -1,0 +1,39 @@
+# Example 2: Cumulative sum using previous iteration values
+# This demonstrates a practical use case: calculating cumulative sum
+
+id: foreach_cumulative_sum
+namespace: company.team
+
+description: >
+  Calculates a cumulative sum by accessing the sum from the previous iteration.
+  This demonstrates how outputFromIteration() enables stateful processing in loops.
+
+tasks:
+  - id: numbers_to_sum
+    type: io.kestra.plugin.core.debug.Return
+    format: |
+      Numbers: [10, 20, 30, 40, 50]
+
+  - id: cumulative_sum_loop
+    type: io.kestra.plugin.core.flow.ForEach
+    values: [10, 20, 30, 40, 50]
+    tasks:
+      - id: calculate_cumulative
+        type: io.kestra.plugin.core.debug.Return
+        format: |
+          {% if taskrun.iteration == 0 %}
+          {{ taskrun.value }}
+          {% else %}
+          {{ taskrun.value + outputFromIteration(outputs.cumulative_sum_loop, taskrun.iteration - 1).value | int }}
+          {% endif %}
+
+  - id: display_results
+    type: io.kestra.plugin.core.debug.Return
+    format: |
+      Cumulative sums calculated:
+      Iteration 0: {{ outputFromIteration(outputs.cumulative_sum_loop, 0).value }}
+      Iteration 1: {{ outputFromIteration(outputs.cumulative_sum_loop, 1).value }}
+      Iteration 2: {{ outputFromIteration(outputs.cumulative_sum_loop, 2).value }}
+      Iteration 3: {{ outputFromIteration(outputs.cumulative_sum_loop, 3).value }}
+      Iteration 4: {{ outputFromIteration(outputs.cumulative_sum_loop, 4).value }}
+      Final cumulative sum: {{ outputFromIteration(outputs.cumulative_sum_loop, 4).value }}

@@ -1,0 +1,43 @@
+# Example 3: Compare current iteration with previous iterations
+# This shows how to make decisions based on previous iteration results
+
+id: foreach_compare_iterations
+namespace: company.team
+
+description: >
+  Compares each iteration's value with previous iterations to detect changes or trends.
+  Useful for monitoring, anomaly detection, or conditional processing.
+
+tasks:
+  - id: sensor_readings
+    type: io.kestra.plugin.core.flow.ForEach
+    values: [72, 75, 78, 92, 95, 76, 73]
+    tasks:
+      - id: analyze_reading
+        type: io.kestra.plugin.core.debug.Return
+        format: |
+          Current reading: {{ taskrun.value }}
+          Iteration: {{ taskrun.iteration }}
+          {% if taskrun.iteration > 0 %}
+          Previous reading: {{ outputFromIteration(outputs.sensor_readings, taskrun.iteration - 1).value }}
+          {% set prev = outputFromIteration(outputs.sensor_readings, taskrun.iteration - 1).value | int %}
+          {% set curr = taskrun.value | int %}
+          {% set diff = curr - prev %}
+          Change: {{ diff }}
+          {% if diff > 10 %}
+          ⚠️ ALERT: Significant temperature increase detected!
+          {% elif diff < -10 %}
+          ⚠️ ALERT: Significant temperature decrease detected!
+          {% else %}
+          ✓ Temperature change is within normal range
+          {% endif %}
+          {% else %}
+          This is the first reading - baseline established
+          {% endif %}
+
+  - id: summary
+    type: io.kestra.plugin.core.debug.Return
+    format: |
+      Analysis complete. Total readings processed: {{ outputs.sensor_readings | length }}
+      First reading: {{ outputFromIteration(outputs.sensor_readings, 0).value }}
+      Last reading: {{ outputFromIteration(outputs.sensor_readings, 6).value }}

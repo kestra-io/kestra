@@ -1,0 +1,50 @@
+# Example 4: Chain processing where each iteration builds on previous results
+# This demonstrates complex data transformation scenarios
+
+id: foreach_chain_processing
+namespace: company.team
+
+description: >
+  Each iteration processes data and passes results to the next iteration,
+  creating a processing chain. Useful for ETL pipelines and data transformations.
+
+tasks:
+  - id: data_processing_chain
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["raw_data", "cleaned", "transformed", "validated", "enriched"]
+    tasks:
+      - id: process_stage
+        type: io.kestra.plugin.core.debug.Return
+        format: |
+          Stage {{ taskrun.iteration }}: {{ taskrun.value }}
+          {% if taskrun.iteration == 0 %}
+          Input: Raw data loaded from source
+          Output: Data ready for cleaning
+          {% elif taskrun.iteration == 1 %}
+          Input: {{ outputFromIteration(outputs.data_processing_chain, taskrun.iteration - 1).value }}
+          Output: Removed duplicates and null values
+          {% elif taskrun.iteration == 2 %}
+          Previous stage: {{ outputFromIteration(outputs.data_processing_chain, taskrun.iteration - 1).value }}
+          Output: Applied business rules and formatting
+          {% elif taskrun.iteration == 3 %}
+          Previous stage: {{ outputFromIteration(outputs.data_processing_chain, taskrun.iteration - 1).value }}
+          Output: Validated against schema
+          {% else %}
+          All previous stages: 
+          {% for i in range(0, taskrun.iteration) %}
+            - {{ outputFromIteration(outputs.data_processing_chain, i).value }}
+          {% endfor %}
+          Output: Final enriched dataset ready for use
+          {% endif %}
+
+  - id: final_report
+    type: io.kestra.plugin.core.debug.Return
+    format: |
+      Processing Pipeline Complete!
+      
+      Pipeline stages executed:
+      {% for i in range(0, 5) %}
+      {{ i }}. {{ outputFromIteration(outputs.data_processing_chain, i).value }}
+      {% endfor %}
+      
+      Final stage output: {{ outputFromIteration(outputs.data_processing_chain, 4).value }}

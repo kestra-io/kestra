@@ -1,0 +1,26 @@
+# Example 1: Access previous iteration value in ForEach loop
+# This example demonstrates how to use the outputFromIteration() function
+# to access outputs from previous iterations
+
+id: foreach_previous_iteration_example
+namespace: company.team
+
+description: >
+  Demonstrates accessing previous iteration values in a ForEach loop.
+  Each iteration can reference the result from the previous iteration.
+
+tasks:
+  - id: loop_with_previous_value
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["s1", "s2", "s3", "s4", "s5"]
+    tasks:
+      - id: process_with_previous
+        type: io.kestra.plugin.core.debug.Return
+        format: |
+          Current iteration: {{ taskrun.iteration }}
+          Current value: {{ taskrun.value }}
+          {% if taskrun.iteration > 0 %}
+          Previous iteration output: {{ outputFromIteration(outputs.loop_with_previous_value, taskrun.iteration - 1) }}
+          {% else %}
+          This is the first iteration, no previous value available
+          {% endif %}

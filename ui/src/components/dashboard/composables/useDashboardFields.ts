@@ -23,11 +23,7 @@ export function useDashboardFields() {
     const dashboardStore = useDashboardStore();
 
     onMounted(() => {
-        if(pluginsStore.schemaType?.dashboard) {
-            return; // Schema already loaded
-        }
-
-        pluginsStore.loadSchemaType({type: "dashboard"});
+        pluginsStore.lazyLoadSchemaType({type: "dashboard"});
     });
 
     const parsedSource = computed(() => dashboardStore.parsedSource)

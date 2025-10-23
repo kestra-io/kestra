@@ -6,7 +6,7 @@
             class="flex-1"
             :modelValue="hasDraft ? draftSource : source"
             :schemaType="flow ? 'flow': undefined"
-            :lang="extension === undefined ? 'yaml' : undefined"
+            :lang="lang"
             :extension="extension"
             :navbar="false"
             :readOnly="flow && flowStore.isReadOnly"
@@ -153,14 +153,26 @@
     });
 
     onMounted(() => {
+        if(props.flow){
+            pluginsStore.lazyLoadSchemaType({type: "flow"});
+            loadFile();
+        }
         loadPluginsHash();
-        loadFile();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
         if(route.query.ai === "open") {
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
         }
+    });
+
+    const LANGS_WITH_WORKERS = ["yaml", "yml", "json", "ts", "js"];
+
+    const lang = computed(() => {
+        if (LANGS_WITH_WORKERS.includes(props.extension)) {
+            return props.extension;
+        }
+        return undefined;
     });
 
     watch(() => flowStore.openAiCopilot, (newVal) => {

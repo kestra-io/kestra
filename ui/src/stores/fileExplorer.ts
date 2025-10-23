@@ -73,7 +73,7 @@ function isNotRootTreeNode(node: ElTreeNode | {level: 0}): node is ElTreeNode {
     return node.level > 0;
 }
 
-export const useFilesStore = defineStore("files", () => {
+export const useFileExplorerStore = defineStore("fileExplorer", () => {
     const fileTree = ref<TreeNode[]>([]);
     const searchResults = ref<string[]>([]);
     const namespaceId = ref<string>();

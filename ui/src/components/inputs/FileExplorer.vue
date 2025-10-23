@@ -370,8 +370,8 @@
         isDirectory, 
         TreeNode,
         TreeNodeFile,
-        useFilesStore
-    } from "../../stores/files";
+        useFileExplorerStore
+    } from "../../stores/fileExplorer";
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -396,7 +396,7 @@
 
     const route = useRoute();
     const namespacesStore = useNamespacesStore();
-    const filesStore = useFilesStore();
+    const filesStore = useFileExplorerStore();
 
     watch(
         () => props.currentNS,

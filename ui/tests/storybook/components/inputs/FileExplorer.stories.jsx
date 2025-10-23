@@ -1,9 +1,9 @@
-import EditorSidebar from "../../../../src/components/inputs/EditorSidebar.vue";
+import FileExplorer from "../../../../src/components/inputs/FileExplorer.vue";
 import {useAxios} from "../../../../src/utils/axios";
 
 const meta = {
-    title: "inputs/EditorSidebar",
-    component: EditorSidebar,
+    title: "inputs/FileExplorer",
+    component: FileExplorer,
 }
 
 export default meta;
@@ -23,7 +23,7 @@ export const Default = {
 
 
             return () => <div style="margin: 1rem;">
-                <EditorSidebar currentNS="example"/>
+                <FileExplorer currentNS="example"/>
             </div>
         }
     })

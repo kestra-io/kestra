@@ -126,6 +126,9 @@
         width: var(--switch-width);
         height: var(--switch-height);
         background: var(--switch-bg);
+        html.light & {
+            background: #ecebef;
+        }
         outline: 1px solid var(--ks-border-primary);
         box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
         border-radius: 999px;

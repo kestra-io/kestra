@@ -1,6 +1,6 @@
 import {useI18n} from "vue-i18n";
-import {getCurrentInstance} from "vue";
-
+import {computed} from "vue";
+import {useMiscStore} from "override/stores/misc";
 import {FilterValue} from "../utils/filterTypes";
 
 import {State} from "@kestra-io/ui-libs";
@@ -29,7 +29,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         t = useI18n({useScope: "global"}).t;
     }
 
-    const isOSS = getCurrentInstance()?.appContext.config.globalProperties.$isOss ?? false;
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     // Override for the scope labels on the dashboard
     const DASHBOARDS = ["dashboard", "custom_dashboard"];
@@ -87,7 +87,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
                 description: t("filter.execution_kind.playground_description"),
                 value: "PLAYGROUND",
             },
-            ...(isOSS ? [] : [{
+            ...(isOSS.value ? [] : [{
                 label: t("filter.execution_kind.test"),
                 description: t("filter.execution_kind.test_description"),
                 value: "TEST",

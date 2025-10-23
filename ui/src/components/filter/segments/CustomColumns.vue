@@ -128,6 +128,10 @@
 
 :deep(.el-button.selected) {
     color: var(--ks-chart-success);
+
+    &:hover {
+        color: var(--ks-content-success);
+    }
 }
 
 :deep(.el-button.unselected) {

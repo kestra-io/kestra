@@ -3,9 +3,7 @@ package io.kestra.core.models.executions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -18,6 +16,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @ToString
 @EqualsAndHashCode
@@ -310,6 +309,24 @@ public class TaskRun implements TenantInterface {
             .state(new State(State.Type.CREATED, List.of(this.state.getHistories().getFirst())))
             .attempts(null)
             .build();
+    }
+
+    public Optional<Reason> resolveAttemptReason() {
+
+        if( this.getAttempts() != null && this.getAttempts().getLast().getState().getCurrent().isKilled() ) return Optional.of(Reason.RESUBMITTED);
+
+        Optional<State.Type> nearestState= this.getState().getHistories()
+            .reversed()
+            .stream()
+            .filter(history -> history.getState().isRetrying() || history.getState().isRestarted())
+            .findFirst().map(State.History::getState);
+
+        if (nearestState.isPresent()){
+            if (nearestState.get().isRetrying()) return Optional.of(Reason.RETRYING);
+            return Optional.of(Reason.RESTARTED);
+        }
+
+        return  Optional.empty();
     }
 
 }

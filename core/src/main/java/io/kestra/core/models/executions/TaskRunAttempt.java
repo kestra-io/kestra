@@ -26,6 +26,9 @@ public class TaskRunAttempt {
     @Nullable
     String workerId;
 
+    @Nullable
+    Reason reason;
+
     @With
     @Nullable
     URI logFile;
@@ -34,6 +37,7 @@ public class TaskRunAttempt {
         return new TaskRunAttempt(
             this.state.withState(state),
             this.workerId,
+            this.reason,
             this.logFile
         );
     }

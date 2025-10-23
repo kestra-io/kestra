@@ -907,9 +907,12 @@ public class DefaultWorker implements Worker {
             return workerTask.withTaskRun(taskRun);
         }
 
+      Optional<Reason> attemptReason = workerTask.getTaskRun().resolveAttemptReason();
+
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new io.kestra.core.models.flows.State().withState(RUNNING))
-            .workerId(this.id);
+            .workerId(this.id)
+            .reason(attemptReason.orElse(null));
 
         // emit the attempt so the execution knows that the task is in RUNNING
         this.workerTaskResultQueue.emit(new WorkerTaskResult(

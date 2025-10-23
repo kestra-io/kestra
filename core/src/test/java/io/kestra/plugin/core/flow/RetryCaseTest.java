@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.Reason;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
@@ -34,18 +35,24 @@ public class RetryCaseTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(4);
+        execution.getTaskRunList().getFirst().getAttempts().stream().skip(1)
+            .forEach(attempt->assertThat(attempt.getReason()).isEqualTo(Reason.RETRYING));
+
     }
 
     public void retrySuccessAtFirstAttempt(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts().getLast().getReason()).isNull();
     }
 
     public void retryFailed(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        execution.getTaskRunList().getFirst().getAttempts().stream().skip(1)
+            .forEach(attempt->assertThat(attempt.getReason()).isEqualTo(Reason.RETRYING));
     }
 
     public void retryRandom(Execution execution) {

@@ -223,7 +223,7 @@ export const useBaseNamespacesStore = () => {
         return request.data ?? [];
     }
 
-    async function importFileDirectory(this: any, payload: {namespace: string; path: string; content: string}) {
+    async function importFileDirectory(this: any, payload: {namespace: string; path: string; content: ArrayBuffer}) {
         const DATA = new FormData();
         const BLOB = new Blob([payload.content], {type: "text/plain"});
         DATA.append("fileContent", BLOB);

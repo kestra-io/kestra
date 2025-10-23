@@ -207,7 +207,7 @@
         if (route.query.q || searchText.value) {
             query.q = route.query.q || searchText.value;
         }
-        const data = await blueprintsStore.getBlueprintTagsForQuery({
+        const data = await blueprintsStore.getBlueprintTags({
             type: props.blueprintType,
             kind: props.blueprintKind,
             ...query,
@@ -225,7 +225,7 @@
         if (props.system) query.tags = "system";
         else if (selectedTags.value.length > 0) query.tags = selectedTags.value;
 
-        const data = await blueprintsStore.getBlueprintsForQuery({
+        const data = await blueprintsStore.getBlueprints({
             type: props.blueprintType,
             kind: props.blueprintKind,
             params: query,

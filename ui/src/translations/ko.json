@@ -587,6 +587,10 @@
     },
     "file preview truncated": "표시된 내용이 잘렸습니다",
     "files": "파일",
+    "filter": {
+      "reset_tooltip": "기본값으로 재설정",
+      "save filter tooltip": "적용된 필터 저장"
+    },
     "filter by log level": "Log 레벨로 필터링",
     "filters": {
       "comparators": {

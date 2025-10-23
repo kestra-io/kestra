@@ -587,6 +587,10 @@
     },
     "file preview truncated": "Angezeigter Inhalt wurde abgeschnitten",
     "files": "Dateien",
+    "filter": {
+      "reset_tooltip": "Auf Standard zurücksetzen",
+      "save filter tooltip": "Gespeicherte angewandte Filter"
+    },
     "filter by log level": "Nach Log-Ebene filtern",
     "filters": {
       "comparators": {

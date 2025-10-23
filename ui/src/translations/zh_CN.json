@@ -587,6 +587,10 @@
     },
     "file preview truncated": "显示的内容已被截断",
     "files": "文件",
+    "filter": {
+      "reset_tooltip": "重置为默认",
+      "save filter tooltip": "保存已应用的过滤器"
+    },
     "filter by log level": "按日志级别过滤",
     "filters": {
       "comparators": {

@@ -587,6 +587,10 @@
     },
     "file preview truncated": "El contenido mostrado ha sido truncado",
     "files": "Archivos",
+    "filter": {
+      "reset_tooltip": "Restablecer a los valores predeterminados",
+      "save filter tooltip": "Guardar filtros aplicados"
+    },
     "filter by log level": "Filtrar por nivel de log",
     "filters": {
       "comparators": {

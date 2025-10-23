@@ -587,6 +587,10 @@
     },
     "file preview truncated": "प्रदर्शित सामग्री को संक्षिप्त किया गया है",
     "files": "फ़ाइलें",
+    "filter": {
+      "reset_tooltip": "डिफ़ॉल्ट पर रीसेट करें",
+      "save filter tooltip": "लागू किए गए फ़िल्टर सहेजें"
+    },
     "filter by log level": "Log स्तर द्वारा फ़िल्टर करें",
     "filters": {
       "comparators": {

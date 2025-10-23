@@ -587,6 +587,10 @@
     },
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
     "files": "ファイル",
+    "filter": {
+      "reset_tooltip": "デフォルトにリセット",
+      "save filter tooltip": "適用されたフィルターを保存"
+    },
     "filter by log level": "Logレベルでフィルター",
     "filters": {
       "comparators": {

@@ -57,7 +57,7 @@ function readFile(file: File): Promise<ArrayBuffer> {
     });
 }
 
-function isNotRootTreeNode(node: (TreeNode & { level: number}) | {level: 0}): node is (TreeNode & { level: number}) {
+function isNotRootTreeNode(node: {data: TreeNode, level: number} | {level: 0}): node is {data: TreeNode, level: number} {
     return node.level > 0;
 }
 
@@ -235,8 +235,7 @@ export const useFilesStore = defineStore("files", () => {
         return {path, file: NEW};
     }
 
-    function getPath(nodeOrName: TreeNode | string ) {
-        const uid = typeof nodeOrName === "string" ? nodeOrName : nodeOrName.id;
+    function getPath(uid: string ) {
         // first, use the node unique id to find it in all the subtrees of the fileTree
         const findPath = (array: TreeNode[], currentPath = ""): string | undefined => {
             for (const item of array) {
@@ -256,18 +255,21 @@ export const useFilesStore = defineStore("files", () => {
         return findPath(fileTree.value);
     }
 
-    async function loadNodes(node: (TreeNode & { level: number}) | {level: 0} = {level: 0}, resolve: (children: TreeNode[]) => void = () => {}) {
+    async function loadNodes(
+        node: { data: TreeNode, level: number} | {level: 0} = {level: 0}, 
+        resolve?: (children: TreeNode[]) => void
+    ) {
         if(namespaceId.value === undefined) return;
         if (node.level === 0) {
             const payload = {namespace: namespaceId.value};
             const itemsArr = await namespacesStore.readDirectory(payload);
             renderNodes(itemsArr);
             fileTree.value = sorted(fileTree.value);
-            resolve(fileTree.value);
+            resolve?.(fileTree.value);
         } else if (isNotRootTreeNode(node)) {
             const payload = {
                 namespace: namespaceId.value, 
-                path: getPath(node)
+                path: getPath(node.data.id),
             };
             let children = await namespacesStore.readDirectory(payload);
             children = sorted(
@@ -291,7 +293,7 @@ export const useFilesStore = defineStore("files", () => {
             if(rootNodePath){
                 updateChildren(fileTree.value!, rootNodePath, children);
             } 
-            resolve(children);
+            resolve?.(children);
         }
     }
 

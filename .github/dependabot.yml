@@ -14,10 +14,6 @@ updates:
     open-pull-requests-limit: 50
     labels:
       - "dependency-upgrade"
-    ignore:
-      - dependency-name: "com.google.protobuf:*"
-        # Ignore versions of Protobuf that are equal to or greater than 4.0.0 as Orc still uses 3
-        versions: [ "[4,)" ]
 
   # Maintain dependencies for Gradle modules
   - package-ecosystem: "gradle"
@@ -30,6 +26,10 @@ updates:
     open-pull-requests-limit: 50
     labels:
       - "dependency-upgrade"
+    ignore:
+      - dependency-name: "com.google.protobuf:*"
+        # Ignore versions of Protobuf that are equal to or greater than 4.0.0 as Orc still uses 3
+        versions: [ "[4,)" ]
 
   # Maintain dependencies for NPM modules
   - package-ecosystem: "npm"

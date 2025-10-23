@@ -26,7 +26,7 @@
                         @dragover.prevent="dragover"
                         @dragleave.prevent="throttle(removeAllPotentialTabs, 300)"
                         @drop="drop"
-                        @wheel="onWheelTabScroll"
+                        @wheel.passive="onWheelTabScroll"
                         :data-panel-index="panelIndex"
                         :class="{dragover: panel.dragover}"
                         ref="tabContainerRefs"

@@ -136,7 +136,6 @@
     import {useFlowStore} from "../../stores/flow";
     import EditorType = editor.EditorType;
     import {useRoute} from "vue-router";
-    import {useEditorStore} from "../../stores/editor";
 
     const currentInstance = getCurrentInstance()!;
     const {t} = useI18n();

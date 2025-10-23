@@ -119,12 +119,18 @@ class ExecutionServiceTest {
 
         Execution restart = executionService.restart(execution, null);
 
-        assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count()).isGreaterThan(1L);
-        assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count()).isGreaterThan(1L);
-        assertThat(restart.getTaskRunList().getFirst().getId()).isEqualTo(restart.getTaskRunList().getFirst().getId());
-        assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
+        Execution finishedRestart = runnerUtils.awaitExecution(
+            e -> e.getState().getCurrent().isTerminated() && !e.getId().equals(execution.getId()),
+            restart,
+            Duration.ofSeconds(60)
+        );
+
+        assertThat(finishedRestart.getState().getCurrent()).isIn(State.Type.SUCCESS, State.Type.FAILED);
+        assertThat(finishedRestart.getState().getHistories()).hasSize(4);
+        assertThat(finishedRestart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count()).isGreaterThan(1L);
+        assertThat(finishedRestart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count()).isGreaterThan(1L);
+        assertThat(finishedRestart.getTaskRunList().getFirst().getId()).isEqualTo(finishedRestart.getTaskRunList().getFirst().getId());
+        assertThat(finishedRestart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
     }
 
     @RetryingTest(5)
@@ -135,12 +141,18 @@ class ExecutionServiceTest {
 
         Execution restart = executionService.restart(execution, null);
 
-        assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getState().getHistories()).hasSize(4);
-        assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count()).isGreaterThan(1L);
-        assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count()).isGreaterThan(1L);
-        assertThat(restart.getTaskRunList().getFirst().getId()).isEqualTo(restart.getTaskRunList().getFirst().getId());
-        assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
+        Execution finishedRestart = runnerUtils.awaitExecution(
+            e -> e.getState().getCurrent().isTerminated() && !e.getId().equals(execution.getId()),
+            restart,
+            Duration.ofSeconds(60)
+        );
+
+        assertThat(finishedRestart.getState().getCurrent()).isIn(State.Type.SUCCESS, State.Type.FAILED);
+        assertThat(finishedRestart.getState().getHistories()).hasSize(4);
+        assertThat(finishedRestart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count()).isGreaterThan(1L);
+        assertThat(finishedRestart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count()).isGreaterThan(1L);
+        assertThat(finishedRestart.getTaskRunList().getFirst().getId()).isEqualTo(finishedRestart.getTaskRunList().getFirst().getId());
+        assertThat(finishedRestart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
     }
 
     @Test

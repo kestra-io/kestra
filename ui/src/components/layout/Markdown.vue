@@ -47,7 +47,7 @@
             permalink: false,
             fontSizeVar: "font-size-sm",
             html: true,
-            showSearch: true, // good default for OSS docs
+            showSearch: false, // good default for OSS docs
             collapseExamples: false,
             variant: "enhanced",
         }

@@ -5,6 +5,12 @@ import {useNamespacesStore} from "../override/stores/namespaces";
 import {useToast} from "../utils/toast";
 import {useI18n} from "vue-i18n";
 
+export interface TreeNodeBase {
+    id: string;
+    fileName: string;
+    leaf: boolean;
+}
+
 export interface TreeNodeFile{
     id: string;
     fileName: string;
@@ -12,7 +18,6 @@ export interface TreeNodeFile{
     leaf: true;
     content?: string;
     extension?: string;
-    data?: any;
 }
 
 export interface TreeNodeDirectory{
@@ -21,7 +26,12 @@ export interface TreeNodeDirectory{
     type: "Directory";
     leaf: false;
     children: TreeNode[];
-    data?: any;
+}
+
+interface ElTreeNode {
+    childNodes: ElTreeNode[];
+    data: TreeNode;
+    level: number;
 }
 
 export type TreeNode = TreeNodeFile | TreeNodeDirectory;
@@ -57,7 +67,9 @@ function readFile(file: File): Promise<ArrayBuffer> {
     });
 }
 
-function isNotRootTreeNode(node: {data: TreeNode, level: number} | {level: 0}): node is {data: TreeNode, level: number} {
+
+
+function isNotRootTreeNode(node: ElTreeNode | {level: 0}): node is ElTreeNode {
     return node.level > 0;
 }
 
@@ -162,14 +174,14 @@ export const useFilesStore = defineStore("files", () => {
         if (fileTree.value === undefined) {
             fileTree.value = [];
         }
-        for (let i = 0; i < itemsArr.length; i++) {
-            const {type, fileName} = itemsArr[i];
+        
+        for (const {type, fileName} of itemsArr) {
             if (type === "Directory") {
                 addFolder({fileName});
             } else if (type === "File") {
-                const [fileName, extension] = getFileNameWithExtension(itemsArr[i].fileName);
+                const [fileFileName, extension] = getFileNameWithExtension(fileName);
                 addFile({
-                    fileName, 
+                    fileName: fileFileName,
                     extension, 
                     leaf: true
                 });
@@ -181,6 +193,7 @@ export const useFilesStore = defineStore("files", () => {
         if(!namespaceId.value) return {}
         const {fileName, extension, content = "", leaf} = file;
         const NAME = `${fileName}${extension ? `.${extension}` : ""}`;
+
         const NEW: TreeNodeFile = {
             id: Utils.uid(),
             fileName: NAME,
@@ -256,14 +269,16 @@ export const useFilesStore = defineStore("files", () => {
     }
 
     async function loadNodes(
-        node: { data: TreeNode, level: number} | {level: 0} = {level: 0}, 
+        node: ElTreeNode | {level: 0} = {level: 0},
         resolve?: (children: TreeNode[]) => void
     ) {
-        if(namespaceId.value === undefined) return;
+        if (namespaceId.value === undefined) return;
         if (node.level === 0) {
             const payload = {namespace: namespaceId.value};
-            const itemsArr = await namespacesStore.readDirectory(payload);
-            renderNodes(itemsArr);
+            const itemsArr = await namespacesStore.readDirectory<TreeNode>(payload);
+            const existingRootPaths = fileTree.value.map((item) => item.fileName); 
+            const itemArrFiltered = itemsArr.filter((item) => !existingRootPaths.includes(item.fileName));
+            renderNodes(itemArrFiltered);
             fileTree.value = sorted(fileTree.value);
             resolve?.(fileTree.value);
         } else if (isNotRootTreeNode(node)) {
@@ -271,13 +286,13 @@ export const useFilesStore = defineStore("files", () => {
                 namespace: namespaceId.value, 
                 path: getPath(node.data.id),
             };
-            let children = await namespacesStore.readDirectory(payload);
+            let children = await namespacesStore.readDirectory<TreeNode>(payload);
             children = sorted(
-                children.map((item: TreeNode) => ({
+                children.map((item) => ({
                     ...item,
                     id: Utils.uid(),
                     leaf: item.type === "File",
-                }))
+                } as TreeNode))
             );
             const updateChildren = (itemsArr: TreeNode[], path: string, newChildren: TreeNode[]) => {
                 for(const item of itemsArr){
@@ -380,6 +395,7 @@ export const useFilesStore = defineStore("files", () => {
                     content,
                     path: file.name,
                 });
+                
                 fileTree.value.push({
                     id: Utils.uid(),
                     fileName: `${name}${extension ? `.${extension}` : ""}`,

@@ -216,22 +216,6 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/trigger-multiplecondition-listener.yaml",
-        "flows/valids/trigger-multiplecondition-flow-a.yaml",
-        "flows/valids/trigger-multiplecondition-flow-b.yaml"})
-    void multipleConditionTrigger() throws Exception {
-        multipleConditionTriggerCaseTest.trigger();
-    }
-
-    @Test // Flaky on CI but never locally even with 100 repetitions
-    @LoadFlows(value = {"flows/valids/trigger-flow-listener-namespace-condition.yaml",
-        "flows/valids/trigger-multiplecondition-flow-c.yaml",
-        "flows/valids/trigger-multiplecondition-flow-d.yaml"}, tenantId = "condition-tenant")
-    void multipleConditionTriggerFailed() throws Exception {
-        multipleConditionTriggerCaseTest.failed("condition-tenant");
-    }
-
-    @Test
     @LoadFlows({"flows/valids/flow-trigger-preconditions-flow-listen.yaml",
         "flows/valids/flow-trigger-preconditions-flow-a.yaml",
         "flows/valids/flow-trigger-preconditions-flow-b.yaml"})

@@ -250,6 +250,15 @@ public record QueryFilter(
                     Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID
                 );
             }
+        },
+        SECRET_METADATA {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE
+                );
+            }
         };
 
         public abstract List<Field> supportedField();

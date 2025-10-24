@@ -1,13 +1,13 @@
 <template>
     <div
         class="p-2 sidebar"
-        @click="$refs.tree.setCurrentKey(undefined)"
+        @click="tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
     >
         <div class="flex-row d-flex">
             <el-select
                 v-model="filter"
-                :placeholder="$t('namespace files.filter')"
+                :placeholder="t('namespace files.filter')"
                 filterable
                 remote
                 :remoteMethod="searchFilesList"
@@ -27,7 +27,7 @@
             <el-button-group class="d-flex">
                 <el-tooltip
                     effect="light"
-                    :content="$t('namespace files.create.file')"
+                    :content="t('namespace files.create.file')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -39,7 +39,7 @@
                 </el-tooltip>
                 <el-tooltip
                     effect="light"
-                    :content="$t('namespace files.create.folder')"
+                    :content="t('namespace files.create.folder')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -76,20 +76,20 @@
                     </el-button>
                     <template #dropdown>
                         <el-dropdown-menu>
-                            <el-dropdown-item @click="$refs.filePicker.click()">
-                                {{ $t("namespace files.import.files") }}
+                            <el-dropdown-item @click="filePicker?.click()">
+                                {{ t("namespace files.import.files") }}
                             </el-dropdown-item>
                             <el-dropdown-item
-                                @click="$refs.folderPicker.click()"
+                                @click="folderPicker?.click()"
                             >
-                                {{ $t("namespace files.import.folder") }}
+                                {{ t("namespace files.import.folder") }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
                 <el-tooltip
                     effect="light"
-                    :content="$t('namespace files.export')"
+                    :content="t('namespace files.export')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -109,7 +109,7 @@
             :data="items"
             highlightCurrent
             :allowDrop="
-                (_, drop, dropType) => !drop.data?.leaf || dropType !== 'inner'
+                (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
             "
             draggable
             nodeKey="id"
@@ -128,15 +128,15 @@
             <template #empty>
                 <div class="m-4 empty">
                     <img :src="FileExplorerEmpty">
-                    <h3>{{ $t("namespace files.no_items.heading") }}</h3>
-                    <p>{{ $t("namespace files.no_items.paragraph") }}</p>
+                    <h3>{{ t("namespace files.no_items.heading") }}</h3>
+                    <p>{{ t("namespace files.no_items.paragraph") }}</p>
                 </div>
             </template>
             <template #default="{data, node}">
                 <el-dropdown
-                    :ref="`dropdown__${data.id}`"
+                    ref="dropdowns"
                     @contextmenu.prevent.stop="
-                        toggleDropdown(`dropdown__${data.id}`);
+                        toggleDropdown();
                         if(selectedNodes.length === 0) {
                             selectedNodes.push(data.id);
                             selectedFiles.push(getPath(data.id));
@@ -148,7 +148,7 @@
                     <el-row
                         justify="space-between"
                         class="w-100"
-                        @click="(event) => handleNodeClick(data, node, event)"
+                        @click="(event: MouseEvent) => handleNodeClick(data, node, event)"
                     >
                         <el-col class="w-100">
                             <TypeIcon
@@ -165,19 +165,19 @@
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'file', node)"
                             >
-                                {{ $t("namespace files.create.file") }}
+                                {{ t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
-                                {{ $t("namespace files.create.folder") }}
+                                {{ t("namespace files.create.folder") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
-                                {{ $t("namespace files.path.copy") }}
+                                {{ t("namespace files.path.copy") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
-                                {{ $t("namespace files.export_single") }}
+                                {{ t("namespace files.export_single") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="data.leaf && !multiSelected"
@@ -191,7 +191,7 @@
                                 "
                             >
                                 {{
-                                    $t(
+                                    t(
                                         `namespace files.rename.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
@@ -200,11 +200,11 @@
                             </el-dropdown-item>
                             <el-dropdown-item @click="removeSelectedFiles()">
                                 {{
-                                    selectedNodes.length <= 1 ? $t(
+                                    selectedNodes.length <= 1 ? t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
-                                    ) : $t(
+                                    ) : t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folders" : "files"
                                         }`
@@ -222,15 +222,15 @@
             v-model="dialog.visible"
             :title="
                 dialog.type === 'file'
-                    ? $t('namespace files.create.file')
-                    : $t('namespace files.create.folder')
+                    ? t('namespace files.create.file')
+                    : t('namespace files.create.folder')
             "
             width="500"
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
         >
             <div class="pb-1">
                 <span>
-                    {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
+                    {{ t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
             </div>
             <el-input
@@ -242,7 +242,7 @@
 
             <div class="py-1">
                 <span>
-                    {{ $t("namespace files.dialog.parent_folder") }}
+                    {{ t("namespace files.dialog.parent_folder") }}
                 </span>
             </div>
             <el-select
@@ -261,14 +261,14 @@
             <template #footer>
                 <div>
                     <el-button @click="toggleDialog(false)">
-                        {{ $t("cancel") }}
+                        {{ t("cancel") }}
                     </el-button>
                     <el-button
                         type="primary"
                         :disabled="!dialog.name"
                         @click="dialogHandler"
                     >
-                        {{ $t("namespace files.create.label") }}
+                        {{ t("namespace files.create.label") }}
                     </el-button>
                 </div>
             </template>
@@ -277,13 +277,13 @@
         <!-- Renaming dialog -->
         <el-dialog
             v-model="renameDialog.visible"
-            :title="$t(`namespace files.rename.${renameDialog.type}`)"
+            :title="t(`namespace files.rename.${renameDialog.type}`)"
             width="500"
             @keydown.enter.prevent="renameItem()"
         >
             <div class="pb-1">
                 <span>
-                    {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
+                    {{ t(`namespace files.rename.new_${renameDialog.type}`) }}
                 </span>
             </div>
             <el-input
@@ -295,14 +295,14 @@
             <template #footer>
                 <div>
                     <el-button @click="toggleRenameDialog(false)">
-                        {{ $t("cancel") }}
+                        {{ t("cancel") }}
                     </el-button>
                     <el-button
                         type="primary"
                         :disabled="!renameDialog.name"
                         @click="renameItem()"
                     >
-                        {{ $t("namespace files.rename.label") }}
+                        {{ t("namespace files.rename.label") }}
                     </el-button>
                 </div>
             </template>
@@ -318,10 +318,10 @@
             <template #footer>
                 <div>
                     <el-button @click="confirmation.visible = false">
-                        {{ $t("cancel") }}
+                        {{ t("cancel") }}
                     </el-button>
                     <el-button type="primary" @click="removeItems()">
-                        {{ $t("namespace files.dialog.deletion.confirm") }}
+                        {{ t("namespace files.dialog.deletion.confirm") }}
                     </el-button>
                 </div>
             </template>
@@ -336,33 +336,37 @@
             class="tabs-context"
         >
             <el-menu-item @click="toggleDialog(true, 'file')">
-                {{ $t("namespace files.create.file") }}
+                {{ t("namespace files.create.file") }}
             </el-menu-item>
             <el-menu-item @click="toggleDialog(true, 'folder')">
-                {{ $t("namespace files.create.folder") }}
+                {{ t("namespace files.create.folder") }}
             </el-menu-item>
         </el-menu>
     </div>
 </template>
 
-<script>
-    import {mapStores} from "pinia";
-    import {useNamespacesStore} from "override/stores/namespaces";
-    import {useEditorStore} from "../../stores/editor";
-    import {useFlowStore} from "../../stores/flow";
+<script lang="ts">
+    export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>;
+    export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>;
+</script>
 
+<script lang="ts" setup>
+    import {ref, computed, onMounted, onBeforeUnmount, nextTick, InjectionKey, inject} from "vue";
+    import {useRoute} from "vue-router";
+    import {useNamespacesStore} from "override/stores/namespaces";
     import Utils from "../../utils/utils";
     import FileExplorerEmpty from "../../assets/icons/file_explorer_empty.svg";
-
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import FilePlus from "vue-material-design-icons/FilePlus.vue";
     import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
     import PlusBox from "vue-material-design-icons/PlusBox.vue";
     import FolderDownloadOutline from "vue-material-design-icons/FolderDownloadOutline.vue";
     import TypeIcon from "../utils/icons/Type.vue";
+    import {useI18n} from "vue-i18n";
+    import {useToast} from "../../utils/toast";
+    import {EditorTabProps} from "./EditorWrapper.vue";
 
-
-    const DIALOG_DEFAULTS = {
+    const DIALOG_DEFAULTS:Dialog = {
         visible: false,
         type: "file",
         name: undefined,
@@ -370,820 +374,688 @@
         path: undefined,
     };
 
-    const RENAME_DEFAULTS = {
+    const RENAME_DEFAULTS:Dialog = {
         visible: false,
         type: "file",
         name: undefined,
         old: undefined,
     };
 
-    export default {
-        props: {
-            currentNS: {
-                type: String,
-                default: null,
-            },
-        },
-        components: {
-            Magnify,
-            FilePlus,
-            FolderPlus,
-            PlusBox,
-            FolderDownloadOutline,
-            TypeIcon,
-        },
-        data() {
-            return {
-                FileExplorerEmpty,
-                namespace: undefined,
-                filter: "",
-                dialog: {...DIALOG_DEFAULTS},
-                renameDialog: {...RENAME_DEFAULTS},
-                dropdownRef: "",
-                tree: {allExpanded: false},
-                currentFolder: undefined,
-                confirmation: {visible: false, data: {}},
-                items: undefined,
-                nodeBeforeDrag: undefined,
-                searchResults: [],
-                tabContextMenu: {visible: false, x: 0, y: 0},
-                selectedFiles: [], // Tracks selected file paths
-                selectedNodes: [], // Tracks selected node IDs
-                lastClickedIndex: null, // Tracks the last clicked file index
-            };
-        },
-        computed: {
-            ...mapStores(useEditorStore, useFlowStore, useNamespacesStore),
-            namespaceId() {
-                return this.currentNS ?? this.$route.params.namespace;
-            },
-            multiSelected() {
-                return this.selectedNodes.length > 1;
-            },
-            folders() {
-                function extractPaths(basePath = "", array) {
-                    const paths = [];
+    const props = defineProps<{
+        currentNS?: string | null;
+    }>();
 
-                    array?.forEach((item) => {
-                        if (item.type === "Directory") {
-                            const folderPath = `${basePath}${item.fileName}`;
-                            paths.push(folderPath);
-                            paths.push(
-                                ...extractPaths(
-                                    `${folderPath}/`,
-                                    item.children ?? [],
-                                ),
-                            );
-                        }
-                    });
-                    return paths;
-                }
+    const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY);
 
-                return extractPaths(undefined, this.items);
-            },
-            confirmationLabels() {
-                const files = this.confirmation.nodes?.filter(n => n.type === "File").length ?? 0;
-                const folders = this.confirmation.nodes?.filter(n => n.type === "Directory").length ?? 0;
+    const route = useRoute();
+    const namespacesStore = useNamespacesStore();
 
-                const labels = {title: this.$t("namespace files.dialog.deletion.title"), message: ""};
+    interface Dialog{
+        visible: boolean;
+        type: "file" | "folder";
+        name?: string;
+        folder?: string;
+        path?: string;
+        old?: string;
+        node?: any;
+    }
 
-                if (folders > 0 && files > 0) labels.message = this.$t("namespace files.dialog.deletion.mixed", {folders, files});
-                else if (folders > 0) labels.message = this.$t("namespace files.dialog.deletion.folders", {count: folders});
-                else labels.message = this.$t("namespace files.dialog.deletion.files", {count: files});
+    const filter = ref<string>("");
+    const dialog = ref<Dialog>({...DIALOG_DEFAULTS});
+    const renameDialog = ref<Dialog>({...RENAME_DEFAULTS});
+    const tree = ref<any>();
+    const filePicker = ref<HTMLInputElement>();
+    const folderPicker = ref<HTMLInputElement>();
+    const dropdowns = ref<{handleClose: () => void; handleOpen: () => void}>();
+    const dropdownRef = ref<{handleClose: () => void; handleOpen: () => void}>();
+    const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
+    const items = ref<TreeNode[]>([]);
+    const nodeBeforeDrag = ref<any>(undefined);
+    const searchResults = ref<string[]>([]);
+    const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0});
+    const selectedFiles = ref<string[]>([]);
+    const selectedNodes = ref<any[]>([]);
+    const lastClickedIndex = ref<number | null>(null);
 
-                return labels;
-            },
-        },
-        methods: {
-            nodeClass(data) {
-                // Use data.id to match the structure used in handleNodeClick
-                if (this.selectedNodes.includes(data.id)) {
-                    return "node selected-tree-node";
-                }
-                return "node";
-            },
-            pushToParentFolder(parentPath, newNode) {
-                const traverseAndInsert = (basePath = "", array) => {
-                    for (const item of array) {
-                        const folderPath = `${basePath}${item.fileName}`;
-                        if (folderPath === parentPath && Array.isArray(item.children)) {
-                            // Avoid duplicate folder entries
-                            if (!item.children.find(child => child.fileName === newNode.fileName)) {
-                                item.children.push(newNode);
-                                item.children = this.sorted(item.children);
-                            }
-                            return true;
-                        } else if (Array.isArray(item.children)) {
-                            if (traverseAndInsert(`${folderPath}/`, item.children)) return true;
-                        }
+    const {t} = useI18n();
+    const toast = useToast();
+
+    const namespaceId = computed<string>(() => props.currentNS ?? route.params.namespace as string);
+
+    const multiSelected = computed(() => selectedNodes.value.length > 1);
+
+    function extractPaths(basePath = "", array: TreeNode[] = []) {
+        const paths: string[] = [];
+        array?.forEach((item) => {
+            if (isDirectory(item)) {
+                const folderPath = `${basePath}${item.fileName}`;
+                paths.push(folderPath);
+                paths.push(...extractPaths(`${folderPath}/`, item.children ?? []));
+            }
+        });
+        return paths;
+    }
+    const folders = computed(() => extractPaths(undefined, items.value));
+
+    const confirmationLabels = computed(() => {
+        const files = confirmation.value.nodes?.filter(n => n.type === "File").length ?? 0;
+        const foldersCount = confirmation.value.nodes?.filter(n => n.type === "Directory").length ?? 0;
+        const labels = {title: t("namespace files.dialog.deletion.title"), message: ""};
+        if (foldersCount > 0 && files > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files});
+        else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount});
+        else labels.message = t("namespace files.dialog.deletion.files", {count: files});
+        return labels;
+    });
+
+    function nodeClass(data: any) {
+        if (selectedNodes.value.includes(data.id)) {
+            return "node selected-tree-node";
+        }
+        return "node";
+    }
+
+    function pushToParentFolder(parentPath: string, newNode: any) {
+        const traverseAndInsert = (basePath = "", array: any[]) => {
+            for (const item of array) {
+                const folderPath = `${basePath}${item.fileName}`;
+                if (folderPath === parentPath && Array.isArray(item.children)) {
+                    if (!item.children.find((child: any) => child.fileName === newNode.fileName)) {
+                        item.children.push(newNode);
+                        item.children = sorted(item.children);
                     }
-                    return false;
-                };
-
-                traverseAndInsert("", this.items);
-            },
-            flattenTree(items, parentPath = "") {
-                const result = [];
-
-                for (const item of items) {
-                    const fullPath = `${parentPath}${item.fileName}`;
-                    result.push({path: fullPath, fileName: item.fileName, id: item.id});
-
-                    if (item.children && item.children.length > 0) {
-                        result.push(...this.flattenTree(item.children, `${fullPath}/`));
-                    }
+                    return true;
+                } else if (Array.isArray(item.children)) {
+                    if (traverseAndInsert(`${folderPath}/`, item.children)) return true;
                 }
+            }
+            return false;
+        };
+        traverseAndInsert("", items.value);
+    }
 
-                return result.filter(i => i.path);
-            },
-            handleNodeClick(data, node, event = null) {
-                const path = this.getPath(node);
-                const flatList = this.flattenTree(this.items);
-                const currentIndex = flatList.findIndex(item => item.path === path);
+    function flattenTree(itemsArr: TreeNode[], parentPath = ""): any[] {
+        const result: any[] = [];
+        for (const item of itemsArr) {
+            const fullPath = `${parentPath}${item.fileName}`;
+            result.push({path: fullPath, fileName: item.fileName, id: item.id});
+            if (isDirectory(item) && item.children.length > 0) {
+                result.push(...flattenTree(item.children, `${fullPath}/`));
+            }
+        }
+        return result.filter(i => i.path);
+    }
 
-                const isCtrl = event && (event.ctrlKey || event.metaKey);
-                const isShift = event && event.shiftKey;
+    function handleNodeClick(data: any, node: TreeNode, event: MouseEvent | null = null) {
+        const path = getPath(node);
+        const flatList = flattenTree(items.value);
+        const currentIndex = flatList.findIndex(item => item.path === path);
+        const isCtrl = event && (event.ctrlKey || (event as any).metaKey);
+        const isShift = event && event.shiftKey;
 
-                if (isShift && this.lastClickedIndex !== null) {
-                    const start = Math.min(this.lastClickedIndex, currentIndex);
-                    const end = Math.max(this.lastClickedIndex, currentIndex);
-
-                    this.selectedFiles = flatList.slice(start, end + 1).map(item => item.path);
-                    this.selectedNodes = flatList.slice(start, end + 1).map(item => item.id);
-
-                } else if (isCtrl) {
-                    const isSelected = this.selectedNodes.includes(node.data.id);
-
-                    if (isSelected) {
-                        // Remove from selection - force reactivity with new arrays
-                        this.selectedFiles = [...this.selectedFiles.filter(file => file !== path)];
-                        this.selectedNodes = [...this.selectedNodes.filter(id => id !== node.data.id)];
-                    } else {
-                        // Add to selection
-                        this.selectedFiles = [...this.selectedFiles, path];
-                        this.selectedNodes = [...this.selectedNodes, node.data.id];
-                    }
-                    this.lastClickedIndex = currentIndex;
-
-                } else {
-                    // Handle single-click selection
-                    this.selectedFiles = [path];
-                    this.selectedNodes = [node.data.id];
-                    this.lastClickedIndex = currentIndex;
-                    if (data.leaf) {
-                        this.editorStore.openTab({
-                            name: data.fileName,
-                            path: path,
-                            extension: data.fileName.split(".").pop(),
-                            flow: false,
-                        });
-                    }
-                }
-            },
-
-            async removeSelectedFiles() {
-                const nodes = this.selectedFiles.map((filePath) => {
-                    const node = this.findNodeByPath(filePath);
-                    return node;
-                });
-
-                this.confirmRemove(nodes);
-            },
-
-            findNodeByPath(path, items = this.items, parentPath = "") {
-                for (const item of items) {
-                    const fullPath = `${parentPath}${item.fileName}`;
-
-                    if (fullPath === path) {
-                        return item;
-                    }
-
-                    if (item.children && item.children.length > 0) {
-                        const foundNode = this.findNodeByPath(
-                            path,
-                            item.children,
-                            `${fullPath}/`
-                        );
-                        if (foundNode) {
-                            return foundNode;
-                        }
-                    }
-                }
-
-                return null;
-            },
-            sorted(items) {
-                return items.sort((a, b) => {
-                    if (a.type === "Directory" && b.type !== "Directory") return -1;
-                    else if (a.type !== "Directory" && b.type === "Directory")
-                        return 1;
-
-                    return a.fileName.localeCompare(b.fileName);
-                });
-            },
-            getFileNameWithExtension(fileNameWithExtension) {
-                const lastDotIdx = fileNameWithExtension.lastIndexOf(".");
-
-                return lastDotIdx !== -1
-                    ? [
-                        fileNameWithExtension.slice(0, lastDotIdx),
-                        fileNameWithExtension.slice(lastDotIdx + 1),
-                    ]
-                    : [fileNameWithExtension, ""];
-            },
-            renderNodes(items) {
-                if (this.items === undefined) {
-                    this.items = [];
-                }
-                for (let i = 0; i < items.length; i++) {
-                    const {type, fileName} = items[i];
-
-                    if (type === "Directory") {
-                        this.addFolder({fileName});
-                    } else if (type === "File") {
-                        const [fileName, extension] = this.getFileNameWithExtension(
-                            items[i].fileName,
-                        );
-                        const file = {fileName, extension, leaf: true};
-                        this.addFile({file});
-                    }
-                }
-            },
-            async loadNodes(node, resolve) {
-                if (node.level === 0) {
-                    const payload = {
-                        namespace: this.namespaceId,
-                    };
-                    const items = await this.namespacesStore.readDirectory(payload);
-
-                    this.renderNodes(items);
-                    this.items = this.sorted(this.items);
-                    this.editorStore.treeData = this.items;
-                    resolve(this.items);
-                } else if (node.level >= 1) {
-                    const payload = {
-                        namespace: this.namespaceId,
-                        path: this.getPath(node),
-                    };
-
-                    let children = await this.namespacesStore.readDirectory(payload);
-                    children = this.sorted(
-                        children.map((item) => ({
-                            ...item,
-                            id: Utils.uid(),
-                            leaf: item.type === "File",
-                        })),
-                    );
-
-
-                    const updateChildren = (items, path, newChildren) => {
-                        items.forEach((item, index) => {
-                            if (this.getPath(item.id) === path) {
-                                // Update children if the fileName matches
-                                items[index].children = newChildren;
-                            } else if (Array.isArray(item.children)) {
-                                // Recursively search in children array
-                                updateChildren(item.children, path, newChildren);
-                            }
-                        });
-                    };
-
-                    updateChildren(
-                        this.items,
-                        this.getPath(node.data.id),
-                        children,
-                    );
-
-                    resolve(children);
-                }
-            },
-            async searchFilesList(value) {
-                if (!value) return;
-
-                const results = await this.namespacesStore.searchFiles({
-                    namespace: this.namespaceId,
-                    query: value,
-                });
-                this.searchResults = results.map((result) =>
-                    result.replace(/^\/*/, ""),
-                );
-                return this.searchResults;
-            },
-            chooseSearchResults(item) {
-                this.editorStore.openTab({
-                    name: item.split("/").pop(),
-                    extension: item.split(".").pop(),
-                    path: item,
+        if (isShift && lastClickedIndex.value !== null) {
+            const start = Math.min(lastClickedIndex.value, currentIndex);
+            const end = Math.max(lastClickedIndex.value, currentIndex);
+            selectedFiles.value = flatList.slice(start, end + 1).map(item => item.path);
+            selectedNodes.value = flatList.slice(start, end + 1).map(item => item.id);
+        } else if (isCtrl) {
+            const isSelected = selectedNodes.value.includes(node.data.id);
+            if (isSelected) {
+                selectedFiles.value = [...selectedFiles.value.filter(file => file !== path)];
+                selectedNodes.value = [...selectedNodes.value.filter(id => id !== node.data.id)];
+            } else {
+                selectedFiles.value = [...selectedFiles.value, path];
+                selectedNodes.value = [...selectedNodes.value, node.data.id];
+            }
+            lastClickedIndex.value = currentIndex;
+        } else {
+            selectedFiles.value = [path];
+            selectedNodes.value = [node.data.id];
+            lastClickedIndex.value = currentIndex;
+            if (data.leaf) {
+                openTab?.({
+                    name: data.fileName,
+                    path: path,
+                    extension: data.fileName.split(".").pop(),
                     flow: false,
+                    dirty: false
                 });
+            }
+        }
+    }
 
-                this.filter = "";
-            },
-            toggleDropdown(reference) {
-                if (this.dropdownRef) {
-                    this.$refs[this.dropdownRef]?.handleClose();
+    async function removeSelectedFiles() {
+        const nodes = selectedFiles.value.map((filePath) => {
+            return findNodeByPath(filePath);
+        });
+        confirmRemove(nodes);
+    }
+
+
+
+    function findNodeByPath(path: string, itemsArr: TreeNode[] = items.value, parentPath = ""): any {
+        for (const item of itemsArr) {
+            const fullPath = `${parentPath}${item.fileName}`;
+            if (fullPath === path) {
+                return item;
+            }
+            if (isDirectory(item) && item.children.length > 0) {
+                const foundNode = findNodeByPath(path, item.children, `${fullPath}/`);
+                if (foundNode) {
+                    return foundNode;
                 }
+            }
+        }
+        return null;
+    }
 
-                this.dropdownRef = reference;
-                this.$refs[reference].handleOpen();
-            },
-            dialogHandler() {
-                if(this.dialog.type === "file"){
-                    this.addFile({creation: true})
-                } else {
-                    this.addFolder(undefined, true)
-                }
-            },
-            toggleDialog(isShown, type, node) {
-                if (isShown) {
-                    let folder;
-                    if (node?.data?.leaf === false) {
-                        folder = this.getPath(node.data.id);
-                    } else {
-                        const selectedNode = this.$refs.tree.getCurrentNode();
-                        if (selectedNode?.leaf === false) {
-                            node = selectedNode.id;
-                            folder = this.getPath(selectedNode.id);
-                        }
-                    }
-                    this.dialog.visible = true;
-                    this.dialog.type = type;
-                    this.dialog.folder = folder;
+    function sorted(itemsArr: TreeNode[]) {
+        return itemsArr.sort((a, b) => {
+            if (a.type === "Directory" && b.type !== "Directory") return -1;
+            else if (a.type !== "Directory" && b.type === "Directory") return 1;
+            return a.fileName.localeCompare(b.fileName);
+        });
+    }
 
-                    this.focusCreationInput();
-                } else {
-                    this.dialog.visible = false;
-                    this.dialog = {...DIALOG_DEFAULTS};
-                }
-            },
-            toggleRenameDialog(isShown, type, name, node) {
-                if (isShown) {
-                    this.renameDialog = {
-                        visible: true,
-                        type,
-                        name,
-                        old: name,
-                        node,
-                    };
-                    this.focusRenamingInput();
-                } else {
-                    this.renameDialog = {...RENAME_DEFAULTS};
-                }
-            },
-            renameItem() {
-                const path = this.getPath(this.renameDialog.node);
-                const start = path.substring(0, path.lastIndexOf("/") + 1);
+    function getFileNameWithExtension(fileNameWithExtension: string): [string, string] {
+        const lastDotIdx = fileNameWithExtension.lastIndexOf(".");
+        return lastDotIdx !== -1
+            ? [
+                fileNameWithExtension.slice(0, lastDotIdx),
+                fileNameWithExtension.slice(lastDotIdx + 1),
+            ]
+            : [fileNameWithExtension, ""];
+    }
 
-                this.namespacesStore.renameFileDirectory({
-                    namespace: this.namespaceId,
-                    old: `${start}${this.renameDialog.old}`,
-                    new: `${start}${this.renameDialog.name}`,
-                    type: this.renameDialog.type,
-                });
+    function renderNodes(itemsArr: any[]) {
+        if (items.value === undefined) {
+            items.value = [];
+        }
+        for (let i = 0; i < itemsArr.length; i++) {
+            const {type, fileName} = itemsArr[i];
+            if (type === "Directory") {
+                addFolder({fileName});
+            } else if (type === "File") {
+                const [fileName, extension] = getFileNameWithExtension(itemsArr[i].fileName);
+                const file = {fileName, extension, leaf: true};
+                addFile({file});
+            }
+        }
+    }
 
-                this.$refs.tree.getNode(this.renameDialog.node).data.fileName =
-                    this.renameDialog.name;
-                this.renameDialog = {...RENAME_DEFAULTS};
-            },
-            async nodeMoved(draggedNode) {
-                try {
-                    await this.namespacesStore.moveFileDirectory({
-                        namespace: this.namespaceId,
-                        old: this.nodeBeforeDrag.path,
-                        new: this.getPath(draggedNode.data.id),
-                        type: draggedNode.data.type,
-                    });
-                } catch {
-                    this.$refs.tree.remove(draggedNode.data.id);
-                    this.$refs.tree.append(
-                        draggedNode.data,
-                        this.nodeBeforeDrag.parent,
-                    );
-                }
-            },
-            focusCreationInput() {
-                setTimeout(() => {
-                    this.$refs.creation_name.focus();
-                }, 10);
-            },
-            focusRenamingInput() {
-                setTimeout(() => {
-                    this.$refs.renaming_name.focus();
-                }, 10);
-            },
+    interface TreeNodeFile{
+        id: string;
+        fileName: string;
+        type: "File";
+        leaf: true;
+        extension?: string;
+        data?: any;
+        content?: ArrayBuffer;
+    }
 
-            readFile(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = reject;
-                    reader.readAsArrayBuffer(file);
-                });
-            },
-            async importFiles(event) {
-                const importedFiles = event.target.files;
+    interface TreeNodeDirectory{
+        id: string;
+        fileName: string;
+        type: "Directory";
+        data?: any;
+        leaf: false;
+        children: TreeNode[];
+    }
 
-                try {
-                    for (const file of importedFiles) {
-                        if (file.webkitRelativePath) {
-                            const filePath = file.webkitRelativePath;
-                            const pathParts = filePath.split("/");
-                            let currentFolder = this.items;
-                            let folderPath = [];
+    type TreeNode = TreeNodeFile | TreeNodeDirectory;
 
-                            // Traverse through each folder level in the path
-                            for (let i = 0; i < pathParts.length - 1; i++) {
-                                const folderName = pathParts[i];
-                                folderPath.push(folderName);
+    function isDirectory(node: TreeNode): node is TreeNodeDirectory {
+        return node.type === "Directory";
+    }
 
-                                // Find the folder in the current folder's children array
-                                const folderIndex = currentFolder.findIndex(
-                                    (item) =>
-                                        typeof item === "object" &&
-                                        item.fileName === folderName,
-                                );
-                                if (folderIndex === -1) {
-                                    // If the folder doesn't exist, create it
-                                    const newFolder = {
-                                        id: Utils.uid(),
-                                        fileName: folderName,
-                                        children: [],
-                                        type: "Directory",
-                                    };
-                                    currentFolder.push(newFolder);
-                                    this.sorted(currentFolder);
-                                    currentFolder = newFolder.children;
-                                } else {
-                                    // If the folder exists, move to the next level
-                                    currentFolder =
-                                        currentFolder[folderIndex].children;
-                                }
-                            }
-
-                            // Extract file details
-                            const fileName = pathParts[pathParts.length - 1];
-                            const [name, extension] =
-                                this.getFileNameWithExtension(fileName);
-
-                            // Read file content
-                            const content = await this.readFile(file);
-
-                            this.namespacesStore.importFileDirectory({
-                                namespace:
-                                    this.namespaceId,
-                                content,
-                                path: `${folderPath}/${fileName}`,
-                            });
-
-                            // Add file to the current folder
-                            currentFolder.push({
-                                id: Utils.uid(),
-                                fileName: `${name}${
-                                    extension ? `.${extension}` : ""
-                                }`,
-                                extension,
-                                type: "File",
-                            });
-                        } else {
-                            // Process files at root level (not in any folder)
-                            const content = await this.readFile(file);
-                            const [name, extension] = this.getFileNameWithExtension(
-                                file.name,
-                            );
-
-                            this.namespacesStore.importFileDirectory({
-                                namespace:
-                                    this.namespaceId,
-                                content,
-                                path: file.name,
-                            });
-
-                            this.items.push({
-                                id: Utils.uid(),
-                                fileName: `${name}${
-                                    extension ? `.${extension}` : ""
-                                }`,
-                                extension,
-                                leaf: !!extension,
-                                type: "File",
-                            });
-                        }
-                    }
-
-                    this.$toast().success(
-                        this.$t("namespace files.import.success"),
-                    );
-                } catch {
-                    this.$toast().error(this.$t("namespace files.import.error"));
-                } finally {
-                    event.target.value = "";
-                    this.import = "file";
-                    this.dialog = {...DIALOG_DEFAULTS};
-                }
-            },
-            exportFiles() {
-                this.namespacesStore.exportFileDirectory({
-                    namespace: this.namespaceId,
-                });
-            },
-            async addFile({file, creation, shouldReset = true}) {
-                let FILE;
-
-                if (creation) {
-                    const [fileName, extension] = this.getFileNameWithExtension(
-                        this.dialog.name,
-                    );
-
-                    FILE = {fileName, extension, content: "", leaf: true};
-                } else {
-                    FILE = file;
-                }
-
-                const {fileName, extension, content, leaf} = FILE;
-                const NAME = `${fileName}${extension ? `.${extension}` : ""}`;
-                const NEW = {
+    async function loadNodes(node: TreeNode & { level: number , leaf: boolean }, resolve: (children: TreeNode[]) => void) {
+        if (node.level === 0) {
+            const payload = {namespace: namespaceId.value};
+            const itemsArr = await namespacesStore.readDirectory(payload);
+            renderNodes(itemsArr);
+            items.value = sorted(items.value);
+            resolve(items.value);
+        } else if (node.level >= 1) {
+            const payload = {namespace: namespaceId.value, path: getPath(node)};
+            let children = await namespacesStore.readDirectory(payload);
+            children = sorted(
+                children.map((item: any) => ({
+                    ...item,
                     id: Utils.uid(),
-                    fileName: NAME,
-                    extension,
-                    content,
-                    leaf,
-                    type: "File",
-                };
+                    leaf: item.type === "File",
+                }))
+            );
+            const updateChildren = (itemsArr: any[], path: string, newChildren: any[]) => {
+                itemsArr.forEach((item, index) => {
+                    if (getPath(item.id) === path) {
+                        itemsArr[index].children = newChildren;
+                    } else if (Array.isArray(item.children)) {
+                        updateChildren(item.children, path, newChildren);
+                    }
+                });
+            };
+            updateChildren(items.value!, getPath(node.data.id), children);
+            resolve(children);
+        }
+    }
 
-                const path = `${this.dialog.folder ? `${this.dialog.folder}/` : ""}${NAME}`;
-                if (creation) {
-                    if ((await this.searchFilesList(path)).includes(path)) {
-                        this.$toast().error(
-                            this.$t("namespace files.create.file_already_exists"),
+    async function searchFilesList(value: string) {
+        if (!value) return;
+        const results = await namespacesStore.searchFiles({
+            namespace: namespaceId.value,
+            query: value,
+        });
+        searchResults.value = results.map((result: string) => result.replace(/^\/*/, ""));
+        return searchResults.value;
+    }
+
+    function chooseSearchResults(item: string) {
+        const name = item.split("/").pop()
+        if(!name) return;
+        openTab?.({
+            name,
+            extension: item.split(".").pop()!,
+            path: item,
+            flow: false,
+            dirty: false
+        });
+        filter.value = "";
+    }
+
+    function toggleDropdown() {
+        if (dropdownRef.value) {
+            dropdownRef.value?.handleClose();
+        }
+        dropdownRef.value = dropdowns.value
+        dropdownRef.value?.handleOpen();
+    }
+
+    function dialogHandler() {
+        if (dialog.value.type === "file") {
+            addFile({creation: true});
+        } else {
+            addFolder(undefined, true);
+        }
+    }
+
+    function toggleDialog(isShown: boolean, type?: "file" | "folder", node?: any) {
+        if (isShown) {
+            let folder;
+            if (node?.data?.leaf === false) {
+                folder = getPath(node.data.id);
+            } else {
+                const selectedNode = tree.value.getCurrentNode();
+                if (selectedNode?.leaf === false) {
+                    node = selectedNode.id;
+                    folder = getPath(selectedNode.id);
+                }
+            }
+            if(!type) return
+            dialog.value.visible = true;
+            dialog.value.type = type;
+            dialog.value.folder = folder;
+            focusCreationInput();
+        } else {
+            dialog.value.visible = false;
+            dialog.value = {...DIALOG_DEFAULTS};
+        }
+    }
+
+    function toggleRenameDialog(isShown: boolean, type?: "file" | "folder", name?: string, node?: any) {
+        if (isShown && type) {
+            renameDialog.value = {
+                visible: true,
+                type,
+                name,
+                old: name,
+                node,
+            };
+            focusRenamingInput();
+        } else {
+            renameDialog.value = {...RENAME_DEFAULTS};
+        }
+    }
+
+    function renameItem() {
+        const path = getPath(renameDialog.value.node);
+        const start = path.substring(0, path.lastIndexOf("/") + 1);
+        namespacesStore.renameFileDirectory({
+            namespace: namespaceId.value,
+            old: `${start}${renameDialog.value.old}`,
+            new: `${start}${renameDialog.value.name}`,
+        });
+        tree.value.getNode(renameDialog.value.node).data.fileName = renameDialog.value.name;
+        renameDialog.value = {...RENAME_DEFAULTS};
+    }
+
+    async function nodeMoved(draggedNode: any) {
+        try {
+            await namespacesStore.moveFileDirectory({
+                namespace: namespaceId.value,
+                old: nodeBeforeDrag.value.path,
+                new: getPath(draggedNode.data.id),
+            });
+        } catch {
+            tree.value.remove(draggedNode.data.id);
+            tree.value.append(draggedNode.data, nodeBeforeDrag.value.parent);
+        }
+    }
+
+    const creation_name = ref<any>();
+    const renaming_name = ref<any>();
+
+    function focusCreationInput() {
+        nextTick(() => {
+            creation_name.value?.focus();
+        });
+    }
+
+    function focusRenamingInput() {
+        nextTick(() => {
+            renaming_name.value?.focus();
+        });
+    }
+
+    function readFile(file: File): Promise<ArrayBuffer> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as ArrayBuffer);
+            reader.onerror = reject;
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    async function importFiles(event: Event) {
+        const importedFiles = (event.target as HTMLInputElement).files;
+        if (!importedFiles) return;
+        try {
+            for (const file of Array.from(importedFiles)) {
+                if ((file as any).webkitRelativePath) {
+                    const filePath: string = (file as any).webkitRelativePath;
+                    const pathParts = filePath.split("/");
+                    let currentFolder: TreeNode[] | undefined = items.value;
+                    let folderPath: string[] = [];
+                    for (let i = 0; i < pathParts.length - 1; i++) {
+                        const folderName = pathParts[i];
+                        folderPath.push(folderName);
+                        if(!currentFolder) continue
+                        const folderIndex = currentFolder.findIndex(
+                            (item: any) => typeof item === "object" && item.fileName === folderName,
                         );
-                        return;
-                    }
-                    await this.namespacesStore.createFile({
-                        namespace: this.namespaceId,
-                        path,
-                        content,
-                        name: NAME,
-                        creation: true,
-                    });
-
-                    this.editorStore.openTab({
-                        name: NAME,
-                        path,
-                        extension: extension,
-                        flow: false,
-                    });
-
-                    this.dialog.folder = path.substring(0, path.lastIndexOf("/"));
-                }
-
-                if (!this.dialog.folder) {
-                    this.items.push(NEW);
-                    this.items = this.sorted(this.items);
-                } else {
-                    const SELF = this;
-                    (function pushItemToFolder(basePath = "", array, pathParts) {
-                        for (const item of array) {
-                            const folderPath = `${basePath}${item.fileName}`;
-
-                            if (
-                                folderPath === SELF.dialog.folder &&
-                                Array.isArray(item.children)
-                            ) {
-                                item.children = SELF.sorted([
-                                    ...item.children,
-                                    NEW,
-                                ]);
-                                return true; // Return true if the folder is found and item is pushed
-                            }
-
-                            if (
-                                Array.isArray(item.children) &&
-                                pushItemToFolder(
-                                    `${folderPath}/`,
-                                    item.children,
-                                    pathParts.slice(1),
-                                )
-                            ) {
-                                // Return true if the folder is found and item is pushed in recursive call
-                                return true;
-                            }
-                        }
-
-                        // If the folder does not exist, create it
-                        if (pathParts && pathParts.length > 0 && pathParts[0]) {
-                            const folderPath = `${basePath}${pathParts[0]}`;
-
-                            if (folderPath === SELF.dialog.folder) {
-                                const newFolder = SELF.folderNode(pathParts[0], [
-                                    NEW,
-                                ]);
-                                array.push(newFolder);
-                                array = SELF.sorted(array);
-
-                                return true; // Return true if the folder is found and item is pushed
-                            }
-                            const newFolder = SELF.folderNode(pathParts[0], []);
-                            array.push(newFolder);
-                            array = SELF.sorted(array);
-
-                            return pushItemToFolder(
-                                `${basePath}${pathParts[0]}/`,
-                                newFolder.children,
-                                pathParts.slice(1),
-                            );
-                        }
-
-                        return false;
-                    })(undefined, this.items, path.split("/"));
-                }
-
-                if (shouldReset) {
-                    this.dialog = {...DIALOG_DEFAULTS};
-                }
-            },
-            confirmRemove(nodes) {
-                if (Array.isArray(nodes)) {
-                    this.confirmation = {
-                        visible: true,
-                        nodes,
-                    };
-                } else {
-                    this.confirmation = {
-                        visible: true,
-                        nodes: [nodes],
-                    };
-                }
-            },
-            async removeItems() {
-                for (const node of this.confirmation.nodes) {
-                    try {
-                        await this.namespacesStore.deleteFileDirectory({
-                            namespace: this.currentNS ?? this.$route.params.namespace,
-                            path: this.getPath(node),
-                            name: node.fileName,
-                            type: node.type,
-                        });
-                        this.$refs.tree.remove(node.id);
-                        this.editorStore.closeTab({
-                            name: node.fileName,
-                        });
-                    } catch (error) {
-                        console.error(`Failed to delete file: ${node.fileName}`, error);
-                        this.$toast().error(`Failed to delete file: ${node.fileName}`);
-                    }
-                }
-
-                // Clear the confirmation state after deletion
-                this.confirmation = {visible: false, nodes: []};
-                this.$toast().success("Selected files deleted successfully.");
-            },
-            async addFolder(folder, creation) {
-                const {fileName} = folder
-                    ? folder
-                    : {
-                        fileName: this.dialog.name,
-                    };
-
-                const NEW = this.folderNode(fileName, folder?.children ?? []);
-                const parentPath = this.dialog.folder || "";
-                const path = parentPath ? `${parentPath}/${fileName}` : fileName;
-
-                // Step 1: Create folder in backend if `creation` flag is true
-                if (creation) {
-                    try {
-                        // Check if folder already exists
-                        await this.namespacesStore.readDirectory({namespace: this.namespaceId, path});
-
-                        // If we reach here, the directory already exists
-                        this.$toast().error(this.$t("namespace files.create.folder_already_exists"));
-                        return;
-                    } catch {/* Directory doesn't exist, proceed with creation */}
-
-                    try {
-                        await this.namespacesStore.createDirectory({namespace: this.namespaceId, path, name: fileName});
-
-                        //  pdate UI immediately (reactive push)
-                        if (!parentPath) {
-                            // Top-level folder
-                            this.items.push(NEW);
-                            this.items = this.sorted(this.items);
+                        if (folderIndex === -1) {
+                            const newFolder: TreeNodeDirectory = {
+                                id: Utils.uid(),
+                                fileName: folderName,
+                                children: [],
+                                type: "Directory",
+                                leaf: false,
+                            };
+                            currentFolder.push(newFolder);
+                            sorted(currentFolder);
+                            currentFolder = newFolder.children;
                         } else {
-                            this.pushToParentFolder(parentPath, NEW);
+                            currentFolder = (currentFolder[folderIndex] as TreeNodeDirectory).children;
                         }
-
-                        this.$toast().success(`Folder "${fileName}" created successfully.`);
-                    } catch (error) {
-                        console.error(`Failed to create folder: ${fileName}`, error);
-
-                        this.$toast().error(this.$t("namespace files.create.folder_error"));
-                        return;
                     }
-
-                    this.dialog = {...DIALOG_DEFAULTS};
-                    return;
-                }
-
-                // Handle non-creation (used for restoring UI or local additions)
-                if (!parentPath) {
-                    const firstFolder = NEW.fileName.split("/")[0];
-                    if (!this.items.find(item => item.fileName === firstFolder)) {
-                        NEW.fileName = firstFolder;
-                        this.items.push(NEW);
-                        this.items = this.sorted(this.items);
-                    }
+                    const fileName = pathParts[pathParts.length - 1];
+                    const [name, extension] = getFileNameWithExtension(fileName);
+                    const content = await readFile(file);
+                    namespacesStore.importFileDirectory({
+                        namespace: namespaceId.value,
+                        content,
+                        path: `${folderPath}/${fileName}`,
+                    });
+                    currentFolder?.push({
+                        id: Utils.uid(),
+                        fileName: `${name}${extension ? `.${extension}` : ""}`,
+                        extension,
+                        type: "File",
+                        leaf: true,
+                    });
                 } else {
-                    this.pushToParentFolder(parentPath, NEW);
+                    const content = await readFile(file);
+                    const [name, extension] = getFileNameWithExtension(file.name);
+                    namespacesStore.importFileDirectory({
+                        namespace: namespaceId.value,
+                        content,
+                        path: file.name,
+                    });
+                    items.value.push({
+                        id: Utils.uid(),
+                        fileName: `${name}${extension ? `.${extension}` : ""}`,
+                        extension,
+                        type: "File",
+                        leaf: true,
+                    });
                 }
+            }
+            toast.success(t("namespace files.import.success"));
+        } catch {
+            toast.error(t("namespace files.import.error"));
+        } finally {
+            (event.target as HTMLInputElement).value = "";
+            dialog.value = {...DIALOG_DEFAULTS};
+        }
+    }
 
-                this.dialog = {...DIALOG_DEFAULTS};
-            },
-            folderNode(fileName, children) {
-                return {
-                    id: Utils.uid(),
-                    fileName,
-                    leaf: false,
-                    children: children ?? [],
-                    type: "Directory",
-                };
-            },
-            getPath(name) {
-                const nodes = this.$refs.tree.getNodePath(name);
-                return nodes.map((obj) => obj.fileName).join("/");
-            },
-            copyPath(name) {
-                const path = this.getPath(name);
+    function exportFiles() {
+        namespacesStore.exportFileDirectory({
+            namespace: namespaceId.value,
+        });
+    }
 
-                try {
-                    Utils.copy(path);
-                    this.$toast().success(this.$t("namespace files.path.success"));
-                } catch {
-                    this.$toast().error(this.$t("namespace files.path.error"));
+    async function addFile({file, creation, shouldReset = true}: { file?: any; creation?: boolean; shouldReset?: boolean }) {
+        let FILE;
+        if (creation && dialog.value.name) {
+            const [fileName, extension] = getFileNameWithExtension(dialog.value.name);
+            FILE = {fileName, extension, content: "", leaf: true};
+        } else {
+            FILE = file;
+        }
+        const {fileName, extension, content, leaf} = FILE;
+        const NAME = `${fileName}${extension ? `.${extension}` : ""}`;
+        const NEW: TreeNodeFile = {
+            id: Utils.uid(),
+            fileName: NAME,
+            extension,
+            content,
+            type: "File",
+            leaf,
+        };
+        const path = `${dialog.value.folder ? `${dialog.value.folder}/` : ""}${NAME}`;
+        if (creation) {
+            if ((await searchFilesList(path))?.includes(path)) {
+                toast.error(t("namespace files.create.file_already_exists"));
+                return;
+            }
+            await namespacesStore.createFile({
+                namespace: namespaceId.value,
+                path,
+                content,
+            });
+            openTab?.({
+                name: NAME,
+                path,
+                extension: extension,
+                flow: false,
+                dirty: false
+            });
+            dialog.value.folder = path.substring(0, path.lastIndexOf("/"));
+        }
+        if (!dialog.value.folder) {
+            items.value.push(NEW);
+            items.value = sorted(items.value);
+        } else {
+            (function pushItemToFolder(basePath: string = "", array: TreeNode[], pathParts: string[]): boolean {
+                for (const item of array) {
+                    const folderPath = `${basePath}${item.fileName}`;
+                    if (folderPath === dialog.value.folder && isDirectory(item)) {
+                        item.children = sorted([...item.children, NEW]);
+                        return true;
+                    }
+                    if (isDirectory(item) && pushItemToFolder(`${folderPath}/`, item.children, pathParts.slice(1))) {
+                        return true;
+                    }
                 }
-            },
-            async exportFile(node, data){
-                const content = await this.namespacesStore.readFile({
-                    path: this.getPath(node),
-                    namespace: this.namespaceId,
-                })
-
-                const blob = new Blob([content], {type: "text/plain"});
-                Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
-            },
-            onTabContextMenu(event) {
-                this.tabContextMenu = {
-                    visible: true,
-                    x: event.clientX,
-                    y: event.clientY,
-                };
-
-                document.addEventListener("click", this.hideTabContextMenu);
-            },
-            hideTabContextMenu() {
-                this.tabContextMenu.visible = false;
-                document.removeEventListener("click", this.hideTabContextMenu);
-            },
-            clearSelection() {
-                this.selectedFiles = [];
-                this.selectedNodes = [];
-                this.lastClickedIndex = null;
-            },
-        },
-        mounted() {
-            document.addEventListener("click", this.clearSelection);
-        },
-        beforeUnmount() {
-            document.removeEventListener("click", this.clearSelection);
-        },
-        watch: {
-            "flowStore.flow": {
-                handler(flow) {
-                    if (flow) {
-                        this.editorStore.openTab({
-                            name: "Flow",
-                            path: "Flow.yaml",
-                            persistent: true,
-                            flow: true,
-                        });
+                if (pathParts && pathParts.length > 0 && pathParts[0]) {
+                    const folderPath = `${basePath}${pathParts[0]}`;
+                    if (folderPath === dialog.value.folder) {
+                        const newFolder = folderNode(pathParts[0], [NEW]);
+                        array.push(newFolder);
+                        array = sorted(array);
+                        return true;
                     }
-                },
-                immediate: true,
-                deep: true,
-            },
-            "editorStore.treeRefresh": {
-                async handler() {
-                    if (this.$refs.tree) {
-                        this.items = undefined;
-                        const items = await this.namespacesStore.readDirectory({
-                            namespace: this.namespaceId
-                        });
-                        this.renderNodes(items);
-                        this.items = this.sorted(this.items);
-                    }
-                },
-                immediate: true,
-            },
-        },
-    };
+                    const newFolder = folderNode(pathParts[0], []);
+                    array.push(newFolder);
+                    array = sorted(array);
+                    return newFolder.children ? pushItemToFolder(`${basePath}${pathParts[0]}/`, newFolder.children, pathParts.slice(1)) : false;
+                }
+                return false;
+            })(undefined, items.value, path.split("/"));
+        }
+        if (shouldReset) {
+            dialog.value = {...DIALOG_DEFAULTS};
+        }
+    }
+
+    function confirmRemove(nodes: any[]) {
+        confirmation.value = {
+            visible: true,
+            nodes: Array.isArray(nodes) ? nodes : [nodes],
+        };
+    }
+
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY);
+
+    async function removeItems() {
+        if(confirmation.value.nodes === undefined) return;
+        for (const node of confirmation.value.nodes) {
+            try {
+                await namespacesStore.deleteFileDirectory({
+                    namespace: props.currentNS ?? route.params.namespace as string,
+                    path: getPath(node),
+                });
+                tree.value.remove(node.id);
+                closeTab?.({
+                    path: getPath(node),
+                });
+            } catch (error) {
+                console.error(`Failed to delete file: ${node.fileName}`, error);
+                toast.error(`Failed to delete file: ${node.fileName}`);
+            }
+        }
+        confirmation.value = {visible: false, nodes: []};
+        toast.success("Selected files deleted successfully.");
+    }
+
+    async function addFolder(folder?: any, creation?: boolean) {
+        const {fileName} = folder
+            ? folder
+            : {
+                fileName: dialog.value.name,
+            };
+        const NEW = folderNode(fileName, folder?.children ?? []);
+        const parentPath = dialog.value.folder || "";
+        const path = parentPath ? `${parentPath}/${fileName}` : fileName;
+        if (creation) {
+            try {
+                await namespacesStore.readDirectory({namespace: namespaceId.value, path});
+                toast.error(t("namespace files.create.folder_already_exists"));
+                return;
+            } catch {
+                // Folder does not exist, we can create it
+            }
+            try {
+                await namespacesStore.createDirectory({namespace: namespaceId.value, path});
+                if (!parentPath) {
+                    items.value.push(NEW);
+                    items.value = sorted(items.value);
+                } else {
+                    pushToParentFolder(parentPath, NEW);
+                }
+                toast.success(`Folder "${fileName}" created successfully.`);
+            } catch (error) {
+                console.error(`Failed to create folder: ${fileName}`, error);
+                toast.error(t("namespace files.create.folder_error"));
+                return;
+            }
+            dialog.value = {...DIALOG_DEFAULTS};
+            return;
+        }
+        if (!parentPath) {
+            const firstFolder = NEW.fileName.split("/")[0];
+            if (!items.value.find(item => item.fileName === firstFolder)) {
+                NEW.fileName = firstFolder;
+                items.value.push(NEW);
+                items.value = sorted(items.value);
+            }
+        } else {
+            pushToParentFolder(parentPath, NEW);
+        }
+        dialog.value = {...DIALOG_DEFAULTS};
+    }
+
+    function folderNode(fileName: string, children: TreeNode[]): TreeNodeDirectory {
+        return {
+            id: Utils.uid(),
+            fileName,
+            children: children ?? [],
+            type: "Directory",
+            leaf: false,
+        };
+    }
+
+    function getPath(nameOrNode: any): string {
+        const nodes = tree.value.getNodePath(nameOrNode);
+        return nodes.map((obj: any) => obj.fileName).join("/");
+    }
+
+    function copyPath(name: any) {
+        const path = getPath(name);
+        try {
+            Utils.copy(path);
+            toast.success(t("namespace files.path.success"));
+        } catch {
+            toast.error(t("namespace files.path.error"));
+        }
+    }
+
+    async function exportFile(node: any, data: any) {
+        const content = await namespacesStore.readFile({
+            path: getPath(node),
+            namespace: namespaceId.value,
+        });
+        const blob = new Blob([content], {type: "text/plain"});
+        Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
+    }
+
+    function onTabContextMenu(event: MouseEvent) {
+        tabContextMenu.value = {
+            visible: true,
+            x: event.clientX,
+            y: event.clientY,
+        };
+        document.addEventListener("click", hideTabContextMenu);
+    }
+
+    function hideTabContextMenu() {
+        tabContextMenu.value.visible = false;
+        document.removeEventListener("click", hideTabContextMenu);
+    }
+
+    function clearSelection() {
+        selectedFiles.value = [];
+        selectedNodes.value = [];
+        lastClickedIndex.value = null;
+    }
+
+    onMounted(async () => {
+        document.addEventListener("click", clearSelection);
+    });
+
+    onBeforeUnmount(() => {
+        document.removeEventListener("click", clearSelection);
+    });
+
 </script>
 
 <style scoped lang="scss">

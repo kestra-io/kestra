@@ -1,6 +1,6 @@
 <template>
     <slot v-if="transparent" name="tasks" />
-    <div v-else class="schema-wrapper bordered" :class="{bordered: !merge}">
+    <div v-else class="schema-wrapper" :class="{bordered: !merge}">
         <slot name="tasks" />
     </div>
 </template>

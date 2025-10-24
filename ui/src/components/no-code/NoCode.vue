@@ -17,7 +17,7 @@
 
                 <hr class="my-4">
 
-                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema)" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
+                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"

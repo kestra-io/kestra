@@ -20,6 +20,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
+
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
@@ -28,7 +30,7 @@ import java.util.Set;
 public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F>> implements io.kestra.core.models.Plugin, IData<F> {
     @NotNull
     @NotBlank
-    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     private String type;
 
     private Map<String, C> columns;

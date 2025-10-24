@@ -24,10 +24,6 @@ public class PluginDefault {
 
     @Schema(
         type = "object",
-        oneOf = {
-            Map.class,
-            String.class
-        },
         additionalProperties = Schema.AdditionalPropertiesValue.FALSE
     )
     private final Map<String, Object> values;

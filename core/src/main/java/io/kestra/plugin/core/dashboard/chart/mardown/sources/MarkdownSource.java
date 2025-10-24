@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
 
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
+
 @Getter
 @JsonTypeInfo(
     use = JsonTypeInfo.Id.NAME,
@@ -20,6 +22,6 @@ import lombok.Getter;
 public class MarkdownSource {
     @NotNull
     @NotBlank
-    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     private String type;
 }

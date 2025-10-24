@@ -160,7 +160,7 @@ class FlowTopologyServiceTest {
                                     .in(Property.ofValue(List.of(State.Type.SUCCESS)))
                                     .build(),
                                 "variables", Expression.builder()
-                                    .expression(new Property<>("{{ true }}"))
+                                    .expression(Property.ofExpression("{{ true }}"))
                                     .build()
                             ))
                             .build()

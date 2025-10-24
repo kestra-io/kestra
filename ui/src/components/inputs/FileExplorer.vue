@@ -409,11 +409,9 @@
         },
     );
 
-    onMounted(() => {
-        if(props.currentNS){
-            filesStore.namespaceId = props.currentNS
-        }
-    });
+    if(props.currentNS){
+        filesStore.namespaceId = props.currentNS
+    }
 
     interface Dialog{
         visible: boolean;
@@ -651,8 +649,8 @@
         });
     }
 
-    async function addFile({file, creation, shouldReset = true}: { file?: Partial<TreeNodeFile>; creation?: boolean; shouldReset?: boolean }) {
-        let FILE: Partial<TreeNodeFile>;
+    async function addFile({file, creation, shouldReset = true}: { file?: Omit<TreeNodeFile, "id" | "type">; creation?: boolean; shouldReset?: boolean }) {
+        let FILE: Omit<TreeNodeFile, "id" | "type">;
         if (creation && dialog.value.name) {
             const [fileName, extension] = getFileNameWithExtension(dialog.value.name);
             FILE = {fileName, extension, content: "", leaf: true};
@@ -660,24 +658,14 @@
             if(!file) return;
             FILE = file;
         }
-        const {fileName, extension, content} = FILE;
-        const NAME = `${fileName}${extension ? `.${extension}` : ""}`;
-        const NEW: TreeNodeFile = {
-            id: Utils.uid(),
-            fileName: NAME,
-            extension,
-            content,
-            type: "File",
-            leaf: true,
-        };
 
-        const {path} = await filesStore.addFile(NEW, dialog.value.folder, creation)
+        const {path, file: createdFile} = await filesStore.addFile(FILE, dialog.value.folder, creation)
         if (creation) {
-            if(path === undefined) return;
+            if(path === undefined || createdFile === undefined) return;
             openTab?.({
-                name: NAME,
+                name: createdFile.fileName,
                 path,
-                extension: extension ?? "",
+                extension: createdFile.extension ?? "",
                 flow: false,
                 dirty: false
             });

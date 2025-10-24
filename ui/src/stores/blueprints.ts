@@ -9,7 +9,7 @@ import {useMiscStore} from "override/stores/misc";
 import {trackBlueprintSelection} from "../utils/tabTracking";
 
 export type BlueprintType = "community" | "custom";
-type BlueprintKind = "flow" | "dashboard" | "app";
+export type BlueprintKind = "flow" | "dashboard" | "app";
 
 interface Options {
     type: BlueprintType;

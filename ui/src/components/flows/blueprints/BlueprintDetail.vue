@@ -83,146 +83,144 @@
         </el-row>
     </section>
 </template>
-<script setup>
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import Editor from "../../inputs/Editor.vue";
-    import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
-    import TaskIcon from  "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
-    import TopNavBar from "../../layout/TopNavBar.vue";
-</script>
-<script>
-    import Markdown from "../../layout/Markdown.vue";
-    import CopyToClipboard from "../../layout/CopyToClipboard.vue";
-    import {mapStores} from "pinia";
+
+<script setup lang="ts">
+    import {ref, computed, onMounted} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useRoute, useRouter, type RouteParamsRaw} from "vue-router";
     import {usePluginsStore} from "../../../stores/plugins";
-    import {useBlueprintsStore} from "../../../stores/blueprints";
-    import {useAuthStore} from "override/stores/auth"
+    import {useBlueprintsStore, type BlueprintType, type BlueprintKind} from "../../../stores/blueprints";
     import {useFlowStore} from "../../../stores/flow";
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {parse as parseFlow} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import Editor from "../../inputs/Editor.vue";
+    import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
+    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import TopNavBar from "../../layout/TopNavBar.vue";
+    import Markdown from "../../layout/Markdown.vue";
+    import CopyToClipboard from "../../layout/CopyToClipboard.vue";
 
-    export default {
-        components: {Markdown, CopyToClipboard},
-        emits: ["back"],
-        data() {
-            return {
-                flowGraph: undefined,
-                blueprint: undefined,
-                tab: "",
-                breadcrumb: [
-                    {
-                        label: this.$t("blueprints.title"),
-                        link: {
-                            name: "blueprints",
-                            params: this.$route.params.tab ? this.$route.params.tab : {...this.$route.params, tab: this.tab},
-                        }
-                    }
-                ]
-            }
-        },
-        props: {
-            blueprintId: {
-                type: String,
-                required: true
-            },
-            embed: {
-                type: Boolean,
-                default: false
-            },
-            blueprintType: {
-                type: String,
-                default: "community"
-            },
-            kind: {
-                type: String,
-                default: "flow",
-            },
-            combinedView: {
-                type: Boolean,
-                default: false
-            },
-        },
-        methods: {
-            goBack() {
-                if (this.embed) {
-                    this.$emit("back");
-                } else {
-                    this.$router.push({
-                        name: "blueprints",
-                        params: {
-                            tenant: this.$route.params.tenant,
-                            tab: this.tab
-                        }
-                    })
-                }
-            }
-        },
-        async created() {
-            this.blueprintsStore.getBlueprint({
-                type: this.combinedView ? this.blueprintType : this.$route.params.tab,
-                kind: this.kind,
-                id: this.blueprintId
-            })
-                .then(data => {
-                    this.blueprint = data;
-                    if (this.kind === "flow") {
-                        try {
-                            if (this.$route.params.tab === "community") {
-                                this.blueprintsStore.getBlueprintGraph({
-                                    type: this.$route.params.tab,
-                                    kind: this.kind,
-                                    id: this.blueprintId,
-                                    validateStatus: (status) => {
-                                        return status === 200;
-                                    }
-                                })
-                                    .then(data => {
-                                        this.flowGraph  = data;
-                                    });
-                            } else {
-                                this.flowStore.getGraphFromSourceResponse({
-                                    flow: this.blueprint.source, config: {
-                                        validateStatus: (status) => {
-                                            return status === 200;
-                                        }
-                                    }
-                                }).then(data => {
-                                    this.flowGraph = data ;
-                                });
-                            }
-                        } catch (e) {
-                            console.error("Unable to create the blueprint's topology : " + e);
-                        }
-                    }
-                });
-        },
-        computed: {
-            ...mapStores(usePluginsStore, useBlueprintsStore, useFlowStore, useAuthStore),
-            userCanCreate() {
-                return canCreate(this.kind);
-            },
-            parsedFlow() {
-                return {
-                    ...parseFlow(this.blueprint.source),
-                    source: this.blueprint.source
-                }
-            },
-            editorRoute() {
-                let additionalQuery = {};
-                if (this.kind === "flow") {
-                    additionalQuery.blueprintSource = this.$route.params.tab;
-                } else if (this.kind === "dashboard") {
-                    additionalQuery = {
-                        name: "home",
-                        params: this.$route.params.tenant === undefined ? undefined : JSON.stringify({tenant: this.$route.params.tenant}),
-                    };
-                }
+    interface Blueprint {
+        source: string;
+        title: string;
+        description: string;
+        tags: string[];
+        includedTasks: string[];
+    }
 
-                return {name: `${this.kind}s/create`, params: {tenant: this.$route.params.tenant}, query: {blueprintId: this.blueprintId, ...additionalQuery}};
-            }
+    interface Props {
+        blueprintId: string;
+        embed?: boolean;
+        blueprintType?: string;
+        kind?: string;
+        combinedView?: boolean;
+    }
+
+    const props = withDefaults(defineProps<Props>(), {
+        embed: false,
+        blueprintType: "community",
+        kind: "flow",
+        combinedView: false,
+    });
+
+    const emit = defineEmits<{ (e: "back"): void }>();
+
+    const {t} = useI18n({useScope: "global"});
+    const route = useRoute();
+    const router = useRouter();
+    const pluginsStore = usePluginsStore();
+    const blueprintsStore = useBlueprintsStore();
+    const flowStore = useFlowStore();
+
+    const flowGraph = ref<any>(undefined);
+    const blueprint = ref<Blueprint | undefined>(undefined);
+    const tab = ref(route.params.tab || "");
+
+    const breadcrumb = computed(() => [
+        {
+            label: t("blueprints.title"),
+            link: {
+                name: "blueprints",
+                params: {tab: tab.value} as RouteParamsRaw,
+            },
         },
+    ]);
+
+    const userCanCreate = computed(() => canCreate(props.kind));
+
+    const parsedFlow = computed(() => {
+        if (!blueprint.value?.source) return {};
+        return {
+            ...parseFlow(blueprint.value.source),
+            source: blueprint.value.source,
+        };
+    });
+
+    const editorRoute = computed(() => {
+        let additionalQuery: any = {};
+        if (props.kind === "flow") {
+            additionalQuery.blueprintSource = route.params.tab;
+        } else if (props.kind === "dashboard") {
+            additionalQuery = {
+                name: "home",
+                params: route.params.tenant === undefined ? undefined : JSON.stringify({tenant: route.params.tenant}),
+            };
+        }
+
+        return {
+            name: `${props.kind}s/create`,
+            params: {tenant: route.params.tenant},
+            query: {blueprintId: props.blueprintId, ...additionalQuery},
+        };
+    });
+
+    const goBack = () => {
+        if (props.embed) {
+            emit("back");
+        } else {
+            router.push({
+                name: "blueprints",
+                params: {
+                    tenant: route.params.tenant,
+                    tab: tab.value,
+                },
+            });
+        }
     };
+
+    onMounted(async () => {
+        try {
+            const blueprintTab = (props.combinedView ? props.blueprintType : route.params.tab) as BlueprintType;
+            
+            const data = await blueprintsStore.getBlueprint({
+                type: blueprintTab,
+                kind: props.kind as BlueprintKind,
+                id: props.blueprintId,
+            });
+            blueprint.value = data;
+
+            if (props.kind === "flow") {
+                if (blueprintTab === "community") {
+                    const graphData = await blueprintsStore.getBlueprintGraph({
+                        type: blueprintTab,
+                        kind: props.kind as BlueprintKind,
+                        id: props.blueprintId,
+                    });
+                    flowGraph.value = graphData;
+                } else if (blueprint.value?.source) {
+                    const graphData = await flowStore.getGraphFromSourceResponse({
+                        flow: blueprint.value.source,
+                    });
+                    flowGraph.value = graphData;
+                }
+            }
+        } catch (e) {
+            console.error("Unable to load the blueprint details: " + e);
+        }
+    });
 </script>
+
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
 

@@ -60,6 +60,7 @@ const layout: cytoscape.CoseLayoutOptions = {
     // Node sizing
     nodeDimensionsIncludeLabels: true,
 };
+
 /**
  * Sets the size of each node in the cytoscape instance
  * based on the number of connected edges.

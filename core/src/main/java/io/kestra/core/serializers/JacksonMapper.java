@@ -140,7 +140,7 @@ public final class JacksonMapper {
 
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
             .registerModule(new JavaTimeModule())
             .registerModule(new Jdk8Module())
             .registerModule(new ParameterNamesModule())
@@ -153,7 +153,7 @@ public final class JacksonMapper {
 
     private static ObjectMapper createIonObjectMapper() {
         return configure(new IonObjectMapper(new IonFactory(createIonSystem())))
-            .setSerializationInclusion(JsonInclude.Include.ALWAYS)
+            .setDefaultPropertyInclusion(JsonInclude.Include.ALWAYS)
             .registerModule(new IonModule());
     }
 
@@ -172,7 +172,7 @@ public final class JacksonMapper {
 
         return Pair.of(patch, revert);
     }
-    
+
     public static JsonNode applyPatchesOnJsonNode(JsonNode jsonObject, List<JsonNode> patches) {
         for (JsonNode patch : patches) {
             try {

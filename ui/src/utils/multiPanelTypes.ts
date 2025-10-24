@@ -1,33 +1,26 @@
 export interface Tab {
+    uid: string
     button: {
-        icon: any,
+        icon: any
         label: string
     },
-    potential?: boolean
-    fromPanel?: boolean
-    value: string,
-    dirty?: boolean,
     component: any
 }
 
-export interface Panel {
+export interface TabLive extends Tab {
+    potential?: boolean
+    fromPanel?: boolean
+    dirty?: boolean,
+}
+
+export interface Panel<T extends Tab = Tab> {
     size: number;
-    tabs: Tab[],
+    tabs: T[],
     dragover?: boolean,
-    activeTab: Tab,
+    activeTab: T,
 }
 
-export interface EditorElement {
-    button: {
-        icon: any,
-        label: string
-    },
-    value: string,
-    component: any,
+export interface EditorElement extends Tab {
     prepend?: boolean,
-    deserialize?: (value: string, allowCreate: boolean) => Tab | undefined
-}
-
-export interface DeserializableEditorElement extends EditorElement {
-    deserialize: (value: string, allowCreate: boolean) => Tab | undefined
+    deserialize: (uid: string, allowCreate: boolean) => Tab | undefined
 }

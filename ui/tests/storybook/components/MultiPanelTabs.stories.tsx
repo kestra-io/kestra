@@ -76,24 +76,24 @@ const argGenerator = (index?: number) => {
             {
                 activeTab: {
                     button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
-                    value: "tab1",
+                    uid: "tab1",
                     component: () => <PlaceholderComponent tabId="1" />,
                 },
                 size: 1,
                 tabs: [
                     {
                         button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
-                        value: "tab1",
+                        uid: "tab1",
                         component: () => <PlaceholderComponent tabId="1" />,
                     },
                     {
                         button: {icon: markRaw(MouseRightClickIcon), label: "Tab 2"},
-                        value: "tab2",
+                        uid: "tab2",
                         component: () => <PlaceholderComponent tabId="2" />,
                     },
                     {
                         button: {icon: markRaw(FileTreeOutlineIcon), label: "Tab 3"},
-                        value: "tab3",
+                        uid: "tab3",
                         component: () => <PlaceholderComponent tabId="3" />,
                     },
                 ],
@@ -101,7 +101,7 @@ const argGenerator = (index?: number) => {
             {
                 activeTab: {
                     button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
-                    value: "tab4",
+                    uid: "tab4",
                     component: () => <PlaceholderComponent tabId="4" />,
                 },
                 size: 1,
@@ -109,17 +109,17 @@ const argGenerator = (index?: number) => {
 
                     {
                         button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
-                        value: "tab4",
+                        uid: "tab4",
                         component: () => <PlaceholderComponent tabId="4" />,
                     },
                     {
                         button: {icon: markRaw(DotsSquareIcon), label: "Tab 5"},
-                        value: "tab5",
+                        uid: "tab5",
                         component: () => <PlaceholderComponent tabId="5" />,
                     },
                     {
                         button: {icon: markRaw(BallotOutlineIcon), label: "Tab 6"},
-                        value: "tab6",
+                        uid: "tab6",
                         component: () => <PlaceholderComponent tabId="6" />,
                     },
                 ],

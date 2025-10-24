@@ -15,7 +15,6 @@
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {useCoreStore} from "../../stores/core";
     import {getRandomID} from "../../../scripts/id";
-    import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {defaultNamespace} from "../../composables/useNamespaces";
     import {useVueTour} from "../../composables/useVueTour";
@@ -29,7 +28,6 @@
 
     const blueprintsStore = useBlueprintsStore();
     const coreStore = useCoreStore();
-    const editorStore = useEditorStore();
     const flowStore = useFlowStore();
 
     const setupFlow = async () => {
@@ -84,7 +82,6 @@ tasks:
         tour.start();
     }
     setupFlow();
-    editorStore.closeAllTabs();
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined;

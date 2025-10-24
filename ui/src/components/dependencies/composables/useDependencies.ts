@@ -310,9 +310,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
             elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
             isLoading.value = false;
-        }
-
-        else {
+        } else {
             try {
                 if (subtype === NAMESPACE) {
                     const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});

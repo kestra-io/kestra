@@ -3,6 +3,12 @@ name: Pull Request Workflow
 on:
   pull_request:
 
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  issues: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-pr
   cancel-in-progress: true
@@ -47,6 +53,8 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    with:
+      extra-build-args: "--warning-mode all --info --stacktrace"
 
   e2e-tests:
     name: E2E - Tests

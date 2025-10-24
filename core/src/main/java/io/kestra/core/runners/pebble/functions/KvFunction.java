@@ -38,7 +38,7 @@ public class KvFunction implements Function {
         String key = getKey(args, self, lineNumber);
         String namespace = (String) args.get(NAMESPACE_ARG);
 
-        Boolean errorOnMissing = Optional.ofNullable((Boolean) args.get(ERROR_ON_MISSING_ARG)).orElse(true);
+        boolean errorOnMissing = Optional.ofNullable((Boolean) args.get(ERROR_ON_MISSING_ARG)).orElse(true);
 
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         String flowNamespace = flow.get(NAMESPACE_ARG);
@@ -53,11 +53,16 @@ public class KvFunction implements Function {
                 // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
                 value = kvStoreService.get(flowTenantId, namespace, flowNamespace).getValue(key);
             }
+        } catch (ResourceExpiredException e) {
+            if (errorOnMissing) {
+                throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
+            }
+            value = Optional.empty();
         } catch (Exception e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
 
-        if (value.isEmpty() && errorOnMissing == Boolean.TRUE) {
+        if (value.isEmpty() && errorOnMissing) {
             throw new PebbleException(null, "The key '" + key + "' does not exist in the namespace '" + namespace + "'.", lineNumber, self.getName());
         }
 

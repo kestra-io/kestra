@@ -1,11 +1,9 @@
 import {useCoreStore} from "../stores/core";
-import {useEditorStore} from "../stores/editor";
 import {useFlowStore} from "../stores/flow";
 
 export default (app, router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
     const coreStore = useCoreStore();
-    const editorStore = useEditorStore()
     const flowStore = useFlowStore();
 
     window.addEventListener("beforeunload", (e) => {
@@ -37,11 +35,6 @@ export default (app, router) => {
     router.beforeEach(async (to, from) => {
         if (coreStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
             if (confirm(confirmationMessage)) {
-                editorStore.setTabDirty({
-                     name: "Flow",
-                     path: "Flow.yaml",
-                     dirty: false,
-                });
                 flowStore.flow = flowStore.lastSavedFlow;
                 coreStore.unsavedChange = false;
             } else {

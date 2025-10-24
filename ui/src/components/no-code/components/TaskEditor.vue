@@ -20,12 +20,12 @@
     <div @click="isPlugin && pluginsStore.updateDocumentation(taskObject as Parameters<typeof pluginsStore.updateDocumentation>[0])">
         <TaskObject
             v-loading="isLoading"
-            v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && resolvedLocalSchema"
+            v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
             name="root"
             :modelValue="taskObject"
             @update:model-value="onTaskInput"
-            :schema="resolvedLocalSchema"
-            :properties="properties"
+            :schema
+            :properties
             :definitions="fullSchema.definitions"
         />
     </div>
@@ -247,27 +247,34 @@
 
     const REQUIRED_FIELDS = ["id", "data"];
 
-    const resolvedLocalSchema = computed(() => {
-        const localSchema = definitions.value?.[resolvedType.value];
-        if(isTaskDefinitionBasedOnType.value && localSchema){
+    const schema = computed(() => {
+        const localSchema = resolvedLocalSchema.value;
+        if(isTaskDefinitionBasedOnType.value){
             localSchema.required = localSchema.required ?? [];
             for(const field of REQUIRED_FIELDS){
-                if(!localSchema.required.includes(field) && localSchema.properties?.[field]){
+                if(!localSchema.required.includes(field) && resolvedProperties.value?.[field]){
                     localSchema.required.push(field);
                 }
             }
         }
+        return localSchema;
+    });
+
+    const resolvedLocalSchema = computed(() => {
         return isTaskDefinitionBasedOnType.value
-            ? localSchema
+            ? definitions.value?.[resolvedType.value] ?? {}
             : schemaAtBlockPath.value
     });
 
     const resolvedProperties = computed<Schemas["properties"] | undefined>(() => {
         // try to resolve the type from local schema
-        if (resolvedLocalSchema.value) {
+        // IE: when only one schema is available take it and run with it
+        if (resolvedLocalSchema.value?.properties) {
             return resolvedLocalSchema.value.properties
         }
 
+        // if there is more than one schema valid, try to find common properties
+        // to all the schemas to help user narrow down the schema they want
         if(resolvedTypes.value.length > 1){
             const schemas = resolvedSchemas.value;
 
@@ -297,6 +304,7 @@
 
             return properties;
         }
+
         return undefined;
     });
 

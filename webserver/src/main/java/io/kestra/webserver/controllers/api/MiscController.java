@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.plugins.PluginRegistry;
@@ -15,6 +14,7 @@ import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
+import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
@@ -28,7 +28,10 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
-import lombok.*;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Value;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
@@ -59,7 +62,7 @@ public class MiscController {
     FeatureUsageReport featureUsageReport;
 
     @Inject
-    BasicAuthService basicAuthService;
+    Optional<BasicAuthService> basicAuthService = Optional.empty();
 
     @Inject
     Optional<TemplateRepositoryInterface> templateRepository;
@@ -121,7 +124,7 @@ public class MiscController {
                 .max(this.maxPreviewRows)
                 .build())
             .isAiEnabled(applicationContext.containsBean(AiController.class))
-            .isBasicAuthInitialized(basicAuthService.isBasicAuthInitialized())
+            .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
@@ -157,7 +160,9 @@ public class MiscController {
     public HttpResponse<Void> createBasicAuth(
         @RequestBody @Body BasicAuthCredentials basicAuthCredentials
     ) {
-        basicAuthService.save(basicAuthCredentials.getUid(), new BasicAuthService.BasicAuthConfiguration(basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()));
+        basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
+            .save(basicAuthCredentials);
 
         return HttpResponse.noContent();
     }
@@ -167,7 +172,9 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
     public List<String> getBasicAuthConfigErrors() {
-        return basicAuthService.validationErrors();
+        return basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
+            .validationErrors();
     }
 
     @Getter
@@ -225,14 +232,6 @@ public class MiscController {
     public static class Preview {
         Integer initial;
         Integer max;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static class BasicAuthCredentials {
-        private String uid;
-        private String username;
-        private String password;
     }
 
     @SuperBuilder(toBuilder = true)

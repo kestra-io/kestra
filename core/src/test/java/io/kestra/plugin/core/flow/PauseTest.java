@@ -56,18 +56,21 @@ public class PauseTest {
 
     @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
     @Test
+    @LoadFlows("flows/valids/pause-delay.yaml")
     void delay() throws Exception {
         suite.runDelay(runnerUtils);
     }
 
     @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
     @Test
+    @LoadFlows("flows/valids/pause-duration-from-input.yaml")
     void delayFromInput() throws Exception {
         suite.runDurationFromInput(runnerUtils);
     }
 
     @FlakyTest(description = "This test is too flaky and it always pass in JDBC and Kafka")
     @Test
+    @LoadFlows("flows/valids/each-parallel-pause.yml")
     void parallelDelay() throws Exception {
         suite.runParallelDelay(runnerUtils);
     }

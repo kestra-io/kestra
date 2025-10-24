@@ -17,68 +17,75 @@
         </template>
     </el-input>
 </template>
-<script>
-    import {debounce} from "throttle-debounce";
+
+<script lang="ts" setup>
+    import {ref, watch, onMounted, onUnmounted} from "vue";
+    import {useRoute, useRouter} from "vue-router";
+    import debounce from "lodash/debounce";
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
-    export default {
-        emits: ["search"],
-        components: {Magnify},
-        searchDebounce: undefined,
-        created() {
-            this.init();
-        },
-        props: {
-            router: {
-                type: Boolean,
-                default: true
-            },
-            placeholder: {
-                type: String,
-                required: false,
-                default: "search"
-            },
-            readonly: {
-                type: Boolean
-            }
-        },
-        watch: {
-            $route(newValue, oldValue) {
-                if (oldValue.name === newValue.name) {
-                    this.init()
-                }
-            }
-        },
-        data() {
-            return {
-                search: ""
-            };
-        },
-        methods: {
-            init() {
-                if (this.$route.query.q && this.router) {
-                    this.search = this.$route.query.q;
-                }
-                this.searchDebounce = debounce(300, () => {
-                    this.$emit("search", this.search);
+    const props = withDefaults(defineProps<{
+        router?: boolean;
+        placeholder?: string;
+        readonly?: boolean;
+    }>(), {
+        router: true,
+        placeholder: "search",
+        readonly: false
+    });
 
-                    if (this.router) {
-                        const query = {...this.$route.query, q: this.search, page: 1};
-                        if (!this.search) {
-                            delete query.q;
-                        }
-                        this.$router.push({query});
-                    }
-                });
-            },
-            onInput() {
-                this.searchDebounce();
-            },
-        },
-        unmounted() {
-            if(this.searchDebounce) this.searchDebounce.cancel();
+    const emit = defineEmits<{
+        (e: "search", value: string): void;
+    }>();
+
+    const route = useRoute();
+    const vueRouter = useRouter();
+
+    const search = ref<string>("");
+
+    let searchDebounce: ReturnType<typeof debounce>;
+
+    function init() {
+        if (route.query.q && props.router !== false) {
+            search.value = String(route.query.q);
         }
-    };
+        searchDebounce = debounce(() => {
+            emit("search", search.value);
+            if (props.router !== false) {
+                const query: Record<string, any> = {
+                    ...route.query,
+                    q: search.value,
+                    page: 1
+                };
+                if (!search.value) {
+                    delete query.q;
+                }
+                vueRouter.push({query});
+            }
+        }, 300);
+    }
+
+    function onInput() {
+        searchDebounce();
+    }
+
+    onMounted(() => {
+        init();
+    });
+
+    onUnmounted(() => {
+        if (searchDebounce) searchDebounce.cancel();
+    });
+
+    watch(
+        () => route,
+        (newValue, oldValue) => {
+            if (oldValue?.name === newValue.name) {
+                init();
+            }
+        }
+    );
+
 </script>
 <style scoped lang="scss">
     .shortcut {

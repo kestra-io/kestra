@@ -52,7 +52,7 @@
             :fullHeight="false"
             :shouldFocus="false"
             schemaType="flow"
-            lang="plaintext-pebble"
+            :lang="`${editorLanguage}-pebble`"
             input
             @update:model-value="onInput"
             :largeSuggestions="false"
@@ -71,6 +71,7 @@
         modelValue?: string;
         schema: { format: string, default?: string };
         root?: string;
+        task?: any;
     }>();
 
     const emit = defineEmits<{
@@ -79,6 +80,61 @@
 
 
     const pebble = ref(false);
+
+    // Function to detect programming language from task type
+    function detectLanguageFromTaskType(): string {
+        if (!props.task?.type) {
+            return "plaintext";
+        }
+
+        const taskType = props.task.type;
+
+        // Check for script tasks and extract language
+        if (taskType.includes("io.kestra.plugin.scripts.")) {
+            if (taskType.includes(".python.")) {
+                return "python";
+            } else if (taskType.includes(".node.")) {
+                return "javascript";
+            } else if (taskType.includes(".shell.")) {
+                return "shell";
+            } else if (taskType.includes(".powershell.")) {
+                return "powershell";
+            } else if (taskType.includes(".r.")) {
+                return "r";
+            } else if (taskType.includes(".julia.")) {
+                return "julia";
+            } else if (taskType.includes(".ruby.")) {
+                return "ruby";
+            } else if (taskType.includes(".go.")) {
+                return "go";
+            } else if (taskType.includes(".deno.")) {
+                return "typescript";
+            } else if (taskType.includes(".lua.")) {
+                return "lua";
+            } else if (taskType.includes(".bun.")) {
+                return "javascript";
+            } else if (taskType.includes(".php.")) {
+                return "php";
+            } else if (taskType.includes(".perl.")) {
+                return "perl";
+            } else if (taskType.includes(".groovy.")) {
+                return "groovy";
+            }
+        }
+
+        return "plaintext";
+    }
+
+    // Computed property for editor language
+    const editorLanguage = computed(() => {
+        // Only apply syntax highlighting for script and commands fields
+        if (props.root === "script" || props.root === "commands" ||
+            props.root?.endsWith(".script") || props.root?.endsWith(".commands")) {
+            return detectLanguageFromTaskType();
+        }
+
+        return "plaintext";
+    });
 
     const values = computed(() => {
         if (props.modelValue === undefined) {

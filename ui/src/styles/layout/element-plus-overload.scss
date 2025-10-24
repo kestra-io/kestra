@@ -1094,9 +1094,19 @@ form.ks-horizontal {
         font-size: var(--font-size-lg);
 
         .el-dialog__headerbtn {
-            height: 62px;
-            width: 62px;
+    height: 62px;
+    width: 62px;
+
+    .el-dialog__close { 
+       
+        color: var(--ks-dialog-headerbtn) !important; 
+        
+       
+        &:hover {
+            color: var(--ks-dialog-headerbtn-hover) !important;
         }
+    }
+}
     }
 
     .el-dialog__title {

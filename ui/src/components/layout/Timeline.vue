@@ -16,7 +16,7 @@
             class="timeline-item"
         >
             <div class="timeline-content">
-                <span class="timeline-date">{{ $filters.date(history.date, 'iso') }}</span>
+                <span class="timeline-date">{{ date(history.date, 'iso') }}</span>
                 <div 
                     class="timeline-dot" 
                     :style="getStyle(history.state)" 
@@ -27,53 +27,43 @@
     </div>
 </template>
 
-<script setup>
-    import {ref, computed, onMounted, onUnmounted} from "vue"
+<script setup lang="ts">
+    import {ref, computed, type PropType} from "vue"
+    import {useMediaQuery} from "@vueuse/core"
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue"
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue"
-
+    import {date} from "../../utils/filters";
+   
     const props = defineProps({
         histories: {
-            type: Array,
+            type: Array as PropType<{date: string, state: string }[]>,
             default: () => []
         }
     })
 
     const showStates = ref(false)
-    const windowWidth = ref(window.innerWidth)
-
-    const handleResize = () => {
-        windowWidth.value = window.innerWidth
-    }
-
-    onMounted(() => {
-        window.addEventListener("resize", handleResize)
-    })
-
-    onUnmounted(() => {
-        window.removeEventListener("resize", handleResize)
-    })
+    const isMediumScreen = useMediaQuery("(min-width: 480px) and (max-width: 960px)")
 
     const isToggle = computed(() => {
-        const minWidth = 480
-        const maxWidth = 960
-        return windowWidth.value >= minWidth && 
-            windowWidth.value <= maxWidth && 
-            props.histories.length > 1
+        return isMediumScreen.value && props.histories?.length > 1;
     })
 
     const displayedHistories = computed(() => {
-        if (!isToggle.value || showStates.value) {
-            return props.histories
+        if (!props.histories || props.histories.length === 0) {
+            return [];
         }
-        return [props.histories[props.histories.length - 1]]
+        if (!isToggle.value || showStates.value) {
+            return props.histories;
+        }
+        return [props.histories[props.histories.length - 1]];
     })
+    
 
     const toggleStates = () => {
         showStates.value = !showStates.value
     }
 
-    const getStyle = (state) => ({
+    const getStyle = (state: string) => ({
         backgroundColor: `var(--ks-chart-${state.toLowerCase()})`
     })
 </script>
@@ -147,7 +137,7 @@
                 top: 50%;
                 left: 50%;
                 transform: translateY(-50%);
-                width: calc(100% - 15px);
+                width: 100%;
                 height: 1px;
             }
         }

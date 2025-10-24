@@ -131,7 +131,7 @@ import jakarta.validation.constraints.Size;
 @WebhookValidation
 public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Output> {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
-        .setSerializationInclusion(JsonInclude.Include.USE_DEFAULTS);
+        .setDefaultPropertyInclusion(JsonInclude.Include.USE_DEFAULTS);
 
     @Size(max = 256)
     @NotNull

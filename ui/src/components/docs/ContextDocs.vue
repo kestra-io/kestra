@@ -26,7 +26,7 @@
                 <OpenInNew class="blank" />
             </router-link>
         </template>
-        <div ref="docWrapper" class="docs-controls">
+        <div ref="docWrapper" class="docs-controls" v-scroll-memory="contextScrollKey">
             <template v-if="isOnline">
                 <ContextDocsSearch />
                 <DocsMenu />
@@ -54,6 +54,11 @@
     import ContextDocsSearch from "./ContextDocsSearch.vue";
     import ContextInfoContent from "../ContextInfoContent.vue";
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue";
+    import scrollMemory from "../../directives/scrollMemory";
+    defineOptions({
+        directives: {scrollMemory}
+    })
+
 
     import {useNetwork} from "@vueuse/core"
     const {isOnline} = useNetwork()
@@ -71,6 +76,7 @@
 
     const pageMetadata = computed(() => docStore.pageMetadata);
     const docPath = computed(() => docStore.docPath);
+    const contextScrollKey = computed(() => `context-docs:${docPath.value ?? ""}`);
     const routeInfo = computed(() => ({
         title: pageMetadata.value?.title ?? t("docs"),
     }));

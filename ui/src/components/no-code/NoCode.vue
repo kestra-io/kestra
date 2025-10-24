@@ -1,5 +1,5 @@
 <template>
-    <div class="no-code">
+    <div class="no-code" ref="scrollContainer" @scroll="onScroll">
         <div class="p-4">
             <Task
                 v-if="creatingTask || editingTask"
@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onActivated, provide, ref, watch} from "vue";
+    import {computed, onActivated, onBeforeUnmount, nextTick, onMounted, provide, ref, watch} from "vue";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {removeNullAndUndefined} from "./utils/cleanUp";
@@ -64,6 +64,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useKeyboardSave} from "./utils/useKeyboardSave";
     import {deepEqual} from "../../utils/utils";
+    import {useViewStateStore} from "../../stores/viewState";
 
 
     const props = defineProps<NoCodeProps>();
@@ -116,6 +117,7 @@
     }, 500);
 
     const timeout = ref();
+    const viewStateStore = useViewStateStore();
 
     const editorUpdate = (source: string) => {
         let parsedSource: any = {}
@@ -194,6 +196,58 @@
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, ( parentPath, blockSchemaPath, refPath) => {
         emit("editTask", parentPath, blockSchemaPath, refPath)
     })
+
+    // Scroll position persistence for No-code editor
+    const scrollContainer = ref<HTMLDivElement | null>(null);
+
+    const flowIdentity = computed(() => {
+        const namespace = flowStore.flow?.namespace ?? "";
+        const flowId = flowStore.flow?.id ?? "";
+        return `${namespace}/${flowId}`;
+    });
+
+    const scrollKey = computed(() => {
+        const base = `nocode:${flowIdentity.value}`;
+        // home screen
+        if (!props.creatingTask && !props.editingTask) return `${base}:home`;
+        // task-specific
+        const action = props.creatingTask ? "create" : "edit";
+        const parentPath = props.parentPath ?? "";
+        const refPath = props.refPath ?? "";
+        const fieldName = props.fieldName ?? "";
+        return `${base}:task:${action}:parentPath:${parentPath}:refPath:${refPath}:fieldName:${fieldName}`;
+    });
+
+    function restoreScroll() {
+        const el = scrollContainer.value;
+        if (!el) return;
+        const saved = viewStateStore.getScrollPosition(scrollKey.value);
+        if (typeof saved === "number") {
+            el.scrollTop = saved;
+        }
+    }
+
+    function onScroll() {
+        const el = scrollContainer.value;
+        if (!el) return;
+        viewStateStore.saveScrollPosition(scrollKey.value, el.scrollTop);
+    }
+
+    onMounted(async () => {
+        await nextTick();
+        restoreScroll();
+    });
+
+    onActivated(() => {
+        nextTick(restoreScroll);
+    });
+
+    watch(scrollKey, () => nextTick(restoreScroll));
+
+    onBeforeUnmount(() => {
+        const el = scrollContainer.value;
+        if (el) viewStateStore.saveScrollPosition(scrollKey.value, el.scrollTop);
+    });
 
 
 </script>

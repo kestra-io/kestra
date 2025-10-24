@@ -308,6 +308,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
                 isLoading.value = false;
                 return;
             }
+
             elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
             isLoading.value = false;
         }
@@ -324,7 +325,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
                     isLoading.value = false;
                 }
             } catch (error) {
-                console.error("Failed to load dependencies:", error);
+                console.error(`Failed to load ${subtype} dependencies:`, error);
                 elements.value = {data: [], count: 0};
                 isLoading.value = false;
             }
@@ -333,8 +334,7 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         if (isTesting && container.value) {
             cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
         } else if (!isTesting && elements.value.data.length > 0) {
-            // Wait for the container to be available in the DOM
-            await nextTick();
+            await nextTick(); // Wait for the container to be available in the DOM
             
             if (!container.value) return;
 

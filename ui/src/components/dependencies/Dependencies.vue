@@ -1,5 +1,5 @@
 <template>
-    <div v-if="isLoading" v-loading="true" style="height: 200px;" />
+    <div v-if="isLoading" v-loading="true" class="h-100" />
     <Empty v-else-if="!getElements().length" :type="`dependencies.${SUBTYPE}`" />
     <el-splitter v-else class="dependencies">
         <el-splitter-panel id="graph" v-bind="PANEL">

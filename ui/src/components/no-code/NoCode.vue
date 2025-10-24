@@ -81,13 +81,13 @@
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
                 : val; // Handle null values
+        
 
-
-        const currentFlow = parsedFlow.value;
-
-        currentFlow[key] = realValue;
-
-        editorUpdate(YAML_UTILS.stringify(currentFlow));
+        editorUpdate(YAML_UTILS.replaceBlockWithPath({
+            source: flowStore.flowYaml ?? "",
+            path: key,
+            newContent: YAML_UTILS.stringify(realValue),
+        }));
     }
 
     const lastValidFlowYaml = computed<string>(
@@ -104,7 +104,6 @@
     const {
         fieldsFromSchemaTop,
         fieldsFromSchemaRest,
-        parsedFlow,
     } = useFlowFields(lastValidFlowYaml)
 
     useKeyboardSave()

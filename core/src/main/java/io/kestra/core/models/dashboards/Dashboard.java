@@ -32,6 +32,8 @@ public class Dashboard implements HasUID, DeletedInterface {
     private String tenantId;
 
     @Hidden
+    @NotNull
+    @NotBlank
     private String id;
 
     @NotNull

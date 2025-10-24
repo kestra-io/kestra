@@ -46,6 +46,7 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -222,7 +223,7 @@ public class FlowController {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
         // Deprecated params
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
@@ -703,7 +704,7 @@ public class FlowController {
         summary = "Export flows as a ZIP archive of yaml sources."
     )
     public HttpResponse<byte[]> exportFlowsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
@@ -741,7 +742,7 @@ public class FlowController {
         summary = "Delete flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> deleteFlowsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
@@ -784,7 +785,7 @@ public class FlowController {
         summary = "Disable flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> disableFlowsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
@@ -816,7 +817,7 @@ public class FlowController {
         summary = "Enable flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> enableFlowsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,

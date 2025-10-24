@@ -71,6 +71,7 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -121,7 +122,7 @@ public class ExecutionController {
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
-    
+
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -168,7 +169,7 @@ public class ExecutionController {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
-    
+
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -186,7 +187,7 @@ public class ExecutionController {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
-    
+
     @Inject
     private ExecutionStreamingService executionStreamingService;
 
@@ -206,7 +207,7 @@ public class ExecutionController {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
         //Deprecated params
         @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -417,7 +418,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Executions"}, summary = "Delete executions filter by query parameters")
     public HttpResponse<?> deleteExecutionsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -996,7 +997,7 @@ public class ExecutionController {
     @Post(uri = "/restart/by-query")
     @Operation(tags = {"Executions"}, summary = "Restart executions filter by query parameters")
     public HttpResponse<?> restartExecutionsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1239,7 +1240,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
     @ApiResponse(responseCode = "422", description = "Changed state with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public HttpResponse<?> updateExecutionsStatusByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1302,7 +1303,7 @@ public class ExecutionController {
         if (execution.getState().isTerminated() && !isOnKillCascade) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
         }
-        
+
         eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
         killQueue.emit(ExecutionKilledExecution
             .builder()
@@ -1512,7 +1513,7 @@ public class ExecutionController {
     @Post(uri = "/resume/by-query")
     @Operation(tags = {"Executions"}, summary = "Resume executions filter by query parameters")
     public HttpResponse<?> resumeExecutionsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1621,7 +1622,7 @@ public class ExecutionController {
     @Post(uri = "/pause/by-query")
     @Operation(tags = {"Executions"}, summary = "Pause executions filter by query parameters")
     public HttpResponse<?> pauseExecutionsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1665,7 +1666,7 @@ public class ExecutionController {
     @Delete(uri = "/kill/by-query")
     @Operation(tags = {"Executions"}, summary = "Kill executions filter by query parameters")
     public HttpResponse<?> killExecutionsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -1709,7 +1710,7 @@ public class ExecutionController {
     @Post(uri = "/replay/by-query")
     @Operation(tags = {"Executions"}, summary = "Create new executions from old ones filter by query parameters. Keep the flow revision")
     public HttpResponse<?> replayExecutionsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -2017,7 +2018,7 @@ public class ExecutionController {
     @Post(uri = "/labels/by-query")
     @Operation(tags = {"Executions"}, summary = "Set label on executions filter by query parameters")
     public HttpResponse<?> setLabelsOnTerminatedExecutionsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -2134,7 +2135,7 @@ public class ExecutionController {
     @Post(uri = "/unqueue/by-query")
     @Operation(tags = {"Executions"}, summary = "Unqueue executions filter by query parameters")
     public HttpResponse<?> unqueueExecutionsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
@@ -2248,7 +2249,7 @@ public class ExecutionController {
     @Post(uri = "/force-run/by-query")
     @Operation(tags = {"Executions"}, summary = "Force run executions filter by query parameters")
     public HttpResponse<?> forceRunExecutionsByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,

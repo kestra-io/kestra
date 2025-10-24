@@ -170,6 +170,7 @@
         :deep(.el-alert) {
             text-align: center;
             color: var(--ks-content-tertiary);
+            padding: 0.875rem;
         }
     }
 

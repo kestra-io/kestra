@@ -83,19 +83,14 @@
     --switch-transition: all 0.2s cubic-bezier(0.27, 0.2, 0.25, 1.51);
     --circle-diameter: 18px;
     --circle-bg: #fff;
-    --circle-shadow: 1px 1px 2px rgba(146, 146, 146, 0.45);
-    --circle-checked-shadow: -1px 1px 2px rgba(163, 163, 163, 0.45);
+    --circle-shadow: none;
+    --circle-checked-shadow: none;
     --circle-transition: var(--switch-transition);
     --icon-transition: all 0.2s cubic-bezier(0.27, 0.2, 0.25, 1.51);
     --icon-cross-color: #000;
     --icon-cross-size: 6px;
     --icon-checkmark-color: var(--switch-checked-bg);
     --icon-checkmark-size: 10px;
-    --effect-width: calc(var(--circle-diameter) / 2);
-    --effect-height: calc(var(--effect-width) / 2 - 1px);
-    --effect-bg: var(--circle-bg);
-    --effect-border-radius: 1px;
-    --effect-transition: all 0.2s ease-in-out;
 
     display: inline-block;
 
@@ -126,28 +121,13 @@
         width: var(--switch-width);
         height: var(--switch-height);
         background: var(--switch-bg);
-        html.light & {
-            background: #ecebef;
-        }
         outline: 1px solid var(--ks-border-primary);
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
         border-radius: 999px;
         display: flex;
         align-items: center;
         position: relative;
         transition: var(--switch-transition);
         cursor: pointer;
-
-        &::before {
-            content: "";
-            position: absolute;
-            width: var(--effect-width);
-            height: var(--effect-height);
-            left: calc(var(--switch-offset) + (var(--effect-width) / 2));
-            background: var(--effect-bg);
-            border-radius: var(--effect-border-radius);
-            transition: var(--effect-transition);
-        }
 
         .circle {
             width: var(--circle-diameter);
@@ -162,6 +142,9 @@
             z-index: 1;
             position: absolute;
             left: var(--switch-offset);
+            html.light & {
+                background: #e1e1e1;
+            }
         }
     }
 
@@ -176,13 +159,10 @@
             transform: scale(0);
         }
 
-        &::before {
-            left: calc(100% - var(--effect-width) - (var(--effect-width) / 2) - var(--switch-offset));
-        }
-
         .circle {
             left: calc(100% - var(--circle-diameter) - var(--switch-offset));
             box-shadow: var(--circle-checked-shadow);
+            background: var(--circle-bg);
         }
     }
 }

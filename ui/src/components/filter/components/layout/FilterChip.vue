@@ -66,7 +66,7 @@
         case Array.isArray(value):
             return value.length === 1
                 ? value[0]
-                : [value[0], h(ElTag, {size: "small"}, `+${value.length - 1}`)];
+                : [value[0], h(ElTag, {size: "small"}, () => `+${value.length - 1}`)];
         case value instanceof Date:
             return value.toLocaleDateString();
         case value && typeof value === "object" && "startDate" in value:

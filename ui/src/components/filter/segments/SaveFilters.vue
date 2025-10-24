@@ -201,7 +201,7 @@
     border-radius: 0.25rem;
     font-size: 1rem;
     color: var(--ks-content-primary) !important;
-    box-shadow: rgba(17, 17, 26, 0.1) 0px 0px 16px;
+    box-shadow: 0 2px 4px var(--ks-card-shadow);
 
     &:hover {
         color: var(--ks-content-link-hover) !important;

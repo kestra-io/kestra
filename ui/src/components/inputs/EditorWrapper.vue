@@ -232,6 +232,9 @@
         if(props.path){
             updateContent?.({path: props.path, content: newValue});
         }
+
+        // only validate and update graph for flow files
+        if(!props.flow) return
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {

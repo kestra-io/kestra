@@ -285,7 +285,7 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = {"flows/valids/switch.yaml",
         "flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml"}, tenantId = TENANT_1)
-    void flowWaitFailed() throws Exception {
+    public void flowWaitFailed() throws Exception {
         flowCaseTest.waitFailed(TENANT_1);
     }
 

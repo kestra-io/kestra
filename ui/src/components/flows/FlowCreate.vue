@@ -15,10 +15,11 @@
     import {useBlueprintsStore} from "../../stores/blueprints";
     import {useCoreStore} from "../../stores/core";
     import {getRandomID} from "../../../scripts/id";
-    import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {defaultNamespace} from "../../composables/useNamespaces";
     import {useVueTour} from "../../composables/useVueTour";
+
+    import type {BlueprintType} from "../../stores/blueprints"
 
     const route = useRoute();
     const {t} = useI18n();
@@ -27,12 +28,11 @@
 
     const blueprintsStore = useBlueprintsStore();
     const coreStore = useCoreStore();
-    const editorStore = useEditorStore();
     const flowStore = useFlowStore();
 
     const setupFlow = async () => {
         const blueprintId = route.query.blueprintId as string;
-        const blueprintSource = route.query.blueprintSource as string;
+        const blueprintSource = route.query.blueprintSource as BlueprintType;
         let flowYaml = "";
         const id = getRandomID();
         const selectedNamespace = (route.query.namespace as string) || defaultNamespace() || "company.team";
@@ -82,7 +82,6 @@ tasks:
         tour.start();
     }
     setupFlow();
-    editorStore.closeAllTabs();
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined;

@@ -172,6 +172,8 @@
         json: "json",
         js: "javascript",
         ts: "typescript",
+        jsx: "javascript",
+        tsx: "typescript",
     };
 
     const lang = computed(() => {

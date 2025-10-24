@@ -2,6 +2,7 @@ package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
@@ -23,6 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 public class KvFunctionTest {
+    @Inject
+    private KvMetadataRepositoryInterface kvMetadataRepository;
 
     @Inject
     private StorageInterface storageInterface;
@@ -34,7 +37,7 @@ public class KvFunctionTest {
     void shouldGetValueFromKVGivenExistingKey() throws IllegalVariableEvaluationException, IOException {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        KVStore kv = new InternalKVStore(tenant, "io.kestra.tests", storageInterface);
+        KVStore kv = new InternalKVStore(tenant, "io.kestra.tests", storageInterface, kvMetadataRepository);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
         Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
@@ -50,10 +53,10 @@ public class KvFunctionTest {
     void shouldGetValueFromKVGivenExistingKeyWithInheritance() throws IllegalVariableEvaluationException, IOException {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        KVStore kv = new InternalKVStore(tenant, "my.company", storageInterface);
+        KVStore kv = new InternalKVStore(tenant, "my.company", storageInterface, kvMetadataRepository);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
-        KVStore firstKv = new InternalKVStore(tenant, "my", storageInterface);
+        KVStore firstKv = new InternalKVStore(tenant, "my", storageInterface, kvMetadataRepository);
         firstKv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "firstValue")));
 
         Map<String, Object> variables = getVariables(tenant, "my.company.team");
@@ -69,7 +72,7 @@ public class KvFunctionTest {
     void shouldNotGetValueFromKVWithGivenNamespaceAndInheritance() throws IOException {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        KVStore kv = new InternalKVStore(tenant, "kv", storageInterface);
+        KVStore kv = new InternalKVStore(tenant, "kv", storageInterface, kvMetadataRepository);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
         Map<String, Object> variables = getVariables(tenant, "my.company.team");
@@ -83,7 +86,7 @@ public class KvFunctionTest {
     void shouldGetValueFromKVGivenExistingAndNamespace() throws IllegalVariableEvaluationException, IOException {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        KVStore kv = new InternalKVStore(tenant, "kv", storageInterface);
+        KVStore kv = new InternalKVStore(tenant, "kv", storageInterface, kvMetadataRepository);
         kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
 
         Map<String, Object> variables = getVariables(tenant, "io.kestra.tests");
@@ -114,7 +117,7 @@ public class KvFunctionTest {
         String namespace = TestsUtils.randomNamespace();
         Map<String, Object> variables = getVariables(tenant, namespace);
 
-        KVStore kv = new InternalKVStore(tenant, namespace, storageInterface);
+        KVStore kv = new InternalKVStore(tenant, namespace, storageInterface, kvMetadataRepository);
         kv.put("my-expired-key", new KVValueAndMetadata(new KVMetadata(null, Instant.now().minus(1, ChronoUnit.HOURS)), "anyValue"));
 
         String rendered = variableRenderer.render("{{ kv('my-expired-key', errorOnMissing=false) }}", variables);

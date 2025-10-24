@@ -33,6 +33,13 @@ public class SecretController<META extends ApiSecretMeta> {
     @Inject
     protected SecretService<String> secretService;
 
+    protected String sortMapper(String key) {
+        if (key != null && key.equals("key")) {
+            return "name";
+        }
+        return key;
+    }
+
     @Get
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Secrets"}, summary = "Search secrets of all namespaces")
@@ -44,7 +51,7 @@ public class SecretController<META extends ApiSecretMeta> {
     ) throws IllegalArgumentException, IOException {
         final String tenantId = this.tenantService.resolveTenant();
 
-        Pageable pageable = PageableUtils.from(page, size, sort, null);
+        Pageable pageable = PageableUtils.from(page, size, sort, this::sortMapper);
 
         ArrayListTotal<String> items = secretService.list(pageable, tenantId, filters);
         //noinspection unchecked

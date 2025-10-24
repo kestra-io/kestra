@@ -21,7 +21,7 @@
             
             <template #table>
                 <SelectTable
-                    :data="filteredSecrets"
+                    :data="secrets"
                     ref="selectTable"
                     :defaultSort="{prop: 'key', order: 'ascending'}"
                     tableLayout="auto"
@@ -218,7 +218,7 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import type {FormInstance} from "element-plus";
-    import {ref, computed, watch, onMounted, type Ref} from "vue";
+    import {ref, computed, watch, onMounted, useTemplateRef} from "vue";
     import _merge from "lodash/merge";
 
     import Lock from "vue-material-design-icons/Lock.vue";
@@ -251,7 +251,7 @@
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useSecretsFilter} from "../filter/configurations";
     import {useTableColumns} from "../../composables/useTableColumns";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
+    import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
     
     const secretsFilter = useSecretsFilter();
 
@@ -302,7 +302,7 @@
     const namespacesStore = useNamespacesStore();
 
     const form = ref<FormInstance>();
-    const dataTable = ref<InstanceType<typeof DataTable>>();
+    const dataTable = useTemplateRef<DataTableRef>("dataTable");
     const selectTable = ref<InstanceType<typeof SelectTable>>();
 
     const total = ref(0);
@@ -339,7 +339,7 @@
             {
                 label: t("tags"), 
                 prop: "tags", 
-                default: false, 
+                default: true,
                 description: t("filter.table_column.secrets.tags")
             }
         ];
@@ -362,15 +362,6 @@
             ?.map(prop => optionalColumns.value?.find(c => c.prop === prop))
             ?.filter(Boolean) as any[]
     );
-
-    const searchQuery = computed<string | undefined>(() => {
-        const q = route.query?.q;
-        return typeof q === "string" ? q : undefined;
-    });
-
-    const filteredSecrets = computed(() => {
-        return secrets.value?.filter((secret) => !searchQuery.value || secret.key.toLowerCase().includes(searchQuery.value));
-    });
 
     const secretModalTitle = computed(() => {
         return secret.value?.update 
@@ -484,8 +475,8 @@
         }
     };
 
-    const {onPageChanged, queryWithFilter, load, ready, onSort} = useDataTableActions({
-        dataTableRef: dataTable as Ref<any>,
+    const {onPageChanged, queryWithFilter, onSort} = useDataTableActions({
+        dataTableRef: dataTable,
         loadData
     });
 
@@ -578,18 +569,6 @@
     watch(hasData, (newValue, oldValue) => {
         if (oldValue !== newValue) {
             emit("hasData", newValue!);
-        }
-    });
-
-    watch(searchQuery, (newValue, oldValue) => {
-        if (newValue !== oldValue) {
-            loadData();
-        }
-    });
-
-    watch(ready, (newReady) => {
-        if (newReady) {
-            loadData(load);
         }
     });
 

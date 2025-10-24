@@ -139,5 +139,5 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         }
     });
 
-    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, p) => acc + (p.size ?? 0), 0) * 100 / panels.value.length))
+    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, p) => acc + (p.size ?? 0), 0) / panels.value.length))
 }

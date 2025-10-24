@@ -1074,7 +1074,7 @@
     },
     "execution_guide": {
       "get_started": {
-        "title": "Get Started ⚡",
+        "title": "Get Started",
         "text": "Follow the Quickstart Guide to install Kestra and start building your first workflows."
       },
       "workflow_components": {

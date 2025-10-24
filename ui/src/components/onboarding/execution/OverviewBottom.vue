@@ -10,7 +10,7 @@
         />
     </div>
 </template>
-<script>
+<script lang="ts">
     import OverviewCard from "../execution/OverviewCard.vue";
 
     export default {
@@ -47,4 +47,4 @@
         flex-wrap: wrap;
         max-width: 1000px;
     }
-</style>
+</style> 

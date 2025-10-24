@@ -1,8 +1,28 @@
 <template>
     <el-card class="box-card">
-        <div>
-            <div class="overview-title">
-                <div>
+        <div class="card-content">
+            <div class="">
+                <div class="card-header">
+                    <el-link underline="never" :href="getLink()" target="_blank">
+                        <el-icon class="el-icon--right">
+                            <OpenInNew />
+                        </el-icon>
+                    </el-link>
+                </div>
+                <div class="icon-title">
+                    <el-icon size="25px">
+                        <component :is="getIcon()" />
+                    </el-icon>
+                    <div class="card">
+                        <h5 class="cat_title">
+                            {{ title }}
+                        </h5>
+                        <div class="cat_description">
+                            <Markdown :source="$t(`execution_guide.${category}.text`)" />
+                        </div>
+                    </div>
+                </div>
+                <!-- <div>
                     <h5 class="overview_cat_title">
                         {{ title }}
                     </h5>
@@ -15,7 +35,7 @@
                             <OpenInNew />
                         </el-icon>
                     </el-link>
-                </div>
+                </div> -->
             </div>
         </div>
     </el-card>
@@ -27,6 +47,9 @@
 
 <script>
     import Markdown from "../../layout/Markdown.vue";
+    import mdiVideoInputComponent from "vue-material-design-icons/videoInputComponent.vue";
+    import mdiRocketLaunchOutline from "vue-material-design-icons/rocketLaunchOutline.vue";
+    import mdiPlayBoxMultiple from "vue-material-design-icons/playBoxMultiple.vue";
 
     export default {
         name: "OverviewCard",
@@ -40,8 +63,23 @@
                 type: String,
                 required: true,
             },
+            content: {
+                type: String,
+                required: true,
+            },
+            link: {
+                type: String,
+                required: true,
+            },
         },
         methods: {
+            getIcon() {
+                return {
+                    videos_tutorials: mdiRocketLaunchOutline ,
+                    workflow_components: mdiVideoInputComponent,
+                    get_started: mdiPlayBoxMultiple,
+                }[this.category] ||mdiRocketLaunchOutline ;
+            },
             getLink() {
                 const links = {
                     videos_tutorials: "https://www.youtube.com/watch?v=6TqWWz9difM",
@@ -55,57 +93,55 @@
 </script>
 
 <style scoped lang="scss">
+a:hover {
+    text-decoration: none;
+}
+
 .el-card {
-	background-color: var(--ks-background-card);
-	border-color: var(--ks-border-primary);
-	box-shadow: var(--el-box-shadow);
-	position: relative;
-	width: 100px;
-	height: 180px;
-	min-width: 200px;
-	flex: 1;
-	cursor: pointer;
+    background-color: var(--ks-background-card);
+    border-color: var(--ks-border-primary);
+    box-shadow: var(--el-box-shadow);
+    position: relative;
+    min-width: 250px;
+    flex: 1;
+    cursor: pointer;
 
-	&:deep(.el-card__header) {
-		padding: 0;
-	}
-
-	&:deep(.el-link) {
-		position: absolute;
-		bottom: 15px;
-		font-size: 12px;
-		border: 1px solid var(--ks-border-primary);
-		padding: 3px 10px;
-		border-radius: 5px;
-
-		&:hover {
-			color: var(--bs-gray-900-lighten-7);
-		}
-	}
+    &:deep(.el-card__header) {
+        padding: 0;
+    }
 }
 
 .box-card {
-	.card-header {
-		position: absolute;
-		top: 5px;
-		right: 5px;
-	}
+    .card-header {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+    }
 
-	.overview_cat_title {
-		width: 100%;
-		margin: 3px 0 10px;
-		font-weight: 600;
-		font-size: var(--el-font-size-small);
-	}
+    .cat_title {
+        width: 100%;
+        margin: 3px 0 10px;
+        padding-left: 20px;
+        font-weight: 600;
+        font-size: var(--el-font-size-small);
+    }
+
+    .cat_description {
+        width: 100%;
+        margin: 0;
+        padding-left: 20px;
+    }
 }
 
-.overview-title {
-	display: inline-flex;
+.icon-title {
+    display: inline-flex;
+
+    &.icon-title-left {
+        margin-right: 10px;
+    }
 }
 
-:deep(.markdown) {
-	font-size: var(--el-font-size-extra-small) !important;
-	color: var(--ks-content-tertiary);
+.el-link {
+    font-size: 20px;
 }
-
 </style>

@@ -21,11 +21,11 @@
     import {computed, useSlots} from "vue";
     import MultiPanelEditorTabs from "./MultiPanelEditorTabs.vue";
     import MultiPanelTabs from "./MultiPanelTabs.vue";
-    import {DeserializableEditorElement, Panel} from "../utils/multiPanelTypes";
+    import {EditorElement, Panel} from "../utils/multiPanelTypes";
     import {useStoredPanels} from "../composables/useStoredPanels";
 
     const props = withDefaults(defineProps<{
-        editorElements: DeserializableEditorElement[];
+        editorElements: EditorElement[];
         defaultActiveTabs: string[];
         saveKey: string;
         bottomVisible?: boolean;
@@ -41,7 +41,7 @@
 
     function focusTab(tabValue: string){
         for(const panel of panels.value){
-            const t = panel.tabs.find(e => e.value === tabValue);
+            const t = panel.tabs.find(e => e.uid === tabValue);
             if(t) panel.activeTab = t;
         }
     }
@@ -91,13 +91,13 @@
 
 
 
-    const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)));
+    const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.uid)));
 
     function onRemoveTab(tabValue: string) {
-        const panel = panels.value.find(p => p.tabs.some(t => t.value === tabValue))
+        const panel = panels.value.find(p => p.tabs.some(t => t.uid === tabValue))
         if (panel) {
-            panel.tabs = panel.tabs.filter(t => t.value !== tabValue)
-            if (panel.activeTab.value === tabValue) {
+            panel.tabs = panel.tabs.filter(t => t.uid !== tabValue)
+            if (panel.activeTab.uid === tabValue) {
                 panel.activeTab = panel.tabs[0]
             }
         }

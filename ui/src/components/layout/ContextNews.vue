@@ -16,10 +16,8 @@
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <!-- fix 3 consider removign tooltip wrapper in DateAgo comp seperate file -->
                 <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
             </div>
-            <!-- fix 2 remove mt-3 -->
             <Markdown class="markdown-tooltip postParagraph" :source="feed.description" />
 
             <div class="newsButtonBar">
@@ -77,7 +75,7 @@
 <style scoped lang="scss">
 
     .post {
-        padding: 1rem 1rem 0rem 1rem; //fix 4 - extra padding in between divider and image without disturbing others
+        padding: 1rem 1rem 0rem 1rem;
 
         h5 {
             margin-bottom: 0;
@@ -89,7 +87,7 @@
             max-width: 10rem;
             margin-right: 1rem;
             float: left;
-            border-radius: 8px; // fix 1
+            border-radius: 8px;
         }
 
         .metaBlock {
@@ -159,6 +157,6 @@
     }
 
     :deep(.news-date) {
-        color: var(--ks-content-secondary); // fix 5
+        color: var(--ks-content-secondary);
     }
 </style>

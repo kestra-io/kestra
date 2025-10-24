@@ -215,6 +215,33 @@
                         parentTask.children.push(taskWrapper)
                     }
                 }
+                function computeEnd(node) {
+                    let histories = node.task.state?.histories || [];
+                    let maxEnd ;
+                    if(histories.length>0){
+                        const lastDate=histories[histories.length-1].date;
+                        maxEnd=ts(lastDate);
+                    }
+                    else{
+                        maxEnd=ts(new Date());
+                    }
+
+    
+                    if (node.children) {
+                        for (let child of node.children) {
+                            const childEnd = computeEnd(child);
+                            if (childEnd > maxEnd) 
+                            {maxEnd = childEnd;}
+                        }
+                    }
+
+                    node.effectiveEnd = maxEnd;
+                    return maxEnd;
+                }
+
+                rootTasks.forEach(node=>computeEnd(node));
+
+
 
                 const nodeStart = node => ts(node.task.state.histories[0].date)
                 const childrenSort = nodes => {
@@ -262,24 +289,41 @@
                 }
 
                 const series = [];
-                const executionDelta = this.delta(); //caching this value matters
+                const executionDelta = this.delta(); 
                 for (let task of this.tasks) {
+
+                    let startTs;
+                    const firstHistoryDate=task.state.histories?.[0]?.date;
+                    if(firstHistoryDate){
+                        startTs=ts(firstHistoryDate);
+                    }
+                    else{
+                        startTs=ts(new Date());
+                    }
                     let stopTs;
-                    if (State.isRunning(task.state.current)) {
-                        stopTs = ts(new Date());
-                    } else {
-                        const lastIndex = task.state.histories.length - 1;
-                        stopTs = ts(task.state.histories[lastIndex].date);
+                    if(State.isRunning(task.state.current)){
+                        stopTs=ts(new Date());
+                    } else if(task.effectiveEnd!==undefined){
+                        stopTs=task.effectiveEnd;
+                    }
+                    else{
+                        const lastHistoryDate=task.state.histories?.[task.state.histories.length-1]?.date;
+
+                        if (lastHistoryDate){
+                            stopTs=ts(lastHistoryDate);
+                        }
+                        else{
+                            stopTs=ts(new Date());
+                        }
                     }
 
-                    const startTs = ts(task.state.histories[0].date);
+
 
                     const runningState = task.state.histories.filter(r => r.state === State.RUNNING);
                     const left = runningState.length > 0 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100) : 0;
 
                     const start = startTs - this.start;
-                    let stop = stopTs - this.start - start;
-
+                   
                     const delta = stopTs - startTs;
                     const duration = this.$moment.duration(delta);
 
@@ -290,10 +334,8 @@
                         tooltip += `\n${this.$t("running duration")} : ${Utils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
                     }
 
-                    let width = (stop / executionDelta) * 100
-                    if (State.isRunning(task.state.current)) {
-                        width = ((this.stop() - startTs) / executionDelta) * 100 //(stop / executionDelta) * 100
-                    }
+                    let width = ((stopTs - startTs) / executionDelta) * 100;
+                   
 
                     series.push({
                         id: task.id,

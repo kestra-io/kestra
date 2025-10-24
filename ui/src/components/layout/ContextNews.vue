@@ -16,7 +16,7 @@
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
+                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :noTooltip="true" />
             </div>
             <Markdown class="markdown-tooltip postParagraph" :source="feed.description" />
 

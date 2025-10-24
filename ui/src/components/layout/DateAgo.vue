@@ -1,7 +1,7 @@
 <template>
     <el-tooltip
         :key="uid('tooltip')"
-        v-if="date"
+        v-if="date && !noTooltip"
         :content="inverted ? from : full"
         :persistent="false"
         transition=""
@@ -10,6 +10,9 @@
     >
         <span :class="className">{{ inverted ? full : from }}</span>
     </el-tooltip>
+    <span v-else-if="date" :class="className">
+        {{ inverted ? full : from }}
+    </span>
 </template>
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
@@ -31,6 +34,10 @@
         className: {
             type: String,
             default: null
+        },
+        noTooltip:{
+            type: Boolean,
+            default: false
         }
     })
 

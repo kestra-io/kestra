@@ -673,6 +673,7 @@
 :not(.namespace-defaults, .el-drawer__body) > .ks-editor {
     flex-direction: column;
     height: 100%;
+    z-index: 1001;
 }
 
 .el-form .ks-editor {

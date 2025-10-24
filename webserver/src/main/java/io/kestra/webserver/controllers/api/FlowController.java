@@ -438,7 +438,7 @@ public class FlowController {
 
     @Put(uri = "{namespace}/{id}", consumes = MediaType.APPLICATION_YAML)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Flows"}, summary = "Update a flow")
+    @Operation(tags = {"Flows"}, summary = "Update a flow", deprecated = false)// force deprecated = false otherwise it is marked as deprecated, dont know why
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = FlowWithSource.class))})
     public HttpResponse<FlowWithSource> updateFlow(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -479,7 +479,7 @@ public class FlowController {
      */
     @Put(uri = "{namespace}/{id}", consumes = MediaType.ALL)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Flows"}, summary = "Update a flow", deprecated = true)
+    @Operation(tags = {"Flows"}, operationId = "updateFlowFromJson", summary = "Update a flow", deprecated = true)
     @Deprecated(forRemoval = true, since = "0.18")
     @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the JSON one.
     public HttpResponse<Flow> updateFlowFromJson(

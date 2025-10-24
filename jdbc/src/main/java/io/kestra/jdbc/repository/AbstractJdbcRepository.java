@@ -49,7 +49,9 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition defaultFilter(Boolean allowDeleted) {
-        return allowDeleted ? DSL.trueCondition() : field("deleted", Boolean.class).eq(false);
+        return allowDeleted ?
+            field("deleted", Boolean.class).in(true, false) :
+            field("deleted", Boolean.class).eq(false);
     }
 
     protected Condition defaultFilter(String tenantId) {

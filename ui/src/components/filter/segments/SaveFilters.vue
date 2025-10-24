@@ -195,17 +195,12 @@
 }
 
 .no-bg-border {
-    background-color: transparent !important;
     margin: 0;
     padding: 0.5rem;
     border-radius: 0.25rem;
     font-size: 1rem;
     color: var(--ks-content-primary) !important;
     box-shadow: 0 2px 4px var(--ks-card-shadow);
-
-    &:hover {
-        color: var(--ks-content-link-hover) !important;
-    }
 }
 
 .el-button.is-disabled {

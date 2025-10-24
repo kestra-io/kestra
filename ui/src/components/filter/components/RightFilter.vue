@@ -28,7 +28,7 @@
             @hide="isSavedFiltersVisible = false"
         >
             <template #reference>
-                <el-button size="default" class="saved-btn" :icon="BookmarkCheckOutline" :disabled="filter.readOnly.value">
+                <el-button type="default" size="default" class="saved-btn" :icon="BookmarkCheckOutline" :disabled="filter.readOnly.value">
                     <el-tooltip :content="$t('filter.saved tooltip')" placement="top" effect="light">
                         <span class="saved-content">
                             {{ $t("filter.saved") }}
@@ -55,6 +55,8 @@
         <el-tooltip :content="$t('filter.show data options tooltip')" placement="top" effect="light">
             <el-button
                 v-if="filter.buttons.value?.tableOptions?.shown !== false"
+                type="default"
+                size="default"
                 @click="filter.toggleOptions"
                 class="options-btn"
                 :icon="VerticalSliders"
@@ -112,15 +114,10 @@
     }
 
     .saved-btn {
-        background-color: transparent;
         box-shadow: none;
         margin: 0;
         font-size: 0.875rem;
         box-shadow: var(--ks-box-shadow);
-
-        &:hover {
-            background: var(--ks-button-background-secondary);
-        }
 
         .saved-content {
             display: flex;
@@ -142,17 +139,12 @@
     }
 
     .options-btn {
-        background-color: transparent !important;
         box-shadow: var(--ks-box-shadow);
         margin: 0;
         padding: 0.5rem;
         border-radius: 0.25rem;
         font-size: 1rem;
         color: var(--ks-content-primary) !important;
-
-        &:hover {
-            background: var(--ks-button-background-secondary-hover) !important;
-        }
     }
 }
 </style>

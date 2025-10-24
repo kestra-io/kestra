@@ -4,7 +4,7 @@
             <span class="key">{{ filter.keyLabel }}</span>
             <span v-if="!hasValue(filter.value)" class="in">in</span>
             <span v-if="!hasValue(filter.value)" class="val">any</span>
-            <span v-else class="comparator">{{ getComparatorLabel() }}</span>
+            <span v-else class="comparator" :class="{negative: isNegative}">{{ getComparatorLabel() }}</span>
             <el-tooltip
                 v-if="hasValue(filter.value)"
                 :content="formatTooltipValue(filter.value)"
@@ -38,7 +38,7 @@
     import {ElTag} from "element-plus";
     import {useValues} from "../../composables/useValues";
     import {Close} from "../../utils/icons";
-    import {AppliedFilter, FilterKeyConfig} from "../../utils/filterTypes";
+    import {AppliedFilter, FilterKeyConfig, Comparators} from "../../utils/filterTypes";
     import FilterEditPopover from "./FilterEditPopover.vue";
 
     type FilterValueType = string | string[] | Date | {startDate: Date; endDate: Date};
@@ -105,6 +105,10 @@
         h("span", {class: "value"}, formatValue(props.filter.value))
     );
 
+    const isNegative = computed(() => 
+        props.filter.comparator === Comparators.NOT_EQUALS || props.filter.comparator === Comparators.NOT_IN
+    );
+
     const isToggled = computed(() => editPopover.value?.isDialogVisible ?? false);
 
     defineExpose({
@@ -164,6 +168,10 @@
         .comparator {
             color: var(--ks-chart-success);
             text-transform: lowercase;
+            
+            &.negative {
+                color: var(--ks-chart-failed);
+            }
         }
     }
     .close {

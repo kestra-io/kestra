@@ -146,7 +146,7 @@
         }
 
         .options-right {
-            gap: 0.875rem;
+            gap: 0.5rem;
         }
     }
 
@@ -156,11 +156,15 @@
         border: none;
         box-shadow: none;
         margin: 0;
-        padding: 0;
+        padding: 0.25rem 0.5rem;
         font-size: 14px;
 
         :deep(svg) {
             color: var(--ks-content-tertiary);
+        }
+
+        &:hover {
+            background-color: var(--ks-tag-background);
         }
     }
 }

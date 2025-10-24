@@ -33,7 +33,9 @@
 
 <style lang="scss" scoped>
     .neon-checkbox {
-        --primary: var(--ks-content-success);
+        --primary: #ffffff;
+        --border-color: var(--ks-border-primary);
+        --background-checked: var(--ks-border-active);
         --size: 16px;
         position: relative;
         width: var(--size);
@@ -55,7 +57,7 @@
                 inset: 0;
                 background: transparent;
                 border-radius: 2px;
-                border: 1px solid var(--ks-border-primary);
+                border: 1px solid var(--border-color);
                 transition: all 0.4s ease;
             }
 
@@ -78,14 +80,14 @@
                 stroke-dasharray: 40;
                 stroke-dashoffset: 40;
                 transform-origin: center;
-                transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                transition: stroke-dashoffset 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s ease;
             }
         }
 
         input:checked ~ &__frame {
             .neon-checkbox__box {
-                border: 1px solid var(--ks-border-success);
-                background: rgba(0, 255, 170, 0.1);
+                border: 1px solid var(--border-color);
+                background: var(--background-checked);
             }
 
             .neon-checkbox__check {

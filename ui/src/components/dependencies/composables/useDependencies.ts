@@ -43,7 +43,7 @@ const layout: cytoscape.CoseLayoutOptions = {
     // Physical forces
     nodeRepulsion: 10_000_000,
     edgeElasticity: 100,
-    idealEdgeLength: 250    ,
+    idealEdgeLength: 250,
 
     // Gravity settings
     gravity: 0.05,

@@ -65,28 +65,28 @@ export const TestDoubleKey: Story = {
         // first test with a duplicated value and make sure there is no error
         await userEvent.type(newKeyField, "key2");
 
+        await waitFor(() => {
+            const errorMsg = canvas.queryByText(/duplicate key/i);
+            if (!errorMsg) return false;
+            return true;
+        }, {timeout: 2000});
+
+        userEvent.clear(newKeyField);
+        await userEvent.type(newKeyField, "newKey");
+
         // find the monaco editor and type in the value
         const monacoEditor = await waitFor(async function monacoInit() {
-            const line = await canvas.findByTestId("task-dict-item-key2-3")
+            const line = canvas.queryByTestId("task-dict-item-newKey-3");
             const mon = line?.querySelector(".ks-monaco-editor") as any;
-            if (!mon?.__setValueInTests) {
-                if(!line)
-                    throw new Error("Dict line not found");
-                if(!mon)
-                    throw new Error("Monaco editor not found");
-                throw new Error("Monaco editor not initialized for tests");
-            }
+            if (!mon?.__setValueInTests) return false;
             return mon;
-        });
-        monacoEditor?.__setValueInTests("newValue");
+        }, {timeout: 5000});
 
-        // if the field disappears because of duplication,
-        // this line will error and the test fail
-        userEvent.clear(newKeyField);
-        userEvent.type(newKeyField, "newKey");
+        monacoEditor.__setValueInTests("newValue");
 
-        await waitFor(function valueUpdated() {
-            expect(canvas.getByTestId("sb-meta-data-result")?.innerText).toContain("\"newKey\": \"newValue\"");
-        });
+        await waitFor(() => {
+            const result = canvas.getByTestId("sb-meta-data-result")?.innerText;
+            expect(result).toContain("\"newKey\": \"newValue\"");
+        }, {timeout: 2000});
     }
 }

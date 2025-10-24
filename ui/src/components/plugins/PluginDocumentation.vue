@@ -35,7 +35,6 @@
                         <Markdown
                             font-size-var="font-size-base"
                             :source="content"
-                            :showSearch="false"
                         />
                     </template>
                 </SchemaToHtml>

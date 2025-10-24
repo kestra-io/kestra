@@ -1,8 +1,13 @@
 name: Pull Request Workflow
 
+permissions:
+  checks: write
+  contents: read
+  pull-requests: write
+  issues: write
+
 on:
   pull_request:
-  pull_request_target:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-pr
@@ -20,6 +25,7 @@ jobs:
       backend: ${{ steps.changes.outputs.backend }}
     steps:
       - name: Checkout
+        uses: actions/checkout@v3
       - uses: dorny/paths-filter@v3
         id: changes
         with:

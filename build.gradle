@@ -184,7 +184,7 @@ subprojects {subProj ->
             testImplementation enforcedPlatform(project(":platform"))
 
             // lombok
-            estAnnotationProcessor "org.projectlombok:lombok:"
+            testAnnotationProcessor "org.projectlombok:lombok:"
             testCompileOnly 'org.projectlombok:lombok'
 
             // micronaut

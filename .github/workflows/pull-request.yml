@@ -1,11 +1,5 @@
 name: Pull Request Workflow
 
-permissions:
-  checks: write
-  contents: read
-  pull-requests: write
-  issues: write
-
 on:
   pull_request:
 
@@ -24,8 +18,6 @@ jobs:
       translations: ${{ steps.changes.outputs.translations }}
       backend: ${{ steps.changes.outputs.backend }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
       - uses: dorny/paths-filter@v3
         id: changes
         with:
@@ -50,8 +42,6 @@ jobs:
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
-    with:
-      extra-build-args: "--warning-mode all --info --stacktrace"
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

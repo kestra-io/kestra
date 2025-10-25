@@ -19,7 +19,7 @@
     import MultiPanelGenericEditorView from "../../MultiPanelGenericEditorView.vue";
     import DashboardEditorButtons from "./DashboardEditorButtons.vue";
 
-    const showEditor = computed(() => dashboardStore.isCreating ?? dashboardStore.parsedSource?.id);
+    const showEditor = computed(() => dashboardStore.isCreating || dashboardStore.parsedSource?.id);
 
     const saveKey = computed(() => 
         dashboardStore.isCreating ? undefined : `ks-dashboard-${dashboardStore.parsedSource?.id}`

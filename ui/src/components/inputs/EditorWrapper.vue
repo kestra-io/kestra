@@ -155,8 +155,8 @@
     onMounted(() => {
         if(props.flow){
             pluginsStore.lazyLoadSchemaType({type: "flow"});
-            loadFile();
         }
+        loadFile();
         loadPluginsHash();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
@@ -166,11 +166,19 @@
         }
     });
 
-    const LANGS_WITH_WORKERS = ["yaml", "yml", "json", "ts", "js"];
+    const LANGS_WITH_WORKERS_MAP = {
+        yaml: "yaml",
+        yml: "yaml",
+        json: "json",
+        js: "javascript",
+        ts: "typescript",
+        jsx: "javascript",
+        tsx: "typescript",
+    };
 
     const lang = computed(() => {
-        if (LANGS_WITH_WORKERS.includes(props.extension)) {
-            return props.extension;
+        if (props.extension in LANGS_WITH_WORKERS_MAP) {
+            return LANGS_WITH_WORKERS_MAP[props.extension as keyof typeof LANGS_WITH_WORKERS_MAP];
         }
         return undefined;
     });
@@ -232,6 +240,9 @@
         if(props.path){
             updateContent?.({path: props.path, content: newValue});
         }
+
+        // only validate and update graph for flow files
+        if(!props.flow) return
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {

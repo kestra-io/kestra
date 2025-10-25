@@ -17,7 +17,7 @@
 
                 <hr class="my-4">
 
-                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema)" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
+                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
@@ -81,13 +81,13 @@
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
                 : val; // Handle null values
+        
 
-
-        const currentFlow = parsedFlow.value;
-
-        currentFlow[key] = realValue;
-
-        editorUpdate(YAML_UTILS.stringify(currentFlow));
+        editorUpdate(YAML_UTILS.replaceBlockWithPath({
+            source: flowStore.flowYaml ?? "",
+            path: key,
+            newContent: YAML_UTILS.stringify(realValue),
+        }));
     }
 
     const lastValidFlowYaml = computed<string>(
@@ -104,7 +104,6 @@
     const {
         fieldsFromSchemaTop,
         fieldsFromSchemaRest,
-        parsedFlow,
     } = useFlowFields(lastValidFlowYaml)
 
     useKeyboardSave()

@@ -45,9 +45,12 @@ public class KvFunction implements Function {
         Boolean insideKvTask = Boolean.TRUE.equals(context.getVariable(INSIDE_KV_TASK));
         Boolean errorOnMissing = Optional.ofNullable((Boolean) args.get(ERROR_ON_MISSING_ARG))
             .orElse(insideKvTask ? false : true);
-        boolean errorOnMissing = Optional.ofNullable((Boolean) args.get(ERROR_ON_MISSING_ARG)).orElse(true);
 
-        Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
+        Object flowObj = context.getVariable("flow");
+        if (!(flowObj instanceof Map)) {
+            throw new PebbleException(null, "'flow' variable is not a Map", lineNumber, self.getName());
+        }
+        Map<String, String> flow = (Map<String, String>) flowObj;
         String flowNamespace = flow.get(NAMESPACE_ARG);
         String flowTenantId = flow.get("tenantId");
 
@@ -68,13 +71,10 @@ public class KvFunction implements Function {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
         if (value.isEmpty()) {
-            if (Boolean.TRUE.equals(errorOnMissing)) {
+            if (errorOnMissing) {
                 throw new PebbleException(null, "The key '" + key + "' does not exist in the namespace '" + namespace + "'.", lineNumber, self.getName());
             }
             return "";
-        }
-        if (value.isEmpty() && errorOnMissing) {
-            throw new PebbleException(null, "The key '" + key + "' does not exist in the namespace '" + namespace + "'.", lineNumber, self.getName());
         }
 
         Object result = value.map(KVValue::value).orElse(null);

@@ -72,6 +72,7 @@ public class KvFunction implements Function {
                 throw new PebbleException(null, "The key '" + key + "' does not exist in the namespace '" + namespace + "'.", lineNumber, self.getName());
             }
             return "";
+        }
         if (value.isEmpty() && errorOnMissing) {
             throw new PebbleException(null, "The key '" + key + "' does not exist in the namespace '" + namespace + "'.", lineNumber, self.getName());
         }

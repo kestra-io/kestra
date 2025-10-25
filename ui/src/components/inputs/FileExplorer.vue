@@ -134,14 +134,8 @@
             </template>
             <template #default="{data, node}">
                 <el-dropdown
-                    ref="dropdowns"
-                    @contextmenu.prevent.stop="
-                        toggleDropdown();
-                        if(selectedNodes.length === 0) {
-                            selectedNodes.push(data.id);
-                            selectedFiles.push(filesStore.getPath(data.id) ?? '');
-                        }
-                    "
+                    :ref="(el: any) => dropdowns[data.id as string] = el"
+                    @contextmenu.prevent.stop="toggleDropdown(data.id)"
                     trigger="contextmenu"
                     class="w-100"
                 >
@@ -429,8 +423,7 @@
     const tree = ref<any>();
     const filePicker = ref<HTMLInputElement>();
     const folderPicker = ref<HTMLInputElement>();
-    const dropdowns = ref<{handleClose: () => void; handleOpen: () => void}>();
-    const dropdownRef = ref<{handleClose: () => void; handleOpen: () => void}>();
+    const dropdowns = ref<Record<string, {handleClose: () => void; handleOpen: () => void}>>({});
     const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
     const nodeBeforeDrag = ref<{
         parent: string;
@@ -535,12 +528,19 @@
         filter.value = "";
     }
 
-    function toggleDropdown() {
-        if (dropdownRef.value) {
-            dropdownRef.value?.handleClose();
+    function toggleDropdown(id: string) {
+        if(selectedNodes.value.length === 0) {
+            selectedNodes.value.push(id);
+            selectedFiles.value.push(filesStore.getPath(id) ?? "");
         }
-        dropdownRef.value = dropdowns.value
-        dropdownRef.value?.handleOpen();
+
+        for(const dd in dropdowns.value){
+            if(dd !== id){
+                dropdowns.value[dd].handleClose();
+            }
+        };
+
+        dropdowns.value[id]?.handleOpen()
     }
 
     function dialogHandler() {

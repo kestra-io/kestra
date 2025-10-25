@@ -10,7 +10,7 @@
             <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
                 <el-input
                     v-model="searchText"
-                    :placeholder="$t('pluginPage.search', {count: countPlugin})"
+                    :placeholder="$t('pluginPage.search', {count: 900})"
                     clearable
                     @input="updateSearch"
                 />
@@ -84,10 +84,6 @@
     const searchText = ref("");
 
     const searchInput = computed(() => searchText.value.toLowerCase());
-
-    const countPlugin = computed(() => {
-        return new Set(props.plugins.flatMap(plugin => allElements(plugin))).size;
-    });
 
     const pluginsList = computed(() => {
         // Show subgroups only if exist, else show main group - GH-8940

@@ -292,7 +292,7 @@
                     :redirect="false"
                     :embed="true"
                 />
-                <template #footer>                  
+                <template #footer>
                     <el-button
                         type="primary"
                         @click="postBackfill()"
@@ -351,7 +351,7 @@
         },
         data() {
             return {
-                triggers: undefined,
+                triggers: [],
                 total: undefined,
                 triggerToUnlock: undefined,
                 states: [
@@ -650,7 +650,7 @@
                 return false
             },
             triggersMerged() {
-                const all = this.triggers.map(t => {
+                const all = this.triggers?.map(t => {
                     return {
                         ...t?.abstractTrigger,
                         ...t.triggerContext,
@@ -658,7 +658,7 @@
                         // if we have no abstract trigger, it means that flow or trigger definition hasn't been found
                         missingSource: !t.abstractTrigger
                     }
-                })
+                }) ?? []
 
                 if(!this.$route.query?.["filters[trigger_state][EQUALS]"]?.length) return all;
 

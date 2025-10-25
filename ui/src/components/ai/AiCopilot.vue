@@ -5,7 +5,12 @@
                 <span class="d-inline-flex title align-items-center">
                     <AiIcon /><span>{{ t("ai.flow.title") }}</span>
                 </span>
-                <el-button class="border-0" size="small" :icon="Close" @click.stop="emit('close')" />
+                <el-button 
+                    class="border-0 ai-close-button" 
+                    size="small" 
+                    :icon="Close" 
+                    @click.stop="emit('close')" 
+                />
             </div>
         </template>
         <el-input
@@ -172,5 +177,44 @@
     .ai-copilot-placeholder :deep(textarea::placeholder) {
         color: gray;
         font-style: italic;
+    }
+
+    // Enhanced close button animation
+    .ai-close-button {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        &:hover {
+            transform: translateY(-2px);
+            opacity: 0.8;
+        }
+        
+        &:active {
+            transform: translateY(0);
+            opacity: 0.6;
+        }
+    }
+
+    // Staggered animations for children elements (scaleX only, faster)
+    :deep(.el-card__header) {
+        animation: scaleInX 0.30s cubic-bezier(0.2, 0.8, 0.2, 1) 0.04s both;
+    }
+
+    :deep(.el-card__body) {
+        animation: scaleInX 0.30s cubic-bezier(0.2, 0.8, 0.2, 1) 0.08s both;
+    }
+
+    :deep(.el-card__footer) {
+        animation: scaleInX 0.30s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s both;
+    }
+
+    @keyframes scaleInX {
+        from {
+            opacity: 0;
+            transform: scaleX(0.85);
+        }
+        to {
+            opacity: 1;
+            transform: scaleX(1);
+        }
     }
 </style>

@@ -687,7 +687,7 @@ class ExecutionControllerRunnerTest {
 
                     assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
                     assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-                    assertThat(restartedExec.getTaskRunList().get(2).getAttempts()).isNull();
+                    assertThat(restartedExec.getTaskRunList().get(2).getAttempts()).isNotNull();
                     assertThat(restartedExec.getTaskRunList().get(3).getAttempts().size()).isEqualTo(1);
                     });
             },
@@ -701,7 +701,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(1);
         assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size()).isEqualTo(1);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).isNull();
+        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).isNotNull();
         assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getHistories().stream().filter(state -> state.getState() == State.Type.PAUSED).count()).isEqualTo(1L);
         assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts().size()).isEqualTo(2);
         assertThat(finishedRestartedExecution.getTaskRunList().get(4).getAttempts().size()).isEqualTo(1);
@@ -2295,6 +2295,20 @@ class ExecutionControllerRunnerTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getCount()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows("flows/valids/webhook-outputs.yaml")
+    void webhookWithOutputs() {
+        Map<String, Object> outputs = client.toBlocking().retrieve(
+            GET(
+                "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS + "/webhook-outputs/webhook-outputs"
+            ),
+            Argument.mapOf(String.class, Object.class)
+        );
+
+        assertThat(outputs).hasFieldOrPropertyWithValue("status", "ok");
+        assertThat(outputs).containsKey("executionId");
     }
 
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {

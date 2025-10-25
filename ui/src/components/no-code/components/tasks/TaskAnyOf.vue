@@ -15,7 +15,7 @@
         <el-radio-group v-else v-model="selectedSchema" @change="onSelectType">
             <el-radio
                 v-for="radioSchema in schemaOptions"
-                :key="radioSchema.label"
+                :key="radioSchema.value"
                 :value="radioSchema.value"
             >
                 {{ radioSchema.label }}
@@ -46,6 +46,8 @@
         definitions: Record<string, any>,
         required?: boolean
     }>();
+
+    defineOptions({inheritAttrs: false});
 
     const model = defineModel<any>()
 
@@ -112,9 +114,22 @@
         });
     });
 
+    const allSchemaSameType = computed(() => {
+        if (schemas.value.length === 0) return false;
+        const firstType = schemas.value[0].type;
+        return schemas.value.every((schema: any) => schema.type === firstType);
+    });
+
+    function makeKey(schema: any) {
+        if(allSchemaSameType.value){
+            return `${schema.type}.${schema.items.type}${schema.items.format ? `.${schema.items.format}` : ""}`;
+        }
+        return schema.type;
+    }
+
     const schemaByType = computed(() => {
         return schemas.value.reduce((acc: Record<string, any>, schema: any) => {
-            acc[schema.type] = schema;
+            acc[makeKey(schema)] = schema;
             return acc;
         }, {});
     });
@@ -139,7 +154,21 @@
 
     const isSelectingPlugins = computed(() => schemas.value.length > 4);
 
-    const schemaOptions = computed(() => {
+    const schemaOptions = computed<{label: string, value: string, id: string}[]>(() => {
+        // if all schemas are of type array we have to
+        // look at the type of their items to differentiate them
+        if(allSchemaSameType.value){
+            return schemas.value.map((schema: any) => {
+                const itemsType = schema.items.format ?? schema.items.type;
+
+                return {
+                    label: itemsType.charAt(0).toUpperCase() + itemsType.slice(1),
+                    value: makeKey(schema),
+                    id: itemsType,
+                };
+            })
+        }
+
         if (!schemas.value?.length || !props.definitions) return [];
         const schemaRefsArray = (schemas.value as {$ref?: string, type: string}[])
             .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
@@ -159,7 +188,9 @@
             })
             .map((schemaRef: string) => `${schemaRef}.`)
             .join("");
+        
 
+        
         return schemas.value.map((schema: any) => {
             const schemaRef = schema.$ref
                 ? schema.$ref.split("/").pop()
@@ -181,7 +212,7 @@
                 value: schemaRef,
                 id: cleanSchemaRef,
             };
-        }).filter((schema: any) => schema.value);
+        }).filter((schema: any) => schema.value !== undefined);
     });
 
     watch(() => constantType.value, (val) => {
@@ -207,15 +238,18 @@
         });
     });
 
-    // Lifecycle
     onMounted(() => {
         const schema = schemaOptions.value.find((item: any) =>
             item.value === model.value?.type ||
             (typeof model.value === "string" && item.value === "string") ||
             (typeof model.value === "number" && item.value === "integer") ||
             (Array.isArray(model.value) && item.value === "array") ||
-            (typeof model.value === "object" && item.value === "object")
+            (typeof model.value === "object" && item.value === "object") ||
+            (Array.isArray(model.value) && typeof model.value[0] === "number" && item.value === "array.number") ||
+            (Array.isArray(model.value) && typeof model.value[0] === "string" && !isNaN(Date.parse(item.value[0])) && item.value === "array.string.date-time") ||
+            (Array.isArray(model.value) && typeof model.value[0] === "string" && item.value === "array.string")
         );
+
         selectedSchema.value = schema?.value;
 
         if (!selectedSchema.value && schemas.value.length > 0 && props.required) {

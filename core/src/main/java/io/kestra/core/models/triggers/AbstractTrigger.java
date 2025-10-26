@@ -15,13 +15,10 @@ import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import lombok.ToString;
-import lombok.EqualsAndHashCode;
 import org.slf4j.event.Level;
 
 import java.util.List;
@@ -39,7 +36,7 @@ import java.util.Map;
 )
 public abstract class AbstractTrigger {
     @Schema(title = "Unique identifier for the trigger")
-    @NotNull(message = "Trigger ID is required.")
+    @NotNull(groups = {Create.class}, message = "Trigger ID is required.")  // Change to optional for Create
     @Pattern(regexp = "[a-zA-Z0-9_-]+")
     protected String id;
 

@@ -11,7 +11,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.micronaut.core.annotation.Nullable;
-import jakarta.validation.Valid;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 

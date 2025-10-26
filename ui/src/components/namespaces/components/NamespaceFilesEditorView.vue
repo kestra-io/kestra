@@ -5,7 +5,7 @@
             key="sideBar"
             :size="sideBarSize"
         >
-            <EditorSidebar
+            <FileExplorer
                 :currentNS="namespace"
                 style="width: 100%;height: 100%;"
             />
@@ -23,7 +23,7 @@
 <script setup lang="ts">
     import {computed, watch} from "vue";
     import {useMounted, useStorage} from "@vueuse/core";
-    import EditorSidebar from "../../inputs/EditorSidebar.vue";
+    import FileExplorer from "../../inputs/FileExplorer.vue";
     import MultiPanelTabs from "../../MultiPanelTabs.vue";
     import {getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels";
     import {useFlowStore} from "../../../stores/flow";

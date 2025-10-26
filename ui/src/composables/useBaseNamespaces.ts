@@ -174,7 +174,7 @@ export const useBaseNamespacesStore = () => {
         await axios.post(URL);
     }
 
-    async function readDirectory(this: any, payload: {namespace: string; path?: string}) {
+    async function readDirectory<T>(this: any, payload: {namespace: string; path?: string}): Promise<T[]> {
         const URL = `${base(payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(safePath(payload.path))}` : ""}`;
         // Accept 200 or 404 so axios doesn't treat 404 as an error (which would set coreStore.error globally)
         const response = await axios.get(URL, VALIDATE);

@@ -634,7 +634,6 @@
 
         const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
         el.scrollLeft += delta;
-        e.preventDefault();
     }
 
     function ensureActiveTabVisible(panelIndex: number, tabId: string){

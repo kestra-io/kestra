@@ -565,7 +565,6 @@
     overflow-wrap: break-word !important;
 }
 
-// Ensure Monaco editors and other code snippets don't overlay other UI elements
 :deep(.monaco-editor),
 :deep(.editor-container),
 :deep(.complex-value-editor) {

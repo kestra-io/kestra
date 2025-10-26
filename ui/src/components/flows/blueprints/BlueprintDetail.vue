@@ -62,8 +62,8 @@
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
-                    <div class="tags text-uppercase">
-                        <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
+                    <div class="tags">
+                        <div v-for="(tag, index) in formattedTags" :key="index" class="tag-box">
                             <el-tag type="info" size="small">
                                 {{ tag }}
                             </el-tag>
@@ -100,6 +100,7 @@
     import {useFlowStore} from "../../../stores/flow";
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {parse as parseFlow} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {formatTag} from "../../../utils/tagFormatter";
 
     export default {
         components: {Markdown, CopyToClipboard},
@@ -219,6 +220,10 @@
                 }
 
                 return {name: `${this.kind}s/create`, params: {tenant: this.$route.params.tenant}, query: {blueprintId: this.blueprintId, ...additionalQuery}};
+            },
+            formattedTags() {
+                if (!this.blueprint?.tags) return [];                 
+                return this.blueprint.tags.map(tag => formatTag(tag)); 
             }
         },
     };
@@ -329,7 +334,7 @@
             background-color: var(--ks-background-card);
             padding: 15px 10px;
             color: var(--ks-content-primary);
-            text-transform: capitalize;
+            // text-transform: capitalize;
             font-size: var(--el-font-size-small);
             border: 1px solid var(--ks-border-primary);
         }

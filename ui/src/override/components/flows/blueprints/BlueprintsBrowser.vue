@@ -108,6 +108,7 @@
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {useDataTableActions} from "../../../../composables/useDataTableActions";
     import useRestoreUrl from "../../../../composables/useRestoreUrl";
+    import {formatTag} from "../../../../utils/tagFormatter";
 
     const props = withDefaults(defineProps<{
         blueprintType?: "community" | "custom";
@@ -162,8 +163,7 @@
     const processedTags = (tags: string[]) => {
         return tags.map(tag => ({
             original: tag,
-            display: tag.length <= 3 && tag === tag.toUpperCase() ? tag : 
-                tag.replace(/\b\w/g, l => l.toUpperCase())
+            display: formatTag(tag)
         }));
     };
 

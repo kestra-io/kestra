@@ -19,6 +19,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import lombok.ToString;
+import lombok.EqualsAndHashCode;
 import org.slf4j.event.Level;
 
 import java.util.List;
@@ -36,7 +38,7 @@ import java.util.Map;
 )
 public abstract class AbstractTrigger {
     @Schema(title = "Unique identifier for the trigger")
-    @NotNull(groups = {Create.class}, message = "Trigger ID is required.")  // Change to optional for Create
+    @NotNull(message = "Trigger ID is required.")
     @Pattern(regexp = "[a-zA-Z0-9_-]+")
     protected String id;
 

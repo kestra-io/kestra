@@ -67,7 +67,7 @@
     "gantt": "Gantt",
     "logs": "Logs",
     "no_logs_data": "No Data",
-    "no_logs_data_description": "Either no flows are running, or you may need to adjust your filters.",
+    "no_logs_data_description": "No logs found for the selected filters. <br> Please try adjusting your filters, changing the time range, or check if the flow has executed recently.",
     "duration": "Duration",
     "total_duration": "Total duration",
     "running duration": "Running duration",
@@ -1054,7 +1054,9 @@
     "scope_filter": {
       "all": "All {label}",
       "user": "User {label}",
-      "system": "System {label}"
+      "system": "System {label}",
+      "user_description": "Regular user initiated {label}",
+      "system_description": "System maintenance {label}"
     },
     "data": "Data",
     "webhook link copied": "Webhook link copied.",
@@ -1550,6 +1552,288 @@
       "force-editor": "Enforce editor view",
       "auto-view": "Auto view",
       "view": "View"
+    },
+    "filter": {
+        "update": "Update",
+        "save": "Save",
+        "footer_apply": "Apply",
+        "cancel": "Cancel",
+        "label": "Label",
+        "description": "Description",
+        "columns": "Columns",
+        "apply": "Apply filters",
+        "apply filter": "Apply filter",
+        "customize": "Add filters",
+        "customize tooltip": "Customize which filters to display",
+        "customize columns": "Customize table columns",
+        "delete filter": "Delete filter",
+        "edit filter": "Edit filter",
+        "options": "Data Options",
+        "periodic refresh": "Periodic refresh",
+        "refresh": "Refresh data",
+        "save filter": "Save filter",
+        "save filter tooltip": "Save applied filters",
+        "saved": "Saved filters",
+        "saved filters": "Saved Filters Sets",
+        "saved tooltip": "Manage saved filters",
+        "show data options tooltip": "Show data options",
+        "show chart": "Show Chart",
+        "drag to reorder": "Drag to reorder",
+        "select filter": "Select a filter to add",
+        "enter description": "Enter filter description",
+        "enter label": "Enter filter label",
+        "reset": "Reset all filters",
+        "reset_tooltip": "Reset to default",
+        "drag to reorder columns": "Drag to reorder columns",
+        "empty": "You don't have any saved filter yet.",
+        "save duplicate": "A filter with this name already exists.",
+        "active key value pairs": "Active key/value pairs",
+        "key": "Key",
+        "value": "Value",
+        "add key value pair": "Add key/value pair",
+        "search options": "Search...",
+        "select all": "Select All",
+        "deselect all": "Deselect All",
+        "no options found": "No options found",
+        "show default": "Show Default",
+        "operator": "Filter operator",
+        "timerange": {
+          "predefined": "Predefined",
+          "custom": "Custom Range"
+        },
+        "select_option": "Select an option",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "select_start_date": "Select start date",
+        "select_end_date": "Select end date",
+        "filters_added": "{selected} of {total} filters added",
+        "comparator_descriptions": {
+            "EQUALS": "Exact match - value must be identical",
+            "NOT_EQUALS": "Excludes exact matches - value must be different",
+            "IN": "Matches any value from a list of options",
+            "NOT_IN": "Excludes all values from a list of options",
+            "GREATER_THAN": "Numeric/date comparison - value must be larger",
+            "LESS_THAN": "Numeric/date comparison - value must be smaller",
+            "GREATER_THAN_OR_EQUAL_TO": "Numeric/date comparison - value must be larger or equal",
+            "LESS_THAN_OR_EQUAL_TO": "Numeric/date comparison - value must be smaller or equal",
+            "STARTS_WITH": "Text begins with the specified characters",
+            "ENDS_WITH": "Text ends with the specified characters",
+            "CONTAINS": "Text includes the specified characters anywhere",
+            "REGEX": "Advanced pattern matching using regular expressions",
+            "PREFIX": "Namespace hierarchy matching (e.g., 'com.example' matches 'com.example.app')"
+        },
+        "hierarchy": {
+            "all": "Default",
+            "child_description": "Show only nested/triggered executions",
+            "parent_description": "Show only top-level/root executions"
+        },
+        "execution_kind": {
+            "playground":"Playground",
+            "test":"Test",
+            "playground_description": "Executions triggered from Playground mode",
+            "test_description": "Executions triggered by Unit Tests"
+        },
+        "scope": {
+            "label": "Scope",
+            "description": "Filter by execution scope"
+        },
+        "namespace": {
+            "label": "Namespace",
+            "description": "Filter by namespace"
+        },
+        "flowId": {
+            "label": "Flow ID",
+            "description": "Filter by flow ID"
+        },
+        "kind": {
+            "label": "Kind",
+            "description": "Filter by execution kind"
+        },
+        "state": {
+            "label": "State",
+            "description": "Filter by execution state"
+        },
+        "childFilter": {
+            "label": "Hierarchy",
+            "description": "Filter by execution hierarchy"
+        },
+        "childFilter_child": {
+            "label": "Child Filter",
+            "description": "Filter by execution hierarchy"
+        },
+        "timeRange": {
+            "label": "Interval",
+            "description": "Filter by execution time"
+        },
+        "timeRange_dashboard": {
+            "label": "Interval",
+            "description": "Filter by dashboard window"
+        },
+        "timeRange_log": {
+            "label": "Interval",
+            "description": "Filter by log timestamp"
+        },
+        "timeRange_trigger": {
+            "label": "Interval",
+            "description": "Filter by last triggered timestamp"
+        },
+        "timeRange_metric": {
+            "label": "Interval",
+            "description": "Filter by time interval"
+        },
+        "labels": {
+            "label": "Labels",
+            "description": "Filter by labels"
+        },
+        "labels_execution": {
+            "label": "Labels",
+            "description": "Filter by execution labels"
+        },
+        "labels_flow": {
+            "label": "Labels",
+            "description": "Filter by flow labels"
+        },
+        "triggerExecutionId": {
+            "label": "Trigger Execution ID",
+            "description": "Filter by trigger execution ID"
+        },
+        "scope_flow": {
+            "label": "Scope",
+            "description": "Filter by flow scope"
+        },
+        "scope_log": {
+            "label": "Scope",
+            "description": "Filter by user or system logs"
+        },
+        "scope_trigger": {
+            "label": "Scope",
+            "description": "Filter by trigger scope"
+        },
+        "level": {
+            "label": "Level",
+            "description": "Filter by log severity"
+        },
+        "level_log_executions": {
+            "label": "Log Level"
+        },
+        "triggerId": {
+            "label": "Trigger ID",
+            "description": "Filter by trigger identifier"
+        },
+        "triggerId_trigger": {
+            "label": "Trigger ID",
+            "description": "Filter by trigger ID"
+        },
+        "workerId": {
+            "label": "Worker ID",
+            "description": "Filter by worker ID"
+        },
+        "metric": {
+            "label": "Metric",
+            "description": "Filter by metric type"
+        },
+        "task": {
+            "label": "Task",
+            "description": "Filter by task name"
+        },
+        "aggregation": {
+            "label": "Aggregation",
+            "description": "Filter by aggregation method"
+        },
+        "table_column": {
+            "flows": {
+                "id": "Unique flow identifier",
+                "labels": "Flow labels (key:value format)",
+                "namespace": "Namespace of the flow",
+                "last execution date": "When the flow was last executed",
+                "last execution status": "Status of the most recent execution",
+                "execution statistics": "Chart showing recent execution states",
+                "triggers": "Triggers that can start the flow (e.g., schedule, event)",
+                "revision": "Current version number of the flow definition",
+                "description": "Text description provided for the flow"
+            },
+            "executions": {
+                "id": "Execution ID",
+                "start-date": "When the execution started",
+                "end-date": "When the execution finished",
+                "duration": "Total runtime of the execution",
+                "namespace": "Namespace to which the executed flow belongs",
+                "flow": "ID of the executed flow",
+                "labels": "Execution labels (key:value format)",
+                "state": "Current execution state",
+                "revision": "Version of the flow used for this execution",
+                "inputs": "Input values provided to the execution",
+                "outputs": "Outputs emitted by the execution",
+                "task-id": "ID of the last task in the execution"
+            },
+            "kv": {
+                "namespace": "Logical grouping where the key-value pair is stored",
+                "key": "Unique identifier for the stored value",
+                "description": "Optional notes explaining the KV entry",
+                "last modified": "Timestamp of the most recent update",
+                "expiration date": "When the key-value pair expires"
+            },
+            "secrets": {
+                "namespace": "Logical grouping where the secret is stored",
+                "key": "Identifier for the stored secret",
+                "description": "Optional notes providing context",
+                "tags": "Extra categorization tags"
+            },
+            "triggers": {
+                "flow": "Flow associated with the trigger",
+                "namespace": "Namespace of the trigger",
+                "current execution": "Current execution ID",
+                "workerId": "Worker identifier",
+                "last trigger date": "When the trigger last executed",
+                "context updated date": "Last update of trigger context",
+                "next evaluation date": "When the trigger evaluates next",
+                "evaluation lock date": "When evaluation is locked"
+            },
+            "flow_triggers": {
+                "type": "Type of trigger",
+                "workerId": "Worker identifier",
+                "next execution date": "When the trigger will execute next"
+            },
+            "metrics": {
+                "task": "Task that generated the metric",
+                "name": "Name of the metric",
+                "value": "Value of the metric",
+                "tags": "Tags associated with the metric"
+            },
+            "blueprints": {
+                "tags": "Tags associated with the blueprint"
+            }
+        },
+        "titles": {
+            "flow_execution_filters": "Flow Execution Filters",
+            "dashboard_filters": "Dashboard Filters",
+            "namespace_dashboard_filters": "Namespace Dashboard Filters",
+            "flow_dashboard_filters": "Flow Dashboard Filters",
+            "execution_filters": "Execution Filters",
+            "flow_filters": "Flow Filters",
+            "log_filters": "Log Filters",
+            "metric_filters": "Metric Filters",
+            "flow_metric_filters": "Flow Metric Filters",
+            "trigger_filters": "Trigger Filters",
+            "namespace_filters": "Namespaces Filters",
+            "kv_filters": "Key-Value Filters",
+            "secret_filters": "Secret Filters",
+            "blueprint_filters": "Blueprint Filters",
+            "plugin_filters": "Plugin Search"
+        },
+        "search_placeholders": {
+            "search_executions": "Search executions",
+            "search_dashboards": "Search dashboards...",
+            "search_flows": "Search flows",
+            "search_logs": "Search logs",
+            "search_metrics": "Search metrics",
+            "search_triggers": "Search triggers",
+            "search_namespaces": "Search namespaces",
+            "search_kv": "Search KV pairs",
+            "search_secrets": "Search secrets",
+            "search_blueprints": "Search blueprints",
+            "search_plugins": "Search {count}+ plugins"
+        }
     }
   }
 }

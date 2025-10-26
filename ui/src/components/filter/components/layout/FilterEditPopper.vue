@@ -85,11 +85,11 @@
     ];
 
     const isTextComparator = computed(() => 
-        TEXT_COMPARATORS.includes(state.selectedComparator)
+        TEXT_COMPARATORS.includes(state.selectedComparator) && props.filterKey.key !== "resources"
     );
 
     const valueComponent = computed(() => {
-        if (isTextComparator.value && props.filterKey.key !== "resources") {
+        if (isTextComparator.value) {
             return {
                 component: FilterText,
                 props: {

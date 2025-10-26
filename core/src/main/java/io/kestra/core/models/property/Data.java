@@ -82,7 +82,7 @@ public class Data {
             return Mono.just(map).flux().map(mapper);
         }
 
-        if (clazz.isAssignableFrom(from.getClass())) {
+        if (clazz.isAssignableFrom(from.getClass()) && !(from instanceof String && URIFetcher.supports((String) from))) {
             // it could be the case in tests so we handle it for dev experience
             return Mono.just((T) from).flux();
         }

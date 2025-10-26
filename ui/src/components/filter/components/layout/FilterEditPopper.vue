@@ -89,7 +89,7 @@
     );
 
     const valueComponent = computed(() => {
-        if (isTextComparator.value) {
+        if (isTextComparator.value && props.filterKey.key !== "resources") {
             return {
                 component: FilterText,
                 props: {

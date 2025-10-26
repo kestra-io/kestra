@@ -3,7 +3,6 @@ import permission from "../../../models/permission";
 import action from "../../../models/action";
 import {useNamespacesStore} from "override/stores/namespaces";
 import {useAuthStore} from "override/stores/auth";
-import {useFlowStore} from "../../../stores/flow";
 import {useValues} from "../composables/useValues";
 import {useI18n} from "vue-i18n";
 
@@ -90,21 +89,19 @@ export const namespaceDashboardFilter = (): FilterConfiguration => {
                 label: t("filter.flowId.label"),
                 description: t("filter.flowId.description"),
                 comparators: [
-                    Comparators.IN,
-                    Comparators.NOT_IN,
                     Comparators.EQUALS,
                     Comparators.NOT_EQUALS,
                     Comparators.CONTAINS,
                     Comparators.STARTS_WITH,
                     Comparators.ENDS_WITH,
                 ],
-                valueType: "multi-select",
-                valueProvider: async () => {
-                    const flowStore = useFlowStore();
+                valueType: "text",
+                // valueProvider: async () => {
+                //     const flowStore = useFlowStore();
 
-                    const flowIds = await flowStore.loadDistinctFlowIds();
-                    return flowIds.map((flowId: string) => ({label: flowId, value: flowId}));
-                },
+                //     const flowIds = await flowStore.loadDistinctFlowIds();
+                //     return flowIds.map((flowId: string) => ({label: flowId, value: flowId}));
+                // },
                 searchable: true
             },
             {

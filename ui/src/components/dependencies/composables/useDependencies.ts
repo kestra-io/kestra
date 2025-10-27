@@ -41,7 +41,7 @@ const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
 
     // Physical forces
-    nodeRepulsion: 2_000_000,
+    nodeRepulsion: 10_000_000,
     edgeElasticity: 100,
     idealEdgeLength: 250,
 
@@ -49,13 +49,13 @@ const layout: cytoscape.CoseLayoutOptions = {
     gravity: 0.05,
 
     // Layout iterations & cooling
-    numIter: 10_000,
+    numIter: 30_000,
     initialTemp: 200,
     minTemp: 1,
 
     // Spacing and padding
     padding: 50,
-    componentSpacing: 150,
+    componentSpacing: 200,
 
     // Node sizing
     nodeDimensionsIncludeLabels: true,
@@ -303,31 +303,46 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
 
     const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number; }>({data: [], count: 0});
     onMounted(async () => {
-        if (!container.value) return;
-
         if (isTesting) {
-            elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
-
-            isLoading.value = false;
-        }
-        else {
-            if (subtype === NAMESPACE) {
-                const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
-                const nodes = data.nodes ?? [];
-                elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
-
+            if (!container.value) {
                 isLoading.value = false;
-            } else {
-                const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
-                elements.value = {data: result.data ?? [], count: result.count};
+                return;
+            }
 
+            elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
+            isLoading.value = false;
+        } else {
+            try {
+                if (subtype === NAMESPACE) {
+                    const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
+                    const nodes = data.nodes ?? [];
+                    elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
+                    isLoading.value = false;
+                } else {
+                    const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype}, false);
+                    elements.value = {data: result.data ?? [], count: result.count};
+                    isLoading.value = false;
+                }
+            } catch (error) {
+                console.error(`Failed to load ${subtype} dependencies:`, error);
+                elements.value = {data: [], count: 0};
                 isLoading.value = false;
             }
         }
 
-        if (subtype === EXECUTION) nextTick(() => openSSE());
+        if (isTesting && container.value) {
+            cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+        } else if (!isTesting && elements.value.data.length > 0) {
+            await nextTick(); // Wait for the container to be available in the DOM
+            
+            if (!container.value) return;
 
-        cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+            cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+        }
+
+        if (!cy) return;
+
+        if (subtype === EXECUTION) nextTick(() => openSSE());
 
         // Hide nodes immediately after initialization to avoid visual flickering or rearrangement during layout setup
         cy.ready(() => cy.nodes().style("display", "none"));

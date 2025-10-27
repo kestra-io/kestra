@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.executions.metrics.Gauge;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
@@ -80,6 +81,10 @@ public class MetricEntry implements DeletedInterface, TenantInterface {
     private static Double computeValue(AbstractMetricEntry<?> metricEntry) {
         if (metricEntry instanceof Counter counter) {
             return counter.getValue();
+        }
+
+        if (metricEntry instanceof Gauge gauge) {
+            return gauge.getValue();
         }
 
         if (metricEntry instanceof Timer timer) {

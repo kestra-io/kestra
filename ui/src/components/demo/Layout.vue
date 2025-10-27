@@ -9,7 +9,7 @@
         </div>
         <div class="msg-block">
             <h2>{{ title }}</h2>
-            <div v-if="video" class="video-container">
+            <div v-if="isOnline && video" class="video-container">
                 <iframe
                     v-if="video.source"
                     :src="video.source"
@@ -24,6 +24,9 @@
 </template>
 
 <script setup lang="ts">
+    import {useNetwork} from "@vueuse/core"
+    const {isOnline} = useNetwork()
+    
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
     import DemoButtons from "./DemoButtons.vue";
 

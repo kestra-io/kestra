@@ -1,32 +1,13 @@
-import {kvsFilter} from "./kvFilter";
-import {logFilter} from "./logFilter";
-import {flowFilter} from "./flowFilter";
-import {pluginFilter} from "./pluginFilter";
-import {triggerFilter} from "./triggerFilter";
-import {secretsFilter} from "./secretsFilter";
-import {blueprintFilter} from "./blueprintFilter";
-import {executionFilter} from "./executionFilter";
-import {namespacesFilter} from "./namespacesFilter";
-import {flowExecutionFilter} from "./flowExecutionFilter";
-import {logExecutionsFilter} from "./logExecutionsFilter";
-import {metricFilter, flowMetricFilter} from "./metricFilters";
-import {dashboardFilter, flowDashboardFilter, namespaceDashboardFilter} from "./dashboardFilters";
-
-export {
-    logFilter,
-    kvsFilter,
-    flowFilter,
-    metricFilter,
-    pluginFilter,
-    triggerFilter,
-    secretsFilter,
-    executionFilter,
-    dashboardFilter,
-    blueprintFilter,
-    flowMetricFilter,
-    namespacesFilter,
-    flowDashboardFilter,
-    flowExecutionFilter,
-    logExecutionsFilter,
-    namespaceDashboardFilter,
-};
+export {useKvFilter} from "./kvFilter";  
+export {useLogFilter} from "./logFilter";  
+export {useFlowFilter} from "./flowFilter";  
+export {usePluginFilter} from "./pluginFilter";  
+export {useTriggerFilter} from "./triggerFilter";  
+export {useSecretsFilter} from "./secretsFilter";  
+export {useBlueprintFilter} from "./blueprintFilter";  
+export {useExecutionFilter} from "./executionFilter";  
+export {useNamespacesFilter} from "./namespacesFilter";  
+export {useFlowExecutionFilter} from "./flowExecutionFilter";  
+export {useLogExecutionsFilter} from "./logExecutionsFilter";  
+export {useMetricFilter, useFlowMetricFilter} from "./metricFilters";  
+export {useDashboardFilter, useFlowDashboardFilter, useNamespaceDashboardFilter} from "./dashboardFilters";

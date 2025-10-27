@@ -1,10 +1,11 @@
+import {computed, ComputedRef} from "vue";
 import {FilterConfiguration, Comparators} from "../utils/filterTypes";
 import {useValues} from "../composables/useValues";
 import {useFlowStore} from "../../../stores/flow";
 import {useI18n} from "vue-i18n";
 import {useExecutionsStore} from "../../../stores/executions";
 
-export const metricFilter = (): FilterConfiguration => {
+export const useMetricFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
     
     return {
@@ -29,9 +30,9 @@ export const metricFilter = (): FilterConfiguration => {
         }
     ]
     };
-};
+});
 
-export const flowMetricFilter = (): FilterConfiguration => {
+export const useFlowMetricFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
     
     return {
@@ -94,4 +95,4 @@ export const flowMetricFilter = (): FilterConfiguration => {
         }
     ]
     };
-};
+});

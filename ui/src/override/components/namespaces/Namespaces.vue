@@ -11,7 +11,7 @@
 
     <el-row class="p-5">
         <KSFilter
-            :configuration="namespacesFilter()"
+            :configuration="namespacesFilter"
             :prefix="'namespaces-list'"
             :tableOptions="{
                 chart: {shown: false},
@@ -85,13 +85,15 @@
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
     import KSFilter from "../../../components/filter/components/KSFilter.vue";
-    import {namespacesFilter} from "../../../components/filter/configurations";
+    import {useNamespacesFilter} from "../../../components/filter/configurations";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";
+    
+    const namespacesFilter = useNamespacesFilter();
 
     interface Node {
         id: string;

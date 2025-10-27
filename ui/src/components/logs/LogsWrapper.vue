@@ -5,7 +5,7 @@
             <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="pageSize" :page="pageNumber" :embed="embed">
                 <template #navbar v-if="!embed">
                     <KSFilter
-                        :configuration="logFilter()"
+                        :configuration="logFilter"
                         :tableOptions="{
                             chart: {shown: true, value: showChart, callback: onShowChartChange},
                             refresh: {shown: true, callback: refresh},
@@ -42,13 +42,15 @@
 </template>
 
 <script setup lang="ts">
-    import {logFilter} from "../filter/configurations";
+    import {useLogFilter} from "../filter/configurations";
     import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";
     import DataTable from "../../components/layout/DataTable.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
     import NoData from "../layout/NoData.vue";
+    
+    const logFilter = useLogFilter();
 </script>
 
 <script lang="ts">

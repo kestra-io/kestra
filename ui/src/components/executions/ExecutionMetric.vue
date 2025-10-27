@@ -9,7 +9,7 @@
     >
         <template #navbar>
             <KSFilter
-                :configuration="metricFilter()"
+                :configuration="metricFilter"
                 :properties="{
                     shown: true,
                     columns: optionalColumns,
@@ -31,13 +31,15 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {useExecutionsStore} from "../../stores/executions";
-    import {metricFilter} from "../filter/configurations";
+    import {useMetricFilter} from "../filter/configurations";
     import MetricsTable from "../executions/MetricsTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
 
     const {t} = useI18n();
     const route = useRoute();
     const executionsStore = useExecutionsStore();
+    
+    const metricFilter = useMetricFilter();
 
     const table = ref<typeof MetricsTable>();
 

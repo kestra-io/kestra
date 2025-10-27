@@ -1,8 +1,9 @@
+import {computed, ComputedRef} from "vue";
 import {FilterConfiguration, Comparators} from "../utils/filterTypes";
 import {useValues} from "../composables/useValues";
 import {useI18n} from "vue-i18n";
 
-export const flowExecutionFilter = (): FilterConfiguration => {
+export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
     
     return {
@@ -88,4 +89,4 @@ export const flowExecutionFilter = (): FilterConfiguration => {
         }
     ]
     };
-};
+});

@@ -96,6 +96,10 @@
     border-bottom: 1px solid var(--ks-border-primary);
     cursor: move;
 
+    &:hover {
+        background-color: var(--ks-dropdown-background-hover);
+    }
+
     &:last-child {
         border-bottom: none;
     }

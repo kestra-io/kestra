@@ -1,7 +1,8 @@
+import {computed, ComputedRef} from "vue";
 import {FilterConfiguration} from "../../../components/filter/utils/filterTypes";
 import {useI18n} from "vue-i18n";
 
-export const namespacesFilter = (): FilterConfiguration => {
+export const useNamespacesFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
     
     return {
@@ -9,4 +10,4 @@ export const namespacesFilter = (): FilterConfiguration => {
         searchPlaceholder: t("filter.search_placeholders.search_namespaces"),
         keys: [],
     };
-};
+});

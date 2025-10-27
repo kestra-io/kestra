@@ -3,7 +3,7 @@
         <DataTable @page-changed="onPageChanged" ref="dataTable" :total="total">
             <template #top>
                 <KSFilter
-                    :configuration="secretsFilter()"
+                    :configuration="secretsFilter"
                     :tableOptions="{
                         chart: {shown: false},
                         refresh: {shown: true, callback: loadData}
@@ -248,9 +248,11 @@
     import {useSecretsStore} from "../../stores/secrets";
     import {useAuthStore} from "override/stores/auth";
     import {useNamespacesStore} from "override/stores/namespaces";
-    import {secretsFilter} from "../filter/configurations";
+    import {useSecretsFilter} from "../filter/configurations";
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useDataTableActions} from "../../composables/useDataTableActions";
+    
+    const secretsFilter = useSecretsFilter();
 
     interface SecretForm {
         value: string;

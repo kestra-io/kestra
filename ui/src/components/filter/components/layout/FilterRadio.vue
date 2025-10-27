@@ -71,6 +71,10 @@
             border-color: var(--ks-content-link);
         }
 
+        &:hover {
+            background-color: var(--ks-dropdown-background-hover);
+        }
+
         :deep(.el-radio) {
             margin-right: 0;
             height: 2.5rem;

@@ -8,7 +8,7 @@
     >
         <el-row class="my-4 px-3" justify="center">
             <KSFilter
-                :configuration="pluginFilter()"
+                :configuration="pluginFilter"
                 :buttons="{
                     savedFilters: {shown: false}, 
                     tableOptions: {shown: false}
@@ -67,7 +67,7 @@
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
     import DottedLayout from "../layout/DottedLayout.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
-    import {pluginFilter} from "../filter/configurations";
+    import {usePluginFilter} from "../filter/configurations";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
     import {usePluginsStore} from "../../stores/plugins";
@@ -75,6 +75,8 @@
     const route = useRoute();
     const router = useRouter();
     const pluginsStore = usePluginsStore();
+    
+    const pluginFilter = usePluginFilter();
 
     const props = withDefaults(defineProps<{
         plugins: any[],

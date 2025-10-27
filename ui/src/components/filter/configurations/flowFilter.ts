@@ -1,3 +1,4 @@
+import {computed, ComputedRef} from "vue";
 import {FilterConfiguration, Comparators} from "../utils/filterTypes";
 import permission from "../../../models/permission";
 import action from "../../../models/action";
@@ -6,7 +7,7 @@ import {useAuthStore} from "override/stores/auth";
 import {useValues} from "../composables/useValues";
 import {useI18n} from "vue-i18n";
 
-export const flowFilter = (): FilterConfiguration => {
+export const useFlowFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
     
     return {
@@ -65,4 +66,4 @@ export const flowFilter = (): FilterConfiguration => {
         },
     ]
     };
-};
+});

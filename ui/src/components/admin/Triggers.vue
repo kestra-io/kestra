@@ -10,7 +10,7 @@
                 <template #navbar>
                     <KSFilter
                         :prefix="'triggers'"
-                        :configuration="triggerFilter()"
+                        :configuration="triggerFilter"
                         @update-properties="updateDisplayColumns"
                         :tableOptions="{
                             chart: {shown: false},
@@ -307,13 +307,15 @@
     import {storageKeys} from "../../utils/constants";
     import {useTriggerStore} from "../../stores/trigger";
     import {useExecutionsStore} from "../../stores/executions";
-    import {triggerFilter} from "../filter/configurations";
+    import {useTriggerFilter} from "../filter/configurations";
     import {useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
     import {useTableColumns, type ColumnConfig} from "../../composables/useTableColumns";
 
     import action from "../../models/action";
     import permission from "../../models/permission";
+    
+    const triggerFilter = useTriggerFilter();
 
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";

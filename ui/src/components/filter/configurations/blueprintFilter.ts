@@ -1,7 +1,8 @@
+import {computed, ComputedRef} from "vue";
 import {FilterConfiguration} from "../utils/filterTypes";
 import {useI18n} from "vue-i18n";
 
-export const blueprintFilter = (): FilterConfiguration => {
+export const useBlueprintFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
 
     return {
@@ -10,4 +11,4 @@ export const blueprintFilter = (): FilterConfiguration => {
         keys: [
         ]
     };
-};
+});

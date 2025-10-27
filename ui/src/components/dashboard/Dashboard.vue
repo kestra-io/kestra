@@ -29,15 +29,19 @@
     import Sections from "./sections/Sections.vue";
 
     import {
-        dashboardFilter,
-        namespaceDashboardFilter,
-        flowDashboardFilter
+        useDashboardFilter,
+        useNamespaceDashboardFilter,
+        useFlowDashboardFilter
     } from "../filter/configurations";
 
+    const dashboardFilter = useDashboardFilter();
+    const flowDashboardFilter = useFlowDashboardFilter();
+    const namespaceDashboardFilter = useNamespaceDashboardFilter();
+
     const filterConfiguration = computed(() => {
-        if (props.isNamespace) return namespaceDashboardFilter();
-        if (props.isFlow) return flowDashboardFilter();
-        return dashboardFilter();
+        if (props.isNamespace) return namespaceDashboardFilter.value;
+        if (props.isFlow) return flowDashboardFilter.value;
+        return dashboardFilter.value;
     });
 
 

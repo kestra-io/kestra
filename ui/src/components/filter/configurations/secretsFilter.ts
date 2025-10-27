@@ -1,3 +1,4 @@
+import {computed, ComputedRef} from "vue";
 import {FilterConfiguration, Comparators} from "../utils/filterTypes";
 import permission from "../../../models/permission";
 import action from "../../../models/action";
@@ -5,7 +6,7 @@ import {useNamespacesStore} from "override/stores/namespaces";
 import {useAuthStore} from "override/stores/auth";
 import {useI18n} from "vue-i18n";
 
-export const secretsFilter = (): FilterConfiguration => {
+export const useSecretsFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
 
     return {
@@ -44,4 +45,4 @@ export const secretsFilter = (): FilterConfiguration => {
             },
         ],
     };
-};
+});

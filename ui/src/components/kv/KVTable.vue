@@ -1,6 +1,6 @@
 <template>
     <KSFilter
-        :configuration="kvsFilter()"
+        :configuration="kvFilter"
         :tableOptions="{
             chart: {shown: false},
             columns: {shown: true},
@@ -237,7 +237,6 @@
     import Id from "../Id.vue";
     import Drawer from "../Drawer.vue";
     import Editor from "../inputs/Editor.vue";
-    //@ts-expect-error No declaration file
     import InheritedKVs from "./InheritedKVs.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     //@ts-expect-error No declaration file
@@ -252,7 +251,7 @@
     import Utils from "../../utils/utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
-    import {kvsFilter} from "../filter/configurations";
+    import {useKvFilter} from "../filter/configurations";
 
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
@@ -272,6 +271,9 @@
 
     const route = useRoute();
     const toast = useToast();
+
+    const kvFilter = useKvFilter();
+
     const authStore = useAuthStore();
     const namespacesStore = useNamespacesStore();
 

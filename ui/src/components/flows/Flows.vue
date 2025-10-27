@@ -42,7 +42,7 @@
             >
                 <template #navbar>
                     <KSFilter
-                        :configuration="flowFilter()"
+                        :configuration="flowFilter"
                         :properties="{
                             shown: true,
                             columns: optionalColumns,
@@ -255,7 +255,7 @@
     import _merge from "lodash/merge";
     import * as FILTERS from "../../utils/filters";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import {flowFilter} from "../filter/configurations";
+    import {useFlowFilter} from "../filter/configurations";
 
     import Plus from "vue-material-design-icons/Plus.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
@@ -314,6 +314,8 @@
 
     const {t} = useI18n();
     const toast = useToast()
+    
+    const flowFilter = useFlowFilter();
 
     const ready = ref(true);
     const internalPageSize = ref(25);

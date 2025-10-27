@@ -31,7 +31,7 @@
                 <template #top>
                     <el-row class="mb-3" justify="center">
                         <KSFilter
-                            :configuration="blueprintFilter()"
+                            :configuration="blueprintFilter"
                             :buttons="{
                                 savedFilters: {shown: false}, 
                                 tableOptions: {shown: false}
@@ -108,7 +108,9 @@
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {useDataTableActions} from "../../../../composables/useDataTableActions";
     import useRestoreUrl from "../../../../composables/useRestoreUrl";
-    import {blueprintFilter} from "../../../../components/filter/configurations";
+    import {useBlueprintFilter} from "../../../../components/filter/configurations";
+    
+    const blueprintFilter = useBlueprintFilter();
 
     const props = withDefaults(defineProps<{
         blueprintType?: "community" | "custom";

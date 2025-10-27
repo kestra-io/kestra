@@ -38,7 +38,7 @@
         >
             <template #navbar v-if="isDisplayedTop">
                 <KSFilter
-                    :configuration="namespace === undefined || flowId === undefined ? executionFilter() : flowExecutionFilter()"
+                    :configuration="namespace === undefined || flowId === undefined ? executionFilter : flowExecutionFilter"
                     :properties="{
                         shown: true,
                         columns: optionalColumns,
@@ -441,12 +441,14 @@
     import {useMiscStore} from "override/stores/misc";
     import {Label, useExecutionsStore} from "../../stores/executions";
 
-    import {executionFilter, flowExecutionFilter} from "../filter/configurations";
+    import {useExecutionFilter, useFlowExecutionFilter} from "../filter/configurations";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
 
     const {t} = useI18n();
     const toast = useToast();
-
+    
+    const executionFilter = useExecutionFilter();
+    const flowExecutionFilter = useFlowExecutionFilter();
 
     const props = withDefaults(defineProps<{
         embed?: boolean;

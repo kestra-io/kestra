@@ -4,18 +4,16 @@
             <div class="options-left">
                 <div v-if="filter.tableOptions.value?.chart?.shown !== false" class="option-item">
                     <span class="option-label">{{ t("filter.show chart") }}</span>
-                    <KSSwitch 
-                        v-model="localChartVisible" 
-                        :showIcon="false"
+                    <el-switch 
+                        v-model="localChartVisible"
                     />
                 </div>
             </div>
 
             <div class="options-right">
                 <div class="option-item">
-                    <KSSwitch 
-                        v-model="periodicRefreshEnabled" 
-                        :showIcon="false"
+                    <el-switch 
+                        v-model="periodicRefreshEnabled"
                     />
                     <Kicon :tooltip="refreshTooltip" placement="top">
                         <span class="option-label periodic">{{ t("filter.periodic refresh") }}</span>
@@ -68,7 +66,6 @@
     import {useI18n} from "vue-i18n";
 
     import Kicon from "../../Kicon.vue";
-    import KSSwitch from "../../layout/KSSwitch.vue";
     import CustomColumns from "../segments/CustomColumns.vue";
 
     import {AutoRenew, CogOutline} from "../utils/icons";

@@ -165,6 +165,10 @@
         transition: all 0.2s ease;
         border-bottom: 1px solid var(--ks-border-primary);
 
+        &:hover {
+            background-color: var(--ks-dropdown-background-hover);
+        }
+
         &:last-child {
             border-bottom: none;
         }

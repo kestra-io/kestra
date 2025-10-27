@@ -205,6 +205,10 @@
                 border-bottom: none;
             }
 
+            &:hover {
+                background-color: var(--ks-dropdown-background-hover);
+            }
+
             .option-content {
                 display: flex;
                 align-items: center;

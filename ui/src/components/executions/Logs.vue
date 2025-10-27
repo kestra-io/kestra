@@ -1,7 +1,7 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
         <KSFilter
-            :configuration="logExecutionsFilter()"
+            :configuration="logExecutionsFilter"
             :tableOptions="{
                 chart: {shown: false},
                 columns: {shown: false}, 
@@ -113,7 +113,9 @@
 </template>
 
 <script setup>
-    import {logExecutionsFilter} from "../filter/configurations";
+    import {useLogExecutionsFilter} from "../filter/configurations";
+    
+    const logExecutionsFilter = useLogExecutionsFilter();
 </script>
 <script>
     import TaskRunDetails from "../logs/TaskRunDetails.vue";

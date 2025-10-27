@@ -1,7 +1,7 @@
 <template>
     <KSFilter
         v-if="triggersWithType.length"
-        :configuration="triggerFilter()"
+        :configuration="triggerFilter"
         :prefix="'flow-triggers'"
         :tableOptions="{
             chart: {shown: false},
@@ -286,7 +286,7 @@
     import Id from "../Id.vue";
     import Kicon from "../Kicon.vue";
     import Drawer from "../Drawer.vue";
-    //@ts-expect-error Not declared types
+    //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";
     import Vars from "../executions/Vars.vue";
     import DateAgo from "../layout/DateAgo.vue";
@@ -307,7 +307,9 @@
     import {useTriggerStore} from "../../stores/trigger";
 
     import {useTableColumns} from "../../composables/useTableColumns";
-    import {triggerFilter} from "../filter/configurations";
+    import {useTriggerFilter} from "../filter/configurations";
+
+    const triggerFilter = useTriggerFilter();
 
     const {t} = useI18n();
     const route = useRoute();

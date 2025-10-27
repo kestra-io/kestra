@@ -1,6 +1,6 @@
 <template>
     <KSFilter
-        :configuration="flowMetricFilter()"
+        :configuration="flowMetricFilter"
         :prefix="'flow-metrics'"
         :tableOptions="{
             chart: {shown: false},
@@ -43,7 +43,9 @@
 </template>
 
 <script setup lang="ts">
-    import {flowMetricFilter} from "../filter/configurations";
+    import {useFlowMetricFilter} from "../filter/configurations";
+
+    const flowMetricFilter = useFlowMetricFilter();
 </script>
 
 <script lang="ts">

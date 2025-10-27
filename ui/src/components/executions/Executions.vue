@@ -144,7 +144,7 @@
                             <el-form>
                                 <ElFormItem :label="$t('execution labels')">
                                     <LabelInput
-                                        :key?="executionLabels"
+                                        :key="executionLabels"
                                         v-model:labels="executionLabels"
                                     />
                                 </ElFormItem>

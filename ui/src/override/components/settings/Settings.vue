@@ -2,10 +2,10 @@
     <BasicSettings />
 </template>
 
-<script>
+<script setup lang="ts">
     import BasicSettings from "../../../components/settings/BasicSettings.vue";
 
-    export default {
-        components: {BasicSettings}
-    }
+    defineOptions({
+        name: "Settings",
+    });
 </script>

@@ -3,11 +3,6 @@ name: Pull Request Workflow
 on:
   pull_request:
 
-permissions:
-  contents: read
-  pull-requests: write
-  issues: write
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-pr
   cancel-in-progress: true
@@ -45,7 +40,7 @@ jobs:
   backend:
     name: Backend - Tests
     needs: file-changes
-    if: ${{ needs.file-changes.outputs.backend == 'true' || github.event_name == 'pull_request' }}
+    if: "needs.file-changes.outputs.backend == 'true'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -667,7 +667,7 @@ public class FlowController {
     @Post(uri = "/validate/task", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Flows"}, summary = "Validate a task")
     public ValidateConstraintViolation validateTask(
-        @RequestBody(description = "A task definition that can be from tasks or triggers") @Body String task,
+        @RequestBody(description = "A task definition that can be from tasks or triggers") @Schema(implementation = Object.class) @Body String task,
         @Parameter(description = "The type of task") @QueryValue TaskValidationType section
     ) {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();

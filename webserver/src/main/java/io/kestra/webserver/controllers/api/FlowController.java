@@ -278,7 +278,7 @@ public class FlowController {
      */
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.ALL)
-    @Operation(tags = {"Flows"}, summary = "Create a flow from json object", deprecated = true)
+    @Operation(tags = {"Flows"}, summary = "Create a flow from json object", deprecated = true, hidden = true)
     @Deprecated(forRemoval = true, since = "0.18")
     @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the YAML one.
     public HttpResponse<Flow> createFlowFromJson(
@@ -335,7 +335,8 @@ public class FlowController {
         summary = "Update a complete namespace from json object",
         description = "All flow will be created / updated for this namespace.\n" +
                       "Flow that already created but not in `flows` will be deleted if the query delete is `true`",
-        deprecated = true
+        deprecated = true,
+        hidden = true
     )
     @Deprecated(forRemoval = true, since = "0.18")
     @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the YAML one.
@@ -438,7 +439,7 @@ public class FlowController {
 
     @Put(uri = "{namespace}/{id}", consumes = MediaType.APPLICATION_YAML)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Flows"}, summary = "Update a flow", deprecated = false)// force deprecated = false otherwise it is marked as deprecated, dont know why
+    @Operation(tags = {"Flows"}, summary = "Update a flow")// force deprecated = false otherwise it is marked as deprecated, dont know why
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = FlowWithSource.class))})
     public HttpResponse<FlowWithSource> updateFlow(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -477,9 +478,9 @@ public class FlowController {
     /**
      * @deprecated use {@link #updateFlow(String, String, String)} instead
      */
-    @Put(uri = "{namespace}/{id}", consumes = MediaType.ALL)
+    @Put(uri = "{namespace}/{id}", consumes = MediaType.APPLICATION_JSON)
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Flows"}, operationId = "updateFlowFromJson", summary = "Update a flow", deprecated = true)
+    @Operation(tags = {"Flows"}, operationId = "updateFlowFromJson", summary = "Update a flow", deprecated = true, hidden = true)
     @Deprecated(forRemoval = true, since = "0.18")
     @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the JSON one.
     public HttpResponse<Flow> updateFlowFromJson(

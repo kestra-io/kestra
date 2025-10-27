@@ -16,7 +16,7 @@
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :noTooltip="true" />
+                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
             </div>
             <Markdown class="markdown-tooltip postParagraph" :source="feed.description" />
 
@@ -40,7 +40,7 @@
                 </el-button>
             </div>
 
-            <el-divider v-if="index !== feeds.length - 1" />
+            <el-divider class="mb-2" v-if="index !== feeds.length - 1" />
         </div>
     </ContextInfoContent>
 </template>
@@ -74,6 +74,7 @@
 
 <style scoped lang="scss">
 
+
     .post {
         padding: 1rem 1rem 0rem 1rem;
 
@@ -87,7 +88,7 @@
             max-width: 10rem;
             margin-right: 1rem;
             float: left;
-            border-radius: 8px;
+            border-radius: var(--bs-border-radius-lg);
         }
 
         .metaBlock {

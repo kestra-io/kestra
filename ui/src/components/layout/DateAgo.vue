@@ -1,14 +1,16 @@
 <template>
     <el-tooltip
+        v-if="showTooltip && date"
         :key="uid('tooltip')"
-        v-if="date && !noTooltip"
         :content="inverted ? from : full"
         :persistent="false"
         transition=""
         :hideAfter="0"
         effect="light"
     >
-        <span :class="className">{{ inverted ? full : from }}</span>
+        <span :class="className">
+            {{ inverted ? full : from }}
+        </span>
     </el-tooltip>
     <span v-else-if="date" :class="className">
         {{ inverted ? full : from }}
@@ -35,9 +37,9 @@
             type: String,
             default: null
         },
-        noTooltip:{
+        showTooltip:{
             type: Boolean,
-            default: false
+            default: true
         }
     })
 

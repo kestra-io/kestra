@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
@@ -121,21 +122,38 @@ public class ExecutionService {
      * Retry set the given taskRun in created state
      * and return the execution in running state
      **/
-    public Execution retryTask(Execution execution, String taskRunId) {
-        List<TaskRun> newTaskRuns = execution
-            .getTaskRunList()
-            .stream()
-            .map(taskRun -> {
-                if (taskRun.getId().equals(taskRunId)) {
-                    return taskRun
-                        .withState(State.Type.CREATED);
+    public Execution retryTask(Execution execution, Flow flow, String taskRunId) throws InternalException {
+        TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId).withState(State.Type.CREATED);
+        List<TaskRun> taskRunList = execution.getTaskRunList();
+
+        if (taskRun.getParentTaskRunId() != null) {
+            // we need to find the parent to remove any errors or finally tasks already executed
+            TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
+            Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
+            if (parentTask instanceof FlowableTask<?> flowableTask) {
+                if (flowableTask.getErrors() != null) {
+                    List<Task> allErrors = Stream.concat(flowableTask.getErrors().stream()
+                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
+                                .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream()),
+                            flowableTask.getErrors().stream())
+                        .toList();
+                    allErrors.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
                 }
 
-                return taskRun;
-            })
-            .toList();
+                if (flowableTask.getFinally() != null) {
+                    List<Task> allFinally = Stream.concat(flowableTask.getFinally().stream()
+                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getFinally() != null)
+                                .flatMap(task -> ((FlowableTask<?>) task).getFinally().stream()),
+                            flowableTask.getFinally().stream())
+                        .toList();
+                    allFinally.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
+                }
+            }
 
-        return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
+            return execution.withTaskRunList(taskRunList).withTaskRun(taskRun).withState(State.Type.RUNNING);
+        }
+
+        return execution.withTaskRun(taskRun).withState(State.Type.RUNNING);
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {

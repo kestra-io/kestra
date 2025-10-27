@@ -137,4 +137,10 @@ public abstract class JdbcRunnerRetryTest {
     void retryDynamicTask(Execution execution){
         retryCaseTest.retryDynamicTask(execution);
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/retry-with-flowable-errors.yaml")
+    void retryWithFlowableErrors(Execution execution){
+        retryCaseTest.retryWithFlowableErrors(execution);
+    }
 }

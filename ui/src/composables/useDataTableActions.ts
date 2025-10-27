@@ -158,14 +158,14 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
     };
 
     const refreshPaging = () => {
-        internalPageSize.value = pageSize.value || Number(route.query.size) || 25;
-        internalPageNumber.value = pageNumber.value || Number(route.query.page) || 1;
+        internalPageSize.value = pageSize.value ?? Number(route.query.size ?? 25);
+        internalPageNumber.value = pageNumber.value ?? Number(route.query.page ?? 1);
     };
 
     watch(
-        () => route,
-        (newValue, oldValue) => {
-            if (oldValue?.name === newValue?.name && !_isEqual(newValue.query, oldValue.query)) {
+        () => route.query,
+        (newQuery, oldQuery) => {
+            if (!_isEqual(newQuery, oldQuery)) {
                 refreshPaging();
                 load(onDataLoaded);
             }

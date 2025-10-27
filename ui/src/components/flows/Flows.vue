@@ -121,7 +121,7 @@
                                                     id: scope.row.id,
                                                 },
                                             }"
-                                            class="me-1"
+                                            class="flow-id-link me-1"
                                         >
                                             {{
                                                 FILTERS.invisibleSpace(
@@ -631,5 +631,9 @@
 
 :deep(.flows-table) .el-scrollbar__thumb {
     background-color: var(--ks-border-active) !important;
+}
+
+:deep(a.flow-id-link) {
+    color: var(--bs-code-color) !important;
 }
 </style>

@@ -200,8 +200,12 @@ public final class ExecutableUtils {
                 Object value = entry.getValue();
                 if (value instanceof ZonedDateTime) {
                     renderedInputs.put(entry.getKey(), value);
+                } else if (value instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> mapValue = (Map<String, Object>) value;
+                    renderedInputs.put(entry.getKey(), runContext.render(mapValue));
                 } else {
-                    renderedInputs.put(entry.getKey(), runContext.render(value));
+                    renderedInputs.put(entry.getKey(), value);
                 }
             }
             

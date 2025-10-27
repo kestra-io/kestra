@@ -1,10 +1,9 @@
-import EditorSidebar from "../../../../src/components/inputs/EditorSidebar.vue";
+import FileExplorer from "../../../../src/components/inputs/FileExplorer.vue";
 import {useAxios} from "../../../../src/utils/axios";
-import {useEditorStore} from "../../../../src/stores/editor";
 
 const meta = {
-    title: "inputs/EditorSidebar",
-    component: EditorSidebar,
+    title: "inputs/FileExplorer",
+    component: FileExplorer,
 }
 
 export default meta;
@@ -12,9 +11,7 @@ export default meta;
 export const Default = {
     render: () => ({
         setup() {
-            const editorStore = useEditorStore()
             const axios = useAxios()
-            editorStore.toggleExplorerVisibility(true)
 
             axios.get = () => {
                     return  Promise.resolve({data: [
@@ -26,7 +23,7 @@ export const Default = {
 
 
             return () => <div style="margin: 1rem;">
-                <EditorSidebar currentNS="example"/>
+                <FileExplorer currentNS="example"/>
             </div>
         }
     })

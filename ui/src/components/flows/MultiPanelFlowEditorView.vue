@@ -8,10 +8,9 @@
         :preSerializePanels="preSerializePanels"
         :bottomVisible="playgroundMode"
         @set-tab-value="setTabValue"
-        @remove-tab="onRemoveTab"
     >
         <template #actions>
-            <EditorButtonsWrapper />
+            <EditorButtonsWrapper :haveChange />
         </template>
         <template #bottom-panel>
             <FlowPlayground v-if="playgroundMode" />
@@ -28,7 +27,6 @@
     import Utils from "../../utils/utils";
     import {useCoreStore} from "../../stores/core";
     import {usePlaygroundStore} from "../../stores/playground";
-    import {useEditorStore} from "../../stores/editor";
 
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
@@ -46,9 +44,9 @@
     import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue";
 
     function isTabFlowRelated(element: Tab){
-        return ["code", "nocode", "topology"].includes(element.value)
+        return ["code", "nocode", "topology"].includes(element.uid)
             // when the flow file is dirty all the nocode tabs get splashed
-            || element.value.startsWith("nocode-")
+            || element.uid.startsWith("nocode-")
     }
 
     const RawNoCode = markRaw(NoCode)
@@ -61,7 +59,6 @@
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
 
     onMounted(() => {
-        useEditorStore().explorerVisible = false
         // Ensure the Flow Code panel is open and focused when arriving with ai=open
         if(route.query.ai === "open"){
             editorView.value?.setTabValue("code")
@@ -97,12 +94,15 @@
 
     function preSerializePanels(v:Panel[]){
         return v.map(p => ({
-            tabs: p.tabs.map(t => t.value),
-            activeTab: cleanupNoCodeTabKey(p.activeTab?.value),
+            tabs: p.tabs.map(t => t.uid),
+            activeTab: cleanupNoCodeTabKey(p.activeTab?.uid),
             size: p.size,
         }))
     }
 
+    const haveChange = computed(() => flowStore.haveChange || panels.value.some(panel =>
+        panel.tabs.some(tab => tab.dirty)
+    ))
 
     const {panels, actions} = useNoCodePanelsFull({
         RawNoCode,
@@ -125,15 +125,11 @@
         }
     }, {immediate: true});
 
-    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useFilesPanels(panels)
-
-    function onRemoveTab(tab: string){
-        onRemoveCodeTab(tab)
-    }
+    useFilesPanels(panels, computed(() => flowStore.flowParsed?.namespace))
 
     useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab)
 
-    watch(isFlowDirty, (dirty) => {
+    watch(() => flowStore.haveChange, (dirty) => {
         for(const panel of panels.value){
             if(panel.activeTab && isTabFlowRelated(panel.activeTab)){
                 panel.activeTab.dirty = dirty

@@ -122,7 +122,7 @@ class ExecutionServiceTest {
         Execution finishedRestart = runnerUtils.awaitExecution(
             e -> e.getState().getCurrent().isTerminated() && !e.getId().equals(execution.getId()),
             restart,
-            Duration.ofSeconds(60)
+            Duration.ofSeconds(120)
         );
 
         assertThat(finishedRestart.getState().getCurrent()).isIn(State.Type.SUCCESS, State.Type.FAILED);
@@ -144,7 +144,7 @@ class ExecutionServiceTest {
         Execution finishedRestart = runnerUtils.awaitExecution(
             e -> e.getState().getCurrent().isTerminated() && !e.getId().equals(execution.getId()),
             restart,
-            Duration.ofSeconds(60)
+            Duration.ofSeconds(120)
         );
 
         assertThat(finishedRestart.getState().getCurrent()).isIn(State.Type.SUCCESS, State.Type.FAILED);

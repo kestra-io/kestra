@@ -199,7 +199,7 @@ public final class ExecutableUtils {
             for (Map.Entry<String, Object> entry : inputs.entrySet()) {
                 Object value = entry.getValue();
                 if (value instanceof ZonedDateTime) {
-                    renderedInputs.put(entry.getKey(), value));
+                    renderedInputs.put(entry.getKey(), value);
                 } else {
                     renderedInputs.put(entry.getKey(), runContext.render(value));
                 }

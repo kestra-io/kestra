@@ -68,7 +68,7 @@
                                     </div>
 
                                     <div class="action-button">
-                                        <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
+                                        <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                             <el-button
                                                 type="primary"
                                                 size="default"

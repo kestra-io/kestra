@@ -75,6 +75,12 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
         ZonedDateTime lastEvaluation = triggerContext.getDate();
+        
+        if (this.timezone != null) {
+            String renderedTimezone = runContext.render(this.timezone);
+            lastEvaluation = lastEvaluation.withZoneSameInstant(ZoneId.of(renderedTimezone));
+        }
+        
         Optional<ZonedDateTime> nextDate = nextDate(runContext, date -> date.isEqual(lastEvaluation) || date.isAfter(lastEvaluation));
 
         if (nextDate.isPresent()) {
@@ -140,9 +146,19 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     }
 
     private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> filter) throws IllegalVariableEvaluationException {
-        return runContext.render(dates).asList(ZonedDateTime.class).stream().sorted()
+        List<ZonedDateTime> dates = runContext.render(this.dates).asList(ZonedDateTime.class);
+        
+        if (this.timezone != null) {
+            String renderedTimezone = runContext.render(this.timezone);
+            ZoneId zoneId = ZoneId.of(renderedTimezone);
+            dates = dates.stream()
+                .map(date -> date.withZoneSameInstant(zoneId))
+                .toList();
+        }
+        
+        return dates.stream()
+            .sorted()
             .filter(date -> filter.test(date))
-            .map(throwFunction(date -> timezone == null ? date : date.withZoneSameInstant(ZoneId.of(runContext.render(timezone)))))
             .findFirst()
             .map(date -> date.truncatedTo(ChronoUnit.SECONDS));
     }

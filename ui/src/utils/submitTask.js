@@ -26,7 +26,8 @@ export const inputsToFormData = (submitor, inputsList, values) => {
         const inputValue = inputValuesCloned[inputName];
         if (inputValue !== undefined) {
             if (input.type === "DATETIME" && inputValue) {
-                formData.append(inputName, submitor.$moment(inputValue).toISOString());
+                const dateTime = submitor.$moment(inputValue);
+                formData.append(inputName, dateTime.format());
             } else if (input.type === "DATE" && inputValue) {
                 formData.append(inputName, submitor.$moment(inputValue).format("YYYY-MM-DD"));
             } else if (input.type === "TIME") {

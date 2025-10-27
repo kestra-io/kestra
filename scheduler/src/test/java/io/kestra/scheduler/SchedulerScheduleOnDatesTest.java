@@ -267,4 +267,57 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
                 oneOf(now.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS), after.toLocalDateTime().truncatedTo(ChronoUnit.SECONDS)));
         }
     }
+
+    @Test
+    void scheduleOnDatesWithTimezone() throws Exception {
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        CountDownLatch queueCount = new CountDownLatch(4);
+        Set<String> executionIds = new HashSet<>();
+
+        var newYorkTime = ZonedDateTime.now(ZoneId.of("America/New_York"));
+        var before = newYorkTime.minusSeconds(3).truncatedTo(ChronoUnit.SECONDS);
+        var after = newYorkTime.plusSeconds(3).truncatedTo(ChronoUnit.SECONDS);
+        var later = newYorkTime.plusSeconds(6).truncatedTo(ChronoUnit.SECONDS);
+        
+        ScheduleOnDates schedule = createScheduleOnDatesTrigger("America/New_York", List.of(before, after, later), "scheduleWithTimezone").build();
+        FlowWithSource flow = createFlow(Collections.singletonList(schedule));
+        flowRepository.create(GenericFlow.of(flow));
+
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        Trigger trigger = Trigger
+            .builder()
+            .triggerId("scheduleWithTimezone")
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(ZonedDateTime.now())
+            .build();
+
+        triggerState.create(trigger);
+
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy)) {
+            Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, throwConsumer(either -> {
+                Execution execution = either.getLeft();
+                
+                String triggerDate = (String) execution.getTrigger().getVariables().get("date");
+                assertThat(triggerDate).matches(".*[-+]\\d{2}:\\d{2}.*"); 
+                
+                executionIds.add(execution.getId());
+
+                if (execution.getState().getCurrent() == State.Type.CREATED) {
+                    terminateExecution(execution, trigger, flow);
+                }
+                queueCount.countDown();
+            }));
+
+            scheduler.run();
+            queueCount.await(1, TimeUnit.MINUTES);
+            receiveExecutions.blockLast();
+
+            assertThat(queueCount.getCount()).isEqualTo(0L);
+            assertThat(executionIds.size()).isGreaterThanOrEqualTo(3);
+        }
+    }
 }

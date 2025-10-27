@@ -193,11 +193,22 @@ public final class ExecutableUtils {
             }
 
             FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
-            Instant scheduleOnDate = runContext.render(scheduleDate).as(ZonedDateTime.class).map(date -> date.toInstant()).orElse(null);
+            Instant scheduleOnDate = runContext.render(scheduleDate).as(ZonedDateTime.class).map(ZonedDateTime::toInstant).orElse(null);
+            
+            Map<String, Object> renderedInputs = new HashMap<>();
+            for (Map.Entry<String, Object> entry : inputs.entrySet()) {
+                Object value = entry.getValue();
+                if (value instanceof ZonedDateTime) {
+                    renderedInputs.put(entry.getKey(), value));
+                } else {
+                    renderedInputs.put(entry.getKey(), runContext.render(value));
+                }
+            }
+            
             Execution execution = Execution
                 .newExecution(
                     flow,
-                    (f, e) -> flowInputOutput.readExecutionInputs(f, e, inputs),
+                    (f, e) -> flowInputOutput.readExecutionInputs(f, e, renderedInputs),
                     newLabels,
                     Optional.empty())
                 .withTrigger(ExecutionTrigger.builder()

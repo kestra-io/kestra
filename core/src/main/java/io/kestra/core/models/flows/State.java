@@ -269,7 +269,9 @@ public class State {
         public boolean isRetrying() {
             return this == Type.RETRYING || this == Type.RETRIED;
         }
-        public boolean isRestarted() { return  this == Type.RESTARTED; }
+        public boolean isRestarted() { 
+            return  this == Type.RESTARTED;
+        }
 
         public boolean isSuccess() {
             return this == Type.SUCCESS;

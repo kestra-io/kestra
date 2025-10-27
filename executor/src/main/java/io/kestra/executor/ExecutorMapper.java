@@ -1,0 +1,54 @@
+package io.kestra.executor;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import io.kestra.core.serializers.JacksonMapper;
+
+import java.io.IOException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * FIXME this is a copy of the JdbcMapper
+ */
+final class ExecutorMapper {
+    private static final DateTimeFormatter INSTANT_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'")
+        .withZone(ZoneOffset.UTC);
+    private static final DateTimeFormatter ZONED_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+    private static final ObjectMapper MAPPER = init();
+
+    private ExecutorMapper() {
+        // utility class pattern
+    }
+
+    public static ObjectMapper of() {
+        return MAPPER;
+    }
+
+    private static ObjectMapper init() {
+        ObjectMapper objectMapper = JacksonMapper.ofJson(false).copy();
+
+        final SimpleModule module = new SimpleModule();
+        module.addSerializer(Instant.class, new JsonSerializer<>() {
+            @Override
+            public void serialize(Instant instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+                jsonGenerator.writeString(INSTANT_FORMATTER.format(instant));
+            }
+        });
+
+        module.addSerializer(ZonedDateTime.class, new JsonSerializer<>() {
+            @Override
+            public void serialize(ZonedDateTime instant, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
+                jsonGenerator.writeString(ZONED_DATE_TIME_FORMATTER.format(instant));
+            }
+        });
+
+        objectMapper.registerModule(module);
+        return objectMapper;
+    }
+}

@@ -18,7 +18,7 @@ jobs:
   translations:
     name: Translations
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 40
     steps:
         - uses: actions/checkout@v5
           name: Checkout

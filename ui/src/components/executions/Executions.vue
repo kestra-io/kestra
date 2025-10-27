@@ -144,7 +144,7 @@
                             <el-form>
                                 <ElFormItem :label="$t('execution labels')">
                                     <LabelInput
-                                        :key="executionLabels"
+                                        :key="executionLabels.map((l) => l.key).join('-')"
                                         v-model:labels="executionLabels"
                                     />
                                 </ElFormItem>
@@ -415,7 +415,6 @@
     import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    //@ts-expect-error no declaration file
     import LabelInput from "../../components/labels/LabelInput.vue";
     //@ts-expect-error no declaration file
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
@@ -440,7 +439,7 @@
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
     import {useMiscStore} from "override/stores/misc";
-    import {useExecutionsStore} from "../../stores/executions";
+    import {Label, useExecutionsStore} from "../../stores/executions";
 
     import {executionFilter, flowExecutionFilter} from "../filter/configurations";
     import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
@@ -487,7 +486,7 @@
     const miscStore = useMiscStore();
     const executionsStore = useExecutionsStore();
 
-    const executionLabels = ref([]);
+    const executionLabels = ref<Label[]>([]);
     const recomputeInterval = ref(false);
     const isOpenLabelsModal = ref(false);
     const isOpenReplayModal = ref(false);

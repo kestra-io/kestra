@@ -4,6 +4,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.server.Service;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.executor.DefaultExecutor;
 import io.kestra.worker.DefaultWorker;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
@@ -49,7 +50,7 @@ public class StandAloneRunner implements Runnable, AutoCloseable {
         running.set(true);
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
-        poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
+        poolExecutor.execute(applicationContext.getBean(DefaultExecutor.class));
 
         if (workerEnabled) {
             // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still used UUID for Worker ID instead of IdUtils

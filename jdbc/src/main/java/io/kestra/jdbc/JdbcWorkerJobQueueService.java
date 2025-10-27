@@ -3,8 +3,9 @@ package io.kestra.jdbc;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.runners.*;
 import io.kestra.core.utils.Either;
-import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
+import io.kestra.jdbc.runner.AbstractJdbcWorkerJobRunningStateStore;
 import io.kestra.jdbc.runner.JdbcQueue;
+import io.kestra.jdbc.runner.JdbcTransactionContext;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -18,13 +19,13 @@ import java.util.function.Consumer;
 @Slf4j
 @Singleton
 public class JdbcWorkerJobQueueService implements Closeable {
-    private final AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
+    private final AbstractJdbcWorkerJobRunningStateStore jdbcWorkerJobRunningRepository;
     private final AtomicReference<Runnable> disposable = new AtomicReference<>();
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
-    
+
     @Inject
     public JdbcWorkerJobQueueService(ApplicationContext applicationContext) {
-        this.jdbcWorkerJobRunningRepository = applicationContext.getBean(AbstractJdbcWorkerJobRunningRepository.class);
+        this.jdbcWorkerJobRunningRepository = applicationContext.getBean(AbstractJdbcWorkerJobRunningStateStore.class);
     }
 
     public Runnable subscribe(JdbcQueue<WorkerJob> workerJobQueue, String workerId, String workerGroup, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
@@ -55,8 +56,8 @@ public class JdbcWorkerJobQueueService implements Closeable {
                 } else {
                     throw new IllegalArgumentException("Message is of type " + workerJob.getClass() + " which should never occurs");
                 }
-                
-                jdbcWorkerJobRunningRepository.save(workerJobRunning, dslContext);
+
+                jdbcWorkerJobRunningRepository.save(new JdbcTransactionContext(dslContext), workerJobRunning);
 
                 if (log.isTraceEnabled()) {
                     log.trace("Sending a workerJobRunning: {}", workerJobRunning);

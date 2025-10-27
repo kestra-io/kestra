@@ -49,7 +49,7 @@ public class TestRunner implements Runnable, AutoCloseable {
         running.set(true);
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
-        poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
+        poolExecutor.execute(applicationContext.getBean(Executor.class));
 
         if (workerEnabled) {
             // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still used UUID for Worker ID instead of IdUtils

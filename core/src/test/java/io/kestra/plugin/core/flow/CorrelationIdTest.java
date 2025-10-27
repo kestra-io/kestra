@@ -7,6 +7,9 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.ExecutionEvent;
+import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -28,10 +31,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @KestraTest(startRunner = true)
 class CorrelationIdTest {
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
+    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
+    private QueueInterface<ExecutionEvent> executionEventQueue;
     @Inject
     private TestRunnerUtils runnerUtils;
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Test
     @LoadFlows({"flows/valids/subflow-parent.yaml",
@@ -42,14 +47,14 @@ class CorrelationIdTest {
         AtomicReference<Execution> child = new AtomicReference<>();
         AtomicReference<Execution> grandChild = new AtomicReference<>();
 
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
-            Execution execution = either.getLeft();
-            if (execution.getFlowId().equals("subflow-child") && execution.getState().getCurrent().isTerminated()) {
-                child.set(execution);
+        Flux<ExecutionEvent> receive = TestsUtils.receive(executionEventQueue, either -> {
+            ExecutionEvent execution = either.getLeft();
+            if (execution.flowId().equals("subflow-child") && execution.eventType() == ExecutionEventType.TERMINATED) {
+                child.set(executionRepository.findById(execution.tenantId(), execution.executionId()).orElseThrow());
                 countDownLatch.countDown();
             }
-            if (execution.getFlowId().equals("subflow-grand-child") && execution.getState().getCurrent().isTerminated()) {
-                grandChild.set(execution);
+            if (execution.flowId().equals("subflow-grand-child") && execution.eventType() == ExecutionEventType.TERMINATED) {
+                grandChild.set(executionRepository.findById(execution.tenantId(), execution.executionId()).orElseThrow());
                 countDownLatch.countDown();
             }
         });

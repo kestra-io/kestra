@@ -71,6 +71,8 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.extensions.Extension;
+import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
@@ -1801,7 +1803,17 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
-    @Operation(tags = {"Executions"}, summary = "Follow an execution")
+    @Operation(
+        tags = {"Executions"},
+        summary = "Follow an execution",
+        extensions = @Extension(
+            name = "x-sdk-customization",
+            properties = {
+                @ExtensionProperty(name = "x-replace-follow-execution", value = "true"),
+                @ExtensionProperty(name = "x-skipped", value = "true")
+            }
+        )
+    )
     public Flux<Event<Execution>> followExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
@@ -2339,7 +2351,17 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow-dependencies", produces = MediaType.TEXT_EVENT_STREAM)
-    @Operation(tags = {"Executions"}, summary = "Follow all execution dependencies executions")
+    @Operation(
+        tags = {"Executions"},
+        summary = "Follow all execution dependencies executions",
+        extensions = @Extension(
+            name = "x-sdk-customization",
+            properties = {
+                @ExtensionProperty(name = "x-replace-follow-dependencies-execution", value = "true"),
+                @ExtensionProperty(name = "x-skipped", value = "true")
+            }
+        )
+    )
     public Flux<Event<ExecutionStatusEvent>> followDependenciesExecutions(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "If true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly,

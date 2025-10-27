@@ -742,7 +742,7 @@ public class FlowController {
         summary = "Delete flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> deleteFlowsByQuery(
-        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat() List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
         @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,

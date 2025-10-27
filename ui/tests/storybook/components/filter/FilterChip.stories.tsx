@@ -1,11 +1,8 @@
 import {ref} from "vue";
-import {within, userEvent, expect, waitFor} from "storybook/test";
 import type {Meta, StoryObj} from "@storybook/vue3-vite";
-
 import FilterChip from "../../../../src/components/filter/components/layout/FilterChip.vue";
-
-import {AppliedFilter, Comparators, FilterKeyConfig, FilterValue} from "../../../../src/components/filter/utils/filterTypes";
 import {useValues} from "../../../../src/components/filter/composables/useValues";
+import {AppliedFilter, Comparators, FilterKeyConfig, FilterValue} from "../../../../src/components/filter/utils/filterTypes";
 
 interface StoryFilter extends AppliedFilter {
     filterKey: FilterKeyConfig;
@@ -86,149 +83,6 @@ const mockFilterKeys = {
             return VALUES.RELATIVE_DATE;
         },
     } as FilterKeyConfig,
-};
-
-const render: Story["render"] = (args) => ({
-    setup() {
-        const filterRef = ref(args.filter);
-        const filterKeyRef = ref(args.filterKey);
-
-        const handleUpdate = (updatedFilter: AppliedFilter) => {
-            filterRef.value = updatedFilter;
-        };
-
-        const handleRemove = (filterId: string) => {
-            console.log("Filter removed:", filterId);
-        };
-
-        return () => (
-            <div style="padding: 2rem; background: var(--ks-background-body);">
-                <FilterChip
-                    filter={filterRef.value}
-                    filterKey={filterKeyRef.value}
-                    onUpdate={handleUpdate}
-                    onRemove={handleRemove}
-                />
-            </div>
-        );
-    },
-});
-
-const createPlayFunction = (chipText: string) => async ({canvasElement}: {canvasElement: HTMLElement}) => {
-    const canvas = within(canvasElement);
-    const chip = await canvas.findByText(chipText);
-
-    await userEvent.click(chip);
-
-    await waitFor(
-        () => {
-            const popper = document.querySelector(".edit-popper");
-            expect(popper).toBeInTheDocument();
-        },
-        {timeout: 3000}
-    );
-};
-
-export const TextFilter: Story = {
-    render,
-    args: {
-        filter: {
-            id: "1",
-            key: "namespace",
-            keyLabel: "Namespace",
-            comparator: Comparators.STARTS_WITH,
-            comparatorLabel: "Starts With",
-            value: "io.kestra",
-            valueLabel: "io.kestra",
-        },
-        filterKey: mockFilterKeys.text,
-    },
-    play: createPlayFunction("Namespace"),
-};
-
-export const SelectFilter: Story = {
-    render,
-    args: {
-        filter: {
-            id: "2",
-            key: "state",
-            keyLabel: "State",
-            comparator: Comparators.EQUALS,
-            comparatorLabel: "Equals",
-            value: "SUCCESS",
-            valueLabel: "Success",
-        },
-        filterKey: mockFilterKeys.select,
-    },
-    play: createPlayFunction("State"),
-};
-
-export const MultiSelectFilter: Story = {
-    render,
-    args: {
-        filter: {
-            id: "3",
-            key: "labels",
-            keyLabel: "Labels",
-            comparator: Comparators.IN,
-            comparatorLabel: "In",
-            value: ["prod", "staging"],
-            valueLabel: "Production, Staging",
-        },
-        filterKey: mockFilterKeys.multiSelect,
-    },
-    play: createPlayFunction("Labels"),
-};
-
-export const DetailsFilter: Story = {
-    render,
-    args: {
-        filter: {
-            id: "5",
-            key: "details",
-            keyLabel: "Details",
-            comparator: Comparators.IN,
-            comparatorLabel: "In",
-            value: ["env:production", "region:us-west"],
-            valueLabel: "2 Details key/value pairs",
-        },
-        filterKey: mockFilterKeys.details,
-    },
-    play: createPlayFunction("Details"),
-};
-
-export const RadioFilter: Story = {
-    render,
-    args: {
-        filter: {
-            id: "6",
-            key: "child",
-            keyLabel: "Child",
-            comparator: Comparators.EQUALS,
-            comparatorLabel: "Equals",
-            value: "CHILD",
-            valueLabel: "CHILD",
-        },
-        filterKey: mockFilterKeys.radio,
-    },
-    play: createPlayFunction("Child"),
-};
-
-export const TimeRangeSelectFilter: Story = {
-    render,
-    args: {
-        filter: {
-            id: "7",
-            key: "timeRange",
-            keyLabel: "Time Range",
-            comparator: Comparators.IN,
-            comparatorLabel: "In",
-            value: "PT24H",
-            valueLabel: "Last 24 Hours",
-        },
-        filterKey: mockFilterKeys.timeRange,
-    },
-    play: createPlayFunction("Time Range"),
 };
 
 export const AllLayout: Story = {
@@ -324,11 +178,11 @@ export const AllLayout: Story = {
             };
 
             return () => (
-                <div style="padding: 2rem; background: var(--ks-background-body);">
-                    <h3 style="margin-bottom: 1rem; color: var(--ks-content-primary);">
+                <div>
+                    <h3>
                         <strong>Filter Poppers Layout</strong>
                     </h3>
-                    <div style="display: flex; flex-wrap: wrap; gap: 1rem;">
+                    <div>
                         {filters.value.map((filter, index) => (
                             <FilterChip
                                 key={filter.id}

@@ -95,7 +95,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
             } else if (Array.isArray(filter.value)) {
                 filter.value.forEach(item => appendQueryParam(query, filter.key, item?.toString() || ""));
             } else if (isTimeRange(filter)) {
-                const {startDate, endDate} = filter.value as {startDate: Date; endDate: Date};
+                const {startDate, endDate} = filter.value as { startDate: Date; endDate: Date };
                 query.startDate = startDate.toISOString();
                 query.endDate = endDate.toISOString();
             } else {
@@ -115,7 +115,8 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
             clearLegacyParams(query);
             buildLegacyQuery(query);
         } else {
-            Object.assign(query, encodeFiltersToQuery(getUniqueFilters(appliedFilters.value.filter(isValidFilter)), keyOfComparator));
+            Object.assign(query, encodeFiltersToQuery(getUniqueFilters(appliedFilters.value
+                .filter(isValidFilter)), keyOfComparator));
         }
 
         updateSearchQuery(query);
@@ -214,8 +215,8 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
             const processedValue = Array.isArray(value)
                 ? (value as string[]).filter(v => v !== null)
                 : config?.valueType === "multi-select"
-                ? ((value as string) || "").split(",")
-                : (value as string) || "";
+                    ? ((value as string) ?? "").split(",")
+                    : (value as string) ?? "";
 
             filtersMap.set(key, createFilter(key, config, processedValue));
         });
@@ -407,7 +408,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
      * Resets user-applied filters while preserving pre-applied filters.
      */
     const resetToPreApplied = () => {
-        appliedFilters.value = appliedFilters.value.filter(f => preAppliedFilterKeys.value.has(f.key));
+        appliedFilters.value = appliedFilters.value?.filter(f => preAppliedFilterKeys.value?.has(f.key));
         searchQuery.value = "";
         updateRoute();
     };

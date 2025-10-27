@@ -24,7 +24,8 @@ public class FlowValidateCommand extends AbstractValidateCommand {
     private FlowService flowService;
 
     @Inject
-    private TenantIdSelectorService tenantService;
+    private TenantIdSelectorService tenantIdSelectorService;
+
 
     @Override
     public Integer call() throws Exception {
@@ -39,7 +40,7 @@ public class FlowValidateCommand extends AbstractValidateCommand {
                 FlowWithSource flow = (FlowWithSource) object;
                 List<String> warnings = new ArrayList<>();
                 warnings.addAll(flowService.deprecationPaths(flow).stream().map(deprecation -> deprecation + " is deprecated").toList());
-                warnings.addAll(flowService.warnings(flow, tenantService.getTenantId(tenantId)));
+                warnings.addAll(flowService.warnings(flow, tenantIdSelectorService.getTenantIdAndAllowEETenants(tenantId)));
                 return warnings;
             },
             (Object object) -> {

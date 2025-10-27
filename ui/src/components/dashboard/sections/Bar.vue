@@ -132,7 +132,7 @@
         const grouped = {};
 
         const rawData = generated.value.results;
-        rawData.forEach((item) => {
+        rawData?.forEach((item) => {
             const key = validColumns.map((col) => item[col]).join(", "); // Use '|' as a delimiter
 
             if (!grouped[item[column]]) {
@@ -146,7 +146,7 @@
         });
 
         const labels = Object.keys(grouped);
-        const xLabels = [...new Set(rawData.map((item) => item[column]))];
+        const xLabels = [...new Set(rawData?.map((item) => item[column]))];
 
         const datasets = xLabels.flatMap((xLabel) => {
             return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({

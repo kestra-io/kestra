@@ -39,7 +39,6 @@
                 :total="flowStore.total"
                 :size="internalPageSize"
                 :page="internalPageNumber"
-                :hideTopPagination="!!namespace"
             >
                 <template #navbar>
                     <KestraFilter
@@ -586,33 +585,29 @@
     // Lifecycle
     onMounted(() => {
         displayColumns.value = loadDisplayColumns();
-        loadData(() => {
-            ready.value = true;
-        });
+
+        const query = {...route.query};
+        const queryKeys = Object.keys(query);
+        let queryHasChanged = false;
+
+        if (props.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+            query["filters[namespace][PREFIX]"] = defaultNamespace();
+            queryHasChanged = true;
+        }
+
+        if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
+            query["filters[scope][EQUALS]"] = "USER";
+            queryHasChanged = true;
+        }
+
+        if (queryHasChanged) router.replace({query});
+
+        loadData(() => ready.value = true);
     });
 
     watch(() => route.query, async () => {
         await loadData(() => {});
     }, {deep: true});
-
-    watch(route, (newRoute) => {
-        if (typeof window !== "undefined") {
-            let queryHasChanged = false;
-            const query = {...newRoute.query};
-            const queryKeys = Object.keys(query);
-            if (defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][PREFIX]"] = defaultNamespace();
-                queryHasChanged = true;
-            }
-            if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
-                query["filters[scope][EQUALS]"] = "USER";
-                queryHasChanged = true;
-            }
-            if (queryHasChanged) {
-                router.replace({...route, query});
-            }
-        }
-    }, {immediate: true, deep: true});
 
 </script>
 

@@ -157,7 +157,6 @@
                 }
             }
             padding: 5px ;
-            border-left: 4px solid var(--ks-border-primary);
         }
 
         strong > code,

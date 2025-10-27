@@ -1,21 +1,5 @@
 package io.kestra.webserver.services;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.and;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.matchingJsonPath;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
-import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_SETTINGS_KEY;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.kestra.core.exceptions.ValidationErrorException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -23,21 +7,33 @@ import io.kestra.core.models.Setting;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.InstanceService;
+import io.kestra.core.utils.AuthUtils;
 import io.kestra.core.utils.Await;
+import io.kestra.webserver.controllers.api.MiscController;
 import io.kestra.webserver.models.events.Event;
 import io.kestra.webserver.services.BasicAuthService.BasicAuthConfiguration;
 import io.micronaut.context.env.Environment;
 import jakarta.inject.Inject;
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_ERROR_CONFIG;
+import static io.kestra.webserver.services.BasicAuthService.BASIC_AUTH_SETTINGS_KEY;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 @WireMockTest(httpPort = 28181)
 @KestraTest(environments = Environment.TEST)
@@ -69,26 +65,145 @@ class BasicAuthServiceTest {
 
     @Test
     void isBasicAuthInitialized(){
-        settingRepositoryInterface.save(Setting.builder()
-            .key(BASIC_AUTH_SETTINGS_KEY)
-            .value(new BasicAuthConfiguration("username", "password", null, null))
-            .build());
+        deleteSetting();
+        basicAuthService.basicAuthConfiguration = new ConfigWrapper(
+            new BasicAuthConfiguration(USER_NAME, PASSWORD, null, null)
+        ).config;
+        basicAuthService.init();
         assertTrue(basicAuthService.isBasicAuthInitialized());
 
         deleteSetting();
         assertFalse(basicAuthService.isBasicAuthInitialized());
 
-        settingRepositoryInterface.save(Setting.builder()
-            .key(BASIC_AUTH_SETTINGS_KEY)
-            .value(new BasicAuthConfiguration("username", null, null, null))
-            .build());
+        basicAuthService.basicAuthConfiguration = new ConfigWrapper(
+            new BasicAuthConfiguration(USER_NAME, null, null, null)
+        ).config;
+        basicAuthService.init();
         assertFalse(basicAuthService.isBasicAuthInitialized());
 
+        basicAuthService.basicAuthConfiguration = new ConfigWrapper(
+            new BasicAuthConfiguration(null, null, null, null)
+        ).config;
+        basicAuthService.init();
+        assertFalse(basicAuthService.isBasicAuthInitialized());
+    }
+
+    @Test
+    void basicAuthAPICreation_shouldNot_discardYamlConfiguration(){
+        // simulate starting Kestra for the first time
+        deleteSetting();
+        var defaultConfigWithoutBasicAuthCreds = new ConfigWrapper(
+            new BasicAuthConfiguration(null, null, "Kestra2", List.of("/api/v1/main/executions/webhook/"))
+        );
+        basicAuthService.basicAuthConfiguration = defaultConfigWithoutBasicAuthCreds.config;
+        basicAuthService.init();
+        assertFalse(basicAuthService.isBasicAuthInitialized());
+
+        /**
+         * simulate basic auth UI onboarding (createBasicAuth)
+         * {@link io.kestra.webserver.controllers.api.MiscController#createBasicAuth(MiscController.BasicAuthCredentials)}
+         */
+        basicAuthService.save(
+            new BasicAuthCredentials(
+                BASIC_AUTH_SETTINGS_KEY,
+                "username1@example.com",
+                "Password1"
+            )
+        );
+        assertTrue(basicAuthService.isBasicAuthInitialized());
+
+        assertThat(basicAuthService.configuration())
+            .as("Default configured realm and openUrls should not have been discarded after creating the basic auth user")
+            .satisfies(configuration -> {
+                assertThat(configuration.credentials().getUsername()).isEqualTo("username1@example.com");
+                assertThat(configuration.credentials().getPassword()).isNotBlank();
+                assertThat(configuration.realm()).isEqualTo("Kestra2");
+                assertThat(configuration.openUrls()).isEqualTo(List.of("/api/v1/main/executions/webhook/"));
+            });
+    }
+
+    @Test
+    void basicAuthAPICreation_shouldNot_discardYamlConfiguration_andBeBackwardCompatible_noDefaultCredentials() {
+        // simulate starting Kestra for the first time
+        deleteSetting();
+        var defaultConfigWithoutBasicAuthCreds = new ConfigWrapper(
+            new BasicAuthConfiguration(null, null, "Kestra2", List.of("/api/v1/main/executions/webhook/"))
+        );
+        basicAuthService.basicAuthConfiguration = defaultConfigWithoutBasicAuthCreds.config;
         settingRepositoryInterface.save(Setting.builder()
             .key(BASIC_AUTH_SETTINGS_KEY)
-            .value(new BasicAuthConfiguration(null, null, null, null))
+            .value(BasicAuthService.SaltedBasicAuthCredentials.salt(null, "username1@example.com", "Password1"))
             .build());
-        assertFalse(basicAuthService.isBasicAuthInitialized());
+        assertTrue(basicAuthService.isBasicAuthInitialized());
+        basicAuthService.init();
+        assertTrue(basicAuthService.isBasicAuthInitialized());
+
+        assertThat(basicAuthService.configuration())
+            .as("Default configured realm and openUrls should not have been discarded after creating the basic auth user")
+            .satisfies(configuration -> {
+                assertThat(configuration.credentials().getUsername()).isEqualTo("username1@example.com");
+                assertThat(configuration.credentials().getPassword()).isNotBlank();
+                assertThat(configuration.realm()).isEqualTo("Kestra2");
+                assertThat(configuration.openUrls()).isEqualTo(List.of("/api/v1/main/executions/webhook/"));
+            });
+    }
+
+    @Test
+    void basicAuthAPICreation_shouldNot_discardYamlConfiguration_andBeBackwardCompatible_withDefaultCredentials() {
+        // simulate starting Kestra for the first time
+        deleteSetting();
+        var defaultConfigWithoutBasicAuthCreds = new ConfigWrapper(
+            new BasicAuthConfiguration("username1@example.com", "Password1", "Kestra2", List.of("/api/v1/main/executions/webhook/"))
+        );
+        basicAuthService.basicAuthConfiguration = defaultConfigWithoutBasicAuthCreds.config;
+        basicAuthService.init();
+        assertTrue(basicAuthService.isBasicAuthInitialized());
+
+        assertThat(basicAuthService.configuration())
+            .as("Default configured realm and openUrls should not have been discarded after creating the basic auth user")
+            .satisfies(configuration -> {
+                assertThat(configuration.credentials().getUsername()).isEqualTo("username1@example.com");
+                assertThat(configuration.credentials().getPassword()).isNotBlank();
+                assertThat(configuration.realm()).isEqualTo("Kestra2");
+                assertThat(configuration.openUrls()).isEqualTo(List.of("/api/v1/main/executions/webhook/"));
+            });
+    }
+
+    @Getter
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    public static class LegacySaltedBasicAuthConfiguration {
+        private String salt;
+        private String username;
+        protected String password;
+        private String realm;
+        private List<String> openUrls;
+    }
+
+    @Test
+    void basicAuthAPICreation_shouldStillWork_withLegacyPersistedConfiguration() {
+        // given an old configuration containing legacy persisted fields 'realm' and 'openUrls'
+        var salt = AuthUtils.generateSalt();
+        settingRepositoryInterface.save(Setting.builder()
+            .key(BASIC_AUTH_SETTINGS_KEY)
+            .value(new LegacySaltedBasicAuthConfiguration(salt, "username1@example.com", AuthUtils.encodePassword(salt, "Password1"), "OldPersistedRealm", List.of("old-persisted-open-url")))
+            .build());
+        deleteSetting();
+
+        basicAuthService.basicAuthConfiguration = new ConfigWrapper(
+            new BasicAuthConfiguration("username1@example.com", "Password1", "NewRealmFromConf", List.of("NewOpenurl-fromConf"))
+        ).config;
+        basicAuthService.init();
+
+        // then
+        assertThat(basicAuthService.configuration())
+            .as("should be able to fetch deserialize legacy configuration that contained 'realm' and 'openUrls', we do not persist these fields anymore")
+            .satisfies(configuration -> {
+                assertThat(configuration.credentials().getUsername()).isEqualTo("username1@example.com");
+                assertThat(configuration.credentials().getPassword()).isNotBlank();
+                assertThat(configuration.realm()).isEqualTo("NewRealmFromConf");
+                assertThat(configuration.openUrls()).isEqualTo(List.of("NewOpenurl-fromConf"));
+            });
     }
 
     @Test
@@ -106,29 +221,29 @@ class BasicAuthServiceTest {
         deleteSetting();
         basicAuthService.basicAuthConfiguration = configWrapper.config;
         basicAuthService.init();
-        assertThat(basicAuthService.configuration()).isNull();
+        assertThat(basicAuthService.configuration().credentials()).isNull();
     }
 
     static Stream<ConfigWrapper> getConfigs() {
         return Stream.of(
             new ConfigWrapper(null),
-            new ConfigWrapper(new BasicAuthConfiguration(null, null)),
-            new ConfigWrapper(new BasicAuthConfiguration(null, PASSWORD)),
-            new ConfigWrapper(new BasicAuthConfiguration("", PASSWORD)),
-            new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, null)),
-            new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, ""))
+            new ConfigWrapper(new BasicAuthConfiguration(null, null, null, null)),
+            new ConfigWrapper(new BasicAuthConfiguration(null, PASSWORD, null, null)),
+            new ConfigWrapper(new BasicAuthConfiguration("", PASSWORD, null, null)),
+            new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, null, null, null)),
+            new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, "", null, null))
         );
     }
 
     @Test
     void saveValidAuthConfig() throws TimeoutException {
-        basicAuthService.save(new BasicAuthConfiguration(USER_NAME, PASSWORD));
+        basicAuthService.save(new BasicAuthCredentials(null, USER_NAME, PASSWORD));
         awaitOssAuthEventApiCall(USER_NAME);
     }
 
     @Test
     void should_throw_exception_when_saving_invalid_config() {
-        assertThrows(ValidationErrorException.class, () -> basicAuthService.save(new BasicAuthConfiguration(null, null)));
+        assertThrows(ValidationErrorException.class, () -> basicAuthService.save(new BasicAuthCredentials(null, null, null)));
     }
 
     @MethodSource("invalidConfigs")
@@ -143,12 +258,12 @@ class BasicAuthServiceTest {
 
     static Stream<Arguments> invalidConfigs() {
         return Stream.of(
-            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration("username", PASSWORD)), "Invalid username for Basic Authentication. Please provide a valid email address."),
-            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(null, PASSWORD)), "No user name set for Basic Authentication. Please provide a user name."),
-            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME + "a".repeat(244), PASSWORD)), "The length of email or password should not exceed 256 characters."),
-            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, "pas")), "Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number"),
-            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, null)), "No password set for Basic Authentication. Please provide a password."),
-            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, PASSWORD + "a".repeat(246))), "The length of email or password should not exceed 256 characters.")
+            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration("username", PASSWORD, null, null)), "Invalid username for Basic Authentication. Please provide a valid email address."),
+            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(null, PASSWORD, null, null)), "No user name set for Basic Authentication. Please provide a user name."),
+            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME + "a".repeat(244), PASSWORD, null, null)), "The length of email or password should not exceed 256 characters."),
+            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, "pas", null, null)), "Invalid password for Basic Authentication. The password must have 8 chars, one upper, one lower and one number"),
+            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, null, null, null)), "No password set for Basic Authentication. Please provide a password."),
+            Arguments.of(new ConfigWrapper(new BasicAuthConfiguration(USER_NAME, PASSWORD + "a".repeat(246), null, null)), "The length of email or password should not exceed 256 characters.")
 
         );
     }
@@ -164,10 +279,11 @@ class BasicAuthServiceTest {
     }
 
     private void assertConfigurationMatchesApplicationYaml() {
-        BasicAuthService.SaltedBasicAuthConfiguration actualConfiguration = basicAuthService.configuration();
-        BasicAuthService.SaltedBasicAuthConfiguration applicationYamlConfiguration = new BasicAuthService.SaltedBasicAuthConfiguration(
+        var actualConfiguration = basicAuthService.configuration().credentials();
+        var applicationYamlConfiguration = BasicAuthService.SaltedBasicAuthCredentials.salt(
             actualConfiguration.getSalt(),
-            basicAuthService.basicAuthConfiguration
+            basicAuthService.basicAuthConfiguration.getUsername(),
+            basicAuthService.basicAuthConfiguration.getPassword()
         );
         assertThat(actualConfiguration).isEqualTo(applicationYamlConfiguration);
 

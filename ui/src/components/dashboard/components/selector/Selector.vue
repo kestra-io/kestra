@@ -134,7 +134,7 @@
                 if (lastSelected) {
                     const dashboard = dashboards.value.find((d) => d.id === lastSelected);
 
-                    if (dashboard) select(dashboard);                    
+                    if (dashboard) select(dashboard);
                     else {
                         selected.value = null;
                         emits("dashboard", "default");

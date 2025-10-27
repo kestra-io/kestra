@@ -144,7 +144,7 @@
                             <el-form>
                                 <ElFormItem :label="$t('execution labels')">
                                     <LabelInput
-                                        :key="executionLabels"
+                                        :key?="executionLabels"
                                         v-model:labels="executionLabels"
                                     />
                                 </ElFormItem>
@@ -415,7 +415,6 @@
     import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    //@ts-expect-error no declaration file
     import LabelInput from "../../components/labels/LabelInput.vue";
     //@ts-expect-error no declaration file
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";

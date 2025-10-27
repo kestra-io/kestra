@@ -39,7 +39,6 @@
                 :total="flowStore.total"
                 :size="internalPageSize"
                 :page="internalPageNumber"
-                :hideTopPagination="!!namespace"
             >
                 <template #navbar>
                     <KestraFilter

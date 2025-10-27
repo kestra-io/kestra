@@ -26,7 +26,6 @@
         size?: number;
         page?: number;
         embed?: boolean;
-        hideTopPagination?: boolean;
     }>();
 
     const emit = defineEmits<{

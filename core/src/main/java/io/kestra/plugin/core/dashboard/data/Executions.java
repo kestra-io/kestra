@@ -51,7 +51,7 @@ import lombok.experimental.SuperBuilder;
                       displayName: Executions
                       agg: COUNT
             """
-          }                    
+          }
         )
     }
 )

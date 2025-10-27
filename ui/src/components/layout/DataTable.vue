@@ -9,12 +9,6 @@
         <el-container direction="vertical" v-loading="isLoading">
             <slot name="top" />
 
-            <Pagination v-if="!embed && !hideTopPagination" :size="size" :top="true" :page="page" :total="total" @page-changed="onPageChanged">
-                <template #search>
-                    <slot name="search" />
-                </template>
-            </Pagination>
-
             <slot name="table" />
 
             <Pagination v-if="total > 0" :size="size" :page="page" :total="total" @page-changed="onPageChanged" />
@@ -32,7 +26,6 @@
         size?: number;
         page?: number;
         embed?: boolean;
-        hideTopPagination?: boolean;
     }>();
 
     const emit = defineEmits<{

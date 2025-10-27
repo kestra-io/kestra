@@ -3,7 +3,7 @@
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hideTopPagination divider>
+            <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
                 <template #navbar>
                     <div v-if="ready && !system && !embed">
                         <div class="tags-selection">

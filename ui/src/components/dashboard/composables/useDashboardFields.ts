@@ -23,17 +23,14 @@ export function useDashboardFields() {
     const dashboardStore = useDashboardStore();
 
     onMounted(() => {
-        if(pluginsStore.schemaType?.dashboard) {
-            return; // Schema already loaded
-        }
-
-        pluginsStore.loadSchemaType({type: "dashboard"});
+        pluginsStore.lazyLoadSchemaType({type: "dashboard"});
     });
 
     const parsedSource = computed(() => dashboardStore.parsedSource)
 
     const getFieldFromKey = (key:string) => ({
         modelValue: parsedSource.value?.[key],
+        disabled: !dashboardStore.isCreating && (key === "id"),
         required: dashboardStore.rootSchema?.required ?? [],
         schema: dashboardStore.rootProperties?.[key] ?? {},
         definitions: dashboardStore.definitions,

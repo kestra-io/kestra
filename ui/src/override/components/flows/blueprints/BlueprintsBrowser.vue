@@ -23,7 +23,7 @@
                             <el-col :xs="24">
                                 <el-input
                                     v-model="searchText"
-                                    :placeholder="$t('Search or choose filters...')"
+                                    :placeholder="$t('search blueprint')"
                                     clearable
                                     @input="updateSearch"
                                 />
@@ -68,7 +68,7 @@
                                     </div>
 
                                     <div class="action-button">
-                                        <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
+                                        <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                             <el-button
                                                 type="primary"
                                                 size="default"
@@ -207,7 +207,7 @@
         if (route.query.q || searchText.value) {
             query.q = route.query.q || searchText.value;
         }
-        const data = await blueprintsStore.getBlueprintTagsForQuery({
+        const data = await blueprintsStore.getBlueprintTags({
             type: props.blueprintType,
             kind: props.blueprintKind,
             ...query,
@@ -225,7 +225,7 @@
         if (props.system) query.tags = "system";
         else if (selectedTags.value.length > 0) query.tags = selectedTags.value;
 
-        const data = await blueprintsStore.getBlueprintsForQuery({
+        const data = await blueprintsStore.getBlueprints({
             type: props.blueprintType,
             kind: props.blueprintKind,
             params: query,
@@ -342,6 +342,11 @@
                     box-shadow: none;
                     text-overflow: ellipsis;
                     overflow: hidden;
+                }
+
+                &:hover :deep(span) {
+                    color: var(--ks-content-link-hover);
+                    background-color: var(--ks-button-background-secondary-hover);
                 }
             }
         }

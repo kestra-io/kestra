@@ -22,6 +22,7 @@ class PollingTest {
         assertThat(optionalExecution).isPresent();
         Execution execution = optionalExecution.get();
         assertThat(execution.getFlowId()).isEqualTo("polling-flow");
+        assertThat(execution.getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
         assertTrue(execution.getState().getCurrent().isCreated());
     }
 }

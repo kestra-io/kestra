@@ -159,14 +159,14 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
     };
 
     const refreshPaging = () => {
-        internalPageSize.value = pageSize.value || Number(route.query.size) || 25;
-        internalPageNumber.value = pageNumber.value || Number(route.query.page) || 1;
+        internalPageSize.value = pageSize.value ?? Number(route.query.size ?? 25);
+        internalPageNumber.value = pageNumber.value ?? Number(route.query.page ?? 1);
     };
 
     watch(
         () => route.query,
-        (newValue, oldValue) => {
-            if (!_isEqual(newValue, oldValue)) {
+        (newQuery, oldQuery) => {
+            if (!_isEqual(newQuery, oldQuery)) {
                 refreshPaging();
                 load(onDataLoaded);
             }

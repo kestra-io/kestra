@@ -21,7 +21,14 @@ public class JdbcQueueConfigurationTest {
 
     @Test
     void shouldCompute5StepsByDefault() {
-        var configuration = new JdbcQueue.Configuration();
+        var configuration = new JdbcQueueConfiguration(
+            Duration.ofMillis(25),
+            Duration.ofMillis(500),
+            Duration.ofSeconds(60),
+            100,
+            5,
+            true
+        );
 
         // By default, we have 5 computed steps + the minPoll
         List<JdbcQueue.Configuration.Step> steps = configuration.computeSteps();

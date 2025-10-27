@@ -49,7 +49,7 @@ public class TestRunner implements Runnable, AutoCloseable {
         running.set(true);
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
-        ExecutorInterface executor = applicationContext.getBean(ExecutorInterface.class);
+        poolExecutor.execute(applicationContext.getBean(Executor.class));
         servers.add(executor);
         poolExecutor.execute(executor);
 

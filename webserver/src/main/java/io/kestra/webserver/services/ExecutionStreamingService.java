@@ -4,6 +4,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -18,6 +20,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import reactor.core.publisher.FluxSink;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -34,18 +37,21 @@ public class ExecutionStreamingService {
     private final Map<String, Map<String, Pair<FluxSink<Event<Execution>>, Flow>>> subscribers = new ConcurrentHashMap<>();
     private final Object subscriberLock = new Object();
 
-    private final QueueInterface<Execution> executionQueue;
+    private final QueueInterface<ExecutionEvent> executionQueue;
     private final ExecutionService executionService;
+    private final ExecutionRepositoryInterface executionRepository;
 
     private Runnable queueConsumer;
 
     @Inject
     public ExecutionStreamingService(
-        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        ExecutionService executionService
+        @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED) QueueInterface<ExecutionEvent> executionQueue,
+        ExecutionService executionService,
+        ExecutionRepositoryInterface executionRepository
     ) {
         this.executionQueue = executionQueue;
         this.executionService = executionService;
+        this.executionRepository = executionRepository;
     }
 
     @PostConstruct
@@ -57,22 +63,27 @@ public class ExecutionStreamingService {
                 return;
             }
 
-            Execution execution = either.getLeft();
-            String executionId = execution.getId();
+            ExecutionEvent event = either.getLeft();
 
             // Get all subscribers for this execution
-            Map<String, Pair<FluxSink<Event<Execution>>, Flow>> executionSubscribers = subscribers.get(executionId);
+            Map<String, Pair<FluxSink<Event<Execution>>, Flow>> executionSubscribers = subscribers.get(event.executionId());
 
             if (!MapUtils.isEmpty(executionSubscribers)) {
+                Optional<Execution> execution = executionRepository.findById(event.tenantId(), event.executionId());
+                if (execution.isEmpty()) {
+                    log.error("Unable to find the execution id {}", event.executionId());
+                    return;
+                }
+
                 executionSubscribers.values().forEach(pair -> {
                     var sink = pair.getLeft();
                     var flow = pair.getRight();
                     try {
-                        if (isStopFollow(flow, execution)) {
-                            sink.next(Event.of(execution).id("end"));
+                        if (isStopFollow(flow, execution.get())) {
+                            sink.next(Event.of(execution.get()).id("end"));
                             sink.complete();
                         } else {
-                            sink.next(Event.of(execution).id("progress"));
+                            sink.next(Event.of(execution.get()).id("progress"));
                         }
                     } catch (Exception e) {
                         log.error("Error sending execution update", e);

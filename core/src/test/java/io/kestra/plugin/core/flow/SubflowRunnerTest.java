@@ -9,6 +9,8 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.ExecutionEvent;
+import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -35,8 +37,8 @@ class SubflowRunnerTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
+    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
+    protected QueueInterface<ExecutionEvent> executionEventQueue;
 
     @Test
     @LoadFlows({"flows/valids/subflow-inherited-labels-child.yaml", "flows/valids/subflow-inherited-labels-parent.yaml"})
@@ -70,9 +72,9 @@ class SubflowRunnerTest {
     void subflowOutputWithoutWait() throws QueueException, TimeoutException, InterruptedException {
         AtomicReference<Execution> childExecution = new AtomicReference<>();
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Runnable closing = executionQueue.receive(either -> {
-            if (either.isLeft() && either.getLeft().getFlowId().equals("subflow-child-with-output") && either.getLeft().getState().isTerminated()) {
-                childExecution.set(either.getLeft());
+        Runnable closing = executionEventQueue.receive(either -> {
+            if (either.isLeft() && either.getLeft().flowId().equals("subflow-child-with-output") && either.getLeft().eventType() == ExecutionEventType.TERMINATED) {
+                childExecution.set(executionRepository.findById(either.getLeft().tenantId(), either.getLeft().executionId()).orElseThrow());
                 countDownLatch.countDown();
             }
         });

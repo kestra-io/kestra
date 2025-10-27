@@ -68,12 +68,6 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
-    @Named("executorstate")
-    public InstantiableJdbcTableConfig executorState() {
-        return new InstantiableJdbcTableConfig("executorstate", ExecutorState.class, "executorstate");
-    }
-
-    @Bean
     @Named("executordelayed")
     public InstantiableJdbcTableConfig executorDelayed() {
         return new InstantiableJdbcTableConfig("executordelayed", ExecutionDelay.class, "executordelayed");

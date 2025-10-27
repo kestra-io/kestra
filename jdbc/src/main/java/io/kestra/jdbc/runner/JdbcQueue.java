@@ -176,10 +176,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         // and the queue has its own cleaner, which we better not mess with, as the 'queues' table is selected with a lock.
     }
 
-    /**
-     * Delete all messages of the queue for this key.
-     * This is used to purge a queue for a specific key.
-     */
+    @Override
     public void deleteByKey(String key) throws QueueException {
         dslContextWrapper.transaction(configuration -> {
             int deleted = DSL
@@ -327,14 +324,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         );
     }
 
-    public Runnable receiveBatch(Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer) {
-        return receiveBatch(null, queueType, consumer);
-    }
-
-    public Runnable receiveBatch(String consumerGroup, Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer) {
-        return receiveBatch(consumerGroup, queueType, consumer, true);
-    }
-
+    @Override
     public Runnable receiveBatch(String consumerGroup, Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer, boolean forUpdate) {
         return this.receiveImpl(
             consumerGroup,

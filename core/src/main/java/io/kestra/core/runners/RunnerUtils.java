@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.Await;
@@ -35,7 +36,14 @@ public class RunnerUtils {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
+    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
+    protected QueueInterface<ExecutionEvent> executionEventQueue;
+
+    @Inject
     private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Inject
     private ExecutionService executionService;
@@ -150,9 +158,10 @@ public class RunnerUtils {
     public Execution awaitExecution(Predicate<Execution> predicate, Runnable executionEmitter, Duration duration) throws TimeoutException {
         AtomicReference<Execution> receive = new AtomicReference<>();
 
-        Runnable cancel = this.executionQueue.receive(null, current -> {
-            if (predicate.test(current.getLeft())) {
-                receive.set(current.getLeft());
+        Runnable cancel = this.executionEventQueue.receive(null, current -> {
+            var execution = executionRepository.findById(current.getLeft().tenantId(), current.getLeft().executionId()).orElseThrow();
+            if (predicate.test(execution)) {
+                receive.set(execution);
             }
         }, false);
 

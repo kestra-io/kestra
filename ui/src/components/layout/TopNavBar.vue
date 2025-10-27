@@ -66,13 +66,13 @@
                         <slot name="title">
                             <span class="title-span">{{ title }}</span>
                             <el-tooltip v-if="description" :content="description">
-                                <Information class="ms-2" />
+                                <Information class="ms-2 icon" />
                             </el-tooltip>
                             <Badge v-if="beta" label="Beta" />
                         </slot>
                         <el-button
-                            class="star-button"
-                            :class="{'star-active': bookmarked}"
+                            class="icon"
+                            :class="{'active': bookmarked}"
                             :icon="bookmarked ? StarIcon : StarOutlineIcon"
                             circle
                             @click="onStarClick"

@@ -3,9 +3,9 @@
         <div class="tabs">
             <button
                 v-for="element of tabs"
-                :key="element.value"
-                :class="{active: openTabs.includes(element.value)}"
-                @click="setTabValue(element.value)"
+                :key="element.uid"
+                :class="{active: openTabs.includes(element.uid)}"
+                @click="setTabValue(element.uid)"
             >
                 <component class="tabs-icon" :is="element.button.icon" />
                 {{ element.button.label }}
@@ -16,14 +16,10 @@
 </template>
 
 <script setup lang="ts">
+    import {Tab} from "../utils/multiPanelTypes";
+
     defineProps<{
-        tabs: {
-            value: string;
-            button: {
-                icon: any;
-                label: string;
-            };
-        }[],
+        tabs: Tab[],
         openTabs: string[];
     }>();
 

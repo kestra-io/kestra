@@ -45,7 +45,7 @@ jobs:
   backend:
     name: Backend - Tests
     needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true'"
+    if: "needs.file-changes.outputs.backend == 'true' || github.event_name == 'pull_request'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

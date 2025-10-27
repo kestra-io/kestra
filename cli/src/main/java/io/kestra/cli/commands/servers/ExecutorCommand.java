@@ -4,7 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.ExecutorInterface;
+import io.kestra.core.runners.Executor;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
@@ -87,7 +87,7 @@ public class ExecutorCommand extends AbstractServerCommand {
             }
         }
 
-        ExecutorInterface executorService = applicationContext.getBean(ExecutorInterface.class);
+        Executor executorService = applicationContext.getBean(Executor.class);
         executorService.run();
 
         Await.until(() -> !this.applicationContext.isRunning());

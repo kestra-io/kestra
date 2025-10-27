@@ -22,7 +22,6 @@ import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
@@ -80,7 +79,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     private SkipExecutionService skipExecutionService;
 
     @Inject
-    private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
+    private AbstractJdbcWorkerJobRunningStateStore workerJobRunningRepository;
 
     @BeforeAll
     void init() {

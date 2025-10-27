@@ -7,7 +7,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.ExecutionQueued;
 import io.kestra.core.services.ConcurrencyLimitService;
-import io.kestra.jdbc.runner.AbstractJdbcExecutionQueuedStorage;
+import io.kestra.jdbc.runner.AbstractJdbcExecutionQueuedStateStore;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -47,7 +47,7 @@ public class SubmitQueuedCommand extends AbstractCommand {
             return 1;
         }
         else if (queueType.get().equals("postgres") || queueType.get().equals("mysql") || queueType.get().equals("h2")) {
-            var executionQueuedStorage = applicationContext.getBean(AbstractJdbcExecutionQueuedStorage.class);
+            var executionQueuedStorage = applicationContext.getBean(AbstractJdbcExecutionQueuedStateStore.class);
             var concurrencyLimitService = applicationContext.getBean(ConcurrencyLimitService.class);
 
             for (ExecutionQueued queued : executionQueuedStorage.getAllForAllTenants()) {

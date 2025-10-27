@@ -7,7 +7,6 @@ import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
-import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -27,9 +26,8 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
     public PostgresExecutionRepository(@Named("executions") PostgresRepository<Execution> repository,
                                        QueueService queueService,
                                        ApplicationContext applicationContext,
-                                       AbstractJdbcExecutorStateStorage executorStateStorage,
                                        JdbcFilterService filterService) {
-        super(repository, queueService, applicationContext, executorStateStorage, filterService);
+        super(repository, queueService, applicationContext, filterService);
     }
 
     @Override

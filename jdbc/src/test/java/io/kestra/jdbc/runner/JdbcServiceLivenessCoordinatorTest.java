@@ -6,7 +6,7 @@ import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.Reason;
+import io.kestra.core.models.executions.AttemptReason;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State.Type;
@@ -131,7 +131,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         assertThat(workerTaskResult).isNotNull();
         assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(Type.SUCCESS);
         assertThat(workerTaskResult.getTaskRun().getAttempts()).hasSize(2);
-        assertThat(workerTaskResult.getTaskRun().getAttempts().getLast().getReason()).isEqualTo(Reason.RESUBMITTED);
+        assertThat(workerTaskResult.getTaskRun().getAttempts().getLast().getAttemptReason()).isEqualTo(AttemptReason.RESUBMITTED);
         newWorker.close();
     }
 

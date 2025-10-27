@@ -27,7 +27,7 @@ public class TaskRunAttempt {
     String workerId;
 
     @Nullable
-    Reason reason;
+    AttemptReason attemptReason;
 
     @With
     @Nullable
@@ -37,7 +37,7 @@ public class TaskRunAttempt {
         return new TaskRunAttempt(
             this.state.withState(state),
             this.workerId,
-            this.reason,
+            this.attemptReason,
             this.logFile
         );
     }

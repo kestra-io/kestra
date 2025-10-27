@@ -311,9 +311,9 @@ public class TaskRun implements TenantInterface {
             .build();
     }
 
-    public Optional<Reason> resolveAttemptReason() {
+    public Optional<AttemptReason> resolveAttemptReason() {
 
-        if( this.getAttempts() != null && this.getAttempts().getLast().getState().getCurrent().isKilled() ) return Optional.of(Reason.RESUBMITTED);
+        if( this.getAttempts() != null && this.getAttempts().getLast().getState().getCurrent().isKilled() ) return Optional.of(AttemptReason.RESUBMITTED);
 
         Optional<State.Type> nearestState= this.getState().getHistories()
             .reversed()
@@ -322,8 +322,8 @@ public class TaskRun implements TenantInterface {
             .findFirst().map(State.History::getState);
 
         if (nearestState.isPresent()){
-            if (nearestState.get().isRetrying()) return Optional.of(Reason.RETRYING);
-            return Optional.of(Reason.RESTARTED);
+            if (nearestState.get().isRetrying()) return Optional.of(AttemptReason.RETRYING);
+            return Optional.of(AttemptReason.RESTARTED);
         }
 
         return  Optional.empty();

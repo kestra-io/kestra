@@ -1,6 +1,6 @@
 package io.kestra.core.models.executions;
 
-public enum Reason {
+public enum AttemptReason {
     RETRYING,
     RESTARTED,
     RESUBMITTED,

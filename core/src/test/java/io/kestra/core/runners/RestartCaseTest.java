@@ -1,7 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.Reason;
+import io.kestra.core.models.executions.AttemptReason;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -58,7 +58,7 @@ public class RestartCaseTest {
         assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(4);
 
         assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts().size()).isEqualTo(2);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts().getLast().getReason()).isEqualTo(Reason.RESTARTED);
+        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts().getLast().getAttemptReason()).isEqualTo(AttemptReason.RESTARTED);
 
         finishedRestartedExecution
             .getTaskRunList()
@@ -95,7 +95,7 @@ public class RestartCaseTest {
         assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(2);
 
         assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(2);
-        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().getLast().getReason()).isEqualTo(Reason.RESTARTED);
+        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().getLast().getAttemptReason()).isEqualTo(AttemptReason.RESTARTED);
         assertThat(finishedRestartedExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 

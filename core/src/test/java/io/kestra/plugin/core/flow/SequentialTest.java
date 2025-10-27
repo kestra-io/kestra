@@ -20,7 +20,7 @@ class SequentialTest {
         assertThat(execution.getTaskRunList()).hasSize(11);
         assertThat(flowableAttempts).isNotNull();
         assertThat(flowableAttempts.getLast().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(flowableAttempts.getLast().getReason()).isNull();
+        assertThat(flowableAttempts.getLast().getAttemptReason()).isNull();
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 

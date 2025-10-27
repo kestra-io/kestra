@@ -62,6 +62,10 @@ export interface Flow {
     triggers?: Trigger[];
     inputs?: Input[];
     errors?: { message: string; code?: string, id?: string }[];
+    concurrency?: {
+        limit: number;
+        behavior: string;
+    };
 }
 
 export const useFlowStore = defineStore("flow", () => {

@@ -74,12 +74,14 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
-        ZonedDateTime lastEvaluation = triggerContext.getDate();
+        ZonedDateTime evaluationDate = triggerContext.getDate();
         
         if (this.timezone != null) {
             String renderedTimezone = runContext.render(this.timezone);
-            lastEvaluation = lastEvaluation.withZoneSameInstant(ZoneId.of(renderedTimezone));
+            evaluationDate = evaluationDate.withZoneSameInstant(ZoneId.of(renderedTimezone));
         }
+        
+        final ZonedDateTime lastEvaluation = evaluationDate;
         
         Optional<ZonedDateTime> nextDate = nextDate(runContext, date -> date.isEqual(lastEvaluation) || date.isAfter(lastEvaluation));
 

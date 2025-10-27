@@ -69,16 +69,21 @@ public class UnsetVariables extends Task implements ExecutionUpdatableTask {
         boolean renderedIgnoreMissing = runContext.render(ignoreMissing).as(Boolean.class).orElseThrow();
         Map<String, Object> variables = execution.getVariables();
         for (String key : renderedVariables) {
-            removeVar(variables, key, renderedIgnoreMissing);
+            removeVar(runContext, variables, key, renderedIgnoreMissing);
         }
         return execution.withVariables(variables);
     }
 
-    private void removeVar(Map<String, Object> vars, String key, boolean ignoreMissing) {
+    private void removeVar(RunContext runContext, Map<String, Object> vars, String key, boolean ignoreMissing) {
         if (key.indexOf('.') >= 0) {
             String prefix = key.substring(0, key.indexOf('.'));
             String suffix = key.substring(key.indexOf('.') + 1);
-            removeVar((Map<String, Object>) vars.get(prefix), suffix, ignoreMissing);
+            Object nested = vars.get(prefix);
+            if (nested instanceof Map) {
+                removeVar(runContext, (Map<String, Object>) nested, suffix, ignoreMissing);
+            } else {
+                runContext.logger().warn("Expected Map for key '{}', but got {}", prefix, nested != null ? nested.getClass() : "null");
+            }
         } else {
             if (ignoreMissing && !vars.containsKey(key)) {
                 return;

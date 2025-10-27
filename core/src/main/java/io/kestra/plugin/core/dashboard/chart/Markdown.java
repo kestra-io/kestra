@@ -35,7 +35,7 @@ import lombok.experimental.SuperBuilder;
                     content: |
                       ## Execution Success Rate
                       This chart displays the percentage of successful executions over time.
-                    
+
                       - A **higher success rate** indicates stable and reliable workflows.
 
                       - Sudden **drops** may signal issues in task execution or external dependencies.

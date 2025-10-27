@@ -7,7 +7,8 @@
         <el-table
             ref="table"
             v-bind="$attrs"
-            :data="data"
+            :data
+            :rowKey
             :emptyText="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
             @selection-change="selectionChanged"
             v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
@@ -15,7 +16,7 @@
             :infiniteScrollDelay="0"
             :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
         >
-            <el-table-column type="selection" v-if="selectable && showSelection" />
+            <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
             <slot name="default" />
         </el-table>
     </div>
@@ -138,7 +139,8 @@
             expandable: {type: Boolean, default: false},
             data: {type: Array, default: () => []},
             noDataText: {type: String, default: undefined},
-            infiniteScrollLoad: {type: Function, default: undefined}
+            infiniteScrollLoad: {type: Function, default: undefined},
+            rowKey: {type: [String, Function], default: "id"}
         },
         emits: [
             "selection-change"

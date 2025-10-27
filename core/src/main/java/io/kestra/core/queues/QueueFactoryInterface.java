@@ -10,7 +10,7 @@ import io.kestra.core.runners.*;
 
 public interface QueueFactoryInterface {
     String EXECUTION_NAMED = "executionQueue";
-    String EXECUTOR_NAMED = "executorQueue";
+    String EXECUTION_EVENT_NAMED = "executionEventQueue";
     String WORKERJOB_NAMED = "workerJobQueue";
     String WORKERTASKRESULT_NAMED = "workerTaskResultQueue";
     String WORKERTRIGGERRESULT_NAMED = "workerTriggerResultQueue";
@@ -28,7 +28,7 @@ public interface QueueFactoryInterface {
 
     QueueInterface<Execution> execution();
 
-    QueueInterface<Executor> executor();
+    QueueInterface<ExecutionEvent> executionEvent();
 
     WorkerJobQueueInterface workerJob();
 

@@ -19,13 +19,12 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.runners.Executor;
-import io.kestra.core.runners.ExecutorState;
+import io.kestra.executor.ExecutorContext;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceUtils;
-import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
+import io.kestra.executor.ExecutionStateStore;
 import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Executions;
@@ -36,7 +35,6 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
@@ -57,7 +55,7 @@ import java.util.stream.Stream;
 
 import static io.kestra.core.models.QueryFilter.Field.KIND;
 
-public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcQueueIndexerInterface<Execution> {
+public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, ExecutionStateStore, JdbcQueueIndexerInterface<Execution> {
     private static final int FETCH_SIZE = 100;
     private static final Field<String> STATE_CURRENT_FIELD = field("state_current", String.class);
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
@@ -67,7 +65,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     protected final io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository;
     private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
     private final ApplicationContext applicationContext;
-    protected final AbstractJdbcExecutorStateStorage executorStateStorage;
 
     private QueueInterface<Execution> executionQueue;
     private final NamespaceUtils namespaceUtils;
@@ -101,11 +98,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public AbstractJdbcExecutionRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository,
         ApplicationContext applicationContext,
-        AbstractJdbcExecutorStateStorage executorStateStorage,
         JdbcFilterService filterService
     ) {
         this.jdbcRepository = jdbcRepository;
-        this.executorStateStorage = executorStateStorage;
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.namespaceUtils = applicationContext.getBean(NamespaceUtils.class);
 
@@ -976,7 +971,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             });
     }
 
-    public Executor lock(String executionId, Function<Pair<Execution, ExecutorState>, Pair<Executor, ExecutorState>> function) {
+    @Override
+    public ExecutorContext lock(String executionId, Function<Execution, ExecutorContext> function) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -996,14 +992,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     return null;
                 }
 
-                ExecutorState executorState = executorStateStorage.get(context, execution.get());
-                Pair<Executor, ExecutorState> pair = function.apply(Pair.of(execution.get(), executorState));
+                ExecutorContext executor = function.apply(execution.get());
 
-                if (pair != null) {
-                    this.jdbcRepository.persist(pair.getKey().getExecution(), context, null);
-                    this.executorStateStorage.save(context, pair.getRight());
-
-                    return pair.getKey();
+                if (executor != null) {
+                    this.jdbcRepository.persist(executor.getExecution(), context, null);
+                    return executor;
                 }
 
                 return null;

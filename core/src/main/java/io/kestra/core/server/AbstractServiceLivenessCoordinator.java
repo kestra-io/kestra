@@ -1,9 +1,17 @@
 package io.kestra.core.server;
 
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
+import io.kestra.core.runners.*;
+import io.kestra.core.services.LogService;
+import io.kestra.core.services.SkipExecutionService;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.event.Level;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -39,6 +47,11 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
 
     protected final ServiceRegistry serviceRegistry;
 
+    private final SkipExecutionService skipExecutionService;
+    private final QueueInterface<WorkerJob> workerJobQueue;
+    private final WorkerJobRunningStateStore workerJobRunningStateStore;
+    private final LogService logService;
+
     // mutable for testing purpose
     protected String serverId = ServerInstance.INSTANCE_ID;
 
@@ -51,10 +64,18 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
     @Inject
     public AbstractServiceLivenessCoordinator(final ServiceLivenessStore store,
                                               final ServiceRegistry serviceRegistry,
+                                              final SkipExecutionService skipExecutionService,
+                                              final @Named(QueueFactoryInterface.WORKERJOB_NAMED) QueueInterface<WorkerJob> workerJobQueue,
+                                              final WorkerJobRunningStateStore workerJobRunningStateStore,
+                                              final LogService logService,
                                               final ServerConfig serverConfig) {
         super(TASK_NAME, serverConfig);
         this.serviceRegistry = serviceRegistry;
         this.store = store;
+        this.skipExecutionService = skipExecutionService;
+        this.workerJobQueue = workerJobQueue;
+        this.workerJobRunningStateStore = workerJobRunningStateStore;
+        this.logService = logService;
     }
 
     /**
@@ -219,7 +240,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
         }
     }
 
-    protected static void maybeLogNonRespondingAfterTerminationGracePeriod(final ServiceInstance instance,
+    protected void maybeLogNonRespondingAfterTerminationGracePeriod(final ServiceInstance instance,
                                                                            final Instant now) {
         if (instance.state().isDisconnectedOrTerminating()) {
             log.warn("Detected non-responding service [id={}, type={}, hostname={}] after termination grace period ({}ms).",
@@ -228,6 +249,61 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
                 instance.server().hostname(),
                 now.toEpochMilli() - instance.updatedAt().toEpochMilli()
             );
+        }
+    }
+
+    protected void resubmitWorkerJobRunning(TransactionContext txContext, WorkerJobRunning workerJobRunning) {
+        // WorkerTaskRunning
+        if (workerJobRunning instanceof WorkerTaskRunning workerTaskRunning) {
+            if (skipExecutionService.skipExecution(workerTaskRunning.getTaskRun())) {
+                // if the execution is skipped, we remove the workerTaskRunning and skip its resubmission
+                log.warn("Skipping execution {}", workerTaskRunning.getTaskRun().getExecutionId());
+                workerJobRunningStateStore.deleteByKey(txContext, workerTaskRunning.uid());
+            } else {
+                try {
+                    workerJobQueue.emit(workerTaskRunning.getWorkerInstance().workerGroup(), WorkerTask.builder()
+                        .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
+                        .task(workerTaskRunning.getTask())
+                        .runContext(workerTaskRunning.getRunContext())
+                        .build()
+                    );
+                    logService.logTaskRun(
+                        workerTaskRunning.getTaskRun(),
+                        Level.WARN,
+                        "Re-emitting WorkerTask."
+                    );
+                } catch (QueueException e) {
+                    logService.logTaskRun(
+                        workerTaskRunning.getTaskRun(),
+                        Level.ERROR,
+                        "Unable to re-emit WorkerTask.",
+                        e
+                    );
+                }
+            }
+        }
+
+        // WorkerTriggerRunning
+        if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
+            try {
+                workerJobQueue.emit(workerTriggerRunning.getWorkerInstance().workerGroup(), WorkerTrigger.builder()
+                    .trigger(workerTriggerRunning.getTrigger())
+                    .conditionContext(workerTriggerRunning.getConditionContext())
+                    .triggerContext(workerTriggerRunning.getTriggerContext())
+                    .build());
+                logService.logTrigger(
+                    workerTriggerRunning.getTriggerContext(),
+                    Level.WARN,
+                    "Re-emitting WorkerTrigger."
+                );
+            } catch (QueueException e) {
+                logService.logTrigger(
+                    workerTriggerRunning.getTriggerContext(),
+                    Level.ERROR,
+                    "Unable to re-emit WorkerTrigger.",
+                    e
+                );
+            }
         }
     }
 }

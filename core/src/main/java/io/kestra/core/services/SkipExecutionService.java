@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.runners.ExecutionEvent;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,10 @@ public class SkipExecutionService {
 
     public boolean skipExecution(Execution execution) {
         return skipExecution(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId());
+    }
+
+    public boolean skipExecution(ExecutionEvent executionEvent) {
+        return skipExecution(executionEvent.tenantId(), executionEvent.namespace(), executionEvent.flowId(), executionEvent.executionId());
     }
 
     public boolean skipExecution(TaskRun taskRun) {

@@ -1,6 +1,7 @@
 package io.kestra.core.repositories;
 
 
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.topologies.FlowTopology;
 
 import java.util.List;
@@ -15,4 +16,6 @@ public interface FlowTopologyRepositoryInterface {
     List<FlowTopology> findAll(String tenantId);
 
     FlowTopology save(FlowTopology flowTopology);
+
+    void save(FlowInterface flow, List<FlowTopology> flowTopologies);
 }

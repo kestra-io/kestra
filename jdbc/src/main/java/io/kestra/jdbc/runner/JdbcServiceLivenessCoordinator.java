@@ -3,6 +3,10 @@ package io.kestra.jdbc.runner;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.lock.Lock;
 import io.kestra.core.lock.LockService;
+import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.*;
 import io.kestra.core.server.AbstractServiceLivenessCoordinator;
 import io.kestra.core.server.ServerConfig;
 import io.kestra.core.server.Service.ServiceState;
@@ -10,20 +14,24 @@ import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceRegistry;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
+import io.kestra.core.services.LogService;
+import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.runners.WorkerJobRunningStateStore;
 import io.kestra.jdbc.repository.AbstractJdbcServiceInstanceRepository;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.jooq.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static io.kestra.core.server.Service.ServiceState.allRunningStates;
@@ -40,10 +48,11 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
 
     private final static Logger log = LoggerFactory.getLogger(JdbcServiceLivenessCoordinator.class);
 
-    private final AtomicReference<JdbcExecutor> executor = new AtomicReference<>();
     private final AbstractJdbcServiceInstanceRepository serviceInstanceRepository;
     private final LockService lockService;
     private final Duration purgeRetention;
+    private final MetricRegistry metricRegistry;
+    private final WorkerJobRunningStateStore workerJobRunningStateStore;
 
     /**
      * Creates a new {@link JdbcServiceLivenessCoordinator} instance.
@@ -56,20 +65,18 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
                                           final LockService lockService,
                                           final ServiceRegistry serviceRegistry,
                                           final ServerConfig serverConfig,
+                                          final MetricRegistry metricRegistry,
+                                          final SkipExecutionService skipExecutionService,
+                                          final @Named(QueueFactoryInterface.WORKERJOB_NAMED) QueueInterface<WorkerJob> workerJobQueue,
+                                          final WorkerJobRunningStateStore workerJobRunningStateStore,
+                                          final LogService logService,
                                           @Value("${kestra.server.service.purge.retention}") final Duration purgeRetention) {
-        super(serviceInstanceRepository, serviceRegistry, serverConfig);
+        super(serviceInstanceRepository, serviceRegistry, skipExecutionService, workerJobQueue, workerJobRunningStateStore, logService, serverConfig);
         this.serviceInstanceRepository = serviceInstanceRepository;
         this.lockService = lockService;
+        this.metricRegistry = metricRegistry;
+        this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.purgeRetention = purgeRetention;
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    protected void onSchedule(final Instant now) throws Exception {
-        if (executor.get() == null) return; // only True during startup
-        super.onSchedule(now);
     }
 
     /**
@@ -95,7 +102,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
                     .toList();
                 if (!ids.isEmpty()) {
                     log.info("Trigger task restart for non-responding workers after termination grace period: {}.", ids);
-                    executor.get().reEmitWorkerJobsForWorkers(configuration, ids);
+                    reEmitWorkerJobsForWorkers(configuration, ids);
                 }
             }
 
@@ -149,7 +156,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
 
             if (!workerIdsHavingTasksToRestart.isEmpty()) {
                 log.info("Trigger task restart for non-responding workers after timeout: {}.", workerIdsHavingTasksToRestart);
-                executor.get().reEmitWorkerJobsForWorkers(configuration, workerIdsHavingTasksToRestart);
+                reEmitWorkerJobsForWorkers(configuration, workerIdsHavingTasksToRestart);
             }
 
             // Eventually release all owned locks
@@ -166,13 +173,19 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
         log.info("Purged {} service instances", purged);
     }
 
-
-    synchronized void setExecutor(final JdbcExecutor executor) {
-        this.executor.set(executor);
-    }
-
     @VisibleForTesting
     void setServerInstance(final String serverId) {
         this.serverId = serverId;
+    }
+
+    void reEmitWorkerJobsForWorkers(final Configuration configuration,
+                                    final List<String> ids) {
+        metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT, MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION)
+            .increment(ids.size());
+
+        var transactionContext = new JdbcTransactionContext(configuration.dsl());
+        ids.forEach(id -> workerJobRunningStateStore.processWorkerJobsForDeadWorkers(transactionContext, id, (txContext, workerJobRunning) -> {
+            resubmitWorkerJobRunning(txContext, workerJobRunning);
+        }));
     }
 }

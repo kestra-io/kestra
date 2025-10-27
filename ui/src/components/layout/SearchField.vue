@@ -4,6 +4,7 @@
         @input="onInput"
         :placeholder="$t(placeholder)"
         :readonly="readonly"
+        clearable
     >
         <template #prefix>
             <slot name="prefix" />
@@ -78,15 +79,13 @@
     });
 
     watch(
-        () => route,
-        (newValue, oldValue) => {
-            if (oldValue?.name === newValue.name) {
-                init();
-            }
+        () => route.query.q,
+        (newQ) => {
+            search.value = newQ ? String(newQ) : "";
         }
     );
-
 </script>
+
 <style scoped lang="scss">
     .shortcut {
         font-size: 0.75rem;

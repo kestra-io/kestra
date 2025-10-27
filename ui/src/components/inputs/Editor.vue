@@ -80,6 +80,7 @@
 </template>
 
 <script setup lang="ts">
+    /* eslint-disable vue/enforce-style-attribute */
     import {computed, onMounted, ref, shallowRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
@@ -673,6 +674,7 @@
 :not(.namespace-defaults, .el-drawer__body) > .ks-editor {
     flex-direction: column;
     height: 100%;
+    z-index: 1001;
 }
 
 .el-form .ks-editor {

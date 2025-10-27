@@ -4,17 +4,14 @@ import permission from "../models/permission";
 import action from "../models/action";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
-import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
-import {useEditorStore} from "./editor";
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {makeToast} from "../utils/toast";
 import {InputType} from "../utils/inputs";
 import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
-import {useNamespacesStore} from "override/stores/namespaces";
 import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
@@ -54,7 +51,7 @@ interface FlowValidations {
     deprecationPaths?: string[];
 }
 
-interface Flow {
+export interface Flow {
     id: string;
     namespace: string;
     source: string;
@@ -63,7 +60,7 @@ interface Flow {
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
     inputs?: Input[];
-    errors: { message: string; code?: string, id?: string }[];
+    errors?: { message: string; code?: string, id?: string }[];
 }
 
 export const useFlowStore = defineStore("flow", () => {
@@ -87,9 +84,7 @@ export const useFlowStore = defineStore("flow", () => {
     const isCreating = ref<boolean>(false)
     const flowYaml = ref<string>("")
     const flowYamlOrigin = ref<string>("")
-    const flowYamlBeforeAdd = ref<string>("")
     const confirmOutdatedSaveDialog = ref<boolean>(false)
-    const haveChange = ref<boolean>(false)
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>();
@@ -106,25 +101,19 @@ export const useFlowStore = defineStore("flow", () => {
     function onSaveMetadata() {
         flowYaml.value = YAML_UTILS.updateMetadata(flowYaml.value ?? "", metadata.value ?? {});
         metadata.value = undefined;
-        haveChange.value = true;
     }
 
-    async function saveAll() {
-        const editorStore = useEditorStore()
-        const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
-        const hasChanges = haveChange.value || hasAnyDirtyTabs;
+    const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value);
 
-        if (flowErrors.value?.length || !hasChanges && !isCreating.value) {
+    async function saveAll() {
+        if ((!haveChange.value && !isCreating.value) || flowErrors.value?.length) {
             return;
         }
 
         if (!flow.value) return;
-        await editorStore.saveAllTabs({namespace: flow.value.namespace});
         flowYamlOrigin.value = flowYaml.value;
         return saveWithoutRevisionGuard();
     }
-
-    const namespaceStore = useNamespacesStore()
 
     const route = useRoute();
 
@@ -132,75 +121,45 @@ export const useFlowStore = defineStore("flow", () => {
         return route.query.namespace || defaultNamespace();
     }
 
-    async function save({content, namespace}: { content?: string, namespace?: string }) {
-        const editorStore = useEditorStore()
-        const hasAnyDirtyTabs = editorStore.tabs.some(t => t.dirty === true);
-        const hasChanges = haveChange.value || hasAnyDirtyTabs;
-
-        if (flowErrors.value?.length || !hasChanges && !isCreating.value) {
+    async function save() {
+        if (flowErrors.value?.length) {
             return;
         }
 
         const source = flowYaml.value;
-        const currentTab = editorStore.current;
 
         if (source) {
-            return onEdit({source, currentIsFlow: isFlow.value}).then((validation: any) => {
+            return onEdit({source}).then((validation: any) => {
                 if (validation?.outdated && !isCreating.value) {
                     return "confirmOutdatedSaveDialog";
                 }
                 const res = saveWithoutRevisionGuard();
                 flowYamlOrigin.value = source;
 
-                if (currentTab && currentTab.name) {
-                    editorStore.setTabDirty({
-                        name: "Flow",
-                        path: "Flow.yaml",
-                        dirty: false,
-                    });
-                }
                 return res
             });
-        } else {
-            if (!currentTab?.dirty) return;
-
-            await namespaceStore.createFile({
-                namespace: namespace ?? flow.value?.namespace ?? "",
-                path: currentTab.path ?? currentTab.name,
-                content: content ?? "",
-            });
-            editorStore.setTabDirty({
-                path: currentTab.path,
-                name: currentTab.name,
-                dirty: false
-            });
-
-            const coreStore = useCoreStore();
-            coreStore.unsavedChange = false;
         }
     }
 
-    async function onEdit({source, currentIsFlow, editorViewType, topologyVisible}: {
+    async function onEdit({source, topologyVisible}: {
         source: string,
-        currentIsFlow: boolean,
         editorViewType?: string,
         topologyVisible?: boolean
     }) {
-        const flowParsed = flow.value;
-        const currentTab = useEditorStore().current;
+        const flowBeforeEdit = flow.value;
+        const flowOnValidation = flowParsed.value;
 
-        if (currentIsFlow) {
-            if (!source.trim()?.length) {
-                flowValidation.value = {
-                    constraints: t("flow must not be empty")
-                };
-                return
-            }
-            if (!isCreating.value && flow.value) {
-                if (!source.trim()?.length ||
-                    (flowParsed &&
-                        (flow.value.id !== flowParsed.id ||
-                            flow.value.namespace !== flowParsed.namespace))) {
+        if (!source.trim()?.length) {
+            flowValidation.value = {
+                constraints: t("flow must not be empty")
+            };
+            return
+        }
+        if (!isCreating.value) {
+            try{
+                if (flowBeforeEdit &&
+                        (flowOnValidation.id !== flowBeforeEdit.id ||
+                            flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
                     const coreStore = useCoreStore();
                     coreStore.message = {
                         variant: "error",
@@ -209,29 +168,17 @@ export const useFlowStore = defineStore("flow", () => {
                     };
                     flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
                         source,
-                        flow.value.id,
-                        flow.value.namespace
+                        flowBeforeEdit.id,
+                        flowBeforeEdit.namespace
                     );
                 }
+            } catch{
+                // yaml is not always valid
             }
         }
 
-        haveChange.value = true;
-        if (editorViewType === "YAML") {
-            const coreStore = useCoreStore();
-            coreStore.unsavedChange = true;
-        }
-
-        if (!isCreating.value) {
-            useEditorStore().setTabDirty({
-                ...currentTab,
-                name: currentTab?.name ?? "Flow",
-                path: currentTab?.path ?? "Flow.yaml",
-                dirty: true
-            });
-        }
-
-        if (!currentIsFlow) return;
+        const coreStore = useCoreStore();
+        coreStore.unsavedChange = true;
 
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
@@ -242,7 +189,7 @@ export const useFlowStore = defineStore("flow", () => {
                     flowHaveTasks.value &&
                     // avoid sending empty errors
                     // they make the backend fail
-                    flowParsed && (!flowParsed.errors || flowParsed.errors.every(e => typeof e.id === "string"))
+                    flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
                 ) {
                     if (!value.constraints) fetchGraph();
                 }
@@ -301,7 +248,6 @@ export const useFlowStore = defineStore("flow", () => {
                     const coreStore = useCoreStore();
                     coreStore.unsavedChange = false;
                     isCreating.value = false;
-                    haveChange.value = false;
                 });
         } else {
             await saveFlow({flow: flowSource})
@@ -316,11 +262,11 @@ export const useFlowStore = defineStore("flow", () => {
             return "redirect_to_update";
         }
 
-        haveChange.value = false;
         await validateFlow({
             flow: (isCreatingBackup ? flowSource : yamlWithNextRevision.value) ?? ""
         });
     }
+
     function fetchGraph() {
         return loadGraphFromSource({
             flow: flowYaml.value ?? "",
@@ -336,22 +282,13 @@ export const useFlowStore = defineStore("flow", () => {
         });
     }
 
-    async function initYamlSource({viewType}: { viewType: string }) {
+    async function initYamlSource() {
         if (!flow.value) return;
         const {source} = flow.value;
         flowYaml.value = source;
         flowYamlOrigin.value = source;
         if (flowHaveTasks.value) {
-            if (
-                [
-                    editorViewTypes.TOPOLOGY,
-                    editorViewTypes.SOURCE_TOPOLOGY,
-                ].includes(viewType)
-            ) {
-                await fetchGraph();
-            } else {
-                fetchGraph();
-            }
+            fetchGraph();
         }
 
         // validate flow on first load
@@ -367,7 +304,7 @@ export const useFlowStore = defineStore("flow", () => {
             if (options.onlyTotal) {
                 return response.data.total;
             }
-            
+
             else {
                 flows.value = response.data.results
                 total.value = response.data.total
@@ -432,7 +369,6 @@ export const useFlowStore = defineStore("flow", () => {
                 flow.value = response.data;
                 flowYaml.value = response.data.source;
                 flowYamlOrigin.value = response.data.source;
-                flowYamlBeforeAdd.value = response.data.source;
                 overallTotal.value = 1;
 
                 return response.data;
@@ -465,10 +401,6 @@ export const useFlowStore = defineStore("flow", () => {
                     return Promise.reject(new Error("Server error on flow save"))
                 } else {
                     flow.value = response.data;
-                    useEditorStore().setTabDirty({
-                        name: "Flow",
-                        dirty: false,
-                    });
 
                     return response.data;
                 }
@@ -785,12 +717,6 @@ function deleteFlowAndDependencies() {
 
     const authStore = useAuthStore()
 
-
-    const isFlow = computed(() => {
-        const currentTab = useEditorStore().current;
-        return currentTab?.flow !== undefined || isCreating.value;
-    })
-
     const isAllowedEdit = computed((): boolean => {
         if (!flow.value || !authStore.user) {
             return false;
@@ -869,7 +795,6 @@ function deleteFlowAndDependencies() {
 
     return {
         creationId,
-        isFlow,
         isAllowedEdit,
         readOnlySystemLabel,
         isReadOnly,
@@ -901,7 +826,6 @@ function deleteFlowAndDependencies() {
         isCreating,
         flowYaml,
         flowYamlOrigin,
-        flowYamlBeforeAdd,
         confirmOutdatedSaveDialog,
         haveChange,
         expandedSubflows,

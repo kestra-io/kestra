@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
+
 /**
  * Top-level marker interface for Kestra's plugin of type App.
  */
@@ -18,6 +20,6 @@ public interface AppBlockInterface extends io.kestra.core.models.Plugin {
     )
     @NotNull
     @NotBlank
-    @Pattern(regexp = "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)*$")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     String getType();
 }

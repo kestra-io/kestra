@@ -58,10 +58,10 @@ import java.util.stream.Stream;
 public class PluginDefaultService {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
         .copy()
-        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+        .setDefaultPropertyInclusion(JsonInclude.Include.NON_DEFAULT);
 
     private static final ObjectMapper OBJECT_MAPPER = JacksonMapper.ofYaml().copy()
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
     private static final String PLUGIN_DEFAULTS_FIELD = "pluginDefaults";
 
     private static final TypeReference<List<PluginDefault>> PLUGIN_DEFAULTS_TYPE_REF = new TypeReference<>() {

@@ -65,123 +65,128 @@
     </el-dialog>
 </template>
 
-<script setup>
-    import StateMachine from "vue-material-design-icons/StateMachine.vue";
-</script>
+<script setup lang="ts">
+    import {ref, computed} from "vue";
+    import {useRouter, useRoute} from "vue-router";
+    import {useI18n} from "vue-i18n";
 
-<script>
-    import {mapStores} from "pinia";
-    import {useExecutionsStore} from "../../stores/executions";
+    import StateMachine from "vue-material-design-icons/StateMachine.vue";
+
+    import Status from "../../components/Status.vue";
+
+    import {State} from "@kestra-io/ui-libs";
+    import * as ExecutionUtils from "../../utils/executionUtils";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
-    import Status from "../../components/Status.vue";
-    import * as ExecutionUtils from "../../utils/executionUtils";
-    import {useAuthStore} from "override/stores/auth"
+    import {useToast} from "../../utils/toast";
+    import {useAxios} from "../../utils/axios";
 
-    export default {
-        components: {StateMachine, Status},
-        props: {
-            component: {
-                type: String,
-                default: "el-button"
-            },
-            execution: {
-                type: Object,
-                required: true
-            },
-            tooltipPosition: {
-                type: String,
-                default: "bottom"
-            }
-        },
-        emits: ["follow"],
-        methods: {
-            changeStatus() {
-                this.visible = false;
+    import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth";
 
-                this.executionsStore
-                    .changeExecutionStatus({
-                        executionId: this.execution.id,
-                        state: this.selectedStatus
-                    })
-                    .then(response => {
-                        if (response.data.id === this.execution.id) {
-                            return ExecutionUtils.waitForState(this.$http, response.data);
-                        } else {
-                            return response.data;
-                        }
-                    })
-                    .then((execution) => {
-                        this.executionsStore.execution = execution;
-                        if (execution.id === this.execution.id) {
-                            this.$emit("follow")
-                        } else {
-                            this.$router.push({
-                                name: "executions/update",
-                                params: {
-                                    namespace: execution.namespace,
-                                    flowId: execution.flowId,
-                                    id: execution.id,
-                                    tab: "gantt",
-                                    tenant: this.$route.params.tenant
-                                }
-                            });
-                        }
-
-                        this.$toast().success(this.$t("change execution state done"));
-                    })
-            },
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
-            uuid() {
-                return "changestatus-" + this.execution.id;
-            },
-            states() {
-                return (this.execution.state.current === "PAUSED" ?
-                    [
-                        State.FAILED,
-                        State.RUNNING,
-                        State.CANCELLED,
-                    ] :
-                    [
-                        State.FAILED,
-                        State.SUCCESS,
-                        State.WARNING,
-                        State.CANCELLED,
-                    ]
-                )
-                    .filter(value => value !== this.execution.state.current)
-                    .map(value => {
-                        return {
-                            code: value,
-                            label: this.$t("mark as", {status: value}),
-                            disabled: value === this.execution.state.current
-                        };
-                    })
-            },
-            enabled() {
-                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false;
-                }
-
-                if (State.isRunning(this.execution.state.current)) {
-                    return false;
-                }
-                return true;
-            }
-        },
-        data() {
-            return {
-                selectedStatus: undefined,
-                visible: false
+    const props = defineProps<{
+        component: string;
+        execution: {
+            id: string;
+            namespace: string;
+            flowId: string;
+            state: {
+                current: string;
             };
-        },
+        };
+        tooltipPosition: string;
+    }>();
+
+    const emit = defineEmits<{
+        follow: [];
+    }>();
+
+    const {t} = useI18n({useScope: "global"});
+    const toast = useToast();
+    const router = useRouter();
+    const route = useRoute();
+    const axios = useAxios();
+
+    const executionsStore = useExecutionsStore();
+    const authStore = useAuthStore();
+
+    const selectedStatus = ref<string | undefined>(undefined);
+    const visible = ref(false);
+
+    const uuid = computed(() => {
+        return "changestatus-" + props.execution.id;
+    });
+
+    const states = computed(() => {
+        return (props.execution.state.current === "PAUSED" ?
+            [
+                State.FAILED,
+                State.RUNNING,
+                State.CANCELLED,
+            ] :
+            [
+                State.FAILED,
+                State.SUCCESS,
+                State.WARNING,
+                State.CANCELLED,
+            ]
+        )
+            .filter(value => value !== props.execution.state.current)
+            .map(value => {
+                return {
+                    code: value,
+                    label: t("mark as", {status: value}),
+                    disabled: value === props.execution.state.current
+                };
+            });
+    });
+
+    const enabled = computed(() => {
+        if (!(authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace))) {
+            return false;
+        }
+
+        if (State.isRunning(props.execution.state.current)) {
+            return false;
+        }
+        return true;
+    });
+
+    const changeStatus = async () => {
+        visible.value = false;
+
+        const response = await executionsStore.changeExecutionStatus({
+            executionId: props.execution.id,
+            state: selectedStatus.value!
+        });
+
+        let execution;
+        if (response.data.id === props.execution.id) {
+            execution = await ExecutionUtils.waitForState(axios, response.data);
+        } else {
+            execution = response.data;
+        }
+
+        executionsStore.execution = execution;
+        if (execution.id === props.execution.id) {
+            emit("follow");
+        } else {
+            router.push({
+                name: "executions/update",
+                params: {
+                    namespace: execution.namespace,
+                    flowId: execution.flowId,
+                    id: execution.id,
+                    tab: "gantt",
+                    tenant: route.params.tenant
+                }
+            });
+        }
+        toast.success(t("change execution state done"));
     };
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .alert-status-change {
     ul {
         margin-bottom: 0;

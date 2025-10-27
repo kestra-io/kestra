@@ -28,6 +28,26 @@ class FlowValidateCommandTest {
     }
 
     @Test
+     // github action kestra-io/validate-action requires being able to validate Flows from OSS CLI against a remote EE instance
+    void runForEEInstance() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.builder().deduceEnvironment(false).start()) {
+            String[] args = {
+                "--tenant",
+                "some-ee-tenant",
+                "--local",
+                "src/test/resources/helper/include.yaml"
+            };
+            Integer call = PicocliRunner.call(FlowValidateCommand.class, ctx, args);
+
+            assertThat(call).isZero();
+            assertThat(out.toString()).contains("✓ - io.kestra.cli / include");
+        }
+    }
+
+    @Test
     void warning() {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));

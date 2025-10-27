@@ -3,7 +3,7 @@
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hideTopPagination divider>
+            <DataTable class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
                 <template #navbar>
                     <div v-if="ready && !system && !embed">
                         <div class="tags-selection">
@@ -68,7 +68,7 @@
                                     </div>
 
                                     <div class="action-button">
-                                        <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
+                                        <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                             <el-button
                                                 type="primary"
                                                 size="default"

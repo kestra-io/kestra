@@ -141,12 +141,13 @@ export const useFlowStore = defineStore("flow", () => {
         }
     }
 
-    async function onEdit({source, editorViewType, topologyVisible}: {
+    async function onEdit({source, topologyVisible}: {
         source: string,
         editorViewType?: string,
         topologyVisible?: boolean
     }) {
-        const flowParsed = flow.value;
+        const flowBeforeEdit = flow.value;
+        const flowOnValidation = flowParsed.value;
 
         if (!source.trim()?.length) {
             flowValidation.value = {
@@ -154,29 +155,30 @@ export const useFlowStore = defineStore("flow", () => {
             };
             return
         }
-        if (!isCreating.value && flow.value) {
-            if (!source.trim()?.length ||
-                (flowParsed &&
-                    (flow.value.id !== flowParsed.id ||
-                        flow.value.namespace !== flowParsed.namespace))) {
-                const coreStore = useCoreStore();
-                coreStore.message = {
-                    variant: "error",
-                    title: t("readonly property"),
-                    message: t("namespace and id readonly"),
-                };
-                flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
-                    source,
-                    flow.value.id,
-                    flow.value.namespace
-                );
+        if (!isCreating.value) {
+            try{
+                if (flowBeforeEdit &&
+                        (flowOnValidation.id !== flowBeforeEdit.id ||
+                            flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
+                    const coreStore = useCoreStore();
+                    coreStore.message = {
+                        variant: "error",
+                        title: t("readonly property"),
+                        message: t("namespace and id readonly"),
+                    };
+                    flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
+                        source,
+                        flowBeforeEdit.id,
+                        flowBeforeEdit.namespace
+                    );
+                }
+            } catch{
+                // yaml is not always valid
             }
         }
 
-        if (editorViewType === "YAML") {
-            const coreStore = useCoreStore();
-            coreStore.unsavedChange = true;
-        }
+        const coreStore = useCoreStore();
+        coreStore.unsavedChange = true;
 
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
@@ -187,7 +189,7 @@ export const useFlowStore = defineStore("flow", () => {
                     flowHaveTasks.value &&
                     // avoid sending empty errors
                     // they make the backend fail
-                    flowParsed && (!flowParsed.errors || flowParsed.errors.every(e => typeof e.id === "string"))
+                    flowBeforeEdit && (!flowBeforeEdit.errors || flowBeforeEdit.errors.every(e => typeof e.id === "string"))
                 ) {
                     if (!value.constraints) fetchGraph();
                 }

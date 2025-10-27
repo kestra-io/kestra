@@ -420,20 +420,20 @@ public class ExecutionController {
     public HttpResponse<?> deleteExecutionsByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
 
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs") @QueryValue(defaultValue = "true") Boolean deleteLogs,
@@ -999,20 +999,20 @@ public class ExecutionController {
     public HttpResponse<?> restartExecutionsByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -1242,20 +1242,20 @@ public class ExecutionController {
     public HttpResponse<?> updateExecutionsStatusByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus
     ) throws QueueException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
@@ -1515,20 +1515,20 @@ public class ExecutionController {
     public HttpResponse<?> resumeExecutionsByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -1624,20 +1624,20 @@ public class ExecutionController {
     public HttpResponse<?> pauseExecutionsByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -1668,20 +1668,20 @@ public class ExecutionController {
     public HttpResponse<?> killExecutionsByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws QueueException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -1712,20 +1712,20 @@ public class ExecutionController {
     public HttpResponse<?> replayExecutionsByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
 
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision
     ) throws Exception {
@@ -2020,20 +2020,20 @@ public class ExecutionController {
     public HttpResponse<?> setLabelsOnTerminatedExecutionsByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
 
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels
     ) {
@@ -2137,20 +2137,20 @@ public class ExecutionController {
     public HttpResponse<?> unqueueExecutionsByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
         @Parameter(description = "The new state of the unqueued executions") @Nullable @QueryValue State.Type newState
     ) throws Exception {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
@@ -2251,20 +2251,20 @@ public class ExecutionController {
     public HttpResponse<?> forceRunExecutionsByQuery(
         @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "The scope of the executions to include") @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Deprecated @Parameter(description = "A flow id filter") @Nullable @QueryValue String flowId,
-        @Deprecated @Parameter(description = "The start datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Deprecated @Parameter(description = "The end datetime") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Deprecated @Parameter(description = "A time range filter relative to the current time", examples = {
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Deprecated @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Deprecated @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Deprecated @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Deprecated @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
-        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
-        @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
+        @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,

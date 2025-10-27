@@ -21,6 +21,7 @@ export const flowFilter = (): FilterConfiguration => {
                 Comparators.IN,
                 Comparators.NOT_IN,
                 Comparators.CONTAINS,
+                Comparators.PREFIX,
             ],
             valueType: "multi-select",
             valueProvider: async () => {

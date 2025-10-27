@@ -15,9 +15,9 @@
 <script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import OverviewCard from "../execution/OverviewCard.vue";
-    import PlayBoxMultiple from "vue-material-design-icons/playBoxMultiple.vue";
-    import RocketLaunchOutline from "vue-material-design-icons/rocketLaunchOutline.vue";
-    import VideoInputComponent from "vue-material-design-icons/videoInputComponent.vue";
+    import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
+    import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue";
+    import VideoInputComponent from "vue-material-design-icons/VideoInputComponent.vue";
 
     const {t} = useI18n();
 

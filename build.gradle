@@ -204,6 +204,9 @@ subprojects {subProj ->
 
             //assertj
             testImplementation 'org.assertj:assertj-core'
+
+            // netty leak detection
+            testRuntimeOnly "io.micronaut.test:micronaut-test-netty-leak"
         }
 
         def commonTestConfig = { Test t ->
@@ -213,6 +216,9 @@ subprojects {subProj ->
             // configure en_US default locale for tests
             t.systemProperty 'user.language', 'en'
             t.systemProperty 'user.country', 'US'
+
+            // enable JUnit extension auto-detection for Netty leak detection
+            t.systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
 
             t.environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
             t.environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"

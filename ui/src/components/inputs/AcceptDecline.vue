@@ -1,9 +1,9 @@
 <template>
     <div class="wrapper">
-        <el-button class="reject-button" @click="emit('reject')">
+        <el-button type="secondary" @click="emit('reject')">
             {{ t('reject') }}
         </el-button>
-        <el-button type="success" class="accept-button" @click="emit('accept')">
+        <el-button type="primary" @click="emit('accept')">
             {{ t('accept') }}
         </el-button>
     </div>
@@ -29,19 +29,15 @@
     background: #1E202AD9;
     backdrop-filter: blur(10px);
     padding: 1rem;
+    border-top:1px solid var(--ks-border-primary);
 
     html.light & {
         background: #F8F9FA80;
     }
 
-    .el-button--success, .reject-button {
-        padding: 4px 12px;
+    &:deep(.el-button) {
         margin: 0;
-    }
-    
-    .reject-button {
-        border-color: var(--ks-border-failed);
-        color: var(--ks-content-failed);
+        padding: 4px 12px;
     }
 }
 </style>

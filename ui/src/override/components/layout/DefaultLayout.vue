@@ -17,7 +17,7 @@
     import Errors from "../../../components/errors/Errors.vue"
     import ContextInfoBar from "../../../components/ContextInfoBar.vue"
     import SurveyDialog from "../../../components/SurveyDialog.vue"
-    import {onMounted, ref, watch, type Ref} from "vue"
+    import {onMounted, ref, watch} from "vue"
     import {useSurveySkip} from "../../../composables/useSurveyData"
     import {useCoreStore} from "../../../stores/core"
     import {useMiscStore} from "override/stores/misc"
@@ -27,7 +27,7 @@
     const miscStore = useMiscStore()
     const layoutStore = useLayoutStore()
     const {markSurveyDialogShown} = useSurveySkip()
-    const showSurveyDialog: Ref<boolean> = ref(false)
+    const showSurveyDialog = ref(false)
 
     function onMenuCollapse(collapse: boolean) {
         layoutStore.setSideMenuCollapsed(collapse)

@@ -155,6 +155,7 @@
                         :id="input.id+'-file'"
                         class="el-input__inner custom-file-input"
                         type="file"
+                        :accept="getAcceptedFileTypes(input)"
                         @change="onFileChange(input, $event)"
                         autocomplete="off"
                     >
@@ -260,10 +261,9 @@
         {{ $t("no inputs") }}
     </el-alert>
 </template>
-<script setup>
+<script lang="ts">
+    import {ElMessage} from "element-plus";
     import ValidationError from "../flows/ValidationError.vue";
-</script>
-<script>
     import {toRaw} from "vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
@@ -272,14 +272,14 @@
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
     import DurationPicker from "./DurationPicker.vue";
-    import {inputsToFormData} from "../../utils/submitTask"
-
+    import {inputsToFormData} from "../../utils/submitTask";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+
 
     export default {
         computed: {
@@ -293,7 +293,7 @@
                     null
             }
         },
-        components: {Editor, Markdown, DurationPicker},
+        components: {Editor, Markdown, DurationPicker, ValidationError, ChevronUp, ChevronDown},
         props: {
             executeClicked: {
                 type: Boolean,
@@ -337,6 +337,11 @@
                 selectedTriggerLocal: {},
                 editingArrayId: null,
                 editableItems: {},
+                // expose icon components to the template so linters and the template can resolve them
+                DeleteOutline,
+                Pencil,
+                Plus,
+                ContentSave,
             };
         },
         emits: ["update:modelValue", "update:modelValueNoDefault", "confirm", "validation"],
@@ -462,7 +467,42 @@
                     return;
                 }
 
-                this.inputsValues[input.id] = files[0];
+                const file = files[0];
+                
+                // Sanitize the filename: remove spaces and special characters
+                const sanitizedName = file.name
+                    .replace(/[^a-zA-Z0-9.-]/g, "_") // Replace special chars with underscore
+                    .replace(/\s+/g, "_");           // Replace spaces with underscore
+                
+                // Create a new File object with the sanitized name
+                const sanitizedFile = new File([file], sanitizedName, {
+                    type: file.type,
+                    lastModified: file.lastModified,
+                });
+                
+                const acceptedTypes = this.getAcceptedFileTypes(input);
+                if (acceptedTypes) {
+                    const allowedTypes = acceptedTypes.toLowerCase().split(",");
+                    const fileName = sanitizedName.toLowerCase();
+                    const fileType = file.type.toLowerCase();
+                    
+                    const isAllowed = allowedTypes.some(type => {
+                        type = type.trim();
+                        if (type.startsWith(".")) {
+                            return fileName.endsWith(type);
+                        } else {
+                            return fileType === type;
+                        }
+                    });
+                    
+                    if (!isAllowed) {
+                        ElMessage.error(this.$t("fileTypeNotAllowed", {types: acceptedTypes}));
+                        e.target.value = "";
+                        return;
+                    }
+                }
+
+                this.inputsValues[input.id] = sanitizedFile;
                 setTimeout(() => this.onChange(input), 300);
             },
             onYamlChange(input, e) {
@@ -616,6 +656,12 @@
                     return value.name;
                 }
                 return this.$t("no_file_choosen");
+            },
+            getAcceptedFileTypes(input: { allowedFileExtensions?: string[]; accept?: string; }) {
+                if (input.allowedFileExtensions && input.allowedFileExtensions.length > 0) {
+                    return input.allowedFileExtensions.join(",");
+                }
+                return input.accept || "";
             },
         },
         watch: {
@@ -802,9 +848,34 @@
   visibility: hidden;
 }
 
-.file-placeholder {
-  margin-left: 8px;
-  color: var(--ks-content-secondary);
-  font-size: 0.9em;
+.el-input-file {
+  .el-input__wrapper {
+    display: flex;
+    align-items: center;
+    padding: 4px 0 4px 0;
+    position: relative;
+    max-width: 100%;
+  }
+
+  .custom-file-input {
+    max-width: 110px;
+    min-width: 110px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .file-placeholder {
+    margin-left: 8px;
+    color: var(--ks-content-secondary) !important;
+    font-size: 0.9em;
+    flex: 1;
+    max-width: calc(100% - 140px); /* 110px for button + 30px for margins/padding */
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 16px;
+  }
 }
 </style>

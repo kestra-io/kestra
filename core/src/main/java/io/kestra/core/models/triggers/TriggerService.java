@@ -11,7 +11,6 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
-
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -25,7 +24,7 @@ public abstract class TriggerService {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, variables, runContext.logFileURI());
 
-        return generateExecution(runContext.getTriggerExecutionId(), trigger, context, executionTrigger, conditionContext.getFlow().getRevision());
+        return generateExecution(runContext.getTriggerExecutionId(), trigger, context, executionTrigger, conditionContext);
     }
 
     public static Execution generateExecution(
@@ -37,7 +36,7 @@ public abstract class TriggerService {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output, runContext.logFileURI());
 
-        return generateExecution(runContext.getTriggerExecutionId(), trigger, context, executionTrigger, conditionContext.getFlow().getRevision());
+        return generateExecution(runContext.getTriggerExecutionId(), trigger, context, executionTrigger, conditionContext);
     }
 
     public static Execution generateRealtimeExecution(
@@ -49,7 +48,7 @@ public abstract class TriggerService {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, output, runContext.logFileURI());
 
-        return generateExecution(IdUtils.create(), trigger, context, executionTrigger, conditionContext.getFlow().getRevision());
+        return generateExecution(IdUtils.create(), trigger, context, executionTrigger, conditionContext);
     }
 
     public static Execution generateScheduledExecution(
@@ -75,6 +74,7 @@ public abstract class TriggerService {
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
             .flowRevision(conditionContext.getFlow().getRevision())
+            .variables(conditionContext.getFlow().getVariables())
             .labels(executionLabels)
             .state(new State())
             .trigger(executionTrigger)
@@ -108,7 +108,7 @@ public abstract class TriggerService {
         AbstractTrigger trigger,
         TriggerContext context,
         ExecutionTrigger executionTrigger,
-        Integer flowRevision
+        ConditionContext conditionContext
     ) {
         List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(trigger.getLabels()));
         if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
@@ -120,7 +120,8 @@ public abstract class TriggerService {
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
             .tenantId(context.getTenantId())
-            .flowRevision(flowRevision)
+            .flowRevision(conditionContext.getFlow().getRevision())
+            .variables(conditionContext.getFlow().getVariables())
             .state(new State())
             .trigger(executionTrigger)
             .labels(executionLabels)

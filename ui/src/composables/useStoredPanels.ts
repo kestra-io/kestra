@@ -1,5 +1,6 @@
 import {useStorage} from "@vueuse/core";
-import {DeserializableEditorElement, Panel, Tab} from "../utils/multiPanelTypes";
+import {EditorElement, Panel, Tab} from "../utils/multiPanelTypes";
+import {ref} from "vue";
 
 interface PreSerializedPanel {
     tabs: string[];
@@ -7,10 +8,10 @@ interface PreSerializedPanel {
     size: number;
 }
 
-export function useStoredPanels(key: string, editorElements: Pick<DeserializableEditorElement, "deserialize">[], defaultPanels: string[] = [], preSerializePanels?: (panels: Panel[]) => PreSerializedPanel[]) {
+export function useStoredPanels(key: string | undefined, editorElements: Pick<EditorElement, "deserialize">[], defaultPanels: string[] = [], preSerializePanels?: (panels: Panel[]) => PreSerializedPanel[]) {
     const preSerializePanelsFn = preSerializePanels ?? ((ps: Panel[]) => ps.map(p => ({
-        tabs: p.tabs.map(t => t.value),
-        activeTab: p.activeTab?.value,
+        tabs: p.tabs.map(t => t.uid),
+        activeTab: p.activeTab?.uid,
         size: p.size,
     })));
 
@@ -20,10 +21,10 @@ export function useStoredPanels(key: string, editorElements: Pick<Deserializable
      * hence the "allowCreate = false".
      * @param tags
      */
-    function deserializeTabTags(tags: string[]): Tab[] {
-        return tags.map(tag => {
+    function deserializeTabTags(uids: string[]): Tab[] {
+        return uids.map(uid => {
             for (const element of editorElements) {
-                const deserializedTab = element.deserialize(tag, false);
+                const deserializedTab = element.deserialize(uid, false);
                 if (deserializedTab) {
                     return deserializedTab;
                 }
@@ -31,15 +32,17 @@ export function useStoredPanels(key: string, editorElements: Pick<Deserializable
         }).filter(t => t !== undefined);
     }
 
-    const panels = useStorage<Panel[]>(
-        key,
-        deserializeTabTags(defaultPanels).map((t) => {
+    const initialPanels = deserializeTabTags(defaultPanels).map((t) => {
             return {
                 activeTab: t,
                 tabs: [t],
                 size: 100 / defaultPanels.length
             };
-        }),
+        });
+
+    const panels = key ? useStorage<Panel[]>(
+        key,
+        initialPanels,
         undefined,
         {
             serializer: {
@@ -53,7 +56,7 @@ export function useStoredPanels(key: string, editorElements: Pick<Deserializable
                         .filter((p) => p.tabs.length)
                         .map((p):Panel => {
                             const tabsConverted = deserializeTabTags(p.tabs);
-                            const activeTab = tabsConverted.find((t) => t.value === p.activeTab) ?? tabsConverted[0];
+                            const activeTab = tabsConverted.find((t) => t.uid === p.activeTab) ?? tabsConverted[0];
                             return {
                                 activeTab,
                                 tabs: tabsConverted,
@@ -65,7 +68,7 @@ export function useStoredPanels(key: string, editorElements: Pick<Deserializable
                 }
             },
         }
-    );
+    ) : ref(initialPanels);
 
     return panels;
 }

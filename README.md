@@ -68,6 +68,12 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 
 ## 🚀 Quick Start
 
+### Launch on AWS (CloudFormation)
+
+Deploy Kestra on AWS using our CloudFormation template:
+
+[![Launch Stack](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://kestra-deployment-templates.s3.eu-west-3.amazonaws.com/aws/cloudformation/ec2-rds-s3/kestra-oss.yaml&stackName=kestra-oss)
+
 ### Get Started Locally in 5 Minutes
 
 #### Launch Kestra in Docker
@@ -98,7 +104,7 @@ If you're on Windows and use WSL (Linux-based environment in Windows):
 ```bash
 docker run --pull=always --rm -it -p 8080:8080 --user=root \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
-    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+    -v "/mnt/c/Temp:/tmp" kestra/kestra:latest server local
 ```
 
 Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).

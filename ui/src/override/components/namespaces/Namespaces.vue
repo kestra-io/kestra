@@ -10,9 +10,19 @@
     </Navbar>
 
     <el-row class="p-5">
-        <KestraFilter
-            :placeholder="t('search')"
-            legacyQuery
+        <KSFilter
+            :configuration="namespacesFilter"
+            :prefix="'namespaces-list'"
+            :tableOptions="{
+                chart: {shown: false},
+                columns: {shown: false},
+                refresh: {shown: false}
+            }"
+            :searchInputFullWidth="true"
+            :buttons="{
+                savedFilters: {shown: false},
+                tableOptions: {shown: false}
+            }"
         />
 
         <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
@@ -74,14 +84,16 @@
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
-    import KestraFilter from "../../../components/filter/KestraFilter.vue";
-
+    import KSFilter from "../../../components/filter/components/KSFilter.vue";
+    import {useNamespacesFilter} from "../../../components/filter/configurations";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";
+    
+    const namespacesFilter = useNamespacesFilter();
 
     interface Node {
         id: string;

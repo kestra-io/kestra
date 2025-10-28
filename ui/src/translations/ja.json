@@ -587,6 +587,288 @@
     },
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
     "files": "ファイル",
+    "filter": {
+      "active key value pairs": "アクティブなkey/valueペア",
+      "add key value pair": "キー/バリュー ペアを追加",
+      "aggregation": {
+        "description": "集約方法でフィルター",
+        "label": "集計"
+      },
+      "apply": "フィルターを適用",
+      "apply filter": "フィルターを適用",
+      "cancel": "キャンセル",
+      "childFilter": {
+        "description": "実行階層でフィルター",
+        "label": "階層"
+      },
+      "childFilter_child": {
+        "description": "実行階層でフィルター",
+        "label": "子フィルター"
+      },
+      "columns": "列",
+      "comparator_descriptions": {
+        "CONTAINS": "テキストに指定された文字が含まれている",
+        "ENDS_WITH": "指定された文字でテキストが終了します",
+        "EQUALS": "完全一致 - valueは同一でなければなりません",
+        "GREATER_THAN": "数値/日付の比較 - 値はより大きくなければなりません",
+        "GREATER_THAN_OR_EQUAL_TO": "数値/日付の比較 - 値は以上でなければなりません",
+        "IN": "オプションのリストから任意のvalueに一致します",
+        "LESS_THAN": "数値/日付の比較 - 値は小さくなければなりません",
+        "LESS_THAN_OR_EQUAL_TO": "数値/日付の比較 - 値は小さいか等しくなければなりません",
+        "NOT_EQUALS": "完全一致を除外 - valueは異なる必要があります",
+        "NOT_IN": "オプションのリストからすべてのvalueを除外します",
+        "PREFIX": "ネームスペース階層の一致（例: 'com.example' は 'com.example.app' に一致します）",
+        "REGEX": "正規表現を使用した高度なパターンマッチング",
+        "STARTS_WITH": "指定された文字で始まるテキスト"
+      },
+      "customize": "フィルターを追加",
+      "customize columns": "テーブル列をカスタマイズ",
+      "customize tooltip": "表示するフィルターをカスタマイズ",
+      "delete filter": "フィルターを削除",
+      "description": "説明",
+      "deselect all": "すべて選択解除",
+      "drag to reorder": "ドラッグして並べ替え",
+      "drag to reorder columns": "列をドラッグして並べ替え",
+      "edit filter": "フィルターを編集",
+      "empty": "まだ保存されたフィルターがありません。",
+      "end_date": "終了日",
+      "enter description": "フィルターの説明を入力してください",
+      "enter label": "フィルターラベルを入力してください",
+      "execution_kind": {
+        "playground": "プレイグラウンド",
+        "playground_description": "Playgroundモードからトリガーされた実行",
+        "test": "テスト",
+        "test_description": "ユニットテストによってトリガーされた実行"
+      },
+      "filters_added": "{total} 個のフィルターのうち {selected} 個が追加されました",
+      "flowId": {
+        "description": "flow IDでフィルター",
+        "label": "Flow ID"
+      },
+      "footer_apply": "適用",
+      "hierarchy": {
+        "all": "デフォルト",
+        "child_description": "ネストされた/トリガーされた実行のみを表示",
+        "parent_description": "トップレベル/ルートの実行のみを表示"
+      },
+      "key": "キー",
+      "kind": {
+        "description": "実行種別でフィルター",
+        "label": "種類"
+      },
+      "label": "ラベル",
+      "labels": {
+        "description": "ラベルでフィルター",
+        "label": "ラベル"
+      },
+      "labels_execution": {
+        "description": "実行ラベルでフィルター",
+        "label": "ラベル"
+      },
+      "labels_flow": {
+        "description": "flowラベルでフィルター",
+        "label": "ラベル"
+      },
+      "level": {
+        "description": "ログの重大度でフィルター",
+        "label": "レベル"
+      },
+      "level_log_executions": {
+        "label": "ログレベル"
+      },
+      "metric": {
+        "description": "メトリックタイプでフィルター",
+        "label": "メトリック"
+      },
+      "namespace": {
+        "description": "namespaceでフィルター",
+        "label": "Namespace"
+      },
+      "no options found": "オプションが見つかりません",
+      "operator": "フィルター演算子",
+      "options": "データオプション",
+      "periodic refresh": "定期更新",
+      "refresh": "データを更新",
+      "reset": "すべてのフィルターをリセット",
+      "reset_tooltip": "デフォルトにリセット",
+      "save": "保存",
+      "save duplicate": "この名前のフィルターはすでに存在します。",
+      "save filter": "フィルターを保存",
+      "save filter tooltip": "適用されたフィルターを保存",
+      "saved": "保存済みフィルター",
+      "saved filters": "保存済みフィルターセット",
+      "saved tooltip": "保存されたフィルターを管理",
+      "scope": {
+        "description": "実行範囲でフィルター",
+        "label": "スコープ"
+      },
+      "scope_flow": {
+        "description": "flowスコープでフィルター",
+        "label": "スコープ"
+      },
+      "scope_log": {
+        "description": "ユーザーまたはシステムのログでフィルター",
+        "label": "スコープ"
+      },
+      "scope_trigger": {
+        "description": "トリガースコープでフィルター",
+        "label": "スコープ"
+      },
+      "search options": "検索...",
+      "search_placeholders": {
+        "search_blueprints": "ブループリントを検索",
+        "search_dashboards": "ダッシュボードを検索...",
+        "search_executions": "実行を検索",
+        "search_flows": "フローを検索",
+        "search_kv": "KVペアを検索",
+        "search_logs": "ログを検索",
+        "search_metrics": "メトリクスを検索",
+        "search_namespaces": "namespaceを検索",
+        "search_plugins": "{count}+ プラグインを検索",
+        "search_secrets": "シークレットを検索",
+        "search_triggers": "トリガーを検索"
+      },
+      "select all": "すべて選択",
+      "select filter": "フィルターを選択して追加",
+      "select_end_date": "終了日を選択",
+      "select_option": "オプションを選択",
+      "select_start_date": "開始日を選択",
+      "show chart": "チャートを表示",
+      "show data options tooltip": "データオプションを表示",
+      "show default": "デフォルトを表示",
+      "start_date": "開始日",
+      "state": {
+        "description": "実行状態でフィルター",
+        "label": "状態"
+      },
+      "table_column": {
+        "blueprints": {
+          "tags": "ブループリントに関連付けられたタグ"
+        },
+        "executions": {
+          "duration": "実行の合計ランタイム",
+          "end-date": "実行が終了したとき",
+          "flow": "実行されたflowのID",
+          "id": "実行ID",
+          "inputs": "実行に提供されたInput値",
+          "labels": "実行ラベル (key:value 形式)",
+          "namespace": "実行されたflowが属するnamespace",
+          "outputs": "実行によって生成されたOutputs",
+          "revision": "この実行に使用されたflowのバージョン",
+          "start-date": "実行が開始されたとき",
+          "state": "現在の実行状態",
+          "task-id": "実行中の最後のタスクのID"
+        },
+        "flow_triggers": {
+          "next execution date": "次にtriggerが実行されるとき",
+          "type": "トリガーの種類",
+          "workerId": "ワーカー識別子"
+        },
+        "flows": {
+          "description": "フローに提供されたテキスト説明",
+          "execution statistics": "最近の実行状態を示すチャート",
+          "id": "一意のflow識別子",
+          "labels": "フローラベル (key:value 形式)",
+          "last execution date": "フローが最後に実行されたとき",
+          "last execution status": "最新の実行のステータス",
+          "namespace": "flowのnamespace",
+          "revision": "フロー定義の現在のバージョン番号",
+          "triggers": "フローを開始できるトリガー（例：スケジュール、イベント）"
+        },
+        "kv": {
+          "description": "KVエントリを説明するオプションのメモ",
+          "expiration date": "キー-バリュー ペアの有効期限が切れたとき",
+          "key": "保存された値の一意の識別子",
+          "last modified": "最新の更新のタイムスタンプ",
+          "namespace": "キーと値のペアが保存される論理グループ"
+        },
+        "metrics": {
+          "name": "メトリックの名前",
+          "tags": "メトリックに関連付けられたタグ",
+          "task": "メトリックを生成したTask",
+          "value": "メトリックの値"
+        },
+        "secrets": {
+          "description": "オプションのメモでコンテキストを提供",
+          "key": "保存されたシークレットの識別子",
+          "namespace": "シークレットが保存されている論理グループ",
+          "tags": "追加のカテゴリタグ"
+        },
+        "triggers": {
+          "context updated date": "トリガーコンテキストの最終更新",
+          "current execution": "現在の実行ID",
+          "evaluation lock date": "評価がロックされている場合",
+          "flow": "トリガーに関連付けられたflow",
+          "last trigger date": "トリガーが最後に実行されたとき",
+          "namespace": "トリガーのnamespace",
+          "next evaluation date": "次にtriggerが評価されるとき",
+          "workerId": "ワーカー識別子"
+        }
+      },
+      "task": {
+        "description": "タスク名でフィルター",
+        "label": "タスク"
+      },
+      "timeRange": {
+        "description": "実行時間でフィルター",
+        "label": "インターバル"
+      },
+      "timeRange_dashboard": {
+        "description": "ダッシュボードウィンドウでフィルター",
+        "label": "インターバル"
+      },
+      "timeRange_log": {
+        "description": "ログタイムスタンプでフィルター",
+        "label": "インターバル"
+      },
+      "timeRange_metric": {
+        "description": "時間間隔でフィルター",
+        "label": "インターバル"
+      },
+      "timeRange_trigger": {
+        "description": "最終トリガーのタイムスタンプでフィルター",
+        "label": "インターバル"
+      },
+      "timerange": {
+        "custom": "カスタム範囲",
+        "predefined": "定義済み"
+      },
+      "titles": {
+        "blueprint_filters": "ブループリントフィルター",
+        "dashboard_filters": "ダッシュボードフィルター",
+        "execution_filters": "実行フィルター",
+        "flow_dashboard_filters": "フローダッシュボードフィルター",
+        "flow_execution_filters": "フロー実行フィルター",
+        "flow_filters": "フローフィルター",
+        "flow_metric_filters": "フローメトリックフィルター",
+        "kv_filters": "キー-バリュー フィルター",
+        "log_filters": "ログフィルター",
+        "metric_filters": "メトリックフィルター",
+        "namespace_dashboard_filters": "Namespace ダッシュボードフィルター",
+        "namespace_filters": "Namespace フィルター",
+        "plugin_filters": "プラグイン検索",
+        "secret_filters": "シークレットフィルター",
+        "trigger_filters": "トリガーフィルター"
+      },
+      "triggerExecutionId": {
+        "description": "トリガー実行IDでフィルター",
+        "label": "トリガー実行ID"
+      },
+      "triggerId": {
+        "description": "トリガー識別子でフィルター",
+        "label": "トリガーID"
+      },
+      "triggerId_trigger": {
+        "description": "トリガーIDでフィルター",
+        "label": "トリガーID"
+      },
+      "update": "更新",
+      "value": "値",
+      "workerId": {
+        "description": "ワーカーIDでフィルター",
+        "label": "ワーカーID"
+      }
+    },
     "filter by log level": "Logレベルでフィルター",
     "filters": {
       "comparators": {
@@ -974,7 +1256,7 @@
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "no_file_choosen": "ファイルが選択されていません",
     "no_logs_data": "データなし",
-    "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
+    "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
     "no_results": {
       "executions": "実行が見つかりません",
@@ -1174,7 +1456,9 @@
     "scope_filter": {
       "all": "すべての{label}",
       "system": "システム {label}",
-      "user": "ユーザー {label}"
+      "system_description": "システムメンテナンス {label}",
+      "user": "ユーザー {label}",
+      "user_description": "通常のユーザーが開始した{label}"
     },
     "search": "検索",
     "search blueprint": "Blueprintsを検索",

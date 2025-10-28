@@ -66,6 +66,7 @@
 #plugin-jdbc:io.kestra.plugin:plugin-jdbc-sybase:LATEST
 #plugin-jenkins:io.kestra.plugin:plugin-jenkins:LATEST
 #plugin-jira:io.kestra.plugin:plugin-jira:LATEST
+#plugin-jms:io.kestra.plugin:plugin-jms:LATEST
 #plugin-kafka:io.kestra.plugin:plugin-kafka:LATEST
 #plugin-kestra:io.kestra.plugin:plugin-kestra:LATEST
 #plugin-kubernetes:io.kestra.plugin:plugin-kubernetes:LATEST

@@ -1,111 +1,90 @@
 <template>
-    <el-card class="box-card">
-        <div>
-            <div class="overview-title">
-                <div>
-                    <h5 class="overview_cat_title">
-                        {{ title }}
-                    </h5>
-                    <div>
-                        <Markdown :source="$t(`execution_guide.${category}.text`)" />
-                    </div>
-                    <el-link underline="never" :href="getLink()" target="_blank">
-                        {{ category === 'videos_tutorials' ? $t('watch') : $t('learn_more') }}
-                        <el-icon class="el-icon--right">
-                            <OpenInNew />
-                        </el-icon>
-                    </el-link>
+    <el-card class="card">
+        <div v-if="showIcon" class="header">
+            <el-link underline="never" :href="link" target="_blank">
+                <el-icon class="el-icon--right">
+                    <OpenInNew />
+                </el-icon>
+            </el-link>
+        </div>
+        <div class="icon-row">
+            <el-icon :size="24">
+                <component :is="icon" />
+            </el-icon>
+            <div>
+                <h5 class="title">
+                    {{ title }}
+                </h5>
+                <div class="desc">
+                    <Markdown :source="$t(`execution_guide.${category}.text`)" />
                 </div>
             </div>
         </div>
     </el-card>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-</script>
-
-<script>
     import Markdown from "../../layout/Markdown.vue";
 
-    export default {
-        name: "OverviewCard",
-        components: {Markdown},
-        props: {
-            title: {
-                type: String,
-                required: true,
-            },
-            category: {
-                type: String,
-                required: true,
-            },
-        },
-        methods: {
-            getLink() {
-                const links = {
-                    videos_tutorials: "https://www.youtube.com/watch?v=6TqWWz9difM",
-                    workflow_components: "https://kestra.io/docs/workflow-components",
-                    get_started: "https://kestra.io/docs/getting-started/quickstart",
-                };
-                return links[this.category] || "#"; // Default to "#" if no link is found
-            },
-        },
-    };
+    defineProps<{
+        title: string;
+        category: string;
+        content?: string;
+        link?: string;
+        icon?: any;
+        showIcon?: boolean;
+    }>();
 </script>
 
 <style scoped lang="scss">
 .el-card {
-	background-color: var(--ks-background-card);
-	border-color: var(--ks-border-primary);
-	box-shadow: var(--el-box-shadow);
-	position: relative;
-	width: 100px;
-	height: 180px;
-	min-width: 200px;
-	flex: 1;
-	cursor: pointer;
-
-	&:deep(.el-card__header) {
-		padding: 0;
-	}
-
-	&:deep(.el-link) {
-		position: absolute;
-		bottom: 15px;
-		font-size: 12px;
-		border: 1px solid var(--ks-border-primary);
-		padding: 3px 10px;
-		border-radius: 5px;
-
-		&:hover {
-			color: var(--bs-gray-900-lighten-7);
-		}
-	}
+    background-color: var(--ks-background-card);
+    border-color: var(--ks-border-primary);
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    position: relative;
+    min-width: 100%;
+    min-height: 8.625rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    text-align: left;
 }
 
-.box-card {
-	.card-header {
-		position: absolute;
-		top: 5px;
-		right: 5px;
-	}
+.card {
+    .header {
+        position: absolute;
+        top: 0.3125rem;
+        right: 0.3125rem;
 
-	.overview_cat_title {
-		width: 100%;
-		margin: 3px 0 10px;
-		font-weight: 600;
-		font-size: var(--el-font-size-small);
-	}
+        :deep(.el-icon) {
+            color: var(--ks-content-secondary);
+            font-size: 1rem;
+            position: absolute;
+            top: -0.875rem;
+            right: 0;
+
+            &:hover {
+                color: var(--ks-content-tertiary);
+            }
+        }
+    }
+
+    .title {
+        font-weight: 700;
+        font-size: 0.875rem;
+        line-height: 1.375rem;
+    }
+
+    .desc {
+        margin: 0;
+        font-size: 0.75rem;
+        line-height: 1.25rem;
+        color: var(--ks-content-secondary);
+    }
 }
 
-.overview-title {
-	display: inline-flex;
+.icon-row {
+    display: inline-flex;
+    gap: 1rem;
 }
-
-:deep(.markdown) {
-	font-size: var(--el-font-size-extra-small) !important;
-	color: var(--ks-content-tertiary);
-}
-
 </style>

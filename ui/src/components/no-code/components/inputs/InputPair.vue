@@ -22,18 +22,18 @@
                     :placeholder="t('key')"
                     @update:model-value="(changed) => handleKeyInput(index, changed)"
                     :haveError="duplicatedKeys.includes(pair[0])"
-                    margin="mt-0 mb-0"
                 />
             </el-col>
-            <el-col :span="16" class="d-flex gap">
+            <el-col :span="16" class="d-flex">
                 <slot name="value-field" :value="pair[1]" :key="pair[0]" :index="index" :updateValue="updateValue">
                     <InputText
                         :modelValue="pair[1]"
                         :placeholder="t('value')"
                         @update:model-value="(changed) => updateValue(index, changed)"
+                        class="w-100 me-2"
                     />
                 </slot>
-                <DeleteOutline @click="removePair(index)" class="base-icon" />
+                <DeleteOutline @click="removePair(index)" class="delete" />
             </el-col>
         </el-row>
 
@@ -141,13 +141,8 @@
 <style scoped lang="scss">
 @import "../../styles/code.scss";
 
-.wrapper {
-    :deep(.el-textarea__inner) {
-        height: 34px !important;
-    }
-}
-
-.gap {
-    gap: 0.5rem;
+:deep(.delete-outline-icon) {
+    height: 10px;
+    margin-left: 10px;
 }
 </style>

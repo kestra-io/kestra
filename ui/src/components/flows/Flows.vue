@@ -121,7 +121,7 @@
                                                     id: scope.row.id,
                                                 },
                                             }"
-                                            class="flow-id-link me-1"
+                                            class="me-1"
                                         >
                                             {{
                                                 FILTERS.invisibleSpace(

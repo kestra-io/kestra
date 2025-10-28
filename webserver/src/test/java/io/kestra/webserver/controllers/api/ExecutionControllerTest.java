@@ -227,7 +227,24 @@ class ExecutionControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
         assertThat(response.body()).isNull();
     }
-
+    
+    @Test
+    void webhookWithInputs() {
+        record Hello(String hello) {}
+        
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-inputs/webhookKey",
+                    new Hello("world")
+                ),
+            Execution.class
+        );
+        
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
+    }
+    
     @Test
     void resolveAbsoluteDateTime() {
         final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6,10, 0, ZoneId.systemDefault());

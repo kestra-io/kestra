@@ -78,6 +78,3 @@
     }
 </script>
 
-<style scoped>
-/* Add local styles if needed */
-</style>

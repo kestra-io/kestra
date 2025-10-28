@@ -1304,6 +1304,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
+                            findFlow(pair.getKey()),
                             executionDelay.getTaskRunId()
                         );
                         executor = executor.withExecution(newAttempt, "retryFailedTask");

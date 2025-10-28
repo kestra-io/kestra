@@ -39,21 +39,20 @@
                 :total="flowStore.total"
                 :size="internalPageSize"
                 :page="internalPageNumber"
-                :hideTopPagination="!!namespace"
             >
                 <template #navbar>
-                    <KestraFilter
-                        prefix="flows"
-                        :language="FlowFilterLanguage"
-                        :buttons="{
-                            refresh: {shown: false},
-                            settings: {shown: false}
-                        }"
+                    <KSFilter
+                        :configuration="flowFilter"
                         :properties="{
                             shown: true,
                             columns: optionalColumns,
-                            displayColumns,
-                            storageKey: 'flows',
+                            storageKey: 'flows'
+                        }"
+                        :prefix="'flows'"
+                        :tableOptions="{
+                            columns: {shown: true},
+                            chart: {shown: false},
+                            refresh: {shown: true, callback: refresh}
                         }"
                         @update-properties="updateDisplayColumns"
                     />
@@ -73,6 +72,7 @@
                         :selectable="canCheck"
                         :no-data-text="t('no_results.flows')"
                         class="flows-table"
+                        :rowKey="(row: any) => `${row.namespace}-${row.id}`"
                     >
                         <template #select-actions>
                             <BulkSelect
@@ -145,81 +145,79 @@
                                 </template>
                             </el-table-column>
 
-                            <el-table-column v-if="displayColumn('labels')" :label="t('labels')">
-                                <template #default="scope">
-                                    <Labels :labels="scope.row.labels" />
-                                </template>
-                            </el-table-column>
+                            <template v-for="colProp in displayColumns" :key="colProp">
+                                <el-table-column
+                                    v-if="colProp === 'labels'"
+                                    :label="t('labels')"
+                                >
+                                    <template #default="scope">
+                                        <Labels :labels="scope.row.labels" />
+                                    </template>
+                                </el-table-column>
 
-                            <el-table-column
-                                prop="namespace"
-                                v-if="displayColumn('namespace')"
-                                sortable="custom"
-                                :sortOrders="['ascending', 'descending']"
-                                :label="t('namespace')"
-                                :formatter="(_: any, __: any, cellValue: string) =>
-                                    FILTERS.invisibleSpace(cellValue)
-                                "
-                            />
+                                <el-table-column
+                                    v-else-if="colProp === 'namespace'"
+                                    prop="namespace"
+                                    sortable="custom"
+                                    :sortOrders="['ascending', 'descending']"
+                                    :label="t('namespace')"
+                                    :formatter="(_: any, __: any, cellValue: string) =>
+                                        FILTERS.invisibleSpace(cellValue)
+                                    "
+                                />
 
-                            <el-table-column
-                                prop="state.startDate"
-                                v-if="
-                                    displayColumn('state.startDate') &&
-                                        user.hasAny(permission.EXECUTION)
-                                "
-                                :label="t('last execution date')"
-                            >
-                                <template #default="scope">
-                                    <DateAgo
-                                        v-if="lastExecutionByFlowReady"
-                                        :inverted="true"
-                                        :date="getLastExecution(scope.row)
-                                            ?.startDate
-                                        "
-                                    />
-                                </template>
-                            </el-table-column>
+                                <el-table-column
+                                    v-else-if="colProp === 'state.startDate' && user.hasAny(permission.EXECUTION)"
+                                    prop="state.startDate"
+                                    :label="t('last execution date')"
+                                >
+                                    <template #default="scope">
+                                        <DateAgo
+                                            v-if="lastExecutionByFlowReady"
+                                            :inverted="true"
+                                            :date="getLastExecution(scope.row)
+                                                ?.startDate
+                                            "
+                                        />
+                                    </template>
+                                </el-table-column>
 
-                            <el-table-column
-                                prop="state.current"
-                                v-if="
-                                    displayColumn('state.current') &&
-                                        user.hasAny(permission.EXECUTION)
-                                "
-                                :label="t('last execution status')"
-                            >
-                                <template #default="scope">
-                                    <div
-                                        v-if="lastExecutionByFlowReady && getLastExecution(scope.row)?.status"
-                                        class="d-flex justify-content-between align-items-center"
-                                    >
-                                        <Status :status="getLastExecution(scope.row)?.status" size="small" />
-                                    </div>
-                                </template>
-                            </el-table-column>
+                                <el-table-column
+                                    v-else-if="colProp === 'state.current' && user.hasAny(permission.EXECUTION)"
+                                    prop="state.current"
+                                    :label="t('last execution status')"
+                                >
+                                    <template #default="scope">
+                                        <div
+                                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)?.status"
+                                            class="d-flex justify-content-between align-items-center"
+                                        >
+                                            <Status :status="getLastExecution(scope.row)?.status" size="small" />
+                                        </div>
+                                    </template>
+                                </el-table-column>
 
-                            <el-table-column
-                                prop="state"
-                                v-if="displayColumn('state') &&
-                                    user.hasAny(permission.EXECUTION)"
-                                :label="t('execution statistics')"
-                                className="row-graph"
-                            >
-                                <template #default="scope">
-                                    <TimeSeriesChart :flowId="scope.row.id" :namespace="scope.row.namespace" />
-                                </template>
-                            </el-table-column>
+                                <el-table-column
+                                    v-else-if="colProp === 'state' && user.hasAny(permission.EXECUTION)"
+                                    prop="state"
+                                    :label="t('execution statistics')"
+                                    className="row-graph"
+                                >
+                                    <template #default="scope">
+                                        <TimeSeriesChart :flowId="scope.row.id" :namespace="scope.row.namespace" />
+                                    </template>
+                                </el-table-column>
 
-                            <el-table-column
-                                v-if="displayColumn('triggers')"
-                                :label="t('triggers')"
-                                className="row-action"
-                            >
-                                <template #default="scope">
-                                    <TriggerAvatar :flow="scope.row" />
-                                </template>
-                            </el-table-column>
+                                <el-table-column
+                                    v-else-if="colProp === 'triggers'"
+                                    :label="t('triggers')"
+                                    className="row-action"
+                                >
+                                    <template #default="scope">
+                                        <TriggerAvatar :flow="scope.row" />
+                                    </template>
+                                </el-table-column>
+                            </template>
 
                             <el-table-column columnKey="action" className="row-action" :label="t('actions')">
                                 <template #default="scope">
@@ -251,42 +249,48 @@
     import {ref, computed, onMounted, watch, useTemplateRef} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
-    import {useExecutionsStore} from "../../stores/executions";
-    import {useFlowStore} from "../../stores/flow";
-    import {useAuthStore} from "override/stores/auth";
     import _merge from "lodash/merge";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import BulkSelect from "../layout/BulkSelect.vue";
-    // @ts-expect-error select-table is too big for ts conversion yet
-    import SelectTable from "../layout/SelectTable.vue";
+    import {useFlowFilter} from "../filter/configurations";
+
     import Plus from "vue-material-design-icons/Plus.vue";
-    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
+    import Upload from "vue-material-design-icons/Upload.vue";
     import Download from "vue-material-design-icons/Download.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
-    import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
-    import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
-    import Upload from "vue-material-design-icons/Upload.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
-    import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
-    // @ts-expect-error data-table is too big for ts conversion yet
-    import DataTable from "../layout/DataTable.vue";
-    import DateAgo from "../layout/DateAgo.vue";
-    import Status from "../Status.vue";
-    import TriggerAvatar from "./TriggerAvatar.vue";
-    import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
+    import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
+    import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
+    import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
+
     import Kicon from "../Kicon.vue";
+    import Status from "../Status.vue";
     import Labels from "../layout/Labels.vue";
-    import {defaultNamespace} from "../../composables/useNamespaces";
+    import DateAgo from "../layout/DateAgo.vue";
+    import TriggerAvatar from "./TriggerAvatar.vue";
+    import DataTable from "../layout/DataTable.vue";
+    import BulkSelect from "../layout/BulkSelect.vue";
+    //@ts-expect-error no declaration file
+    import SelectTable from "../layout/SelectTable.vue";
+    import KSFilter from "../filter/components/KSFilter.vue";
+    import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
+
+    import action from "../../models/action";
+    import permission from "../../models/permission";
+
     import {useToast} from "../../utils/toast";
+    import {defaultNamespace} from "../../composables/useNamespaces";
+
+    import {useFlowStore} from "../../stores/flow";
+    import {useAuthStore} from "override/stores/auth";
+    import {useExecutionsStore} from "../../stores/executions";
+
+    import {useTableColumns} from "../../composables/useTableColumns";
     import {useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
     import * as FILTERS from "../../utils/filters";
     import TimeSeriesChart from "../charts/TimeSeriesChart.vue";
 
-    // Props
+
     const props = withDefaults(defineProps<{
         topbar?: boolean;
         namespace?: string;
@@ -297,54 +301,90 @@
         id: undefined,
     });
 
-    // Stores
-    const executionsStore = useExecutionsStore();
     const flowStore = useFlowStore();
     const authStore = useAuthStore();
+    const executionsStore = useExecutionsStore();
 
-    // Route
     const route = useRoute();
     const router = useRouter();
 
-    const toast = useToast()
     const {t} = useI18n();
+    const toast = useToast()
+    
+    const flowFilter = useFlowFilter();
 
-    // State
-    const file = ref<HTMLInputElement | null>(null);
     const ready = ref(true);
     const internalPageSize = ref(25);
     const internalPageNumber = ref(1);
     const lastExecutionByFlowReady = ref(false);
     const latestExecutions = ref<any[]>([]);
+    const file = ref<HTMLInputElement | null>(null);
 
-    const optionalColumns: {
-        label: string;
-        prop: string;
-        default: boolean;
-        condition?: () => boolean;
-    }[] = [
-        {label: t("labels"), prop: "labels", default: true},
-        {label: t("namespace"), prop: "namespace", default: true},
-        {label: t("last execution date"), prop: "state.startDate", default: true},
-        {label: t("last execution status"), prop: "state.current", default: true},
-        {label: t("execution statistics"), prop: "state", default: true},
-        {label: t("triggers"), prop: "triggers", default: true},
-    ];
+    const optionalColumns = ref([
+        {
+            label: t("labels"), 
+            prop: "labels", 
+            default: true, 
+            description: t("filter.table_column.flows.labels")
+        },
+        {
+            label: t("namespace"), 
+            prop: "namespace", 
+            default: true, 
+            description: t("filter.table_column.flows.namespace")
+        },
+        {
+            label: t("last execution date"), 
+            prop: "state.startDate", 
+            default: true, 
+            description: t("filter.table_column.flows.last execution date")
+        },
+        {
+            label: t("last execution status"), 
+            prop: "state.current", 
+            default: true, 
+            description: t("filter.table_column.flows.last execution status")
+        },
+        {
+            label: t("execution statistics"), 
+            prop: "state", 
+            default: true, 
+            description: t("filter.table_column.flows.execution statistics")
+        },
+        {
+            label: t("triggers"), 
+            prop: "triggers", 
+            default: true, 
+            description: t("filter.table_column.flows.triggers")
+        },
+    ]);
 
-    const displayColumns = ref<string[]>([]);
+    const {
+        visibleColumns: displayColumns,
+        updateVisibleColumns
+    } = useTableColumns({
+        columns: optionalColumns.value,
+        storageKey: "flows",
+        initialVisibleColumns: []
+    });
 
-    // Permission helpers
     const user = computed(() => authStore.user);
+    const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value);
+    const canCreate = computed(() => user.value?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE));
     const canRead = computed(() => user.value?.isAllowed(permission.FLOW, action.READ, route.query.namespace));
     const canDelete = computed(() => user.value?.isAllowed(permission.FLOW, action.DELETE, route.query.namespace));
     const canUpdate = computed(() => user.value?.isAllowed(permission.FLOW, action.UPDATE, route.query.namespace));
-    const canCreate = computed(() => user.value?.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE));
-    const canCheck = computed(() => canRead.value || canDelete.value || canUpdate.value);
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
-    const {queryWithFilter, onPageChanged, onRowDoubleClick, onSort} = useDataTableActions({dblClickRouteName: "flows/update"});
+
+    const {
+        queryWithFilter, 
+        onPageChanged, 
+        onRowDoubleClick, 
+        onSort
+    } = useDataTableActions({dblClickRouteName: "flows/update"});
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
         return {
@@ -354,7 +394,13 @@
         };
     }
 
-    const {selection, queryBulkAction, handleSelectionChange, toggleAllUnselected, toggleAllSelection} = useSelectTableActions({
+    const {
+        selection, 
+        queryBulkAction, 
+        handleSelectionChange, 
+        toggleAllUnselected, 
+        toggleAllSelection
+    } = useSelectTableActions({
         dataTableRef: selectTableRef,
         selectionMapper
     });
@@ -362,20 +408,8 @@
     const selectionIds = computed(() => selection.value.map((flow) => ({id: flow.id, namespace: flow.namespace})));
 
 
-    function loadDisplayColumns(): string[] {
-        const storedColumns = localStorage.getItem("columns_flows");
-        if (storedColumns) {
-            return storedColumns.split(",");
-        }
-        return optionalColumns.filter(col => col.default && (!col.condition || col.condition())).map(col => col.prop);
-    }
-
-    function displayColumn(column: string): boolean {
-        return displayColumns.value.includes(column);
-    }
-
     function updateDisplayColumns(newColumns: string[]) {
-        displayColumns.value = newColumns;
+        updateVisibleColumns(newColumns);
     }
 
     function exportFlows() {
@@ -515,40 +549,37 @@
             .finally(callback);
     }
 
+    function refresh() {
+        loadData(() => {});
+    }
+
     function rowClasses(row: any) {
         return row && row.row && row.row.disabled ? "disabled" : "";
     }
 
-    // Lifecycle
     onMounted(() => {
-        displayColumns.value = loadDisplayColumns();
-        loadData(() => {
-            ready.value = true;
-        });
+        const query = {...route.query};
+        const queryKeys = Object.keys(query);
+        let queryHasChanged = false;
+
+        if (props.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+            query["filters[namespace][PREFIX]"] = defaultNamespace();
+            queryHasChanged = true;
+        }
+
+        if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
+            query["filters[scope][EQUALS]"] = "USER";
+            queryHasChanged = true;
+        }
+
+        if (queryHasChanged) router.replace({query});
+
+        loadData(() => ready.value = true);
     });
 
     watch(() => route.query, async () => {
         await loadData(() => {});
     }, {deep: true});
-
-    watch(route, (newRoute) => {
-        if (typeof window !== "undefined") {
-            let queryHasChanged = false;
-            const query = {...newRoute.query};
-            const queryKeys = Object.keys(query);
-            if (defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-                query["filters[namespace][PREFIX]"] = defaultNamespace();
-                queryHasChanged = true;
-            }
-            if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
-                query["filters[scope][EQUALS]"] = "USER";
-                queryHasChanged = true;
-            }
-            if (queryHasChanged) {
-                router.replace({...route, query});
-            }
-        }
-    }, {immediate: true, deep: true});
 
 </script>
 
@@ -564,6 +595,10 @@
 
 .flow-id {
     min-width: 200px;
+
+    & a {
+        color: var(--bs-code-color)
+    }
 }
 
 .flows-table .el-table__cell {

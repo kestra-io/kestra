@@ -1,118 +1,194 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Function;
-import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.junit.annotations.KestraTest;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Pebble function to retrieve outputs from a specific iteration in a ForEach loop.
- * 
- * This function enables accessing previous (or any) iteration outputs by iteration index.
- * Useful for scenarios like cumulative calculations, comparisons between iterations,
- * or conditional processing based on previous results.
- * 
- * Usage: {{ outputFromIteration(outputs.taskId, iterationIndex) }}
- * 
- * Example:
- * <pre>
- * id: each_example
- * namespace: company.team
- * tasks:
- *   - id: 1_each
- *     type: io.kestra.plugin.core.flow.ForEach
- *     values: '[10, 20, 30, 40, 50]'
- *     tasks:
- *       - id: cumulative_sum
- *         type: io.kestra.plugin.core.debug.Return
- *         format: |
- *           {% if taskrun.iteration == 0 %}{{ taskrun.value }}
- *           {% else %}{{ taskrun.value + outputFromIteration(outputs.1_each, taskrun.iteration - 1).value | int }}
- *           {% endif %}
- * </pre>
- * 
- * Note: Currently optimized for flat ForEach loops. Nested ForEach support may require
- * additional context handling and will be added in future iterations.
- */
-public class OutputFromIterationFunction implements Function {
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
-        if (!args.containsKey("outputs")) {
-            throw new PebbleException(null, "The 'outputFromIteration' function expects an argument 'outputs'.", lineNumber, self.getName());
-        }
+@KestraTest
+class OutputFromIterationFunctionTest {
+    @Inject
+    VariableRenderer variableRenderer;
 
-        if (!args.containsKey("iteration")) {
-            throw new PebbleException(null, "The 'outputFromIteration' function expects an argument 'iteration'.", lineNumber, self.getName());
-        }
-
-        Object outputsArg = args.get("outputs");
-        if (!(outputsArg instanceof Map) && !(outputsArg instanceof List)) {
-            throw new PebbleException(null, "The 'outputFromIteration' function expects argument 'outputs' to be a Map or List.", lineNumber, self.getName());
-        }
-
-        Object iterationArg = args.get("iteration");
-        int iteration;
+    @Test
+    void fromListOfOutputs() throws IllegalVariableEvaluationException {
+        List<Map<String, Object>> outputs = List.of(
+            Map.of("value", "iteration_0", "result", "first"),
+            Map.of("value", "iteration_1", "result", "second"),
+            Map.of("value", "iteration_2", "result", "third")
+        );
         
-        try {
-            if (iterationArg instanceof Number) {
-                iteration = ((Number) iterationArg).intValue();
-            } else if (iterationArg instanceof String) {
-                iteration = Integer.parseInt((String) iterationArg);
-            } else {
-                throw new PebbleException(null, "The 'outputFromIteration' function expects argument 'iteration' to be a Number or String.", lineNumber, self.getName());
-            }
-        } catch (NumberFormatException e) {
-            throw new PebbleException(null, "The 'outputFromIteration' function expects argument 'iteration' to be a valid integer.", lineNumber, self.getName());
-        }
-
-        if (outputsArg instanceof List) {
-            List<?> outputsList = (List<?>) outputsArg;
-            
-            if (iteration < 0 || iteration >= outputsList.size()) {
-                throw new PebbleException(null, 
-                    String.format("Iteration index %d is out of bounds. Available iterations: 0 to %d", iteration, outputsList.size() - 1), 
-                    lineNumber, self.getName());
-            }
-            
-            return outputsList.get(iteration);
-        } else {
-            Map<?, ?> outputs = (Map<?, ?>) outputsArg;
-            
-            if (iteration < 0) {
-                throw new PebbleException(null, 
-                    String.format("Iteration index %d is negative. Iteration index must be >= 0", iteration), 
-                    lineNumber, self.getName());
-            }
-            
-            List<Map<?, ?>> parents = (List<Map<?, ?>>) context.getVariable("parents");
-            if (parents != null && !parents.isEmpty()) {
-                throw new PebbleException(null, 
-                    "The 'outputFromIteration' function does not currently support nested ForEach loops. " +
-                    "This feature is planned for a future release. " +
-                    "Please use this function only in flat (non-nested) ForEach contexts.", 
-                    lineNumber, self.getName());
-            }
-            
-            String iterationKey = String.valueOf(iteration);
-            
-            if (!outputs.containsKey(iterationKey)) {
-                throw new PebbleException(null, 
-                    String.format("Iteration index %d not found in outputs. Available keys: %s", iteration, outputs.keySet()), 
-                    lineNumber, self.getName());
-            }
-            
-            return outputs.get(iterationKey);
-        }
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("outputs", outputs);
+        
+        String render0 = variableRenderer.render("{{ outputFromIteration(outputs, 0).result }}", vars);
+        assertThat(render0).isEqualTo("first");
+        
+        String render1 = variableRenderer.render("{{ outputFromIteration(outputs, 1).result }}", vars);
+        assertThat(render1).isEqualTo("second");
+        
+        String render2 = variableRenderer.render("{{ outputFromIteration(outputs, 2).result }}", vars);
+        assertThat(render2).isEqualTo("third");
     }
 
-    @Override
-    public List<String> getArgumentNames() {
-        return List.of("outputs", "iteration");
+    @Test
+    void accessPreviousIteration() throws IllegalVariableEvaluationException {
+        List<Map<String, Object>> outputs = List.of(
+            Map.of("value", "s1", "result", 10),
+            Map.of("value", "s2", "result", 20),
+            Map.of("value", "s3", "result", 30)
+        );
+        
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("outputs", outputs);
+        vars.put("currentIteration", 2);
+        
+        String render = variableRenderer.render("{{ outputFromIteration(outputs, currentIteration - 1).result }}", vars);
+        assertThat(render).isEqualTo("20");
+    }
+
+    @Test
+    void withMapOfOutputs() throws IllegalVariableEvaluationException {
+        Map<String, Object> output0 = new HashMap<>();
+        output0.put("result", "first_output");
+        
+        Map<String, Object> output1 = new HashMap<>();
+        output1.put("result", "second_output");
+        
+        Map<String, Object> output2 = new HashMap<>();
+        output2.put("result", "third_output");
+        
+        Map<String, Object> outputs = new HashMap<>();
+        outputs.put("0", output0);
+        outputs.put("1", output1);
+        outputs.put("2", output2);
+        
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("outputs", outputs);
+        
+        String render0 = variableRenderer.render("{{ outputFromIteration(outputs, 0).result }}", vars);
+        assertThat(render0).isEqualTo("first_output");
+        
+        String render1 = variableRenderer.render("{{ outputFromIteration(outputs, 1).result }}", vars);
+        assertThat(render1).isEqualTo("second_output");
+        
+        String render2 = variableRenderer.render("{{ outputFromIteration(outputs, 2).result }}", vars);
+        assertThat(render2).isEqualTo("third_output");
+    }
+
+    @Test
+    void outOfBoundsThrowsException() {
+        List<Map<String, Object>> outputs = List.of(
+            Map.of("value", "s1"),
+            Map.of("value", "s2")
+        );
+        
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("outputs", outputs);
+        
+        assertThatThrownBy(() -> variableRenderer.render("{{ outputFromIteration(outputs, 5) }}", vars))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("out of bounds");
+    }
+
+    @Test
+    void mapKeyNotFoundThrowsException() {
+        Map<String, Object> outputs = new HashMap<>();
+        outputs.put("0", Map.of("value", "s1"));
+        outputs.put("1", Map.of("value", "s2"));
+        
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("outputs", outputs);
+        
+        assertThatThrownBy(() -> variableRenderer.render("{{ outputFromIteration(outputs, 5) }}", vars))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("not found in outputs");
+    }
+
+    @Test
+    void negativeIndexThrowsException() {
+        List<Map<String, Object>> outputs = List.of(
+            Map.of("value", "s1")
+        );
+        
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("outputs", outputs);
+        
+        assertThatThrownBy(() -> variableRenderer.render("{{ outputFromIteration(outputs, -1) }}", vars))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("out of bounds");
+    }
+
+    @Test
+    void missingOutputsArgumentThrowsException() {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("iteration", 0);
+        
+        assertThatThrownBy(() -> variableRenderer.render("{{ outputFromIteration(iteration: iteration) }}", vars))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("expects an argument 'outputs'");
+    }
+
+    @Test
+    void missingIterationArgumentThrowsException() {
+        List<Map<String, Object>> outputs = List.of(
+            Map.of("value", "s1")
+        );
+        
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("outputs", outputs);
+        
+        assertThatThrownBy(() -> variableRenderer.render("{{ outputFromIteration(outputs) }}", vars))
+            .isInstanceOf(IllegalVariableEvaluationException.class)
+            .hasMessageContaining("expects an argument 'iteration'");
+    }
+
+    @Test
+    void withStringIteration() throws IllegalVariableEvaluationException {
+        List<Map<String, Object>> outputs = List.of(
+            Map.of("value", "first"),
+            Map.of("value", "second")
+        );
+        
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("outputs", outputs);
+        vars.put("iterationStr", "1");
+        
+        String render = variableRenderer.render("{{ outputFromIteration(outputs, iterationStr).value }}", vars);
+        assertThat(render).isEqualTo("second");
+    }
+
+    @Test
+    void conditionalAccessToPreviousIteration() throws IllegalVariableEvaluationException {
+        List<Map<String, Object>> outputs = new ArrayList<>();
+        outputs.add(Map.of("value", "s1", "result", 100));
+        outputs.add(Map.of("value", "s2", "result", 200));
+        outputs.add(Map.of("value", "s3", "result", 300));
+        
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("outputs", outputs);
+        vars.put("currentIteration", 0);
+        
+        String render = variableRenderer.render(
+            "{% if currentIteration > 0 %}{{ outputFromIteration(outputs, currentIteration - 1).result }}{% else %}No previous iteration{% endif %}",
+            vars
+        );
+        assertThat(render).isEqualTo("No previous iteration");
+        
+        vars.put("currentIteration", 2);
+        render = variableRenderer.render(
+            "{% if currentIteration > 0 %}{{ outputFromIteration(outputs, currentIteration - 1).result }}{% else %}No previous iteration{% endif %}",
+            vars
+        );
+        assertThat(render).isEqualTo("200");
     }
 }

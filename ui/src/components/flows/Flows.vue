@@ -658,6 +658,10 @@
 
 .flow-id {
     min-width: 200px;
+
+    & a {
+        color: var(--bs-code-color)
+    }
 }
 
 .flows-table .el-table__cell {
@@ -666,9 +670,5 @@
 
 :deep(.flows-table) .el-scrollbar__thumb {
     background-color: var(--ks-border-active) !important;
-}
-
-:deep(a.flow-id-link) {
-    color: var(--bs-code-color) !important;
 }
 </style>

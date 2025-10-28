@@ -834,6 +834,7 @@
         position: relative;
         height: 100%;
         overflow: auto;
+        container-type: inline-size;
     }
 
     .el-splitter-panel{

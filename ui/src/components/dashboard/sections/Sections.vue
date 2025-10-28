@@ -139,8 +139,18 @@ section#charts {
         padding: 0 2rem 1rem;
     }
 
+    
+    & .el-row {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        min-width: 0;
+    }
+    
+
     & .el-row .el-col {
         margin-bottom: 1rem;
+        min-width: 0;
 
         & > div {
             height: 100%;
@@ -159,6 +169,13 @@ section#charts {
         &:hover #charts_buttons {
             opacity: 1;
         }
+    }
+}
+@container (max-width: 800px){
+    .el-row .el-col {
+    width: 100% !important;
+    flex: 0 0 100%;
+    max-width: 100%;
     }
 }
 </style>

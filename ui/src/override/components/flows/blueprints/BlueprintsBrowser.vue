@@ -18,17 +18,6 @@
                                 </el-checkbox-button>
                             </el-checkbox-group>
                         </div>
-                        
-                        <el-row class="search-bar-row" justify="center">
-                            <el-col :xs="24">
-                                <el-input
-                                    v-model="searchText"
-                                    :placeholder="$t('search blueprint')"
-                                    clearable
-                                    @input="updateSearch"
-                                />
-                            </el-col>
-                        </el-row>
                     </div>
                     <nav v-else-if="system" class="header pb-3">
                         <p class="mb-0 fw-lighter">
@@ -39,9 +28,19 @@
                         </p>
                     </nav>
                 </template>
-                
-                <template #top />
-
+                <template #top>
+                    <el-row class="mb-3" justify="center">
+                        <KSFilter
+                            :configuration="blueprintFilter"
+                            :buttons="{
+                                savedFilters: {shown: false}, 
+                                tableOptions: {shown: false}
+                            }"
+                            :searchInputFullWidth="true"
+                            @search="handleSearch"
+                        />
+                    </el-row>
+                </template>
                 <template #table>
                     <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
                         {{ $t('blueprints.empty') }}
@@ -99,6 +98,7 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import DataTable from "../../../../components/layout/DataTable.vue";
     import Errors from "../../../../components/errors/Errors.vue";
+    import KSFilter from "../../../../components/filter/components/KSFilter.vue";
     import {editorViewTypes} from "../../../../utils/constants";
     import Utils from "../../../../utils/utils";
     import {usePluginsStore} from "../../../../stores/plugins";
@@ -108,6 +108,9 @@
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {useDataTableActions} from "../../../../composables/useDataTableActions";
     import useRestoreUrl from "../../../../composables/useRestoreUrl";
+    import {useBlueprintFilter} from "../../../../components/filter/configurations";
+    
+    const blueprintFilter = useBlueprintFilter();
 
     const props = withDefaults(defineProps<{
         blueprintType?: "community" | "custom";
@@ -124,6 +127,7 @@
     });
 
     const {onPageChanged, onDataLoaded, load, ready, internalPageNumber, internalPageSize} = useDataTableActions({loadData});
+
     useRestoreUrl();
 
     const emit = defineEmits(["goToDetail", "loaded"]);
@@ -152,6 +156,11 @@
     const error = ref(false);
     const icon = {ContentCopy};
 
+    const handleSearch = (query: string) => {
+        searchText.value = query;
+        router.push({query: {...route.query, q: query}});
+    };
+
     const pluginsStore = usePluginsStore();
     const blueprintsStore = useBlueprintsStore();
     const coreStore = useCoreStore();
@@ -165,10 +174,6 @@
             display: tag.length <= 3 && tag === tag.toUpperCase() ? tag : 
                 tag.replace(/\b\w/g, l => l.toUpperCase())
         }));
-    };
-
-    const updateSearch = (value: string) => {
-        router.push({query: {...route.query, q: value || undefined}});
     };
 
     async function copy(id: string) {
@@ -270,7 +275,7 @@
     });
 
     watch(route,
-          (newValue, oldValue) =>{
+          (newValue, oldValue) => {
               if (oldValue.name === newValue.name) {
                   selectedTags.value = initSelectedTags();
                   searchText.value = route.query.q || "";

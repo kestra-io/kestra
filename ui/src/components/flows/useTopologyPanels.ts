@@ -16,16 +16,16 @@ export function useTopologyPanels(
     const topologyClick = ref<TopologyClickParams | undefined>(undefined);
     provide(TOPOLOGY_CLICK_INJECTION_KEY, topologyClick);
 
-    function findTopologyIndexes(arr: { tabs: { value: string }[] }[]): {
+    function findTopologyIndexes(arr: Pick<Panel, "tabs">[]): {
         panelIndex: number;
         tabIndex: number;
     } {
         const panelIndex = arr.findIndex((p) =>
-            p.tabs.some((t) => t.value === "topology"),
+            p.tabs.some((t) => t.uid === "topology"),
         );
         const tabIndex =
             panelIndex !== -1
-                ? arr[panelIndex].tabs.findIndex((t) => t.value === "topology")
+                ? arr[panelIndex].tabs.findIndex((t) => t.uid === "topology")
                 : 0;
         return {panelIndex: panelIndex !== -1 ? panelIndex : 0, tabIndex};
     }
@@ -73,7 +73,7 @@ export function useTopologyPanels(
                 + (fieldName ? fieldName.length + 1 : 0); // -2 for the [ and ] characters an 1 for the .
 
             const parentPath = path.slice(0, - refLength); // remove the [refPath] part and the fieldName if necessary
-            openAddTaskTab(target, parentPath, blockSchemaPath, refPath, params.position, undefined, fieldName);
+            openAddTaskTab(target, parentPath, blockSchemaPath, refPath, params.position, fieldName);
         } else if( action === "edit" && fieldName === undefined) {
             // if the fieldName is undefined, editing a task directly in an array
             // we need the parent path and the refPath

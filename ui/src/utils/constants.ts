@@ -21,6 +21,9 @@ export const editorViewTypes = {
 export const storageKeys = {
     DISPLAY_EXECUTIONS_COLUMNS: "displayExecutionsColumns",
     DISPLAY_FLOW_EXECUTIONS_COLUMNS: "displayFlowExecutionsColumns",
+    DISPLAY_KV_COLUMNS: "displayKvColumns",
+    DISPLAY_SECRETS_COLUMNS: "displaySecretsColumns",
+    DISPLAY_TRIGGERS_COLUMNS: "displayTriggersColumns",
     SELECTED_TENANT: "selectedTenant",
     EXECUTE_FLOW_BEHAVIOUR: "executeFlowBehaviour",
     SHOW_CHART: "showChart",
@@ -32,8 +35,11 @@ export const storageKeys = {
     IMPERSONATE: "impersonate",
     EDITOR_VIEW_TYPE: "editorViewType",
     AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
+    AUTO_REFRESH_ENABLED: "autoRefreshEnabled",
     DATE_FORMAT_STORAGE_KEY: "dateFormat",
     TIMEZONE_STORAGE_KEY: "timezone",
+    SAVED_FILTERS_PREFIX: "saved_filters",
+    FILTER_ORDER_PREFIX: "filter-order",
 }
 
 export const executeFlowBehaviours = {

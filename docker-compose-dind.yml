@@ -1,3 +1,8 @@
+# For ubuntu 24.04+ users, to make dind work properly with apparmor, you might need to disable the restriction on unprivileged user namespaces.
+# if `sudo sysctl kernel.apparmor_restrict_unprivileged_userns` returns `1`, you need to disable it to start dind:
+# echo 'kernel.apparmor_restrict_unprivileged_userns=0' | sudo tee /etc/sysctl.d/99-apparmor-userns.conf
+# sudo sysctl --system
+
 volumes:
   postgres-data:
     driver: local
@@ -28,12 +33,12 @@ services:
     privileged: true
     user: "1000"
     environment:
-      DOCKER_HOST: unix://dind/docker.sock
+      DOCKER_HOST: unix:///home/rootless/docker.sock
     command:
       - --log-level=fatal
       - --group=1000
     volumes:
-      - dind-socket:/dind
+      - dind-socket:/home/rootless/
       - tmp-data:/tmp/kestra-wd
 
   kestra:
@@ -55,10 +60,6 @@ services:
             username: kestra
             password: k3str4
         kestra:
-          server:
-            basic-auth:
-              username: "admin@kestra.io" # it must be a valid email address
-              password: kestra
           repository:
             type: postgres
           storage:

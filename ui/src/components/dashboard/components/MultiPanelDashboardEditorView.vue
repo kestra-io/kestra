@@ -1,9 +1,10 @@
 <template>
     <MultiPanelGenericEditorView
         ref="editorView"
+        v-if="showEditor"
         :editorElements="DASHBOARD_EDITOR_ELEMENTS"
         :defaultActiveTabs="DEFAULT_ACTIVE_TABS"
-        :saveKey="`ks-dashboard-${dashboardStore.dashboard?.id}`"
+        :saveKey="saveKey"
     >
         <template #actions>
             <DashboardEditorButtons @save="onSave" />
@@ -17,6 +18,12 @@
     import {useDashboardStore} from "../../../stores/dashboard";
     import MultiPanelGenericEditorView from "../../MultiPanelGenericEditorView.vue";
     import DashboardEditorButtons from "./DashboardEditorButtons.vue";
+
+    const showEditor = computed(() => dashboardStore.isCreating || dashboardStore.parsedSource?.id);
+
+    const saveKey = computed(() => 
+        dashboardStore.isCreating ? undefined : `ks-dashboard-${dashboardStore.parsedSource?.id}`
+    );
 
     const dashboardStore = useDashboardStore();
 

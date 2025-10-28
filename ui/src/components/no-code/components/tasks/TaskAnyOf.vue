@@ -138,8 +138,11 @@
     });
 
     const allSchemaSameType = computed(() => {
-        if (schemas.value.length === 0) return false;
+        if (schemas.value.length < 2) return false;
         const firstType = schemas.value[0].type;
+        if(firstType === undefined){
+            return false;
+        }
         return schemas.value.every((schema: Schema) => schema.type === firstType);
     });
 

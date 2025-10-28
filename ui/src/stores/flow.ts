@@ -54,6 +54,7 @@ interface FlowValidations {
 export interface Flow {
     id: string;
     namespace: string;
+    disabled?: boolean;
     source: string;
     revision?: number;
     deleted?: boolean;
@@ -61,6 +62,10 @@ export interface Flow {
     triggers?: Trigger[];
     inputs?: Input[];
     errors?: { message: string; code?: string, id?: string }[];
+    concurrency?: {
+        limit: number;
+        behavior: string;
+    };
 }
 
 export const useFlowStore = defineStore("flow", () => {

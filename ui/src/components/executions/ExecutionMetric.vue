@@ -5,11 +5,22 @@
         :taskRunId="route.query.metric?.[0] ?? undefined"
         :showTask="true"
         :execution="executionsStore.execution"
+        :optionalColumns="optionalColumns"
     >
         <template #navbar>
-            <KestraFilter
-                :language="metricFilterLang"
-                :placeholder="`${t('display metric for specific task')}...`"
+            <KSFilter
+                :configuration="metricFilter"
+                :properties="{
+                    shown: true,
+                    columns: optionalColumns,
+                    storageKey: 'execution-metrics'
+                }"
+                :prefix="'execution-metrics'"
+                :tableOptions="{
+                    chart: {shown: false},
+                    refresh: {shown: true, callback: refresh}
+                }"
+                @update-properties="updateDisplayColumns"
                 legacyQuery
             />
         </template>
@@ -20,20 +31,54 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {useExecutionsStore} from "../../stores/executions";
-    import {MetricFilterLanguage} from "../../composables/monaco/languages/filters/impl/metricFilterLanguage";
+    import {useMetricFilter} from "../filter/configurations";
     import MetricsTable from "../executions/MetricsTable.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
+    import KSFilter from "../filter/components/KSFilter.vue";
 
     const {t} = useI18n();
     const route = useRoute();
+    const executionsStore = useExecutionsStore();
+    
+    const metricFilter = useMetricFilter();
 
     const table = ref<typeof MetricsTable>();
 
-    const executionsStore = useExecutionsStore();
+    const optionalColumns = ref([
+        {
+            label: t("task"), 
+            prop: "taskId", 
+            default: true, 
+            description: t("filter.table_column.metrics.task")
+        },
+        {
+            label: t("name"), 
+            prop: "name", 
+            default: true, 
+            description: t("filter.table_column.metrics.name")
+        },
+        {
+            label: t("value"), 
+            prop: "value", 
+            default: true, 
+            description: t("filter.table_column.metrics.value")
+        },
+        {
+            label: t("tags"), 
+            prop: "tags", 
+            default: true, 
+            description: t("filter.table_column.metrics.tags")
+        },
+    ]);
 
-    const metricFilterLang = new MetricFilterLanguage(executionsStore)
+    const updateDisplayColumns = (newColumns: string[]) => {
+        table.value?.updateDisplayColumns(newColumns);
+    };
+
+    const refresh = () => {
+        table.value!.loadData(table.value!.onDataLoaded);
+    };
 
     onMounted(() => {
         table.value!.loadData(table.value!.onDataLoaded);
-    })
+    });
 </script>

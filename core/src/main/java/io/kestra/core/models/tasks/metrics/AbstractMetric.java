@@ -22,6 +22,7 @@ import java.util.Map;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = CounterMetric.class, name = "counter"),
     @JsonSubTypes.Type(value = TimerMetric.class, name = "timer"),
+    @JsonSubTypes.Type(value = GaugeMetric.class, name = "gauge"),
 })
 @ToString
 @EqualsAndHashCode

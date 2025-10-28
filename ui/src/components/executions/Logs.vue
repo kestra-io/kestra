@@ -1,23 +1,16 @@
 <template>
-    <div>
+    <div data-component="FILENAME_PLACEHOLDER">
+        <KSFilter
+            :configuration="logExecutionsFilter"
+            :tableOptions="{
+                chart: {shown: false},
+                columns: {shown: false}, 
+                refresh: {shown: true, callback: loadLogs}
+            }"
+            @search="filter = $event"
+            @filter="onFilterChange"
+        />
         <Collapse>
-            <el-form-item>
-                <el-input
-                    v-model="filter"
-                    @update:model-value="onChange"
-                    :placeholder="$t('search')"
-                >
-                    <template #suffix>
-                        <Magnify />
-                    </template>
-                </el-input>
-            </el-form-item>
-            <el-form-item>
-                <LogLevelSelector
-                    v-model="level"
-                    @update:model-value="onChange"
-                />
-            </el-form-item>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
                 <LogLevelNavigator
                     v-if="countByLogLevel[logLevel] > 0"
@@ -119,13 +112,16 @@
     </div>
 </template>
 
+<script setup>
+    import {useLogExecutionsFilter} from "../filter/configurations";
+    
+    const logExecutionsFilter = useLogExecutionsFilter();
+</script>
 <script>
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Download from "vue-material-design-icons/Download.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import Kicon from "../Kicon.vue";
-    import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -138,22 +134,22 @@
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
+    import KSFilter from "../filter/components/KSFilter.vue";
 
     export default {
         components: {
             LogLine,
             TaskRunDetails,
-            LogLevelSelector,
             LogLevelNavigator,
             Kicon,
             Download,
-            Magnify,
             ContentCopy,
             Collapse,
             Restart,
             DynamicScroller,
             DynamicScrollerItem,
-            Refresh
+            Refresh,
+            KSFilter
         },
         data() {
             return {
@@ -243,7 +239,7 @@
             },
             viewTypeAwareLogIndicesByLevel() {
                 return this.raw_view ? this.temporalViewLogIndicesByLevel : this.logIndicesByLevel;
-            }
+            },
         },
         methods: {
             loadLogs(){
@@ -278,8 +274,13 @@
             prevent(event) {
                 event.preventDefault();
             },
-            onChange() {
-                this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
+            onFilterChange(filters) {
+                const levelFilter = filters.find(f => f.key === "level");
+                if (levelFilter) {
+                    this.level = Array.isArray(levelFilter.value) ? levelFilter.value[0] : levelFilter.value;
+                } else {
+                    this.level = undefined;
+                }
             },
             expandCollapseAll() {
                 this.$refs.logs.toggleExpandCollapseAll();
@@ -365,5 +366,18 @@
     .ks-b-group {
         min-width: auto!important;
         max-width: max-content !important;
+    }
+
+    :deep(.el-form) {
+        padding: 1rem 1rem 0.5rem 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.5rem;
+        background-color: var(--ks-background-panel);
+        box-shadow: 2px 3px 3px 0px var(--ks-card-shadow);
+    }
+
+    :deep(.el-form-item) {
+        margin-bottom: 0.5rem !important;
     }
 </style>

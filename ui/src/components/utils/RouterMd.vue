@@ -11,10 +11,9 @@
 </template>
 
 <script setup lang="ts">
-    interface Props {
+    const props = defineProps<{
         execution: string;
         flowId: string;
         namespace: string;
-    }
-    const props = defineProps<Props>();
+    }>();
 </script>

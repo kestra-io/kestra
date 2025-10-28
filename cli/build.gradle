@@ -31,6 +31,8 @@ dependencies {
     implementation project(":jdbc-mysql")
     implementation project(":jdbc-postgres")
 
+    implementation project(":queue")
+
     implementation project(":storage-local")
 
     // Kestra server components

@@ -319,6 +319,8 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
 
             assertThat(queueCount.getCount()).isEqualTo(0L);
             assertThat(executionIds.size()).isGreaterThanOrEqualTo(3);
+        } finally {
+            scheduler.close();
         }
     }
 }

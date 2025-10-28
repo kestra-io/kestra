@@ -16,6 +16,8 @@ include 'jdbc-h2'
 include 'jdbc-mysql'
 include 'jdbc-postgres'
 
+include 'queue'
+
 include 'webserver'
 include 'executor'
 include 'scheduler'

@@ -1,0 +1,114 @@
+package io.kestra.queue;
+
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.utils.IdUtils;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
+
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public abstract class AbstractKeyedDispatchQueueTest {
+    private static final int DEFAULT_TIMEOUT_SECONDS = 10;
+
+    @Inject
+    private KeyedDispatchQueueInterface<TestKeyedDispatch> keyDispatchQueue;
+
+    @Test
+    void singleConsumer() throws QueueException, InterruptedException {
+        String groupKey = IdUtils.create();
+
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
+
+        io.kestra.core.utils.Disposable disposable = keyDispatchQueue
+            .subscriber(groupKey)
+            .subscribe(e -> {
+                list.add(e.getLeft().id);
+                countDownLatch.countDown();
+            });
+
+        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(1));
+        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(2));
+
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        disposable.dispose();
+
+        assertThat(await).isEqualTo(true);
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
+        assertThat(list).containsExactlyInAnyOrder(1, 2);
+    }
+
+    @Test
+    void multipleConsumer() throws QueueException, InterruptedException {
+        String groupKey = IdUtils.create();
+
+        int rand = ThreadLocalRandom.current().nextInt(10, 50);;
+        CountDownLatch countDownLatch = new CountDownLatch(rand);
+        Collection<String> list = Collections.synchronizedCollection(new ArrayList<>());
+        List<io.kestra.core.utils.Disposable> disposables = new ArrayList<>();
+
+        IntStream.range(0, 3)
+            .forEach(i -> disposables.add(keyDispatchQueue
+                .subscriber(groupKey)
+                .subscribe(e -> {
+                    list.add("c" + String.format("%03d", i) + "-i" + String.format("%03d", e.getLeft().id));
+                    countDownLatch.countDown();
+                })
+            ));
+
+        for (int i = 0; i < rand; i++) {
+            keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(i));
+        }
+
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        io.kestra.core.utils.Disposable.of(disposables).dispose();
+
+        assertThat(await).isEqualTo(true);
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
+        assertThat(list).hasSize(rand);
+        assertThat(list.stream().map(s -> s.substring(0, s.indexOf("-"))).toList()).contains("c000", "c001", "c002");
+        assertThat(list.stream().map(s -> s.substring(s.indexOf("-") + 1)).toList()).contains("i001", String.format("i%03d", rand - 1));
+    }
+
+    @Test
+    void multipleGroup() throws InterruptedException, QueueException {
+        CountDownLatch countDownLatch = new CountDownLatch(6);
+        List<io.kestra.core.utils.Disposable> disposables = new ArrayList<>();
+        Map<Integer, Collection<Integer>> map = new HashMap<>();
+
+        IntStream.range(0, 3)
+            .forEach(i -> {
+                map.put(i, Collections.synchronizedCollection(new ArrayList<>()));
+
+                disposables.add(keyDispatchQueue
+                    .subscriber("group-" + i)
+                    .subscribe(e -> {
+                        map.get(i).add(e.getLeft().id);
+                        countDownLatch.countDown();
+                    }));
+            });
+
+        for (int i = 0; i < 3; i++) {
+            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(1));
+            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(2));
+        }
+
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        io.kestra.core.utils.Disposable.of(disposables).dispose();
+
+        assertThat(await).isEqualTo(true);
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
+        assertThat(map.entrySet().stream().flatMap(s -> s.getValue().stream()).toList()).hasSize(6);
+        for (int i = 0; i < 3; i++) {
+            assertThat(map.get(i)).containsExactlyInAnyOrder(1, 2);
+        }
+    }
+
+    public record TestKeyedDispatch(Integer id) implements KeyedDispatchEvent {}
+}

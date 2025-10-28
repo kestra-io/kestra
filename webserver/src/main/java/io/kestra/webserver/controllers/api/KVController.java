@@ -193,9 +193,6 @@ public class KVController {
         KVType type,
 
         @Parameter(description = "The value of the KV entry.")
-        @Schema(
-            anyOf = {Object.class, String.class}
-        )
         Object value
     ) {
     }

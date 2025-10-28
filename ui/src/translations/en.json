@@ -48,6 +48,7 @@
     "saved": "Successfully saved",
     "saved done": "<em>{name}</em> is successfully saved",
     "multiple saved done": "{name} have been saved",
+    "fileTypeNotAllowed": "File type not allowed. Accepted types: {types}",
     "delete": "Delete",
     "deleted": "Successfully deleted",
     "deleted confirm": "<em>{name}</em> is successfully deleted!",

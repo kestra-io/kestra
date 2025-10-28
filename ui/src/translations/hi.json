@@ -586,6 +586,7 @@
       "title": "केस्ट्रा में नया क्या है"
     },
     "file preview truncated": "प्रदर्शित सामग्री को संक्षिप्त किया गया है",
+    "fileTypeNotAllowed": "फ़ाइल प्रकार की अनुमति नहीं है। स्वीकृत प्रकार: {types}",
     "files": "फ़ाइलें",
     "filter": {
       "active key value pairs": "सक्रिय key/value जोड़े",

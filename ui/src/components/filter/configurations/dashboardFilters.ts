@@ -22,6 +22,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => comput
                     Comparators.IN,
                     Comparators.NOT_IN,
                     Comparators.CONTAINS,
+                    Comparators.PREFIX,
                 ],
                 valueType: "multi-select",
                 valueProvider: async () => {

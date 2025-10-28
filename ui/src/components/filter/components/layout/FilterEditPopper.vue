@@ -101,7 +101,8 @@
                 }
             };
         }
-
+        
+        // valueType drives component selection
         const componentConfigs = {
             select: {
                 component: FilterSelect,
@@ -318,6 +319,7 @@
         }
     };
 
+    // Without it, the filter editor would open with empty fields
     const initializeValueByType = () => {
         if (isTextComparator.value) {
             state.textValue = typeof props.filter.value === "string" ? props.filter.value : "";

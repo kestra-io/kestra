@@ -9,61 +9,61 @@ import {useI18n} from "vue-i18n";
 
 export const useFlowFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
-    
+
     return {
-    title: t("filter.titles.flow_filters"),
-    searchPlaceholder: t("filter.search_placeholders.search_flows"),
-    keys: [
-        {
-            key: "namespace",
-            label: t("filter.namespace.label"),
-            description: t("filter.namespace.description"),
-            comparators: [
-                Comparators.IN,
-                Comparators.NOT_IN,
-                Comparators.CONTAINS,
-                Comparators.PREFIX,
-            ],
-            valueType: "multi-select",
-            valueProvider: async () => {
-                const user = useAuthStore().user;
-                if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
-                    const namespacesStore = useNamespacesStore();
-                    const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
-                    return [...new Set(namespaces
-                        .flatMap(namespace => {
-                            return namespace.split(".").reduce((current: string[], part: string) => {
-                                const previousCombination = current?.[current.length - 1];
-                                return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
-                            }, []);
-                        }))].map(namespace => ({
-                        label: namespace,
-                        value: namespace
-                    }));
-                }
-                return [];
+        title: t("filter.titles.flow_filters"),
+        searchPlaceholder: t("filter.search_placeholders.search_flows"),
+        keys: [
+            {
+                key: "namespace",
+                label: t("filter.namespace.label"),
+                description: t("filter.namespace.description"),
+                comparators: [
+                    Comparators.IN,
+                    Comparators.NOT_IN,
+                    Comparators.CONTAINS,
+                    Comparators.PREFIX,
+                ],
+                valueType: "multi-select",
+                valueProvider: async () => {
+                    const user = useAuthStore().user;
+                    if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
+                        const namespacesStore = useNamespacesStore();
+                        const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
+                        return [...new Set(namespaces
+                            .flatMap(namespace => {
+                                return namespace.split(".").reduce((current: string[], part: string) => {
+                                    const previousCombination = current?.[current.length - 1];
+                                    return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
+                                }, []);
+                            }))].map(namespace => ({
+                                label: namespace,
+                                value: namespace
+                            }));
+                    }
+                    return [];
+                },
+                searchable: true
             },
-            searchable: true
-        },
-        {
-            key: "scope",
-            label: t("filter.scope_flow.label"),
-            description: t("filter.scope_flow.description"),
-            comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-            valueType: "radio",
-            valueProvider: async () => {
-                const {VALUES} = useValues("flows");
-                return VALUES.SCOPES;
+            {
+                key: "scope",
+                label: t("filter.scope_flow.label"),
+                description: t("filter.scope_flow.description"),
+                comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                valueType: "radio",
+                valueProvider: async () => {
+                    const {VALUES} = useValues("flows");
+                    return VALUES.SCOPES;
+                },
+                showComparatorSelection: false
             },
-            showComparatorSelection: false
-        },
-        {
-            key: "labels",
-            label: t("filter.labels_flow.label"),
-            description: t("filter.labels_flow.description"),
-            comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-            valueType: "text",
-        },
-    ]
+            {
+                key: "labels",
+                label: t("filter.labels_flow.label"),
+                description: t("filter.labels_flow.description"),
+                comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                valueType: "text",
+            },
+        ]
     };
 });

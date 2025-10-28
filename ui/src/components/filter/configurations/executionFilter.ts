@@ -9,133 +9,134 @@ import {useI18n} from "vue-i18n";
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
-    
+
     return {
-    title: t("filter.titles.execution_filters"),
-    searchPlaceholder: t("filter.search_placeholders.search_executions"),
-    keys: [
-        {
-            key: "namespace",
-            label: t("filter.namespace.label"),
-            description: t("filter.namespace.description"),
-            comparators: [
-                Comparators.IN,
-                Comparators.NOT_IN,
-                Comparators.CONTAINS,
-            ],
-            valueType: "multi-select",
-            valueProvider: async () => {
-                const user = useAuthStore().user;
-                if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
-                    const namespacesStore = useNamespacesStore();
-                    const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
-                    return [...new Set(namespaces
-                        .flatMap(namespace => {
-                            return namespace.split(".").reduce((current: string[], part: string) => {
-                                const previousCombination = current?.[current.length - 1];
-                                return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
-                            }, []);
-                        }))].map(namespace => ({
-                        label: namespace,
-                        value: namespace
-                    }));
+        title: t("filter.titles.execution_filters"),
+        searchPlaceholder: t("filter.search_placeholders.search_executions"),
+        keys: [
+            {
+                key: "namespace",
+                label: t("filter.namespace.label"),
+                description: t("filter.namespace.description"),
+                comparators: [
+                    Comparators.IN,
+                    Comparators.NOT_IN,
+                    Comparators.CONTAINS,
+                    Comparators.PREFIX,
+                ],
+                valueType: "multi-select",
+                valueProvider: async () => {
+                    const user = useAuthStore().user;
+                    if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
+                        const namespacesStore = useNamespacesStore();
+                        const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
+                        return [...new Set(namespaces
+                            .flatMap(namespace => {
+                                return namespace.split(".").reduce((current: string[], part: string) => {
+                                    const previousCombination = current?.[current.length - 1];
+                                    return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
+                                }, []);
+                            }))].map(namespace => ({
+                                label: namespace,
+                                value: namespace
+                            }));
+                    }
+                    return [];
+                },
+                searchable: true
+            },
+            {
+                key: "flowId",
+                label: t("filter.flowId.label"),
+                description: t("filter.flowId.description"),
+                comparators: [
+                    Comparators.EQUALS,
+                    Comparators.NOT_EQUALS,
+                    Comparators.CONTAINS,
+                    Comparators.STARTS_WITH,
+                    Comparators.ENDS_WITH,
+                ],
+                valueType: "text",
+            },
+            {
+                key: "kind",
+                label: t("filter.kind.label"),
+                description: t("filter.kind.description"),
+                comparators: [Comparators.EQUALS],
+                valueType: "radio",
+                valueProvider: async () => {
+                    const {VALUES} = useValues("executions");
+                    return VALUES.KINDS;
                 }
-                return [];
             },
-            searchable: true
-        },
-        {
-            key: "flowId",
-            label: t("filter.flowId.label"),
-            description: t("filter.flowId.description"),
-            comparators: [
-                Comparators.EQUALS,
-                Comparators.NOT_EQUALS,
-                Comparators.CONTAINS,
-                Comparators.STARTS_WITH,
-                Comparators.ENDS_WITH,
-            ],
-            valueType: "text",
-        },
-        {
-            key: "kind",
-            label: t("filter.kind.label"),
-            description: t("filter.kind.description"),
-            comparators: [Comparators.EQUALS],
-            valueType: "radio",
-            valueProvider: async () => {
-                const {VALUES} = useValues("executions");
-                return VALUES.KINDS;
-            }
-        },
-        {
-            key: "state",
-            label: t("filter.state.label"),
-            description: t("filter.state.description"),
-            comparators: [Comparators.IN, Comparators.NOT_IN],
-            valueType: "multi-select",
-            valueProvider: async () => {
-                const {VALUES} = useValues("executions");
-                return VALUES.EXECUTION_STATES;
+            {
+                key: "state",
+                label: t("filter.state.label"),
+                description: t("filter.state.description"),
+                comparators: [Comparators.IN, Comparators.NOT_IN],
+                valueType: "multi-select",
+                valueProvider: async () => {
+                    const {VALUES} = useValues("executions");
+                    return VALUES.EXECUTION_STATES;
+                },
+                showComparatorSelection: true,
+                searchable: true
             },
-            showComparatorSelection: true,
-            searchable: true
-        },
-        {
-            key: "scope",
-            label: t("filter.scope.label"),
-            description: t("filter.scope.description"),
-            comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-            valueType: "radio",
-            valueProvider: async () => {
-                const {VALUES} = useValues("executions");
-                return VALUES.SCOPES;
+            {
+                key: "scope",
+                label: t("filter.scope.label"),
+                description: t("filter.scope.description"),
+                comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                valueType: "radio",
+                valueProvider: async () => {
+                    const {VALUES} = useValues("executions");
+                    return VALUES.SCOPES;
+                },
+                showComparatorSelection: false
             },
-            showComparatorSelection: false
-        },
-        {
-            key: "childFilter",
-            label: t("filter.childFilter.label"),
-            description: t("filter.childFilter.description"),
-            comparators: [Comparators.EQUALS],
-            valueType: "radio",
-            valueProvider: async () => {
-                const {VALUES} = useValues("executions");
-                return VALUES.CHILDS;
+            {
+                key: "childFilter",
+                label: t("filter.childFilter.label"),
+                description: t("filter.childFilter.description"),
+                comparators: [Comparators.EQUALS],
+                valueType: "radio",
+                valueProvider: async () => {
+                    const {VALUES} = useValues("executions");
+                    return VALUES.CHILDS;
+                }
+            },
+            {
+                key: "timeRange",
+                label: t("filter.timeRange.label"),
+                description: t("filter.timeRange.description"),
+                comparators: [Comparators.EQUALS],
+                valueType: "select",
+                valueProvider: async () => {
+                    const {VALUES} = useValues("executions");
+                    return VALUES.RELATIVE_DATE;
+                }
+            },
+            {
+                key: "labels",
+                label: t("filter.labels_execution.label"),
+                description: t("filter.labels_execution.description"),
+                comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
+                valueType: "text",
+            },
+            {
+                key: "triggerExecutionId",
+                label: t("filter.triggerExecutionId.label"),
+                description: t("filter.triggerExecutionId.description"),
+                comparators: [
+                    Comparators.EQUALS,
+                    Comparators.NOT_EQUALS,
+                    Comparators.CONTAINS,
+                    Comparators.STARTS_WITH,
+                    Comparators.ENDS_WITH
+                ],
+                valueType: "text",
+                searchable: true
             }
-        },
-        {
-            key: "timeRange",
-            label: t("filter.timeRange.label"),
-            description: t("filter.timeRange.description"),
-            comparators: [Comparators.EQUALS],
-            valueType: "select",
-            valueProvider: async () => {
-                const {VALUES} = useValues("executions");
-                return VALUES.RELATIVE_DATE;
-            }
-        },
-        {
-            key: "labels",
-            label: t("filter.labels_execution.label"),
-            description: t("filter.labels_execution.description"),
-            comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-            valueType: "text",
-        },
-        {
-            key: "triggerExecutionId",
-            label: t("filter.triggerExecutionId.label"),
-            description: t("filter.triggerExecutionId.description"),
-            comparators: [
-                Comparators.EQUALS,
-                Comparators.NOT_EQUALS,
-                Comparators.CONTAINS,
-                Comparators.STARTS_WITH,
-                Comparators.ENDS_WITH
-            ],
-            valueType: "text",
-            searchable: true
-        }
-    ]
+        ]
     };
 });

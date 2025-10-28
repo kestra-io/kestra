@@ -22,6 +22,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => computed(() 
                 Comparators.IN,
                 Comparators.NOT_IN,
                 Comparators.CONTAINS,
+                Comparators.PREFIX,
             ],
             valueType: "multi-select",
             valueProvider: async () => {

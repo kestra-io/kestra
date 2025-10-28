@@ -76,8 +76,8 @@ export const encodeFiltersToQuery = (filters: Filter[], keyOfComparator: (compar
                 const processedValue = Array.isArray(value)
                     ? value.join(",")
                     : typeof value === "object" && "startDate" in value
-                    ? `${value.startDate.toISOString()},${value.endDate.toISOString()}`
-                    : value;
+                        ? `${value.startDate.toISOString()},${value.endDate.toISOString()}`
+                        : value;
                 query[`filters[${key}][${comparatorKey}]`] = processedValue?.toString() ?? "";
                 return query;
             }
@@ -101,7 +101,7 @@ export const isValidFilter = (filter: Filter): boolean => {
     }
 };
 
-export const getUniqueFilters = <T extends {key: string}>(filters: T[]): T[] =>
+export const getUniqueFilters = <T extends { key: string }>(filters: T[]): T[] =>
     filters.filter((filter, index, self) =>
         index === self.findLastIndex(f => f.key === filter.key)
     );

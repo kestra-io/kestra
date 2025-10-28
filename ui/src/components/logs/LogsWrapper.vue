@@ -3,7 +3,7 @@
     <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
             <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="pageSize" :page="pageNumber" :embed="embed">
-                <template #navbar v-if="!embed">
+                <template #navbar v-if="!embed || showFilters">
                     <KSFilter
                         :configuration="logFilter"
                         :tableOptions="{
@@ -75,6 +75,10 @@
                 default: undefined
             },
             embed: {
+                type: Boolean,
+                default: false
+            },
+            showFilters: {
                 type: Boolean,
                 default: false
             },

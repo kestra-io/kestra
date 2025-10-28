@@ -586,6 +586,7 @@
       "title": "Was gibt's Neues bei Kestra"
     },
     "file preview truncated": "Angezeigter Inhalt wurde abgeschnitten",
+    "fileTypeNotAllowed": "Dateityp nicht erlaubt. Akzeptierte Typen: {types}",
     "files": "Dateien",
     "filter": {
       "active key value pairs": "Aktive Key/Value-Paare",

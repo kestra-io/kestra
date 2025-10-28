@@ -1,8 +1,10 @@
 package io.kestra.core.validations;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -65,6 +67,50 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isFalse();
+    }
+    
+    @Test
+    void shouldGetConstraintErrorGivenInputWithBothDefaultsAndSuggestion() {
+        // Given
+        GenericFlow flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
+            id: test
+            namespace: unittest
+            inputs:
+              - id: input
+                type: STRING
+                prefill: "suggestion"
+                defaults: "defaults"
+            tasks: []
+            """);
+        
+        // When
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        
+        // Then
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getMessage()).contains("Inputs with a default value cannot also have a suggestion.");
+    }
+    
+    @Test
+    void shouldGetConstraintErrorGivenOptionalInputWithDefault() {
+        // Given
+        GenericFlow flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
+            id: test
+            namespace: unittest
+            inputs:
+              - id: input
+                type: STRING
+                defaults: "defaults"
+                required: false
+            tasks: []
+            """);
+        
+        // When
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+        
+        // Then
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getMessage()).contains("Inputs with a default value must be required, since the default is always applied.");
     }
 
     private Flow parse(String path) {

@@ -586,6 +586,7 @@
       "title": "Kestra的最新动态"
     },
     "file preview truncated": "显示的内容已被截断",
+    "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
     "files": "文件",
     "filter": {
       "active key value pairs": "活动的key/value对",

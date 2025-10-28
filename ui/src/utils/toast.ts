@@ -81,10 +81,10 @@ export const makeToast = (t: (t:string, options?: Record<string, string>) => str
             ...options
         })
     },
-    error: function(message:string, title:string, options?: Record<string, any>) {
+    error: function(message:string, title?:string, options?: Record<string, any>) {
         ElNotification({
 
-                title: title || t("error"),
+                title: title ?? t("error"),
                 message: this._wrap(message),
                 position: "bottom-right",
                 type: "error",

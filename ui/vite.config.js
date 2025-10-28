@@ -5,35 +5,28 @@ import vue from "@vitejs/plugin-vue";
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
-export const manualChunks = {
-    // bundle dashboard and all its dependencies in a single chunk
-    "dashboard": [
-        "src/components/dashboard/Dashboard.vue",
-        "src/components/dashboard/components/Create.vue",
-        "src/override/components/dashboard/Edit.vue"
-    ],
-    // bundle flows and all its dependencies in a second chunk
-    "flows": [
-        "src/components/flows/Flows.vue",
-        "src/components/flows/FlowCreate.vue",
-        "src/components/flows/FlowsSearch.vue",
-        "src/components/flows/FlowRoot.vue"
-    ],
-    "markdownDeps": [
-        "shiki/langs/yaml.mjs",
-        "shiki/langs/python.mjs",
-        "shiki/langs/javascript.mjs",
-        "src/utils/markdownDeps.ts"
-    ]
-}
-
 export default defineConfig({
     base: "",
     build: {
         outDir: "../webserver/src/main/resources/ui",
         rollupOptions: {
             output: {
-                manualChunks
+                advancedChunks: {
+                    groups: [
+                        {
+                            test: /src\/components\/dashboard/i,
+                            name: "dashboard",
+                        },
+                        {
+                            test: /src\/components\/flows/i,
+                            name: "flows",
+                        },
+                        {
+                            test: /(shiki\/langs)|(src\/utils\/markdownDeps)/,
+                            name: "markdownDeps",
+                        },
+                    ],
+                }
             }
         }
     },

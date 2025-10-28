@@ -6,77 +6,72 @@
         :disabled="!enabled"
         class="ms-0 me-1"
     >
-        {{ $t('pause') }}
+        {{ t('pause') }}
     </component>
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="$t('pause title', {id: execution.id})" />
+            <span v-html="t('pause title', {id: execution.id})" />
         </template>
         <template #footer>
             <el-button :icon="PauseBox" type="primary" @click="pause()" nativeType="submit">
-                {{ $t('pause') }}
+                {{ t('pause') }}
             </el-button>
         </template>
     </el-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
-</script>
-
-<script>
-    import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
-    import {useAuthStore} from "override/stores/auth"
+    import {State} from "@kestra-io/ui-libs";
+    import {useAuthStore} from "override/stores/auth";
+    import {computed, ref} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useToast} from "../../utils/toast";
 
-    export default {
-        props: {
-            execution: {
-                type: Object,
-                required: true
-            },
-            component: {
-                type: String,
-                default: "el-button"
-            },
+    const props = defineProps({
+        execution: {
+            type: Object,
+            required: true
         },
-        data() {
-            return {
-                isDrawerOpen: false,
-            };
-        },
-        methods: {
-            click() {
-                this.$toast()
-                    .confirm(this.$t("pause confirm", {id: this.execution.id}), () => {
-                        return this.pause();
-                    });
-            },
-            pause() {
-                this.executionsStore
-                    .pause({
-                        id: this.execution.id
-                    })
-                    .then(() => {
-                        this.isDrawerOpen = false;
-                        this.$toast().success(this.$t("pause done"));
-                    });
-            }
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
-            enabled() {
-                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false;
-                }
+        component: {
+            type: String,
+            default: "el-button"
+        }
+    });
 
-                return State.isRunning(this.execution.state.current) && ! State.isPaused(this.execution.state.current);
-            }
-        },
+    const {t} = useI18n();
+    const executionsStore = useExecutionsStore();
+    const authStore = useAuthStore();
+    const toast = useToast();
+
+    const isDrawerOpen = ref(false);
+
+    const enabled = computed(() => {
+        if (!authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace)) {
+            return false;
+        }
+        return State.isRunning(props.execution.state.current) && !State.isPaused(props.execution.state.current);
+    });
+
+    const click = () => {
+        isDrawerOpen.value = true;
+    };
+
+    const pause = () => {
+        toast.confirm(t("pause confirm", {id: props.execution.id}), () => {
+            return executionsStore
+                .pause({
+                    id: props.execution.id
+                })
+                .then(() => {
+                    isDrawerOpen.value = false;
+                    toast.success(t("pause done"));
+                });
+        });
     };
 </script>
 

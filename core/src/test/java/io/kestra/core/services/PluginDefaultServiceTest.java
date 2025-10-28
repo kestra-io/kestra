@@ -158,7 +158,7 @@ class PluginDefaultServiceTest {
               forced: false
               values:
                 expression: "{{ test }}"
-                  """,
+            """,
             DefaultTester.class.getName(),
             DefaultTriggerTester.class.getName(),
             Expression.class.getName()

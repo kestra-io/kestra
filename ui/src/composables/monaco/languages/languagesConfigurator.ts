@@ -3,7 +3,6 @@ import {useI18n} from "vue-i18n";
 import {editor} from "monaco-editor/esm/vs/editor/editor.api";
 import {YamlLanguageConfigurator} from "./yamlLanguageConfigurator";
 import {PebbleLanguageConfigurator} from "./pebbleLanguageConfigurator";
-import FilterLanguageConfigurator, {languages as filterLanguages} from "./filters/filterLanguageConfigurator";
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
 import {YamlAutoCompletion} from "../../../services/autoCompletionProvider";
 import {usePluginsStore} from "../../../stores/plugins";
@@ -28,12 +27,9 @@ export default async function configure(
             yamlAutocompletion = new YamlAutoCompletion();
         }
         await new YamlLanguageConfigurator(yamlAutocompletion).configure(pluginsStore, t, editorInstance);
-    } else if(language === "plaintext-pebble") {
+    } else if(language.endsWith("-pebble")) {
         const autoCompletion = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore, computed(() => flowStore.flowYaml));
-        await new PebbleLanguageConfigurator(autoCompletion, computed(() => flowStore.flowYaml))
-            .configure(pluginsStore, t, editorInstance);
-    } else if (filterLanguages.some(languageRegex => languageRegex.test(language))) {
-        await new FilterLanguageConfigurator(language, domain)
+        await new PebbleLanguageConfigurator(language, autoCompletion, computed(() => flowStore.flowYaml))
             .configure(pluginsStore, t, editorInstance);
     }
 }

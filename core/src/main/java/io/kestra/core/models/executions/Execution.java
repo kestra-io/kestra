@@ -496,7 +496,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         }
 
         if (resolvedFinally != null && (
-            this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailed(resolvedTasks, parentTaskRun
+            this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailedNoRetry(resolvedTasks, parentTaskRun
         ))) {
             return resolvedFinally;
         }
@@ -581,6 +581,13 @@ public class Execution implements DeletedInterface, TenantInterface {
         return Streams.findLast(taskRuns
             .stream()
             .filter(t -> t.getState().isCreated())
+        );
+    }
+
+    public Optional<TaskRun> findLastSubmitted(List<TaskRun> taskRuns) {
+        return Streams.findLast(taskRuns
+            .stream()
+            .filter(t -> t.getState().getCurrent() == State.Type.SUBMITTED)
         );
     }
 

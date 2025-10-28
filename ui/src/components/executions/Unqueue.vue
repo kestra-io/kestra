@@ -44,67 +44,67 @@
     </el-dialog>
 </template>
 
-<script setup>
-    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
-</script>
-
-<script>
-    import {mapStores} from "pinia";
+<script setup lang="ts">
+    import {computed, ref} from "vue";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import Status from "../../components/Status.vue";
     import {useAuthStore} from "override/stores/auth"
+    import {useI18n} from "vue-i18n";
+    import {useToast} from "../../utils/toast";
+    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
 
-    export default {
-        components: {Status},
-        props: {
-            execution: {
-                type: Object,
-                required: true
-            },
-            component: {
-                type: String,
-                default: "el-button"
-            },
-        },
-        data() {
-            return {
-                isDrawerOpen: false,
-                selectedStatus: State.RUNNING,
-            };
-        },
-        methods: {
-            unqueue() {
-                this.executionsStore
-                    .unqueue({
-                        id: this.execution.id,
-                        state: this.selectedStatus
-                    })
-                    .then(() => {
-                        this.isDrawerOpen = false;
-                        this.$toast().success(this.$t("unqueue done"));
-                    });
-            }
-        },
-        computed: {
-            ...mapStores(useExecutionsStore, useAuthStore),
-            states() {
-                return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
-                    code: value,
-                    label: this.$t("unqueue as", {status: value}),
-                }));
-            },
-            enabled() {
-                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false;
-                }
+    interface Execution {
+        id: string;
+        namespace: string;
+        state: {
+            current: string;
+        };
+    }
 
-                return State.isQueued(this.execution.state.current);
-            }
-        },
-    };
+    const props = withDefaults(defineProps<{
+        execution: Execution;
+        component?: string;
+    }>(), {
+        component: "el-button"
+    });
+
+    const {t} = useI18n();
+    const toast = useToast();
+    const executionsStore = useExecutionsStore();
+    const authStore = useAuthStore();
+
+    const isDrawerOpen = ref(false);
+    const selectedStatus = ref(State.RUNNING);
+
+    const states = computed(() => {
+        return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
+            code: value,
+            label: t("unqueue as", {status: value}),
+        }));
+    });
+
+    const enabled = computed(() => {
+        if (!(authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace))) {
+            return false;
+        }
+
+        return State.isQueued(props.execution.state.current);
+    });
+
+    const unqueue = () => {
+        executionsStore
+            .unqueue({
+                id: props.execution.id,
+                state: selectedStatus.value
+            })
+            .then(() => {
+                isDrawerOpen.value = false;
+                toast.success(t("unqueue done"));
+            });
+    }
 </script>
 
 <style scoped lang="scss">

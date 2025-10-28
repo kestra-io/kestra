@@ -19,24 +19,21 @@
 
 <script lang="ts" setup>
     import {computed, useSlots} from "vue";
-    import {useStorage} from "@vueuse/core";
     import MultiPanelEditorTabs from "./MultiPanelEditorTabs.vue";
     import MultiPanelTabs from "./MultiPanelTabs.vue";
-    import {DeserializableEditorElement, Panel, Tab} from "../utils/multiPanelTypes";
+    import {EditorElement, Panel} from "../utils/multiPanelTypes";
+    import {useStoredPanels} from "../composables/useStoredPanels";
 
     const props = withDefaults(defineProps<{
-        editorElements: DeserializableEditorElement[];
+        editorElements: EditorElement[];
         defaultActiveTabs: string[];
-        saveKey: string;
+        saveKey?: string;
         bottomVisible?: boolean;
         preSerializePanels?: (panels: Panel[]) => any;
     }>(), {
         bottomVisible: false,
-        preSerializePanels: (ps: Panel[]) => ps.map(p => ({
-            tabs: p.tabs.map(t => t.value),
-            activeTab: p.activeTab?.value,
-            size: p.size,
-        }))
+        preSerializePanels: undefined,
+        saveKey: undefined,
     });
 
     const slots = useSlots();
@@ -45,19 +42,19 @@
 
     function focusTab(tabValue: string){
         for(const panel of panels.value){
-            const t = panel.tabs.find(e => e.value === tabValue);
+            const t = panel.tabs.find(e => e.uid === tabValue);
             if(t) panel.activeTab = t;
         }
     }
 
     function getPanelFromValue(value: string): {panel: Panel, prepend: boolean} | undefined {
         for (const element of props.editorElements) {
-            const deserializedTab = element.deserialize(value, false);
+            const deserializedTab = element.deserialize(value, true);
             if (deserializedTab) {
                 return {
                     panel: {
-                        activeTab: element,
-                        tabs: [element],
+                        activeTab: deserializedTab,
+                        tabs: [deserializedTab],
                         size: defaultPanelSize.value,
                     },
                     prepend: element.prepend ?? false
@@ -66,16 +63,7 @@
         }
     };
 
-    function deserializeTabTags(tags: string[]): Tab[] {
-        return tags.map(tag => {
-            for (const element of props.editorElements) {
-                const deserializedTab = element.deserialize(tag, true);
-                if (deserializedTab) {
-                    return deserializedTab;
-                }
-            }
-        }).filter(t => t !== undefined) as Tab[];
-    }
+    const panels = useStoredPanels(props.saveKey, props.editorElements, props.defaultActiveTabs, props.preSerializePanels);
 
     const emit = defineEmits<{
         (e: "set-tab-value", tabValue: string): void | false;
@@ -88,7 +76,7 @@
         }
 
         if(openTabs.value.includes(tabValue)){
-            focusTab(tabValue);
+            onRemoveTab(tabValue);
             return;
         }
 
@@ -102,47 +90,15 @@
         }
     }
 
-    const panels = useStorage<Panel[]>(
-        props.saveKey,
-        deserializeTabTags(props.defaultActiveTabs).map((t) => {
-            return {
-                activeTab: t,
-                tabs: [t],
-                size: 100 / props.defaultActiveTabs.length
-            };
-        }),
-        undefined,
-        {
-            serializer: {
-                write(v: Panel[]){
-                    return JSON.stringify(props.preSerializePanels(v));
-                },
-                read(v?: string) {
-                    if(!v) return null;
-                    const panels = JSON.parse(v);
-                    return panels
-                        .filter((p: any) => p.tabs.length)
-                        .map((p: {tabs: string[], activeTab: string, size: number}):Panel => {
-                            const tabs = deserializeTabTags(p.tabs);
-                            const activeTab = tabs.find((t: any) => t.value === p.activeTab) ?? tabs[0];
-                            return {
-                                activeTab,
-                                tabs,
-                                size: p.size
-                            };
-                        });
-                }
-            },
-        }
-    );
 
-    const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)));
+
+    const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.uid)));
 
     function onRemoveTab(tabValue: string) {
-        const panel = panels.value.find(p => p.tabs.some(t => t.value === tabValue))
+        const panel = panels.value.find(p => p.tabs.some(t => t.uid === tabValue))
         if (panel) {
-            panel.tabs = panel.tabs.filter(t => t.value !== tabValue)
-            if (panel.activeTab.value === tabValue) {
+            panel.tabs = panel.tabs.filter(t => t.uid !== tabValue)
+            if (panel.activeTab.uid === tabValue) {
                 panel.activeTab = panel.tabs[0]
             }
         }

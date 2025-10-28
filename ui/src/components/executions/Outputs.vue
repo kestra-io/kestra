@@ -1,53 +1,37 @@
 <template>
-    <el-dropdown-item
-        :icon="LocationExit"
-        :disabled="!outputs || outputs.length === 0"
-        @click="isOpen = !isOpen"
-    >
-        {{ $t('outputs') }}
+    <el-dropdown-item :disabled :icon="LocationExit" @click="isOpen = !isOpen">
+        {{ $t("outputs") }}
     </el-dropdown-item>
 
-    <Drawer
-        v-if="isOpen"
-        v-model="isOpen"
-        :title="$t('outputs')"
-    >
+    <Drawer v-if="isOpen" v-model="isOpen" :title="$t('outputs')">
         <Vars
-            :execution="execution"
+            :execution="props.execution"
             class="table-unrounded mt-1"
-            :data="outputs"
+            :data="props.outputs"
         />
     </Drawer>
 </template>
 
-<script setup>
-    import LocationExit from "vue-material-design-icons/LocationExit.vue";
-</script>
+<script setup lang="ts">
+    import {computed, ref, type PropType} from "vue";
 
-<script>
-    import Vars from "../executions/Vars.vue";
     import Drawer from "../Drawer.vue";
+    import Vars from "../executions/Vars.vue";
 
-    export default {
-        components: {
-            Vars,
-            Drawer,
+    import LocationExit from "vue-material-design-icons/LocationExit.vue";
+
+    const props = defineProps({
+        outputs: {
+            type: Object as PropType<object>,
+            default: () => ({}),
         },
-        props: {
-            outputs: {
-                type: Object,
-                required: false,
-                default: () => {}
-            },
-            execution: {
-                type: Object,
-                required: true
-            }
+        execution: {
+            type: Object as PropType<object>,
+            required: true,
         },
-        data() {
-            return {
-                isOpen: false,
-            };
-        },
-    };
+    });
+
+    const isOpen = ref(false);
+
+    const disabled = computed(() => !props.outputs || Object.keys(props.outputs).length === 0);
 </script>

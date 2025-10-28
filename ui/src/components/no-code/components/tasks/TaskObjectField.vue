@@ -3,7 +3,7 @@
         v-if="simpleType === 'list'"
         ref="taskComponent"
         :is="type"
-        v-bind="{...componentProps}"
+        v-bind="componentProps"
         :disabled
         class="mt-1 mb-2 wrapper"
     />
@@ -56,7 +56,7 @@
             v-if="!isBoolean"
             ref="taskComponent"
             :is="type"
-            v-bind="{...componentProps}"
+            v-bind="componentProps"
             :disabled
             class="mt-1 mb-2 wrapper"
         />

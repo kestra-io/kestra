@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -96,15 +97,28 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     }
 
     @Override
-    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
-        // lastEvaluation date is the last one from the trigger context or the first date of the list
-        return last
-            .map(throwFunction(context -> nextDate(conditionContext.getRunContext(), date -> date.isAfter(context.getDate()))
-                .orElse(ZonedDateTime.now().plusYears(1) // it's not ideal, but we need a date or the trigger will keep evaluated
-            )))
-            .orElse(conditionContext.getRunContext().render(dates).asList(ZonedDateTime.class).stream().sorted().findFirst().orElse(ZonedDateTime.now()))
-            .truncatedTo(ChronoUnit.SECONDS);
+    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
+        try {
+            return last
+                .map(throwFunction(context ->
+                    nextDate(conditionContext.getRunContext(), date -> date.isAfter(context.getDate()))
+                        .orElse(ZonedDateTime.now().plusYears(1))
+                ))
+                .orElse(conditionContext.getRunContext()
+                    .render(dates)
+                    .asList(ZonedDateTime.class)
+                    .stream()
+                    .sorted()
+                    .findFirst()
+                    .orElse(ZonedDateTime.now()))
+                .truncatedTo(ChronoUnit.SECONDS);
+        } catch (IllegalVariableEvaluationException e) {
+            log.warn("Failed to evaluate schedule dates for trigger '{}': {}", this.getId(), e.getMessage());
+            return ZonedDateTime.now().plusYears(1);
+        }
     }
+
+
 
     @Override
     public ZonedDateTime nextEvaluationDate() {

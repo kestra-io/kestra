@@ -97,7 +97,6 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     }
 
     @FlakyTest
-    @Disabled
     @Test
     void shouldReEmitTasksWhenWorkerIsDetectedAsNonResponding() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);
@@ -210,7 +209,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         assertThat(receive.blockLast().getTaskRun().getState().getCurrent()).isNotEqualTo(Type.SUCCESS);
     }
 
-    @Disabled
+    @FlakyTest
     @Test
     void shouldReEmitTriggerWhenWorkerIsDetectedAsNonResponding() throws Exception {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);

@@ -44,30 +44,29 @@
 
         <template v-else-if="typeof modelValue === 'object' && modelValue !== null && !Array.isArray(modelValue)">
             <TaskDict
-                :modelValue="modelValue"
-                :task="task"
+                :modelValue
                 @update:model-value="
                     (value) => $emit('update:modelValue', value)
                 "
-                :root="root"
+                :root
                 :schema="schema ?? {}"
-                :required="required"
-                :definitions="definitions"
+                :required
+                :definitions
             />
         </template>
     </el-form>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
+    import {computed, inject, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import TaskDict from "./TaskDict.vue";
     import Wrapper from "./Wrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
     import {collapseEmptyValues} from "./MixinTask";
+    import {DATA_TYPES_MAP_INJECTION_KEY} from "../../injectionKeys";
 
     defineOptions({
-        name: "TaskObject",
         inheritAttrs: false,
     });
 
@@ -82,8 +81,6 @@
         required?: boolean;
         schema?: Schema;
         definitions?: any;
-        // passed-through by parent in some contexts
-        task?: any;
         root?: string;
     }>();
 
@@ -95,15 +92,21 @@
 
     const activeNames = ref<string[]>([]);
 
-    const FIRST_FIELDS = ["id", "forced", "on", "type"] as const;
+    const FIRST_FIELDS = ["id", "forced", "on", "field", "type"];
 
     type Entry = [string, any];
 
     function sortProperties(properties: Entry[], required?: string[]): Entry[] {
         if (!properties?.length) return [];
         return properties.slice().sort((a, b) => {
-            if (FIRST_FIELDS.includes(a[0] as any)) return -1;
-            if (FIRST_FIELDS.includes(b[0] as any)) return 1;
+            if (FIRST_FIELDS.includes(a[0]) && !FIRST_FIELDS.includes(b[0])) return -1;
+            if (FIRST_FIELDS.includes(b[0]) && !FIRST_FIELDS.includes(a[0])) return 1;
+
+            const aIndex = FIRST_FIELDS.indexOf(a[0]);
+            const bIndex = FIRST_FIELDS.indexOf(b[0]);
+            if(aIndex !== -1 && bIndex !== -1){
+                return aIndex - bIndex;
+            }
 
             const aRequired = (required || []).includes(a[0]);
             const bRequired = (required || []).includes(b[0]);
@@ -144,8 +147,19 @@
 
     const isRequired = (key: string) => Boolean(props.schema?.required?.includes(key));
 
+    const dataTypesMap = inject(DATA_TYPES_MAP_INJECTION_KEY, ref<Record<string, string[] | undefined>>({}));
+
     const requiredProperties = computed<Entry[]>(() => {
-        return props.merge ? sortedProperties.value : sortedProperties.value.filter(([p, v]) => v && isRequired(p));
+        const properties =  props.merge ? sortedProperties.value : sortedProperties.value.filter(([p, v]) => v && isRequired(p));
+        const dataTypes = dataTypesMap.value[props.root ?? ""]
+        if(dataTypes){
+            properties.unshift(["type", {
+                type: "string",
+                enum: dataTypes,
+                $required: true,
+            }]);
+        }
+        return properties;
     });
 
     const protectedRequiredProperties = computed<Entry[]>(() => {

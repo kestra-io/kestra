@@ -6,11 +6,11 @@
         :defaultActiveTabs="TABS"
         :saveKey="`el-fl-${flowStore.flow?.namespace ?? `creation-${flowStore.creationId}`}${flowStore.flow?.id ? `-${flowStore.flow?.id}` : ''}`"
         :preSerializePanels="preSerializePanels"
+        :bottomVisible="playgroundMode"
         @set-tab-value="setTabValue"
-        @remove-tab="onRemoveTab"
     >
         <template #actions>
-            <EditorButtonsWrapper />
+            <EditorButtonsWrapper :haveChange />
         </template>
         <template #bottom-panel>
             <FlowPlayground v-if="playgroundMode" />
@@ -25,10 +25,8 @@
     import {computed, markRaw, onMounted, onUnmounted, ref, watch} from "vue";
     import {useRoute} from "vue-router";
     import Utils from "../../utils/utils";
-    import {useI18n} from "vue-i18n";
     import {useCoreStore} from "../../stores/core";
     import {usePlaygroundStore} from "../../stores/playground";
-    import {useEditorStore} from "../../stores/editor";
 
     import FlowPlayground from "./FlowPlayground.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
@@ -39,16 +37,16 @@
     import {useTopologyPanels} from "./useTopologyPanels";
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
 
-    import {setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodeHandlers, useNoCodePanels} from "./useNoCodePanels";
+    import {useNoCodePanelsFull} from "./useNoCodePanels";
     import {useFlowStore} from "../../stores/flow";
     import {trackTabOpen} from "../../utils/tabTracking";
     import {Panel, Tab} from "../../utils/multiPanelTypes";
     import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue";
 
     function isTabFlowRelated(element: Tab){
-        return ["code", "nocode", "topology"].includes(element.value)
+        return ["code", "nocode", "topology"].includes(element.uid)
             // when the flow file is dirty all the nocode tabs get splashed
-            || element.value.startsWith("nocode-")
+            || element.uid.startsWith("nocode-")
     }
 
     const RawNoCode = markRaw(NoCode)
@@ -61,7 +59,6 @@
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
 
     onMounted(() => {
-        useEditorStore().explorerVisible = false
         // Ensure the Flow Code panel is open and focused when arriving with ai=open
         if(route.query.ai === "open"){
             editorView.value?.setTabValue("code")
@@ -77,14 +74,6 @@
         playgroundStore.clearExecutions()
     })
 
-    /**
-     * Focus or activate a tab from it's value
-     * @param tabValue
-     */
-    function focusTab(tabValue: string){
-        editorView.value?.setTabValue(tabValue)
-    }
-
     function setTabValue(tabValue: string) {
         // Show dialog instead of creating panel
         if(tabValue === "keyshortcuts"){
@@ -93,13 +82,7 @@
         }
     }
 
-    const {t} = useI18n()
-
-    const {setupInitialCodeTab} = useInitialFilesTabs()
-
-    const codeElement = EDITOR_ELEMENTS.find(e => e.value === "code")!
-    codeElement!.deserialize = (value: string) => setupInitialCodeTab(value, codeElement)
-
+    useInitialFilesTabs(EDITOR_ELEMENTS)
 
     const isTourRunning = computed(() => coreStore.guidedProperties?.tourStarted)
     const DEFAULT_TOUR_TABS = ["code", "topology"];
@@ -111,19 +94,26 @@
 
     function preSerializePanels(v:Panel[]){
         return v.map(p => ({
-            tabs: p.tabs.map(t => t.value),
-            activeTab: cleanupNoCodeTabKey(p.activeTab?.value),
+            tabs: p.tabs.map(t => t.uid),
+            activeTab: cleanupNoCodeTabKey(p.activeTab?.uid),
             size: p.size,
         }))
     }
 
-    const openTabs = computed(() => {
-        return editorView.value?.openTabs ?? []
-    })
+    const haveChange = computed(() => flowStore.haveChange || panels.value.some(panel =>
+        panel.tabs.some(tab => tab.dirty)
+    ))
 
+    const {panels, actions} = useNoCodePanelsFull({
+        RawNoCode,
+        editorView,
+        editorElements: EDITOR_ELEMENTS,
+        source: computed(() => flowStore.flowYaml),
+    });
 
+    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS : DEFAULT_ACTIVE_TABS;
 
-    const panels = computed<Panel[]>(() => editorView.value?.panels ?? [])
+    flowStore.creationId = flowStore.creationId ?? Utils.uid()
 
     // Track initial tabs opened while editing or creating flow.
     let hasTrackedInitialTabs = false;
@@ -135,30 +125,11 @@
         }
     }, {immediate: true});
 
-    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useFilesPanels(panels)
-
-    const actions = useNoCodePanels(RawNoCode, panels, openTabs, focusTab)
-
-    const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, actions)
-
-    const noCodeElement = EDITOR_ELEMENTS.find(e => e.value === "nocode")!
-    noCodeElement!.deserialize = (value: string, allowCreate: boolean) => {
-        return allowCreate
-            ? setupInitialNoCodeTab(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
-            : setupInitialNoCodeTabIfExists(RawNoCode, value, t, noCodeHandlers, flowStore.flowYaml ?? "")
-    }
-
-    const TABS = isTourRunning.value ? DEFAULT_TOUR_TABS : DEFAULT_ACTIVE_TABS;
-
-    flowStore.creationId = flowStore.creationId ?? Utils.uid()
-
-    function onRemoveTab(tab: string){
-        onRemoveCodeTab(tab)
-    }
+    useFilesPanels(panels, computed(() => flowStore.flowParsed?.namespace))
 
     useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab)
 
-    watch(isFlowDirty, (dirty) => {
+    watch(() => flowStore.haveChange, (dirty) => {
         for(const panel of panels.value){
             if(panel.activeTab && isTabFlowRelated(panel.activeTab)){
                 panel.activeTab.dirty = dirty
@@ -172,7 +143,7 @@
     })
 </script>
 
-<style scoped lang="scss">
+<style lang="scss" scoped>
     @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
 
     .playgroundMode :deep(.tabs-wrapper) {

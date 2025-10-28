@@ -36,6 +36,7 @@
                         expandable
                         :rowClassName="getClasses"
                         :no-data-text="$t('no_results.triggers')"
+                        :rowKey="(row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
                     >
                         <template #expand>
                             <el-table-column type="expand">

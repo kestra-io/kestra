@@ -3,7 +3,7 @@
         <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
-        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.Flash" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
         <el-dialog id="execute-flow-dialog" v-model="isOpen" destroyOnClose :showClose="!coreStore.guidedProperties.tourStarted" :beforeClose="(done) => beforeClose(done)" :appendToBody="true">
@@ -57,7 +57,7 @@
 
 <script>
     import FlowRun from "./FlowRun.vue";
-    import Flash from "vue-material-design-icons/Flash.vue";
+    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
     import {pageFromRoute} from "../../utils/eventsRouter";
@@ -102,7 +102,7 @@
                 localFlow: undefined,
                 localNamespace: undefined,
                 icon: {
-                    Flash: shallowRef(Flash),
+                    LightningBolt: shallowRef(LightningBolt),
                     Play: shallowRef(Play)
                 }
             };
@@ -241,11 +241,12 @@
     .trigger-flow-wrapper {
         display: inline;
     }
-
+    
     .onboarding-glow {
         animation: glowAnimation 1s infinite alternate;
     }
-
+    
+    
     @keyframes glowAnimation {
         0% {
             box-shadow: 0px 0px 0px 0px #8405FF;

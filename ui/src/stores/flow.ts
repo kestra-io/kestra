@@ -54,6 +54,7 @@ interface FlowValidations {
 export interface Flow {
     id: string;
     namespace: string;
+    disabled?: boolean;
     source: string;
     revision?: number;
     deleted?: boolean;

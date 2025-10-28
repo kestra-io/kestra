@@ -108,7 +108,6 @@
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {useDataTableActions} from "../../../../composables/useDataTableActions";
     import useRestoreUrl from "../../../../composables/useRestoreUrl";
-    import {formatTag} from "../../../../utils/tagFormatter";
     import {useBlueprintFilter} from "../../../../components/filter/configurations";
     
     const blueprintFilter = useBlueprintFilter();
@@ -169,10 +168,10 @@
 
     const userCanCreate = computed(() => canCreate(props.blueprintKind));
 
-    const processedTags = (tags: string[]) => {
-        return tags.map(tag => ({
+    const processedTags = (blueprintTags: string[]) => {
+        return blueprintTags.map(tag => ({
             original: tag,
-            display: formatTag(tag)
+            display: tags.value?.[tag]?.name ?? tag
         }));
     };
 

@@ -42,8 +42,8 @@
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     const props = defineProps<{
-        schema: any,
-        definitions: Record<string, any>,
+        schema: Schema,
+        definitions: Record<string, Schema>,
         required?: boolean
     }>();
 
@@ -57,16 +57,36 @@
     const delayedSelectedSchema = ref<string>();
     const finishedMounting = ref(false);
 
-    function consolidateAllOfSchemas(schema: any, definitions: Record<string, any>) {
+    interface Schema{
+        $ref?: string;
+        type: string | {const: string};
+        properties?: Record<string, Schema>;
+        required?: string[];
+        $required?: boolean;
+        default?: any;
+        allOf?: Schema[];
+        anyOf?: Schema[];
+        oneOf?: Schema[];
+        items?: {
+            type: string;
+            format?: string;
+        };
+        const?: string;
+    }
+
+    function consolidateAllOfSchemas(schema: Schema, definitions: Record<string, Schema>) {
         if (schema?.allOf?.length) {
             return {
                 ...schema,
-                type: "object",
-                ...schema.allOf.reduce((acc: any, item: any) => {
+                ...schema.allOf.reduce<Schema>((acc, item) => {
+                    if(!acc.required){
+                        return acc;
+                    }
                     if (item.$ref) {
-                        const refSchema = definitions[item.$ref.split("/").pop()];
+                        const refSchema = definitions[item.$ref.split("/").pop() ?? "---"];
                         if (refSchema) {
                             return {
+                                ...acc,
                                 required: [
                                     ...acc.required,
                                     ...(refSchema.required ?? [])
@@ -79,6 +99,7 @@
                         }
                     } else {
                         return {
+                            ...acc,
                             required: [
                                 ...acc.required,
                                 ...(item.required ?? [])
@@ -91,9 +112,11 @@
                     }
                     return acc;
                 }, {
+                    type: "object",
                     properties: {},
                     required: [],
-                })
+                }),
+                
             }
         }
         return schema;
@@ -101,7 +124,7 @@
 
     const schemas = computed(() => {
         if (!props.schema?.anyOf || !Array.isArray(props.schema.anyOf)) return [];
-        return props.schema.anyOf.map((schema: any) => {
+        return props.schema.anyOf.map((schema: Schema) => {
             if (schema.allOf && Array.isArray(schema.allOf)) {
                 if (schema.allOf.length === 2 && schema.allOf[0].$ref && !schema.allOf[1].$ref) {
                     return {
@@ -117,11 +140,14 @@
     const allSchemaSameType = computed(() => {
         if (schemas.value.length === 0) return false;
         const firstType = schemas.value[0].type;
-        return schemas.value.every((schema: any) => schema.type === firstType);
+        return schemas.value.every((schema: Schema) => schema.type === firstType);
     });
 
-    function makeKey(schema: any) {
-        if(allSchemaSameType.value){
+    function makeKey(schema: Schema) {
+        if(typeof schema.type === "object"){
+            return schema.type.const;
+        }
+        if(allSchemaSameType.value && schema.items){
             return `${schema.type}.${schema.items.type}${schema.items.format ? `.${schema.items.format}` : ""}`;
         }
         return schema.type;
@@ -138,7 +164,7 @@
 
     const filteredProperties = computed(() =>
         currentSchema.value?.properties
-            ? Object.entries(currentSchema.value.properties).filter(([key, schema]: [string, any]) => !(key === "type" && schema?.const))
+            ? Object.entries(currentSchema.value.properties).filter(([key, schema]: [string, Schema]) => !(key === "type" && schema?.const))
             : []
     );
 
@@ -159,7 +185,7 @@
         // look at the type of their items to differentiate them
         if(allSchemaSameType.value){
             return schemas.value.map((schema: any) => {
-                const itemsType = schema.items.format ?? schema.items.type;
+                const itemsType = schema.items?.format ?? schema.items?.type;
 
                 return {
                     label: itemsType.charAt(0).toUpperCase() + itemsType.slice(1),
@@ -173,7 +199,7 @@
         const schemaRefsArray = (schemas.value as {$ref?: string, type: string}[])
             .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
             .filter((schemaRef) => schemaRef !== undefined)
-            .map((schemaRef) => props.definitions[schemaRef]?.type?.const ?? schemaRef)
+            .map((schemaRef) => typeof props.definitions[schemaRef]?.type === "object" ? props.definitions[schemaRef]?.type?.const : schemaRef)
             .map((schemaRef: string) => schemaRef.split("."));
 
         let mismatch = false;
@@ -253,7 +279,7 @@
         selectedSchema.value = schema?.value;
 
         if (!selectedSchema.value && schemas.value.length > 0 && props.required) {
-            selectedSchema.value = schemas.value[0].type;
+            selectedSchema.value = typeof schemas.value[0].type === "object" ? schemas.value[0].type.const : schemas.value[0].type;
         }
 
         if (schema) {

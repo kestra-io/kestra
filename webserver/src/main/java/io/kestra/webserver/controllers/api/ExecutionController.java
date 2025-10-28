@@ -1065,7 +1065,16 @@ public class ExecutionController {
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
         @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
         @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
-        @RequestBody(description = "The inputs") @Body MultipartBody inputs
+        @RequestBody(
+            description = "The inputs (multipart map)",
+            content = @Content(
+                mediaType = MediaType.MULTIPART_FORM_DATA,
+                schema = @Schema(
+                    type = "object",
+                    additionalProperties = Schema.AdditionalPropertiesValue.TRUE
+                )
+            )
+        ) @Body MultipartBody inputs
     ) {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {

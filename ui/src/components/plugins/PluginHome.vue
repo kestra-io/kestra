@@ -7,14 +7,15 @@
         :imageDark="headerImageDark"
     >
         <el-row class="my-4 px-3" justify="center">
-            <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
-                <el-input
-                    v-model="searchText"
-                    :placeholder="$t('pluginPage.search', {count: 900})"
-                    clearable
-                    @input="updateSearch"
-                />
-            </el-col>
+            <KSFilter
+                :configuration="pluginFilter"
+                :buttons="{
+                    savedFilters: {shown: false}, 
+                    tableOptions: {shown: false}
+                }"
+                :searchInputFullWidth="true"
+                @search="handleSearch"
+            />
         </el-row>
         <section class="px-3 plugins-container">
             <el-tooltip
@@ -65,6 +66,8 @@
     import {useRoute, useRouter} from "vue-router";
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
     import DottedLayout from "../layout/DottedLayout.vue";
+    import KSFilter from "../filter/components/KSFilter.vue";
+    import {usePluginFilter} from "../filter/configurations";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
     import {usePluginsStore} from "../../stores/plugins";
@@ -72,6 +75,8 @@
     const route = useRoute();
     const router = useRouter();
     const pluginsStore = usePluginsStore();
+    
+    const pluginFilter = usePluginFilter();
 
     const props = withDefaults(defineProps<{
         plugins: any[],
@@ -82,6 +87,13 @@
 
     const icons = ref<Record<string, any>>({});
     const searchText = ref("");
+
+    const handleSearch = (query: string) => {
+        searchText.value = query;
+        router.push({
+            query: {...route.query, q: query || undefined}
+        });
+    };
 
     const searchInput = computed(() => searchText.value.toLowerCase());
 
@@ -119,12 +131,6 @@
             console.error("Failed to load plugin icons:", error);
             icons.value = {};
         }
-    };
-
-    const updateSearch = (value: string) => {
-        router.push({
-            query: {...route.query, q: value ?? undefined}
-        });
     };
 
     const openGroup = (plugin: any) => {

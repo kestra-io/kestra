@@ -50,7 +50,6 @@
     const {t} = useI18n();
 
     defineOptions({
-        name: "TaskDict",
         inheritAttrs: false,
     });
 

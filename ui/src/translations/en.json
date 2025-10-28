@@ -1067,14 +1067,14 @@
     "behavior": "Behavior",
     "concurrency": "Concurrency",
     "no-executions-view": {
-      "title": "Start automating with ",
+      "title": "Start automating with Kestra",
       "sub_title": "Click on the Execute button to start your first workflow execution.",
       "guidance_desc": "Need guidance to execute your flow?",
       "guidance_sub_desc": "Follow the documentation for all the info you need."
     },
     "execution_guide": {
       "get_started": {
-        "title": "Get Started ⚡",
+        "title": "Get Started",
         "text": "Follow the Quickstart Guide to install Kestra and start building your first workflows."
       },
       "workflow_components": {

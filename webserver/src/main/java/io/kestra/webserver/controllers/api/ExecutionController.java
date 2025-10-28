@@ -1071,7 +1071,8 @@ public class ExecutionController {
                 mediaType = MediaType.MULTIPART_FORM_DATA,
                 schema = @Schema(
                     type = "object",
-                    additionalProperties = Schema.AdditionalPropertiesValue.TRUE
+                    additionalProperties = Schema.AdditionalPropertiesValue.TRUE,
+                    additionalPropertiesSchema = Object.class
                 )
             )
         ) @Body MultipartBody inputs

@@ -586,6 +586,7 @@
       "title": "Novidades no Kestra"
     },
     "file preview truncated": "Conteúdo exibido foi truncado",
+    "fileTypeNotAllowed": "Tipo de arquivo não permitido. Tipos aceitos: {types}",
     "files": "Arquivos",
     "filter": {
       "active key value pairs": "Pares de chave/valor ativos",

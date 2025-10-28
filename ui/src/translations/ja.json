@@ -586,6 +586,7 @@
       "title": "Kestraの新機能"
     },
     "file preview truncated": "表示されたコンテンツが切り捨てられました",
+    "fileTypeNotAllowed": "ファイルタイプが許可されていません。許可されているタイプ: {types}",
     "files": "ファイル",
     "filter": {
       "active key value pairs": "アクティブなkey/valueペア",

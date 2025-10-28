@@ -1,16 +1,16 @@
 <template>
-    <Header v-if="header" :dashboard />
+    <Header v-if="header" :dashboard :load />
 
     <section id="filter" :class="{filterPadding: padding}">
-        <KestraFilter
+        <KSFilter
             :prefix="`dashboard__${dashboard.id}`"
-            :language
-            :buttons="{
-                refresh: {shown: true, callback: () => refreshCharts()},
-                settings: {shown: false},
+            :configuration="filterConfiguration"
+            :tableOptions="{
+                chart: {shown: false},
+                columns: {shown: false},
+                refresh: {shown: true, callback: () => refreshCharts()}
             }"
-            :dashboards="{shown: ALLOWED_CREATION_ROUTES.includes(String(route.name))}"
-            @dashboard="(value: Dashboard['id']) => load(value)"
+            :showSearchInput="false"
         />
     </section>
 
@@ -19,25 +19,31 @@
 
 <script setup lang="ts">
     import {computed, onBeforeMount, ref, useTemplateRef} from "vue";
+    import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
     import {ALLOWED_CREATION_ROUTES, getDashboard, processFlowYaml} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
+    import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "./sections/Sections.vue";
 
-    import FILTER_LANGUAGE_MAIN from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage";
-    import FILTER_LANGUAGE_NAMESPACE from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage";
-    import FILTER_LANGUAGE_FLOW from "../../composables/monaco/languages/filters/impl/flowDashboardFilterLanguage";
+    import {
+        useDashboardFilter,
+        useNamespaceDashboardFilter,
+        useFlowDashboardFilter
+    } from "../filter/configurations";
 
-    const language = computed(() => {
-        if (props.isNamespace) return FILTER_LANGUAGE_NAMESPACE;
-        if (props.isFlow) return FILTER_LANGUAGE_FLOW;
-        return FILTER_LANGUAGE_MAIN;
+    const dashboardFilter = useDashboardFilter();
+    const flowDashboardFilter = useFlowDashboardFilter();
+    const namespaceDashboardFilter = useNamespaceDashboardFilter();
+
+    const filterConfiguration = computed(() => {
+        if (props.isNamespace) return namespaceDashboardFilter.value;
+        if (props.isFlow) return flowDashboardFilter.value;
+        return dashboardFilter.value;
     });
 
-    import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
     import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";

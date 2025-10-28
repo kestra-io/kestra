@@ -11,6 +11,7 @@
             },
             "namespace": "company.team",
             "revision": 1,
+            "scope": "USER",
             "disabled": false,
             "deleted": false,
             "tasks": [
@@ -46,6 +47,7 @@
             },
             "namespace": "company.team",
             "revision": 1,
+            "scope": "SYSTEM",
             "disabled": false,
             "deleted": false,
             "triggers": [
@@ -67,6 +69,7 @@
             },
             "namespace": "company.team",
             "revision": 1,
+            "scope": "USER",
             "disabled": false,
             "deleted": false,
             "tasks": [
@@ -91,6 +94,7 @@
                 "startDate": "2025-01-15T13:57:12.397Z"
             },
             "revision": 1,
+            "scope": "SYSTEM",
             "disabled": false,
             "deleted": false,
             "tasks": [
@@ -117,11 +121,12 @@
                 }
             ],
             "state": {
-                "current": "WARN",
+                "current": "WARNING",
                 "duration": "PT30.337S",
                 "endDate": "2025-01-15T13:57:42.734Z",
                 "startDate": "2025-01-15T13:57:12.397Z"
             },
+            "scope": "USER",
             "disabled": false,
             "deleted": false,
             "tasks": [
@@ -411,7 +416,368 @@
                     "type": "FILE"
                 }
             ]
+        },
+        {
+            "id": "exec-001",
+            "flowId": "data-pipeline-v1",
+            "state": {
+                "current": "SUCCESS",
+                "duration": "PT45.123S",
+                "endDate": "2025-01-20T10:15:30.734Z",
+                "startDate": "2025-01-20T09:30:07.611Z"
+            },
+            "namespace": "io.kestra.production",
+            "revision": 5,
+            "scope": "USER",
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "data-engineering"},
+                {"key": "priority", "value": "high"}
+            ]
+        },
+        {
+            "id": "exec-002",
+            "flowId": "etl-process",
+            "state": {
+                "current": "FAILED",
+                "duration": "PT120.456S",
+                "endDate": "2025-01-20T11:20:15.123Z",
+                "startDate": "2025-01-20T09:18:14.667Z"
+            },
+            "namespace": "io.kestra.staging",
+            "revision": 3,
+            "scope": "SYSTEM",
+            "labels": [
+                {"key": "env", "value": "staging"},
+                {"key": "team", "value": "analytics"}
+            ]
+        },
+        {
+            "id": "exec-003",
+            "flowId": "monitoring-check",
+            "state": {
+                "current": "RUNNING",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-21T08:45:12.456Z",
+                "startDate": "2025-01-21T08:14:45.119Z"
+            },
+            "namespace": "io.kestra.monitoring",
+            "revision": 2,
+            "scope": "SYSTEM",
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "platform"}
+            ]
+        },
+        {
+            "id": "exec-004",
+            "flowId": "backup-job",
+            "state": {
+                "current": "SUCCESS",
+                "duration": "PT90.789S",
+                "endDate": "2025-01-21T12:30:45.789Z",
+                "startDate": "2025-01-21T10:59:54.000Z"
+            },
+            "namespace": "io.kestra.ops",
+            "revision": 8,
+            "scope": "USER",
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "devops"},
+                {"key": "backup", "value": "daily"}
+            ]
+        },
+        {
+            "id": "exec-005",
+            "flowId": "api-sync",
+            "state": {
+                "current": "WARNING",
+                "duration": "PT60.234S",
+                "endDate": "2025-01-22T14:15:20.234Z",
+                "startDate": "2025-01-22T13:15:06.000Z"
+            },
+            "namespace": "company.team.integrations",
+            "revision": 4,
+            "labels": [
+                {"key": "env", "value": "staging"},
+                {"key": "team", "value": "backend"}
+            ]
+        },
+        {
+            "id": "exec-006",
+            "flowId": "ml-training",
+            "state": {
+                "current": "SUCCESS",
+                "duration": "PT300.567S",
+                "endDate": "2025-01-22T16:45:30.567Z",
+                "startDate": "2025-01-22T11:44:43.000Z"
+            },
+            "namespace": "ai.research.models",
+            "revision": 12,
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "ml-ops"},
+                {"key": "model", "value": "bert"}
+            ]
+        },
+        {
+            "id": "exec-007",
+            "flowId": "data-validation",
+            "state": {
+                "current": "KILLED",
+                "duration": "PT15.890S",
+                "endDate": "2025-01-23T09:10:15.890Z",
+                "startDate": "2025-01-23T08:54:25.000Z"
+            },
+            "namespace": "io.kestra.quality",
+            "revision": 1,
+            "labels": [
+                {"key": "env", "value": "development"},
+                {"key": "team", "value": "quality-assurance"}
+            ]
+        },
+        {
+            "id": "exec-008",
+            "flowId": "report-generator",
+            "state": {
+                "current": "SUCCESS",
+                "duration": "PT75.123S",
+                "endDate": "2025-01-23T10:30:45.123Z",
+                "startDate": "2025-01-23T09:15:30.000Z"
+            },
+            "namespace": "analytics.reporting",
+            "revision": 6,
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "analytics"},
+                {"key": "report", "value": "monthly"}
+            ]
+        },
+        {
+            "id": "exec-009",
+            "flowId": "security-scan",
+            "state": {
+                "current": "FAILED",
+                "duration": "PT45.678S",
+                "endDate": "2025-01-23T13:20:10.678Z",
+                "startDate": "2025-01-23T12:34:32.000Z"
+            },
+            "namespace": "security.compliance",
+            "revision": 3,
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "security"},
+                {"key": "scan", "value": "vulnerability"}
+            ]
+        },
+        {
+            "id": "exec-010",
+            "flowId": "notification-service",
+            "state": {
+                "current": "RUNNING",
+                "duration": "PT20.456S",
+                "endDate": "2025-01-24T08:15:30.456Z",
+                "startDate": "2025-01-24T07:55:10.000Z"
+            },
+            "namespace": "io.kestra.messaging",
+            "revision": 9,
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "platform"}
+            ]
+        },
+        {
+            "id": "exec-011",
+            "flowId": "data-migration",
+            "state": {
+                "current": "SUCCESS",
+                "duration": "PT180.234S",
+                "endDate": "2025-01-24T11:45:20.234Z",
+                "startDate": "2025-01-24T08:45:06.000Z"
+            },
+            "namespace": "migration.database",
+            "revision": 2,
+            "labels": [
+                {"key": "env", "value": "staging"},
+                {"key": "team", "value": "data-engineering"},
+                {"key": "migration", "value": "postgres"}
+            ]
+        },
+        {
+            "id": "exec-012",
+            "flowId": "cache-invalidation",
+            "state": {
+                "current": "SUCCESS",
+                "duration": "PT5.123S",
+                "endDate": "2025-01-24T14:10:15.123Z",
+                "startDate": "2025-01-24T14:05:10.000Z"
+            },
+            "namespace": "io.kestra.cache",
+            "revision": 15,
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "backend"}
+            ]
+        },
+        {
+            "id": "exec-013",
+            "flowId": "log-aggregation",
+            "state": {
+                "current": "WARNING",
+                "duration": "PT95.678S",
+                "endDate": "2025-01-25T09:30:45.678Z",
+                "startDate": "2025-01-25T07:55:10.000Z"
+            },
+            "namespace": "observability.logs",
+            "revision": 7,
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "sre"}
+            ]
+        },
+        {
+            "id": "exec-014",
+            "flowId": "user-import",
+            "state": {
+                "current": "FAILED",
+                "duration": "PT35.890S",
+                "endDate": "2025-01-25T12:15:20.890Z",
+                "startDate": "2025-01-25T11:39:30.000Z"
+            },
+            "namespace": "company.team.users",
+            "revision": 4,
+            "labels": [
+                {"key": "env", "value": "staging"},
+                {"key": "team", "value": "backend"},
+                {"key": "import", "value": "csv"}
+            ]
+        },
+        {
+            "id": "exec-015",
+            "flowId": "metrics-collection",
+            "state": {
+                "current": "RUNNING",
+                "duration": "PT40.234S",
+                "endDate": "2025-01-25T15:20:30.234Z",
+                "startDate": "2025-01-25T14:40:06.000Z"
+            },
+            "namespace": "observability.metrics",
+            "revision": 11,
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "platform"}
+            ]
+        },
+        {
+            "id": "exec-016",
+            "flowId": "invoice-processing",
+            "state": {
+                "current": "SUCCESS",
+                "duration": "PT55.567S",
+                "endDate": "2025-01-26T10:30:15.567Z",
+                "startDate": "2025-01-26T09:34:30.000Z"
+            },
+            "namespace": "finance.billing",
+            "revision": 8,
+            "labels": [
+                {"key": "env", "value": "production"},
+                {"key": "team", "value": "finance"}
+            ]
+        },
+        {
+            "id": "exec-017",
+            "flowId": "image-optimization",
+            "state": {
+                "current": "SUCCESS",
+                "duration": "PT70.890S",
+                "endDate": "2025-01-26T13:45:20.890Z",
+                "startDate": "2025-01-26T12:34:30.000Z"
+            },
+            "namespace": "media.processing",
+            "revision": 5,
+            "labels": [
+                {"key": "env", "value": "staging"},
+                {"key": "team", "value": "frontend"}
+            ]
+        },
+        {
+            "id": "exec-018",
+            "flowId": "webhook-handler",
+            "state": {
+                "current": "KILLED",
+                "duration": "PT10.123S",
+                "endDate": "2025-01-26T16:20:10.123Z",
+                "startDate": "2025-01-26T16:10:07.000Z"
+            },
+            "namespace": "io.kestra.webhooks",
+            "revision": 3,
+            "scope": "USER",
+            "disabled": false,
+            "deleted": false,
+            "labels": [
+                {"key": "env", "value": "development"},
+                {"key": "team", "value": "integrations"}
+            ]
+        },
+        {
+            "id": "playground-flow-1",
+            "flowId": "playground-flow-1",
+            "state": {
+                "current": "SUCCESS",
+                "duration": "PT15.500S",
+                "endDate": "2025-01-27T10:30:15.500Z",
+                "startDate": "2025-01-27T10:30:00.000Z"
+            },
+            "namespace": "playground.namespace",
+            "revision": 1,
+            "scope": "USER",
+            "kind": "PLAYGROUND",
+            "disabled": false,
+            "deleted": false,
+            "tasks": [
+                {
+                    "id": "hello_world",
+                    "type": "io.kestra.plugin.core.log.Log",
+                    "message": "Hello from playground!"
+                }
+            ],
+            "labels": [
+                {"key": "playground", "value": "true"},
+                {"key": "experiment", "value": "test-1"}
+            ]
+        },
+        {
+            "id": "playground-flow-2",
+            "flowId": "playground-flow-2",
+            "state": {
+                "current": "RUNNING",
+                "duration": "PT45.200S",
+                "endDate": null,
+                "startDate": "2025-01-27T11:00:00.000Z"
+            },
+            "namespace": "playground.namespace",
+            "revision": 2,
+            "scope": "USER",
+            "kind": "PLAYGROUND",
+            "disabled": false,
+            "deleted": false,
+            "tasks": [
+                {
+                    "id": "data_processing",
+                    "type": "io.kestra.plugin.core.log.Log",
+                    "message": "Processing data in playground mode"
+                },
+                {
+                    "id": "api_call",
+                    "type": "io.kestra.plugin.core.http.Request",
+                    "uri": "https://api.example.com/data"
+                }
+            ],
+            "labels": [
+                {"key": "playground", "value": "true"},
+                {"key": "experiment", "value": "test-2"}
+            ]
         }
     ],
-    "total": 8
+    "total": 28
 }

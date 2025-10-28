@@ -70,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue";
+    import {ref, computed} from "vue";
 
     import type {Dashboard, Chart} from "../composables/useDashboards";
     import {TYPES, isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards";
@@ -112,17 +112,21 @@
         title: getChartTitle(chart),
         description: chart?.chartOptions?.description,
     });
-
-    const filters = ref<{ field: string; operation: string; value: string | string[] }[]>([]);
-    onMounted(() => {
+    
+    // Make the overview of flows/dashboard/namespace specific
+    const filters = computed(() => {
+        const baseFilters: { field: string; operation: string; value: string | string[] }[] = [];
+        
         if (route.name === "flows/update") {
-            filters.value.push({field: "namespace", operation: "EQUALS", value: route.params.namespace});
-            filters.value.push({field: "flowId", operation: "EQUALS", value: route.params.id});
+            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.namespace as string});
+            baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string});
         }
 
         if (route.name === "namespaces/update") {
-            filters.value.push({field: "namespace", operation: "EQUALS", value: route.params.id});
+            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.id as string});
         }
+
+        return baseFilters;
     });
 </script>
 

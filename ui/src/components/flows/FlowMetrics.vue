@@ -1,10 +1,11 @@
 <template>
-    <KestraFilter
-        prefix="flow_metrics"
-        :language="FlowMetricFilterLanguage"
-        :buttons="{
-            refresh: {shown: true, callback: load},
-            settings: {shown: false},
+    <KSFilter
+        :configuration="flowMetricFilter"
+        :prefix="'flow-metrics'"
+        :tableOptions="{
+            chart: {shown: false},
+            columns: {shown: false},
+            refresh: {shown: true, callback: load}
         }"
         legacyQuery
     />
@@ -42,7 +43,9 @@
 </template>
 
 <script setup lang="ts">
-    import FlowMetricFilterLanguage from "../../composables/monaco/languages/filters/impl/flowMetricFilterLanguage";
+    import {useFlowMetricFilter} from "../filter/configurations";
+
+    const flowMetricFilter = useFlowMetricFilter();
 </script>
 
 <script lang="ts">
@@ -54,13 +57,13 @@
     import moment from "moment";
     import {defaultConfig, getFormat, tooltip} from "../dashboard/composables/charts";
     import {cssVariable} from "@kestra-io/ui-libs";
-    import KestraFilter from "../filter/KestraFilter.vue";
+    import KSFilter from "../filter/components/KSFilter.vue";
 
     export default defineComponent({
         name: "FlowMetrics",
         components: {
             Bar,
-            KestraFilter,
+            KSFilter,
         },
         created() {
             this.loadMetrics();
@@ -252,7 +255,7 @@
     });
 </script>
 
-<style>
+<style scoped>
 .navbar-flow-metrics {
     display: flex;
     width: 100%;

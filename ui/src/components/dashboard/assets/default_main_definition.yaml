@@ -113,7 +113,7 @@ charts:
       displayName: Total Executions
       graphStyle: DONUT
       tooltip: ALL
-      width: 3
+      width: 6
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:

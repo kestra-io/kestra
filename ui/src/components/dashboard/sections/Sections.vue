@@ -5,8 +5,9 @@
                 v-for="chart in props.charts"
                 :key="`chart__${chart.id}`"
                 :xs="24"
-                :sm="(chart.chartOptions?.width || 6) * 4"
-                :md="(chart.chartOptions?.width || 6) * 2"
+                :sm="12"
+                :md="(chart.chartOptions?.width || 6)"
+                :lg="(chart.chartOptions?.width || 6)"
             >
                 <div class="d-flex flex-column">
                     <div class="d-flex justify-content-between">

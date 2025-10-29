@@ -27,12 +27,13 @@
     const props = withDefaults(defineProps<{
         editorElements: EditorElement[];
         defaultActiveTabs: string[];
-        saveKey: string;
+        saveKey?: string;
         bottomVisible?: boolean;
         preSerializePanels?: (panels: Panel[]) => any;
     }>(), {
         bottomVisible: false,
-        preSerializePanels: undefined
+        preSerializePanels: undefined,
+        saveKey: undefined,
     });
 
     const slots = useSlots();

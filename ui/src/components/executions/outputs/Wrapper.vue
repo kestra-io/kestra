@@ -52,7 +52,7 @@
                 </div>
             </el-splitter-panel>
             <el-splitter-panel>
-                <div class="right wrapper" :style="{'z-index': 999}">
+                <div class="right wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
                         class="w-100 overflow-auto p-3 content-container"
@@ -478,6 +478,8 @@
 
 .wrapper {
     background: var(--ks-background-card);
+    position: relative;
+    z-index: 1;
 }
 
 :deep(.el-cascader-menu) {
@@ -533,6 +535,8 @@
     overflow-x: hidden;
     word-wrap: break-word;
     word-break: break-word;
+    position: relative;
+    z-index: 0;
 }
 
 :deep(.el-collapse) {
@@ -559,5 +563,12 @@
     word-wrap: break-word !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
+}
+
+:deep(.monaco-editor),
+:deep(.editor-container),
+:deep(.complex-value-editor) {
+    position: relative !important;
+    z-index: auto !important;
 }
 </style>

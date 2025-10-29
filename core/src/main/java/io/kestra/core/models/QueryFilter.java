@@ -109,6 +109,12 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX);
             }
         },
+        UPDATED("updated") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
         START_DATE("startDate") {
             @Override
             public List<Op> supportedOp() {
@@ -257,6 +263,16 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY,
                     Field.NAMESPACE
+                );
+            }
+        },
+        KV_METADATA {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE,
+                    Field.UPDATED
                 );
             }
         };

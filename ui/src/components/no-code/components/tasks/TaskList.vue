@@ -6,7 +6,7 @@
                     <slot name="name" />
                 </div>
                 <Creation
-                    :parentPathComplete="parentPathComplete"
+                    :parentPathComplete
                     :refPath="elements?.length ? elements.length - 1 : undefined"
                     :blockSchemaPath
                 />
@@ -40,7 +40,7 @@
             >
                 <template #icon>
                     <Creation
-                        :parentPathComplete="parentPathComplete"
+                        :parentPathComplete
                         :refPath="elements?.length ? elements.length - 1 : undefined"
                         :blockSchemaPath
                     />
@@ -93,6 +93,7 @@
     const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
 
     const blockSchemaPath = computed(() => {
+        // FIXME: if the schema has additionalProperties, remove the key from the path
         const rootParts = props.root ? props.root.split(".") : []
         if(rootParts.length > 1){
             rootParts.splice(1, 0, "properties")

@@ -10,36 +10,25 @@
     <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
         <el-col :span="componentType ? 22 : 6">
             <InputText
-                v-if="!valueComponent?.[0]?.$slots?.name"
                 :modelValue="item[0]"
                 @update:model-value="onKey(index, $event)"
                 margin="m-0"
                 placeholder="Key"
                 :haveError="duplicatedKeys.includes(item[0])"
             />
-            <component
-                v-if="componentType"
-                ref="valueComponent"
-                :is="componentType"
-                :modelValue="item[1]"
-                @update:model-value="onValueChange(index, $event)"
-                :root="getKey(item[0])"
-                :schema="schema.additionalProperties"
-                :required="isRequired(item[0])"
-                :disabled
-                merge
-            >
-                <template #name>
-                    <InputText
-                        :modelValue="item[0]"
-                        @update:model-value="onKey(index, $event)"
-                        margin="m-0"
-                        placeholder="Key"
-                        :haveError="duplicatedKeys.includes(item[0])"
-                    />
-                </template>
-            </component>
-            <hr v-if="componentType">
+            <div v-if="componentType" class="task-container">
+                <component
+                    ref="valueComponent"
+                    :is="componentType"
+                    :modelValue="item[1]"
+                    @update:model-value="onValueChange(index, $event)"
+                    :root="getKey(item[0])"
+                    :schema="schema.additionalProperties"
+                    :required="isRequired(item[0])"
+                    :disabled
+                    merge
+                />
+            </div>
         </el-col>
         <el-col v-if="!componentType" :span="16">
             <TaskExpression
@@ -170,4 +159,14 @@
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
+
+.task-container{
+    margin-top: -4px;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--ks-border-primary);
+    border-bottom: 1px solid var(--ks-border-secondary);
+    padding-top: 1rem;
+    padding-left: 1rem;
+    border-bottom-left-radius: 4px;
+}
 </style>

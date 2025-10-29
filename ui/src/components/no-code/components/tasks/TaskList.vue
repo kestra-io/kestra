@@ -1,42 +1,9 @@
 <template>
     <div class="tasks-wrapper">
-        <template v-if="slots.name">
-            <div class="list-header">
-                <div style="flex:1; ">
-                    <slot name="name" />
-                </div>
-                <Creation
-                    :parentPathComplete
-                    :refPath="elements?.length ? elements.length - 1 : undefined"
-                    :blockSchemaPath
-                />
-            </div>
-            <Element
-                v-for="(element, elementIndex) in filteredElements"
-                :key="elementIndex"
-                :section
-                :parentPathComplete
-                :element
-                :elementIndex
-                :moved="elementIndex == movedIndex"
-                :blockSchemaPath
-                :typeFieldSchema
-                @remove-element="removeElement(elementIndex)"
-                @move-element="
-                    (direction: 'up' | 'down') =>
-                        moveElement(
-                            elements,
-                            element.id,
-                            elementIndex,
-                            direction,
-                        )
-                "
-            />
-        </template>
-        <el-collapse v-else v-model="expanded" class="collapse">
+        <el-collapse v-model="expanded" class="collapse">
             <el-collapse-item
                 :name="section"
-                :title="`${section}${elements ? ` (${elements.length})` : ''}`"
+                :title="merge ? '' : `${section}${elements ? ` (${elements.length})` : ''}`"
             >
                 <template #icon>
                     <Creation
@@ -111,8 +78,6 @@
         inheritAttrs: false
     });
 
-    const slots = defineSlots();
-
     const flowStore = useFlowStore();
 
     interface Task {
@@ -124,9 +89,11 @@
     const props = withDefaults(defineProps<{
         modelValue?: Task[],
         root?: string;
+        merge?: boolean;
     }>(), {
         modelValue: () => [],
-        root: undefined
+        root: undefined,
+        merge: false,
     });
 
     const elements = computed(() =>

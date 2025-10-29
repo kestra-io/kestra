@@ -1,6 +1,12 @@
 <template>
     <div class="h-100 d-flex flex-column">
+        <img 
+            v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)" 
+            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+            class="image-preview"
+        >
         <Editor
+            v-else
             id="editorWrapper"
             ref="editorRefElement"
             class="flex-1"
@@ -11,7 +17,7 @@
             :navbar="false"
             :readOnly="flow && flowStore.isReadOnly"
             :creating="isCreating"
-            :path="props.path"
+            :path="path"
             :diffOverviewBar="false"
             @update:model-value="editorUpdate"
             @cursor="updatePluginDocumentation"
@@ -78,6 +84,7 @@
 <script setup lang="ts">
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue";
     import {useRoute, useRouter} from "vue-router";
+    import {apiUrl} from "override/utils/route";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
@@ -436,5 +443,9 @@
             left: 0.5rem;
             bottom: 2%;
         }
+    }
+
+    .image-preview {
+        margin: 2rem;
     }
 </style>

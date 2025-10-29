@@ -36,14 +36,12 @@ public abstract class MysqlExecutionRepositoryService {
         if (input.isRight()) {
             var query = input.getRight();
             if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
-                String sql = "EXISTS ( " +
-                    "SELECT 1 FROM JSON_TABLE(value, '$.labels[*]' COLUMNS(" +
-                    "  label_key VARCHAR(255) PATH '$.key'," +
-                    "  label_value VARCHAR(255) PATH '$.value')) AS lbl " +
-                    "WHERE LOWER(lbl.label_value) LIKE LOWER(CONCAT('%', ?, '%')) " +
-                    "   OR LOWER(lbl.label_key) LIKE LOWER(CONCAT('%', ?, '%'))" +
-                    ")";
-                conditions.add(DSL.condition(sql, query, query));
+                conditions.add
+                    (DSL.condition(
+                    "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].key') IS NOT NULL", query)
+                    .or(DSL.condition(
+                        "JSON_SEARCH(value, 'one', CONCAT('%', ?, '%'), NULL, '$.labels[*].value') IS NOT NULL", query)
+                    ));
             } else {
                 throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
             }

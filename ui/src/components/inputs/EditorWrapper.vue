@@ -1,6 +1,10 @@
 <template>
     <div class="h-100 d-flex flex-column">
-        <img v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)" :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`">
+        <img 
+            v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)" 
+            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+            class="image-preview"
+        >
         <Editor
             v-else
             id="editorWrapper"
@@ -439,5 +443,9 @@
             left: 0.5rem;
             bottom: 2%;
         }
+    }
+
+    .image-preview {
+        margin: 2rem;
     }
 </style>

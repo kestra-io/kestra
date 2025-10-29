@@ -15,10 +15,10 @@ import java.util.concurrent.Callable;
 
 /**
  * This service provides facility for executing Runnable and Callable tasks inside a lock.
- * Note: it may be handy to provide a tryLock facility that, if locked, skip executing the Runnable or Callable and exit immediately.
+ * Note: it may be handy to provide a tryLock facility that, if locked, skips executing the Runnable or Callable and exits immediately.
  *
- * @implNote There are no expiry for locks so a service may hold a lock infinitely until the service is restarted as the
- *           liveness mechanism release all locks when the service is unreachable.
+ * @implNote There is no expiry for locks, so a service may hold a lock infinitely until the service is restarted as the
+ *           liveness mechanism releases all locks when the service is unreachable.
  *           This may be improved at some point by adding an expiry (for ex 30s) and running a thread that will periodically
  *           increase the expiry for all exiting locks. This should allow quicker recovery of zombie locks than relying on the liveness mechanism,
  *           as a service wanted to lock an expired lock would be able to take it over.
@@ -46,7 +46,7 @@ public class LockService {
      *
      * @throws LockException if the lock cannot be hold before the timeout or the thread is interrupted.
      */
-    public void doInLock(String category, String id, Runnable runnable) throws LockException {
+    public void doInLock(String category, String id, Runnable runnable) {
         doInLock(category, id, DEFAULT_TIMEOUT, runnable);
     }
 
@@ -57,11 +57,11 @@ public class LockService {
      *
      * @param category lock category, ex 'executions'
      * @param id identifier of the lock identity inside the category, ex an execution ID
-     * @param timeout how much time to wait for the lock if another process already hold the same lock
+     * @param timeout how much time to wait for the lock if another process already holds the same lock
      *
      * @throws LockException if the lock cannot be hold before the timeout or the thread is interrupted.
      */
-    public void doInLock(String category, String id, Duration timeout, Runnable runnable) throws LockException {
+    public void doInLock(String category, String id, Duration timeout, Runnable runnable) {
         if (!lock(category, id, timeout)) {
             throw new LockException("Unable to hold the lock inside the configured timeout of " + timeout);
         }
@@ -70,6 +70,22 @@ public class LockService {
             runnable.run();
         } finally {
             unlock(category, id);
+        }
+    }
+
+    /**
+     * Attempts to execute the provided {@code runnable} within a lock.
+     * If the lock is already held by another process, the execution is skipped.
+     *
+     * @param category the category of the lock, e.g., 'executions'
+     * @param id the identifier of the lock within the specified category, e.g., an execution ID
+     * @param runnable the task to be executed if the lock is successfully acquired
+     */
+    public void tryLock(String category, String id, Runnable runnable) {
+        if (lock(category, id, Duration.ZERO)) {
+            runnable.run();
+        } else {
+            log.debug("Lock '{}'.'{}' already hold, skipping", category, id);
         }
     }
 
@@ -92,7 +108,7 @@ public class LockService {
      *
      * @param category lock category, ex 'executions'
      * @param id identifier of the lock identity inside the category, ex an execution ID
-     * @param timeout how much time to wait for the lock if another process already hold the same lock
+     * @param timeout how much time to wait for the lock if another process already holds the same lock
      *
      * @throws LockException if the lock cannot be hold before the timeout or the thread is interrupted.
      */
@@ -137,6 +153,11 @@ public class LockService {
                 }
             } else {
                 log.debug("Already locked by: {}", existing.get().getOwner());
+            }
+
+            // fast path for when we don't want to wait for the lock
+            if (timeout.isZero()) {
+                return false;
             }
 
             try {

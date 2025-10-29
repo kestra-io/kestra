@@ -1,9 +1,42 @@
 <template>
     <div class="tasks-wrapper">
-        <el-collapse v-model="expanded" class="collapse">
+        <template v-if="slots.name">
+            <div class="list-header">
+                <div style="flex:1; ">
+                    <slot name="name" />
+                </div>
+                <Creation
+                    :parentPathComplete="parentPathComplete"
+                    :refPath="elements?.length ? elements.length - 1 : undefined"
+                    :blockSchemaPath
+                />
+            </div>
+            <Element
+                v-for="(element, elementIndex) in filteredElements"
+                :key="elementIndex"
+                :section
+                :parentPathComplete
+                :element
+                :elementIndex
+                :moved="elementIndex == movedIndex"
+                :blockSchemaPath
+                :typeFieldSchema
+                @remove-element="removeElement(elementIndex)"
+                @move-element="
+                    (direction: 'up' | 'down') =>
+                        moveElement(
+                            elements,
+                            element.id,
+                            elementIndex,
+                            direction,
+                        )
+                "
+            />
+        </template>
+        <el-collapse v-else v-model="expanded" class="collapse">
             <el-collapse-item
-                :name="sectionName"
-                :title="`${sectionName}${elements ? ` (${elements.length})` : ''}`"
+                :name="section"
+                :title="`${section}${elements ? ` (${elements.length})` : ''}`"
             >
                 <template #icon>
                     <Creation
@@ -16,10 +49,10 @@
                 <Element
                     v-for="(element, elementIndex) in filteredElements"
                     :key="elementIndex"
-                    :section="sectionName"
-                    :parentPathComplete="parentPathComplete"
+                    :section
+                    :parentPathComplete
                     :element
-                    :elementIndex="elementIndex"
+                    :elementIndex
                     :moved="elementIndex == movedIndex"
                     :blockSchemaPath
                     :typeFieldSchema
@@ -71,6 +104,8 @@
         inheritAttrs: false
     });
 
+    const slots = defineSlots();
+
     const flowStore = useFlowStore();
 
     interface Task {
@@ -102,7 +137,7 @@
         emits("update:modelValue", localItems);
     };
 
-    const sectionName = computed(() => {
+    const section = computed(() => {
         return props.root ?? "tasks";
     });
 
@@ -127,7 +162,7 @@
                         ? `[${refPath}]`
                         : undefined,
             ].filter(Boolean).join(""),
-            sectionName.value
+            section.value
         ].filter(p => p.length).join(".")}`;
     });
 
@@ -139,7 +174,7 @@
         index: number,
         direction: "up" | "down",
     ) => {
-        const keyName = sectionName.value === "Plugin Defaults" ? "type" : "id";
+        const keyName = section.value === "Plugin Defaults" ? "type" : "id";
         if (!items || !flow) return;
         if (
             (direction === "up" && index === 0) ||
@@ -157,7 +192,7 @@
         flowStore.flowYaml =
             YAML_UTILS.swapBlocks({
                 source:flow.value,
-                section: SECTIONS_MAP[sectionName.value.toLowerCase() as keyof typeof SECTIONS_MAP],
+                section: SECTIONS_MAP[section.value.toLowerCase() as keyof typeof SECTIONS_MAP],
                 key1:elementID,
                 key2:items[newIndex][keyName],
                 keyName,
@@ -175,6 +210,13 @@
 <style scoped lang="scss">
 @import "../../styles/code.scss";
 
+.list-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    gap: 1rem;
+}
 .tasks-wrapper {
     width: 100%;
 }

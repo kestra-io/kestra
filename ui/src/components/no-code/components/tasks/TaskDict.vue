@@ -8,18 +8,40 @@
         class="mb-2"
     />
     <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
-        <el-col :span="6">
+        <el-col :span="componentType ? 22 : 6">
             <InputText
+                v-if="!valueComponent?.[0]?.$slots?.name"
                 :modelValue="item[0]"
                 @update:model-value="onKey(index, $event)"
                 margin="m-0"
                 placeholder="Key"
                 :haveError="duplicatedKeys.includes(item[0])"
             />
-        </el-col>
-        <el-col :span="16">
             <component
-                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties, root) : TaskExpression"
+                v-if="componentType"
+                ref="valueComponent"
+                :is="componentType"
+                :modelValue="item[1]"
+                @update:model-value="onValueChange(index, $event)"
+                :root="getKey(item[0])"
+                :schema="schema.additionalProperties"
+                :required="isRequired(item[0])"
+                :disabled
+            >
+                <template #name>
+                    <InputText
+                        :modelValue="item[0]"
+                        @update:model-value="onKey(index, $event)"
+                        margin="m-0"
+                        placeholder="Key"
+                        :haveError="duplicatedKeys.includes(item[0])"
+                    />
+                </template>
+            </component>
+            <hr v-if="componentType">
+        </el-col>
+        <el-col v-if="!componentType" :span="16">
+            <TaskExpression
                 :modelValue="item[1]"
                 @update:model-value="onValueChange(index, $event)"
                 :root="getKey(item[0])"
@@ -36,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue";
+    import {computed, ref, useTemplateRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {DeleteOutline} from "../../utils/icons";
 
@@ -52,6 +74,8 @@
         inheritAttrs: false,
     });
 
+    const valueComponent = useTemplateRef<any[]>("valueComponent");
+
     const props = withDefaults(defineProps<{
         modelValue?: Record<string, any>;
         schema?: any;
@@ -62,6 +86,10 @@
         modelValue: () => ({}),
         root: undefined,
         schema: () => ({type: "object"})
+    });
+
+    const componentType = computed(() => {
+        return props.schema.additionalProperties ? getTaskComponent(props.schema.additionalProperties, props.root) : null;
     });
 
     const currentValue = ref<[string, any][]>([])

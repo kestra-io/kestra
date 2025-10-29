@@ -30,7 +30,7 @@
         "@vue-flow/core": "^1.47.0",
         "@vueuse/core": "^14.0.0",
         "ansi-to-html": "^0.7.2",
-        "axios": "^1.12.2",
+        "axios": "^1.13.1",
         "bootstrap": "^5.3.8",
         "buffer": "^6.0.3",
         "chart.js": "^4.5.1",

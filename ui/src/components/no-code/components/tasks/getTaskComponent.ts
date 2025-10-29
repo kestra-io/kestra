@@ -1,5 +1,7 @@
+import {inject} from "vue";
 import {pascalCase} from "change-case";
 import {resolve$ref} from "../../../../utils/utils";
+import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys";
 
 const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true});
 
@@ -18,7 +20,9 @@ export interface Schema{
     format?: string;
 }
 
-function getType(property: any, key?: string, definitions?: Record<string, Schema>): string {
+function getType(property: any, key?: string): string {
+    const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY);
+    const definitions = definitionsRef?.value;
     if (property.enum !== undefined) {
         return "enum";
     }
@@ -105,8 +109,8 @@ function getType(property: any, key?: string, definitions?: Record<string, Schem
     return property.type || "expression";
 }
 
-export default function getTaskComponent(property: any, key?: string, definitions?: any): any {
-    const typeString = getType(property, key, definitions);
+export default function getTaskComponent(property: any, key?: string, _definitions?: any): any {
+    const typeString = getType(property, key);
     const type = pascalCase(typeString);
     const component = TasksComponents[`./Task${type}.vue`]?.default;
     if (component) {

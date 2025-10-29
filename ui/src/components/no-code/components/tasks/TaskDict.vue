@@ -27,6 +27,7 @@
                 :schema="schema.additionalProperties"
                 :required="isRequired(item[0])"
                 :disabled
+                merge
             >
                 <template #name>
                     <InputText

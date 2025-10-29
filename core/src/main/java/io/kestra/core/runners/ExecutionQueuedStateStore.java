@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.ExecutionQueued;
+import io.kestra.core.runners.TransactionContext;
 
 import java.util.function.BiConsumer;
 

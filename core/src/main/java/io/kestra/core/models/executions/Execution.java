@@ -941,7 +941,15 @@ public class Execution implements DeletedInterface, TenantInterface {
                 for (TaskRun current : taskRuns) {
                     if (!MapUtils.isEmpty(current.getOutputs())) {
                         if (current.getIteration() != null) {
-                            taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                            Map<String, Object> merged = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                            // If one of two of the map is null in the merge() method, we just return the other
+                            // And if the not null map is a Variables (= read only), we cast it back to a simple
+                            // hashmap to avoid taskOutputs becoming read-only
+                            // i.e this happen in nested loopUntil tasks
+                            if (merged instanceof Variables) {
+                                merged = new HashMap<>(merged);
+                            }
+                            taskOutputs = merged;
                         } else {
                             taskOutputs.putAll(outputs(current, byIds));
                         }

@@ -98,11 +98,7 @@ public class PluginCatalogService {
 
             // Build the PluginResolutionResult
             return new PluginResolutionResult(
-                PluginArtifact.builder()
-                    .groupId(it.groupId())
-                    .artifactId(it.artifactId())
-                    .version(resolvedVersion)
-                    .build(),
+                it,
                 resolvedVersion,
                 versions,
                 resolvedVersion != null

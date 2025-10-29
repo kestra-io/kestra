@@ -1,121 +1,129 @@
 <template>
-    <KSFilter
-        :configuration="kvFilter"
-        :tableOptions="{
-            chart: {shown: false},
-            columns: {shown: true},
-            refresh: {shown: true, callback: refresh}
-        }"
-        :prefix="'kv'"
-        :properties="{
-            shown: true,
-            columns: optionalColumns,
-            displayColumns: visibleColumns,
-            storageKey: storageKey
-        }"
-        @update-properties="updateVisibleColumns"
-        legacyQuery
-    />
-
-    <SelectTable
-        :data="filteredKvs"
-        ref="selectTable"
-        :defaultSort="{prop: 'id', order: 'ascending'}"
-        tableLayout="auto"
-        fixed
-        @selection-change="handleSelectionChange"
-        @sort-change="handleSort"
-        :infiniteScrollLoad="namespace === undefined ? fetchKvs : undefined"
-        :no-data-text="$t('no_results.kv_pairs')"
-        class="fill-height"
-        :showSelection="!paneView"
-        :rowKey="(row: any) => `${row.namespace}-${row.key}`"
-    >
-        <template #select-actions>
-            <BulkSelect
-                :selectAll="queryBulkAction"
-                :selections="selection"
-                @update:select-all="toggleAllSelection"
-                @unselect="toggleAllUnselected"
-            >
-                <el-button :icon="Delete" type="default" @click="removeKvs()">
-                    {{ $t("delete") }}
-                </el-button>
-            </BulkSelect>
+    <DataTable @page-changed="onPageChanged" ref="dataTable" :total="total">
+        <template #top>
+            <KSFilter
+                :configuration="kvFilter"
+                :tableOptions="{
+                    chart: {shown: false},
+                    columns: {shown: true},
+                    refresh: {shown: true, callback: refresh}
+                }"
+                prefix="kv"
+                :properties="{
+                    shown: true,
+                    columns: optionalColumns,
+                    displayColumns: visibleColumns,
+                    storageKey: storageKey
+                }"
+                @update-properties="updateVisibleColumns"
+            />
         </template>
 
-        <template v-for="colProp in orderedVisibleColumns" :key="colProp">
-            <el-table-column
-                v-if="colProp === 'namespace' && namespace === undefined && !paneView"
-                prop="namespace"
-                sortable="custom"
-                :sortOrders="['ascending', 'descending']"
-                :label="$t('namespace')"
-            />
-            <el-table-column
-                v-else-if="colProp === 'key'"
-                prop="key"
-                sortable="custom"
-                :sortOrders="['ascending', 'descending']"
-                :label="$t('key')"
+        <template #table>
+            <SelectTable
+                :data="kvs"
+                ref="selectTable"
+                :defaultSort="{prop: 'key', order: 'ascending'}"
+                tableLayout="auto"
+                fixed
+                @selection-change="handleSelectionChange"
+                @sort-change="onSort"
+                :no-data-text="$t('no_results.kv_pairs')"
+                class="fill-height"
+                :showSelection="!paneView"
+                :rowKey="(row: any) => `${row.namespace}-${row.key}`"
             >
-                <template #default="scope">
-                    <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                <template #select-actions>
+                    <BulkSelect
+                        :selectAll="queryBulkAction"
+                        :selections="selection"
+                        @update:select-all="toggleAllSelection"
+                        @unselect="toggleAllUnselected"
+                    >
+                        <el-button :icon="Delete" type="default" @click="removeKvs()">
+                            {{ $t("delete") }}
+                        </el-button>
+                    </BulkSelect>
                 </template>
-            </el-table-column>
-            <el-table-column
-                v-else-if="colProp === 'description' && !paneView"
-                prop="description"
-                sortable="custom"
-                :sortOrders="['ascending', 'descending']"
-                :label="$t('description')"
-            />
-            <el-table-column
-                v-else-if="colProp === 'updateDate'"
-                prop="updateDate"
-                sortable="custom"
-                :sortOrders="['ascending', 'descending']"
-                :label="$t('last modified')"
-            />
-            <el-table-column
-                v-else-if="colProp === 'expirationDate' && !paneView"
-                prop="expirationDate"
-                sortable="custom"
-                :sortOrders="['ascending', 'descending']"
-                :label="$t('expiration date')"
-            />
+
+                <template v-for="colProp in orderedVisibleColumns" :key="colProp">
+                    <el-table-column
+                        v-if="colProp === 'namespace' && namespace === undefined && !paneView"
+                        prop="namespace"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('namespace')"
+                    />
+                    <el-table-column
+                        v-else-if="colProp === 'key'"
+                        prop="key"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('key')"
+                    >
+                        <template #default="scope">
+                            <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        v-else-if="colProp === 'description' && !paneView"
+                        prop="description"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('description')"
+                    />
+                    <el-table-column
+                        v-else-if="colProp === 'updateDate'"
+                        prop="updateDate"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('last modified')"
+                    />
+                    <el-table-column
+                        v-else-if="colProp === 'expirationDate' && !paneView"
+                        prop="expirationDate"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('expiration date')"
+                    />
+                </template>
+
+                <el-table-column columnKey="copy" className="row-action">
+                    <template #default="scope">
+                        <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
+                            <el-button
+                                :icon="ContentCopy"
+                                link
+                                @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
+                            />
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <el-table-column v-if="!paneView" columnKey="update" className="row-action">
+                    <template #default="scope">
+                        <el-button
+                            v-if="canUpdate(scope.row)"
+                            :icon="FileDocumentEdit"
+                            link
+                            @click="updateKvModal(scope.row)"
+                        />
+                    </template>
+                </el-table-column>
+
+                <el-table-column v-if="!paneView" columnKey="delete" className="row-action">
+                    <template #default="scope">
+                        <el-button
+                            v-if="canDelete(scope.row)"
+                            :icon="Delete"
+                            link
+                            @click="removeKv(scope.row.namespace, scope.row.key)"
+                        />
+                    </template>
+                </el-table-column>
+            </SelectTable>
         </template>
-
-        <el-table-column columnKey="copy" className="row-action">
-            <template #default="scope">
-                <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
-                    <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)" />
-                </el-tooltip>
-            </template>
-        </el-table-column>
-
-        <el-table-column v-if="!paneView" columnKey="update" className="row-action">
-            <template #default="scope">
-                <el-button
-                    v-if="canUpdate(scope.row)"
-                    :icon="FileDocumentEdit"
-                    link
-                    @click="updateKvModal(scope.row)"
-                />
-            </template>
-        </el-table-column>
-
-        <el-table-column v-if="!paneView" columnKey="delete" className="row-action">
-            <template #default="scope">
-                <el-button
-                    v-if="canDelete(scope.row)"
-                    :icon="Delete"
-                    link
-                    @click="removeKv(scope.row.namespace, scope.row.key)"
-                />
-            </template>
-        </el-table-column>
-    </SelectTable>
+    </DataTable>
 
     <Drawer
         v-if="addKvDrawerVisible"
@@ -227,7 +235,7 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import _groupBy from "lodash/groupBy";
-    import {ref, computed, watch, onMounted, useTemplateRef} from "vue";
+    import {computed, ref, useTemplateRef, watch} from "vue";
 
     import Check from "vue-material-design-icons/Check.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
@@ -248,7 +256,7 @@
 
     import action from "../../models/action";
     import permission from "../../models/permission";
-    
+
     import Utils from "../../utils/utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
@@ -256,12 +264,49 @@
 
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
-    import useNamespaces, {NamespaceIterator} from "../../composables/useNamespaces";
 
     import {useAuthStore} from "override/stores/auth";
     import {useNamespacesStore} from "override/stores/namespaces";
+    import {useKvStore} from "../../stores/kvs.ts";
 
-    
+    import DataTable from "../layout/DataTable.vue";
+    import _merge from "lodash/merge";
+    import {type DataTableRef, useDataTableActions} from "../../composables/useDataTableActions.ts";
+
+    const dataTable = useTemplateRef<DataTableRef>("dataTable");
+
+    const loadData = async (callback?: () => void) => {
+        try {
+            const kvsResponse = await kvStore.find(loadQuery({
+                size: parseInt(String(route.query?.size ?? 25)),
+                page: parseInt(String(route.query?.page ?? 1)),
+                sort: route.query.sort || "name:asc",
+                ...(props.namespace === undefined ? {} : {
+                    filters: {
+                        namespace: {
+                            EQUALS: props.namespace
+                        }
+                    }
+                })
+            }));
+
+            kvs.value = kvsResponse.results;
+            total.value = kvsResponse.total;
+        } finally {
+            if (callback) callback();
+        }
+    }
+
+    const {onPageChanged, queryWithFilter, onSort} = useDataTableActions({
+        loadData: loadData,
+        dataTableRef: dataTable
+    });
+
+    const loadQuery = (base: any) => {
+        const queryFilter = queryWithFilter();
+        return _merge(base, queryFilter);
+    };
+
     const props = withDefaults(defineProps<{
         namespace?: string;
         paneView?: boolean;
@@ -277,6 +322,7 @@
 
     const authStore = useAuthStore();
     const namespacesStore = useNamespacesStore();
+    const kvStore = useKvStore();
 
     const selectTable = useTemplateRef<typeof SelectTable>("selectTable");
 
@@ -303,7 +349,6 @@
     const {t} = useI18n();
 
     const kvs = ref<any[] | undefined>(undefined);
-    const namespaceIterator = ref<NamespaceIterator | undefined>(undefined);
 
     const storageKey = storageKeys.DISPLAY_KV_COLUMNS;
 
@@ -336,7 +381,7 @@
             {
                 label: t("expiration date"),
                 prop: "expirationDate",
-                default: false,
+                default: true,
                 description: t("filter.table_column.kv.expiration date")
             }
         ];
@@ -355,26 +400,13 @@
     });
 
     const {
-        selection, 
-        queryBulkAction, 
-        handleSelectionChange, 
-        toggleAllUnselected, 
-        toggleAllSelection} = useSelectTableActions({
-            dataTableRef: selectTable
-        });
-
-    const searchQuery = computed(() => {
-        const q = route.query.q;
-        return typeof q === "string" ? q : "";
-    });
-
-    const filteredKvs = computed(() => {
-        if (!kvs.value) return [];
-        if (!searchQuery.value) return kvs.value;
-        return kvs.value.filter(kv =>
-            kv.key.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-            kv.description?.toLowerCase().includes(searchQuery.value.toLowerCase())
-        );
+        selection,
+        queryBulkAction,
+        handleSelectionChange,
+        toggleAllUnselected,
+        toggleAllSelection
+    } = useSelectTableActions({
+        dataTableRef: selectTable
     });
 
     const kvModalTitle = computed(() => {
@@ -444,45 +476,7 @@
         }
     }
 
-    async function fetchKvs() {
-        let kvFetch;
-        if (props.namespace === undefined) {
-            if (namespaceIterator.value === undefined) {
-                namespaceIterator.value = useNamespaces(20);
-            }
-
-            const namespaces = (await namespaceIterator.value.next()).map(n => n.id);
-            if (namespaces.length !== 0) {
-                const kvsPromises = Promise.all(namespaces.filter(n => authStore.user?.isAllowed(permission.KVSTORE, action.READ, n)).map(async n => {
-                    const kvs = await namespacesStore.kvsList({id: n});
-
-                    return kvs.map((kv: any) => {
-                        kv.namespace = n;
-                        return kv;
-                    });
-                }));
-
-                kvFetch = (await kvsPromises).flat();
-            }
-        } else {
-            kvFetch = (await namespacesStore.kvsList({id: props.namespace})).map((kv: any) => {
-                kv.namespace = props.namespace;
-                return kv;
-            });
-        }
-
-        if (kvFetch === undefined) {
-            return undefined;
-        }
-
-        kvs.value = kvs.value?.concat(kvFetch) ?? kvFetch;
-
-        if (props.namespace === undefined && filteredKvs.value.length === 0) {
-            return fetchKvs();
-        }
-
-        return kvFetch;
-    }
+    const total = ref(0);
 
     function kvKeyDuplicate(_rule: any, value: string, callback: (error?: Error) => void) {
         if (kv.value.update === undefined && kvs.value && kvs.value.find(r => r.namespace === kv.value.namespace && r.key === value)) {
@@ -515,7 +509,7 @@
                 .deleteKv({namespace, key: key})
                 .then(() => {
                     toast.deleted(key);
-                    reloadKvs();
+                    loadData();
                 });
         });
     }
@@ -526,40 +520,18 @@
         const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
         const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
         toast.confirm(
-            "kv.delete multiple.confirm" +
-                (withoutDeletePermissionNamespaces.length === 0 ? "" : "\nkv.delete multiple.warning"),
+            t("kv.delete multiple.confirm", {name: Object.values(withDeletePermissionGroupedKvs).reduce((count, kvs) => count + kvs.length, 0)}) +
+                (withoutDeletePermissionNamespaces.length === 0 ? "" : "\n" + t("kv.delete multiple.warning")),
             async () => {
                 Object.entries(withDeletePermissionGroupedKvs).forEach(([namespace, kvs]) => {
                     namespacesStore
                         .deleteKvs({namespace, request: {keys: kvs.map(kv => kv.key)}})
                         .then(() => {
                             toast.deleted(`${kvs.length} KV(s) from ${namespace} namespace`);
-                            reloadKvs();
+                            loadData();
                         });
                 });
             });
-    }
-
-    async function reloadKvs() {
-        if (!searchQuery.value) {
-            kvs.value = [];
-            const iterator = useNamespaces(100);
-            let namespaces;
-            let allKvs: any[] = [];
-            do {
-                namespaces = await iterator.next();
-                for (const ns of namespaces) {
-                    const kvFetch = (await namespacesStore.kvsList({id: ns.id})).map((kv: any) => ({...kv, namespace: ns.id}));
-                    allKvs = allKvs.concat(kvFetch);
-                }
-            } while (namespaces.length > 0);
-            kvs.value = allKvs;
-        } else {
-            namespaceIterator.value = undefined;
-            await selectTable.value?.resetInfiniteScroll();
-            kvs.value = [];
-            fetchKvs();
-        }
     }
 
     function saveKv(form: any) {
@@ -580,7 +552,7 @@
             } else if (["NUMBER", "BOOLEAN", "JSON"].includes(type)) {
                 value = JSON.stringify(value);
             }
-        
+
             const contentType = ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json";
 
             const namespace = kv.value.namespace!;
@@ -605,7 +577,7 @@
                 .then(() => {
                     toast.saved(key);
                     addKvDrawerVisible.value = false;
-                    reloadKvs();
+                    loadData();
                 });
         });
     }
@@ -621,21 +593,8 @@
         kv.value.ttl = value.timeRange;
     }
 
-    function handleSort({prop, order}: {prop: string, order: string}) {
-        if (prop && order) {
-            kvs.value?.sort((a, b) => {
-                const [valueA, valueB] = [a[prop] ?? "", b[prop] ?? ""];
-                const modifier = order === "ascending" ? 1 : -1;
-
-                return typeof valueA === "string"
-                    ? modifier * valueA.localeCompare(valueB)
-                    : modifier * (valueA - valueB);
-            });
-        }
-    }
-
     function refresh() {
-        reloadKvs();
+        loadData();
     }
 
     watch(addKvDrawerVisible, (newValue) => {
@@ -649,18 +608,6 @@
     watch(() => kv.value.type, () => {
         if (formRef.value) {
             (formRef.value as any).clearValidate("value");
-        }
-    });
-
-    watch(searchQuery, (newValue, oldValue) => {
-        if (newValue !== oldValue) {
-            reloadKvs();
-        }
-    });
-
-    onMounted(() => {
-        if (props.namespace !== undefined) {
-            fetchKvs();
         }
     });
 

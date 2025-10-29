@@ -9,8 +9,9 @@ import {NoCodeProps} from "./noCodeTypes";
 
 import {trackTabOpen, trackTabClose} from "../../utils/tabTracking";
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
+import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize";
 
-const NOCODE_PREFIX = "nocode"
+export const NOCODE_PREFIX = "nocode"
 
 interface Opener {
     panelIndex: number,
@@ -233,6 +234,8 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
     const {t} = useI18n()
     const flowStore = useFlowStore()
 
+    const defaultSize = usePanelDefaultSize(panels);
+
     function openAddTaskTab(
         opener: {
             panelIndex: number,
@@ -243,6 +246,7 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         refPath?: number,
         position: "before" | "after" = "after",
         fieldName?: string | undefined,
+        newPanelIndex?: number,
     ) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab(component, {
@@ -255,6 +259,16 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         }, t, handlers, flowStore.flowYaml)
 
         trackTabOpen(tab);
+
+        if(newPanelIndex !== undefined) {
+            const targetPanel = {
+                tabs: [tab],
+                activeTab: tab,
+                size: defaultSize.value,
+            }
+            panels.value.splice(newPanelIndex, 0, targetPanel)
+            return
+        }
 
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
@@ -269,7 +283,8 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         opener: { panelIndex: number, tabIndex: number },
         parentPath: string,
         blockSchemaPath: string,
-        refPath?: number
+        refPath?: number,
+        newPanelIndex?: number,
     ) {
         const tab = getTabFromNoCodeTab(component, {
             action: "edit",
@@ -279,6 +294,16 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         }, t, handlers, flowStore.flowYaml ?? "")
 
         trackTabOpen(tab);
+
+        if(newPanelIndex !== undefined) {
+            const targetPanel = {
+                tabs: [tab],
+                activeTab: tab,
+                size: defaultSize.value,
+            }
+            panels.value.splice(newPanelIndex, 0, targetPanel)
+            return
+        }
 
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {

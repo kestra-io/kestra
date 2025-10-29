@@ -1,6 +1,6 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.executor.TransactionContext;
+import io.kestra.core.runners.TransactionContext;
 import org.jooq.DSLContext;
 
 public class JdbcTransactionContext implements TransactionContext {

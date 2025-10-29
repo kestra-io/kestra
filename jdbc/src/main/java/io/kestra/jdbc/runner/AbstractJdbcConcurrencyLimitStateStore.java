@@ -4,7 +4,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.ExecutionRunning;
 import io.kestra.executor.ConcurrencyLimitStateStore;
-import io.kestra.executor.TransactionContext;
+import io.kestra.core.runners.TransactionContext;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;

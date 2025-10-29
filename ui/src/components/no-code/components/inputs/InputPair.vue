@@ -140,9 +140,4 @@
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
-
-:deep(.delete-outline-icon) {
-    height: 10px;
-    margin-left: 10px;
-}
 </style>

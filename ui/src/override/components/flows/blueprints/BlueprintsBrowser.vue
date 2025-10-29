@@ -168,10 +168,11 @@
 
     const userCanCreate = computed(() => canCreate(props.blueprintKind));
 
-    const processedTags = (blueprintTags: string[]) => {
-        return blueprintTags.map(tag => ({
+    const processedTags = (tags: string[]) => {
+        return tags.map(tag => ({
             original: tag,
-            display: tags.value?.[tag]?.name ?? tag
+            display: tag.length <= 3 && tag === tag.toUpperCase() ? tag : 
+                tag.replace(/\b\w/g, l => l.toUpperCase())
         }));
     };
 

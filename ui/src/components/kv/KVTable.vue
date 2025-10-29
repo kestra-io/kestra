@@ -29,7 +29,6 @@
         :no-data-text="$t('no_results.kv_pairs')"
         class="fill-height"
         :showSelection="!paneView"
-        :rowKey="(row: any) => `${row.namespace}-${row.key}`"
     >
         <template #select-actions>
             <BulkSelect

@@ -77,9 +77,7 @@ export const encodeFiltersToQuery = (filters: Filter[], keyOfComparator: (compar
                     ? value.join(",")
                     : typeof value === "object" && "startDate" in value
                         ? `${value.startDate.toISOString()},${value.endDate.toISOString()}`
-                        : value instanceof Date
-                            ? value.toISOString()
-                            : value;
+                        : value;
                 query[`filters[${key}][${comparatorKey}]`] = processedValue?.toString() ?? "";
                 return query;
             }

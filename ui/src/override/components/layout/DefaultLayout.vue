@@ -12,7 +12,7 @@
     />
 </template>
 
-<script setup lang="ts">
+<script setup>
     import LeftMenu from "override/components/LeftMenu.vue"
     import Errors from "../../../components/errors/Errors.vue"
     import ContextInfoBar from "../../../components/ContextInfoBar.vue"
@@ -29,17 +29,17 @@
     const {markSurveyDialogShown} = useSurveySkip()
     const showSurveyDialog = ref(false)
 
-    function onMenuCollapse(collapse: boolean) {
+    const onMenuCollapse = (collapse) => {
         layoutStore.setSideMenuCollapsed(collapse)
     }
 
-    function handleSurveyDialogClose() {
+    const handleSurveyDialogClose = () => {
         showSurveyDialog.value = false
         markSurveyDialogShown()
         localStorage.removeItem("showSurveyDialogAfterLogin")
     }
 
-    function checkForSurveyDialog() {
+    const checkForSurveyDialog = () => {
         const shouldShow = localStorage.getItem("showSurveyDialogAfterLogin") === "true"
         if (shouldShow) {
             setTimeout(() => {
@@ -49,15 +49,11 @@
     }
 
     onMounted(() => {
-        // ensure UI state is synchronized with store
-        onMenuCollapse(Boolean(layoutStore.sideMenuCollapsed))
+        onMenuCollapse(layoutStore.sideMenuCollapsed)
         checkForSurveyDialog()
     })
 
-    watch(
-        () => layoutStore.sideMenuCollapsed,
-        (val: boolean) => {
-            onMenuCollapse(val)
-        },
-    )
+    watch(() => layoutStore.sideMenuCollapsed, (val) => {
+        onMenuCollapse(val)
+    })
 </script>

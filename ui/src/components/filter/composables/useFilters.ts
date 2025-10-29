@@ -269,14 +269,8 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
             return {value: combinedValue, valueLabel: combinedValue.join(", ")};
         } else {
             const param = params[0];
-            let value = Array.isArray(param?.value) ? param.value[0] : param?.value as string;
-            
-            if (config?.valueType === "date" && typeof value === "string") {
-                value = new Date(value);
-            }
-            
-            const valueLabel = value instanceof Date ? value.toLocaleDateString() : value;
-            return {value, valueLabel};
+            const value = Array.isArray(param?.value) ? param.value[0] : param?.value as string;
+            return {value, valueLabel: value};
         }
     };
 

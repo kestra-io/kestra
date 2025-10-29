@@ -130,7 +130,7 @@ public class FlowInputOutput {
     private Mono<Map<String, Object>> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
         return Flux.from(data)
             .publishOn(Schedulers.boundedElastic())
-            .<Map.Entry<String, String>>handle((input, sink) -> {
+            .<AbstractMap.SimpleEntry<String, String>>handle((input, sink) -> {
                 if (input instanceof CompletedFileUpload fileUpload) {
                     boolean oldStyleInput = false;
                     if ("files".equals(fileUpload.getName())) {
@@ -150,7 +150,7 @@ public class FlowInputOutput {
                             .getContextStorageURI()
                         );
                         fileUpload.discard();
-                        sink.next(Map.entry(inputId, from.toString()));
+                        sink.next(new AbstractMap.SimpleEntry<>(inputId, from.toString()));
                     } else {
                         try {
                             final String fileExtension = FileInput.findFileInputExtension(inputs, fileName);
@@ -165,7 +165,7 @@ public class FlowInputOutput {
                                     return;
                                 }
                                 URI from = storageInterface.from(execution, inputId, fileName, tempFile);
-                                sink.next(Map.entry(inputId, from.toString()));
+                                sink.next(new AbstractMap.SimpleEntry<>(inputId, from.toString()));
                             } finally {
                                 if (!tempFile.delete()) {
                                     tempFile.deleteOnExit();
@@ -178,13 +178,13 @@ public class FlowInputOutput {
                     }
                 } else {
                     try {
-                        sink.next(Map.entry(input.getName(), new String(input.getBytes())));
+                        sink.next(new AbstractMap.SimpleEntry<>(input.getName(), new String(input.getBytes())));
                     } catch (IOException e) {
                         sink.error(e);
                     }
                 }
             })
-            .collectMap(Map.Entry::getKey, Map.Entry::getValue);
+            .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue);
     }
 
     /**

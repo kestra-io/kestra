@@ -1,21 +1,25 @@
 <template>
-    <div class="p-3">
-        <el-date-picker
-            :modelValue="dateValue"
-            type="datetime"
-            :placeholder="`Select ${label.toLowerCase()}`"
-            @update:model-value="$emit('update:dateValue', $event)"
-        />
-    </div>
+    <el-date-picker
+        v-model="dateModel"
+        type="datetime"
+        :placeholder="`Select ${label.toLowerCase()}`"
+    />
 </template>
 
 <script setup lang="ts">
-    defineProps<{
+    import {computed} from "vue";
+
+    const props = defineProps<{
         label: string;
         dateValue: Date | null;
     }>();
 
-    defineEmits<{
+    const emits = defineEmits<{
         "update:dateValue": [value: Date | null];
     }>();
+
+    const dateModel = computed({
+        get: () => props.dateValue,
+        set: (value: Date | null) => emits("update:dateValue", value)
+    });
 </script>

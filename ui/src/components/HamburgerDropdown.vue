@@ -10,8 +10,14 @@
         </template>
     </el-dropdown>
 </template>
-
-<script setup lang="ts">
+<script>
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+
+    export default {
+        components: {DotsVertical},
+        props:{
+
+        },
+    }
 </script>
 

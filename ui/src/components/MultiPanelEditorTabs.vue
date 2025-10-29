@@ -39,7 +39,6 @@
         align-items: center;
         justify-content: space-between;
         border-bottom: 1px solid var(--ks-border-primary);
-        background: var(--ks-background-card);
         background-image: linear-gradient(
                 to right,
                 colorPalette.$base-blue-400 0%,

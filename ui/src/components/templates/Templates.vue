@@ -62,7 +62,6 @@
                         @selection-change="handleSelectionChange"
                         :selectable="canRead || canDelete"
                         :no-data-text="$t('no_results.templates')"
-                        :rowKey="(row) => `${row.namespace}-${row.id}`"
                     >
                         <template #select-actions>
                             <BulkSelect

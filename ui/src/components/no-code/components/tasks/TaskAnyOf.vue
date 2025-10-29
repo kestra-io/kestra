@@ -14,11 +14,11 @@
         </el-select>
         <el-radio-group v-else v-model="selectedSchema" @change="onSelectType">
             <el-radio
-                v-for="schema in schemaOptions"
-                :key="schema.label"
-                :value="schema.value"
+                v-for="radioSchema in schemaOptions"
+                :key="radioSchema.value"
+                :value="radioSchema.value"
             >
-                {{ schema.label }}
+                {{ radioSchema.label }}
             </el-radio>
         </el-radio-group>
     </el-form-item>
@@ -36,26 +36,57 @@
     </el-form>
 </template>
 
-<script>
-    import Task from "./MixinTask";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+<script setup lang="ts">
+    import {ref, computed, watch, onMounted, nextTick} from "vue";
     import getTaskComponent from "./getTaskComponent";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    /**
-     * merge allOf schemas if they exist
-     * @param schema
-     */
-    function consolidateAllOfSchemas(schema, definitions) {
-        if(schema?.allOf?.length) {
+    const props = defineProps<{
+        schema: Schema,
+        definitions: Record<string, Schema>,
+        required?: boolean
+    }>();
+
+    defineOptions({inheritAttrs: false});
+
+    const model = defineModel<any>()
+
+    const emit = defineEmits(["update:selectedSchema"]);
+
+    const selectedSchema = ref<string>();
+    const delayedSelectedSchema = ref<string>();
+    const finishedMounting = ref(false);
+
+    interface Schema{
+        $ref?: string;
+        type: string | {const: string};
+        properties?: Record<string, Schema>;
+        required?: string[];
+        $required?: boolean;
+        default?: any;
+        allOf?: Schema[];
+        anyOf?: Schema[];
+        oneOf?: Schema[];
+        items?: {
+            type: string;
+            format?: string;
+        };
+        const?: string;
+    }
+
+    function consolidateAllOfSchemas(schema: Schema, definitions: Record<string, Schema>) {
+        if (schema?.allOf?.length) {
             return {
                 ...schema,
-                type: "object",
-                ...schema.allOf.reduce((acc, item) => {
-                    if(item.$ref) {
-                        const refSchema = definitions[item.$ref.split("/").pop()];
-                        if(refSchema) {
+                ...schema.allOf.reduce<Schema>((acc, item) => {
+                    if(!acc.required){
+                        return acc;
+                    }
+                    if (item.$ref) {
+                        const refSchema = definitions[item.$ref.split("/").pop() ?? "---"];
+                        if (refSchema) {
                             return {
+                                ...acc,
                                 required: [
                                     ...acc.required,
                                     ...(refSchema.required ?? [])
@@ -68,6 +99,7 @@
                         }
                     } else {
                         return {
+                            ...acc,
                             required: [
                                 ...acc.required,
                                 ...(item.required ?? [])
@@ -80,248 +112,245 @@
                     }
                     return acc;
                 }, {
+                    type: "object",
                     properties: {},
                     required: [],
-                })
+                }),
+                
             }
         }
         return schema;
     }
 
-    export default {
-        components: {
-            TaskIcon,
-        },
-        inheritAttrs: false,
-        mixins: [Task],
-        emits: ["update:modelValue", "update:selectedSchema"],
-        data() {
-            return {
-                isOpen: false,
-                selectedSchema: undefined,
-                delayedSelectedSchema: undefined,
-                finishedMounting: false,
-            };
-        },
-        created() {
-            const schema = this.schemaOptions.find((item) =>
-                item.value === this.modelValue?.type ||
-                (typeof this.modelValue === "string" && item.value === "string") ||
-                (typeof this.modelValue === "number" && item.value === "integer") ||
-                (Array.isArray(this.modelValue) && item.value === "array") ||
-                // this last line needs to stay after the array one.
-                // If not, arrays will be detected as objects
-                (typeof this.modelValue === "object" && item.value === "object"),
-            );
-
-            this.selectedSchema = schema?.value;
-
-            // only default selector to required values
-            if(!this.selectedSchema && this.schemas.length > 0 && this.required) {
-                this.selectedSchema = this.schemas[0].type;
-            }
-
-            if (schema) {
-                this.onSelectType(schema.value);
-            }
-        },
-        mounted() {
-            this.$nextTick(() => {
-                this.finishedMounting = true
-            })
-        },
-        watch: {
-            constantType(val) {
-                // avoid setting values
-                // before user acts on the component
-                if(!this.finishedMounting) {
-                    return;
-                }
-                if(!val) {
-                    this.onInput(undefined);
-                    return;
-                }
-                // If the constant type changes, we need to update the modelValue
-                if(this.modelValue){
-                    for(const val in this.modelValue) {
-                        if(val !== "type" && !this.filteredProperties?.some(([key]) => key === val)) {
-                            delete this.modelValue[val];
-                        }
-                    }
-                }
-                this.onAnyOfInput(this.modelValue || {type: val});
-            },
-            selectedSchema(val) {
-                this.$emit("update:selectedSchema", val);
-                this.$nextTick(() => {
-                    this.delayedSelectedSchema = val;
-                });
-            },
-        },
-
-        methods: {
-            onSelectType(value) {
-                // When switching form string to object/array,
-                // We try to parse the string as YAML
-                // If the value is not yaml it has no point on being kept.
-                if(typeof this.modelValue === "string" && (value === "object" || value === "array")) {
-                    let parsedValue = {}
-                    try{
-                        parsedValue = YAML_UTILS.parse(this.modelValue) ?? {};
-                        if(value === "array" && !Array.isArray(parsedValue)) {
-                            parsedValue = [parsedValue];
-                        }
-                    } catch {
-                        // eat an error
-                    }
-
-                    this.$emit("update:modelValue", parsedValue);
-                }
-
-                if(value === "string") {
-                    if (Array.isArray(this.modelValue) && this.modelValue.length === 1) {
-                        this.$emit("update:modelValue", this.modelValue[0]);
-                    } else if (typeof this.modelValue !== "string"){
-                        this.$emit("update:modelValue", YAML_UTILS.stringify(this.modelValue));
-                    }
-                }
-
-                this.selectedSchema = value;
-                // Set up default values
-                if (
-                    this.currentSchema?.properties &&
-                    this.modelValue === undefined
-                ) {
-                    const defaultValues = {};
-                    for (let prop in this.currentSchema.properties) {
-                        if (
-                            this.currentSchema.properties[prop].$required &&
-                            this.currentSchema.properties[prop].default
-                        ) {
-                            defaultValues[prop] =
-                                this.currentSchema.properties[prop].default;
-                        }
-                    }
-                    this.onInput(defaultValues)
-                }
-                this.delayedSelectedSchema = value;
-            },
-            onAnyOfInput(value) {
-                if(this.constantType?.length && typeof value === "object") {
-                    value.type = this.constantType;
-                }
-                this.onInput(value);
-            },
-            resetSelectType() {
-                this.selectedSchema = undefined;
-                this.$nextTick(() => {
-                    this.onInput(undefined);
-                });
-            },
-        },
-
-        expose: [
-            "resetSelectType",
-        ],
-
-        computed: {
-            schemas() {
-                if(!this.schema?.anyOf || !Array.isArray(this.schema.anyOf)) {
-                    return [];
-                }
-                return this.schema.anyOf.map((schema) => {
-
-                    if(schema.allOf && Array.isArray(schema.allOf)) {
-                        if(schema.allOf.length === 2 && schema.allOf[0].$ref && !schema.allOf[1].$ref) {
-                            return {
-                                ...schema.allOf[1],
-                                $ref: schema.allOf[0].$ref,
-                            };
-                        }
-                    }
-
-                    return schema;
-                });
-            },
-            constantType() {
-                return this.currentSchema?.properties?.type?.const;
-            },
-            filteredProperties() {
-                return this.currentSchema?.properties ? Object.entries(this.currentSchema.properties).filter(([key, schema]) => {
-                    return !(key === "type" && schema?.const);
-                }) : [];
-            },
-            currentSchema() {
-                const rawSchema = this.definitions[this.delayedSelectedSchema] ?? this.schemaByType[this.delayedSelectedSchema]
-                return consolidateAllOfSchemas(rawSchema, this.definitions);
-            },
-            schemaByType() {
-                return this.schemas.reduce((acc, schema) => {
-                    acc[schema.type] = schema;
-                    return acc;
-                }, {});
-            },
-            currentSchemaType() {
-                return this.delayedSelectedSchema ? getTaskComponent(this.currentSchema) : undefined;
-            },
-            isSelectingPlugins() {
-                return this.schemas.length > 4;
-            },
-            schemaOptions() {
-                if (!this.schemas?.length || !this.definitions) {
-                    return [];
-                }
-
-                // find the part of the prefix to schema references that is common to all schemas
-                const schemaRefsArray = this.schemas
-                    ?.map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
-                    .filter((schemaRef) => schemaRef)
-                    .map((schemaRef) => this.definitions[schemaRef]?.type?.const ?? schemaRef)
-                    .map((schemaRef) => schemaRef.split("."))
-
-                let mismatch = false
-                const commonPart = schemaRefsArray[0]
-                    ?.filter((schemaRef, index) => {
-                        if(!mismatch && schemaRefsArray.every((item) => item[index] === schemaRef)){
-                            return true;
-                        } else {
-                            mismatch = true;
-                            return false;
-                        }
-                    })
-                    .map((schemaRef) => `${schemaRef}.`)
-                    .join("");
-
-                return this.schemas.map((schema) => {
-                    const schemaRef = schema.$ref
-                        ? schema.$ref.split("/").pop()
-                        : schema.type;
-
-                    if (!schemaRef) {
-                        return {
-                            label: "Unknown Schema",
-                            value: "",
-                            id: "",
-                        };
-                    }
-
-                    const cleanSchemaRef = schemaRef.replace(/-\d+$/, "");
-
-                    const lastPartOfValue = cleanSchemaRef.slice(
-                        commonPart.length,
-                    )
-
+    const schemas = computed(() => {
+        if (!props.schema?.anyOf || !Array.isArray(props.schema.anyOf)) return [];
+        return props.schema.anyOf.map((schema: Schema) => {
+            if (schema.allOf && Array.isArray(schema.allOf)) {
+                if (schema.allOf.length === 2 && schema.allOf[0].$ref && !schema.allOf[1].$ref) {
                     return {
-                        label: lastPartOfValue.capitalize(),
-                        value: schemaRef,
-                        id: cleanSchemaRef,
+                        ...schema.allOf[1],
+                        $ref: schema.allOf[0].$ref,
                     };
-                }).filter((schema) => {
-                    return schema.value
-                });
-            },
-        },
-    };
+                }
+            }
+            return schema;
+        });
+    });
+
+    const allSchemaSameType = computed(() => {
+        if (schemas.value.length < 2) return false;
+        const firstType = schemas.value[0].type;
+        if(firstType === undefined){
+            return false;
+        }
+        return schemas.value.every((schema: Schema) => schema.type === firstType);
+    });
+
+    function makeKey(schema: Schema) {
+        if(typeof schema.type === "object"){
+            return schema.type.const;
+        }
+        if(allSchemaSameType.value && schema.items){
+            return `${schema.type}.${schema.items.type}${schema.items.format ? `.${schema.items.format}` : ""}`;
+        }
+        return schema.type;
+    }
+
+    const schemaByType = computed(() => {
+        return schemas.value.reduce((acc: Record<string, any>, schema: any) => {
+            acc[makeKey(schema)] = schema;
+            return acc;
+        }, {});
+    });
+
+    const constantType = computed(() => currentSchema.value?.properties?.type?.const);
+
+    const filteredProperties = computed(() =>
+        currentSchema.value?.properties
+            ? Object.entries(currentSchema.value.properties).filter(([key, schema]: [string, Schema]) => !(key === "type" && schema?.const))
+            : []
+    );
+
+    const currentSchema = computed(() => {
+        if(!delayedSelectedSchema.value) return
+        const rawSchema = props.definitions[delayedSelectedSchema.value] ?? schemaByType.value[delayedSelectedSchema.value];
+        return consolidateAllOfSchemas(rawSchema, props.definitions);
+    });
+
+    const currentSchemaType = computed(() =>
+        delayedSelectedSchema.value ? getTaskComponent(currentSchema.value) : undefined
+    );
+
+    const isSelectingPlugins = computed(() => schemas.value.length > 4);
+
+    const schemaOptions = computed<{label: string, value: string, id: string}[]>(() => {
+        // if all schemas are of type array we have to
+        // look at the type of their items to differentiate them
+        if(allSchemaSameType.value){
+            return schemas.value.map((schema: any) => {
+                const itemsType = schema.items?.format ?? schema.items?.type;
+
+                return {
+                    label: itemsType.charAt(0).toUpperCase() + itemsType.slice(1),
+                    value: makeKey(schema),
+                    id: itemsType,
+                };
+            })
+        }
+
+        if (!schemas.value?.length || !props.definitions) return [];
+        const schemaRefsArray = (schemas.value as {$ref?: string, type: string}[])
+            .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
+            .filter((schemaRef) => schemaRef !== undefined)
+            .map((schemaRef) => typeof props.definitions[schemaRef]?.type === "object" ? props.definitions[schemaRef]?.type?.const : schemaRef)
+            .map((schemaRef: string) => schemaRef.split("."));
+
+        let mismatch = false;
+        const commonPart = schemaRefsArray[0]
+            ?.filter((schemaRef: string, index: number) => {
+                if (!mismatch && schemaRefsArray.every((item: string[]) => item[index] === schemaRef)) {
+                    return true;
+                } else {
+                    mismatch = true;
+                    return false;
+                }
+            })
+            .map((schemaRef: string) => `${schemaRef}.`)
+            .join("");
+        
+
+        
+        return schemas.value.map((schema: any) => {
+            const schemaRef = schema.$ref
+                ? schema.$ref.split("/").pop()
+                : schema.type;
+
+            if (!schemaRef) {
+                return {
+                    label: "Unknown Schema",
+                    value: "",
+                    id: "",
+                };
+            }
+
+            const cleanSchemaRef = schemaRef.replace(/-\d+$/, "");
+            const lastPartOfValue = cleanSchemaRef.slice(commonPart.length);
+
+            return {
+                label: lastPartOfValue.charAt(0).toUpperCase() + lastPartOfValue.slice(1),
+                value: schemaRef,
+                id: cleanSchemaRef,
+            };
+        }).filter((schema: any) => schema.value !== undefined);
+    });
+
+    watch(() => constantType.value, (val) => {
+        if (!finishedMounting.value) return;
+        if (!val) {
+            onInput(undefined);
+            return;
+        }
+        if (model.value) {
+            for (const key in model.value) {
+                if (key !== "type" && !filteredProperties.value?.some(([k]) => k === key)) {
+                    delete model.value[key];
+                }
+            }
+        }
+        onAnyOfInput(model.value || {type: val});
+    });
+
+    watch(selectedSchema, (val) => {
+        emit("update:selectedSchema", val);
+        nextTick(() => {
+            delayedSelectedSchema.value = val;
+        });
+    });
+
+    onMounted(() => {
+        const schema = schemaOptions.value.find((item: any) =>
+            item.value === model.value?.type ||
+            (typeof model.value === "string" && item.value === "string") ||
+            (typeof model.value === "number" && item.value === "integer") ||
+            (Array.isArray(model.value) && item.value === "array") ||
+            (typeof model.value === "object" && item.value === "object") ||
+            (Array.isArray(model.value) && typeof model.value[0] === "number" && item.value === "array.number") ||
+            (Array.isArray(model.value) && typeof model.value[0] === "string" && !isNaN(Date.parse(item.value[0])) && item.value === "array.string.date-time") ||
+            (Array.isArray(model.value) && typeof model.value[0] === "string" && item.value === "array.string")
+        );
+
+        selectedSchema.value = schema?.value;
+
+        if (!selectedSchema.value && schemas.value.length > 0 && props.required) {
+            selectedSchema.value = typeof schemas.value[0].type === "object" ? schemas.value[0].type.const : schemas.value[0].type;
+        }
+
+        if (schema) {
+            onSelectType(schema.value);
+        }
+        nextTick(() => {
+            finishedMounting.value = true;
+        });
+    });
+
+    // Methods
+    function onSelectType(value: string) {
+        if (typeof model.value === "string" && (value === "object" || value === "array")) {
+            let parsedValue: any = {};
+            try {
+                parsedValue = YAML_UTILS.parse(model.value) ?? {};
+                if (value === "array" && !Array.isArray(parsedValue)) {
+                    parsedValue = [parsedValue];
+                }
+            } catch {
+                // ignore invalid yaml
+            }
+        }
+        if (value === "string") {
+            if (Array.isArray(model.value) && model.value.length === 1) {
+                model.value = model.value[0];
+            } else if (typeof model.value !== "string") {
+                model.value = YAML_UTILS.stringify(model.value);
+            }
+        }
+        selectedSchema.value = value;
+        if (currentSchema.value?.properties && model.value === undefined) {
+            const defaultValues: Record<string, any> = {};
+            for (let prop in currentSchema.value.properties) {
+                if (
+                    currentSchema.value.properties[prop].$required &&
+                    currentSchema.value.properties[prop].default
+                ) {
+                    defaultValues[prop] = currentSchema.value.properties[prop].default;
+                }
+            }
+            onInput(defaultValues);
+        }
+        delayedSelectedSchema.value = value;
+    }
+
+    function onAnyOfInput(value: any) {
+        if (constantType.value?.length && typeof value === "object") {
+            value.type = constantType.value;
+        }
+        onInput(value);
+    }
+
+    function onInput(value: any) {
+        model.value = value;
+    }
+
+    function resetSelectType() {
+        selectedSchema.value = undefined;
+        nextTick(() => {
+            onInput(undefined);
+        });
+    }
+
+    // Expose
+    defineExpose({
+        resetSelectType
+    });
 </script>
 
 <style scoped lang="scss">

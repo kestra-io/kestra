@@ -6,7 +6,7 @@
     </SideBar>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     import {useLeftMenu} from "override/components/useLeftMenu";
     import SideBar from "../../components/layout/SideBar.vue";
     import Auth from "../../override/components/auth/Auth.vue";
@@ -15,7 +15,7 @@
 
     const $emit = defineEmits(["menu-collapse"])
 
-    function onCollapse(folded) {
+    function onCollapse(folded: boolean) {
         $emit("menu-collapse", folded);
     }
 

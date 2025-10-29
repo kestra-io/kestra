@@ -146,7 +146,7 @@
     z-index: 1000;
 
     .edit-popup {
-        background: var(--ks-background-body);
+        background: var(--ks-dropdown-background);
         border: 1px solid var(--ks-border-primary);
         border-radius: 8px;
         box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;

@@ -14,9 +14,8 @@
 
     import {useMiscStore} from "override/stores/misc";
     const miscStore = useMiscStore();
-
-    const {edition} = miscStore.configs || {};
-    const disabled = computed(() => edition === "OSS")
+    
+    const disabled = computed(() => miscStore.configs?.edition === "OSS") 
 
     const {t} = useI18n()
 

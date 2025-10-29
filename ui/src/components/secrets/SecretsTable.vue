@@ -30,6 +30,7 @@
                     @sort-change="onSort"
                     :no-data-text="$t('no_results.secrets')"
                     class="fill-height"
+                    :rowKey="(row: any) => `${row.namespace}-${row.key}`"
                 >
                     <el-table-column 
                         prop="key" 

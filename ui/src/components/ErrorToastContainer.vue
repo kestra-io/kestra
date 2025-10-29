@@ -19,79 +19,87 @@
     </ul>
 </template>
 
-<script>
+<script setup lang="ts">
+    import { ref, computed, onMounted, watch } from "vue";
+    import { useRoute } from "vue-router";
     import AiIcon from "vue-material-design-icons/Creation.vue";
     import * as Markdown from "../utils/markdown";
-    import {useFlowStore} from "../stores/flow";
+    import { useFlowStore } from "../stores/flow";
 
-    export default {
-        props: {
-            message: {
-                type: Object,
-                required: true
-            },
-            items: {
-                type: Array,
-                required: true
-            },
-            onClose: {
-                type: Function,
-                default: null
-            },
-        },
-        data() {
-            return {
-                markdownRenderer: undefined
-            }
-        },
-        async created() {
-            this.markdownRenderer = await this.renderMarkdown();
-        },
-        watch: {
-            async source() {
-                this.markdownRenderer = await this.renderMarkdown();
-            }
-        },
-        computed: {
-            isFlowContext() {
-                const routeName = this.$route?.name;
-                return routeName === "flows/update" || routeName === "flows/create";
-            }
-        },
-        components: {AiIcon},
-        methods: {
-            async renderMarkdown() {
-                if (this.message.response && this.message.response.status === 503) {
-                    return await Markdown.render("Server is temporarily unavailable. Please try again later.", {html: true});
-                }
-                return await Markdown.render(this.message.message || this.message.content.message, {html: true});
-            },
-            async fixWithAi() {
-                const errorMessage = this.message.message || this.message.content?.message || "";
-                const errorItems = this.items.map(item => {
-                    const path = item.path ? `At ${item.path}: ` : "";
-                    return path + item.message;
-                }).join("\n");
+    interface ErrorItem {
+        path?: string;
+        message: string;
+    }
 
-                const fullErrorMessage = [errorMessage, errorItems].filter(Boolean).join("\n\n");
-                const prompt = `Fix the following error in the flow:\n${fullErrorMessage}`;
+    interface ErrorMessage {
+        message?: string;
+        title?: string;
+        content?: {
+            message: string;
+        };
+        response?: {
+            status: number;
+        };
+    }
 
-                try {
-                    window.sessionStorage.setItem("kestra-ai-prompt", prompt);
-                } catch (err) {
-                    console.warn("AI prompt not persisted to sessionStorage:", err);
-                }
+    interface Props {
+        message: ErrorMessage;
+        items: ErrorItem[];
+        onClose?: (() => void) | null;
+    }
 
-                // Close the notification
-                if (this.onClose) {
-                    this.onClose();
-                }
+    const props = withDefaults(defineProps<Props>(), {
+        onClose: null
+    });
 
-                const flowStore = useFlowStore();
-                flowStore.setOpenAiCopilot(true);
-            },
-        },
+    const route = useRoute();
+    const flowStore = useFlowStore();
+    const markdownRenderer = ref<string | undefined>(undefined);
+
+    const isFlowContext = computed(() => {
+        const routeName = route?.name;
+        return routeName === "flows/update" || routeName === "flows/create";
+    });
+
+    const renderMarkdown = async (): Promise<string> => {
+        if (props.message.response && props.message.response.status === 503) {
+            return await Markdown.render("Server is temporarily unavailable. Please try again later.", { html: true });
+        }
+        return await Markdown.render(props.message.message || props.message.content?.message || "", { html: true });
     };
+
+    const fixWithAi = async () => {
+        const errorMessage = props.message.message || props.message.content?.message || "";
+        const errorItems = props.items.map((item: ErrorItem) => {
+            const path = item.path ? `At ${item.path}: ` : "";
+            return path + item.message;
+        }).join("\n");
+
+        const fullErrorMessage = [errorMessage, errorItems].filter(Boolean).join("\n\n");
+        const prompt = `Fix the following error in the flow:\n${fullErrorMessage}`;
+
+        try {
+            window.sessionStorage.setItem("kestra-ai-prompt", prompt);
+        } catch (err) {
+            console.warn("AI prompt not persisted to sessionStorage:", err);
+        }
+
+        // Close the notification
+        if (props.onClose) {
+            props.onClose();
+        }
+
+        flowStore.setOpenAiCopilot(true);
+    };
+
+    // Watch for changes in message
+    watch(() => props.message, async () => {
+        markdownRenderer.value = await renderMarkdown();
+    }, { deep: true });
+
+    onMounted(async () => {
+        markdownRenderer.value = await renderMarkdown();
+    });
 </script>
 
 <style scoped lang="scss">

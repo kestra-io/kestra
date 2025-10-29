@@ -1,6 +1,25 @@
 # Kestra AGENTS.md
 
-This file provides guidance for AI coding agents working on the Kestra project. Kestra is an open-source data orchestration and scheduling platform built with Java (Micronaut) and Vue.js.
+Hey there! This file is my go-to guide for getting AI coding agents up and running on the Kestra project. Kestra's this awesome open-source platform for data orchestration and scheduling, built with Java (Micronaut) and Vue.js. I've spent way too much time figuring this stuff out, so hopefully this saves you some headaches.
+
+## Table of Contents
+
+- [Repository Layout](#repository-layout)
+- [Development Environment](#development-environment)
+  - [Prerequisites](#prerequisites)
+  - [Quick Setup with Devcontainer](#quick-setup-with-devcontainer)
+  - [Manual Setup](#manual-setup)
+- [Configuration Files](#configuration-files)
+- [Running the Application](#running-the-application)
+- [Building and Testing](#building-and-testing)
+- [Development Guidelines](#development-guidelines)
+- [Testing Strategy](#testing-strategy)
+- [Plugin Development](#plugin-development)
+- [Troubleshooting](#troubleshooting)
+- [Pull Request Guidelines](#pull-request-guidelines)
+- [Useful Commands](#useful-commands)
+- [Getting Help](#getting-help)
+- [Environment Variables](#environment-variables)
 
 ## Repository Layout
 
@@ -31,14 +50,35 @@ This file provides guidance for AI coding agents working on the Kestra project. 
 
 ### Quick Setup with Devcontainer
 
-The easiest way to get started is using the provided devcontainer:
+Look, if you're new to devcontainers or just want to skip the hassle of installing everything locally, this is your jam. The devcontainer does all the heavy lifting for you – no more wrestling with Java, Node, or whatever else.
 
-1. Install VSCode Remote Development extension
-2. Run `Dev Containers: Open Folder in Container...` from command palette
-3. Select the Kestra root folder
-4. Wait for Gradle build to complete
+#### Prerequisites
+
+Before we jump in, let's make sure you've got the basics covered:
+
+- **VS Code**: If you don't have it, grab it from [code.visualstudio.com](https://code.visualstudio.com/). Trust me, it's worth it.
+- **Docker Desktop**: Head over to [docker.com](https://www.docker.com/products/docker-desktop), download it, and get it running. You'll see that little whale icon in your tray.
+- **Remote Development Extension Pack**: In VS Code, hit Extensions (Ctrl+Shift+X), search for "Remote Development" by Microsoft, and snag the whole pack. It includes Dev Containers and a bunch of other goodies.
+
+#### Step-by-Step Setup
+
+1. **Fire up VS Code**: Open it and double-check Docker Desktop is humming along in the background.
+
+2. **Extensions check**: Make sure the Dev Containers extension is there. If not, install it from the Extensions tab.
+
+3. **Grab the project**: Go to `File > Open Folder...` and pick the Kestra root folder – the one with this AGENTS.md file.
+
+4. **Launch the dev container**: Smash `Ctrl+Shift+P` for the command palette, type "Dev Containers: Open Folder in Container...", and hit enter. Pick the Kestra folder when it asks.
+
+5. **Grab a coffee**: First time? It'll pull the container image and build the project. Could take 10-20 minutes depending on your setup. The Gradle build kicks off automatically.
+
+6. **You're good to go**: Once it's done, you're in the devcontainer world with everything ready. Start coding!
+
+For a visual guide, check out VS Code's [quick start docs](https://code.visualstudio.com/docs/devcontainers/containers). If there's a video, I'll link it here.
 
 ### Manual Setup
+
+If you prefer to set things up yourself or can't use devcontainers for some reason, here's how to do it the old-fashioned way. It's a bit more work, but you'll have full control.
 
 1. Clone the repository
 2. Run `./gradlew build` to build the backend
@@ -221,27 +261,61 @@ make start-standalone-postgres
 - Use devcontainer mounts for local development
 - Plugins are loaded at startup
 
-## Common Issues and Solutions
+## Troubleshooting
 
-### JavaScript Heap Out of Memory
+Alright, let's talk about  I've dealt with setting this up. These are the issues that pop up most often, and yeah, they've bitten me more than once. If your problem isn't here, definitely check out the [GitHub issues](https://github.com/kestra-io/kestra/issues) or hop into [Slack](https://kestra.io/slack) – the community there is super helpful.
 
-Set `NODE_OPTIONS=--max-old-space-size=4096` environment variable.
+### Q: JavaScript Heap Out of Memory Error
 
-### CORS Issues
+**A:** Oh man, this one sneaks up on you when you're building the frontend and it has a ton of dependencies. I've had to bump up the Node.js heap size more times than I can count. Just set this environment variable:
 
-Ensure backend CORS is configured for `http://localhost:5173` when using frontend dev server.
+```bash
+export NODE_OPTIONS=--max-old-space-size=4096
+```
 
-### Database Connection Issues
+Throw it in your `~/.bashrc` or `~/.zshrc` so it's always there. On Windows? Stick it in your environment variables.
 
-- Use `host.docker.internal` instead of `localhost` when connecting from devcontainer
-- Verify PostgreSQL is running and accessible
-- Check database credentials and permissions
+### Q: CORS Errors in Browser Console
 
-### Gradle Build Issues
+**A:** "CORS policy" errors driving you nuts when the frontend tries to chat with the backend? I've been there. Here's what usually fixes it:
 
-- Clear Gradle cache: `./gradlew clean`
-- Check Java version compatibility
-- Verify all dependencies are available
+1. Crack open your `cli/src/main/resources/application-override.yml` file.
+2. Make sure CORS is flipped on like this:
+
+```yaml
+micronaut:
+  server:
+    cors:
+      enabled: true
+      configurations:
+        all:
+          allowedOrigins:
+            - http://localhost:5173
+```
+
+3. Give the backend a restart: `./gradlew runLocal`
+
+If your frontend's running on a different port, just toss that into the `allowedOrigins` list too.
+
+### Q: Database Connection Issues
+
+**A:** PostgreSQL giving you the cold shoulder? This has tripped me up plenty. Try these:
+
+- **Inside a devcontainer?** Swap `localhost` for `host.docker.internal` in your connection string. Something like: `jdbc:postgresql://host.docker.internal:5432/kestra`
+- **Is Postgres even running?** Quick check: `docker ps | grep postgres`
+- **Credentials match?** Double-check your config against what's in the database.
+- **Docker Compose drama?** Make sure the network's set up right between containers.
+
+### Q: Gradle Build Failing
+
+**A:** Builds acting up? This is my least favorite. Here's what I usually check:
+
+- **Clear the cache**: `./gradlew clean` – wipes the slate clean.
+- **Java version?** Gotta be 21+: `java -version`
+- **Dependencies acting weird?** Try `./gradlew dependencies --refresh-dependencies`
+- **Last resort**: Nuke the `.gradle` folder in your project root and start over.
+
+Still stuck? Run `./gradlew build --info` for the full story.
 
 ## Pull Request Guidelines
 
@@ -297,9 +371,10 @@ npm run lint                          # Lint frontend code
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `MICRONAUT_ENVIRONMENTS` | Custom config environments | `local,override` |
-| `KESTRA_PLUGINS_PATH` | Path to custom plugins | `/workspaces/kestra/local/plugins` |
-| `NODE_OPTIONS` | Node.js options | `--max-old-space-size=4096` |
-| `JAVA_HOME` | Java installation path | `/usr/java/jdk-21` |
+| `MICRONAUT_ENVIRONMENTS` | Comma-separated list of Micronaut environments to activate (e.g., for custom configs) | `local,override` |
+| `KESTRA_PLUGINS_PATH` | Directory where custom plugin JARs are loaded from at startup | `/workspaces/kestra/local/plugins` |
+| `NODE_OPTIONS` | Options passed to Node.js runtime (useful for increasing memory limits) | `--max-old-space-size=4096` |
+| `JAVA_HOME` | Path to the JDK installation directory | `/usr/java/jdk-21` |
+| `GRADLE_OPTS` | JVM options for Gradle builds (e.g., heap size, proxy settings) | (none) |
 
 Remember: Always test your changes in both local and standalone modes, and ensure CORS is properly configured for frontend development.

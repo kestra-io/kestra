@@ -6,7 +6,7 @@
             class="flex-1"
             :modelValue="hasDraft ? draftSource : source"
             :schemaType="flow ? 'flow': undefined"
-            :lang="extension === undefined ? 'yaml' : undefined"
+            :lang="lang"
             :extension="extension"
             :navbar="false"
             :readOnly="flow && flowStore.isReadOnly"
@@ -153,14 +153,34 @@
     });
 
     onMounted(() => {
-        loadPluginsHash();
+        if(props.flow){
+            pluginsStore.lazyLoadSchemaType({type: "flow"});
+        }
         loadFile();
+        loadPluginsHash();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
         if(route.query.ai === "open") {
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
         }
+    });
+
+    const LANGS_WITH_WORKERS_MAP = {
+        yaml: "yaml",
+        yml: "yaml",
+        json: "json",
+        js: "javascript",
+        ts: "typescript",
+        jsx: "javascript",
+        tsx: "typescript",
+    };
+
+    const lang = computed(() => {
+        if (props.extension in LANGS_WITH_WORKERS_MAP) {
+            return LANGS_WITH_WORKERS_MAP[props.extension as keyof typeof LANGS_WITH_WORKERS_MAP];
+        }
+        return undefined;
     });
 
     watch(() => flowStore.openAiCopilot, (newVal) => {
@@ -220,6 +240,9 @@
         if(props.path){
             updateContent?.({path: props.path, content: newValue});
         }
+
+        // only validate and update graph for flow files
+        if(!props.flow) return
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {

@@ -13,8 +13,14 @@ interface LogsState {
     results: any[];
 }
 
+export interface Label{
+    key: string;
+    value: string;
+}
+
 export interface Execution{
     id: string;
+    flowId?: string;
     taskRunList:  {
         id: string,
         taskId: string,
@@ -28,6 +34,7 @@ export interface Execution{
         duration: string;
     }
     inputs?: Record<string, any>;
+    labels?: any[];
     namespace: string;
 }
 

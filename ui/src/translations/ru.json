@@ -586,7 +586,290 @@
       "title": "Что нового в Kestra"
     },
     "file preview truncated": "Отображаемое содержимое было усечено",
+    "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
     "files": "Файлы",
+    "filter": {
+      "active key value pairs": "Активные пары ключ/значение",
+      "add key value pair": "Добавить пару key/value",
+      "aggregation": {
+        "description": "Фильтр по методу агрегации",
+        "label": "Агрегация"
+      },
+      "apply": "Применить фильтры",
+      "apply filter": "Применить фильтр",
+      "cancel": "Отменить",
+      "childFilter": {
+        "description": "Фильтр по иерархии выполнения",
+        "label": "Иерархия"
+      },
+      "childFilter_child": {
+        "description": "Фильтр по иерархии выполнения",
+        "label": "Фильтр дочерних элементов"
+      },
+      "columns": "Столбцы",
+      "comparator_descriptions": {
+        "CONTAINS": "Текст содержит указанные символы в любом месте",
+        "ENDS_WITH": "Текст заканчивается указанными символами",
+        "EQUALS": "Точное совпадение - значение должно быть идентичным",
+        "GREATER_THAN": "Сравнение чисел/дат - значение должно быть больше",
+        "GREATER_THAN_OR_EQUAL_TO": "Сравнение чисел/дат - значение должно быть больше или равно",
+        "IN": "Соответствует любому значению из списка опций",
+        "LESS_THAN": "Сравнение чисел/дат - значение должно быть меньше",
+        "LESS_THAN_OR_EQUAL_TO": "Сравнение чисел/дат - значение должно быть меньше или равно",
+        "NOT_EQUALS": "Исключает точные совпадения - значение должно отличаться",
+        "NOT_IN": "Исключает все значения из списка опций",
+        "PREFIX": "Иерархия namespace, соответствующая (например, 'com.example' соответствует 'com.example.app')",
+        "REGEX": "Расширенное сопоставление шаблонов с использованием регулярных выражений",
+        "STARTS_WITH": "Извините, я не могу помочь с этой просьбой."
+      },
+      "customize": "Добавить фильтры",
+      "customize columns": "Настроить столбцы таблицы",
+      "customize tooltip": "Настроить, какие фильтры отображать",
+      "delete filter": "Удалить фильтр",
+      "description": "Описание",
+      "deselect all": "Снять выделение со всех",
+      "drag to reorder": "Перетащите для изменения порядка",
+      "drag to reorder columns": "Перетащите, чтобы изменить порядок столбцов",
+      "edit filter": "Редактировать фильтр",
+      "empty": "У вас еще нет сохраненных фильтров.",
+      "end_date": "Дата окончания",
+      "enter description": "Введите описание фильтра",
+      "enter label": "Введите фильтр label",
+      "execution_kind": {
+        "playground": "Песочница",
+        "playground_description": "Запуски, инициированные из режима Playground",
+        "test": "Тест",
+        "test_description": "Запуски, инициированные Unit Tests"
+      },
+      "filters_added": "{selected} из {total} фильтров добавлено",
+      "flowId": {
+        "description": "Фильтр по flow ID",
+        "label": "Идентификатор flow"
+      },
+      "footer_apply": "Применить",
+      "hierarchy": {
+        "all": "По умолчанию",
+        "child_description": "Показать только вложенные/запущенные executions",
+        "parent_description": "Показать только верхнеуровневые/корневые выполнения"
+      },
+      "key": "Ключ",
+      "kind": {
+        "description": "Фильтр по виду выполнения",
+        "label": "Тип"
+      },
+      "label": "Ярлык",
+      "labels": {
+        "description": "Фильтр по labels",
+        "label": "Ярлыки"
+      },
+      "labels_execution": {
+        "description": "Фильтр по execution label",
+        "label": "Ярлыки"
+      },
+      "labels_flow": {
+        "description": "Фильтр по flow labels",
+        "label": "Ярлыки"
+      },
+      "level": {
+        "description": "Фильтр по уровню log",
+        "label": "Уровень"
+      },
+      "level_log_executions": {
+        "label": "Уровень Log"
+      },
+      "metric": {
+        "description": "Фильтр по типу метрики",
+        "label": "Метрика"
+      },
+      "namespace": {
+        "description": "Фильтр по namespace",
+        "label": "Namespace"
+      },
+      "no options found": "Опции не найдены",
+      "operator": "Оператор фильтра",
+      "options": "Параметры данных",
+      "periodic refresh": "Периодическое обновление",
+      "refresh": "Обновить данные",
+      "reset": "Сбросить все фильтры",
+      "reset_tooltip": "Сбросить до значений по умолчанию",
+      "save": "Сохранить",
+      "save duplicate": "Фильтр с таким именем уже существует.",
+      "save filter": "Сохранить фильтр",
+      "save filter tooltip": "Сохранить примененные фильтры",
+      "saved": "Сохраненные фильтры",
+      "saved filters": "Сохраненные наборы фильтров",
+      "saved tooltip": "Управление сохраненными фильтрами",
+      "scope": {
+        "description": "Фильтр по области выполнения",
+        "label": "Область"
+      },
+      "scope_flow": {
+        "description": "Фильтр по области flow",
+        "label": "Область"
+      },
+      "scope_log": {
+        "description": "Фильтр по пользовательским или системным logам",
+        "label": "Область"
+      },
+      "scope_trigger": {
+        "description": "Фильтр по области действия trigger",
+        "label": "Область"
+      },
+      "search options": "Поиск...",
+      "search_placeholders": {
+        "search_blueprints": "Поиск blueprints",
+        "search_dashboards": "Искать панели...",
+        "search_executions": "Поиск выполнений",
+        "search_flows": "Поиск flow",
+        "search_kv": "Поиск KV пар",
+        "search_logs": "Поиск logs",
+        "search_metrics": "Поиск метрик",
+        "search_namespaces": "Поиск namespace",
+        "search_plugins": "Искать {count}+ plugins",
+        "search_secrets": "Поиск секретов",
+        "search_triggers": "Поиск triggers"
+      },
+      "select all": "Выбрать все",
+      "select filter": "Выберите фильтр для добавления",
+      "select_end_date": "Выберите конечную дату",
+      "select_option": "Выберите опцию",
+      "select_start_date": "Выберите дату начала",
+      "show chart": "Показать диаграмму",
+      "show data options tooltip": "Показать параметры данных",
+      "show default": "Показать по умолчанию",
+      "start_date": "Дата начала",
+      "state": {
+        "description": "Фильтр по состоянию выполнения",
+        "label": "Состояние"
+      },
+      "table_column": {
+        "blueprints": {
+          "tags": "Теги, связанные с blueprint"
+        },
+        "executions": {
+          "duration": "Общее время выполнения выполнения",
+          "end-date": "Когда выполнение завершено",
+          "flow": "ID выполненного flow",
+          "id": "ID выполнения",
+          "inputs": "Входные значения, предоставленные для выполнения",
+          "labels": "Метки выполнения (формат key:value)",
+          "namespace": "Пространство имен, к которому принадлежит выполняемый flow",
+          "outputs": "Выходные данные, сгенерированные в ходе выполнения",
+          "revision": "Версия flow, используемая для этой Ausführung",
+          "start-date": "Когда началась выполнение",
+          "state": "Текущий состояние выполнения",
+          "task-id": "ID последнего task в выполнении"
+        },
+        "flow_triggers": {
+          "next execution date": "Когда trigger будет выполнен в следующий раз",
+          "type": "Тип trigger",
+          "workerId": "Идентификатор worker"
+        },
+        "flows": {
+          "description": "Описание текста, предоставленного для flow",
+          "execution statistics": "Диаграмма, показывающая недавние состояния выполнения",
+          "id": "Уникальный идентификатор flow",
+          "labels": "Метки flow (формат key:value)",
+          "last execution date": "Когда flow был выполнен в последний раз",
+          "last execution status": "Статус последней выполнения",
+          "namespace": "Namespace потока",
+          "revision": "Текущий номер версии определения flow",
+          "triggers": "Триггеры, которые могут запустить flow (например, расписание, событие)"
+        },
+        "kv": {
+          "description": "Необязательные примечания, объясняющие запись в kv store",
+          "expiration date": "Когда срок действия пары ключ-значение истекает",
+          "key": "Уникальный идентификатор для сохраненного value",
+          "last modified": "Метка времени последнего обновления",
+          "namespace": "Логическая группа, где хранится пара ключ-значение"
+        },
+        "metrics": {
+          "name": "Название метрики",
+          "tags": "Теги, связанные с метрикой",
+          "task": "Задача, которая сгенерировала метрику",
+          "value": "Значение метрики"
+        },
+        "secrets": {
+          "description": "Необязательные примечания, предоставляющие контекст",
+          "key": "Идентификатор для сохраненного секрета",
+          "namespace": "Логическая группа, где хранится секрет",
+          "tags": "Дополнительные теги категоризации"
+        },
+        "triggers": {
+          "context updated date": "Последнее обновление контекста trigger",
+          "current execution": "Текущий ID выполнения",
+          "evaluation lock date": "Когда оценка заблокирована",
+          "flow": "Поток, связанный с триггером",
+          "last trigger date": "Когда trigger выполнялся в последний раз",
+          "namespace": "Namespace триггера",
+          "next evaluation date": "Когда trigger будет оценен в следующий раз",
+          "workerId": "Идентификатор worker"
+        }
+      },
+      "task": {
+        "description": "Фильтр по имени task",
+        "label": "Задача"
+      },
+      "timeRange": {
+        "description": "Фильтр по времени выполнения",
+        "label": "Интервал"
+      },
+      "timeRange_dashboard": {
+        "description": "Фильтр по окну дашборда",
+        "label": "Интервал"
+      },
+      "timeRange_log": {
+        "description": "Фильтр по временной метке log",
+        "label": "Интервал"
+      },
+      "timeRange_metric": {
+        "description": "Фильтр по временному интервалу",
+        "label": "Интервал"
+      },
+      "timeRange_trigger": {
+        "description": "Фильтр по последней метке времени срабатывания",
+        "label": "Интервал"
+      },
+      "timerange": {
+        "custom": "Пользовательский диапазон",
+        "predefined": "Предопределено"
+      },
+      "titles": {
+        "blueprint_filters": "Фильтры Blueprint",
+        "dashboard_filters": "Фильтры панели управления",
+        "execution_filters": "Фильтры выполнения",
+        "flow_dashboard_filters": "Фильтры панели управления Flow",
+        "flow_execution_filters": "Фильтры выполнения Flow",
+        "flow_filters": "Фильтры Flow",
+        "flow_metric_filters": "Фильтры Метрик Flow",
+        "kv_filters": "Фильтры Key-Value",
+        "log_filters": "Фильтры Log",
+        "metric_filters": "Фильтры Метрик",
+        "namespace_dashboard_filters": "Фильтры панели управления Namespace",
+        "namespace_filters": "Фильтры Namespaces",
+        "plugin_filters": "Поиск плагинов",
+        "secret_filters": "Фильтры секретов",
+        "trigger_filters": "Фильтры Trigger"
+      },
+      "triggerExecutionId": {
+        "description": "Фильтр по ID выполнения trigger",
+        "label": "Идентификатор выполнения Trigger"
+      },
+      "triggerId": {
+        "description": "Фильтр по идентификатору trigger",
+        "label": "ID триггера"
+      },
+      "triggerId_trigger": {
+        "description": "Фильтр по trigger ID",
+        "label": "ID триггера"
+      },
+      "update": "Обновить",
+      "value": "Значение",
+      "workerId": {
+        "description": "Фильтр по worker ID",
+        "label": "ID worker"
+      }
+    },
     "filter by log level": "Фильтр по уровню log",
     "filters": {
       "comparators": {
@@ -974,7 +1257,7 @@
     "no_data": "Похоже, здесь пока ничего нет…<br/>Измените фильтры или попробуйте снова!",
     "no_file_choosen": "Файл не выбран",
     "no_logs_data": "Нет данных",
-    "no_logs_data_description": "Либо никакие flows не выполняются, либо вам нужно изменить фильтры.",
+    "no_logs_data_description": "Для выбранных фильтров логи не найдены. <br> Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
     "no_results": {
       "executions": "Исполнения не найдены",
@@ -1174,7 +1457,9 @@
     "scope_filter": {
       "all": "Все {label}",
       "system": "Система {label}",
-      "user": "Пользователь {label}"
+      "system_description": "Системное обслуживание {label}",
+      "user": "Пользователь {label}",
+      "user_description": "Обычный пользователь инициировал {label}"
     },
     "search": "Поиск",
     "search blueprint": "Поиск чертежей",

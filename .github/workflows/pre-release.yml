@@ -5,6 +5,15 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      skip-test:
+        description: 'Skip test'
+        type: choice
+        required: true
+        default: 'false'
+        options:
+          - "true"
+          - "false"
 
 jobs:
   build-artifacts:
@@ -14,6 +23,7 @@ jobs:
   backend-tests:
     name: Backend tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
@@ -23,6 +33,7 @@ jobs:
   frontend-tests:
     name: Frontend tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

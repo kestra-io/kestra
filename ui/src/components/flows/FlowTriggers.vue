@@ -1,13 +1,21 @@
 <template>
-    <KestraFilter
+    <KSFilter
         v-if="triggersWithType.length"
-        prefix="flow_triggers"
-        readOnly
-        :buttons="{
-            refresh: {shown: true, callback: loadData},
-            settings: {shown: false}
+        :configuration="triggerFilter"
+        :prefix="'flow-triggers'"
+        :tableOptions="{
+            chart: {shown: false},
+            refresh: {shown: true, callback: loadData}
         }"
+        :properties="{
+            shown: true,
+            columns: orderedColumns,
+            displayColumns,
+            storageKey: storageKeys.DISPLAY_TRIGGERS_COLUMNS
+        }"
+        @update-properties="updateDisplayColumns"
         legacyQuery
+        readOnly
     />
 
     <el-table
@@ -22,7 +30,10 @@
                 <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purgeFilters :withCharts="false" :reloadLogs embed />
             </template>
         </el-table-column>
-        <el-table-column prop="id" :label="$t('id')">
+        <el-table-column
+            prop="id"
+            :label="$t('id')"
+        >
             <template #default="scope">
                 <code>
                     {{ scope.row.id }}
@@ -30,20 +41,25 @@
             </template>
         </el-table-column>
 
-        <el-table-column prop="type" :label="$t('type')" />
-
-        <el-table-column prop="workerId" :label="$t('workerId')">
+        <el-table-column
+            v-for="column in orderedColumns.filter(col => displayColumns.includes(col.prop))"
+            :key="column.prop"
+            :prop="column.prop"
+            :label="column.label"
+        >
             <template #default="scope">
-                <Id
-                    :value="scope.row.workerId"
-                    :shrink="true"
-                />
-            </template>
-        </el-table-column>
-
-        <el-table-column prop="nextExecutionDate" :label="$t('next execution date')">
-            <template #default="scope">
-                <DateAgo :inverted="true" :date="scope.row.nextExecutionDate" />
+                <template v-if="column.prop === 'workerId'">
+                    <Id
+                        :value="scope.row.workerId"
+                        :shrink="true"
+                    />
+                </template>
+                <template v-else-if="column.prop === 'nextExecutionDate'">
+                    <DateAgo :inverted="true" :date="scope.row.nextExecutionDate" />
+                </template>
+                <template v-else>
+                    {{ scope.row[column.prop] }}
+                </template>
             </template>
         </el-table-column>
 
@@ -188,7 +204,7 @@
                             v-model="backfill.start"
                             type="datetime"
                             placeholder="Start"
-                            :disabledDate="time => new Date() < time || backfill.end ? time > backfill.end : false"
+                            :disabledDate="(time: Date) => new Date() < time || (backfill.end && time > backfill.end)"
                         />
                     </el-form-item>
                 </div>
@@ -198,7 +214,7 @@
                             v-model="backfill.end"
                             type="datetime"
                             placeholder="End"
-                            :disabledDate="time => new Date() < time || backfill?.start > time"
+                            :disabledDate="(time: Date) => new Date() < time || (backfill.start && backfill.start > time)"
                         />
                     </el-form-item>
                 </div>
@@ -213,13 +229,13 @@
         />
         <template #footer>
             <router-link
-                v-if="isSchedule(selectedTrigger.type)"
+                v-if="isSchedule(selectedTrigger?.type)"
                 :to="{
                     name: 'admin/triggers',
                     query: {
-                        namespace: selectedTrigger.namespace,
-                        flowId: selectedTrigger.flowId,
-                        q: selectedTrigger.triggerId
+                        namespace: selectedTrigger?.namespace,
+                        flowId: selectedTrigger?.flowId,
+                        q: selectedTrigger?.triggerId
                     }
                 }"
             >
@@ -245,350 +261,409 @@
             <code>{{ triggerId }}</code>
         </template>
 
-        <Markdown v-if="triggerDefinition && triggerDefinition.description" :source="triggerDefinition.description" />
+        <Markdown v-if="triggerDefinition && (triggerDefinition as any).description" :source="(triggerDefinition as any).description" />
         <Vars :data="modalData" />
     </Drawer>
 </template>
 
-<script setup>
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import Pause from "vue-material-design-icons/Pause.vue";
+<script setup lang="ts">
+    import moment from "moment";
+    import {useI18n} from "vue-i18n";
+    import _isEqual from "lodash/isEqual";
+    import {useRoute, useRouter} from "vue-router";
+    import {ref, computed, watch, onMounted, nextTick} from "vue";
+
     import Play from "vue-material-design-icons/Play.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import Pause from "vue-material-design-icons/Pause.vue";
+    import Check from "vue-material-design-icons/Check.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import LockOff from "vue-material-design-icons/LockOff.vue";
-    import Check from "vue-material-design-icons/Check.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
-    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import FlowRun from "./FlowRun.vue";
+    import TextSearch from "vue-material-design-icons/TextSearch.vue";
+    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
+
     import Id from "../Id.vue";
-    import TriggerAvatar from "./TriggerAvatar.vue";
-
-    import KestraFilter from "../filter/KestraFilter.vue";
-    import Empty from "../layout/empty/Empty.vue";
-    import Markdown from "../layout/Markdown.vue";
-    import Kicon from "../Kicon.vue"
-    import DateAgo from "../layout/DateAgo.vue";
-    import Vars from "../executions/Vars.vue";
+    import Kicon from "../Kicon.vue";
     import Drawer from "../Drawer.vue";
-</script>
-
-<script>
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import moment from "moment";
+    //@ts-expect-error no declared types
+    import FlowRun from "./FlowRun.vue";
+    import Vars from "../executions/Vars.vue";
+    import DateAgo from "../layout/DateAgo.vue";
+    import Markdown from "../layout/Markdown.vue";
+    import Empty from "../layout/empty/Empty.vue";
+    import TriggerAvatar from "./TriggerAvatar.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import _isEqual from "lodash/isEqual";
-    import {storageKeys} from "../../utils/constants";
-    import {mapStores} from "pinia";
-    import {useTriggerStore} from "../../stores/trigger";
-    import {useAuthStore} from "override/stores/auth";
-    import {useFlowStore} from "../../stores/flow";
+    import KSFilter from "../filter/components/KSFilter.vue";
 
-    export default {
-        inheritAttrs: false,
-        props:{
-            embed: {
-                type: Boolean,
-                default: false
-            }
+    import action from "../../models/action";
+    import permission from "../../models/permission";
+    
+    import {useToast} from "../../utils/toast";
+    import {storageKeys} from "../../utils/constants";
+
+    import {useFlowStore} from "../../stores/flow";
+    import {useAuthStore} from "override/stores/auth";
+    import {useTriggerStore} from "../../stores/trigger";
+
+    import {useTableColumns} from "../../composables/useTableColumns";
+    import {useTriggerFilter} from "../filter/configurations";
+
+    const triggerFilter = useTriggerFilter();
+
+    const {t} = useI18n();
+    const route = useRoute();
+    const router = useRouter();
+
+    defineProps<{
+        embed: boolean;
+    }>();
+
+    const backfill = ref({
+        start: null as Date | null,
+        end: null as Date | null,
+        inputs: null as any,
+        labels: [] as any[]
+    });
+    const isOpen = ref(false);
+    const triggers = ref<any[]>([]);
+    const isBackfillOpen = ref(false);
+    const selectedTrigger = ref<any>(null);
+    const triggerId = ref<string | undefined>();
+
+    const reloadLogs = ref<number | undefined>();
+
+    const localOptionalColumns = ref([
+        {
+            label: t("type"), 
+            prop: "type", 
+            default: true, 
+            description: t("filter.table_column.flow_triggers.type")
         },
-        data() {
-            return {
-                triggerId: undefined,
-                isOpen: false,
-                isBackfillOpen: false,
-                triggers: [],
-                selectedTrigger: null,
-                backfill: {
+        {
+            label: t("workerId"), 
+            prop: "workerId", 
+            default: false, 
+            description: t("filter.table_column.flow_triggers.workerId")
+        },
+        {
+            label: t("next execution date"), 
+            prop: "nextExecutionDate", 
+            default: true, 
+            description: t("filter.table_column.flow_triggers.next execution date")
+        }
+    ]);
+
+    const {
+        orderedColumns, 
+        visibleColumns: displayColumns, 
+        updateVisibleColumns: updateDisplayColumns
+    } = useTableColumns({
+        columns: localOptionalColumns.value,
+        storageKey: storageKeys.DISPLAY_TRIGGERS_COLUMNS
+    });
+
+    const toast = useToast();
+    const authStore = useAuthStore();
+    const flowStore = useFlowStore();
+    const triggerStore = useTriggerStore();
+
+    const query = computed(() => {
+        return Array.isArray(route.query?.q) ? route.query.q[0] : route.query?.q;
+    });
+
+    const modalData = computed(() => {
+        const filtered = triggersWithType.value.filter((trigger: any) => trigger?.triggerId === triggerId.value);
+        if (!filtered.length) return {};
+        return Object
+            .entries(filtered[0])
+            .filter(([key]) => !["tenantId", "namespace", "flowId", "flowRevision", "triggerId", "description"].includes(key))
+            .reduce(
+                (map, currentValue) => {
+                    map[currentValue[0]] = currentValue[1];
+                    return map;
+                },
+                {} as any,
+            );
+    });
+
+    const triggerDefinition = computed(() => {
+        if (!flowStore.flow?.triggers) return undefined;
+        return flowStore.flow.triggers.find((trigger: any) => trigger.id === triggerId.value);
+    });
+
+    const triggersWithType = computed(() => {
+        if(!flowStore.flow?.triggers) return [];
+
+        let flowTriggers = flowStore.flow?.triggers.map((trigger: any) => {
+            return {...trigger, sourceDisabled: (trigger as any).disabled ?? false}
+        })
+        if (flowTriggers) {
+            const trigs = flowTriggers.map((flowTrigger: any) => {
+                let pollingTrigger = triggers.value.find((trigger: any) => trigger.triggerId === flowTrigger.id)
+                return {...flowTrigger, ...pollingTrigger}
+            })
+
+            return !query.value ? trigs : trigs.filter((trigger: any) => trigger?.id?.includes(query.value))
+        }
+        return triggers.value
+    });
+
+    const cleanBackfill = computed(() => {
+        return {...backfill.value, labels: backfill.value.labels?.filter((label: any) => label.key && label.value)}
+    });
+
+    const checkBackfill = computed(() => {
+        if (!backfill.value.start) {
+            return true
+        }
+        if (backfill.value.end && backfill.value.start > backfill.value.end) {
+            return true
+        }
+        if (flowStore.flow?.inputs) {
+            const requiredInputs = flowStore.flow?.inputs.map((input: any) => input.required !== false ? input.id : null).filter((i: any) => i !== null)
+
+            if (requiredInputs.length > 0) {
+                if (!backfill.value.inputs) {
+                    return true
+                }
+                const fillInputs = Object.keys(backfill.value.inputs).filter((i: string) => backfill.value.inputs[i] !== null && backfill.value.inputs[i] !== undefined);
+                if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
+                    return true
+                }
+            }
+        }
+        if (backfill.value.labels?.length > 0) {
+            for (let label of backfill.value.labels) {
+                if ((label.key && !label.value) || (!label.key && label.value)) {
+                    return true
+                }
+            }
+        }
+        return false
+    });
+
+    const editorViewType = computed(() => {
+        return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
+    });
+
+    const userCan = (act: any) => {
+        if (!flowStore.flow) return false;
+        return authStore.user?.isAllowed(permission.EXECUTION, act ? act : action.READ, flowStore.flow?.namespace);
+    };
+
+    const loadData = () => {
+        if(!triggersWithType.value.length || !flowStore.flow) return;
+
+        triggerStore
+            .find({namespace: flowStore.flow?.namespace, flowId: flowStore.flow?.id, size: triggersWithType.value.length, q: query.value})
+            .then((trigs: any) => triggers.value = trigs.results)
+            .then(() => reloadLogs.value = Math.random());
+    };
+
+    const setBackfillModal = (trigger: any, bool: boolean) => {
+        isBackfillOpen.value = bool
+        selectedTrigger.value = trigger
+    };
+
+    const postBackfill = () => {
+        triggerStore.update({
+            ...selectedTrigger.value,
+            backfill: cleanBackfill.value
+        })
+            .then((newTrigger: any) => {
+                (window as any).$toast().saved(newTrigger.id);
+                triggers.value = triggers.value.map((t: any) => {
+                    if (t.id === newTrigger.id) {
+                        return newTrigger
+                    }
+                    return t
+                })
+                setBackfillModal(null, false);
+                backfill.value = {
                     start: null,
                     end: null,
                     inputs: null,
                     labels: []
-                },
-                reloadLogs: undefined,
+                }
+            })
+
+    };
+
+    const pauseBackfill = (trigger: any) => {
+        triggerStore.pauseBackfill(trigger)
+            .then((newTrigger: any) => {
+                toast.saved(newTrigger.id);
+                triggers.value = triggers.value.map((t: any) => {
+                    if (t.id === newTrigger.id) {
+                        return newTrigger
+                    }
+                    return t
+                })
+            })
+    };
+
+    const unpauseBackfill = (trigger: any) => {
+        triggerStore.unpauseBackfill(trigger)
+            .then((newTrigger: any) => {
+                toast.saved(newTrigger.id);
+                triggers.value = triggers.value.map((t: any) => {
+                    if (t.id === newTrigger.id) {
+                        return newTrigger
+                    }
+                    return t
+                })
+            })
+    };
+
+    const deleteBackfill = (trigger: any) => {
+        triggerStore.deleteBackfill(trigger)
+            .then((newTrigger: any) => {
+                toast.saved(newTrigger.id);
+                triggers.value = triggers.value.map((t: any) => {
+                    if (t.id === newTrigger.id) {
+                        return newTrigger
+                    }
+                    return t
+                })
+            })
+    };
+
+    const setDisabled = (trigger: any, value: boolean) => {
+        triggerStore.update({...trigger, disabled: !value})
+            .then((newTrigger: any) => {
+                toast.saved(newTrigger.id);
+                triggers.value = triggers.value.map((t: any) => {
+                    if (t.id === newTrigger.id) {
+                        return newTrigger
+                    }
+                    return t
+                })
+            })
+    };
+
+    const unlock = (trigger: any) => {
+        triggerStore.unlock({
+            namespace: trigger.namespace,
+            flowId: trigger.flowId,
+            triggerId: trigger.triggerId
+        }).then((newTrigger: any) => {
+            toast.saved(newTrigger.id);
+            triggers.value = triggers.value.map((t: any) => {
+                if (t.id === newTrigger.id) {
+                    return newTrigger
+                }
+                return t
+            })
+        })
+    };
+
+    const restart = (trigger: any) => {
+        triggerStore.restart({
+            namespace: trigger.namespace,
+            flowId: trigger.flowId,
+            triggerId: trigger.triggerId
+        }).then((newTrigger: any) => {
+            toast.saved(newTrigger.id);
+            triggers.value = triggers.value.map((t: any) => {
+                if (t.id === newTrigger.id) {
+                    return newTrigger
+                }
+                return t
+            })
+        })
+    };
+
+    const backfillProgression = (backfillObj: any) => {
+        const startMoment = moment(backfillObj?.start);
+        const endMoment = moment(backfillObj?.end);
+        const currentMoment = moment(backfillObj?.currentDate);
+
+        const totalDuration = endMoment.diff(startMoment);
+        const elapsedDuration = currentMoment.diff(startMoment);
+        return Math.round((elapsedDuration / totalDuration) * 100);
+    };
+
+    const isSchedule = (type: string) => {
+        return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
+    };
+
+    const canBeDisabled = (trigger: any) => {
+        return triggers.value.map((trigg: any) => trigg?.triggerId).includes(trigger?.id)
+            && !trigger?.sourceDisabled;
+    };
+
+    const addNewTrigger = () => {
+        if (!flowStore.flow) return;
+        localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, "NO_CODE");
+
+        const baseUrl = {
+            name: "flows/update",
+            params: {
+                tenant: route.params?.tenant,
+                namespace: flowStore.flow?.namespace,
+                id: flowStore.flow?.id,
+                tab: "edit"
             }
-        },
-        created() {
-            this.loadData();
-        },
-        watch: {
-            $route(newValue, oldValue) {
-                if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
-                    this.loadData();
+        };
+
+        if (editorViewType.value) {
+            const r = {
+                ...baseUrl,
+                query: {
+                    section: "triggers"
                 }
-            }
-        },
-        computed: {
-            ...mapStores(useTriggerStore, useFlowStore, useAuthStore),
-            query() {
-                return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
-            },
-            modalData() {
-                return Object
-                    .entries(this.triggersWithType.filter(trigger => trigger.triggerId === this.triggerId)[0])
-                    .filter(([key]) => !["tenantId", "namespace", "flowId", "flowRevision", "triggerId", "description"].includes(key))
-                    .reduce(
-                        (map, currentValue) => {
-                            map[currentValue[0]] = currentValue[1];
-                            return map;
-                        },
-                        {},
-                    );
-            },
-            triggerDefinition() {
-                return this.flowStore.flow.triggers.find(trigger => trigger.id === this.triggerId);
-            },
-            triggersWithType() {
-                if(!this.flowStore.flow.triggers) return [];
+            };
 
-                let flowTriggers = this.flowStore.flow.triggers.map(trigger => {
-                    return {...trigger, sourceDisabled: trigger.disabled ?? false}
-                })
-                if (flowTriggers) {
-                    const triggers = flowTriggers.map(flowTrigger => {
-                        let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
-                        return {...flowTrigger, ...pollingTrigger}
-                    })
-
-                    return !this.query ? triggers : triggers.filter(trigger => trigger.id.includes(this.query))
-                }
-                return this.triggers
-            },
-            cleanBackfill() {
-                return {...this.backfill, labels: this.backfill.labels.filter(label => label.key && label.value)}
-            },
-            checkBackfill() {
-                if (!this.backfill.start) {
-                    return true
-                }
-                if (this.backfill.end && this.backfill.start > this.backfill.end) {
-                    return true
-                }
-                if (this.flowStore.flow.inputs) {
-                    const requiredInputs = this.flowStore.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
-
-                    if (requiredInputs.length > 0) {
-                        if (!this.backfill.inputs) {
-                            return true
-                        }
-                        const fillInputs = Object.keys(this.backfill.inputs).filter(i => this.backfill.inputs[i] !== null && this.backfill.inputs[i] !== undefined);
-                        if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
-                            return true
-                        }
-                    }
-                }
-                if (this.backfill.labels.length > 0) {
-                    for (let label of this.backfill.labels) {
-                        if ((label.key && !label.value) || (!label.key && label.value)) {
-                            return true
-                        }
-                    }
-                }
-                return false
-            },
-            editorViewType() {
-                return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
-            },
-            triggerStore() {
-                return useTriggerStore();
-            },
-        },
-        methods: {
-            userCan(action) {
-                return this.authStore.user?.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flowStore.flow.namespace);
-            },
-            loadData() {
-                if(!this.triggersWithType.length) return;
-
-                this.triggerStore
-                    .find({namespace: this.flowStore.flow.namespace, flowId: this.flowStore.flow.id, size: this.triggersWithType.length, q: this.query})
-                    .then(triggers => this.triggers = triggers.results)
-                    .then(() => this.reloadLogs = Math.random());
-            },
-            setBackfillModal(trigger, bool) {
-                this.isBackfillOpen = bool
-                this.selectedTrigger = trigger
-            },
-            postBackfill() {
-                this.triggerStore.update({
-                    ...this.selectedTrigger,
-                    backfill: this.cleanBackfill
-                })
-                    .then(newTrigger => {
-                        this.$toast().saved(newTrigger.id);
-                        this.triggers = this.triggers.map(t => {
-                            if (t.id === newTrigger.id) {
-                                return newTrigger
-                            }
-                            return t
-                        })
-                        this.setBackfillModal(null, false);
-                        this.backfill = {
-                            start: null,
-                            end: null,
-                            inputs: null,
-                            labels: []
-                        }
-                    })
-
-            },
-            pauseBackfill(trigger) {
-                this.triggerStore.pauseBackfill(trigger)
-                    .then(newTrigger => {
-                        this.$toast().saved(newTrigger.id);
-                        this.triggers = this.triggers.map(t => {
-                            if (t.id === newTrigger.id) {
-                                return newTrigger
-                            }
-                            return t
-                        })
-                    })
-            },
-            unpauseBackfill(trigger) {
-                this.triggerStore.unpauseBackfill(trigger)
-                    .then(newTrigger => {
-                        this.$toast().saved(newTrigger.id);
-                        this.triggers = this.triggers.map(t => {
-                            if (t.id === newTrigger.id) {
-                                return newTrigger
-                            }
-                            return t
-                        })
-                    })
-            },
-            deleteBackfill(trigger) {
-                this.triggerStore.deleteBackfill(trigger)
-                    .then(newTrigger => {
-                        this.$toast().saved(newTrigger.id);
-                        this.triggers = this.triggers.map(t => {
-                            if (t.id === newTrigger.id) {
-                                return newTrigger
-                            }
-                            return t
-                        })
-                    })
-            },
-            setDisabled(trigger, value) {
-                this.triggerStore.update({...trigger, disabled: !value})
-                    .then(newTrigger => {
-                        this.$toast().saved(newTrigger.id);
-                        this.triggers = this.triggers.map(t => {
-                            if (t.id === newTrigger.id) {
-                                return newTrigger
-                            }
-                            return t
-                        })
-                    })
-            },
-            unlock(trigger) {
-                this.triggerStore.unlock({
-                    namespace: trigger.namespace,
-                    flowId: trigger.flowId,
-                    triggerId: trigger.triggerId
-                }).then(newTrigger => {
-                    this.$toast().saved(newTrigger.id);
-                    this.triggers = this.triggers.map(t => {
-                        if (t.id === newTrigger.id) {
-                            return newTrigger
-                        }
-                        return t
-                    })
-                })
-            },
-            restart(trigger) {
-                this.triggerStore.restart({
-                    namespace: trigger.namespace,
-                    flowId: trigger.flowId,
-                    triggerId: trigger.triggerId
-                }).then(newTrigger => {
-                    this.$toast().saved(newTrigger.id);
-                    this.triggers = this.triggers.map(t => {
-                        if (t.id === newTrigger.id) {
-                            return newTrigger
-                        }
-                        return t
-                    })
-                })
-            },
-            backfillProgression(backfill) {
-                const startMoment = moment(backfill.start);
-                const endMoment = moment(backfill.end);
-                const currentMoment = moment(backfill.currentDate);
-
-                const totalDuration = endMoment.diff(startMoment);
-                const elapsedDuration = currentMoment.diff(startMoment);
-                return Math.round((elapsedDuration / totalDuration) * 100);
-            },
-            isSchedule(type) {
-                return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
-            },
-            canBeDisabled(trigger) {
-                return this.triggers.map(trigg => trigg.triggerId).includes(trigger.id)
-                    && !trigger.sourceDisabled;
-            },
-            addNewTrigger() {
-                localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, "NO_CODE");
-
-                const baseUrl = {
-                    name: "flows/update",
-                    params: {
-                        tenant: this.$route.params.tenant,
-                        namespace: this.flowStore.flow.namespace,
-                        id: this.flowStore.flow.id,
-                        tab: "edit"
-                    }
-                };
-
-                if (this.editorViewType) {
-                    const route = {
-                        ...baseUrl,
+            nextTick(() => {
+                router.push(r).then(() => {
+                    router.replace({
+                        ...r,
                         query: {
-                            section: "triggers"
+                            ...r.query,
                         }
-                    };
-
-                    this.$nextTick(() => {
-                        this.$router.push(route).then(() => {
-                            this.$router.replace({
-                                ...route,
-                                query: {
-                                    ...route.query,
-                                }
-                            });
-                        });
                     });
-                } else {
-                    this.$router.push(baseUrl);
-                }
-            }
+                });
+            });
+        } else {
+            router.push(baseUrl);
         }
     };
+
+    onMounted(() => {
+        loadData();
+    });
+
+    watch(route, (newValue, oldValue) => {
+        if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
+            loadData();
+        }
+    });
 </script>
 
-<style scoped>
-    .pickers {
-        display: flex;
-        justify-content: space-between;
+<style lang="scss" scoped>
+.pickers {
+    display: flex;
+    justify-content: space-between;
 
-        .small-picker {
-            width: 49%;
-        }
+    .small-picker {
+        width: 49%;
     }
+}
 
-    .backfill-cell {
-        display: flex;
-        align-items: center;
-    }
+.backfill-cell {
+    display: flex;
+    align-items: center;
+}
 
-    .progress-cell {
-        width: 200px;
-        margin-right: 1em;
-    }
+.progress-cell {
+    width: 200px;
+    margin-right: 1em;
+}
 
-    :deep(.markdown) {
-        p {
-            margin-bottom: auto;
-        }
+:deep(.markdown) {
+    p {
+        margin-bottom: auto;
     }
+}
 </style>

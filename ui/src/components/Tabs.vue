@@ -26,7 +26,7 @@
             :blueprintId="selectedBlueprintId"
             blueprintType="community"
             @back="selectedBlueprintId = undefined"
-            combinedView="true"
+            :combinedView="true"
             :kind="activeTab.props.blueprintKind"
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />

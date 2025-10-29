@@ -1,12 +1,7 @@
 package io.kestra.core.runners.pebble.filters;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.NumericNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Filter;
@@ -22,18 +17,12 @@ import java.util.List;
 import java.util.Map;
 
 public class JqFilter implements Filter {
-    private static final Scope scope;
-
-    static {
-        scope = Scope.newEmptyScope();
-        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, scope);
-    }
-
-    private final Scope rootScope = Scope.newChildScope(scope);
-
+    private final Scope scope;
     private final List<String> argumentNames = new ArrayList<>();
 
     public JqFilter() {
+        scope = Scope.newEmptyScope();
+        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, scope);
         this.argumentNames.add("expression");
     }
 
@@ -54,6 +43,8 @@ public class JqFilter implements Filter {
 
         String pattern = (String) args.get("expression");
 
+        Scope rootScope = Scope.newEmptyScope();
+        BuiltinFunctionLoader.getInstance().loadFunctions(Versions.JQ_1_6, rootScope);
         try {
 
             JsonQuery q = JsonQuery.compile(pattern, Versions.JQ_1_6);
@@ -68,7 +59,7 @@ public class JqFilter implements Filter {
             final List<Object> out = new ArrayList<>();
 
             try {
-                q.apply(rootScope, in, v -> {
+                q.apply(scope, in, v -> {
                     if (v instanceof TextNode) {
                         out.add(v.textValue());
                     } else if (v instanceof NullNode) {

@@ -72,6 +72,7 @@
                         :selectable="canCheck"
                         :no-data-text="t('no_results.flows')"
                         class="flows-table"
+                        :rowKey="(row: any) => `${row.namespace}-${row.id}`"
                     >
                         <template #select-actions>
                             <BulkSelect
@@ -658,6 +659,10 @@
 
 .flow-id {
     min-width: 200px;
+
+    & a {
+        color: var(--bs-code-color)
+    }
 }
 
 .flows-table .el-table__cell {

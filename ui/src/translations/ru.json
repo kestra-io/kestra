@@ -586,6 +586,7 @@
       "title": "Что нового в Kestra"
     },
     "file preview truncated": "Отображаемое содержимое было усечено",
+    "fileTypeNotAllowed": "Недопустимый тип файла. Допустимые типы: {types}",
     "files": "Файлы",
     "filter": {
       "active key value pairs": "Активные пары ключ/значение",

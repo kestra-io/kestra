@@ -92,11 +92,17 @@
 
     const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
 
+    const schemaAtBlockPathInjected = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPathInjected.value))
+
     const blockSchemaPath = computed(() => {
-        // FIXME: if the schema has additionalProperties, remove the key from the path
         const rootParts = props.root ? props.root.split(".") : []
         if(rootParts.length > 1){
-            rootParts.splice(1, 0, "properties")
+            if(schemaAtBlockPathInjected.value.properties?.[rootParts[0]]?.additionalProperties){
+                rootParts[1] = "additionalProperties"
+    
+            } else {
+                rootParts.splice(1, 0, "properties")
+            }
         }
         return [blockSchemaPathInjected.value, "properties", ...rootParts, "items"].join("/");
     });

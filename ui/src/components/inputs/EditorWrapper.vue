@@ -1,5 +1,5 @@
 <template>
-    <div class="h-100 d-flex flex-column">
+    <div class="h-100 d-flex flex-column editor-wrapper">
         <Editor
             id="editorWrapper"
             ref="editorRefElement"
@@ -34,7 +34,7 @@
                 <PlaygroundRunTaskButton :taskId="highlightedLines?.taskId" />
             </template>
         </Editor>
-        <!-- Backdrop overlay -->
+        <!-- Backdrop overlay (scoped to editor container) -->
         <Transition name="backdrop-fade">
             <div 
                 v-if="aiCopilotOpened" 
@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue";
-    import {useRoute, useRouter} from "vue-router";
+    import {useRoute, useRouter, onBeforeRouteLeave} from "vue-router";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
@@ -166,6 +166,11 @@
         }
     });
 
+    // Ensure AI Copilot closes when navigating away
+    onBeforeRouteLeave(() => {
+        aiCopilotOpened.value = false;
+    });
+
     const LANGS_WITH_WORKERS_MAP = {
         yaml: "yaml",
         yml: "yaml",
@@ -196,6 +201,7 @@
     });
 
     onBeforeUnmount(() => {
+        aiCopilotOpened.value = false;
         window.removeEventListener("keydown", handleGlobalSave);
         window.removeEventListener("keydown", toggleAiShortcut);
         pluginsStore.editorPlugin = undefined;
@@ -367,6 +373,10 @@
 </script>
 
 <style scoped lang="scss">
+    .editor-wrapper {
+        position: relative;
+    }
+
     .prompt {
         bottom: 10%;
         width: calc(100% - 5rem);
@@ -378,11 +388,8 @@
 
     // Enhanced AI Copilot animations
     .ai-copilot-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        position: absolute;
+        inset: 0;
         background-color: rgba(0, 0, 0, 0.4);
         z-index: 1000;
     }

@@ -130,7 +130,7 @@ export default (
                 return
             }
 
-            const impersonate = localStorage.getItem(storageKeys.IMPERSONATE)
+            const impersonate = window.sessionStorage.getItem(storageKeys.IMPERSONATE)
 
             // Authentication expired
             if (errorResponse.response.status === 401 &&

@@ -8,6 +8,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.*;
+import io.kestra.core.runners.QueueIndexer;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
@@ -58,10 +59,10 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected final Table<Record> table;
 
-    protected final JdbcQueueIndexer jdbcQueueIndexer;
-    
+    protected final QueueIndexer queueIndexer;
+
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
-    
+
     private final List<JdbcQueuePoller> pollers = new ArrayList<>();
 
     private final Counter bigMessageCounter;
@@ -82,8 +83,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         this.table = DSL.table(jdbcTableConfigs.tableConfig("queues").table());
 
-        this.jdbcQueueIndexer = applicationContext.getBean(JdbcQueueIndexer.class);
-        
+        this.queueIndexer = applicationContext.getBean(QueueIndexer.class);
+
         // init metrics we can at post construct to avoid costly Metric.Id computation
         this.bigMessageCounter = metricRegistry
             .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, queueType());
@@ -131,7 +132,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 DSLContext context = DSL.using(configuration);
 
                 if (!skipIndexer) {
-                    jdbcQueueIndexer.accept(context, message);
+                    queueIndexer.accept(new JdbcTransactionContext(context), message);
                 }
 
                 context
@@ -404,13 +405,13 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             queueType.getSimpleName()
         );
     }
-    
+
     protected Runnable poll(Supplier<Integer> runnable) {
         JdbcQueuePoller queuePoller = new JdbcQueuePoller(configuration, runnable::get);
         pollers.add(queuePoller);
-        
+
         poolExecutor.execute(queuePoller);
-        
+
         return () -> {
             pollers.remove(queuePoller);
             queuePoller.stop();
@@ -448,7 +449,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         if (!this.isClosed.compareAndSet(false, true)) {
             return;
         }
-        
+
         this.pollers.forEach(JdbcQueuePoller::stop);
         this.poolExecutor.shutdown();
         this.asyncPoolExecutor.shutdown();

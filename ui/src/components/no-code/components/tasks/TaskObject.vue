@@ -51,7 +51,6 @@
                 :root
                 :schema="schema ?? {}"
                 :required
-                :definitions
             />
         </template>
     </el-form>
@@ -80,7 +79,6 @@
         modelValue?: Model;
         required?: boolean;
         schema?: Schema;
-        definitions?: any;
         root?: string;
     }>();
 

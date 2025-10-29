@@ -29,7 +29,6 @@
             :modelValue="modelValue"
             :schema="currentSchema"
             :properties="Object.fromEntries(filteredProperties)"
-            :definitions="definitions"
             @update:model-value="onAnyOfInput"
             merge
         />
@@ -37,13 +36,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch, onMounted, nextTick} from "vue";
+    import {ref, computed, watch, onMounted, nextTick, inject} from "vue";
     import getTaskComponent, {Schema} from "./getTaskComponent";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys";
 
     const props = defineProps<{
         schema: Schema,
-        definitions: Record<string, Schema>,
         required?: boolean
     }>();
 
@@ -154,10 +153,12 @@
             : []
     );
 
+    const definitions = inject(SCHEMA_DEFINITIONS_INJECTION_KEY, computed<Record<string, Schema>>(() => ({})));
+
     const currentSchema = computed(() => {
         if(!delayedSelectedSchema.value) return
-        const rawSchema = props.definitions[delayedSelectedSchema.value] ?? schemaByType.value[delayedSelectedSchema.value];
-        return consolidateAllOfSchemas(rawSchema, props.definitions);
+        const rawSchema = definitions.value[delayedSelectedSchema.value] ?? schemaByType.value[delayedSelectedSchema.value];
+        return consolidateAllOfSchemas(rawSchema, definitions.value);
     });
 
     const currentSchemaType = computed(() =>
@@ -181,11 +182,11 @@
             })
         }
 
-        if (!schemas.value?.length || !props.definitions) return [];
+        if (!schemas.value?.length || !definitions.value) return [];
         const schemaRefsArray = (schemas.value as {$ref?: string, type: string}[])
             .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
             .filter((schemaRef) => schemaRef !== undefined)
-            .map((schemaRef) => typeof props.definitions[schemaRef]?.type === "object" ? props.definitions[schemaRef]?.type?.const : schemaRef)
+            .map((schemaRef) => typeof definitions.value[schemaRef]?.type === "object" ? definitions.value[schemaRef]?.type?.const : schemaRef)
             .map((schemaRef: string) => schemaRef.split("."));
 
         let mismatch = false;

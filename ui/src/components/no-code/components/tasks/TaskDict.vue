@@ -19,13 +19,12 @@
         </el-col>
         <el-col :span="16">
             <component
-                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties, root, definitions) : TaskExpression"
+                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties, root) : TaskExpression"
                 :modelValue="item[1]"
                 @update:model-value="onValueChange(index, $event)"
                 :root="getKey(item[0])"
                 :schema="schema.additionalProperties"
                 :required="isRequired(item[0])"
-                :definitions="definitions"
                 :disabled
             />
         </el-col>
@@ -44,7 +43,7 @@
     import InputText from "../inputs/InputText.vue";
     import TaskExpression from "./TaskExpression.vue";
     import Add from "../Add.vue";
-    import getTaskComponent, {Schema} from "./getTaskComponent";
+    import getTaskComponent from "./getTaskComponent";
     import debounce from "lodash/debounce";
 
     const {t} = useI18n();
@@ -56,7 +55,6 @@
     const props = withDefaults(defineProps<{
         modelValue?: Record<string, any>;
         schema?: any;
-        definitions: Record<string, Schema>;
         root?: string;
         disabled?: boolean;
     }>(), {

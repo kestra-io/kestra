@@ -109,7 +109,7 @@ function getType(property: any, key?: string): string {
     return property.type || "expression";
 }
 
-export default function getTaskComponent(property: any, key?: string, _definitions?: any): any {
+export default function getTaskComponent(property: any, key?: string): any {
     const typeString = getType(property, key);
     const type = pascalCase(typeString);
     const component = TasksComponents[`./Task${type}.vue`]?.default;

@@ -1,5 +1,6 @@
 import {ref} from "vue";
 import TaskDict from "../../../../../../src/components/no-code/components/tasks/TaskDict.vue";
+import Wrapper from "../../../../../../src/components/no-code/components/tasks/Wrapper.vue";
 import {userEvent, waitFor, within, expect} from "storybook/internal/test";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
@@ -88,5 +89,64 @@ export const TestDoubleKey: Story = {
         await waitFor(function valueUpdated() {
             expect(canvas.getByTestId("sb-meta-data-result")?.innerText).toContain("\"newKey\": \"newValue\"");
         });
+    }
+}
+
+export const ValuesAsObjects: Story = {
+    render(args){
+        return {
+            setup() {
+                const model = ref(args.modelValue || {});
+                return () => <div style={{width: "1200px", display: "flex", gap: "20px"}}>
+                    <Wrapper>
+                        {{
+                            tasks: () => <TaskDict modelValue={model.value} schema={{
+                                additionalProperties: {
+                                    "type": "object",
+                                    "properties": {
+                                        "binding": {
+                                            "type": "string",
+                                            "enum": [
+                                                "io.kestra.core.tasks.scripts.Bash",
+                                                "io.kestra.core.tasks.scripts.Python",
+                                                "io.kestra.core.tasks.scripts.JavaScript"
+                                            ]
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        },
+                                        "script": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }} onUpdate:modelValue={val => model.value = val}/>
+                        }}
+                    </Wrapper>
+                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-background-card)", padding: "10px", borderRadius: "4px", width: "100%"}}>
+                        {JSON.stringify(model.value, null, 2)}
+                    </pre>
+                </div>
+            }
+        }
+    },
+    args: {
+        modelValue: {
+            "task1": {
+                "binding": "io.kestra.core.tasks.scripts.Bash",
+                "description": "A bash task",
+                "script": "echo 'Hello World'"
+            },
+            "task2": {
+                "binding": "io.kestra.core.tasks.scripts.Python",
+                "description": "A python task",
+                "script": "print('Hello World')"
+            },
+            "task3": {
+                "binding": "io.kestra.core.tasks.scripts.JavaScript",
+                "description": "A javascript task",
+                "script": "console.log('Hello World')"
+            }
+        }
     }
 }

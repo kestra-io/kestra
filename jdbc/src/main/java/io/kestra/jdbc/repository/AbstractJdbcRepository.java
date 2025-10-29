@@ -49,7 +49,9 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition defaultFilter(Boolean allowDeleted) {
-        return allowDeleted ? DSL.trueCondition() : field("deleted", Boolean.class).eq(false);
+        return allowDeleted ?
+            field("deleted", Boolean.class).in(true, false) :
+            field("deleted", Boolean.class).eq(false);
     }
 
     protected Condition defaultFilter(String tenantId) {
@@ -296,7 +298,7 @@ public abstract class AbstractJdbcRepository {
         }
 
         // Special handling for START_DATE and END_DATE
-        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {
+        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED) {
             if(dateColumn == null){
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }

@@ -35,8 +35,7 @@
         COMPARATOR_LABELS,
         Comparators,
         FilterKeyConfig,
-        FilterValue,
-        FilterState
+        FilterValue
     } from "../../utils/filterTypes";
     import FilterText from "./FilterText.vue";
     import FilterRadio from "./FilterRadio.vue";
@@ -60,6 +59,18 @@
         remove: [filterId: string];
         update: [filter: AppliedFilter];
     }>();
+
+    type FilterState = {
+        textValue: string;
+        selectValue: string;
+        multiSelectValue: string[];
+        radioValue: string;
+        dateValue: Date | null;
+        timeRangeMode: "predefined" | "custom";
+        startDateValue: Date | null;
+        endDateValue: Date | null;
+        selectedComparator: Comparators | undefined;
+    };
 
     const initialState = reactive<FilterState>({
         textValue: "",

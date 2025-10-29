@@ -81,18 +81,6 @@ export interface TableOptions {
     };
 }
 
-export interface FilterState {
-    textValue: string;
-    selectValue: string;
-    multiSelectValue: string[];
-    radioValue: string;
-    dateValue: Date | null;
-    timeRangeMode: "predefined" | "custom";
-    startDateValue: Date | null;
-    endDateValue: Date | null;
-    selectedComparator: Comparators | undefined;
-}
-
 export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.EQUALS]: "Equals",
     [Comparators.NOT_EQUALS]: "Not Equals",

@@ -4,7 +4,6 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.server.ServerInstance;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -25,11 +24,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class LockServiceTest {
     @Inject
     private LockService lockService;
-
-    @AfterEach
-    void tearDown() {
-        lockService.releaseAllLocks(ServerInstance.INSTANCE_ID);
-    }
 
     @Test
     void doInLock() throws LockException {

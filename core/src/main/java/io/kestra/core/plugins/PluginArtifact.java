@@ -1,5 +1,6 @@
 package io.kestra.core.plugins;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 
 import java.io.File;
@@ -33,7 +34,7 @@ public record PluginArtifact(
     String version,
     URI uri
 ) implements Comparable<PluginArtifact> {
-
+    
     private static final Pattern ARTIFACT_PATTERN = Pattern.compile(
         "([^: ]+):([^: ]+)(:([^: ]*)(:([^: ]+))?)?:([^: ]+)"
     );
@@ -42,7 +43,8 @@ public record PluginArtifact(
     );
 
     public static final String JAR_EXTENSION = "jar";
-
+    public static final String KESTRA_GROUP_ID = "io.kestra";
+    
     /**
      * Static helper method for constructing a new {@link PluginArtifact} from a JAR file.
      *
@@ -134,6 +136,11 @@ public record PluginArtifact(
     @Override
     public String toString() {
         return toCoordinates();
+    }
+    
+    @JsonIgnore
+    public boolean isOfficial() {
+        return groupId.startsWith(KESTRA_GROUP_ID);
     }
 
     public String toCoordinates() {

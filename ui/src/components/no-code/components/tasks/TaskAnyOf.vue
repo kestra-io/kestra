@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick} from "vue";
-    import getTaskComponent from "./getTaskComponent";
+    import getTaskComponent, {Schema} from "./getTaskComponent";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     const props = defineProps<{
@@ -56,23 +56,6 @@
     const selectedSchema = ref<string>();
     const delayedSelectedSchema = ref<string>();
     const finishedMounting = ref(false);
-
-    interface Schema{
-        $ref?: string;
-        type: string | {const: string};
-        properties?: Record<string, Schema>;
-        required?: string[];
-        $required?: boolean;
-        default?: any;
-        allOf?: Schema[];
-        anyOf?: Schema[];
-        oneOf?: Schema[];
-        items?: {
-            type: string;
-            format?: string;
-        };
-        const?: string;
-    }
 
     function consolidateAllOfSchemas(schema: Schema, definitions: Record<string, Schema>) {
         if (schema?.allOf?.length) {

@@ -2,6 +2,21 @@ import {pascalCase} from "change-case";
 
 const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true});
 
+export interface Schema{
+    $ref?: string;
+    $required?: boolean;
+    type: string | {const: string};
+    properties?: Record<string, Schema>;
+    required?: string[];
+    default?: any;
+    allOf?: Schema[];
+    anyOf?: Schema[];
+    oneOf?: Schema[];
+    items?: Schema;
+    const?: string;
+    format?: string;
+}
+
 function getType(property: any, key?: string, schema?: any): string {
     if (property.enum !== undefined) {
         return "enum";
@@ -33,7 +48,7 @@ function getType(property: any, key?: string, schema?: any): string {
     if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
         if (key === "labels" && property.anyOf.length === 2
             && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
-            return "KV-pairs";
+            return "dict";
         }
 
         // for dag tasks
@@ -82,7 +97,7 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if (property.type === "object" && !property.properties) {
-        return "KV-pairs";
+        return "dict";
     }
 
     return property.type || "expression";

@@ -1,10 +1,12 @@
 import {useCoreStore} from "../stores/core";
 import {useFlowStore} from "../stores/flow";
+import {useUnsavedChangesDialog} from "../composables/useUnsavedChangesDialog";
 
 export default (app, router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();
+    const {showDialog} = useUnsavedChangesDialog();
 
     window.addEventListener("beforeunload", (e) => {
         if (coreStore.unsavedChange) {
@@ -34,7 +36,8 @@ export default (app, router) => {
 
     router.beforeEach(async (to, from) => {
         if (coreStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
-            if (confirm(confirmationMessage)) {
+            const shouldLeave = await showDialog();
+            if (shouldLeave) {
                 flowStore.flow = flowStore.lastSavedFlow;
                 coreStore.unsavedChange = false;
             } else {

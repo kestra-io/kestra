@@ -44,7 +44,7 @@
             <DeleteOutline @click="removeItem(index)" />
         </el-col>
     </el-row>
-    <Add v-if="!disabledAdding" @add="addItem()" />
+    <Add v-if="!props.disabled" :disabled="addButtonDisabled" @add="addItem()" />
 </template>
 
 <script setup lang="ts">
@@ -148,12 +148,15 @@
     }
 
     function addItem() {
+        if(addButtonDisabled.value) {
+            return;
+        }
         currentValue.value.push(["", undefined]);
         emitUpdate()
     }
 
-    const disabledAdding = computed(() => {
-        return props.disabled || currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
+    const addButtonDisabled = computed(() => {
+        return currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
     });
 </script>
 

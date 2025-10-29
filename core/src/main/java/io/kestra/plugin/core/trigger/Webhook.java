@@ -156,6 +156,13 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
            """
     )
     private Boolean wait = false;
+    
+    
+    @Schema(
+        title = "The inputs to pass to the triggered flow"
+    )
+    @PluginProperty(dynamic = true)
+    private Map<String, Object> inputs;
 
     @PluginProperty
     @Builder.Default
@@ -174,6 +181,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
+            .inputs(inputs)
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,

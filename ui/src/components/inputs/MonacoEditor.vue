@@ -218,7 +218,7 @@
                 "editorLineNumber.foreground": "#444444",
                 "editor.selectionBackground": "#E8E5FF",
                 "editor.wordHighlightBackground": "#E8E5FF",
-                "diffEditor.insertedLineBackground": "#BEEFE2",
+                "diffEditor.insertedLineBackground": "#029E734D",
             }
         }
     };

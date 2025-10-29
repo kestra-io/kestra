@@ -83,7 +83,11 @@ public class LockService {
      */
     public void tryLock(String category, String id, Runnable runnable) {
         if (lock(category, id, Duration.ZERO)) {
-            runnable.run();
+            try {
+                runnable.run();
+            } finally {
+                unlock(category, id);
+            }
         } else {
             log.debug("Lock '{}'.'{}' already hold, skipping", category, id);
         }

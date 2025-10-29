@@ -91,11 +91,13 @@ public class HttpConfiguration {
     @Deprecated
     private final String proxyPassword;
 
-    @Schema(title = "The username for HTTP basic authentication.")
+    @Schema(title = "The username for HTTP basic authentication. " +
+        "Deprecated, use `auth` property with a `BasicAuthConfiguration` instance instead.")
     @Deprecated
     private final String basicAuthUser;
 
-    @Schema(title = "The password for HTTP basic authentication.")
+    @Schema(title = "The password for HTTP basic authentication. " +
+        "Deprecated, use `auth` property with a `BasicAuthConfiguration` instance instead.")
     @Deprecated
     private final String basicAuthPassword;
 

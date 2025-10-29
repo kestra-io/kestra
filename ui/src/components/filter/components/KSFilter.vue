@@ -66,7 +66,7 @@
 
     const route = useRoute();
 
-    const {appliedFilters, searchQuery, addFilter, removeFilter, updateFilter, resetToPreApplied} = useFilters(
+    const {appliedFilters, searchQuery, addFilter, removeFilter, updateFilter, resetToPreApplied, isPreApplied} = useFilters(
         props.configuration,
         props.showSearchInput,
         props.legacyQuery
@@ -129,6 +129,7 @@
         updateChart,
         refreshData,
         resetToPreApplied,
+        isPreApplied,
         editSavedFilter: (filter: SavedFilter) => {
             editingFilter.value = filter;
         },

@@ -20,6 +20,7 @@
             :filter
             :filterKey
             :shouldShowComparatorInPopper
+            :isPreApplied
             @update="emit('update', $event)"
             @remove="emit('remove', $event)"
         />
@@ -34,11 +35,12 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, h, ref} from "vue";
+    import {computed, h, inject, ref} from "vue";
     import {ElTag} from "element-plus";
     import {useValues} from "../../composables/useValues";
     import {Close} from "../../utils/icons";
     import {AppliedFilter, FilterKeyConfig, Comparators} from "../../utils/filterTypes";
+    import {FILTER_CONTEXT_INJECTION_KEY} from "../../utils/filterInjectionKeys";
     import FilterEditPopover from "./FilterEditPopover.vue";
 
     type FilterValueType = string | string[] | Date | {startDate: Date; endDate: Date};
@@ -53,9 +55,12 @@
         update: [filter: AppliedFilter];
     }>();
 
+    const filters = inject(FILTER_CONTEXT_INJECTION_KEY);
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>();
         
     const {getRelativeDateLabel} = useValues("executions");
+
+    const isPreApplied = computed(() => filters?.isPreApplied(props.filter.key) ?? false);
 
     const shouldShowComparatorInPopper = computed(
         () => (props.filterKey?.comparators?.length ?? 0) >= 2

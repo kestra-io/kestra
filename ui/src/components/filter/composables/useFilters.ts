@@ -419,6 +419,8 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         updateRoute();
     };
 
+    const isPreApplied = (filterKey: string) => preAppliedFilterKeys.value?.has(filterKey) ?? false;
+
     return {
         appliedFilters: computed(() => appliedFilters.value),
         searchQuery: computed({
@@ -433,5 +435,6 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         updateFilter,
         clearFilters,
         resetToPreApplied,
+        isPreApplied,
     };
 }

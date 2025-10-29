@@ -27,6 +27,7 @@
                             :filter="filter"
                             :filterKey="filterKey"
                             :showComparatorSelection="shouldShowComparatorInPopper"
+                            :isPreApplied
                             @update="handleUpdate"
                             @close="closeDialog"
                             @remove="handleRemove"
@@ -48,6 +49,7 @@
         filter: AppliedFilter;
         filterKey?: FilterKeyConfig | null;
         shouldShowComparatorInPopper?: boolean;
+        isPreApplied?: boolean;
     }>();
 
     const emits = defineEmits<{

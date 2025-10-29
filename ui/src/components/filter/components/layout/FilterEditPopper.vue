@@ -270,8 +270,8 @@
                         : "";
                 break;
             case "date":
-                filterValue = state.dateValue!;
-                valueLabel = state.dateValue!.toLocaleDateString();
+                filterValue = state.dateValue ?? "";
+                valueLabel = state.dateValue?.toLocaleDateString() ?? "";
                 break;
             case "radio":
                 if (state.radioValue === "ALL") {
@@ -343,7 +343,11 @@
                 state.multiSelectValue = Array.isArray(props.filter.value) ? props.filter.value : [];
                 break;
             case "date":
-                state.dateValue = props.filter.value instanceof Date ? props.filter.value : null;
+                state.dateValue = props.filter.value instanceof Date 
+                    ? props.filter.value 
+                    : typeof props.filter.value === "string" 
+                        ? new Date(props.filter.value) 
+                        : null;
                 break;
             case "radio":
                 state.radioValue = typeof props.filter.value === "string" ? props.filter.value : "ALL";

@@ -539,7 +539,7 @@
                 const metadataCallback = (response) => {
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
                         if(it.enabled){
-                            acc.push({...it.input, errors: it.errors, value: it.value, isDefault: it.isDefault});
+                            acc.push({...it.input, errors: it.errors, value: it.value || it.input.prefill, isDefault: it.isDefault});
                         }
                         return acc;
                     }, [])

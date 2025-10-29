@@ -73,10 +73,10 @@ export const AppTableBlock: Story = {
         fireEvent.input(canvas.getByPlaceholderText("Key"), {target: {value: "key1"}})
         fireEvent.input(canvas.getByTestId("monaco-editor-hidden-synced-textarea"), {target: {value: "value1"}})
 
-        canvas.getByText("+ Add a new value", {selector: ".schema-wrapper button"}).click();
+        fireEvent.click(canvas.getByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}))
 
         await waitFor(function getByPlaceholderKey() {
-            expect(canvas.getAllByPlaceholderText("Key")[0]).toBeVisible();
+            expect(canvas.getAllByPlaceholderText("Key")[1]).toBeVisible();
         });
 
         fireEvent.input(canvas.getAllByPlaceholderText("Key")[1], {target: {value: "key2"}})

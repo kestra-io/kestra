@@ -51,7 +51,6 @@
         filter: AppliedFilter;
         filterKey: FilterKeyConfig;
         showComparatorSelection?: boolean;
-        isPreApplied?: boolean;
     }>();
 
     const emits = defineEmits<{
@@ -60,36 +59,19 @@
         update: [filter: AppliedFilter];
     }>();
 
-    type FilterState = {
-        textValue: string;
-        selectValue: string;
-        multiSelectValue: string[];
-        radioValue: string;
-        dateValue: Date | null;
-        timeRangeMode: "predefined" | "custom";
-        startDateValue: Date | null;
-        endDateValue: Date | null;
-        selectedComparator: Comparators | undefined;
-    };
-
-    const initialState = reactive<FilterState>({
-        textValue: "",
-        selectValue: "",
-        multiSelectValue: [],
-        radioValue: "ALL",
-        dateValue: null,
-        timeRangeMode: "predefined",
-        startDateValue: null,
-        endDateValue: null,
-        selectedComparator: undefined,
-    });
-
     const {getRelativeDateLabel} = useValues("executions");
 
     const state = reactive({
-        ...initialState,
+        textValue: "",
+        selectValue: "",
+        radioValue: "ALL",
+        dateValue: null as Date | null,
+        multiSelectValue: [] as string[],
+        endDateValue: null as Date | null,
         valueOptions: [] as FilterValue[],
+        startDateValue: null as Date | null,
         selectedComparator: props.filter.comparator,
+        timeRangeMode: "predefined" as "predefined" | "custom"
     });
 
     const shouldShowComparator = computed(
@@ -230,18 +212,14 @@
     });
 
     const resetState = () => {
-        if (props.isPreApplied) {
-            Object.assign(state, {...initialState});
-        } else {
-            state.textValue = "";
-            state.selectValue = "";
-            state.multiSelectValue = [];
-            state.radioValue = "ALL";
-            state.dateValue = null;
-            state.timeRangeMode = "predefined";
-            state.startDateValue = null;
-            state.endDateValue = null;
-        }
+        state.textValue = "";
+        state.selectValue = "";
+        state.multiSelectValue = [];
+        state.radioValue = "ALL";
+        state.dateValue = null;
+        state.timeRangeMode = "predefined";
+        state.startDateValue = null;
+        state.endDateValue = null;
     };
 
     const applyFilter = () => {
@@ -405,19 +383,6 @@
         initializeTimeRange();
         await loadValueOptions();
         initializeValueByType();
-        if (props.isPreApplied) {
-            Object.assign(initialState, {
-                textValue: state.textValue,
-                selectValue: state.selectValue,
-                multiSelectValue: [...state.multiSelectValue],
-                radioValue: state.radioValue,
-                dateValue: state.dateValue,
-                timeRangeMode: state.timeRangeMode,
-                startDateValue: state.startDateValue,
-                endDateValue: state.endDateValue,
-                selectedComparator: state.selectedComparator,
-            });
-        }
     };
 
     onMounted(initializeFilter);

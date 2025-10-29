@@ -196,7 +196,6 @@
             fieldKey: key,
             task: props.modelValue,
             schema: schema,
-            definitions: props.definitions,
             required: props.schema?.required,
         } as const;
     }

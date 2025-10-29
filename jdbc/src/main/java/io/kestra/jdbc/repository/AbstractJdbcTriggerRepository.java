@@ -15,11 +15,13 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.runners.QueueIndexerRepository;
 import io.kestra.core.runners.ScheduleContextInterface;
+import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
 import io.kestra.jdbc.runner.JdbcSchedulerContext;
+import io.kestra.jdbc.runner.JdbcTransactionContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.ITriggers;
 import io.kestra.plugin.core.dashboard.data.Triggers;
@@ -36,7 +38,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepository<Trigger> implements TriggerRepositoryInterface, JdbcQueueIndexerInterface<Trigger> {
+public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepository<Trigger> implements TriggerRepositoryInterface, QueueIndexerRepository<Trigger> {
     public static final Field<Object> NAMESPACE_FIELD = field("namespace");
 
     private final JdbcFilterService filterService;
@@ -126,6 +128,23 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         save(jdbcSchedulerContext.getContext(), trigger);
 
         return trigger;
+    }
+
+    @Override
+    public Trigger save(TransactionContext txContext, Trigger trigger) {
+        return save(txContext.unwrap(JdbcTransactionContext.class).getDslContext(), trigger);
+    }
+
+    private Trigger save(DSLContext dslContext, Trigger trigger) {
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
+        this.jdbcRepository.persist(trigger, dslContext, fields);
+
+        return trigger;
+    }
+
+    @Override
+    public Class<Trigger> getItemClass() {
+        return Trigger.class;
     }
 
     public Trigger create(Trigger trigger) {

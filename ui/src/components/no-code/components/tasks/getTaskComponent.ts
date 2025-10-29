@@ -1,4 +1,5 @@
 import {pascalCase} from "change-case";
+import {resolve$ref} from "../../../../utils/utils";
 
 const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true});
 
@@ -17,7 +18,7 @@ export interface Schema{
     format?: string;
 }
 
-function getType(property: any, key?: string, schema?: any): string {
+function getType(property: any, key?: string, definitions?: Record<string, Schema>): string {
     if (property.enum !== undefined) {
         return "enum";
     }
@@ -74,7 +75,7 @@ function getType(property: any, key?: string, schema?: any): string {
         return "namespace";
     }
 
-    const properties = Object.keys(schema?.properties ?? {});
+    const properties = Object.keys(definitions?.properties ?? {});
     const hasNamespaceProperty = properties.includes("namespace");
     if (key === "flowId" && hasNamespaceProperty) {
         return "subflow-id";
@@ -85,7 +86,8 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if (property.type === "array") {
-        if (property.items?.anyOf?.length === 0 || property.items?.anyOf?.length > 10 || key === "pluginDefaults" || key === "layout") {
+        const items = definitions ? resolve$ref({definitions: definitions}, property.items) : property.items;
+        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10 || key === "pluginDefaults" || key === "layout") {
             return "list";
         }
 
@@ -103,8 +105,8 @@ function getType(property: any, key?: string, schema?: any): string {
     return property.type || "expression";
 }
 
-export default function getTaskComponent(property: any, key?: string, schema?: any) {
-    const typeString = getType(property, key, schema);
+export default function getTaskComponent(property: any, key?: string, definitions?: any): any {
+    const typeString = getType(property, key, definitions);
     const type = pascalCase(typeString);
     const component = TasksComponents[`./Task${type}.vue`]?.default;
     if (component) {

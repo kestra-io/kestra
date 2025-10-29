@@ -74,7 +74,7 @@
     });
 
     const componentType = computed(() => {
-        return getTaskComponent(props.schema.items, "", props.definitions);
+        return getTaskComponent(props.schema.items, props.root, props.definitions);
     });
 
     const needWrapper = computed(() => {

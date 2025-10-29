@@ -19,7 +19,7 @@
         </el-col>
         <el-col :span="16">
             <component
-                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties) : TaskExpression"
+                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties, root, definitions) : TaskExpression"
                 :modelValue="item[1]"
                 @update:model-value="onValueChange(index, $event)"
                 :root="getKey(item[0])"
@@ -44,7 +44,7 @@
     import InputText from "../inputs/InputText.vue";
     import TaskExpression from "./TaskExpression.vue";
     import Add from "../Add.vue";
-    import getTaskComponent from "./getTaskComponent";
+    import getTaskComponent, {Schema} from "./getTaskComponent";
     import debounce from "lodash/debounce";
 
     const {t} = useI18n();
@@ -53,27 +53,17 @@
         inheritAttrs: false,
     });
 
-    const props = defineProps({
-        modelValue: {
-            type: Object,
-            default: () => ({}),
-        },
-        schema: {
-            type: Object,
-            required: true,
-        },
-        definitions: {
-            type: Object,
-            default: () => ({}),
-        },
-        root: {
-            type: String,
-            default: undefined,
-        },
-        disabled: {
-            type: Boolean,
-            default: false,
-        },
+    const props = withDefaults(defineProps<{
+        modelValue?: Record<string, any>;
+        schema?: any;
+        definitions: Record<string, Schema>;
+        root?: string;
+        disabled?: boolean;
+    }>(), {
+        disabled: false,
+        modelValue: () => ({}),
+        root: undefined,
+        schema: () => ({type: "object"})
     });
 
     const currentValue = ref<[string, any][]>([])

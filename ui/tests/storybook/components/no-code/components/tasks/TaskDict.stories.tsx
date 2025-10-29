@@ -1,9 +1,10 @@
-import {ref} from "vue";
+import {computed, provide, ref} from "vue";
 import TaskDict from "../../../../../../src/components/no-code/components/tasks/TaskDict.vue";
 import Wrapper from "../../../../../../src/components/no-code/components/tasks/Wrapper.vue";
 import {userEvent, waitFor, within, expect} from "storybook/internal/test";
 import {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
+import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
 
 const meta: Meta<typeof TaskDict> = {
     title: "components/nocode/TaskDict",
@@ -27,6 +28,7 @@ const render: Story["render"] = (args) => ({
     components: {TaskDict},
     setup() {
         const model = ref(args.modelValue || {});
+        provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
         return () => <>
             <TaskDict modelValue={model.value} schema={{}} onUpdate:modelValue={val => model.value = val}/>
             <pre data-testid="sb-meta-data-result">
@@ -97,6 +99,8 @@ export const ValuesAsObjects: Story = {
         return {
             setup() {
                 const model = ref(args.modelValue || {});
+
+                provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
                 return () => <div style={{width: "1200px", display: "flex", gap: "20px"}}>
                     <Wrapper>
                         {{

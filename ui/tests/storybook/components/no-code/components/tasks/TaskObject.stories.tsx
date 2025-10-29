@@ -1,8 +1,9 @@
 import TaskObject from "../../../../../../src/components/no-code/components/tasks/TaskObject.vue";
-import {ref} from "vue"
+import {computed, provide, ref} from "vue"
 import {StoryObj} from "@storybook/vue3-vite";
 import {waitFor, within, expect, fireEvent} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
+import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
 
 export default {
     decorators: [vueRouter([
@@ -34,6 +35,7 @@ const schema = {
 
 const AppTableBlockRender = () => ({
     setup() {
+        provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
         const model = ref<Record<string, any> | undefined>({})
         return () => <div style={{display: "flex", gap: "16px"}}>
             <div style={{width: "500px"}}>

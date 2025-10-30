@@ -870,19 +870,10 @@
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
       "clearSelection": "Очистить выбор",
-      "close": {
-        "afterExecution": "Закрыть после выполнения task",
-        "conditions": "Закрыть условие",
-        "errors": "Закрыть обработчик ошибок",
-        "finally": "Закрыть task",
-        "input": "Закрыть input",
-        "pluginDefaults": "Закрыть плагин по умолчанию",
-        "tasks": "Закрыть task",
-        "triggers": "Закрыть trigger"
-      },
       "creation": {
         "afterExecution": "Добавить блок после выполнения",
         "conditions": "Добавить условие",
+        "default": "Добавить",
         "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
         "inputs": "Добавить поле input",
@@ -916,6 +907,10 @@
         "variable": "Переменная",
         "yaml": "Редактор YAML"
       },
+      "remove": {
+        "cases": "Удалить этот кейс",
+        "default": "Удалить эту запись"
+      },
       "sections": {
         "afterExecution": "После выполнения",
         "connection": "Свойства подключения",
@@ -932,6 +927,7 @@
       "select": {
         "afterExecution": "Выберите task",
         "conditions": "Выберите условие",
+        "default": "Выберите тип",
         "errors": "Выберите task",
         "finally": "Выберите task",
         "inputs": "Выберите тип поля input",

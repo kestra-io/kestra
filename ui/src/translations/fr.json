@@ -870,19 +870,10 @@
       "adding": "+ Ajouter un {what}",
       "adding_default": "+ Ajouter une nouvelle valeur",
       "clearSelection": "Effacer la sélection",
-      "close": {
-        "afterExecution": "Fermer après l'exécution de la task",
-        "conditions": "Condition de fermeture",
-        "errors": "Fermer le gestionnaire d'erreurs",
-        "finally": "Fermer la task",
-        "input": "Fermer l'input",
-        "pluginDefaults": "Fermer le plugin par défaut",
-        "tasks": "Fermer la task",
-        "triggers": "Fermer le trigger"
-      },
       "creation": {
         "afterExecution": "Ajouter un bloc après l'exécution",
         "conditions": "Ajouter une condition",
+        "default": "Ajouter",
         "errors": "Ajouter un gestionnaire d'erreurs",
         "finally": "Ajouter un bloc finally",
         "inputs": "Ajouter un champ d'input",
@@ -916,6 +907,10 @@
         "variable": "Variable",
         "yaml": "Éditeur YAML"
       },
+      "remove": {
+        "cases": "Supprimer ce cas",
+        "default": "Supprimer cette entrée"
+      },
       "sections": {
         "afterExecution": "Après l'Exécution",
         "connection": "Propriétés de connexion",
@@ -932,6 +927,7 @@
       "select": {
         "afterExecution": "Sélectionnez une task",
         "conditions": "Sélectionner une condition",
+        "default": "Sélectionner un type",
         "errors": "Sélectionner une task",
         "finally": "Sélectionnez une task",
         "inputs": "Sélectionnez un type de champ input",

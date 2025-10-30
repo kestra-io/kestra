@@ -3,7 +3,7 @@ import {TableOptions} from "../utils/filterTypes";
 
 export function useTableOptions(options: TableOptions) {
     const showOptions = ref(false);
-    const chartVisible = ref(options.chart?.value ?? false);
+    const chartVisible = ref(options.chart?.value ?? true);
 
     watch(() => options.chart?.value, (newValue) => {
         if (newValue !== undefined)

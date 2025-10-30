@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive} from "vue";
+    import {computed, onMounted, reactive, inject} from "vue";
     import {useValues} from "../../composables/useValues";
     import {
         AppliedFilter,
@@ -37,6 +37,7 @@
         FilterKeyConfig,
         FilterValue
     } from "../../utils/filterTypes";
+    import {FILTER_CONTEXT_INJECTION_KEY} from "../../utils/filterInjectionKeys";
     import FilterText from "./FilterText.vue";
     import FilterRadio from "./FilterRadio.vue";
     import FilterFooter from "./FilterFooter.vue";
@@ -59,6 +60,7 @@
         update: [filter: AppliedFilter];
     }>();
 
+    const filterContext = inject(FILTER_CONTEXT_INJECTION_KEY);
     const {getRelativeDateLabel} = useValues("executions");
 
     const state = reactive({
@@ -212,6 +214,16 @@
     });
 
     const resetState = () => {
+        const hasPreApplied = filterContext?.hasPreApplied(props.filterKey.key);
+        
+        if (hasPreApplied) {
+            const defaultFilter = filterContext?.getPreApplied(props.filterKey.key);
+            if (defaultFilter) {
+                initializeStateFromFilter(defaultFilter);
+                return;
+            }
+        }
+        
         state.textValue = "";
         state.selectValue = "";
         state.multiSelectValue = [];
@@ -301,15 +313,15 @@
         emits("close");
     };
 
-    const initializeTimeRange = () => {
+    const initializeTimeRange = (filter: AppliedFilter) => {
         if (
             props.filterKey.key === "timeRange" &&
-            typeof props.filter.value === "object" &&
-            props.filter.value !== null &&
-            "startDate" in props.filter.value
+            typeof filter.value === "object" &&
+            filter.value !== null &&
+            "startDate" in filter.value
         ) {
             state.timeRangeMode = "custom";
-            const dateRange = props.filter.value as {startDate: Date; endDate: Date};
+            const dateRange = filter.value as {startDate: Date; endDate: Date};
             state.startDateValue = dateRange.startDate;
             state.endDateValue = dateRange.endDate;
         } else {
@@ -319,41 +331,49 @@
         }
     };
 
-    // Without it, the filter editor would open with empty fields
-    const initializeValueByType = () => {
-        if (isTextComparator.value) {
-            state.textValue = typeof props.filter.value === "string" ? props.filter.value : "";
+    const initializeStateFromFilter = (filter: AppliedFilter) => {
+        state.selectedComparator = filter.comparator;
+        initializeTimeRange(filter);
+        
+        const isTextComp = TEXT_COMPARATORS.includes(filter.comparator) && props.filterKey.key !== "resources";
+        
+        if (isTextComp) {
+            state.textValue = typeof filter.value === "string" ? filter.value : "";
         } else {
             switch (props.filterKey.valueType) {
             case "text":
-                state.textValue = typeof props.filter.value === "string" ? props.filter.value : "";
+                state.textValue = typeof filter.value === "string" ? filter.value : "";
                 break;
             case "select":
-                if (typeof props.filter.value === "string") {
+                if (typeof filter.value === "string") {
                     const matchingOption = state.valueOptions.find(
-                        option => option.value === props.filter.value
+                        option => option.value === filter.value
                     );
-                    state.selectValue = matchingOption ? props.filter.value : "";
+                    state.selectValue = matchingOption ? filter.value : "";
                 } else {
                     state.selectValue = "";
                 }
                 break;
             case "multi-select":
             case "details":
-                state.multiSelectValue = Array.isArray(props.filter.value) ? props.filter.value : [];
+                state.multiSelectValue = Array.isArray(filter.value) ? filter.value : [];
                 break;
             case "date":
-                state.dateValue = props.filter.value instanceof Date 
-                    ? props.filter.value 
-                    : typeof props.filter.value === "string" 
-                        ? new Date(props.filter.value) 
+                state.dateValue = filter.value instanceof Date 
+                    ? filter.value 
+                    : typeof filter.value === "string" 
+                        ? new Date(filter.value) 
                         : null;
                 break;
             case "radio":
-                state.radioValue = typeof props.filter.value === "string" ? props.filter.value : "ALL";
+                state.radioValue = typeof filter.value === "string" ? filter.value : "ALL";
                 break;
             }
         }
+    };
+
+    const initializeValueByType = () => {
+        initializeStateFromFilter(props.filter);
     };
 
     const loadValueOptions = async () => {
@@ -380,7 +400,6 @@
         state.selectedComparator = shouldShowComparator.value
             ? props.filter.comparator
             : props.filterKey.comparators[0];
-        initializeTimeRange();
         await loadValueOptions();
         initializeValueByType();
     };

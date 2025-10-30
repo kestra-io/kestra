@@ -63,7 +63,7 @@ public class MetadataMigrationCommandTest {
 
 
             assertThat(out.toString()).contains("✅ Metadata migration complete.");
-            // Still it's not in the metadata repository because no flow exist to find that secret
+            // Still it's not in the metadata repository because no flow exist to find that kv
             assertThat(kvMetadataRepository.findByName(tenantId, namespace, key).isPresent()).isFalse();
             assertThat(kvMetadataRepository.findByName(tenantId, anotherNamespace, anotherKey).isPresent()).isFalse();
 
@@ -79,9 +79,9 @@ public class MetadataMigrationCommandTest {
             PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
 
             assertThat(out.toString()).contains("✅ Metadata migration complete.");
-            Optional<PersistedKvMetadata> foundSecret = kvMetadataRepository.findByName(tenantId, namespace, key);
-            assertThat(foundSecret.isPresent()).isTrue();
-            assertThat(foundSecret.get().getDescription()).isEqualTo(description);
+            Optional<PersistedKvMetadata> foundKv = kvMetadataRepository.findByName(tenantId, namespace, key);
+            assertThat(foundKv.isPresent()).isTrue();
+            assertThat(foundKv.get().getDescription()).isEqualTo(description);
             assertThat(kvMetadataRepository.findByName(tenantId, anotherNamespace, anotherKey).isPresent()).isFalse();
 
             KVStore kvStore = new InternalKVStore(tenantId, namespace, storage, kvMetadataRepository);

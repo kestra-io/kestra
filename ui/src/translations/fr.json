@@ -170,6 +170,11 @@
       "back": "Retour"
     },
     "concurrency": "Concurrence",
+    "concurrency limits": "Limites de Concurrence",
+    "concurrency_limit": {
+      "dialog_title": "Limites de Concurrence",
+      "warning": "Modifier le compteur en cours peut corrompre la concurrence, ce qui peut entraîner des exécutions dépassant la limite autorisée."
+    },
     "conditions": "Conditions",
     "configure basic auth": "Configurer l'authentification basique",
     "confirm": "Confirmer",

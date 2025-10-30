@@ -170,6 +170,11 @@
       "back": "戻る"
     },
     "concurrency": "並行性",
+    "concurrency limits": "同時実行制限",
+    "concurrency_limit": {
+      "dialog_title": "同時実行制限",
+      "warning": "実行中のカウンターを変更すると、並行性が損なわれ、実行が許可された制限を超える可能性があります。"
+    },
     "conditions": "条件",
     "configure basic auth": "基本認証を設定",
     "confirm": "確認",

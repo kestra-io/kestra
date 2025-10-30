@@ -170,6 +170,11 @@
       "back": "Zurück"
     },
     "concurrency": "Nebenläufigkeit",
+    "concurrency limits": "Nebenläufigkeitsgrenzen",
+    "concurrency_limit": {
+      "dialog_title": "Nebenläufigkeitsgrenzen",
+      "warning": "Das Ändern des laufenden Zählers kann die Nebenläufigkeit beeinträchtigen, sodass Ausführungen das erlaubte Limit überschreiten können."
+    },
     "conditions": "Bedingungen",
     "configure basic auth": "Basis-Authentifizierung konfigurieren",
     "confirm": "Bestätigen",

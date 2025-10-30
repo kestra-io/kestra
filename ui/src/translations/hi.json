@@ -170,6 +170,11 @@
       "back": "वापस"
     },
     "concurrency": "समानांतरता",
+    "concurrency limits": "समानांतरता सीमाएँ",
+    "concurrency_limit": {
+      "dialog_title": "समानांतरता सीमाएँ",
+      "warning": "चल रहे काउंटर को बदलने से concurrency खराब हो सकती है जिससे executions अनुमत सीमा से अधिक हो सकते हैं।"
+    },
     "conditions": "शर्तें",
     "configure basic auth": "बेसिक प्रमाणीकरण कॉन्फ़िगर करें",
     "confirm": "पुष्टि करें",

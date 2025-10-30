@@ -54,7 +54,7 @@ class GetKeysTest {
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
             .type(GetKeys.class.getName())
-            .prefix(new Property<>("{{ inputs.prefix }}"))
+            .prefix(Property.ofExpression("{{ inputs.prefix }}"))
             .build();
 
         final KVStore kv = runContext.namespaceKv(namespace);
@@ -79,7 +79,7 @@ class GetKeysTest {
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
             .type(GetKeys.class.getName())
-            .prefix(new Property<>("{{ inputs.prefix }}"))
+            .prefix(Property.ofExpression("{{ inputs.prefix }}"))
             .build();
 
         // When

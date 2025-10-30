@@ -1,19 +1,19 @@
 <template>
     <template v-if="flow">
-        <el-alert v-if="flow.disabled" type="warning" show-icon :closable="false">
+        <el-alert v-if="flow.disabled" type="warning" showIcon :closable="false">
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </el-alert>
 
-        <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
-            <inputs-form :initial-inputs="flow.inputs" :selected-trigger="selectedTrigger" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
+        <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
+            <InputsForm :initialInputs="flow.inputs" :selectedTrigger="selectedTrigger" :flow="flow" v-model="inputs" :executeClicked="executeClicked" @confirm="onSubmit($refs.form)" @update:model-value-no-default="values => inputsNoDefaults=values" />
 
             <el-collapse v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
                     <el-form-item
                         :label="$t('execution labels')"
                     >
-                        <label-input
+                        <LabelInput
                             :key="executionLabels"
                             v-model:labels="executionLabels"
                         />
@@ -28,7 +28,7 @@
                     </el-form-item>
                 </el-collapse-item>
                 <el-collapse-item :title="$t('curl.command')" name="curl">
-                    <curl :flow="flow" :execution-labels="executionLabels" :inputs="inputs" />
+                    <Curl :flow="flow" :executionLabels="executionLabels" :inputs="inputs" />
                 </el-collapse-item>
                 <el-collapse-item v-if="hasWebhookTriggers" :title="$t('webhook.curl_command')" name="webhook-curl">
                     <WebhookCurl :flow="flow" />
@@ -46,16 +46,15 @@
                 <div class="right-align">
                     <el-form-item class="submit">
                         <el-button
-                            data-test-id="execute-dialog-button"
-                            :icon="Flash"
-                            class="flow-run-trigger-button"
-                            :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}"
-                            @click.prevent="onSubmit($refs.form); executeClicked = true;"
-                            type="primary"
-                            native-type="submit"
+                            :data-test-id="buttonTestId"
+                            :icon="buttonIcon"
                             :disabled="!flowCanBeExecuted"
+                            :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"
+                            type="primary"
+                            nativeType="submit"
+                            @click.prevent="onSubmit($refs.form); executeClicked = true;"
                         >
-                            {{ $t('launch execution') }}
+                            {{ $t(buttonText) }}
                         </el-button>
                         <el-text v-if="haveBadLabels" type="danger" size="small">
                             {{ $t('wrong labels') }}
@@ -73,20 +72,19 @@
 </script>
 
 <script>
+    import moment from "moment-timezone";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {executeTask} from "../../utils/submitTask"
-    import InputsForm from "../../components/inputs/InputsForm.vue";
-    import LabelInput from "../../components/labels/LabelInput.vue";
-    import Curl from "./Curl.vue";
-    import WebhookCurl from "./WebhookCurl.vue";
     import {executeFlowBehaviours, storageKeys} from "../../utils/constants";
     import Inputs from "../../utils/inputs";
-    import {TIMEZONE_STORAGE_KEY} from "../settings/BasicSettings.vue";
-    import moment from "moment-timezone";
+    import Curl from "./Curl.vue";
+    import WebhookCurl from "./WebhookCurl.vue";
+    import InputsForm from "../../components/inputs/InputsForm.vue";
+    import LabelInput from "../../components/labels/LabelInput.vue";
 
     export default {
         components: {
@@ -96,22 +94,18 @@
             WebhookCurl
         },
         props: {
-            redirect: {
-                type: Boolean,
-                default: true
-            },
-            embed: {
-                type: Boolean,
-                default: false
-            },
-            selectedTrigger:{
-                type: Object,
-                default: undefined
-            }
+            redirect: {type: Boolean, default: true},
+            embed: {type: Boolean, default: false},
+            replaySubmit: {type: Function, default: null},
+            selectedTrigger: {type: Object, default: undefined},
+            buttonText: {type: String, default: "launch execution"},
+            buttonIcon: {type: [Object, Function], default: () => Flash},
+            buttonTestId: {type: String, default: "execute-dialog-button"},
         },
         data() {
             return {
                 inputs: {},
+                inputsNoDefaults: {},
                 inputNewLabel: "",
                 executionLabels: [],
                 scheduleDate: undefined,
@@ -140,8 +134,8 @@
                 if (!this.flow?.triggers) {
                     return false;
                 }
-                return this.flow.triggers.some(trigger => 
-                    trigger.type === "io.kestra.plugin.core.trigger.Webhook" && 
+                return this.flow.triggers.some(trigger =>
+                    trigger.type === "io.kestra.plugin.core.trigger.Webhook" &&
                     (trigger.disabled === undefined || trigger.disabled === false)
                 );
             }
@@ -185,19 +179,34 @@
                             return false;
                         }
 
-                        executeTask(this, this.flow, this.inputs, {
-                            redirect: this.redirect,
-                            newTab: this.newTab,
-                            id: this.flow.id,
-                            namespace: this.flow.namespace,
-                            labels: [...new Set(
-                                this.executionLabels
-                                    .filter(label => label.key && label.value)
-                                    .map(label => `${label.key}:${label.value}`)
-                            )],
-                            scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
-                            nextStep: true,
-                        })
+                        if (this.replaySubmit) {
+                            this.replaySubmit({
+                                formRef,
+                                id: this.flow.id,
+                                namespace: this.flow.namespace,
+                                inputs: this.selectedTrigger?.inputs ? {...this.selectedTrigger.inputs, ...this.inputsNoDefaults} : this.inputsNoDefaults,
+                                labels: [...new Set(
+                                    this.executionLabels
+                                        .filter(label => label.key && label.value)
+                                        .map(label => `${label.key}:${label.value}`)
+                                )],
+                                scheduleDate: this.scheduleDate
+                            });
+                        } else {
+                            executeTask(this, this.flow, this.selectedTrigger?.inputs ? {...this.selectedTrigger.inputs, ...this.inputsNoDefaults} : this.inputsNoDefaults, {
+                                redirect: this.redirect,
+                                newTab: this.newTab,
+                                id: this.flow.id,
+                                namespace: this.flow.namespace,
+                                labels: [...new Set(
+                                    this.executionLabels
+                                        .filter(label => label.key && label.value)
+                                        .map(label => `${label.key}:${label.value}`)
+                                )],
+                                scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
+                                nextStep: true,
+                            });
+                        }
                         this.$emit("executionTrigger");
                     });
                 }

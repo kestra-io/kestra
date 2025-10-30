@@ -125,7 +125,8 @@ public class TriggerController {
             Optional<Flow> flow = flowRepository.findById(tc.getTenantId(), tc.getNamespace(), tc.getFlowId());
             if (flow.isEmpty()) {
                 // Warn instead of throwing to avoid blocking the trigger UI
-                log.warn(String.format("Flow %s not found for trigger %s", tc.getFlowId(), tc.getTriggerId()));
+                log.warn("Flow {} not found for trigger {}", tc.getFlowId(), tc.getTriggerId());
+
                 return;
             }
     
@@ -137,7 +138,7 @@ public class TriggerController {
             AbstractTrigger abstractTrigger = flow.get().getTriggers().stream().filter(t -> t.getId().equals(tc.getTriggerId())).findFirst().orElse(null);
             if (abstractTrigger == null) {
                 // Warn instead of throwing to avoid blocking the trigger UI
-                log.warn(String.format("Flow %s has no trigger %s", tc.getFlowId(), tc.getTriggerId()));
+                log.warn("Flow {} has no trigger {}", tc.getFlowId(), tc.getTriggerId());
             }
     
             triggers.add(Triggers.builder()
@@ -287,52 +288,29 @@ public class TriggerController {
         if (abstractTrigger == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, String.format("Flow %s has no trigger %s", newTrigger.getFlowId(), newTrigger.getTriggerId()));
         }
-
-        Trigger updatedTrigger = this.triggerRepository.lock(newTrigger.uid(), throwFunction(current -> {
-            if (abstractTrigger instanceof RealtimeTriggerInterface && !newTrigger.getDisabled().equals(current.getDisabled())) {
-                throw new IllegalArgumentException("Realtime triggers can not be disabled through the API, please edit the trigger from the flow.");
-            }
-            Trigger updated;
-            ZonedDateTime nextExecutionDate = null;
+        
+        if (abstractTrigger instanceof RealtimeTriggerInterface) {
+            throw new IllegalArgumentException("Realtime triggers can not be updated through the API, please edit the trigger from the flow.");
+        }
+        
+        Trigger updatedTrigger;
+        
+        if (newTrigger.getBackfill() != null) {
             try {
-                Trigger lastUpdate = newTrigger;
-                RunContext runContext = runContextFactory.of(maybeFlow.get(), abstractTrigger);
-                ConditionContext conditionContext = conditionService.conditionContext(runContext, maybeFlow.get(), null);
-
-                // If we are enabling back a schedule trigger,
-                // then we need to handle its recoverMissedSchedules
-                if (current.getDisabled() && !newTrigger.getDisabled() && abstractTrigger instanceof Schedule schedule) {
-                    nextExecutionDate = schedule.nextEvaluationDate();
-                    RecoverMissedSchedules recoverMissedSchedules = schedule.getRecoverMissedSchedules();
-                    if (recoverMissedSchedules == RecoverMissedSchedules.LAST) {
-                        nextExecutionDate = schedule.previousEvaluationDate(conditionContext);
-                    } else if (recoverMissedSchedules == RecoverMissedSchedules.NONE) {
-                        nextExecutionDate = schedule.nextEvaluationDate();
-                    }
-                } else {
-                    // We must set up the backfill before the update to calculate the next execution date
-                    updated = current.initBackfill(lastUpdate);
-                    if (abstractTrigger instanceof PollingTriggerInterface pollingTriggerInterface) {
-                        nextExecutionDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(updated));
-                    }
-                }
-                updated = Trigger.update(current, lastUpdate, nextExecutionDate);
+                updatedTrigger = setTriggerBackfill(newTrigger, maybeFlow.get(), abstractTrigger);
             } catch (Exception e) {
                 throw new HttpStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
             }
-            triggerQueue.emit(updated);
-
-            return updated;
-        }));
-
+        } else {
+            updatedTrigger = setTriggerDisabled(newTrigger.uid(), newTrigger.getDisabled(), abstractTrigger, maybeFlow.get());
+        }
+        
         if (updatedTrigger == null) {
-
             return HttpResponse.notFound();
         }
-
         return HttpResponse.ok(updatedTrigger);
     }
-
+    
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{namespace}/{flowId}/{triggerId}/restart")
     @Operation(tags = {"Triggers"}, summary = "Restart a trigger")
@@ -542,7 +520,7 @@ public class TriggerController {
     public MutableHttpResponse<?> disabledTriggersByIds(
         @Parameter(description = "The triggers you want to set the disabled state") @Body @Valid SetDisabledRequest setDisabledRequest
     ) throws QueueException {
-        setDisabledRequest.triggers.forEach(throwConsumer(trigger -> this.setDisabled(trigger, setDisabledRequest.disabled)));
+        setDisabledRequest.triggers.forEach(throwConsumer(trigger -> this.setTriggerDisabled(trigger, setDisabledRequest.disabled)));
 
         return HttpResponse.ok(BulkResponse.builder().count(setDisabledRequest.triggers.size()).build());
     }
@@ -575,7 +553,7 @@ public class TriggerController {
         Integer count = triggerRepository
             .find(tenantService.resolveTenant(), filters)
             .map(throwFunction(trigger -> {
-                this.setDisabled(trigger, disabled);
+                this.setTriggerDisabled(trigger, disabled);
                 return 1;
             }))
             .reduce(Integer::sum)
@@ -585,15 +563,74 @@ public class TriggerController {
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
-    public void setDisabled(Trigger trigger, Boolean disabled) throws QueueException {
-        this.triggerRepository.lock(trigger.uid(), throwFunction(current -> {
-            Trigger updating = current.toBuilder().disabled(disabled).build();
-            triggerQueue.emit(updating);
-
-            return updating;
+    public void setTriggerDisabled(Trigger trigger, Boolean disabled) throws QueueException {
+        Optional<Flow> maybeFlow = this.flowRepository.findById(this.tenantService.resolveTenant(), trigger.getNamespace(), trigger.getFlowId());
+        
+        if (maybeFlow.isEmpty()) {
+            return; // Flow doesn't exist
+        }
+        
+        Optional<AbstractTrigger> maybeAbstractTrigger = maybeFlow.flatMap(flow -> flow.getTriggers().stream().filter(t -> t.getId().equals(trigger.getTriggerId())).findFirst());
+        
+        if (maybeAbstractTrigger.isEmpty()) {
+            return; // Trigger doesn't exist
+        }
+        
+        if (maybeAbstractTrigger.get() instanceof RealtimeTriggerInterface) {
+            return; // RealTimeTriggers can't be disabled/enabled through API.
+        }
+        
+        setTriggerDisabled(trigger.uid(), disabled, maybeAbstractTrigger.get(), maybeFlow.get());
+    }
+    
+    private Trigger setTriggerDisabled(String triggerUID, Boolean disabled, AbstractTrigger triggerDefinition, Flow flow) throws QueueException {
+        return this.triggerRepository.lock(triggerUID, throwFunction(current -> {
+            if (disabled.equals(current.getDisabled())) {
+                return current; // Trigger is already in the expected state
+            }
+            return doSetTriggerDisabled(current, disabled, flow, triggerDefinition);
         }));
     }
-
+    
+    private Trigger setTriggerBackfill(Trigger newTrigger, Flow flow, AbstractTrigger abstractTrigger) throws Exception {
+        return this.triggerRepository.lock(newTrigger.uid(), throwFunction(current -> doSetTriggerBackfill(current, newTrigger.getBackfill(), flow, abstractTrigger)));
+    }
+    
+    protected Trigger doSetTriggerDisabled(Trigger currentState, Boolean disabled, Flow flow, AbstractTrigger trigger) throws QueueException {
+        Trigger.TriggerBuilder<?, ?> builder = currentState.toBuilder().disabled(disabled);
+        
+        if (disabled) {
+            builder = builder.nextExecutionDate(null);
+        }
+        
+        Trigger updated = builder.build();
+        triggerQueue.emit(updated);
+        return updated;
+    }
+    
+    protected Trigger doSetTriggerBackfill(Trigger currentState, Backfill backfill, Flow flow, AbstractTrigger trigger) throws Exception {
+        Trigger updated;
+        ZonedDateTime nextExecutionDate = null;
+        
+        RunContext runContext = runContextFactory.of(flow, trigger);
+        ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
+        
+        // We must set up the backfill before the update to calculate the next execution date
+        updated = currentState.withBackfill(backfill);
+        
+        if (trigger instanceof PollingTriggerInterface pollingTriggerInterface) {
+            nextExecutionDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(updated));
+        }
+        
+        updated = updated
+            .toBuilder()
+            .nextExecutionDate(nextExecutionDate)
+            .build();
+        
+        triggerQueue.emit(updated);
+        return updated;
+    }
+    
     public int backfillsAction(List<Trigger> triggers, BACKFILL_ACTION action) throws QueueException {
         AtomicInteger count = new AtomicInteger();
         triggers.forEach(throwConsumer(trigger -> {

@@ -1,0 +1,27 @@
+id: output_values
+namespace: sanitychecks.core
+
+variables:
+  var1: "myvaribale"
+  var2: 25
+
+tasks:
+  - id: output_values
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      string_value: "hello"
+      number_value: 42
+      nested_object:
+        key1: "value1"
+        key2: "value2"
+      text_var: "{{ vars.var1}}"
+      number_var: "the number value is: {{vars.var2}}"
+
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.output_values.values.string_value == 'hello'}}"
+      - "{{ outputs.output_values.values.number_value == 42 }}"
+      - "{{ outputs.output_values.values.nested_object['key1'] == 'value1' }}"
+      - "{{ outputs.output_values.values.text_var == 'myvaribale' }}"
+      - "{{ outputs.output_values.values.number_var == 'the number value is: 25' }}"

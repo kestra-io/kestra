@@ -27,13 +27,20 @@ public record TestSuiteRunResult(
 
     public static TestSuiteRunResult of(String id, String testSuiteId, String namespace, String flowId, Instant startDate, Instant endDate, List<UnitTestResult> results) {
         boolean allSkipped = true;
+        boolean anyFailed = false;
         for (UnitTestResult result : results) {
             if(!result.state().equals(TestState.SKIPPED)) {
                 allSkipped = false;
             }
-            if(result.state().equals(TestState.ERROR) || result.state().equals(TestState.FAILED)) {
+            if (result.state().equals(TestState.FAILED)) {
+                anyFailed = true;
+            }
+            if (result.state().equals(TestState.ERROR)) {
                 return new TestSuiteRunResult(id, testSuiteId, namespace, flowId, result.state(), startDate, endDate, results);
             }
+        }
+        if (anyFailed) {
+            return new TestSuiteRunResult(id, testSuiteId, namespace, flowId, TestState.FAILED, startDate, endDate, results);
         }
         var state = allSkipped ? TestState.SKIPPED : TestState.SUCCESS;
         return new TestSuiteRunResult(id, testSuiteId, namespace, flowId, state, startDate, endDate, results);

@@ -108,7 +108,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-        title = "Number of concurrent parallel tasks that can be running at any point in time.",
+        title = "Number of concurrent parallel tasks that can be running at any point in time",
         description = "If the value is `0`, no limit exist and all tasks will start at the same time."
     )
     private final Property<Integer> concurrent = Property.ofValue(0);

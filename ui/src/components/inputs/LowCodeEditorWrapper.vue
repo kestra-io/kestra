@@ -2,13 +2,13 @@
     <div id="topologyWrapper" v-loading="isLoading" class="vue-flow">
         <LowCodeEditor
             v-if="flowGraph"
-            :flow-graph="flowGraph"
-            :flow-id="flowId"
+            :flowGraph="flowGraph"
+            :flowId="flowId"
             :namespace="namespace"
-            :is-read-only="isReadOnly"
+            :isReadOnly="isReadOnly"
             :source="flowYaml"
-            :is-allowed-edit="isAllowedEdit"
-            :expanded-subflows="expandedSubflows"
+            :isAllowedEdit="isAllowedEdit"
+            :expandedSubflows="expandedSubflows"
             @on-edit="onEdit"
             @loading="loadingState"
             @expand-subflow="onExpandSubflow"
@@ -27,7 +27,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import {Utils} from "@kestra-io/ui-libs";
@@ -85,13 +85,23 @@
         }))
     };
 
-    const onEdit = (source:string, currentIsFlow = false) => {
+    const onEdit = async (source: string, currentIsFlow = false) => {
         flowStore.flowYaml = source
-        return flowStore.onEdit({
+        const result = await flowStore.onEdit({
             source,
             currentIsFlow,
             editorViewType: "YAML",
         })
+        
+        if (currentIsFlow && source) {
+            await flowStore.loadGraphFromSource({
+                flow: source,
+            }).catch((error) => {
+                console.error("Error loading graph:", error);
+            })
+        }
+        
+        return result
     }
 </script>
 

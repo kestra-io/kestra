@@ -76,7 +76,7 @@ public class UploadFilesTest {
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
             .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
-            .namespace(new Property<>("{{ inputs.namespace }}"))
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
             .destination(Property.ofValue("/folder"))
             .build();
 

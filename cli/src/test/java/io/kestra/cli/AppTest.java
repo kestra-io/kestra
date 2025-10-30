@@ -37,7 +37,7 @@ class AppTest {
 
         final String[] args = new String[]{"server", serverType, "--help"};
 
-        try (ApplicationContext ctx = App.applicationContext(App.class, args)) {
+        try (ApplicationContext ctx = App.applicationContext(App.class, new String [] { Environment.CLI }, args)) {
             new CommandLine(App.class, new MicronautFactory(ctx)).execute(args);
 
             assertTrue(ctx.getProperty("kestra.server-type", ServerType.class).isEmpty());
@@ -52,7 +52,7 @@ class AppTest {
 
         final String[] argsWithMissingParams = new String[]{"flow", "namespace", "update"};
 
-        try (ApplicationContext ctx = App.applicationContext(App.class, argsWithMissingParams)) {
+        try (ApplicationContext ctx = App.applicationContext(App.class, new String [] { Environment.CLI }, argsWithMissingParams)) {
             new CommandLine(App.class, new MicronautFactory(ctx)).execute(argsWithMissingParams);
 
             assertThat(out.toString()).startsWith("Missing required parameters: ");

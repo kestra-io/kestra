@@ -24,7 +24,7 @@ import java.util.Map;
 @NoArgsConstructor
 @Schema(
     title = "Create temporary files (Deprecated).",
-    description = "This task is deprecated and replaced by `inputFiles` property available in all script tasks and in the [WorkingDirectory](https://kestra.io/plugins/core/tasks/io.kestra.plugin.core.flow.workingdirectory) task. Check the [migration guide](https://kestra.io/docs/migration-guide/0.17.0/local-files) for more details. This task suffers from multiple limitations e.g. it cannot be skipped, so setting `disabled: true` will have no effect. Overall, the WorkingDirectory task is more flexible and should be used instead of this task. This task will be removed in a future version of Kestra."
+    description = "This task is deprecated and replaced by the `inputFiles` property available in all script tasks and in the [WorkingDirectory](https://kestra.io/plugins/core/tasks/io.kestra.plugin.core.flow.workingdirectory) task. Check the [migration guide](https://kestra.io/docs/migration-guide/0.17.0/local-files) for more details. This task suffers from multiple limitations, such as that it cannot be skipped, so setting `disabled: true` will have no effect. Overall, the WorkingDirectory task is more flexible and should be used instead of this task. This task will be removed in a future version of Kestra."
 )
 @Deprecated
 @Plugin(examples = {
@@ -122,14 +122,14 @@ import java.util.Map;
 )
 public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFilesOutput> {
     @Schema(
-        title = "The files to be created on the local filesystem. It can be a map or a JSON object.",
+        title = "The files to be created on the local filesystem; it can be a map or a JSON object.",
         oneOf = { Map.class, String.class }
     )
     @PluginProperty(dynamic = true)
     private Object inputs;
 
     @Schema(
-        title = "The files from the local filesystem to be sent to the Kestra's internal storage.",
+        title = "The files from the local filesystem to be sent to the Kestra's internal storage",
         description = "Must be a list of [glob](https://en.wikipedia.org/wiki/Glob_(programming)) expressions relative to the current working directory, some examples: `my-dir/**`, `my-dir/*/**` or `my-dir/my-file.txt`."
     )
     private Property<List<String>> outputs;
@@ -147,7 +147,7 @@ public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFil
     @Builder
     @Getter
     public static class LocalFilesOutput implements Output {
-        @Schema(title = "The URI of the files that have been sent to the Kestra's internal storage.")
+        @Schema(title = "The URI of the files that have been sent to the Kestra's internal storage")
         private Map<String, URI> uris;
     }
 }

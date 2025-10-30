@@ -1,20 +1,32 @@
 <template>
     <el-button-group v-if="isFileValid(value)">
-        <a class="el-button el-button--small el-button--primary" :href="itemUrl(value)" target="_blank">
-            <Download />
+        <el-button
+            type="primary"
+            tag="a"
+            :href="itemUrl(value.toString())"
+            target="_blank"
+            size="small"
+            :icon="Download"
+            rel="noopener noreferrer"
+        >
             {{ $t('download') }}
-        </a>
-        <FilePreview v-if="isFile(value)" :value="value" :execution-id="execution.id" />
+        </el-button>
+        <FilePreview v-if="isFile(value)" :value="value.toString()" :executionId="execution.id" />
         <el-button disabled size="small" type="primary" v-if="humanSize">
             ({{ humanSize }})
         </el-button>
     </el-button-group>
-
     <el-button-group v-else-if="isURI(value)">
-        <a class="el-button el-button--small el-button--primary" :href="value" target="_blank">
-            <OpenInNew /> &nbsp;
+        <el-button
+            type="primary"
+            tag="a"
+            size="small"
+            :href="value"
+            target="_blank"
+            :icon="OpenInNew"
+        >
             {{ $t('open') }}
-        </a>
+        </el-button>
     </el-button-group>
 
     <span v-else-if="value === null">
@@ -25,74 +37,84 @@
     </span>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {ref, watch, onMounted} from "vue";
     import Download from "vue-material-design-icons/Download.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import FilePreview from "./FilePreview.vue";
-</script>
-
-<script>
     import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
 
-    export default {
-        data () {
-            return {
-                humanSize: ""
+    interface Execution {
+        id: string;
+    }
+
+    interface FileMetadata {
+        size: number;
+    }
+
+    const props = withDefaults(defineProps<{
+        value?: string | object | boolean | number;
+        execution?: Execution;
+        restrictUri?: boolean;
+    }>(), {
+        value: undefined,
+        execution: undefined,
+        restrictUri: false,
+    });
+
+    const humanSize = ref<string>("");
+
+    const isFile = (value: unknown): value is string => {
+        return typeof value === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"));
+    };
+
+    const isFileValid = (value: unknown): boolean => {
+        return isFile(value) && humanSize.value.length > 0 && humanSize.value !== "0B";
+    };
+
+    const isURI = (value: unknown): value is string => {
+        if (typeof value !== "string") {
+            return false;
+        }
+        try {
+            const url = new URL(value);
+            if (props.restrictUri) {
+                return ["http:", "https:"].includes(url.protocol);
             }
-        },
-        methods: {
-            isFile(value) {
-                return typeof(value) === "string" && (value.startsWith("kestra:///") || value.startsWith("file://") || value.startsWith("nsfile://"))
-            },
-            isFileValid(value) {
-                // we don't want to display the file if it's not a file or if the size is 0
-                return this.isFile(value) && this.humanSize && this.humanSize !== "0B"
-            },
-            isURI(value) {
-                try {
-                    const url = new URL(value);
-                    if (this.restrictUri) { return ["http:", "https:"].includes(url.protocol); }
-                    return true;
-                } catch {
-                    return false;
+            return true;
+        } catch {
+            return false;
+        }
+    };
+
+    const itemUrl = (value: string): string => {
+        return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;
+    };
+
+    const getFileSize = async (): Promise<void> => {
+        if (isFile(props.value) && props.execution?.id) {
+            try {
+                const response = await fetch(`${apiUrl()}/executions/${props.execution.id}/file/metas?path=${props.value}`, {
+                    method: "GET"
+                });
+                if (response.ok) {
+                    const data: FileMetadata = await response.json();
+                    humanSize.value = Utils.humanFileSize(data.size);
                 }
-            },
-            itemUrl(value) {
-                return `${apiUrl(this.$store)}/executions/${this.execution.id}/file?path=${encodeURI(value)}`;
-            },
-            getFileSize(){
-                if (this.isFile(this.value)) {
-                    this.$http(`${apiUrl(this.$store)}/executions/${this?.execution?.id}/file/metas?path=${this.value}`, {
-                        validateStatus: (status) => status === 200 || status === 404 || status === 422
-                    }).then(r => this.humanSize = Utils.humanFileSize(r.data.size))
-                }
-            }
-        },
-        watch: {
-            value(newValue) {
-                if(newValue) this.getFileSize()
-            }
-        },
-        mounted() {
-            this.getFileSize()
-        },
-        props: {
-            value: {
-                type: [String, Object, Boolean, Number],
-                required: false,
-                default: undefined
-            },
-            execution: {
-                type: Object,
-                required: false,
-                default: undefined
-            },
-            restrictUri: {
-                type: Boolean,
-                required: false,
-                default: false
+            } catch (error) {
+                console.error("Failed to fetch file size:", error);
             }
         }
     };
+
+    watch(() => props.value, (newValue) => {
+        if (newValue) {
+            getFileSize();
+        }
+    });
+
+    onMounted(() => {
+        getFileSize();
+    });
 </script>

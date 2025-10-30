@@ -3,124 +3,146 @@
         effect="light"
         :persistent="false"
         transition=""
-        :hide-after="0"
-        :content="$t('Set labels tooltip')"
-        raw-content
-        :placement="tooltipPosition"
+        :hideAfter="0"
+        :content="t('Set labels tooltip')"
+        rawContent
+        placement="bottom"
     >
-        <component
-            :is="component"
+        <el-button
             :icon="LabelMultiple"
             @click="isOpen = !isOpen"
             :disabled="!enabled"
         >
-            {{ $t("Set labels") }}
-        </component>
+            {{ t("Set labels") }}
+        </el-button>
     </el-tooltip>
-    <el-dialog v-if="isOpen" v-model="isOpen" destroy-on-close :append-to-body="true">
+
+    <el-dialog
+        v-if="isOpen"
+        v-model="isOpen"
+        destroyOnClose
+        :appendToBody="true"
+    >
         <template #header>
-            <h5>{{ $t("Set labels") }}</h5>
+            <h5>{{ t("Set labels") }}</h5>
         </template>
 
         <template #footer>
             <el-button @click="isOpen = false">
-                {{ $t("cancel") }}
+                {{ t("cancel") }}
             </el-button>
             <el-button type="primary" @click="setLabels()">
-                {{ $t("ok") }}
+                {{ t("ok") }}
             </el-button>
         </template>
 
-        <p v-html="$t('Set labels to execution', {id: execution.id})" />
+        <p v-html="t('Set labels to execution', {id: execution.id})" />
 
         <el-form>
-            <el-form-item :label="$t('execution labels')">
-                <label-input
+            <el-form-item :label="t('execution labels')">
+                <LabelInput
                     v-model:labels="executionLabels"
-                    :existing-labels="execution.labels"
+                    :existingLabels="execution.labels"
                 />
             </el-form-item>
         </el-form>
     </el-dialog>
 </template>
 
-<script setup>
-    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
-</script>
+<script setup lang="ts">
+    import {computed, ref, watch} from "vue";
 
-<script>
-    import {mapState} from "vuex";
-    import {mapStores} from "pinia";
-    import {useMiscStore} from "../../stores/misc";
-    import {useExecutionsStore} from "../../stores/executions";
     import LabelInput from "../../components/labels/LabelInput.vue";
-    import {State} from "@kestra-io/ui-libs"
 
-    import {filterLabels} from "./utils"
+    import {State} from "@kestra-io/ui-libs";
+    import {filterValidLabels} from "./utils";
+
+    import {useMiscStore} from "override/stores/misc";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth";
+
+    const miscStore = useMiscStore();
+    const executionsStore = useExecutionsStore();
+    const authStore = useAuthStore();
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
+    import {useToast} from "../../utils/toast";
+    const toast = useToast();
+
     import permission from "../../models/permission";
     import action from "../../models/action";
 
-    export default {
-        components: {LabelInput},
-        props: {
-            component: {
-                type: String,
-                default: "el-button"
-            },
-            execution: {
-                type: Object,
-                required: true
-            },
-            tooltipPosition: {
-                type: String,
-                default: "bottom"
-            }
-        },
-        methods: {
-            setLabels() {
-                let filtered = filterLabels(this.executionLabels)
+    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
 
-                if(filtered.error) {
-                    filtered.labels = filtered.labels.filter(obj => !(obj.key === null && obj.value === null));
-                }
+    interface Label {
+        key: string;
+        value: string;
+    }
 
-                this.isOpen = false;
-                this.executionsStore.setLabels({
-                    labels: filtered.labels,
-                    executionId: this.execution.id
-                }).then(response => {
-                    this.executionsStore.execution = response.data
-                    this.$toast().success(this.$t("Set labels done"));
-                })
-            },
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useMiscStore, useExecutionsStore),
-            enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false;
-                }
-
-                return !State.isRunning(this.execution.state.current);
-            }
-        },
-        data() {
-            return {
-                isOpen: false,
-                executionLabels: []
+    interface Props {
+        execution: {
+            id: string;
+            namespace: string;
+            state: {
+                current: string;
             };
-        },
-        watch: {
-            isOpen() {
-                this.executionLabels = [];
+            labels?: Label[];
+        };
+    }
 
-                const toIgnore = this.miscStore.configs?.hiddenLabelsPrefixes || [];
+    const props = defineProps<Props>();
 
-                if (this.execution.labels) {
-                    this.executionLabels = this.execution.labels.filter(label => !toIgnore.some(prefix => label.key?.startsWith(prefix)));
-                }
-            }
-        },
+    const isOpen = ref(false);
+    const executionLabels = ref<Label[]>([]);
+
+    const enabled = computed(() => {
+        if (
+            !authStore.user?.isAllowed(
+                permission.EXECUTION,
+                action.UPDATE,
+                props.execution.namespace,
+            )
+        ) {
+            return false;
+        }
+        return !State.isRunning(props.execution.state.current);
+    });
+
+    const setLabels = async () => {
+        const filtered = filterValidLabels(executionLabels.value);
+
+        if (filtered.error) {
+            toast.error(t("wrong labels"), t("error"));
+            return;
+        }
+
+        isOpen.value = false;
+        try {
+            const response = await executionsStore.setLabels({
+                labels: filtered.labels,
+                executionId: props.execution.id,
+            });
+            executionsStore.execution = response.data;
+            toast.success(t("Set labels done"));
+        } catch (err) {
+            console.error(err); // Error handling is done by the store/interceptor
+        }
     };
+
+    watch(isOpen, () => {
+        executionLabels.value = [];
+
+        const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || [];
+
+        if (props.execution.labels) {
+            executionLabels.value = props.execution.labels.filter(
+                (label) =>
+                    !toIgnore.some((prefix: string) =>
+                        label.key?.startsWith(prefix),
+                    ),
+            );
+        }
+    });
 </script>

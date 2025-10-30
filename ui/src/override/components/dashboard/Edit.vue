@@ -1,18 +1,16 @@
 <template>
-    <TopNavBar :title="header.title" :breadcrumb="header.breadcrumb" />
+    <TopNavBar v-bind="header" />
     <section class="full-container">
-        <Editor
-            v-if="dashboard.sourceCode"
-            :initial-source="dashboard.sourceCode"
-            @save="save"
-        />
+        <MultiPanelDashboardEditorView @save="save" />
     </section>
 </template>
 
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
+    import MultiPanelDashboardEditorView from "../../../components/dashboard/components/MultiPanelDashboardEditorView.vue";
 
     import {useRoute} from "vue-router";
+
     const route = useRoute();
 
     import {useCoreStore} from "../../../stores/core";
@@ -28,13 +26,12 @@
     const toast = useToast();
 
     import TopNavBar from "../../../components/layout/TopNavBar.vue";
-    import Editor from "../../../components/dashboard/components/Editor.vue";
 
     import type {Dashboard} from "../../../components/dashboard/composables/useDashboards";
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
-    const save = async (source: string) => {
-        const response = await dashboardStore.update({id: route.params.dashboard, source});
+    const save = async (source?: string) => {
+        const response = await dashboardStore.update({id: route.params.dashboard.toString(), source});
 
         dashboard.value.sourceCode = source;
 
@@ -43,18 +40,22 @@
     };
 
     onMounted(() => {
+        dashboardStore.isCreating = false;
+        
         dashboardStore.load(route.params.dashboard as string).then((response) => {
             dashboard.value = response;
         });
     });
 
+    import type {Breadcrumb} from "../../../components/namespaces/utils/useHelpers";
     const header = computed(() => ({
-        title: dashboard.value?.title || route.params.dashboard,
-        breadcrumb: [{label: t("dashboards.edition.label"), link: {}}],
+        title: dashboard.value?.title || route.params.dashboard.toString(),
+        breadcrumb: [{label: t("dashboards.edition.label")} satisfies Breadcrumb],
     }));
 
-    const context = ref({title: t("dashboards.edition.label")});
+    const routeInfo = computed(() => ({title: t("dashboards.edition.label")}));
 
-    import useRouteContext from "../../../mixins/useRouteContext";
-    useRouteContext(context);
+    import useRouteContext from "../../../composables/useRouteContext";
+
+    useRouteContext(routeInfo);
 </script>

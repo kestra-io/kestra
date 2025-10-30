@@ -1,6 +1,7 @@
 package io.kestra.core.test;
 
 import io.kestra.core.test.flow.AssertionResult;
+import io.kestra.core.test.flow.AssertionRunError;
 import io.kestra.core.test.flow.UnitTestResult;
 import org.junit.jupiter.api.Test;
 
@@ -76,6 +77,34 @@ class TestSuiteRunResultTest {
             )
         );
         assertThat(res).extracting(TestSuiteRunResult::state).isEqualTo(TestState.FAILED);
+    }
+
+    @Test
+    void one_testcase_error() {
+        var res = TestSuiteRunResult.of("id", "testSuiteId", "namespace", "flowId", Instant.now(), Instant.now(),
+            List.of(
+                UnitTestResult.of("id", "type", "executionId", URI.create("url"),
+                    List.of(
+                        SUCCESSFUL_ASSERTION
+                    ),
+                    List.of(),
+                    null
+                ),
+                UnitTestResult.of("id", "type", "executionId", URI.create("url"),
+                    List.of(
+                        FAILING_ASSERTION
+                    ),
+                    List.of(),
+                    null
+                ),
+                UnitTestResult.of("id", "type", "executionId", URI.create("url"),
+                    List.of(),
+                    List.of(new AssertionRunError("assertion failed", "assertion failed details")),
+                    null
+                )
+            )
+        );
+        assertThat(res).extracting(TestSuiteRunResult::state).isEqualTo(TestState.ERROR);
     }
 
     @Test

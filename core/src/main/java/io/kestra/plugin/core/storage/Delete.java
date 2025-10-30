@@ -37,14 +37,14 @@ import java.util.NoSuchElementException;
 )
 public class Delete extends Task implements RunnableTask<Delete.Output> {
     @Schema(
-        title = "The file to be deleted."
+        title = "The file to be deleted"
     )
     @NotNull
     @PluginProperty(internalStorageURI = true)
     private Property<String> uri;
 
     @Schema(
-        title = "Raise an error if the file is not found."
+        title = "Raise an error if the file is not found"
     )
     @Builder.Default
     private final Property<Boolean> errorOnMissing = Property.ofValue(false);
@@ -70,12 +70,12 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The deleted file URI."
+            title = "The deleted file URI"
         )
         private final URI uri;
 
         @Schema(
-            title = "Whether the file was deleted."
+            title = "A flag for whether the file was deleted"
         )
         private final Boolean deleted;
     }

@@ -1,6 +1,6 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.jdbc.repository.AbstractJdbcMetricRepositoryTest;
+import io.kestra.core.repositories.AbstractMetricRepositoryTest;
 
-public class PostgresMetricRepositoryTest extends AbstractJdbcMetricRepositoryTest {
+public class PostgresMetricRepositoryTest extends AbstractMetricRepositoryTest {
 }

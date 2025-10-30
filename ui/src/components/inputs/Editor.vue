@@ -1,6 +1,6 @@
 <template>
     <div class="ks-editor edit-flow-editor">
-        <nav v-if="original === undefined && navbar" class="top-nav">
+        <nav v-if="!isDiff && navbar" class="top-nav">
             <slot name="nav">
                 <div class="text-nowrap">
                     <el-button-group>
@@ -9,7 +9,7 @@
                             :content="t('Fold content lines')"
                             :persistent="false"
                             transition=""
-                            :hide-after="0"
+                            :hideAfter="0"
                         >
                             <el-button
                                 :icon="icon.UnfoldLessHorizontal"
@@ -22,7 +22,7 @@
                             :content="t('Unfold content lines')"
                             :persistent="false"
                             transition=""
-                            :hide-after="0"
+                            :hideAfter="0"
                         >
                             <el-button
                                 :icon="icon.UnfoldMoreHorizontal"
@@ -43,18 +43,19 @@
             <div ref="editorContainer" class="editor-wrapper position-relative">
                 <MonacoEditor
                     ref="monacoEditor"
+                    :key="isDiff.toString()"
                     :path="path"
                     :theme="themeComputed"
                     :value="modelValue"
                     :options="options"
-                    :diff-editor="original !== undefined"
+                    :diffEditor="isDiff"
                     :original="original"
                     :language="lang"
                     :extension="extension"
-                    :schema-type="schemaType"
+                    :schemaType="schemaType"
                     :input="input"
                     :creating="creating"
-                    :large-suggestions="largeSuggestions"
+                    :largeSuggestions="largeSuggestions"
                     @mouse-move="emit('mouse-move', $event)"
                     @mouse-leave="emit('mouse-leave', $event)"
                     @change="onInput"
@@ -79,17 +80,18 @@
 </template>
 
 <script setup lang="ts">
+    /* eslint-disable vue/enforce-style-attribute */
     import {computed, onMounted, ref, shallowRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
     import {useDocStore} from "../../stores/doc";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     // @ts-expect-error no clean way to have focus on inputs
-    import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
+    import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus";
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
@@ -230,8 +232,8 @@
 
         } else {
             options.scrollbar = {
-                vertical: props.original !== undefined ? "hidden" : "auto",
-                verticalScrollbarSize: props.original !== undefined ? 0 : 10,
+                vertical: isDiff.value ? "hidden" : "auto",
+                verticalScrollbarSize: isDiff.value ? 0 : 10,
                 alwaysConsumeMouseWheel: false,
             };
             options.renderSideBySide = props.diffSideBySide;
@@ -252,18 +254,17 @@
         const settingsEditorFontSize = localStorage.getItem("editorFontSize")
 
         return {
-            ...{
-                tabSize: 2,
-                fontFamily: localStorage.getItem("editorFontFamily")
-                    ? localStorage.getItem("editorFontFamily")
-                    : "'Source Code Pro', monospace",
-                fontSize: settingsEditorFontSize
-                    ? parseInt(settingsEditorFontSize)
-                    : 12,
-                showFoldingControls: "always",
-                scrollBeyondLastLine: false,
-                roundedSelection: false,
-            },
+            
+            tabSize: 2,
+            fontFamily: localStorage.getItem("editorFontFamily")
+                ? localStorage.getItem("editorFontFamily")
+                : "'Source Code Pro', monospace",
+            fontSize: settingsEditorFontSize
+                ? parseInt(settingsEditorFontSize)
+                : 12,
+            showFoldingControls: "always",
+            scrollBeyondLastLine: false,
+            roundedSelection: false,
             ...options,
         } as monaco.editor.IStandaloneEditorConstructionOptions & {
             renderSideBySide?:boolean
@@ -282,6 +283,7 @@
     let lastTimeout: number | undefined = undefined
     let decorations: monaco.editor.IEditorDecorationsCollection | undefined = undefined
 
+    const isDiff = computed(() => props.original !== undefined);
 
     function isCodeEditor(editor?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor): editor is monaco.editor.IStandaloneCodeEditor{
         return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor
@@ -310,7 +312,7 @@
             return
         }
 
-        if (!props.original) {
+        if (!isDiff.value) {
             editor.onDidBlurEditorWidget?.(() => {
                 emit("focusout", isCodeEditor(editor)
                     ? editor.getValue()
@@ -396,7 +398,7 @@
             }
         }
 
-        if (props.original === undefined && props.navbar && props.fullHeight) {
+        if (!isDiff.value && props.navbar && props.fullHeight) {
             editor.addAction({
                 id: "fold-multiline",
                 label: t("fold_all_multi_lines"),
@@ -445,7 +447,7 @@
             });
         }
 
-        if (!props.original) {
+        if (!isDiff.value) {
             editor.onDidContentSizeChange((_) => {
                 highlightPebble();
             });
@@ -651,10 +653,6 @@
     }
 </script>
 
-<style scoped lang="scss">
-@import "../code/styles/code.scss";
-</style>
-
 <style lang="scss">
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 @import "../../styles/layout/root-dark.scss";
@@ -676,6 +674,7 @@
 :not(.namespace-defaults, .el-drawer__body) > .ks-editor {
     flex-direction: column;
     height: 100%;
+    z-index: 1001;
 }
 
 .el-form .ks-editor {

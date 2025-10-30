@@ -1,0 +1,28 @@
+id: webhook-outputs
+namespace: io.kestra.tests
+
+tasks:
+  - id: out
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      status: "ok"
+
+  - id: second
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      executionId: "{{ execution.id }}"
+
+outputs:
+  - id: status
+    type: STRING
+    value: "{{ outputs.out.values.status }}"
+  - id: executionId
+    type: STRING
+    value: "{{ outputs.second.values.executionId }}"
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: "{{ flow.id }}"
+    wait: true
+    returnOutputs: true

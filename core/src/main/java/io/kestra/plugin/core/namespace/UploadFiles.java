@@ -113,12 +113,12 @@ import static io.kestra.core.utils.PathUtil.checkLeadingSlash;
 public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output> {
     @NotNull
     @Schema(
-        title = "The namespace to which the files will be uploaded."
+        title = "The namespace to which the files will be uploaded"
     )
     private Property<String> namespace;
 
     @Schema(
-        title = "A list of Regex that match files in the current directory.",
+        title = "A list of Regex that match files in the current directory",
         description = "This should be a list of Regex matching the [Apache Ant patterns](https://ant.apache.org/manual/dirtasks.html#patterns)." +
             "It's primarily intended to be used with the `WorkingDirectory` task"
     )
@@ -126,8 +126,8 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
 
     @Schema(
         title = "A map of key-value pairs where the key is the filename and the value is the URI of the file to upload.",
-        description = "This should be a map of URI, with the key being the filename that will be upload, and the key the URI." +
-            "This one is intended to be used with output files of other tasks. Many Kestra tasks, incl. all Downloads tasks, " +
+        description = "This should be a map of URI, with the key being the filename that will be upload and the key the URI." +
+            "This property is intended to be used with the output files of other tasks. Many Kestra tasks, incl. all Downloads tasks, " +
             "output a map of files so that you can directly pass the output property to this task e.g. " +
             "[outputFiles in the S3 Downloads task](https://kestra.io/plugins/plugin-aws/tasks/s3/io.kestra.plugin.aws.s3.downloads#outputfiles) " +
             "or the [files in the Archive Decompress task](https://kestra.io/plugins/plugin-compress/tasks/io.kestra.plugin.compress.archivedecompress#files).",
@@ -137,7 +137,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     private Object filesMap;
 
     @Schema(
-        title = "The destination folder.",
+        title = "The destination folder",
         description = "Required when providing a list of files."
     )
     @Builder.Default
@@ -146,7 +146,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
     @Builder.Default
 
     @Schema(
-        title = "Which action to take when uploading a file that already exists.",
+        title = "Which action to take when uploading a file that already exists",
         description = "Can be one of the following options: OVERWRITE, ERROR or SKIP. Default is OVERWRITE."
     )
     private Property<Namespace.Conflicts> conflict = Property.ofValue(Namespace.Conflicts.OVERWRITE);

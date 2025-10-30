@@ -9,6 +9,7 @@ import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
 
 import MultiPanelTabs from "../../../src/components/MultiPanelTabs.vue";
+import {Panel} from "../../../src/utils/multiPanelTypes";
 
 const meta: Meta<typeof MultiPanelTabs> = {
     title: "Components/MultiPanelTabs",
@@ -33,7 +34,7 @@ const render: Story["render"] = ({modelValue}) => ({
             textAlign: "right",
             padding: "0 1rem"
           };
-          
+
         return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-background-body)">
             <div style={{...labelStyle, background: "red", width: "250px"}}>This is an example of 250px wide element.</div>
             <div style={{...labelStyle, background: "blue", width: "800px", top: "20px"}}>This is an example of 800px wide element.</div>
@@ -75,23 +76,24 @@ const argGenerator = (index?: number) => {
             {
                 activeTab: {
                     button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
-                    value: "tab1",
+                    uid: "tab1",
                     component: () => <PlaceholderComponent tabId="1" />,
                 },
+                size: 1,
                 tabs: [
                     {
                         button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
-                        value: "tab1",
+                        uid: "tab1",
                         component: () => <PlaceholderComponent tabId="1" />,
                     },
                     {
                         button: {icon: markRaw(MouseRightClickIcon), label: "Tab 2"},
-                        value: "tab2",
+                        uid: "tab2",
                         component: () => <PlaceholderComponent tabId="2" />,
                     },
                     {
                         button: {icon: markRaw(FileTreeOutlineIcon), label: "Tab 3"},
-                        value: "tab3",
+                        uid: "tab3",
                         component: () => <PlaceholderComponent tabId="3" />,
                     },
                 ],
@@ -99,29 +101,30 @@ const argGenerator = (index?: number) => {
             {
                 activeTab: {
                     button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
-                    value: "tab4",
+                    uid: "tab4",
                     component: () => <PlaceholderComponent tabId="4" />,
                 },
+                size: 1,
                 tabs: [
 
                     {
                         button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
-                        value: "tab4",
+                        uid: "tab4",
                         component: () => <PlaceholderComponent tabId="4" />,
                     },
                     {
                         button: {icon: markRaw(DotsSquareIcon), label: "Tab 5"},
-                        value: "tab5",
+                        uid: "tab5",
                         component: () => <PlaceholderComponent tabId="5" />,
                     },
                     {
                         button: {icon: markRaw(BallotOutlineIcon), label: "Tab 6"},
-                        value: "tab6",
+                        uid: "tab6",
                         component: () => <PlaceholderComponent tabId="6" />,
                     },
                 ],
             },
-        ]
+        ] satisfies Panel[],
     }
 
     return index === undefined ? values : {modelValue:[values.modelValue[index]]}
@@ -174,7 +177,7 @@ export const PanelResizeTest: Story = {
         await new Promise(resolve => setTimeout(resolve, 100));
 
         // Find the resize handle
-        const resizeHandle = canvasElement.querySelector(".splitpanes__splitter");
+        const resizeHandle = canvasElement.querySelector(".el-splitter__splitter");
 
         if (resizeHandle) {
             // Click on the tab to ensure it's visible
@@ -240,7 +243,7 @@ export const TabReorderTest: Story = {
 
             // Verify the tabs have been reordered
             await userEvent.click(firstTab);
-            expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 2", "Tab 3", "Tab 1"]);
+            expect(canvas.getAllByRole("tab").map(tab => tab.querySelector(".tab-title")?.textContent?.trim())).toMatchObject(["Tab 2", "Tab 3", "Tab 1"]);
         }
 
         const dropBetweenTwoTabs = async () => {
@@ -261,7 +264,7 @@ export const TabReorderTest: Story = {
 
             // Verify the tabs have been reordered
             await userEvent.click(firstTab);
-            expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 3", "Tab 2", "Tab 1"]);
+            expect(canvas.getAllByRole("tab").map(tab => tab.querySelector(".tab-title")?.textContent?.trim())).toMatchObject(["Tab 3", "Tab 2", "Tab 1"]);
         }
 
         const dragEnterOnPanelDropOnPanel = async () => {
@@ -280,7 +283,7 @@ export const TabReorderTest: Story = {
              // Wait for the reorder to complete
              await new Promise(resolve => setTimeout(resolve, 100));
 
-            expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 3", "Tab 1", "Tab 2"]);
+            expect(canvas.getAllByRole("tab").map(tab => tab.querySelector(".tab-title")?.textContent?.trim())).toMatchObject(["Tab 3", "Tab 1", "Tab 2"]);
         }
 
         await waitFor(dropBetweenTabs);
@@ -323,7 +326,7 @@ export const TabMoveBetweenPanelsTest: Story = {
             // Verify the tabs have been reordered
             expect(
                 within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
-                    .map(tab => tab.textContent?.trim())
+                    .map(tab => tab.querySelector(".tab-title")?.textContent?.trim())
             ).toMatchObject(["Tab 4", "Tab 5", "Tab 6", "Tab 2"]);
         }
 
@@ -349,7 +352,7 @@ export const TabMoveBetweenPanelsTest: Story = {
             // Verify the tabs have been reordered
             expect(
                 within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
-                    .map(tab => tab.textContent?.trim())
+                    .map(tab => tab.querySelector(".tab-title")?.textContent?.trim())
             ).toMatchObject(["Tab 1", "Tab 4", "Tab 5", "Tab 6", "Tab 2"]);
 
             // Verify that the original active tab is now changed

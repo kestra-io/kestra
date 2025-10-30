@@ -1,52 +1,57 @@
 <template>
     <el-tooltip
-        data-component="FILENAME_PLACEHOLDER"
+        v-if="showTooltip && date"
         :key="uid('tooltip')"
-        v-if="date"
         :content="inverted ? from : full"
         :persistent="false"
         transition=""
-        :hide-after="0"
+        :hideAfter="0"
         effect="light"
     >
-        <span :class="className">{{ inverted ? full : from }}</span>
+        <span :class="className">
+            {{ inverted ? full : from }}
+        </span>
     </el-tooltip>
+    <span v-else-if="date" :class="className">
+        {{ inverted ? full : from }}
+    </span>
 </template>
-<script>
+<script setup lang="ts">
+    import {computed, getCurrentInstance} from "vue";
     import Utils from "../../utils/utils";
 
-    export default {
-        props: {
-            date: {
-                type: String,
-                default: undefined
-            },
-            inverted: {
-                type: Boolean,
-                default: false
-            },
-            format: {
-                type: String,
-                default: undefined
-            },
-            className: {
-                type: String,
-                default: null
-            }
+    const props = defineProps({
+        date: {
+            type: [Date, String],
+            default: undefined
         },
-        methods: {
-            uid(key) {
-                return key + "-" + Utils.uid();
-            }
+        inverted: {
+            type: Boolean,
+            default: false
         },
-        computed: {
-            from() {
-                return this.$moment(this.date).fromNow();
-            },
-            full() {
-                return this.$filters.date(this.date, this.format);
-            },
-
+        format: {
+            type: String,
+            default: undefined
+        },
+        className: {
+            type: String,
+            default: null
+        },
+        showTooltip:{
+            type: Boolean,
+            default: true
         }
-    };
+    })
+
+    function uid(key: string) {
+        return key + "-" + Utils.uid();
+    }
+    const {$moment, $filters} = getCurrentInstance()?.appContext.config.globalProperties || {} as any;
+
+    const from = computed(() => {
+        return $moment(props.date).fromNow();
+    })
+    const full = computed(() => {
+        return $filters.date(props.date, props.format);
+    })
 </script>

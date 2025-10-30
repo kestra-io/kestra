@@ -33,8 +33,13 @@ dependencies {
 
     implementation project(":storage-local")
 
+    // Kestra server components
+    implementation project(":executor")
+    implementation project(":scheduler")
     implementation project(":webserver")
+    implementation project(":worker")
 
     //test
+    testImplementation project(':tests')
     testImplementation "org.wiremock:wiremock-jetty12"
 }

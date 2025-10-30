@@ -49,7 +49,7 @@ const Template = (args) => ({
 
 export const Default = Template.bind({});
 Default.args = {
-  generateMenu: () => [
+  menu: [
     {
       title: "Home",
       href: "/",
@@ -126,5 +126,5 @@ Default.args = {
         },
       ]
     },
-  ],
+  ]
 };

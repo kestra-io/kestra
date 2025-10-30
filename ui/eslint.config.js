@@ -1,16 +1,14 @@
 import globals from "globals";
 import pluginJs from "@eslint/js";
+import {defineConfig, globalIgnores} from "eslint/config";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
 
 const components = (folder) => `src/components/${folder}/**/*.vue`;
 
 /** @type {import('eslint').Linter.Config[]} */
-export default [
-    {
-        files: ["**/*.{js,mjs,cjs,ts,vue}"],
-        ignores: ["node_modules", "node"],
-    },
+export default defineConfig([
+    globalIgnores(["node_modules/*", "node/*", "playwright-report/*", "test-results/*", "coverage/*"]),
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
@@ -30,6 +28,13 @@ export default [
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
         languageOptions: {parserOptions: {parser: tseslint.parser}},
         rules: {
+            "vue/block-lang": ["warn",
+                {
+                    "script": {
+                        "lang": "ts"
+                    }
+                }
+            ],
             "vue/this-in-template": "error",
             "vue/html-indent": [
                 "error",
@@ -60,6 +65,22 @@ export default [
                     order: ["template", "script", "style"],
                 },
             ],
+            "vue/enforce-style-attribute": [
+                "warn",
+                {"allow": ["scoped"]}
+            ],
+
+            "vue/component-name-in-template-casing": [
+                "error",
+                "PascalCase",
+                {
+                    "registeredComponentsOnly": true,
+                }
+            ],
+            "vue/attribute-hyphenation": [
+                "error",
+                "never"
+            ],
             "@typescript-eslint/consistent-type-assertions": [
                 "error",
                 {
@@ -89,6 +110,7 @@ export default [
     {
         // Enforce the use of the <script setup> block in components within these paths
         files: [components("filter"), components("code")],
+        ignores: [components("code/components/tasks")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
     {
@@ -97,4 +119,4 @@ export default [
             "no-console": ["off"]
         }
     }
-];
+]);

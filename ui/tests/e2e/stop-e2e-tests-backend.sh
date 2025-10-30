@@ -1,8 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "stopping backend for E2E tests"
+E2E_TEST_CONFIG_DIR="$(dirname "${BASH_SOURCE[0]}")"
+
+echo "Stopping backend for E2E tests"
+cd "$E2E_TEST_CONFIG_DIR"
 docker compose -f "docker-compose-postgres.yml" down
-echo "backend stopped"
+echo "Backend stopped"
 
 exit 0

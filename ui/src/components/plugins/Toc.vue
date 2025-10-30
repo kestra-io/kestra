@@ -11,7 +11,7 @@
                 <el-collapse-item
                     v-if="isVisible(plugin)"
                     :name="plugin.group"
-                    :title="plugin.title.capitalize()"
+                    :title="plugin.title?.capitalize()"
                     :key="plugin.group"
                     :ref="`plugin-${plugin.group}`"
                 >
@@ -28,8 +28,8 @@
                                                 :to="{name: 'plugins/view', params: {cls: namespace + '.' + cls}}"
                                             >
                                                 <div class="icon">
-                                                    <task-icon
-                                                        :only-icon="true"
+                                                    <TaskIcon
+                                                        :onlyIcon="true"
                                                         :cls="namespace + '.' + cls"
                                                         :icons="pluginsStore.icons"
                                                     />

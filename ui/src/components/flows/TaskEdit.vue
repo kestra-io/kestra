@@ -5,13 +5,13 @@
         @click="onShow"
         ref="taskEdit"
     >
-        <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
-        <drawer
+        <span v-if="component !== 'el-button' && !isHidden">{{ t("show task source") }}</span>
+        <Drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
         >
             <template #header>
-                <code>{{ taskId || task?.id || $t("add task") }}</code>
+                <code>{{ taskId || task?.id || t("add task") }}</code>
             </template>
             <template #footer>
                 <div v-loading="isLoading">
@@ -24,16 +24,16 @@
                         :disabled="errors && !!errors.length"
                         type="primary"
                     >
-                        {{ $t("save task") }}
+                        {{ t("save task") }}
                     </el-button>
                     <el-alert
-                        show-icon
+                        showIcon
                         :closable="false"
                         class="mb-0 mt-3"
                         v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
-                        <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
+                        <strong>{{ t("seeing old revision", {revision: revision}) }}</strong>
                     </el-alert>
                 </div>
             </template>
@@ -41,9 +41,9 @@
             <el-tabs v-model="activeTabs">
                 <el-tab-pane v-if="!readOnly" name="form">
                     <template #label>
-                        <span>{{ $t("form") }}</span>
+                        <span>{{ t("form") }}</span>
                     </template>
-                    <task-editor
+                    <TaskEditor
                         ref="editor"
                         v-model="taskYaml"
                         :section="section"
@@ -52,15 +52,15 @@
                 </el-tab-pane>
                 <el-tab-pane name="source">
                     <template #label>
-                        <span>{{ $t("source") }}</span>
+                        <span>{{ t("source") }}</span>
                     </template>
-                    <editor
-                        :read-only="readOnly"
+                    <Editor
+                        :readOnly="readOnly"
                         ref="editor"
                         @save="saveTask"
                         v-model="taskYaml"
-                        :schema-type="section.toLowerCase()"
-                        :full-height="false"
+                        :schemaType="section.toLowerCase()"
+                        :fullHeight="false"
                         :navbar="false"
                         lang="yaml"
                         @update:model-value="onInput"
@@ -69,33 +69,36 @@
                 <el-tab-pane v-if="pluginMarkdown" name="documentation">
                     <template #label>
                         <span>
-                            {{ $t("documentation.documentation") }}
+                            {{ t("documentation.documentation") }}
                         </span>
                     </template>
                     <div class="documentation">
-                        <markdown :source="pluginMarkdown" />
+                        <Markdown :source="pluginMarkdown" />
                     </div>
                 </el-tab-pane>
             </el-tabs>
-        </drawer>
+        </Drawer>
     </component>
 </template>
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
-    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Editor from "../inputs/Editor.vue";
-    import TaskEditor from "./TaskEditor.vue";
+    import TaskEditor from "../no-code/components/TaskEditor.vue";
     import Drawer from "../Drawer.vue";
     import {canSaveFlowTemplate} from "../../utils/flowTemplate";
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
+
+    const {t} = useI18n()
 
     // Types
     interface Props {
@@ -132,8 +135,6 @@
         "close": [];
     }>();
 
-
-    const store = useStore();
     const pluginsStore = usePluginsStore();
 
 
@@ -154,8 +155,10 @@
         return null;
     });
 
+    const authStore = useAuthStore();
+
     const canSave = computed(() => {
-        const user = store.state.auth.user;
+        const user = authStore.user;
         return canSaveFlowTemplate(true, user, {namespace: props.namespace}, "flow");
     });
 
@@ -203,17 +206,17 @@
         }
     };
 
-    const onInput = (value: string) => {
+    const onInput = (value?: string) => {
         if (timer.value) {
             clearTimeout(timer.value);
         }
-        taskYaml.value = value;
+        taskYaml.value = value ?? "";
 
         timer.value = setTimeout(() => {
-            if (lastValidatedValue.value !== value) {
-                lastValidatedValue.value = value;
+            if (lastValidatedValue.value !== taskYaml.value) {
+                lastValidatedValue.value = taskYaml.value;
                 flowStore.validateTask({
-                    task: value,
+                    task: taskYaml.value,
                     section: props.section
                 });
             }

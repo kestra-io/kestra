@@ -1,44 +1,32 @@
 <template>
-    <el-tabs data-component="FILENAME_PLACEHOLDER" class="router-link" :class="{top: top}" v-model="activeName" :type="type">
+    <el-tabs class="router-link" :class="{top: top}" v-model="activeName" :type="type">
         <el-tab-pane
             v-for="tab in tabs.filter(t => !t.hidden)"
             :key="tab.name"
             :label="tab.title"
             :name="tab.name || 'default'"
             :disabled="tab.disabled"
-            :data-component="`FILENAME_PLACEHOLDER#${tab}`"
         >
             <template #label>
                 <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
                     <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
                         <span><strong>{{ tab.title }}</strong></span>
                     </el-tooltip>
-                    <enterprise-badge :enable="tab.locked">
+                    <EnterpriseBadge :enable="tab.locked">
                         {{ tab.title }}
                         <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
-                    </enterprise-badge>
+                    </EnterpriseBadge>
                 </component>
             </template>
         </el-tab-pane>
     </el-tabs>
-    <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
-        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${editorStore.explorerWidth}% - 11px);`" :current-n-s="namespace" v-show="editorStore.explorerVisible" />
-        <div v-if="isEditorActiveTab && editorStore.explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
-        <div v-if="isEditorActiveTab" :style="`flex: 1 1 ${100 - (isEditorActiveTab && editorStore.explorerVisible ? editorStore.explorerWidth : 0)}%;`">
-            <component
-                v-bind="{...activeTab.props, ...attrsWithoutClass}"
-                v-on="activeTab['v-on'] ?? {}"
-                ref="tabContent"
-                :is="activeTab.component"
-                embed
-            />
-        </div>
-        <blueprint-detail
-            v-else-if="selectedBlueprintId"
-            :blueprint-id="selectedBlueprintId"
-            blueprint-type="community"
+    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
+        <BlueprintDetail
+            v-if="selectedBlueprintId"
+            :blueprintId="selectedBlueprintId"
+            blueprintType="community"
             @back="selectedBlueprintId = undefined"
-            combined-view="true"
+            :combinedView="true"
             :kind="activeTab.props.blueprintKind"
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />
@@ -48,22 +36,19 @@
             v-on="activeTab['v-on'] ?? {}"
             ref="tabContent"
             :is="activeTab.component"
+            :namespace="namespaceToForward"
             @go-to-detail="blueprintId => selectedBlueprintId = blueprintId"
-            :namespace
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />
     </section>
 </template>
 
 <script>
-    import EditorSidebar from "./inputs/EditorSidebar.vue";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
     import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
-    import {useEditorStore} from "../stores/editor";
-    import {mapStores} from "pinia";
 
     export default {
-        components: {EditorSidebar, EnterpriseBadge,BlueprintDetail},
+        components: {EnterpriseBadge,BlueprintDetail},
         props: {
             tabs: {
                 type: Array,
@@ -121,25 +106,6 @@
             this.setActiveName();
         },
         methods: {
-            dragSidebar(e){
-                const SELF = this;
-
-                let dragX = e.clientX;
-
-                let blockWidth = this.$refs.sidebar.$el.offsetWidth;
-                let parentWidth = this.$refs.container.offsetWidth;
-
-                let blockWidthPercent = (blockWidth / parentWidth) * 100;
-
-                document.onmousemove = function onMouseMove(e) {
-                    let percent = blockWidthPercent + ((e.clientX - dragX) / parentWidth) * 100;
-                    SELF.editorStore.changeExplorerWidth(percent)
-                };
-
-                document.onmouseup = () => {
-                    document.onmousemove = document.onmouseup = null;
-                };
-            },
             embeddedTabChange(tab) {
                 this.$emit("changed", tab);
             },
@@ -156,8 +122,8 @@
                 } else {
                     return {
                         name: this.routeName || this.$route.name,
-                        params: {...this.$route.params, ...{tab: tab.name}},
-                        query: {...(tab.query || {})}
+                        params: {...this.$route.params, tab: tab.name},
+                        query: {...tab.query}
                     };
                 }
             },
@@ -172,7 +138,6 @@
             },
         },
         computed: {
-            ...mapStores(useEditorStore),
             containerClass() {
                 return this.getTabClasses(this.activeTab);
             },
@@ -190,9 +155,6 @@
                     ["namespaces/update", "namespaces/create"].includes(ROUTE)
                 ) {
                     if (TAB === "files") return true;
-
-                    this.editorStore.closeExplorer();
-                    return false;
                 }
 
                 return false;
@@ -204,60 +166,64 @@
                     Object.entries(this.$attrs)
                         .filter(([key]) => key !== "class")
                 );
+            },
+            namespaceToForward(){
+                return this.activeTab.props?.namespace ?? this.namespace;
+                // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
+                // in this case this.props.namespace will be used
             }
         }
     };
 </script>
 
-<style lang="scss" scoped>
-    section.container.mt-4:has(> section.empty){
-        margin: 0 !important;
-        padding: 0 !important;
-    }
+<style scoped lang="scss">
+section.container.mt-4:has(> section.empty) {
+    margin: 0 !important;
+    padding: 0 !important;
+}
 
-    :deep(.el-tabs) {
-        .el-tabs__item.is-disabled {
-            &:after {
-                top: 0;
-                content: "";
-                position: absolute;
-                display: block;
-                width: 100%;
-                height: 100%;
-                z-index: 1000;
-            }
+:deep(.el-tabs) {
+    .el-tabs__item.is-disabled {
+        &:after {
+            top: 0;
+            content: "";
+            position: absolute;
+            display: block;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+        }
 
-            a {
-                color: var(--ks-content-inactive);
-            }
+        a {
+            color: var(--ks-content-inactive);
         }
     }
+}
 
-    .slider {
-        flex: 0 0 3px;
-        border-radius: 0.15rem;
-        margin: 0 4px;
-        background-color: var(--ks-border-primary);
-        border: none;
-        cursor: col-resize;
-        user-select: none; /* disable selection */
+.maximized {
+    margin: 0 !important;
+    padding: 0;
+    flex-grow: 1;
+}
 
-        &:hover {
-            background-color: var(--ks-border-active);
-        }
-    }
+.editor-splitter {
+    height: 100%;
 
-    .maximized {
-        margin: 0 !important;
-        padding: 0;
+    :deep(.el-splitter-panel) {
         display: flex;
-        flex-grow: 1;
+        flex-direction: column;
     }
+}
 
-    :deep(.el-tabs__nav-next),
-    :deep(.el-tabs__nav-prev) {
-        &.is-disabled {
-            display: none;
-        }
+.sidebar {
+    height: 100%;
+    width: 100%;
+}
+
+:deep(.el-tabs__nav-next),
+:deep(.el-tabs__nav-prev) {
+    &.is-disabled {
+        display: none;
     }
+}
 </style>

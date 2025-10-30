@@ -59,14 +59,14 @@ import java.util.Map;
 public class DeduplicateItems extends Task implements RunnableTask<DeduplicateItems.Output> {
 
     @Schema(
-        title = "The file to be deduplicated."
+        title = "The file to be deduplicated"
     )
     @NotNull
     @PluginProperty(internalStorageURI = true)
     private Property<String> from;
 
     @Schema(
-        title = "The 'pebble' expression to be used for extracting the deduplication key from each item.",
+        title = "The Pebble expression to extract the deduplication key from each item",
         description = "The 'pebble' expression can be used for constructing a composite key."
     )
     @PluginProperty
@@ -144,22 +144,22 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The deduplicated file URI."
+            title = "The deduplicated file URI"
         )
         private final URI uri;
 
         @Schema(
-            title = "The number of distinct keys observed by the task."
+            title = "The number of distinct keys observed by the task"
         )
         private final Long numKeys;
 
         @Schema(
-            title = "The total number of items that was processed by the task."
+            title = "The total number of items that was processed by the task"
         )
         private final Long processedItemsTotal;
 
         @Schema(
-            title = "The total number of items that was dropped by the task."
+            title = "The total number of items that was dropped by the task"
         )
         private final Long droppedItemsTotal;
     }

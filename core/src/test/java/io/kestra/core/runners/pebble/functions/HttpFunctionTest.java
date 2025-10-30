@@ -8,6 +8,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.serializers.JacksonMapper;
+import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 import org.apache.hc.client5.http.utils.Base64;
 import org.junit.jupiter.api.Assertions;
@@ -16,12 +17,17 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertThrows;
 
 @KestraTest
 @WireMockTest(httpPort = 28182)
+@Execution(ExecutionMode.SAME_THREAD)
 class HttpFunctionTest {
     @Inject
     private VariableRenderer variableRenderer;
@@ -43,6 +49,13 @@ class HttpFunctionTest {
             ))
         );
         Assertions.assertTrue(rendered.contains("\"todo\":\"New todo\""));
+    }
+
+    @Test
+    void wrongMethod() {
+        var exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ http(url) }}", Map.of("url", "https://dummyjson.com/todos/add")));
+        assertThat(exception.getCause()).isInstanceOf(PebbleException.class);
+        assertThat(exception.getCause().getMessage()).isEqualTo("Failed to execute HTTP Request, server respond with status 404 : Not Found ({{ http(url) }}:1)");
     }
 
     @Test

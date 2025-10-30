@@ -111,7 +111,6 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -138,7 +137,6 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
                     .select(
                         field("value")
                     )
-                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
@@ -176,7 +174,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
 
         try {
             templateQueue.emit(template);
-            eventPublisher.publishEvent(new CrudEvent<>(template, CrudEventType.CREATE));
+            eventPublisher.publishEvent(CrudEvent.create(template));
 
             return template;
         } catch (QueueException e) {
@@ -219,7 +217,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
 
         try {
             templateQueue.emit(deleted);
-            eventPublisher.publishEvent(new CrudEvent<>(deleted, CrudEventType.DELETE));
+            eventPublisher.publishEvent(CrudEvent.delete(deleted));
         } catch (QueueException e) {
             throw new RuntimeException(e);
         }

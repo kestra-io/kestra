@@ -1,7 +1,7 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER" class="bulk-select">
+    <div class="bulk-select">
         <el-checkbox
-            :model-value="selections.length > 0"
+            :modelValue="selections.length > 0"
             @change="toggle"
             :indeterminate="partialCheck"
         >
@@ -19,33 +19,36 @@
         </el-button-group>
     </div>
 </template>
-<script>
-    export default {
-        props: {
-            total: {type: Number, required: false, default: undefined},
-            selections: {type: Array, required: true},
-            selectAll: {type: Boolean, required: true},
-        },
-        emits: ["update:selectAll", "unselect"],
-        methods: {
-            toggle(value) {
-                if (!value) {
-                    this.$emit("unselect");
-                }
-            },
-            toggleAll() {
-                this.$emit("update:selectAll", !this.selectAll);
-            }
-        },
-        computed: {
-            partialCheck() {
-                return !this.selectAll && (this.total === undefined || this.selections.length < this.total);
-            },
+<script setup lang="ts">
+    import {computed} from "vue";
+
+    const props = defineProps<{
+        total?: number;
+        selections: unknown[];
+        selectAll: boolean;
+    }>();
+
+    const emit = defineEmits<{
+        (e: "update:selectAll", value: boolean): void;
+        (e: "unselect"): void;
+    }>();
+
+    const partialCheck = computed(() => {
+        return !props.selectAll && (props.total === undefined || props.selections.length < (props.total ?? 0));
+    });
+
+    function toggle(value: boolean) {
+        if (!value) {
+            emit("unselect");
         }
+    }
+
+    function toggleAll() {
+        emit("update:selectAll", !props.selectAll);
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .bulk-select {
         height: 100%;
         display: flex;

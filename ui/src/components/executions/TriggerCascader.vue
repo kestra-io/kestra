@@ -1,109 +1,112 @@
 <template>
     <div class="outputs">
-        <div
-            class="d-flex flex-column left"
-            :style="{width: leftWidth + '%'}"
-        >
-            <el-cascader-panel
-                ref="cascader"
-                v-model="selected"
-                :options="options"
-                :border="false"
-                class="flex-grow-1 cascader"
-                @change="onSelectionChange"
-            >
-                <template #default="{data}">
-                    <div
-                        class="w-100 d-flex justify-content-between"
-                        @click="onNodeClick(data)"
+        <el-splitter>
+            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'">
+                <div class="d-flex flex-column overflow-x-auto left">
+                    <ElCascaderPanel
+                        ref="cascader"
+                        v-model="selected"
+                        :options="options"
+                        :border="false"
+                        class="flex-grow-1 cascader"
+                        @change="onSelectionChange"
                     >
-                        <div class="pe-5 d-flex">
-                            <span>{{ data.label }}</span>
+                        <template #default="{data}">
+                            <div
+                                class="w-100 d-flex justify-content-between"
+                                @click="onNodeClick(data)"
+                            >
+                                <div class="pe-5 d-flex">
+                                    <span>{{ data.label }}</span>
+                                </div>
+                                <code>
+                                    <span class="regular">
+                                        {{ processedValue(data).label }}
+                                    </span>
+                                </code>
+                            </div>
+                        </template>
+                    </ElCascaderPanel>
+                </div>
+            </el-splitter-panel>
+            <el-splitter-panel v-model:size="rightWidth">
+                <div class="right wrapper">
+                    <div class="w-100 overflow-auto debug-wrapper">
+                        <div class="debug">
+                            <div class="debug-title mb-3">
+                                <span>{{ $t("eval.render") }}</span>
+                            </div>
+
+                            <div class="d-flex flex-column p-3 debug">
+                                <Editor
+                                    ref="debugEditor"
+                                    :fullHeight="false"
+                                    :customHeight="20"
+                                    :input="true"
+                                    :navbar="false"
+                                    :modelValue="computedDebugValue"
+                                    @update:model-value="editorValue = $event"
+                                    @confirm="onDebugExpression($event)"
+                                    class="w-100"
+                                />
+
+                                <el-button
+                                    type="primary"
+                                    :icon="Refresh"
+                                    @click="
+                                        onDebugExpression(
+                                            editorValue.length > 0 ? editorValue : computedDebugValue,
+                                        )
+                                    "
+                                    class="mt-3"
+                                >
+                                    {{ $t("eval.render") }}
+                                </el-button>
+
+                                <Editor
+                                    v-if="debugExpression"
+                                    :readOnly="true"
+                                    :input="true"
+                                    :fullHeight="false"
+                                    :customHeight="20"
+                                    :navbar="false"
+                                    :modelValue="debugExpression"
+                                    :lang="isJSON ? 'json' : ''"
+                                    class="mt-3"
+                                />
+                            </div>
                         </div>
-                        <code>
-                            <span class="regular">
-                                {{ processedValue(data).label }}
-                            </span>
-                        </code>
-                    </div>
-                </template>
-            </el-cascader-panel>
-        </div>
-        <div class="right wrapper fixed-right" :style="{width: 100 - leftWidth + '%'}">
-            <div class="w-100 overflow-auto debug-wrapper">
-                <div class="debug">
-                    <div class="debug-title mb-3">
-                        <span>{{ $t("eval.render") }}</span>
-                    </div>
 
-                    <div class="d-flex flex-column p-3 debug">
-                        <Editor
-                            ref="debugEditor"
-                            :full-height="false"
-                            :custom-height="20"
-                            :input="true"
-                            :navbar="false"
-                            :model-value="computedDebugValue"
-                            @update:model-value="editorValue = $event"
-                            @confirm="onDebugExpression($event)"
-                            class="w-100"
-                        />
-
-                        <el-button
-                            type="primary"
-                            :icon="Refresh"
-                            @click="
-                                onDebugExpression(
-                                    editorValue.length > 0 ? editorValue : computedDebugValue,
-                                )
-                            "
-                            class="mt-3"
+                        <el-alert
+                            v-if="debugError"
+                            type="error"
+                            :closable="false"
+                            class="overflow-auto"
                         >
-                            {{ $t("eval.render") }}
-                        </el-button>
+                            <p>
+                                <strong>{{ debugError }}</strong>
+                            </p>
+                            <div class="my-2">
+                                <CopyToClipboard
+                                    :text="`${debugError}\n\n${debugStackTrace}`"
+                                    label="Copy Error"
+                                    class="d-inline-block me-2"
+                                />
+                            </div>
+                            <pre class="mb-0" style="overflow: scroll">{{
+                                debugStackTrace
+                            }}</pre>
+                        </el-alert>
 
-                        <Editor
-                            v-if="debugExpression"
-                            :read-only="true"
-                            :input="true"
-                            :full-height="false"
-                            :custom-height="20"
-                            :navbar="false"
-                            :model-value="debugExpression"
-                            :lang="isJSON ? 'json' : ''"
-                            class="mt-3"
+                        <VarValue
+                            v-if="selectedValue && displayVarValue()"
+                            :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
+                            :execution="execution"
                         />
                     </div>
                 </div>
-
-                <el-alert
-                    v-if="debugError"
-                    type="error"
-                    :closable="false"
-                    class="overflow-auto"
-                >
-                    <p>
-                        <strong>{{ debugError }}</strong>
-                    </p>
-                    <div class="my-2">
-                        <CopyToClipboard
-                            :text="`${debugError}\n\n${debugStackTrace}`"
-                            label="Copy Error"
-                            class="d-inline-block me-2"
-                        />
-                    </div>
-                    <pre class="mb-0" style="overflow: scroll">{{
-                        debugStackTrace
-                    }}</pre>
-                </el-alert>
-
-                <VarValue
-                    v-if="selectedValue && displayVarValue()"
-                    :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
-                    :execution="execution"
-                />
-            </div>
-        </div>
+            </el-splitter-panel>
+        </el-splitter>
     </div>
 </template>
 
@@ -126,7 +129,6 @@
     const props = defineProps<{
         options: CascaderOption[];
         execution: any;
-        id?: string;
     }>();
 
     const cascader = ref<any>(null);
@@ -138,7 +140,8 @@
     const debugStackTrace = ref("");
     const isJSON = ref(false);
     const expandedValue = ref("");
-    const leftWidth = ref(70);
+    const leftWidth = ref("70%");
+    const rightWidth = ref("30%");
 
     const selectedValue = computed(() => {
         if (!selected.value?.length) return null;
@@ -322,26 +325,29 @@
 
 .left {
     overflow-x: auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
-.el-cascader-panel {
+:deep(.el-cascader-panel) {
     min-height: 197px;
     border: 1px solid var(--ks-border-primary);
     border-radius: 0;
     overflow-x: auto !important;
     overflow-y: hidden !important;
 
-    :deep(.el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child) {
+    .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child {
         pointer-events: auto !important;
         margin: 0 !important;
     }
 
-    :deep(.el-cascader-node) {
+    .el-cascader-node {
         pointer-events: auto !important;
         cursor: pointer !important;
     }
 
-    :deep(.el-cascader-panel__wrap) {
+    .el-cascader-panel__wrap {
         overflow-x: auto !important;
         display: flex !important;
         min-width: max-content !important;
@@ -360,7 +366,7 @@
             height: 100%;
         }
 
-        & .el-cascader-node {
+        .el-cascader-node {
             height: 36px;
             line-height: 36px;
             font-size: var(--el-font-size-small);
@@ -404,12 +410,9 @@
     height: fit-content;
     overflow: hidden;
     z-index: 1000;
-
-    &.fixed-right {
-        position: sticky;
-        right: 0;
-        top: 0;
-    }
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 
     .debug-wrapper {
         min-height: 197px;
@@ -418,6 +421,7 @@
         border-radius: 0;
         padding: 0;
         background-color: var(--ks-background-body);
+        flex: 1;
     }
 
     .debug-title {

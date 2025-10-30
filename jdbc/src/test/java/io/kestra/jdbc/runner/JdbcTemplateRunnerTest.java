@@ -7,7 +7,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.plugin.core.flow.TemplateTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -20,7 +20,7 @@ import org.junitpioneer.jupiter.RetryingTest;
 public abstract class JdbcTemplateRunnerTest {
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)

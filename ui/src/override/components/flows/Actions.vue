@@ -13,12 +13,12 @@
         :label="t('edit flow')"
         @click="editFlow"
     />
-    <trigger-flow
+    <TriggerFlow
         v-if="flow && !deleted && tab !== 'apps' && canExecute"
         type="primary"
-        :flow-id="flow?.id"
+        :flowId="flow?.id"
         :namespace="flow?.namespace"
-        :flow-source="flow?.source"
+        :flowSource="flow?.source"
     />
 </template>
 
@@ -26,36 +26,37 @@
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
-    import {useStore} from "vuex";
     import {useCoreStore} from "../../../stores/core";
     import {useFlowStore} from "../../../stores/flow";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
+    // @ts-expect-error does not have types
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
+    import {useAuthStore} from "override/stores/auth";
 
     const {t} = useI18n();
 
-    const store = useStore();
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();
     const router = useRouter();
     const route = useRoute();
 
     const flow = computed(() => flowStore.flow);
-    const user = computed(() => store.state.auth.user);
     const deleted = computed(() => flow.value?.deleted || false);
     const tab = computed(() => route.params?.tab as string);
 
+    const authStore = useAuthStore();
+
     const canExecute = computed(() =>
-        flow.value && user.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.value.namespace)
+        flow.value && authStore.user?.isAllowed(permission.EXECUTION, action.CREATE, flow.value.namespace)
     );
 
     const canEdit = computed(() =>
-        user.value?.isAllowed(permission.FLOW, action.UPDATE, flow.value?.namespace)
+        authStore.user?.isAllowed(permission.FLOW, action.UPDATE, flow.value?.namespace)
     );
 
     const editFlow = () => {

@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar v-if="topbar" :title="routeInfo.title">
+    <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
             <ul>
                 <li>
@@ -9,7 +9,7 @@
                 </li>
             </ul>
         </template>
-    </top-nav-bar>
+    </TopNavBar>
     <div class="main">
         <div class="section-1">
             <div class="section-1-main">
@@ -48,7 +48,7 @@
                 <el-divider>
                     {{ $t("welcome_page.guide") }}
                 </el-divider>
-                <onboarding-bottom />
+                <OnboardingBottom />
             </div>
         </div>
     </div>
@@ -57,39 +57,35 @@
 
 <script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
-    import {useStore} from "vuex";
     import {useCoreStore} from "../../stores/core";
     import {useI18n} from "vue-i18n";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import OnboardingBottom from "override/components/OnboardingBottom.vue";
     import kestraWelcome from "../../assets/onboarding/kestra_welcome.svg";
-    // @ts-expect-error - Component not typed
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import useRouteContext from "../../mixins/useRouteContext";
+    import useRouteContext from "../../composables/useRouteContext";
     import useRestoreUrl from "../../composables/useRestoreUrl";
     import permission from "../../models/permission";
     import action from "../../models/action";
+    import {useAuthStore} from "override/stores/auth";
 
     const {topbar = true} = defineProps<{topbar?: boolean}>();
 
-    const store = useStore();
     const coreStore = useCoreStore();
     const {t} = useI18n();
     const instance = getCurrentInstance();
-
-    const user = computed(() => store.state.auth.user);
 
     const logo = computed(() => {
         return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
     });
 
-    const routeInfo = computed(() => ({
-        title: t("welcome_page.welcome")
-    }));
+    const routeInfo = computed(() =>  ({title: t("welcome_page.welcome")}));
+
+    const authStore = useAuthStore();
 
     const canCreate = computed(() => {
-        return user.value && user.value.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
+        return authStore.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
     });
 
     useRouteContext(routeInfo);

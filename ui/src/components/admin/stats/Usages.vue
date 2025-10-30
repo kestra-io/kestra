@@ -5,7 +5,7 @@
             <slot name="button" />
         </div>
         <div class="usage-card-body">
-            <div v-for="item in filteredUsageItems" :key="item.key" class="usage-row">
+            <div v-for="item in usageItems" :key="item.key" class="usage-row">
                 <component :is="item.icon" class="usage-icon" />
                 <el-text size="small" class="usage-label">
                     {{ $t(item.labelKey) }}
@@ -22,171 +22,136 @@
         </div>
     </div>
 </template>
-<script setup>
+<script setup lang="ts">
+    import {ref, computed, onBeforeMount} from "vue";
+    import {useRouter} from "vue-router";
+    import {useMiscStore} from "override/stores/misc";
     import TextSearchVariant from "vue-material-design-icons/TextSearchVariant.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
-    import ChartTimeline from "vue-material-design-icons/ChartTimeline.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
-</script>
-<script>
-    import {mapStores} from "pinia";
-    import {useMiscStore} from "../../../stores/misc";
+    import {useI18n} from "vue-i18n";
 
-    export default {
-        data() {
-            return {
-                usages: undefined
-            }
-        },
-        emits: ["loaded"],
-        async beforeMount() {
-            if (this.fetchedUsages) {
-                this.usages = this.fetchedUsages;
-            } else {
-                this.usages = await this.miscStore.loadAllUsages();
-            }
+    const props = defineProps<{
+        fetchedUsages?: Record<string, any>;
+    }>();
+    const emit = defineEmits<{
+        (e: "loaded"): void;
+    }>();
 
-            this.$emit("loaded");
-        },
-        props: {
-            fetchedUsages: {
-                type: Object,
-                default: undefined
-            }
-        },
-        methods: {
-            aggregateValues(object) {
-                return this.aggregateValuesFromList(object ? Object.values(object) : object);
-            },
-            aggregateValuesFromList(list) {
-                return this.aggregateValuesFromListWithGetter(list, (item) => item);
-            },
-            aggregateValuesFromListWithGetter(list, valueGetter) {
-                return this.aggregateValuesFromListWithGetterAndAggFunction(list, valueGetter, list => list.reduce((a, b) => a + b, 0));
-            },
-            aggregateValuesFromListWithGetterAndAggFunction(list, valueGetter, aggFunction) {
-                if (!list) {
-                    return 0;
-                }
+    const miscStore = useMiscStore();
+    const router = useRouter();
 
-                return aggFunction(list.map(valueGetter));
-            }
-        },
-        computed: {
-            ...mapStores(useMiscStore),
-            usageItems() {
-                return [
-                    {
-                        key: "namespaces",
-                        icon: DotsSquare,
-                        labelKey: "namespaces",
-                        value: this.namespaces,
-                        route: this.namespaceRoute
-                    },
-                    {
-                        key: "flows",
-                        icon: FileTreeOutline,
-                        labelKey: "flows",
-                        value: this.flows,
-                        route: "flows/list"
-                    },
-                    {
-                        key: "tasks",
-                        icon: TimelineTextOutline,
-                        labelKey: "tasks",
-                        value: this.tasks,
-                        route: "flows/list"
-                    },
-                    {
-                        key: "triggers",
-                        icon: LightningBolt,
-                        labelKey: "triggers",
-                        value: this.triggers,
-                        route: "admin/triggers"
-                    },
-                    {
-                        key: "executions",
-                        icon: TimelineClockOutline,
-                        labelKey: "executions",
-                        value: `${this.executionsOverTwoDays} (${this.$t("last 48 hours")})`,
-                        route: "executions/list"
-                    },
-                    {
-                        key: "taskruns",
-                        icon: ChartTimeline,
-                        labelKey: "taskruns",
-                        value: `${this.taskrunsOverTwoDays} (${this.$t("last 48 hours")})`,
-                        route: "taskruns/list"
-                    },
-                    {
-                        key: "executionsDuration",
-                        icon: CalendarMonth,
-                        labelKey: "executions duration (in minutes)",
-                        value: `${this.executionsDurationOverTwoDays} (${this.$t("last 48 hours")})`,
-                        route: "executions/list"
-                    }
-                ];
-            },
-            filteredUsageItems() {
-                return this.usageItems.filter(item => {
-                    if (item.key === "taskruns") {
-                        return !!this.taskrunsOverTwoDays;
-                    }
-                    return true;
-                });
-            },
-            namespaces() {
-                return this.usages.flows?.namespacesCount ?? 0;
-            },
-            flows() {
-                return this.usages.flows?.count ?? 0;
-            },
-            namespaceRoute() {
-                try {
-                    this.$router.resolve({name: "namespaces/list"})
-                    return "namespaces/list";
-                } catch {
-                    return "flows/list"
-                }
-            },
-            tasks() {
-                return this.aggregateValues(this.usages.flows?.taskTypeCount);
-            },
-            triggers() {
-                return this.aggregateValues(this.usages.flows?.triggerTypeCount);
-            },
-            executionsPerDay() {
-                return (this.usages.executions?.dailyExecutionsCount ?? [])
-                    .filter(item => item.groupBy === "day");
-            },
-            executionsOverTwoDays() {
-                return this.aggregateValuesFromListWithGetter(this.executionsPerDay, item => item.duration.count ?? 0);
-            },
-            taskrunsPerDay() {
-                return this.usages.executions?.dailyTaskrunsCount?.filter(item => item.groupBy === "day");
-            },
-            taskrunsOverTwoDays() {
-                if (!this.miscStore.configs?.isTaskRunEnabled) {
-                    return undefined;
-                }
+    const usages = ref<Record<string, any> | undefined>(undefined);
 
-                return this.aggregateValuesFromListWithGetter(this.taskrunsPerDay, item => item.duration.count ?? 0);
-            },
-            executionsDurationOverTwoDays() {
-                return this.aggregateValuesFromListWithGetterAndAggFunction(
-                    this.executionsPerDay,
-                    item => item.duration.sum ?? this.$moment.duration("PT0S"),
-                    list => list.reduce((a, b) => this.$moment.duration(a).add(this.$moment.duration(b)), this.$moment.duration("PT0S"))
-                ).minutes();
-            }
+    onBeforeMount(async () => {
+        if (props.fetchedUsages) {
+            usages.value = props.fetchedUsages;
+        } else {
+            usages.value = await miscStore.loadAllUsages();
         }
-    };
+        emit("loaded");
+    });
+
+    function aggregateValues(object: any) {
+        return aggregateValuesFromList(object ? Object.values(object) : object);
+    }
+    function aggregateValuesFromList(list: any) {
+        return aggregateValuesFromListWithGetter(list, (item: any) => item);
+    }
+    function aggregateValuesFromListWithGetter(list: any, valueGetter: (item: any) => any) {
+        return aggregateValuesFromListWithGetterAndAggFunction(list, valueGetter, (list: any[]) => list.reduce((a, b) => a + b, 0));
+    }
+    function aggregateValuesFromListWithGetterAndAggFunction(list: any, valueGetter: (item: any) => any, aggFunction: (list: any[]) => any) {
+        if (!list) return 0;
+        return aggFunction(list.map(valueGetter));
+    }
+
+    const namespaces = computed(() => usages.value?.flows?.namespacesCount ?? 0);
+    const flows = computed(() => usages.value?.flows?.count ?? 0);
+    const tasks = computed(() => aggregateValues(usages.value?.flows?.taskTypeCount));
+    const triggers = computed(() => aggregateValues(usages.value?.flows?.triggerTypeCount));
+
+    const namespaceRoute = computed(() => {
+        try {
+            router.resolve({name: "namespaces/list"});
+            return "namespaces/list";
+        } catch {
+            return "flows/list";
+        }
+    });
+
+    const executionsPerDay = computed(() =>
+        (usages.value?.executions?.dailyExecutionsCount ?? []).filter((item: any) => item.groupBy === "day")
+    );
+
+    const executionsOverTwoDays = computed(() =>
+        aggregateValuesFromListWithGetter(executionsPerDay.value, (item: any) => item.duration.count ?? 0)
+    );
+
+    const executionsDurationOverTwoDays = computed(() => {
+        // Use $moment from global context
+        const moment = (window as any).$moment;
+        if (!moment) return 0;
+        const sum = aggregateValuesFromListWithGetterAndAggFunction(
+            executionsPerDay.value,
+            (item: any) => item.duration.sum ?? moment.duration("PT0S"),
+            (list: any[]) => list.reduce((a, b) => moment.duration(a).add(moment.duration(b)), moment.duration("PT0S"))
+        );
+        return sum.minutes();
+    });
+
+    const {t} = useI18n();
+
+    const usageItems = computed(() => [
+        {
+            key: "namespaces",
+            icon: DotsSquare,
+            labelKey: "namespaces",
+            value: namespaces.value,
+            route: namespaceRoute.value,
+        },
+        {
+            key: "flows",
+            icon: FileTreeOutline,
+            labelKey: "flows",
+            value: flows.value,
+            route: "flows/list",
+        },
+        {
+            key: "tasks",
+            icon: TimelineTextOutline,
+            labelKey: "tasks",
+            value: tasks.value,
+            route: "flows/list",
+        },
+        {
+            key: "triggers",
+            icon: LightningBolt,
+            labelKey: "triggers",
+            value: triggers.value,
+            route: "admin/triggers",
+        },
+        {
+            key: "executions",
+            icon: TimelineClockOutline,
+            labelKey: "executions",
+            value: `${executionsOverTwoDays.value} (${t("last 48 hours")})`,
+            route: "executions/list",
+        },
+        {
+            key: "executionsDuration",
+            icon: CalendarMonth,
+            labelKey: "executions duration (in minutes)",
+            value: `${executionsDurationOverTwoDays.value} (${t("last 48 hours")})`,
+            route: "executions/list",
+        },
+    ]);
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .usage-card {
     background-color: transparent;
     // min-height: 432px;

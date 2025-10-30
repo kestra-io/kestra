@@ -1,0 +1,186 @@
+package io.kestra.jdbc.repository;
+
+import io.kestra.core.events.CrudEvent;
+import io.kestra.core.models.FetchVersion;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.TenantAndNamespace;
+import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.KvMetadataRepositoryInterface;
+import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.data.model.Pageable;
+import jakarta.annotation.Nullable;
+import org.jooq.*;
+import org.jooq.Record;
+import org.jooq.impl.DSL;
+
+import java.time.Instant;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcRepository implements KvMetadataRepositoryInterface {
+    protected final io.kestra.jdbc.AbstractJdbcRepository<PersistedKvMetadata> jdbcRepository;
+    private final ApplicationEventPublisher<CrudEvent<PersistedKvMetadata>> eventPublisher;
+
+    @SuppressWarnings("unchecked")
+    public AbstractJdbcKvMetadataRepository(
+        io.kestra.jdbc.AbstractJdbcRepository<PersistedKvMetadata> jdbcRepository,
+        ApplicationContext applicationContext
+    ) {
+        this.jdbcRepository = jdbcRepository;
+        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
+    }
+
+    private static Condition lastCondition(boolean isLast) {
+        return field("last").eq(isLast);
+    }
+
+    private static Condition lastCondition() {
+        return lastCondition(true);
+    }
+
+    abstract protected Condition findCondition(String query);
+
+    @Override
+    protected Condition findQueryCondition(String query) {
+        return findCondition(query);
+    }
+
+    @Override
+    public Optional<PersistedKvMetadata> findByName(String tenantId, String namespace, String name) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                Select<Record1<Object>> from = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId, true))
+                    .and(field("namespace").eq(namespace))
+                    .and(field("name").eq(name))
+                    .and(lastCondition());
+                return this.jdbcRepository.fetchOne(from);
+            });
+    }
+
+    private SelectConditionStep<Record1<Object>> findSelect(
+        DSLContext context,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters,
+        boolean allowDeleted,
+        boolean allowExpired,
+        FetchVersion fetchBehavior
+    ) {
+        SelectConditionStep<Record1<Object>> condition = context
+            .select(field("value"))
+            .from(this.jdbcRepository.getTable())
+            .where(this.defaultFilter(tenantId, allowDeleted))
+            .and(allowExpired ? DSL.trueCondition() : DSL.or(
+                field("expiration_date").greaterThan(Instant.now()),
+                field("expiration_date").isNull()
+            ))
+            .and(this.filter(filters, "updated", QueryFilter.Resource.KV_METADATA));
+
+        switch (fetchBehavior) {
+            case LATEST -> condition = condition.and(lastCondition());
+            case OLD -> condition = condition.and(lastCondition(false));
+        }
+
+        return condition;
+    }
+
+    @Override
+    public ArrayListTotal<PersistedKvMetadata> find(Pageable pageable, String tenantId, List<QueryFilter> filters, boolean allowDeleted, boolean allowExpired, FetchVersion fetchBehavior) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = this.findSelect(
+                    context,
+                    tenantId,
+                    filters,
+                    allowDeleted,
+                    allowExpired,
+                    fetchBehavior
+                );
+
+                return this.jdbcRepository.fetchPage(context, select, pageable);
+            });
+    }
+
+    @Override
+    public Integer purge(List<PersistedKvMetadata> persistedKvsMetadata) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                Map<TenantAndNamespace, List<PersistedKvMetadata>> byTenantNamespace = persistedKvsMetadata.stream().collect(Collectors.toMap(
+                    kvMetadata -> new TenantAndNamespace(kvMetadata.getTenantId(), kvMetadata.getNamespace()),
+                    List::of,
+                    (kv1, kv2) -> Stream.concat(kv1.stream(), kv2.stream()).toList()
+                ));
+
+                return byTenantNamespace.entrySet().stream().reduce(0, (totalForTenantNamespace, e) -> {
+                    DeleteConditionStep<Record> deleteCondition = context.delete(this.jdbcRepository.getTable())
+                        .where(this.defaultFilter(e.getKey().tenantId(), true))
+                        .and(field("namespace").eq(e.getKey().namespace()))
+                        .and(field("last").in(true, false));
+                    if (e.getValue().getFirst().getVersion() == null) {
+                        deleteCondition = deleteCondition.and(field("name").in(persistedKvsMetadata.stream().map(PersistedKvMetadata::getName).toList()));
+                    } else {
+                        deleteCondition = deleteCondition.and(DSL.or(e.getValue().stream().map(kvMetadata -> DSL.and(
+                            field("name").eq(kvMetadata.getName()),
+                            field("version").eq(kvMetadata.getVersion()
+                            ))).toList()));
+                    }
+
+                    int deletedAmount = deleteCondition
+                        .execute();
+
+                    e.getValue().forEach(kvMetadata -> eventPublisher.publishEvent(CrudEvent.of(
+                        kvMetadata,
+                        null
+                    )));
+
+                    return totalForTenantNamespace + deletedAmount;
+                }, Integer::sum);
+            });
+    }
+
+    @Override
+    public PersistedKvMetadata save(PersistedKvMetadata kvMetadata) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                Optional<PersistedKvMetadata> maybePrevious = this.findByName(kvMetadata.getTenantId(), kvMetadata.getNamespace(), kvMetadata.getName());
+                PersistedKvMetadata kvMetadataToPersist = kvMetadata.asLast().toBuilder().version(maybePrevious.map(PersistedKvMetadata::getVersion).orElse(0) + 1).build();
+                if (maybePrevious.isPresent()) {
+                    PersistedKvMetadata previous = maybePrevious.get();
+                    if (kvMetadata.isDeleted()) {
+                        // If we are deleting, we just mark the previous as deleted without changing version and we return directly
+                        kvMetadataToPersist = previous.toBuilder().deleted(true).updated(Instant.now()).build();
+                    } else {
+                        // We mark the previous as not last
+                        PersistedKvMetadata previousAsNotLast = previous.toBuilder().last(false).build();
+                        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(previousAsNotLast);
+                        this.jdbcRepository.persist(previousAsNotLast, context, fields);
+                    }
+                }
+
+                eventPublisher.publishEvent(CrudEvent.of(
+                    maybePrevious.orElse(null),
+                    kvMetadataToPersist
+                ));
+                Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(kvMetadataToPersist);
+                this.jdbcRepository.persist(kvMetadataToPersist, context, fields);
+
+                return kvMetadataToPersist;
+            });
+    }
+}

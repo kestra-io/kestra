@@ -82,6 +82,8 @@ public abstract class FilesService {
     }
 
     private static String resolveUniqueNameForFile(final Path path) {
-        return IdUtils.from(path.toString()) + "-" + path.toFile().getName();
+        String filename = path.getFileName().toString();
+        String encodedFilename = java.net.URLEncoder.encode(filename, java.nio.charset.StandardCharsets.UTF_8);
+        return IdUtils.from(path.toString()) + "-" + encodedFilename;
     }
 }

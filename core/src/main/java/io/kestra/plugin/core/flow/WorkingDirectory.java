@@ -182,10 +182,10 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     private static final String OUTPUTS_FILE = "outputs.ion";
 
     @Schema(
-        title = "Cache configuration.",
+        title = "Cache configuration",
         description = """
-            When a cache is configured, an archive of the files denoted by the cache configuration is created at the end of the execution of the task and saved in Kestra's internal storage.
-            Then at the beginning of the next execution of the task, the archive of the files is retrieved and the working directory initialized with it.
+            When a cache is configured, an archive of the files denoted by the cache configuration is created at the end of the task run and saved in Kestra's internal storage.
+            Then, at the beginning of the next task execution, the file archive is retrieved and the working directory is initialized with it.
             """
     )
     @PluginProperty
@@ -300,7 +300,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
                     try {
                         return Files.getLastModifiedTime(path).toMillis() > cacheDownloadedTime;
                     } catch (IOException e) {
-                        runContext.logger().warn("Unable to retrieve files last modified time,  will update the cache anyway", e);
+                        runContext.logger().warn("Unable to retrieve files last modified time, will update the cache anyway", e);
                         return true;
                     }
                 });
@@ -357,7 +357,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     @Getter
     public static class Outputs extends VoidOutput {
         @Schema(
-            title = "The URIs for output files."
+            title = "The URIs for output files"
         )
         private final Map<String, URI> outputFiles;
 
@@ -376,7 +376,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         private Property<Duration> ttl;
 
         @Schema(
-            title = "List of file [glob](https://en.wikipedia.org/wiki/Glob_(programming)) patterns to include in the cache.",
+            title = "List of file [glob](https://en.wikipedia.org/wiki/Glob_(programming)) patterns to include in the cache",
             description = "For example, 'node_modules/**' will include all files of the node_modules directory including sub-directories."
         )
         @NotNull

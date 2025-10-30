@@ -66,7 +66,7 @@ public class Delete extends AbstractState implements RunnableTask<Delete.Output>
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "Whether the state file was deleted."
+            title = "Flag specifying whether the state file was deleted"
         )
         private final Boolean deleted;
     }

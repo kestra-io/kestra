@@ -1,0 +1,32 @@
+id: trigger-flow-listener-with-concurrency-limit
+namespace: io.kestra.tests.trigger.concurrency
+
+outputs:
+  - id: status
+    type: STRING
+    value: "{{trigger.state}}"
+  - id: executionId
+    type: STRING
+    value: "{{trigger.executionId}}"
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    states:
+      - QUEUED
+      - RUNNING
+      - SUCCESS
+    preconditions:
+      id: flows
+      flows:
+        - namespace: io.kestra.tests.trigger.concurrency
+          flowId: trigger-flow-with-concurrency-limit
+          states:
+            - QUEUED
+            - RUNNING
+            - SUCCESS
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello {{trigger.executionId}} you're in {{trigger.state}}

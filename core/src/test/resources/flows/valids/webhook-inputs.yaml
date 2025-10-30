@@ -1,0 +1,15 @@
+id: webhook-inputs
+namespace: io.kestra.tests
+inputs:
+  - id: body
+    type: STRING
+tasks:
+  - id: out
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ inputs.body }}"
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: webhookKey
+    inputs:
+      body: "{{ trigger.body }}"

@@ -12,7 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -33,7 +33,7 @@ public class DagTest {
     ModelValidator modelValidator;
 
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Inject
     private FlowInputOutput flowIO;

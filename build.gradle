@@ -16,28 +16,28 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "9.0.1"
+    id "com.gradleup.shadow" version "8.3.9"
     id "application"
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "6.2.0.5505"
+    id "org.sonarqube" version "7.0.1.6134"
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.52.0"
+    id "com.github.ben-manes.versions" version "0.53.0"
 
     // front
     id 'com.github.node-gradle.node' version '7.1.0'
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.2"
+    id "com.gorylenko.gradle-git-properties" version "2.5.3"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.34.0"
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.1.3" apply false
+    id "org.owasp.dependencycheck" version "12.1.8" apply false
 }
 
 idea {
@@ -168,8 +168,9 @@ allprojects {
 /**********************************************************************************************************************\
  * Test
  **********************************************************************************************************************/
-subprojects {
-    if (it.name != 'platform' && it.name != 'jmh-benchmarks') {
+subprojects {subProj ->
+
+    if (subProj.name != 'platform' && subProj.name != 'jmh-benchmarks') {
         apply plugin: "com.adarshr.test-logger"
 
         java {
@@ -205,23 +206,67 @@ subprojects {
             testImplementation 'org.assertj:assertj-core'
         }
 
-        test {
-            useJUnitPlatform()
-
+        def commonTestConfig = { Test t ->
             // set Xmx for test workers
-            maxHeapSize = '4g'
+            t.maxHeapSize = '4g'
 
             // configure en_US default locale for tests
-            systemProperty 'user.language', 'en'
-            systemProperty 'user.country', 'US'
+            t.systemProperty 'user.language', 'en'
+            t.systemProperty 'user.country', 'US'
 
-            environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
-            environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
-            environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
-            environment 'SECRET_NON_B64_SECRET', "some secret value"
-            environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
-            environment 'ENV_TEST1', "true"
-            environment 'ENV_TEST2', "Pass by env"
+            t.environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
+            t.environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"
+            t.environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
+            t.environment 'SECRET_NON_B64_SECRET', "some secret value"
+            t.environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
+            t.environment 'ENV_TEST1', "true"
+            t.environment 'ENV_TEST2', "Pass by env"
+
+
+            if (subProj.name == 'core' || subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
+                // JUnit 5 parallel settings
+                t.systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
+                t.systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
+                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
+            }
+        }
+
+        tasks.register('flakyTest', Test) { Test t ->
+            group = 'verification'
+            description = 'Runs tests tagged @Flaky but does not fail the build.'
+
+            useJUnitPlatform {
+                includeTags 'flaky'
+            }
+            ignoreFailures = true
+
+            reports {
+                junitXml.required = true
+                junitXml.outputPerTestCase = true
+                junitXml.mergeReruns = true
+                junitXml.includeSystemErrLog = true
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
+            }
+            commonTestConfig(t)
+
+        }
+
+        test {
+            useJUnitPlatform {
+                excludeTags 'flaky'
+            }
+            reports {
+                junitXml.required = true
+                junitXml.outputPerTestCase = true
+                junitXml.mergeReruns = true
+                junitXml.includeSystemErrLog = true
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
+            }
+            commonTestConfig(it)
+
+
+            finalizedBy(tasks.named('flakyTest'))
         }
 
         testlogger {
@@ -327,7 +372,7 @@ tasks.named('testCodeCoverageReport') {
 subprojects {
     sonar {
         properties {
-            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml"
+            property "sonar.coverage.jacoco.xmlReportPaths", "$projectDir.parentFile.path/build/reports/jacoco/testCodeCoverageReport/testCodeCoverageReport.xml,$projectDir.parentFile.path/build/reports/jacoco/test/testCodeCoverageReport.xml"
         }
     }
 }

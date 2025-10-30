@@ -1,169 +1,118 @@
-export const encodeParams = (route, filters, OPTIONS) => {
-    if(isSearchPath(route)) { return encodeSearchParams(filters, OPTIONS); }
+import {LocationQuery} from "vue-router";
+import {AppliedFilter, Comparators} from "./filterTypes";
 
-    const encode = (values, key) => {
-        return values
-            .map((v) => {
-                if (key === "childFilter" && v === "ALL") return null;
-                else if(key === "q") return v;
+const decodeURIComponentSafely = (value: string | (string | null)[]): string | string[] =>
+    Array.isArray(value)
+        ? value.filter(v => v !== null).map(decodeURIComponent)
+        : decodeURIComponent(value);
 
-                const encoded = encodeURIComponent(v);
-                return key === "labels"
-                    ? encoded.replace(/%3A/g, ":")
-                    : encoded;
-            })
-            .filter((v) => v !== null);
-    };
-    return filters.reduce((query, filter) => {
-        const match = OPTIONS.find((o) => o.value.label === filter.label);
-        const key = match ? match.key : filter.label === "text" ? "q" : null;
+export function getComparator(comparatorKey: keyof typeof Comparators): Comparators {
+    return Comparators[comparatorKey];
+}
 
-        if (key) {
-            if (key === "details") {
-                match.value.value.forEach((item) => {
-                    const value = item.split(":");
-                    if (value.length === 2) {
-                        query[`details.${value[0]}`] = value[1];
-                    }
-                });
-            }
-            if (key !== "date") query[key] = encode(filter.value, key);
-            else {
-                if(filter.value?.length > 0) {
-                    const {startDate, endDate} = filter.value[0];
+export function keyOfComparator(comparator: Comparators): keyof typeof Comparators {
+    return Object.entries(Comparators).find(([_, value]) => value === comparator)![0] as keyof typeof Comparators;
+}
 
-                    query.startDate = startDate;
-                    query.endDate = endDate;
-                }
-            }
-        }
-
-        delete query.details;
-
-        return query;
-    }, {});
-};
-
-export const decodeParams = (route, query, include, OPTIONS) => {
-    if(isSearchPath(route)) {return decodeSearchParams(query, include, OPTIONS); }
-
-    let params = Object.entries(query)
-        .filter(
-            ([key]) =>
-                key === "q" ||
-                OPTIONS.some(
-                    (o) => o.key === key && include.includes(o.value.label),
-                ),
-        )
+export const decodeSearchParams = (query: LocationQuery) =>
+    Object.entries(query)
+        .filter(([key]) => key.startsWith("filters[") || key === "q")
         .map(([key, value]) => {
-            if (key.startsWith("details.")) {
-                // Handle details.* keys
-                const detailKey = key.replace("details.", ""); // Extract key after 'details.'
-                return {label: "details", value: `${detailKey}:${value}`};
-            }
+            if (!value) return null;
 
-            const label =
-                key === "q"
-                    ? "text"
-                    : OPTIONS.find((o) => o.key === key)?.value.label || key;
-
-            const decodedValue = Array.isArray(value)
-                ? value.map(decodeURIComponent)
-                : [decodeURIComponent(value)];
-
-            return {label, value: decodedValue};
-        });
-
-    // Group all details into a single entry
-    const details = params
-        .filter((p) => p.label === "details")
-        .map((p) => p.value); // Collect all `details` values
-
-    if (details.length > 0) {
-        // Replace multiple details with a single object
-        params = params.filter((p) => p.label !== "details"); // Remove individual details
-        params.push({label: "details", value: details});
-    }
-
-    // Handle the date functionality by grouping startDate and endDate if they exist
-    if (query.startDate && query.endDate) {
-        params.push({
-            label: "absolute_date",
-            value: [{startDate: query.startDate, endDate: query.endDate}],
-        });
-    }
-
-    // TODO: Will need tweaking once we introduce multiple comparators for filters
-    return params.map((p) => {
-        const comparator = OPTIONS.find((o) => o.value.label === p.label);
-        return {...p, comparator: comparator?.comparators?.[0]};
-    });
-};
-
-
-export const encodeSearchParams = (filters, OPTIONS) => {
-    const encode = (values, key, operation) => {
-        const valuesArray = Array.isArray(values) ? values : [values];
-
-        return valuesArray.reduce((acc, v) => {
-            if (key === "childFilter" && v === "ALL") return acc;
-
-            if (key === "labels") {
-                const [labelKey, labelValue] = v.split(":");
-                acc[`filters[${key}][${operation}][${labelKey}]`] = labelValue;
-            } else {
-                const paramKey = `filters[${key}][${operation}]`;
-                acc[paramKey] = acc[paramKey] ? `${acc[paramKey]},${v}` : v;
-            }
-            return acc;
-        }, {});
-    };
-
-    return filters.reduce((query, filter) => {
-        if(filter.operation) {
-            const match = OPTIONS.find((o) => o.value.label === filter.field);
-            const key = match ? match.key : filter.field === "text" ? "q" : filter.field;
-            Object.assign(query, encode(filter.value, key, filter.operation));
-        } else {
-            const match = OPTIONS.find((o) => o.value.label === filter.label);
-            const key = match ? match.key : filter.label === "text" ? "q" : null;
-            const operation = filter.comparator?.value || match?.comparators?.find(c => c.value === filter.operation)?.value || "EQUALS";
-            if (key) {
-                if (key !== "date") {
-                    Object.assign(query, encode(filter.value, key, operation));
-                } else if (filter.value?.length > 0) {
-                    const {startDate, endDate} = filter.value[0];
-                    if(startDate && endDate) {
-                        query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = startDate;
-                        query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = endDate;
-                    }
-                }
-            }
-        }
-        return query;
-    }, {});
-};
-
-export const decodeSearchParams = (query, include, OPTIONS): any[] => {
-    const params = Object.entries(query)
-        .filter(([key]) => (key.startsWith("filters[") || key === "q"))
-        .map(([key, value]) => {
             const match = key.match(/filters\[(.*?)]\[(.*?)](?:\[(.*?)])?/);
-
             if (!match) return null;
 
             const [, field, operation, subKey] = match;
 
             if (field === "labels" && subKey) {
-                return {field: field, value: `${subKey}:${decodeURIComponent(value)}`, operation};
+                return {
+                    field,
+                    value: `${subKey}:${decodeURIComponentSafely(value)}`,
+                    operation
+                };
             }
 
-            const label = OPTIONS.find(o => o.key === field)?.value.label || field;
-            const comparator = OPTIONS.find(o => o.key === field)?.comparators?.find(c => c.value === operation) || {value: operation};
-
-            return {field: label, value: decodeURIComponent(value), operation: comparator.value};
+            return {
+                field,
+                value: decodeURIComponentSafely(value),
+                operation
+            };
         })
         .filter(Boolean);
-    return params;
+
+type Filter = Pick<AppliedFilter, "key" | "comparator" | "value">;
+
+export const encodeFiltersToQuery = (filters: Filter[], keyOfComparator: (comparator: any) => string) =>
+    filters.reduce((query, filter) => {
+        const {key, comparator, value} = filter;
+        const comparatorKey = keyOfComparator(comparator);
+
+        switch (key) {
+            case "timeRange":
+                if (typeof value === "object" && "startDate" in value) {
+                    query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = value.startDate.toISOString();
+                    query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = value.endDate.toISOString();
+                } else {
+                    query[`filters[${key}][${comparatorKey}]`] = value?.toString() ?? "";
+                }
+                return query;
+            case "labels":
+                if (Array.isArray(value)) {
+                    value.forEach((label: string) => {
+                        const [k, v] = label.split(":", 2);
+                        if (k && v) query[`filters[labels][${comparatorKey}][${k}]`] = v;
+                    });
+                } else if (typeof value === "string") {
+                    const [k, v] = value.split(":", 2);
+                    if (k && v) {
+                        query[`filters[labels][${comparatorKey}][${k}]`] = v;
+                    } else {
+                        query[`filters[${key}][${comparatorKey}]`] = value;
+                    }
+                }
+                return query;
+            default: {
+                const processedValue = Array.isArray(value)
+                    ? value.join(",")
+                    : typeof value === "object" && "startDate" in value
+                        ? `${value.startDate.toISOString()},${value.endDate.toISOString()}`
+                        : value instanceof Date
+                            ? value.toISOString()
+                            : value;
+                query[`filters[${key}][${comparatorKey}]`] = processedValue?.toString() ?? "";
+                return query;
+            }
+        }
+    }, {} as Record<string, string>);
+
+export const isValidFilter = (filter: Filter): boolean => {
+    const {value} = filter;
+
+    if (value == null || value === "") return false;
+
+    switch (true) {
+        case Array.isArray(value):
+            return value.length > 0;
+        case typeof value === "object" && "startDate" in value:
+            return !!(value.startDate && value.endDate);
+        case value instanceof Date:
+            return true;
+        default:
+            return true;
+    }
 };
-export const isSearchPath = (name: string) => ["home", "flows/list", "executions/list", "logs/list", "admin/triggers"].includes(name);
+
+export const getUniqueFilters = <T extends { key: string }>(filters: T[]): T[] =>
+    filters.filter((filter, index, self) =>
+        index === self.findLastIndex(f => f.key === filter.key)
+    );
+
+export const clearFilterQueryParams = (query: Record<string, any>): void => {
+    for (const key of Object.keys(query)) {
+        if (key.startsWith("filters[")) delete query[key];
+    }
+};
+
+export const isSearchPath = (name: string) =>
+    ["home", "flows/list", "executions/list", "logs/list", "admin/triggers"].includes(name);

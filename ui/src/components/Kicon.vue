@@ -1,21 +1,21 @@
 <template>
-    <span data-component="FILENAME_PLACEHOLDER" class="kicon">
+    <span class="kicon">
         <el-tooltip
             effect="light"
             v-if="tooltip"
             :content="tooltip"
-            :raw-content="true"
+            :rawContent="true"
             v-bind="placement ? {placement} : {}"
             :persistent="false"
             transition=""
-            :hide-after="0"
+            :hideAfter="0"
         >
             <slot />
         </el-tooltip>
         <slot v-else />
     </span>
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     withDefaults(
         defineProps<{
             tooltip?: string;
@@ -26,7 +26,7 @@
         });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .kicon {
         white-space: nowrap;
     }

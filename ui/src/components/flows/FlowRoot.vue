@@ -1,11 +1,11 @@
 <template>
     <template v-if="ready">
         <FlowRootTopBar
-            :route-info="routeInfo"
-            :active-tab-name="activeTabName()"
+            :routeInfo="routeInfo"
+            :activeTabName="activeTabName()"
         />
         <Tabs
-            route-name="flows/update"
+            routeName="flows/update"
             ref="currentTab"
             :tabs="tabs"
             @expand-subflow="updateExpandedSubflows"
@@ -19,7 +19,6 @@
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useCoreStore} from "../../stores/core";
     import {useFlowStore} from "../../stores/flow";
@@ -29,11 +28,12 @@
     import Overview from "./Overview.vue";
     import Dependencies from "../dependencies/Dependencies.vue";
     import FlowMetrics from "./FlowMetrics.vue";
-    import FlowEditor from "./FlowEditor.vue";
+    import MultiPanelFlowEditorView from "./MultiPanelFlowEditorView.vue";
     import FlowTriggers from "./FlowTriggers.vue";
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         mixins: [RouteContext],
@@ -55,6 +55,19 @@
                     this.load();
                 }
             },
+            "$route.params.tab": {
+                immediate: true,
+                handler: function (newTab) {
+                    if (newTab === "overview") {
+                        const dateTimeKeys = ["startDate", "endDate", "timeRange"];
+
+                        if (!Object.keys(this.$route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+                            const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": "PT168H"};
+                            this.$router.replace({name: this.$route.name, params: this.$route.params, query: newQuery});
+                        }
+                    }
+                }
+            },
             "coreStore.guidedProperties": {
                 deep: true,
                 immediate: true,
@@ -74,8 +87,8 @@
                         // https://github.com/kestra-io/kestra/issues/10484
                         setTimeout(() => {
                             this.flowStore
-                                .loadDependencies({namespace: flow.namespace, id: flow.id})
-                                .then(({count}) => this.dependenciesCount = count);
+                                .loadDependencies({namespace: flow.namespace, id: flow.id}, true)
+                                .then(({count}) => this.dependenciesCount = count > 0 ? (count - 1) : 0);
                         }, 1000);
                     }
                 },
@@ -83,8 +96,12 @@
         },
         created() {
             if(!this.$route.params.tab) {
-                const tab = localStorage.getItem("flowDefaultTab") || undefined;
-                this.$router.replace({name: "flows/update", params: {...this.$route.params, tab}});
+                const tab = localStorage.getItem("flowDefaultTab") || "overview";
+                this.$router.replace({
+                    name: "flows/update", 
+                    params: {...this.$route.params, tab}, 
+                    query: {...this.$route.query}
+                });
             }
             // since this component is only used in edition
             // we need to set the flag as editing in the store.
@@ -113,15 +130,8 @@
                                 this.flowStore.loadGraph({
                                     flow: this.flowStore.flow,
                                 });
-
-                                return this.flowStore.loadDependencies({
-                                    namespace: this.$route.params.namespace,
-                                    id: this.$route.params.id
-                                });
                             }
-                        }).then(({count}) => {
-                            this.dependenciesCount = count;
-                        });
+                        })
                 }
             },
             flowKey() {
@@ -145,7 +155,7 @@
 
                     tabs = [
                         {
-                            name: undefined,
+                            name: "overview",
                             component: Overview,
                             title: this.$t("overview"),
                             containerClass: "full-container flex-grow-0 flex-shrink-0 flex-basis-0",
@@ -180,14 +190,10 @@
                 ) {
                     tabs.push({
                         name: "edit",
-                        component: FlowEditor,
+                        component: MultiPanelFlowEditorView,
                         title: this.$t("edit"),
                         containerClass: "full-container",
                         maximized: true,
-                        props: {
-                            expandedSubflows: this.flowStore.expandedSubflows,
-                            isReadOnly: this.deleted || !this.flowStore.isAllowedEdit || this.flowStore.readOnlySystemLabel,
-                        },
                     });
                 }
 
@@ -305,8 +311,7 @@
             }
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useCoreStore, useFlowStore),
+            ...mapStores(useCoreStore, useFlowStore, useAuthStore),
             routeInfo() {
                 return {
                     title: this.$route.params.id,
@@ -337,6 +342,9 @@
             ready() {
                 return this.user && this.flowStore.flow;
             },
+            user() {
+                return this.authStore.user;
+            }
         },
         unmounted() {
             this.flowStore.flow = undefined;
@@ -344,7 +352,7 @@
         },
     };
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .gray-700 {
     color: var(--ks-content-secondary-color);
 }

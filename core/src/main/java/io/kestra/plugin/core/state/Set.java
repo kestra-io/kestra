@@ -58,7 +58,7 @@ import java.util.Map;
 )
 public class Set extends AbstractState implements RunnableTask<Set.Output> {
     @Schema(
-        title = "The data to be stored in the state store."
+        title = "The data to be stored in the state store"
     )
     private Property<Map<String, Object>> data;
 
@@ -76,12 +76,12 @@ public class Set extends AbstractState implements RunnableTask<Set.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The count of properties found in the state."
+            title = "The count of properties found in the state"
         )
         private final int count;
 
         @Schema(
-            title = "The key of the current state."
+            title = "The key of the current state"
         )
         private final String key;
     }

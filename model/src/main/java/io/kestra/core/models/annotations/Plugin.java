@@ -36,6 +36,13 @@ public @interface Plugin {
      */
     String[] aliases() default {};
 
+    Priority priority() default Priority.SECONDARY;
+
+    enum Priority {
+        PRIMARY,
+        SECONDARY
+    }
+
     @Documented
     @Inherited
     @Retention(RUNTIME)

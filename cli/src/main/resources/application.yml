@@ -18,6 +18,10 @@ micronaut:
       root:
         paths: classpath:root
         mapping: /**
+  codec:
+    json:
+      additional-types:
+        - application/scim+json
   server:
     max-request-size: 10GB
     multipart:
@@ -45,6 +49,8 @@ micronaut:
           - /ui/.+
           - /health
           - /health/.+
+          - /metrics
+          - /metrics/.+
           - /prometheus
     http-version: HTTP_1_1
   caches:
@@ -78,8 +84,19 @@ micronaut:
       type: scheduled
       core-pool-size: 1
 
-  # Disable OpenTelemetry metrics by default, users that need it must enable it and configure the collector URL.
   metrics:
+    binders:
+      retry:
+        enabled: true
+      netty:
+        queues:
+          enabled: true
+        bytebuf-allocators:
+          enabled: true
+        channels:
+          enabled: true
+
+    # Disable OpenTelemetry metrics by default, users that need it must enable it and configure the collector URL.
     export:
       otlp:
         enabled: false
@@ -92,6 +109,8 @@ jackson:
   serialization-inclusion: non_null
   deserialization:
     FAIL_ON_UNKNOWN_PROPERTIES: false
+  mapper:
+    ACCEPT_CASE_INSENSITIVE_ENUMS: true
 
 endpoints:
   all:
@@ -100,6 +119,10 @@ endpoints:
     sensitive: false
   health:
     details-visible: ANONYMOUS
+    disk-space:
+      enabled: false
+    discovery-client:
+      enabled: false
   loggers:
     write-sensitive: false
   env:
@@ -133,11 +156,46 @@ kestra:
   tutorial-flows:
     # Automatically loads all tutorial flows at startup.
     enabled: true
+
   retries:
     attempts: 5
     multiplier: 2.0
     delay: 1s
     maxDelay: ""
+
+  server:
+    basic-auth:
+      # These URLs will not be authenticated, by default we open some of the Micronaut default endpoints but not all for security reasons
+      open-urls:
+        - "/ping"
+        - "/api/v1/executions/webhook/"
+        - "/api/v1/main/executions/webhook/"
+        - "/api/v1/*/executions/webhook/"
+        - "/api/v1/basicAuthValidationErrors"
+
+    preview:
+      initial-rows: 100
+      max-rows: 5000
+
+    # The expected time for this server to complete all its tasks before initiating a graceful shutdown.
+    terminationGracePeriod: 5m
+    workerTaskRestartStrategy: AFTER_TERMINATION_GRACE_PERIOD
+    # Configuration for Liveness and Heartbeat mechanism between servers.
+    liveness:
+      enabled: true
+      # The expected time between liveness probe.
+      interval: 10s
+      # The timeout used to detect service failures.
+      timeout: 1m
+      # The time to wait before executing a liveness probe.
+      initialDelay: 1m
+      # The expected time between service heartbeats.
+      heartbeatInterval: 3s
+    service:
+      purge:
+        initial-delay: 1h
+        fixed-delay: 1d
+        retention: 30d
 
   jdbc:
     queues:
@@ -150,7 +208,7 @@ kestra:
       fixed-delay: 1h
       retention: 7d
       types:
-        - type : io.kestra.core.models.executions.LogEntry
+        - type: io.kestra.core.models.executions.LogEntry
           retention: 1h
         - type: io.kestra.core.models.executions.MetricEntry
           retention: 1h
@@ -182,37 +240,12 @@ kestra:
   traces:
     root: DISABLED
 
-  server:
-    basic-auth:
-      # These URLs will not be authenticated, by default we open some of the Micronaut default endpoints but not all for security reasons
-      open-urls:
-        - "/ping"
-        - "/api/v1/executions/webhook/"
-    preview:
-      initial-rows: 100
-      max-rows: 5000
-    # The expected time for this server to complete all its tasks before initiating a graceful shutdown.
-    terminationGracePeriod: 5m
-    workerTaskRestartStrategy: AFTER_TERMINATION_GRACE_PERIOD
-    # Configuration for Liveness and Heartbeat mechanism between servers.
-    liveness:
-      enabled: true
-      # The expected time between liveness probe.
-      interval: 10s
-      # The timeout used to detect service failures.
-      timeout: 1m
-      # The time to wait before executing a liveness probe.
-      initialDelay: 1m
-      # The expected time between service heartbeats.
-      heartbeatInterval: 3s
-    service:
-      purge:
-        initial-delay: 1h
-        fixed-delay: 1d
-        retention: 30d
+  ui-anonymous-usage-report:
+    enabled: true
+
   anonymous-usage-report:
     enabled: true
-    uri: https://api.kestra.io/v1/reports/usages
+    uri: https://api.kestra.io/v1/reports/server-events
     initial-delay: 5m
     fixed-delay: 1h
 

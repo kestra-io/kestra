@@ -272,7 +272,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {
-        ArrayList<TaskRun> newTaskRunList = new ArrayList<>(this.taskRunList);
+        ArrayList<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
 
         boolean b = Collections.replaceAll(
             newTaskRunList,
@@ -442,6 +442,28 @@ public class Execution implements DeletedInterface, TenantInterface {
         @Nullable List<ResolvedTask> resolvedFinally,
         TaskRun parentTaskRun
     ) {
+        return findTaskDependingFlowState(resolvedTasks, resolvedErrors, resolvedFinally, parentTaskRun, null);
+    }
+
+    /**
+     * Determine if the current execution is on error &amp; normal tasks
+     * <p>
+     * if the current have errors, return tasks from errors if not, return the normal tasks
+     *
+     * @param resolvedTasks normal tasks
+     * @param resolvedErrors errors tasks
+     * @param resolvedFinally finally tasks
+     * @param parentTaskRun the parent task
+     * @param terminalState the parent task terminal state
+     * @return the flow we need to follow
+     */
+    public List<ResolvedTask> findTaskDependingFlowState(
+        List<ResolvedTask> resolvedTasks,
+        @Nullable List<ResolvedTask> resolvedErrors,
+        @Nullable List<ResolvedTask> resolvedFinally,
+        TaskRun parentTaskRun,
+        @Nullable State.Type terminalState
+    ) {
         resolvedTasks = removeDisabled(resolvedTasks);
         resolvedErrors = removeDisabled(resolvedErrors);
         resolvedFinally = removeDisabled(resolvedFinally);
@@ -454,10 +476,15 @@ public class Execution implements DeletedInterface, TenantInterface {
             return resolvedFinally == null ? Collections.emptyList() : resolvedFinally;
         }
 
-        // Check if flow has failed task
+        // check if the parent task should fail, and there is error tasks so we start them
+        if (errorsFlow.isEmpty() && terminalState == State.Type.FAILED) {
+            return resolvedErrors == null ? resolvedFinally == null ? Collections.emptyList() : resolvedFinally : resolvedErrors;
+        }
+
+        // Check if flow has failed tasks
         if (!errorsFlow.isEmpty() || this.hasFailed(resolvedTasks, parentTaskRun)) {
             // Check if among the failed task, they will be retried
-            if (!this.hasFailedNoRetry(resolvedTasks, parentTaskRun)) {
+            if (!this.hasFailedNoRetry(resolvedTasks, parentTaskRun) && terminalState != State.Type.FAILED) {
                 return Collections.emptyList();
             }
 
@@ -469,7 +496,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         }
 
         if (resolvedFinally != null && (
-            this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailed(resolvedTasks, parentTaskRun
+            this.isTerminated(resolvedTasks, parentTaskRun) || this.hasFailedNoRetry(resolvedTasks, parentTaskRun
         ))) {
             return resolvedFinally;
         }
@@ -554,6 +581,13 @@ public class Execution implements DeletedInterface, TenantInterface {
         return Streams.findLast(taskRuns
             .stream()
             .filter(t -> t.getState().isCreated())
+        );
+    }
+
+    public Optional<TaskRun> findLastSubmitted(List<TaskRun> taskRuns) {
+        return Streams.findLast(taskRuns
+            .stream()
+            .filter(t -> t.getState().getCurrent() == State.Type.SUBMITTED)
         );
     }
 
@@ -666,6 +700,11 @@ public class Execution implements DeletedInterface, TenantInterface {
 
     public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun,
         boolean allowFailure, boolean allowWarning) {
+        return guessFinalState(currentTasks, parentTaskRun, allowFailure, allowWarning, State.Type.SUCCESS);
+    }
+
+    public State.Type guessFinalState(List<ResolvedTask> currentTasks, TaskRun parentTaskRun,
+                                      boolean allowFailure, boolean allowWarning, State.Type terminalState) {
         List<TaskRun> taskRuns = this.findTaskRunByTasks(currentTasks, parentTaskRun);
         var state = this
             .findLastByState(taskRuns, State.Type.KILLED)
@@ -682,7 +721,7 @@ public class Execution implements DeletedInterface, TenantInterface {
                 .findLastByState(taskRuns, State.Type.PAUSED)
                 .map(taskRun -> taskRun.getState().getCurrent())
             )
-            .orElse(State.Type.SUCCESS);
+            .orElse(terminalState);
 
         if (state == State.Type.FAILED && allowFailure) {
             if (allowWarning) {
@@ -833,20 +872,18 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @param e the exception raise
      * @return new taskRun with updated attempt with logs
      */
-    private FailedTaskRunWithLog lastAttemptsTaskRunForFailedExecution(TaskRun taskRun,
-        TaskRunAttempt lastAttempt, Exception e) {
+    private FailedTaskRunWithLog lastAttemptsTaskRunForFailedExecution(TaskRun taskRun, TaskRunAttempt lastAttempt, Exception e) {
+        TaskRun failed = taskRun
+            .withAttempts(
+                Stream
+                    .concat(
+                        taskRun.getAttempts().stream().limit(taskRun.getAttempts().size() - 1),
+                        Stream.of(lastAttempt.getState().isFailed() ? lastAttempt : lastAttempt.withState(State.Type.FAILED))
+                    )
+                    .toList()
+            );
         return new FailedTaskRunWithLog(
-            taskRun
-                .withAttempts(
-                    Stream
-                        .concat(
-                            taskRun.getAttempts().stream().limit(taskRun.getAttempts().size() - 1),
-                            Stream.of(lastAttempt
-                                .withState(State.Type.FAILED))
-                        )
-                        .toList()
-                )
-                .withState(State.Type.FAILED),
+            failed.getState().isFailed() ? failed : failed.withState(State.Type.FAILED),
             RunContextLogger.logEntries(loggingEventFromException(e), LogEntry.of(taskRun, kind))
         );
     }
@@ -904,7 +941,15 @@ public class Execution implements DeletedInterface, TenantInterface {
                 for (TaskRun current : taskRuns) {
                     if (!MapUtils.isEmpty(current.getOutputs())) {
                         if (current.getIteration() != null) {
-                            taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                            Map<String, Object> merged = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                            // If one of two of the map is null in the merge() method, we just return the other
+                            // And if the not null map is a Variables (= read only), we cast it back to a simple
+                            // hashmap to avoid taskOutputs becoming read-only
+                            // i.e this happen in nested loopUntil tasks
+                            if (merged instanceof Variables) {
+                                merged = new HashMap<>(merged);
+                            }
+                            taskOutputs = merged;
                         } else {
                             taskOutputs.putAll(outputs(current, byIds));
                         }
@@ -1039,6 +1084,16 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         return result;
     }
+
+    /**
+     * Find all children of this {@link TaskRun}.
+     */
+    public List<TaskRun> findChildren(TaskRun parentTaskRun) {
+        return taskRunList.stream()
+            .filter(taskRun -> parentTaskRun.getId().equals(taskRun.getParentTaskRunId()))
+            .toList();
+    }
+
 
     public List<String> findParentsValues(TaskRun taskRun, boolean withCurrent) {
         return (withCurrent ?

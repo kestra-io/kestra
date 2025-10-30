@@ -7,19 +7,12 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.FlowListenersTest;
 import io.kestra.core.services.PluginDefaultService;
-import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.jdbc.JooqDSLContextWrapper;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 
 class H2FlowListenersTest extends FlowListenersTest {
-    @Inject
-    JooqDSLContextWrapper dslContextWrapper;
-
-    @Inject
-    JdbcTestUtils jdbcTestUtils;
 
     @Inject
     FlowRepositoryInterface flowRepository;
@@ -32,14 +25,8 @@ class H2FlowListenersTest extends FlowListenersTest {
     PluginDefaultService pluginDefaultService;
 
     @Test
-    public void all() {
+    public void all() throws TimeoutException {
         // we don't inject FlowListeners to remove a flaky test
         this.suite(new FlowListeners(flowRepository, flowQueue, pluginDefaultService));
-    }
-
-    @BeforeEach
-    protected void init() {
-        jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
     }
 }

@@ -2,11 +2,15 @@ package io.kestra.plugin.core.flow;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
 
 @KestraTest(startRunner = true)
 class ForEachTest {
@@ -59,5 +63,14 @@ class ForEachTest {
     @ExecuteFlow("flows/valids/foreach-nested.yaml")
     void nested(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/foreach-iteration.yaml")
+    void iteration(Execution execution) throws InternalException {
+        List<TaskRun> seconds = execution.findTaskRunsByTaskId("second");
+        assertThat(seconds).hasSize(2);
+        assertThat(seconds.get(0).getIteration()).isEqualTo(0);
+        assertThat(seconds.get(1).getIteration()).isEqualTo(1);
     }
 }

@@ -4,12 +4,13 @@ import {apiUrl} from "override/utils/route";
 
 export const useAiStore = defineStore("ai", {
     actions: {
-        async generateFlow({userPrompt, flowYaml}: {userPrompt: string, flowYaml: string}) {
-            const response = await axios.post(`${apiUrl(this.vuexStore)}/ai/generate/flow`, {
+        async generateFlow({userPrompt, flowYaml, conversationId}: {userPrompt: string, flowYaml: string, conversationId: string}) {
+            const response = await axios.post(`${apiUrl()}/ai/generate/flow`, {
                 userPrompt,
-                flowYaml
+                flowYaml,
+                conversationId
             });
-            
+
             return response.data;
         }
     }

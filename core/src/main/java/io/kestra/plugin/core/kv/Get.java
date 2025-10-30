@@ -53,20 +53,20 @@ import java.util.Optional;
 public class Get extends Task implements RunnableTask<Get.Output> {
     @NotNull
     @Schema(
-        title = "The key for which to get the value."
+        title = "The key for which to get the value"
     )
     private Property<String> key;
 
     @NotNull
     @Schema(
-        title = "The namespace on which to get the value."
+        title = "The namespace from which to retrieve the KV pair"
     )
     @Builder.Default
     private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
-        title = "Whether to fail if there is no value for the given key."
+        title = "Flag specifying whether to fail if there is no value for the given key"
     )
     @Builder.Default
     private Property<Boolean> errorOnMissing = Property.ofValue(false);
@@ -84,7 +84,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         } else {
             FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
             flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
-            value =  runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
+            value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
         }
 
         if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && value.isEmpty()) {
@@ -115,8 +115,8 @@ public class Get extends Task implements RunnableTask<Get.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "Value retrieve for the key.",
-            description = "This can be of any type and will keep the same as when it was set."
+            title = "Value retrieved for the key",
+            description = "This can be of any type and will stay the same as when it was set."
         )
         private final Object value;
     }

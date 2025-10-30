@@ -8,6 +8,7 @@ import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.ArrayListTotal;
@@ -15,7 +16,6 @@ import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.dashboard.chart.Markdown;
 import io.kestra.plugin.core.dashboard.chart.Table;
 import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
@@ -49,9 +49,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.regex.Pattern;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
@@ -60,6 +59,7 @@ import static io.kestra.core.utils.DateUtils.validateTimeline;
 @Slf4j
 public class DashboardController {
     protected static final YamlParser YAML_PARSER = new YamlParser();
+    public static final Pattern DASHBOARD_ID_PATTERN = Pattern.compile("^id:.*$", Pattern.MULTILINE);
 
     @Inject
     private DashboardRepositoryInterface dashboardRepository;
@@ -91,7 +91,12 @@ public class DashboardController {
     public Dashboard getDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
     ) throws ConstraintViolationException {
-        return dashboardRepository.get(tenantService.resolveTenant(), id).orElse(null);
+        return dashboardRepository.get(tenantService.resolveTenant(), id).map(d -> {
+            if (!DASHBOARD_ID_PATTERN.matcher(d.getSourceCode()).find()) {
+                return d.toBuilder().sourceCode("id: " + d.getId() + "\n" + d.getSourceCode()).build();
+            }
+            return d;
+        }).orElse(null);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -101,13 +106,24 @@ public class DashboardController {
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
     ) throws ConstraintViolationException {
         Dashboard dashboardParsed = parseDashboard(dashboard);
+
+        if (dashboardParsed.getId() == null) {
+            throw new IllegalArgumentException("Dashboard id is mandatory");
+        }
         modelValidator.validate(dashboardParsed);
 
-        if (dashboardParsed.getId() != null) {
-            throw new IllegalArgumentException("Dashboard id is not editable");
+        Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), dashboardParsed.getId());
+        if (existingDashboard.isPresent()) {
+            throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
+                "Dashboard id already exists",
+                dashboardParsed,
+                Dashboard.class,
+                "dashboard.id",
+                dashboardParsed.getId()
+            )));
         }
 
-        return HttpResponse.ok(this.save(null, dashboardParsed.toBuilder().id(IdUtils.create()).build(), dashboard));
+        return HttpResponse.ok(this.save(null, dashboardParsed, dashboard));
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -148,6 +164,15 @@ public class DashboardController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
         Dashboard dashboardToSave = parseDashboard(dashboard);
+        if (!dashboardToSave.getId().equals(id)) {
+            throw new ConstraintViolationException(Set.of(ManualConstraintViolation.of(
+                "Illegal dashboard id update",
+                dashboardToSave,
+                Dashboard.class,
+                "dashboard.id",
+                dashboardToSave.getId()
+            )));
+        }
         modelValidator.validate(dashboardToSave);
 
         return HttpResponse.ok(this.save(existingDashboard.get(), dashboardToSave, dashboard));
@@ -204,20 +229,17 @@ public class DashboardController {
 
         ZonedDateTime endDate = timeLineSearch.getEndDate();
         ZonedDateTime startDate = timeLineSearch.getStartDate();
-        if (endDate == null) {
-            endDate = ZonedDateTime.now();
-        }
 
         if (startDate == null) {
             // If no start date is provided, we use the default duration of the dashboard's time
             startDate = endDate.minus(dashboard.getTimeWindow().getDefaultDuration());
         }
 
-        if (endDate.isBefore(startDate)) {
+        if (endDate != null && endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("`endDate` must be after `startDate`.");
         }
 
-        Duration windowDuration = Duration.ofSeconds(endDate.minus(Duration.ofSeconds(startDate.toEpochSecond())).toEpochSecond());
+        Duration windowDuration = Duration.ofSeconds((endDate != null ? endDate : ZonedDateTime.now()).minus(Duration.ofSeconds(startDate.toEpochSecond())).toEpochSecond());
         if (windowDuration.compareTo(dashboard.getTimeWindow().getMax()) > 0) {
             throw new IllegalArgumentException("The queried window is larger than the max allowed one.");
         }

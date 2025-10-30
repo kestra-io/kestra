@@ -1,7 +1,7 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.jdbc.repository.AbstractJdbcLogRepositoryTest;
+import io.kestra.core.repositories.AbstractLogRepositoryTest;
 
-public class PostgresLogRepositoryTest extends AbstractJdbcLogRepositoryTest {
+public class PostgresLogRepositoryTest extends AbstractLogRepositoryTest {
 
 }

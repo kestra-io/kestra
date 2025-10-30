@@ -1,5 +1,5 @@
 <template>
-    <Navbar :title="details.title">
+    <Navbar :title="routeInfo.title">
         <template #additional-right>
             <Action
                 v-if="canCreate"
@@ -10,9 +10,19 @@
     </Navbar>
 
     <el-row class="p-5">
-        <KestraFilter
-            :placeholder="t('search')"
-            legacy-query
+        <KSFilter
+            :configuration="namespacesFilter"
+            :prefix="'namespaces-list'"
+            :tableOptions="{
+                chart: {shown: false},
+                columns: {shown: false},
+                refresh: {shown: false}
+            }"
+            :searchInputFullWidth="true"
+            :buttons="{
+                savedFilters: {shown: false},
+                tableOptions: {shown: false}
+            }"
         />
 
         <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
@@ -27,7 +37,7 @@
         >
             <el-tree
                 :data="[namespace]"
-                default-expand-all
+                defaultExpandAll
                 :props="{class: 'tree'}"
                 class="h-auto p-2 rounded-full"
             >
@@ -67,27 +77,29 @@
     import {computed, onMounted, Ref, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
-    import useRouteContext from "../../../mixins/useRouteContext.ts";
-    import {useStore} from "vuex";
-    import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
+    import useRouteContext from "../../../composables/useRouteContext";
+    import useNamespaces, {Namespace} from "../../../composables/useNamespaces";
     import {useI18n} from "vue-i18n";
-    import {useMiscStore} from "../../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
-    import KestraFilter from "../../../components/filter/KestraFilter.vue";
-
-    import permission from "../../../models/permission.ts";
-    import action from "../../../models/action.ts";
+    import KSFilter from "../../../components/filter/components/KSFilter.vue";
+    import {useNamespacesFilter} from "../../../components/filter/configurations";
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
+    import {useAuthStore} from "override/stores/auth";
+    
+    const namespacesFilter = useNamespacesFilter();
 
     interface Node {
         id: string;
         label: string;
         description?: string;
-        disabled: boolean;
+        disabled?: boolean;
         children?: Node[];
         system?: boolean;
     }
@@ -96,21 +108,18 @@
 
     const {t} = useI18n({useScope: "global"});
 
-    const details = computed(() => ({title: t("namespaces")}));
-    useRouteContext(details);
+    const routeInfo = computed(() => ({title: t("namespaces")}));
+    useRouteContext(routeInfo);
 
-    const store = useStore();
 
-    const user = computed(() => store.state.auth.user);
+    const authStore = useAuthStore();
     const canCreate = computed(() => {
-        if (Object.keys(user.value).length === 0) return false;
-        return user.value.hasAnyAction(permission.NAMESPACE, action.CREATE);
+        return authStore.user?.hasAnyAction(permission.NAMESPACE, action.CREATE);
     });
 
     const namespaces = ref([]) as Ref<Namespace[]>;
     const loadData = async () => {
         namespaces.value = await useNamespaces(
-            store,
             1000,
             route.query?.q === undefined ? undefined : {q: route.query.q},
         ).all();
@@ -138,7 +147,7 @@
             const parts = item.id.split(".");
             let currentLevel = map;
 
-            parts.forEach((part, index) => {
+            parts.forEach((_part, index) => {
                 const label = parts.slice(0, index + 1).join(".");
                 const isLeaf = index === parts.length - 1;
 
@@ -146,7 +155,6 @@
                     currentLevel[label] = {
                         id: label,
                         label,
-                        disabled: item.disabled,
                         description: isLeaf ? item.description : undefined,
                         children: [],
                     };
@@ -159,7 +167,6 @@
                 const result: Node = {
                     id: node.id,
                     label: node.label,
-                    disabled: node.disabled,
                     description: node.description,
                     children: node.children ? build(node.children) : undefined,
                 };
@@ -187,7 +194,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
 .namespaces {

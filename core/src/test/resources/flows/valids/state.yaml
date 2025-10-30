@@ -53,6 +53,9 @@ tasks:
             type: io.kestra.plugin.core.state.Get
             taskrunValue: false
             name: "{{ inputs.state }}"
+          - id: delete3
+            type: io.kestra.plugin.core.state.Delete
+            name: "{{ inputs.state }}"
 
 
     else:

@@ -7,6 +7,7 @@
                 @click="emits('click')"
                 :tag="to ? 'router-link' : 'button'"
                 :to
+                :loading="props.loading ?? false"
             >
                 {{ props.label }}
             </el-button>
@@ -25,5 +26,6 @@
         icon?: Component;
         type?: string;
         to?: Record<string, any>;
+        loading?: boolean;
     }>();
 </script>

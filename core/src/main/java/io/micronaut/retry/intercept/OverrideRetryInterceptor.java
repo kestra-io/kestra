@@ -56,7 +56,8 @@ public class OverrideRetryInterceptor implements MethodInterceptor<Object, Objec
             retry.get("delay", Duration.class).orElse(Duration.ofSeconds(1)),
             retry.get("maxDelay", Duration.class).orElse(null),
             new DefaultRetryPredicate(resolveIncludes(retry, "includes"), resolveIncludes(retry, "excludes")),
-            Throwable.class
+            Throwable.class,
+            0
         );
 
         MutableConvertibleValues<Object> attrs = context.getAttributes();

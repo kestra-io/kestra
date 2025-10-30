@@ -8,9 +8,11 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +23,7 @@ import org.junit.jupiter.api.Test;
 class RuntimeLabelsTest {
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Test
     @LoadFlows({"flows/valids/labels-update-task.yml"})
@@ -58,6 +60,14 @@ class RuntimeLabelsTest {
             new Label("keyFromList", "valueFromList"),
             new Label("keyFromExecution", "valueFromExecution"),
             new Label("overriddenExecutionLabelKey", labelsOverriderTaskRunId));
+
+        TaskRun labelTaskRun = execution.findTaskRunsByTaskId("override-labels").getFirst();
+        TaskRunAttempt labelRunAttempt = labelTaskRun.lastAttempt();
+
+        assertThat(labelRunAttempt.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(labelRunAttempt.getState().getHistories().size()).isEqualTo(3);
+        assertThat(labelRunAttempt.getState().getHistories()).extracting(State.History::getState)
+            .containsExactly(State.Type.CREATED, State.Type.RUNNING, State.Type.SUCCESS);
     }
 
 
@@ -69,6 +79,15 @@ class RuntimeLabelsTest {
 
         String labelsTaskRunId = execution.findTaskRunsByTaskId("labels").getFirst().getId();
         assertThat(execution.getLabels()).contains(new Label("someLabel", labelsTaskRunId));
+
+        TaskRun labelTaskRun = execution.findTaskRunsByTaskId("labels").getFirst();
+        TaskRunAttempt labelRunAttempt = labelTaskRun.lastAttempt();
+
+        assertThat(labelRunAttempt.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(labelRunAttempt.getState().getHistories().size()).isEqualTo(3);
+        assertThat(labelRunAttempt.getState().getHistories()).extracting(State.History::getState)
+            .containsExactly(State.Type.CREATED, State.Type.RUNNING, State.Type.SUCCESS);
+
     }
 
     @Test
@@ -102,13 +121,22 @@ class RuntimeLabelsTest {
             new Label("floatValue", "3.14"),
             new Label("taskRunId", labelsTaskRunId),
             new Label("existingLabel", "someValue"));
+
+        TaskRun labelTaskRun = execution.findTaskRunsByTaskId("update-labels").getFirst();
+        TaskRunAttempt labelRunAttempt = labelTaskRun.lastAttempt();
+
+        assertThat(labelRunAttempt.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(labelRunAttempt.getState().getHistories().size()).isEqualTo(3);
+        assertThat(labelRunAttempt.getState().getHistories()).extracting(State.History::getState)
+            .containsExactly(State.Type.CREATED, State.Type.RUNNING, State.Type.SUCCESS);
+
     }
 
     @Test
-    @LoadFlows({"flows/valids/primitive-labels-flow.yml"})
+    @LoadFlows(value = {"flows/valids/primitive-labels-flow.yml"}, tenantId = "tenant1")
     void primitiveTypeLabelsOverrideExistingLabels() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            "tenant1",
             "io.kestra.tests",
             "primitive-labels-flow",
             null,
@@ -136,6 +164,14 @@ class RuntimeLabelsTest {
             new Label("boolValue", "true"),
             new Label("floatValue", "3.14"),
             new Label("taskRunId", labelsTaskRunId));
+
+        TaskRun labelTaskRun = execution.findTaskRunsByTaskId("update-labels").getFirst();
+        TaskRunAttempt labelRunAttempt = labelTaskRun.lastAttempt();
+
+        assertThat(labelRunAttempt.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(labelRunAttempt.getState().getHistories().size()).isEqualTo(3);
+        assertThat(labelRunAttempt.getState().getHistories()).extracting(State.History::getState)
+            .containsExactly(State.Type.CREATED, State.Type.RUNNING, State.Type.SUCCESS);
     }
 
     @Test
@@ -159,5 +195,40 @@ class RuntimeLabelsTest {
             new Label("fromStringKey", "value2"),
             new Label("fromListKey", "value2")
         );
+
+        TaskRun labelTaskRun = execution.findTaskRunsByTaskId("from-string").getFirst();
+        TaskRunAttempt labelRunAttempt = labelTaskRun.lastAttempt();
+
+        assertThat(labelRunAttempt.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(labelRunAttempt.getState().getHistories().size()).isEqualTo(3);
+        assertThat(labelRunAttempt.getState().getHistories()).extracting(State.History::getState)
+            .containsExactly(State.Type.CREATED, State.Type.RUNNING, State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/labels-update-task-empty.yml"})
+    void updateIgnoresEmpty() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(
+            MAIN_TENANT,
+            "io.kestra.tests",
+            "labels-update-task-empty",
+            null,
+            (flow, createdExecution) -> Map.of(),
+            null,
+            List.of()
+        );
+
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        assertThat(execution.getLabels()).containsExactly(
+            new Label(Label.CORRELATION_ID, execution.getId())
+        );
+
+        TaskRun labelTaskRun = execution.findTaskRunsByTaskId("from-string").getFirst();
+        TaskRunAttempt labelRunAttempt = labelTaskRun.lastAttempt();
+
+        assertThat(labelRunAttempt.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(labelRunAttempt.getState().getHistories().size()).isEqualTo(1);
     }
 }

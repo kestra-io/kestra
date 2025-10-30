@@ -12,6 +12,7 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -19,8 +20,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
-import io.kestra.core.runners.ExecutorService;
-import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import io.kestra.core.server.*;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
@@ -28,12 +27,17 @@ import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.*;
+import io.kestra.executor.ExecutorService;
+import io.kestra.executor.FlowTriggerService;
+import io.kestra.executor.SLAService;
+import io.kestra.core.services.SkipExecutionService;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.plugin.core.flow.ForEachItem;
 import io.kestra.plugin.core.flow.Template;
+import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -61,17 +65,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
+import static io.kestra.core.utils.Rethrow.*;
 
 @SuppressWarnings("deprecation")
 @Singleton
 @JdbcRunnerEnabled
 @Slf4j
-public class JdbcExecutor implements ExecutorInterface, Service {
+public class JdbcExecutor implements ExecutorInterface {
     private static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private final ScheduledExecutorService scheduledDelay = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> executionDelayFuture;
+    private ScheduledFuture<?> monitorSLAFuture;
 
     @Inject
     private AbstractJdbcExecutionRepository executionRepository;
@@ -113,8 +118,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_RUNNING_NAMED)
-    private QueueInterface<ExecutionRunning> executionRunningQueue;
+    @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
+    private QueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
 
     @Inject
     private RunContextFactory runContextFactory;
@@ -150,7 +155,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private AbstractJdbcExecutionQueuedStorage executionQueuedStorage;
 
     @Inject
-    private AbstractJdbcExecutionRunningStorage executionRunningStorage;
+    private AbstractJdbcConcurrencyLimitStorage concurrencyLimitStorage;
 
     @Inject
     private AbstractJdbcExecutorStateStorage executorStateStorage;
@@ -309,17 +314,17 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         this.receiveCancellations.addFirst(this.killQueue.receive(Executor.class, this::killQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));
-        this.receiveCancellations.addFirst(this.executionRunningQueue.receive(Executor.class, this::executionRunningQueue));
+        this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
 
-        ScheduledFuture<?> scheduledDelayFuture = scheduledDelay.scheduleAtFixedRate(
+        executionDelayFuture = scheduledDelay.scheduleAtFixedRate(
             this::executionDelaySend,
             0,
             1,
             TimeUnit.SECONDS
         );
 
-        ScheduledFuture<?> scheduledSLAMonitorFuture = scheduledDelay.scheduleAtFixedRate(
+        monitorSLAFuture = scheduledDelay.scheduleAtFixedRate(
             this::executionSLAMonitor,
             0,
             1,
@@ -329,11 +334,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         // look at exceptions on the scheduledDelay thread
         Thread.ofVirtual().name("jdbc-delay-exception-watcher").start(
             () -> {
-                Await.until(scheduledDelayFuture::isDone);
+                Await.until(executionDelayFuture::isDone);
 
                 try {
-                    scheduledDelayFuture.get();
-                } catch (ExecutionException | InterruptedException | CancellationException e) {
+                    executionDelayFuture.get();
+                } catch (CancellationException ignored) {
+
+                } catch (ExecutionException | InterruptedException e) {
                     if (e.getCause() != null && e.getCause().getClass() != CannotCreateTransactionException.class) {
                         log.error("Executor fatal exception in the scheduledDelay thread", e);
                         close();
@@ -346,11 +353,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         // look at exceptions on the scheduledSLAMonitorFuture thread
         Thread.ofVirtual().name("jdbc-sla-monitor-exception-watcher").start(
             () -> {
-                Await.until(scheduledSLAMonitorFuture::isDone);
+                Await.until(monitorSLAFuture::isDone);
 
                 try {
-                    scheduledSLAMonitorFuture.get();
-                } catch (ExecutionException | InterruptedException | CancellationException e) {
+                    monitorSLAFuture.get();
+                } catch (CancellationException ignored) {
+
+                } catch (ExecutionException | InterruptedException e) {
                     if (e.getCause() != null && e.getCause().getClass() != CannotCreateTransactionException.class) {
                         log.error("Executor fatal exception in the scheduledSLAMonitor thread", e);
                         close();
@@ -393,7 +402,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             .toList()
                     );
                 } catch (Exception e) {
-                    log.error("Unable to save flow topology", e);
+                    log.error("Unable to save flow topology for flow " + flow.uid(), e);
                 }
 
             }
@@ -405,6 +414,24 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             setState(ServiceState.RUNNING);
         }
         log.info("Executor started with {} thread(s)", numberOfThreads);
+    }
+
+    private void multipleConditionEventQueue(Either<MultipleConditionEvent, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error("Unable to deserialize a multiple condition event: {}", either.getRight().getMessage());
+            return;
+        }
+
+        MultipleConditionEvent multipleConditionEvent = either.getLeft();
+
+        flowTriggerService.computeExecutionsFromFlowTriggers(multipleConditionEvent.execution(), List.of(multipleConditionEvent.flow()), Optional.of(multipleConditionStorage))
+            .forEach(exec -> {
+                try {
+                    executionQueue.emit(exec);
+                } catch (QueueException e) {
+                    log.error("Unable to emit the execution {}", exec.getId(), e);
+                }
+            });
     }
 
     private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
@@ -571,11 +598,23 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                 .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
                                 .build();
 
-                            executionRunningQueue.emit(executionRunning);
-                            return Pair.of(
-                                executor,
-                                executorState
-                            );
+                            ExecutionRunning processed = concurrencyLimitStorage.countThenProcess(flow, (dslContext, concurrencyLimit) -> {
+                                ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
+                                if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
+                                    return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
+                                } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                    executionQueuedStorage.save(dslContext, ExecutionQueued.fromExecutionRunning(computed));
+                                }
+                                return Pair.of(computed, concurrencyLimit);
+                            });
+
+                            // if the execution is queued or terminated due to concurrency limit, we stop here
+                            if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
+                                return Pair.of(
+                                    executor.withExecution(processed.getExecution(), "handleConcurrencyLimit"),
+                                    executorState
+                                );
+                            }
                         }
 
                         // handle execution changed SLA
@@ -610,10 +649,33 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                                 Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
                                                 String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> workerTask.getRunContext().render(workerGroup.getKey())))
                                                     .orElse(null);
-                                                workerJobQueue.emit(workerGroupKey, workerTask);
+                                                if (workerTask.getTask() instanceof WorkingDirectory) {
+                                                    // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
+                                                    workerJobQueue.emit(workerGroupKey, workerTask);
+                                                } else {
+                                                    TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
+                                                    workerJobQueue.emit(workerGroupKey, workerTask.withTaskRun(taskRun));
+                                                    workerTaskResults.add(new WorkerTaskResult(taskRun));
+                                                }
                                             }
+                                            /// flowable attempt state transition to running
                                             if (workerTask.getTask().isFlowable()) {
-                                                workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
+                                                List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
+                                                    .map(ArrayList::new)
+                                                    .orElseGet(ArrayList::new);
+
+
+                                                attempts.add(
+                                                    TaskRunAttempt.builder()
+                                                        .state(new State().withState(State.Type.RUNNING))
+                                                        .build()
+                                                );
+
+                                                TaskRun updatedTaskRun = workerTask.getTaskRun()
+                                                    .withAttempts(attempts)
+                                                    .withState(State.Type.RUNNING);
+
+                                                workerTaskResults.add(new WorkerTaskResult(updatedTaskRun));
                                             }
                                         }
                                     } catch (Exception e) {
@@ -674,9 +736,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         );
                     } catch (QueueException e) {
                         try {
-                            this.executionQueue.emit(
-                                message.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED)
-                            );
+                            Execution failedExecution = fail(message, e);
+                            this.executionQueue.emit(failedExecution);
                         } catch (QueueException ex) {
                             log.error("Unable to emit the execution {}", message.getId(), ex);
                         }
@@ -691,6 +752,16 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         if (result != null) {
             this.toExecution(result);
         }
+    }
+
+    private Execution fail(Execution message, Exception e) {
+        var failedExecution = message.failedExecutionFromExecutor(e);
+        try {
+            logQueue.emitAsync(failedExecution.getLogs());
+        } catch (QueueException ex) {
+            // fail silently
+        }
+        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() :  failedExecution.getExecution().withState(State.Type.FAILED);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -976,41 +1047,15 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         }
     }
 
-    private void executionRunningQueue(Either<ExecutionRunning, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a running execution: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ExecutionRunning executionRunning = either.getLeft();
-        FlowInterface flow = flowMetaStore.findByExecution(executionRunning.getExecution()).orElseThrow();
-        ExecutionRunning processed = executionRunningStorage.countThenProcess(flow, (dslContext, count) -> {
-            ExecutionRunning computed = executorService.processExecutionRunning(flow, count, executionRunning);
-            if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
-                executionRunningStorage.save(dslContext, computed);
-            } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                executionQueuedStorage.save(dslContext, ExecutionQueued.fromExecutionRunning(computed));
-            }
-            return computed;
-        });
-
-        try {
-            executionQueue.emit(processed.getExecution());
-        } catch (QueueException e) {
-            try {
-                this.executionQueue.emit(
-                    processed.getExecution().failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED)
-                );
-            } catch (QueueException ex) {
-                log.error("Unable to emit the execution {}", processed.getExecution().getId(), ex);
-            }
-        }
-    }
-
     private Executor killingOrAfterKillState(final String executionId, Optional<State.Type> afterKillState) {
         return executionRepository.lock(executionId, pair -> {
             Execution currentExecution = pair.getLeft();
             FlowInterface flow = flowMetaStore.findByExecution(currentExecution).orElseThrow();
+
+            // remove it from the queued store if it was queued so it would not be restarted
+            if (currentExecution.getState().isQueued()) {
+                executionQueuedStorage.remove(currentExecution);
+            }
 
             Execution killing = executionService.kill(currentExecution, flow, afterKillState);
             Executor current = new Executor(currentExecution, null)
@@ -1047,7 +1092,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 }
 
                 // purge the trigger: reset scheduler trigger at end
-                // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrives directly here.
+                // IMPORTANT: this is to cover an edge case, execution created for failed trigger didn't have any taskrun so they will arrive directly here.
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     FlowWithSource flow = executor.getFlow();
@@ -1089,8 +1134,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             Execution execution = executor.getExecution();
             // handle flow triggers on state change
             if (!execution.getState().getCurrent().equals(executor.getOriginalState())) {
-                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
-                    .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
+                processFlowTriggers(execution);
             }
 
             // handle actions on terminated state
@@ -1113,30 +1157,35 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     slaMonitorStorage.purge(executor.getExecution().getId());
                 }
 
-                // purge execution running
-                if (executor.getFlow().getConcurrency() != null) {
-                    executionRunningStorage.remove(execution);
-                }
-
                 // check if there exist a queued execution and submit it to the execution queue
-                if (executor.getFlow().getConcurrency() != null && executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
-                    executionQueuedStorage.pop(executor.getFlow().getTenantId(),
-                        executor.getFlow().getNamespace(),
-                        executor.getFlow().getId(),
-                        throwConsumer(queued -> {
-                            var newExecution = queued.withState(State.Type.RUNNING);
-                            ExecutionRunning executionRunning = ExecutionRunning.builder()
-                                .tenantId(newExecution.getTenantId())
-                                .namespace(newExecution.getNamespace())
-                                .flowId(newExecution.getFlowId())
-                                .execution(newExecution)
-                                .concurrencyState(ExecutionRunning.ConcurrencyState.RUNNING)
-                                .build();
-                            executionRunningStorage.save(executionRunning);
-                            executionQueue.emit(newExecution);
-                            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
-                        })
-                    );
+                if (executor.getFlow().getConcurrency() != null) {
+
+                    // decrement execution concurrency limit
+                    // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
+                    // this could only happen for KILLED execution.
+                    boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
+                        && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
+                        && execution.getState().getHistories().stream().noneMatch(h -> h.getState().isRunning());
+                    if (!queuedThenKilled) {
+                        concurrencyLimitStorage.decrement(executor.getFlow());
+
+                        if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
+                            var finalFlow = executor.getFlow();
+                            executionQueuedStorage.pop(executor.getFlow().getTenantId(),
+                                executor.getFlow().getNamespace(),
+                                executor.getFlow().getId(),
+                                throwBiConsumer((dslContext, queued) -> {
+                                    var newExecution = queued.withState(State.Type.RUNNING);
+                                    concurrencyLimitStorage.increment(dslContext, finalFlow);
+                                    executionQueue.emit(newExecution);
+                                    metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+
+                                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                                    processFlowTriggers(newExecution);
+                                })
+                            );
+                        }
+                    }
                 }
 
                 // purge the trigger: reset scheduler trigger at end
@@ -1166,8 +1215,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 // If we cannot add the new worker task result to the execution, we fail it
                 executionRepository.lock(executor.getExecution().getId(), pair -> {
                     Execution execution = pair.getLeft();
+                    Execution failedExecution = fail(execution, e);
                     try {
-                        this.executionQueue.emit(execution.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED));
+                        this.executionQueue.emit(failedExecution);
                     } catch (QueueException ex) {
                         log.error("Unable to emit the execution {}", execution.getId(), ex);
                     }
@@ -1175,6 +1225,20 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 });
             }
         }
+    }
+
+    private void processFlowTriggers(Execution execution) throws QueueException {
+        // directly process simple conditions
+        flowTriggerService.withFlowTriggersOnly(allFlows.stream())
+            .filter(f ->ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().noneMatch(c -> c instanceof MultipleCondition) && f.getTrigger().getPreconditions() == null)
+            .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggers(execution, List.of(f.getFlow()), Optional.empty()).stream())
+            .forEach(throwConsumer(exec -> executionQueue.emit(exec)));
+
+        // send multiple conditions to the multiple condition queue for later processing
+        flowTriggerService.withFlowTriggersOnly(allFlows.stream())
+            .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().anyMatch(c -> c instanceof MultipleCondition) || f.getTrigger().getPreconditions() != null)
+            .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
+            .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
     }
 
     private FlowWithSource findFlow(Execution execution) {
@@ -1217,15 +1281,15 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     .increment();
 
                 try {
-                    // Handle paused tasks
+                    // Handle paused tasks and scheduledAt
                     if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !pair.getLeft().getState().isTerminated()) {
-                        FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
                         if (executionDelay.getTaskRunId() == null) {
                             // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
                             Execution markAsExecution = pair.getKey().withState(executionDelay.getState());
                             executor = executor.withExecution(markAsExecution, "pausedRestart");
                         } else {
                             // if there is a taskRun it means we restart a paused task
+                            FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
                             Execution markAsExecution = executionService.markAs(
                                 pair.getKey(),
                                 flow,
@@ -1236,19 +1300,21 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             executor = executor.withExecution(markAsExecution, "pausedRestart");
                         }
                     }
-                    // Handle failed tasks
+                    // Handle failed task retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
+                            findFlow(pair.getKey()),
                             executionDelay.getTaskRunId()
                         );
                         executor = executor.withExecution(newAttempt, "retryFailedTask");
                     }
-                    // Handle failed flow
+                    // Handle failed flow retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
                         Execution newExecution = executionService.replay(executor.getExecution(), null, null);
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
+                    // Handle WaitFor
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
                         Execution execution  = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                         executor = executor.withExecution(execution, "continueLoop");
@@ -1329,7 +1395,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     + taskRun.getIteration();
 
                 if (executorState.getChildDeduplication().containsKey(deduplicationKey)) {
-                    log.trace("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
+                    log.warn("Duplicate Nexts on execution '{}' with key '{}'", execution.getId(), deduplicationKey);
                     return false;
                 } else {
                     executorState.getChildDeduplication().put(deduplicationKey, taskRun.getId());
@@ -1345,7 +1411,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         State.Type current = executorState.getWorkerTaskDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.trace("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}, taskId '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId());
+            log.warn("Duplicate WorkerTask on execution '{}' for taskRun '{}', value '{}', taskId '{}' on state {}", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), current);
             return false;
         } else {
             executorState.getWorkerTaskDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());
@@ -1359,7 +1425,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         State.Type current = executorState.getSubflowExecutionDeduplication().get(deduplicationKey);
 
         if (current == taskRun.getState().getCurrent()) {
-            log.trace("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}', taskId '{}', attempt '{}'", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), taskRun.getAttempts() == null ? null : taskRun.getAttempts().size() + 1);
+            log.warn("Duplicate SubflowExecution on execution '{}' for taskRun '{}', value '{}', taskId '{}', attempt '{}' on state {}", execution.getId(), taskRun.getId(), taskRun.getValue(), taskRun.getTaskId(), taskRun.getAttempts() == null ? null : taskRun.getAttempts().size() + 1, current);
             return false;
         } else {
             executorState.getSubflowExecutionDeduplication().put(deduplicationKey, taskRun.getState().getCurrent());
@@ -1374,13 +1440,11 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private Executor handleFailedExecutionFromExecutor(Executor executor, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
 
-        failedExecutionWithLog.getLogs().forEach(log -> {
-            try {
-                logQueue.emitAsync(log);
-            } catch (QueueException ex) {
-                // fail silently
-            }
-        });
+        try {
+            logQueue.emitAsync(failedExecutionWithLog.getLogs());
+        } catch (QueueException ex) {
+            // fail silently
+        }
 
         return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
     }
@@ -1398,7 +1462,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
             setState(ServiceState.TERMINATING);
             this.receiveCancellations.forEach(Runnable::run);
-            scheduledDelay.shutdown();
+            ExecutorsUtils.closeScheduledThreadPool(scheduledDelay, Duration.ofSeconds(5), List.of(executionDelayFuture, monitorSLAFuture));
             setState(ServiceState.TERMINATED_GRACEFULLY);
 
             if (log.isDebugEnabled()) {

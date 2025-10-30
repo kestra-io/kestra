@@ -43,7 +43,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
         static final DefaultPluginRegistry INSTANCE = new DefaultPluginRegistry();
     }
 
-    private final Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> pluginClassByIdentifier = new ConcurrentHashMap<>();
+    protected final Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> pluginClassByIdentifier = new ConcurrentHashMap<>();
     private final Map<PluginBundleIdentifier, RegisteredPlugin> plugins = new ConcurrentHashMap<>();
     private final PluginScanner scanner = new PluginScanner(DefaultPluginRegistry.class.getClassLoader());
     private final AtomicBoolean initialized = new AtomicBoolean(false);
@@ -56,7 +56,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
      *
      * @return the {@link DefaultPluginRegistry}.
      */
-    public static DefaultPluginRegistry getOrCreate() {
+    public synchronized static DefaultPluginRegistry getOrCreate() {
         DefaultPluginRegistry instance = LazyHolder.INSTANCE;
         if (!instance.isInitialized()) {
             instance.init();
@@ -74,7 +74,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
     /**
      * Initializes the registry by loading all core plugins.
      */
-    protected void init() {
+    protected synchronized void init() {
         if (initialized.compareAndSet(false, true)) {
             register(scanner.scan());
         }
@@ -103,11 +103,13 @@ public class DefaultPluginRegistry implements PluginRegistry {
      */
     @Override
     public void registerIfAbsent(final Path pluginPath) {
+        long start = System.currentTimeMillis();
         if (isPluginPathValid(pluginPath) && !isPluginPathScanned(pluginPath)) {
             List<RegisteredPlugin> scanned = scanner.scan(pluginPath);
             scanned.forEach(this::register);
             scannedPluginPaths.add(pluginPath);
         }
+        log.debug("Registered if absent plugins from path {} in {} ms", pluginPath, System.currentTimeMillis() - start);
     }
 
     private boolean isPluginPathScanned(final Path pluginPath) {
@@ -119,10 +121,12 @@ public class DefaultPluginRegistry implements PluginRegistry {
      */
     @Override
     public void register(final Path pluginPath) {
+        long start = System.currentTimeMillis();
         if (isPluginPathValid(pluginPath)) {
             List<RegisteredPlugin> scanned = scanner.scan(pluginPath);
             scanned.forEach(this::register);
         }
+        log.debug("Registered plugins from path {} in {} ms", pluginPath, System.currentTimeMillis() - start);
     }
 
     /**
@@ -191,19 +195,26 @@ public class DefaultPluginRegistry implements PluginRegistry {
      */
     public void register(final RegisteredPlugin plugin) {
         final PluginBundleIdentifier identifier = PluginBundleIdentifier.of(plugin);
-
-        // Skip registration if plugin-bundle already exists in the registry.
-        if (containsPluginBundle(identifier)) {
-            return;
+        // Skip registration if the same plugin already exists in the registry.
+        final RegisteredPlugin existing = plugins.get(identifier);
+        if (existing != null && existing.crc32() == plugin.crc32()) {
+            return; // same plugin already registered
         }
 
         lock.lock();
         try {
+            if (existing != null) {
+                unregister(List.of(existing));
+            }
             plugins.put(PluginBundleIdentifier.of(plugin), plugin);
-            pluginClassByIdentifier.putAll(getPluginClassesByIdentifier(plugin));
+            registerAll(getPluginClassesByIdentifier(plugin));
         } finally {
             lock.unlock();
         }
+    }
+
+    protected void registerAll(Map<PluginIdentifier, PluginClassAndMetadata<? extends Plugin>> plugins) {
+        pluginClassByIdentifier.putAll(plugins);
     }
 
     @SuppressWarnings("unchecked")

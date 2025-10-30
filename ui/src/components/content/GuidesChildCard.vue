@@ -1,17 +1,9 @@
 <template>
-    <ChildCard :page-url="pageUrl" />
+    <ChildCard :pageUrl />
 </template>
 
-<script>
+<script setup lang="ts">
     import ChildCard from "./ChildCard.vue";
 
-    export default {
-        components: {ChildCard},
-        props: {
-            pageUrl: {
-                type: String,
-                default: undefined
-            }
-        }
-    }
+    defineProps<{ pageUrl?: string }>();
 </script>

@@ -200,7 +200,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
     @PluginProperty(dynamic = true)
     @Schema(
-        title = "The list of values for which Kestra will execute a group of tasks.",
+        title = "The list of values for which Kestra will execute a group of tasks",
         description = "The values can be passed as a string, a list of strings, or a list of objects.",
         oneOf = {String.class, Object[].class}
     )
@@ -210,7 +210,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-        title = "The number of concurrent task groups for each value in the `values` array.",
+        title = "The number of concurrent task groups for each value in the `values` array",
         description = """
         If you set the `concurrencyLimit` property to 0, Kestra will execute all task groups concurrently for all values (zero limits!). \
 

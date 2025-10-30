@@ -3,11 +3,11 @@
         v-model="isVisible"
         :title="t('setup.titles.survey')"
         width="550px"
-        :show-close="true"
-        :close-on-click-modal="false"
-        :close-on-press-escape="true"
+        :showClose="true"
+        :closeOnClickModal="false"
+        :closeOnPressEscape="true"
         @close="handleClose"
-        custom-class="hello-survey-dialog"
+        customClass="hello-survey-dialog"
     >
         <div class="survey-content">
             <h3>{{ t('setup.subtitles.survey') }}</h3>
@@ -71,7 +71,7 @@
     import {computed, ref} from "vue"
     import {useI18n} from "vue-i18n"
     import {useApiStore} from "../stores/api"
-    import {useMiscStore} from "../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
 
     interface Props {
         visible?: boolean

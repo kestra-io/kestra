@@ -6,12 +6,14 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class SkipExecutionServiceTest {
     @Inject
     private SkipExecutionService skipExecutionService;
@@ -22,6 +24,7 @@ class SkipExecutionServiceTest {
         skipExecutionService.setSkipFlows(null);
         skipExecutionService.setSkipNamespaces(null);
         skipExecutionService.setSkipTenants(null);
+        skipExecutionService.setSkipIndexerRecords(null);
     }
 
     @Test
@@ -93,5 +96,13 @@ class SkipExecutionServiceTest {
         assertThat(skipExecutionService.skipExecution("anotherTenant", "namespace", "someFlow", "someExecution")).isFalse();
         assertThat(skipExecutionService.skipExecution("tenant", "another.namespace", "someFlow", "someExecution")).isTrue();
         assertThat(skipExecutionService.skipExecution("anotherTenant", "another.namespace", "someFlow", "someExecution")).isFalse();
+    }
+
+    @Test
+    void skipIndexedRecords() {
+        skipExecutionService.setSkipIndexerRecords(List.of("indexed"));
+
+        assertThat(skipExecutionService.skipIndexerRecord("indexed")).isTrue();
+        assertThat(skipExecutionService.skipIndexerRecord("notindexed")).isFalse();
     }
 }

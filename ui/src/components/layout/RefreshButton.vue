@@ -1,13 +1,13 @@
 <template>
     <el-button :disabled="!canAutoRefresh" :active="autoRefresh" @click="toggleAutoRefresh" data-test-id="toggle-aut-refresh-button">
-        <kicon :tooltip="$t('toggle periodic refresh each x seconds', {interval: autoRefreshIntervalSec})" placement="bottom">
+        <Kicon :tooltip="$t('toggle periodic refresh each x seconds', {interval: autoRefreshIntervalSec})" placement="bottom">
             <component :is="autoRefresh ? 'auto-renew' : 'auto-renew-off'" class="auto-refresh-icon" />
-        </kicon>
+        </Kicon>
     </el-button>
     <el-button @click="triggerRefresh" data-test-id="trigger-refresh-button" data-testid="trigger-refresh-button">
-        <kicon :tooltip="$t('trigger refresh')" placement="bottom">
-            <refresh />
-        </kicon>
+        <Kicon :tooltip="$t('trigger refresh')" placement="bottom">
+            <Refresh />
+        </Kicon>
     </el-button>
 </template>
 

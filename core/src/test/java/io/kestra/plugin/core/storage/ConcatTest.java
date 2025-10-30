@@ -4,6 +4,7 @@ import com.google.common.io.CharStreams;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.utils.IdUtils;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -41,7 +42,7 @@ class ConcatTest {
         URI put = storageInterface.put(
             MAIN_TENANT,
             null,
-            new URI("/file/storage/get.yml"),
+            new URI("/file/storage/get-%s.yml".formatted(IdUtils.create())),
             new FileInputStream(Objects.requireNonNull(resource).getFile())
         );
 

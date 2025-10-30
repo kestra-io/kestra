@@ -21,10 +21,13 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@Execution(ExecutionMode.SAME_THREAD)
 class DocumentationGeneratorTest {
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;

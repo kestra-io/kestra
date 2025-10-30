@@ -10,16 +10,16 @@
             </ul>
         </template>
     </TopNavBar>
-    <section data-component="FILENAME_PLACEHOLDER" class="d-flex flex-column fill-height container padding-bottom">
+    <section class="d-flex flex-column fill-height container padding-bottom">
         <KVTable />
     </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useNamespacesStore} from "override/stores/namespaces.js";
-    import useRouteContext from "../../mixins/useRouteContext.js";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import useRouteContext from "../../composables/useRouteContext";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TopNavBar from "../layout/TopNavBar.vue";
     import KVTable from "./KVTable.vue";

@@ -16,10 +16,11 @@
 
     import Markdown from "../../layout/Markdown.vue";
     import NoData from "../../layout/NoData.vue";
+    import {FilterObject} from "../../../utils/filters";
 
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<string[]>, default: () => []},
+        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
     });
 

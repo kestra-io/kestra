@@ -10,7 +10,7 @@
     <NoData v-else />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {PropType, computed, watch} from "vue";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
@@ -22,12 +22,13 @@
 
 
     import {customBarLegend} from "../composables/useLegend";
-    import {useTheme} from "../../../utils/utils.js";
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts.js";
+    import {useTheme} from "../../../utils/utils";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts";
 
 
     import {useRoute, useRouter} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
+    import {FilterObject} from "../../../utils/filters";
 
     const router = useRouter();
 
@@ -36,7 +37,7 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object as PropType<Chart>, required: true},
-        filters: {type: Array as PropType<string[]>, default: () => []},
+        filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
     });
@@ -48,15 +49,15 @@
     const DEFAULTS = {
         display: true,
         stacked: true,
-        ticks: {maxTicksLimit: 8 , stepSize: 1},
+        ticks: {maxTicksLimit: 8},
         grid: {display: false},
     };
 
-    const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
+    const aggregator = Object.entries(data?.columns ?? {}).filter(([_, v]) => v.agg);
 
     const theme = useTheme();
 
-    const options = computed(() => {
+    const options = computed<any>(() => {
         return defaultConfig({
             skipNull: true,
             barThickness: 12,
@@ -74,9 +75,9 @@
                     : {}),
                 tooltip: {
                     enabled: props.short ? false : true,
-                    filter: (value) => value.raw,
+                    filter: (value: any) => value.raw,
                     callbacks: {
-                        label: (value) => {
+                        label: (value: any) => {
                             if (!value.dataset.tooltip) return "";
                             return `${value.dataset.tooltip}`;
                         },
@@ -87,7 +88,7 @@
                 x: {
                     title: {
                         display: props.short ? false : true,
-                        text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
+                        text: chartOptions?.column ? (data?.columns?.[chartOptions.column]?.displayName ?? chartOptions.column) : "",
                     },
                     position: "bottom",
                     ...DEFAULTS,
@@ -131,7 +132,7 @@
         const grouped = {};
 
         const rawData = generated.value.results;
-        rawData.forEach((item) => {
+        rawData?.forEach((item) => {
             const key = validColumns.map((col) => item[col]).join(", "); // Use '|' as a delimiter
 
             if (!grouped[item[column]]) {
@@ -145,12 +146,12 @@
         });
 
         const labels = Object.keys(grouped);
-        const xLabels = [...new Set(rawData.map((item) => item[column]))];
+        const xLabels = [...new Set(rawData?.map((item) => item[column]))];
 
         const datasets = xLabels.flatMap((xLabel) => {
             return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
                 label: subSectionsEntry[0],
-                data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
+                data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0) as any[],
                 backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
                 tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));
@@ -174,7 +175,7 @@
     }, {deep: true});
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .chart {
         #{--chart-height}: 200px;
 

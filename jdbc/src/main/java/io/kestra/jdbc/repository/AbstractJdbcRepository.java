@@ -49,7 +49,9 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition defaultFilter(Boolean allowDeleted) {
-        return allowDeleted ? DSL.trueCondition() : field("deleted", Boolean.class).eq(false);
+        return allowDeleted ?
+            field("deleted", Boolean.class).in(true, false) :
+            field("deleted", Boolean.class).eq(false);
     }
 
     protected Condition defaultFilter(String tenantId) {
@@ -58,7 +60,11 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
         var tenant = buildTenantCondition(tenantId);
-        return allowDeleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
+
+        // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
+        return allowDeleted ?
+            tenant.and(field("deleted", Boolean.class).in(true, false)) :
+            tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     protected Condition defaultFilterWithNoACL(String tenantId) {
@@ -67,7 +73,11 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition defaultFilterWithNoACL(String tenantId, boolean deleted) {
         var tenant = buildTenantCondition(tenantId);
-        return deleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
+
+        // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
+        return deleted ?
+            tenant.and(field("deleted", Boolean.class).in(true, false)) :
+            tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     protected Condition buildTenantCondition(String tenantId) {
@@ -296,7 +306,7 @@ public abstract class AbstractJdbcRepository {
         }
 
         // Special handling for START_DATE and END_DATE
-        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {
+        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED) {
             if(dateColumn == null){
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
@@ -316,6 +326,9 @@ public abstract class AbstractJdbcRepository {
             } else {
                 throw new InvalidQueryFiltersException("Label field value must but instance of Map");
             }
+        }
+        if (field == QueryFilter.Field.KIND) {
+            return applyKindCondition(value,operation);
         }
 
         // Convert the field name to lowercase and quote it
@@ -439,6 +452,14 @@ public abstract class AbstractJdbcRepository {
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
         };
     }
+    private Condition applyKindCondition(Object value, QueryFilter.Op operation) {
+        String kind =  value.toString();
+        return switch (operation) {
+            case EQUALS -> field("kind").eq(kind);
+            case NOT_EQUALS -> field("kind").ne(kind);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for KIND: " + operation);
+        };
+    }
 
 
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
@@ -450,13 +471,15 @@ public abstract class AbstractJdbcRepository {
         Map<F, String> fieldsMapping,
         ZonedDateTime startDate,
         ZonedDateTime endDate,
-        Set<F> dateFields
+        Set<F> dateFields,
+        @Nullable DateUtils.GroupType groupType
     ) {
         return descriptors.getColumns().entrySet().stream()
             .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
             .map(entry -> {
                 Duration duration = Duration.between(startDate, endDate == null ? ZonedDateTime.now() : endDate);
-                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
+                DateUtils.GroupType effectiveGroupType = groupType != null ? groupType : DateUtils.groupByType(duration);
+                return formatDateField(fieldsMapping.get(entry.getValue().getField()), effectiveGroupType).as(entry.getKey());
             })
             .toList();
 

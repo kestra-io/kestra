@@ -98,7 +98,7 @@ class RunContextTest {
     private FlowInputOutput flowIO;
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Inject
     protected LocalFlowRepositoryLoader repositoryLoader;
@@ -140,7 +140,7 @@ class RunContextTest {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
-        char[] chars = new char[1024 * 11];
+        char[] chars = new char[1024 * 16];
         Arrays.fill(chars, 'a');
 
         Map<String, Object> inputs = new HashMap<>(InputsTest.inputs);
@@ -257,7 +257,7 @@ class RunContextTest {
 
     @Test
     void withDefaultInput() throws IllegalVariableEvaluationException {
-        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults("test").build())).build();
+        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults(io.kestra.core.models.property.Property.ofValue("test")).build())).build();
         Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State()).build();
 
         RunContext runContext = runContextFactory.of(flow, execution);
@@ -267,7 +267,7 @@ class RunContextTest {
 
     @Test
     void withNullLabel() throws IllegalVariableEvaluationException {
-        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults("test").build())).build();
+        Flow flow = Flow.builder().id("triggerWithDefaultInput").namespace("io.kestra.test").revision(1).inputs(List.of(StringInput.builder().id("test").type(Type.STRING).defaults(io.kestra.core.models.property.Property.ofValue("test")).build())).build();
         Execution execution = Execution.builder().id(IdUtils.create()).flowId("triggerWithDefaultInput").namespace("io.kestra.test").state(new State()).labels(List.of(new Label("key", null), new Label(null, "value"))).build();
 
         RunContext runContext = runContextFactory.of(flow, execution);

@@ -1,7 +1,6 @@
 import {setup} from "@storybook/vue3-vite";
 import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
-import stores from "../src/stores/store";
 
 import "../src/styles/vendor.scss";
 import "../src/styles/app.scss";
@@ -33,9 +32,14 @@ const preview = {
   ]
 };
 
-setup((app) => {
-  initApp(app, [], stores, en);
-});
+setup(async (app) => {
+  const {piniaStore} = await initApp(app, [], {}, en);
+  piniaStore.use(({store}) => {
+    store.$http = {
+        get: () => Promise.resolve({data: []}),
+    }
+  });
+})
 
 
 window.addEventListener("unhandledrejection", (evt) => {

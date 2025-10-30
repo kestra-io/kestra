@@ -12,8 +12,10 @@ export function linkTag(md: MarkdownIt) {
 
         // Get the attributes, they must have the following format: key="value"
         const attrs = match[0].match(/\S+="(\S)+"/g)
-            .map(attr => attr.split("="))
-            .map(([name, value]) => [name, value.replace(/"/g, "")]);
+            ?.map(attr => attr.split("="))
+            .map(([name, value]): [string, string] => [name, value.replace(/"/g, "")]);
+
+        if (!attrs) return false;
 
         const token = state.push("link_custom_open", "link", 1);
         token.markup = "[[link]]";

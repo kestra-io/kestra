@@ -1,5 +1,4 @@
 import {ComputedRef} from "vue";
-import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
 import {YamlElement} from "@kestra-io/ui-libs";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -15,7 +14,6 @@ function distinct<T>(val: T[] | undefined): T[] {
 }
 
 export class FlowAutoCompletion extends YamlAutoCompletion {
-    store: Store<Record<string, any>>;
     flowsInputsCache: Record<string, string[]> = {};
     pluginsStore: ReturnType<typeof usePluginsStore>;
     flowStore: ReturnType<typeof useFlowStore>;
@@ -23,14 +21,12 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
     private readonly completionSource: ComputedRef<string | undefined> | undefined;
 
     constructor(
-        store: Store<Record<string, any>>,
         flowStore: ReturnType<typeof useFlowStore>,
         pluginsStore: ReturnType<typeof usePluginsStore>,
         namespacesStore: ReturnType<typeof useNamespacesStore>,
         completionSource?: ComputedRef<string | undefined>
     ) {
         super();
-        this.store = store;
         this.flowStore = flowStore;
         this.pluginsStore = pluginsStore;
         this.namespacesStore = namespacesStore;
@@ -191,10 +187,10 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
 
         switch(yamlElement.key) {
             case "namespace": {
-                const datatypeNamespaces = this.namespacesStore.datatypeNamespaces;
-                return datatypeNamespaces === undefined
-                    ? await this.namespacesStore.loadNamespacesForDatatype({dataType: "flow"})
-                    : Promise.resolve(datatypeNamespaces);
+                const availableNamespaces = this.namespacesStore.autocomplete;
+                return availableNamespaces === undefined
+                    ? await this.namespacesStore.loadAutocomplete()
+                    : Promise.resolve(availableNamespaces);
             }
             case "flowId": {
                 if (parentTask !== undefined && parentTask.namespace !== undefined) {
@@ -242,10 +238,7 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
                 if (namespace === undefined) {
                     return Promise.resolve([]);
                 }
-                return Array.from(Object.entries<string[]>(await this.namespacesStore.loadInheritedSecrets({id: namespace})).reduce((acc: Set<string>, [_, nsSecrets]: [string, string[]]) => {
-                    nsSecrets.forEach(secret => acc.add(QUOTE + secret + QUOTE));
-                    return acc;
-                }, new Set<string>()));
+                return Array.from(new Set<string>((await (this.namespacesStore as any).usableSecrets(namespace)).map((secret: string) => QUOTE + secret + QUOTE)));
             }
             case "kv": {
                 const namespace = this.extractArgValue(namespaceArg);

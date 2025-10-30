@@ -1,6 +1,6 @@
 import Triggers from "../../../../src/components/admin/Triggers.vue";
 import {vueRouter} from "storybook-vue3-router";
-import {useStore} from "vuex";
+import {useAxios} from "../../../../src/utils/axios";
 
 const meta = {
     title: "Components/Admin/Triggers",
@@ -89,41 +89,44 @@ const triggersData = [
 
 const Template = (args) => ({
     setup() {
-      const store = useStore()
-      store.$http = {
-          get: async (uri) => {
-              if(uri.includes("/triggers/search")) {
-                  return {data: {
-                    results: args.triggers,
-                    total: args.triggers.length,
-                  }
+        const store = useAxios()
+        store.get = async function (uri) {
+            if (uri.includes("/triggers/search")) {
+                return {
+                    data: {
+                        results: args.triggers,
+                        total: args.triggers.length,
+                    }
                 }
-              }
-              if(uri.includes("/distinct-namespaces")) {
-                  return {data: [
-                    "io.kestra.company",
-                    "company.team",
-                    "io.kestra.plugin",
-                    "io.kestra",
-                  ]}
-              }
-              console.log("get request", uri)
-              return {data: {}}
-          },
-          post: async (uri) => {
-              console.log("post request", uri)
-              return {data: {}}
-          },
-          put: async (uri) => {
+            }
+            if (uri.includes("/distinct-namespaces")) {
+                return {
+                    data: [
+                        "io.kestra.company",
+                        "company.team",
+                        "io.kestra.plugin",
+                        "io.kestra",
+                    ]
+                }
+            }
+            console.log("get request", uri)
+            return {data: {}}
+        }
+
+        store.post = async function (uri) {
+            console.log("post request", uri)
+            return {data: {}}
+        }
+
+        store.put = async function (uri) {
             console.log("put request", uri)
             return {data: {}}
-          },
-      }
+        }
 
-      return () =>
-              <Triggers />
+        return () =>
+            <Triggers />
     }
-  });
+});
 
 export const Default = {
     render: Template,

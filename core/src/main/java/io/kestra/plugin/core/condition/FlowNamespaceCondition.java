@@ -47,7 +47,7 @@ public class FlowNamespaceCondition extends Condition {
 
     @Builder.Default
     @Schema(
-        title = "If we must look at the flow namespace by prefix (checked using startWith). The prefix is case sensitive."
+        title = "If we must look at the flow namespace by prefix (checked using startsWith). The prefix is case sensitive."
     )
     @PluginProperty
     private final Boolean prefix = false;

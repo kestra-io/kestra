@@ -3,11 +3,11 @@
         <div v-if="webhookTriggers.length > 0">
             <el-form-item :label="t('webhook.payload')" class="payload">
                 <Editor
-                    :full-height="false"
+                    :fullHeight="false"
                     :input="true"
                     :navbar="false"
                     lang="json"
-                    :show-scroll="true"
+                    :showScroll="true"
                     v-model="webhookPayload"
                 />
             </el-form-item>
@@ -18,12 +18,12 @@
                 </div>
             </div>
 
-            <el-alert type="info" show-icon :closable="false">
+            <el-alert type="info" showIcon :closable="false">
                 {{ t('webhook.curl_note') }}
             </el-alert>
         </div>
         <div v-else>
-            <el-alert type="warning" show-icon :closable="false">
+            <el-alert type="warning" showIcon :closable="false">
                 {{ t('webhook.no_triggers') }}
             </el-alert>
         </div>
@@ -35,7 +35,7 @@
     import {useI18n} from "vue-i18n";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import Editor from "../inputs/Editor.vue";
-    import {apiUrlWithoutTenants} from "../../override/utils/route";
+    import {baseUrl, basePath, apiUrl} from "../../override/utils/route";
     import {useFlowStore} from "../../stores/flow";
 
     interface Flow {
@@ -73,7 +73,8 @@
     });
 
     const generateWebhookUrl = (trigger: Trigger): string => {
-        return `${apiUrlWithoutTenants()}/executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
+        const origin = baseUrl ? apiUrl() : `${location.origin}${basePath()}`;
+        return `${origin}/executions/webhook/${props.flow.namespace}/${props.flow.id}/${trigger.key}`;
     };
 
     const generateWebhookCurlCommand = (trigger: Trigger): string => {
@@ -109,7 +110,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .webhook-curl {
     position: relative;
     border: 1px solid var(--ks-border-primary);

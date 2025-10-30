@@ -11,12 +11,11 @@
         </template>
     </Navbar>
     <section
-        data-component="FILENAME_PLACEHOLDER"
         class="d-flex flex-column fill-height padding-bottom"
         :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
     >
         <EmptyTemplate v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
-            <div class="no-secret-manager-block d-flex flex-column gap-6">
+            <div class="no-secret-manager-block d-flex flex-column gap-6 mt-3">
                 <div class="header-block d-flex align-items-center">
                     <div class="d-flex flex-column">
                         <div class="d-flex flex-row gap-2">
@@ -29,7 +28,7 @@
                             <img :src="sourceImg" :alt="$t('demos.secrets.title')" class="img-wrapper">
                         </div>
                         <div>
-                            <div class="video-container">
+                            <div v-if="isOnline" class="video-container">
                                 <iframe
                                     src="https://www.youtube.com/embed/u0yuOYG-qMI"
                                 />
@@ -59,9 +58,9 @@
                 <SecretsTable
                     v-show="hasData === true"
                     :filterable="false"
-                    key-only
+                    keyOnly
                     :namespace="miscStore.configs?.systemNamespace ?? 'system'"
-                    :add-secret-modal-visible="addSecretModalVisible"
+                    :addSecretModalVisible="addSecretModalVisible"
                     @update:add-secret-modal-visible="addSecretModalVisible = $event"
                     @has-data="hasData = $event"
                 />
@@ -70,21 +69,24 @@
         <SecretsTable
             v-else
             filterable
-            :add-secret-modal-visible="addSecretModalVisible"
+            :addSecretModalVisible="addSecretModalVisible"
             :namespace="props.namespace"
             @update:add-secret-modal-visible="addSecretModalVisible = $event"
         />
     </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {useNetwork} from "@vueuse/core"
+    const {isOnline} = useNetwork()
+
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Navbar from "../layout/TopNavBar.vue";
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
-    import useRouteContext from "../../mixins/useRouteContext.js";
-    import {useMiscStore} from "../../stores/misc";
+    import useRouteContext from "../../composables/useRouteContext";
+    import {useMiscStore} from "override/stores/misc";
     import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
@@ -107,7 +109,7 @@
     useRouteContext(routeInfo);
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .no-secret-manager-block {
         padding: 0 10.75rem;
 

@@ -1,5 +1,4 @@
 import {canSaveFlowTemplate, saveFlowTemplate} from "../utils/flowTemplate";
-import {mapState} from "vuex";
 
 import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
@@ -15,6 +14,7 @@ import {useApiStore} from "../stores/api";
 import {usePluginsStore} from "../stores/plugins";
 import {useCoreStore} from "../stores/core";
 import {useTemplateStore} from "../stores/template";
+import {useAuthStore} from "override/stores/auth";
 import {useFlowStore} from "../stores/flow";
 
 export default {
@@ -34,8 +34,7 @@ export default {
         };
     },
     computed: {
-        ...mapState("auth", ["user"]),
-        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useFlowStore),
+        ...mapStores(useApiStore, usePluginsStore, useCoreStore, useTemplateStore, useFlowStore, useAuthStore),
         guidedProperties() {
             return this.coreStore.guidedProperties;
         },
@@ -46,13 +45,13 @@ export default {
             );
         },
         canSave() {
-            return canSaveFlowTemplate(true, this.user, this.item, this.dataType);
+            return canSaveFlowTemplate(true, this.authStore.user, this.item, this.dataType);
         },
         canCreate() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.FLOW, action.CREATE, this.item.namespace)
         },
         canExecute() {
-            return this.dataType === "flow" && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
+            return this.dataType === "flow" && this.authStore.user.isAllowed(permission.EXECUTION, action.CREATE, this.item.namespace)
         },
         routeInfo() {
             let route = {
@@ -90,8 +89,7 @@ export default {
             return (
                 this.item &&
                 this.isEdit &&
-                this.user &&
-                this.user.isAllowed(
+                this.authStore.user?.isAllowed(
                     permission[this.dataType.toUpperCase()],
                     action.DELETE,
                     this.item.namespace
@@ -134,7 +132,7 @@ export default {
             }
 
             return this.$http
-                .get(`${apiUrl(this.$store)}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
+                .get(`${apiUrl()}/flows/${this.flowStore.flow.namespace}/${this.flowStore.flow.id}/dependencies`, {params: {destinationOnly: true}})
                 .then(response => {
                     let warning = "";
 
@@ -167,13 +165,14 @@ export default {
                     .then(message => {
                         this.$toast()
                             .confirm(message, () => {
-                                // TODO: When flow store is migrated to Pinia, this will be simplified:
                                 const deletePromise = this.dataType === "template"
                                     ? this.templateStore.deleteTemplate(item)
-                                    : this.$store.dispatch(`${this.dataType}/delete${this.dataType.capitalize()}`, item);
+                                    : this.dataType === "flow"
+                                        ? this.flowStore.deleteFlow(item)
+                                        : undefined;
 
                                 return deletePromise
-                                    .then(() => {
+                                    ?.then(() => {
                                         this.content = ""
                                         this.previousContent = ""
                                         return this.$router.push({
@@ -248,13 +247,14 @@ export default {
                     return;
                 }
                 this.previousContent = YAML_UTILS.stringify(this.item);
-                // TODO: When flow store is migrated to Pinia, this will be simplified:
                 const createPromise = this.dataType === "template"
                     ? this.templateStore.createTemplate({template: this.content})
-                    : this.$store.dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content});
+                    : this.dataType === "flow"
+                        ? this.flowStore.createFlow({flow: this.content})
+                        : undefined;
 
                 createPromise
-                    .then((data) => {
+                    ?.then((data) => {
                         this.previousContent = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.content = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.onChange();

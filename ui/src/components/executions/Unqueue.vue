@@ -9,7 +9,7 @@
         {{ $t('unqueue') }}
     </component>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('unqueue')" />
         </template>
@@ -29,7 +29,7 @@
                     :disabled="item.disabled"
                 >
                     <template #default>
-                        <status size="small" :label="true" class="me-1" :status="item.code" />
+                        <Status size="small" :label="true" class="me-1" :status="item.code" />
                         <span v-html="item.label" />
                     </template>
                 </el-option>
@@ -37,78 +37,77 @@
         </template>
 
         <template #footer>
-            <el-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" native-type="submit">
+            <el-button :icon="QueueFirstInLastOut" type="primary" @click="unqueue()" nativeType="submit">
                 {{ $t('unqueue') }}
             </el-button>
         </template>
     </el-dialog>
 </template>
 
-<script setup>
-    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
-</script>
-
-<script>
-    import {mapState} from "vuex";
-    import {mapStores} from "pinia";
+<script setup lang="ts">
+    import {computed, ref} from "vue";
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import Status from "../../components/Status.vue";
+    import {useAuthStore} from "override/stores/auth"
+    import {useI18n} from "vue-i18n";
+    import {useToast} from "../../utils/toast";
+    import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
 
-    export default {
-        components: {Status},
-        props: {
-            execution: {
-                type: Object,
-                required: true
-            },
-            component: {
-                type: String,
-                default: "el-button"
-            },
-        },
-        data() {
-            return {
-                isDrawerOpen: false,
-                selectedStatus: State.RUNNING,
-            };
-        },
-        methods: {
-            unqueue() {
-                this.executionsStore
-                    .unqueue({
-                        id: this.execution.id,
-                        state: this.selectedStatus
-                    })
-                    .then(() => {
-                        this.isDrawerOpen = false;
-                        this.$toast().success(this.$t("unqueue done"));
-                    });
-            }
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
-            states() {
-                return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
-                    code: value,
-                    label: this.$t("unqueue as", {status: value}),
-                }));
-            },
-            enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
-                    return false;
-                }
+    interface Execution {
+        id: string;
+        namespace: string;
+        state: {
+            current: string;
+        };
+    }
 
-                return State.isQueued(this.execution.state.current);
-            }
-        },
-    };
+    const props = withDefaults(defineProps<{
+        execution: Execution;
+        component?: string;
+    }>(), {
+        component: "el-button"
+    });
+
+    const {t} = useI18n();
+    const toast = useToast();
+    const executionsStore = useExecutionsStore();
+    const authStore = useAuthStore();
+
+    const isDrawerOpen = ref(false);
+    const selectedStatus = ref(State.RUNNING);
+
+    const states = computed(() => {
+        return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
+            code: value,
+            label: t("unqueue as", {status: value}),
+        }));
+    });
+
+    const enabled = computed(() => {
+        if (!(authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, props.execution.namespace))) {
+            return false;
+        }
+
+        return State.isQueued(props.execution.state.current);
+    });
+
+    const unqueue = () => {
+        executionsStore
+            .unqueue({
+                id: props.execution.id,
+                state: selectedStatus.value
+            })
+            .then(() => {
+                isDrawerOpen.value = false;
+                toast.success(t("unqueue done"));
+            });
+    }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     button.el-button {
         cursor: pointer !important;
     }

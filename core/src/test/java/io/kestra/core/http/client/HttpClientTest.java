@@ -37,6 +37,7 @@ import lombok.Value;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -67,6 +68,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 @Testcontainers
+@org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
 class HttpClientTest {
     @Inject
     private ApplicationContext applicationContext;

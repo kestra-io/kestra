@@ -16,7 +16,6 @@
     "Per page": "每页",
     "Previous step": "上一步",
     "Reset guided tour": "重置引导游览",
-    "Select namespace": "选择命名空间",
     "Set default page": "设置默认页面",
     "Set labels": "设置标签",
     "Set labels done": "标签设置成功",
@@ -49,6 +48,10 @@
     "aggregation": "聚合",
     "ai": {
       "flow": {
+        "enable_instructions": {
+          "footer": "注意：目前，仅支持 Gemini 作为 AI 提供商。\n\n保存配置后重启您的 Kestra 实例。",
+          "header": "<b>AI Copilot 尚未配置。</b>\n\n要启用 AI Copilot，请将以下代码片段添加到您的 Kestra 实例配置文件中（例如 <code>application.yml</code>），并将 <code>geminiApiKey</code> 替换为您的实际 key："
+        },
         "generating": "正在为您生成Flow YAML...",
         "prompt_placeholder": "输入指令以创建您的Kestra flow。示例提示：创建一个每周一上午9点运行的flow。",
         "title": "AI代理"
@@ -160,6 +163,7 @@
     "choose file": "选择文件或拖放到此处...",
     "close": "关闭",
     "close sidebar": "关闭侧边栏",
+    "codeDisabled": "在Flow中禁用",
     "collapse": "折叠",
     "collapse all": "折叠所有",
     "common": {
@@ -171,13 +175,15 @@
     "confirm": "确认",
     "confirm password": "确认密码",
     "confirmation": "确认",
+    "context updated date": "上下文更新日期",
+    "context updated date tooltip": "触发器的上下文上次更新的时间。这发生在执行被触发、完成（锁释放）或评估后（即使没有执行发生）。",
     "contextBar": {
-      "demo": "获取演示",
+      "demo": "演示",
       "docs": "文档",
       "help": "帮助",
-      "issue": "打开问题",
+      "issue": "问题",
       "news": "新闻",
-      "star": "为仓库加星"
+      "star": "点赞我们"
     },
     "continue backfill": "继续回填",
     "continue backfills": "继续回填",
@@ -214,6 +220,7 @@
       "edition": {
         "chart": "编辑此图表",
         "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
+        "id readonly": "属性 `id` 不能更改——它现在设置为初始值。如果您想更改它，可以创建一个新的仪表板并删除旧的。",
         "label": "编辑仪表板"
       },
       "empty": "没有结果显示。",
@@ -444,8 +451,22 @@
         "title": "此Flow未设置限制。"
       },
       "dependencies": {
-        "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
-        "title": "此Flow未设置依赖项。"
+        "EXECUTION": {
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
+          "title": "当前没有依赖项。"
+        },
+        "FLOW": {
+          "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
+          "title": "当前没有依赖项。"
+        },
+        "NAMESPACE": {
+          "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a>的信息，请参阅我们的文档。",
+          "title": "当前没有依赖项。"
+        }
+      },
+      "panels": {
+        "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、Namespace Context）以获取相关功能。",
+        "title": "当前没有打开的面板。"
       },
       "plugins": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
@@ -458,6 +479,10 @@
       "triggers": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>的信息。",
         "title": "您的 flow 没有任何 Triggers。"
+      },
+      "versionPlugin": {
+        "content": "在这里，您可以管理安装在您的 Kestra 实例上的所有插件。新安装的插件可能不会立即在所有 Kestra 服务中可用，这取决于您的实例配置。",
+        "title": "您还没有版本化的插件！"
       }
     },
     "empty search": "搜索结果为空",
@@ -505,7 +530,7 @@
     "execution not found": "未找到执行 <code>{executionId}</code>",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
     "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
-    "execution replay": "此执行是对<code>{originalId}</code>的重放。",
+    "execution replay": "此执行是以下内容的重放",
     "execution replayed": "此执行已被重放。",
     "execution restarted": "此执行已重新启动{nbRestart}次。",
     "execution statistics": "执行统计",
@@ -561,7 +586,290 @@
       "title": "Kestra的最新动态"
     },
     "file preview truncated": "显示的内容已被截断",
+    "fileTypeNotAllowed": "不允许的文件类型。接受的类型：{types}",
     "files": "文件",
+    "filter": {
+      "active key value pairs": "活动的key/value对",
+      "add key value pair": "添加key/value对",
+      "aggregation": {
+        "description": "按聚合方法筛选",
+        "label": "聚合"
+      },
+      "apply": "应用过滤器",
+      "apply filter": "应用过滤器",
+      "cancel": "取消",
+      "childFilter": {
+        "description": "按执行层级筛选",
+        "label": "层次结构"
+      },
+      "childFilter_child": {
+        "description": "按执行层级筛选",
+        "label": "子过滤器"
+      },
+      "columns": "列",
+      "comparator_descriptions": {
+        "CONTAINS": "文本包含指定字符的任意位置",
+        "ENDS_WITH": "文本以指定字符结束",
+        "EQUALS": "完全匹配 - value 必须相同",
+        "GREATER_THAN": "数字/日期比较 - 值必须更大",
+        "GREATER_THAN_OR_EQUAL_TO": "数值/日期比较 - 值必须大于或等于",
+        "IN": "匹配选项列表中的任何值",
+        "LESS_THAN": "数字/日期比较 - 值必须更小",
+        "LESS_THAN_OR_EQUAL_TO": "数值/日期比较 - 值必须小于或等于",
+        "NOT_EQUALS": "排除完全匹配 - value 必须不同",
+        "NOT_IN": "从选项列表中排除所有值",
+        "PREFIX": "命名空间层级匹配（例如，'com.example' 匹配 'com.example.app'）",
+        "REGEX": "使用正则表达式进行高级模式匹配",
+        "STARTS_WITH": "文本以指定字符开头"
+      },
+      "customize": "添加过滤器",
+      "customize columns": "自定义表格列",
+      "customize tooltip": "自定义显示哪些过滤器",
+      "delete filter": "删除过滤器",
+      "description": "描述",
+      "deselect all": "取消全选",
+      "drag to reorder": "拖动以重新排序",
+      "drag to reorder columns": "拖动以重新排序列",
+      "edit filter": "编辑过滤器",
+      "empty": "您还没有保存任何过滤器。",
+      "end_date": "结束日期",
+      "enter description": "输入筛选器描述",
+      "enter label": "输入过滤器标签",
+      "execution_kind": {
+        "playground": "游乐场",
+        "playground_description": "从Playground模式触发的执行",
+        "test": "测试",
+        "test_description": "单元测试触发的执行"
+      },
+      "filters_added": "已添加 {total} 个过滤器中的 {selected} 个",
+      "flowId": {
+        "description": "按 flow ID 筛选",
+        "label": "Flow ID"
+      },
+      "footer_apply": "应用",
+      "hierarchy": {
+        "all": "默认",
+        "child_description": "仅显示嵌套/触发的执行",
+        "parent_description": "仅显示顶级/根执行"
+      },
+      "key": "键",
+      "kind": {
+        "description": "按执行类型筛选",
+        "label": "种类"
+      },
+      "label": "标签",
+      "labels": {
+        "description": "按标签筛选",
+        "label": "标签"
+      },
+      "labels_execution": {
+        "description": "按执行标签筛选",
+        "label": "标签"
+      },
+      "labels_flow": {
+        "description": "按 flow 标签筛选",
+        "label": "标签"
+      },
+      "level": {
+        "description": "按日志严重性筛选",
+        "label": "级别"
+      },
+      "level_log_executions": {
+        "label": "日志级别"
+      },
+      "metric": {
+        "description": "按指标类型筛选",
+        "label": "指标"
+      },
+      "namespace": {
+        "description": "按namespace筛选",
+        "label": "命名空间"
+      },
+      "no options found": "未找到选项",
+      "operator": "过滤运算符",
+      "options": "数据选项",
+      "periodic refresh": "定期刷新",
+      "refresh": "刷新数据",
+      "reset": "重置所有过滤器",
+      "reset_tooltip": "重置为默认",
+      "save": "保存",
+      "save duplicate": "已存在同名过滤器。",
+      "save filter": "保存过滤器",
+      "save filter tooltip": "保存已应用的过滤器",
+      "saved": "已保存的过滤器",
+      "saved filters": "已保存的过滤器集",
+      "saved tooltip": "管理已保存的过滤器",
+      "scope": {
+        "description": "按执行范围筛选",
+        "label": "范围"
+      },
+      "scope_flow": {
+        "description": "按flow范围筛选",
+        "label": "范围"
+      },
+      "scope_log": {
+        "description": "按用户或系统日志筛选",
+        "label": "范围"
+      },
+      "scope_trigger": {
+        "description": "按 trigger 范围筛选",
+        "label": "范围"
+      },
+      "search options": "搜索...",
+      "search_placeholders": {
+        "search_blueprints": "搜索blueprint",
+        "search_dashboards": "搜索仪表板...",
+        "search_executions": "搜索执行",
+        "search_flows": "搜索 flows",
+        "search_kv": "搜索 KV 对",
+        "search_logs": "搜索日志",
+        "search_metrics": "搜索指标",
+        "search_namespaces": "搜索 namespaces",
+        "search_plugins": "搜索 {count}+ 插件",
+        "search_secrets": "搜索密钥",
+        "search_triggers": "搜索 triggers"
+      },
+      "select all": "全选",
+      "select filter": "选择要添加的过滤器",
+      "select_end_date": "选择结束日期",
+      "select_option": "选择一个选项",
+      "select_start_date": "选择开始日期",
+      "show chart": "显示图表",
+      "show data options tooltip": "显示数据选项",
+      "show default": "显示默认",
+      "start_date": "开始日期",
+      "state": {
+        "description": "按执行状态筛选",
+        "label": "状态"
+      },
+      "table_column": {
+        "blueprints": {
+          "tags": "与blueprint关联的标签"
+        },
+        "executions": {
+          "duration": "执行的总运行时间",
+          "end-date": "执行完成时",
+          "flow": "已执行flow的ID",
+          "id": "执行 ID",
+          "inputs": "执行提供的输入值",
+          "labels": "执行标签 (key:value 格式)",
+          "namespace": "执行的flow所属的namespace",
+          "outputs": "执行产生的输出",
+          "revision": "用于此次执行的flow版本",
+          "start-date": "执行开始时",
+          "state": "当前执行状态",
+          "task-id": "执行中最后一个task的ID"
+        },
+        "flow_triggers": {
+          "next execution date": "下次触发器执行时间",
+          "type": "触发器类型",
+          "workerId": "工作器标识符"
+        },
+        "flows": {
+          "description": "flow的文本描述",
+          "execution statistics": "显示最近执行状态的图表",
+          "id": "唯一的flow标识符",
+          "labels": "flow 标签 (key:value 格式)",
+          "last execution date": "上次执行flow的时间",
+          "last execution status": "最近一次执行的状态",
+          "namespace": "flow的namespace",
+          "revision": "flow定义的当前版本号",
+          "triggers": "可以启动flow的Triggers（例如，schedule，event）"
+        },
+        "kv": {
+          "description": "可选说明解释KV条目",
+          "expiration date": "当 kv store 的键值对过期时",
+          "key": "存储值的唯一标识符",
+          "last modified": "最近更新的时间戳",
+          "namespace": "逻辑分组，其中存储了key-value对"
+        },
+        "metrics": {
+          "name": "指标名称",
+          "tags": "与指标关联的标签",
+          "task": "生成该指标的任务",
+          "value": "指标的值"
+        },
+        "secrets": {
+          "description": "可选备注提供上下文",
+          "key": "存储密钥的标识符",
+          "namespace": "逻辑分组存储机密",
+          "tags": "额外分类标签"
+        },
+        "triggers": {
+          "context updated date": "触发器上下文的最后更新",
+          "current execution": "当前执行ID",
+          "evaluation lock date": "当评估被锁定时",
+          "flow": "与trigger关联的flow",
+          "last trigger date": "上次触发器执行时间",
+          "namespace": "触发器的namespace",
+          "next evaluation date": "触发器下一次评估时",
+          "workerId": "工作器标识符"
+        }
+      },
+      "task": {
+        "description": "按任务名称筛选",
+        "label": "任务"
+      },
+      "timeRange": {
+        "description": "按执行时间筛选",
+        "label": "间隔"
+      },
+      "timeRange_dashboard": {
+        "description": "按仪表板窗口筛选",
+        "label": "间隔"
+      },
+      "timeRange_log": {
+        "description": "按log时间戳筛选",
+        "label": "间隔"
+      },
+      "timeRange_metric": {
+        "description": "按时间间隔筛选",
+        "label": "间隔"
+      },
+      "timeRange_trigger": {
+        "description": "按最后触发的时间戳筛选",
+        "label": "间隔"
+      },
+      "timerange": {
+        "custom": "自定义范围",
+        "predefined": "预定义"
+      },
+      "titles": {
+        "blueprint_filters": "蓝图过滤器",
+        "dashboard_filters": "仪表板过滤器",
+        "execution_filters": "执行过滤器",
+        "flow_dashboard_filters": "流仪表板过滤器",
+        "flow_execution_filters": "流执行过滤器",
+        "flow_filters": "流过滤器",
+        "flow_metric_filters": "流量指标过滤器",
+        "kv_filters": "键值过滤器",
+        "log_filters": "日志过滤器",
+        "metric_filters": "指标过滤器",
+        "namespace_dashboard_filters": "命名空间仪表板过滤器",
+        "namespace_filters": "命名空间过滤器",
+        "plugin_filters": "插件搜索",
+        "secret_filters": "秘密过滤器",
+        "trigger_filters": "触发器过滤器"
+      },
+      "triggerExecutionId": {
+        "description": "按 trigger 执行 ID 筛选",
+        "label": "触发 Execution ID"
+      },
+      "triggerId": {
+        "description": "按触发器标识符筛选",
+        "label": "触发器 ID"
+      },
+      "triggerId_trigger": {
+        "description": "按 trigger ID 筛选",
+        "label": "触发器 ID"
+      },
+      "update": "更新",
+      "value": "值",
+      "workerId": {
+        "description": "按worker ID筛选",
+        "label": "工作者 ID"
+      }
+    },
     "filter by log level": "按日志级别过滤",
     "filters": {
       "comparators": {
@@ -627,6 +935,7 @@
       },
       "text_search": "搜索此文本"
     },
+    "fix_with_ai": "使用 AI 修复",
     "flow": "流程",
     "flow already exists": "流程已存在",
     "flow creation": "流程创建",
@@ -643,6 +952,7 @@
     "flow-no-dependencies": "您的flow没有任何依赖项",
     "flow_export": "导出flow",
     "flow_only": "仅在流程标签中可用。",
+    "flow_outputs": "Flow Outputs",
     "flows": "流程",
     "flows deleted": "<code>{count}</code> 个流程已删除",
     "flows disabled": "<code>{count}</code> 个流程已禁用",
@@ -708,6 +1018,7 @@
         "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
       },
       "duplicate": "此键已存在",
+      "inherited": "继承的KV对",
       "name": "键值存储",
       "type": "类型",
       "update": "更新键 '{key}' 的值"
@@ -721,6 +1032,8 @@
     "last execution state": "上一次状态",
     "last execution status": "上次执行状态",
     "last modified": "上次修改",
+    "last trigger date": "上次触发日期",
+    "last trigger date tooltip": "触发器上次执行的时间。在运行backfill时可能是过去的时间。",
     "launch execution": "执行",
     "learn_more": "了解更多",
     "light_background": "这是在使用浅色背景时的首选选项。",
@@ -745,9 +1058,12 @@
     "metrics": "指标",
     "min": "最小",
     "minutes": "分钟",
+    "missingSource": "缺少源",
     "monogram": "字母组合",
     "months": "月份",
+    "more_actions": "更多操作",
     "multi_panel_editor": {
+      "close_all_panels": "关闭所有面板",
       "close_all_tabs": "关闭所有标签页",
       "move_left": "向左移动",
       "move_right": "向右移动"
@@ -758,9 +1074,12 @@
     "namespace and id readonly": "属性 `namespace` 和 `id` 不能更改——它们现在被设置为初始值。如果你想重命名一个流程或更改其命名空间，可以创建一个新流程并删除旧的。",
     "namespace files": {
       "create": {
-        "already_exists": "文件名已存在",
         "file": "创建文件",
+        "file_already_exists": "已存在同名文件",
+        "file_error": "创建文件时发生错误",
         "folder": "创建文件夹",
+        "folder_already_exists": "已存在同名文件夹",
+        "folder_error": "创建文件夹时发生错误",
         "label": "创建"
       },
       "delete": {
@@ -771,11 +1090,13 @@
         "label": "删除"
       },
       "dialog": {
-        "confirm": "确认",
-        "file_deletion": "确认删除文件",
-        "file_deletion_description": "确定要删除此文件吗？",
-        "folder_deletion": "确认删除文件夹",
-        "folder_deletion_description": "确定要删除此文件夹及其所有内容吗？",
+        "deletion": {
+          "confirm": "确认",
+          "files": "您确定要删除 <code>{count}</code> 个文件吗？",
+          "folders": "您确定要删除 <code>{count}</code> 个文件夹及其所有内容吗？",
+          "mixed": "您确定要删除 <code>{folders}</code> 个文件夹和 <code>{files}</code> 个文件吗？",
+          "title": "确认删除内容"
+        },
         "name": {
           "file": "文件名（带扩展名）：",
           "folder": "文件夹名："
@@ -835,6 +1156,8 @@
     "neutral trend": "稳定",
     "new": "新建",
     "new version": "新版本 {version} 可用！",
+    "next evaluation date": "下次评估日期",
+    "next evaluation date tooltip": "根据其间隔，下一次评估trigger的时间。如果条件不满足，可能与下一次执行日期不同。",
     "next execution date": "下次执行日期",
     "next_execution": "下一次执行",
     "no data current task": "当前task没有可用数据",
@@ -863,13 +1186,16 @@
       },
       "creation": {
         "afterExecution": "添加执行后块",
+        "charts": "添加图表",
         "conditions": "添加条件",
         "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
         "inputs": "添加一个input字段",
+        "numerator": "添加分子",
         "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
-        "triggers": "添加一个trigger"
+        "triggers": "添加一个trigger",
+        "where": "筛选您的数据"
       },
       "fields": {
         "general": {
@@ -912,14 +1238,17 @@
       },
       "select": {
         "afterExecution": "选择一个task",
+        "charts": "选择图表类型",
         "conditions": "选择条件",
         "errors": "选择一个task",
         "finally": "选择一个task",
         "inputs": "选择一个input字段类型",
+        "numerator": "选择一个分子",
         "pluginDefaults": "选择插件",
         "task": "选择一个task",
         "tasks": "选择一个task",
-        "triggers": "选择一个trigger"
+        "triggers": "选择一个trigger",
+        "where": "选择筛选器类型"
       },
       "toggle_pebble": "切换Pebble编辑器",
       "unnamed": "无名称",
@@ -928,7 +1257,7 @@
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_file_choosen": "未选择文件",
     "no_logs_data": "无数据",
-    "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
+    "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
       "executions": "未找到执行",
@@ -1027,7 +1356,9 @@
     "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
+    "paused": "暂停",
     "playground": {
+      "clear_history": "清除历史记录",
       "confirm_create": "在创建flow时无法运行playground。启动playground运行将创建flow。",
       "history": "最近10次运行",
       "play_icon_info": "您还可以在无代码或拓扑视图中点击播放图标。",
@@ -1037,7 +1368,8 @@
       "run_task_info": "将鼠标悬停在Flow Code编辑器中的任何task上，然后点击“Run task”按钮以测试您的task。",
       "run_this_task": "运行此task",
       "title": "游乐场",
-      "toggle": "游乐场"
+      "toggle": "游乐场",
+      "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
     },
     "pluginDefaults": "插件默认值",
     "pluginPage": {
@@ -1055,7 +1387,12 @@
     "port": "端口",
     "prefill inputs": "预填",
     "prev_execution": "先前执行",
-    "preview": "预览",
+    "preview": {
+      "auto-view": "自动视图",
+      "force-editor": "强制编辑器视图",
+      "label": "预览",
+      "view": "查看"
+    },
     "properties": {
       "hidden": "隐藏在表格中",
       "hint": "选择可见列",
@@ -1077,6 +1414,8 @@
     "replay from beginning tooltip": "从头开始创建相似的执行",
     "replay from task tooltip": "从任务 <code>{taskId}</code> 创建相似的执行",
     "replay latest revision": "使用最新修订版重放",
+    "replay the execution": "重放 flow <code>{flowId}</code> 的执行 <code>{executionId}</code>",
+    "replay with inputs": "使用输入重放",
     "replayed": "执行已重放",
     "required field": "必填字段",
     "reset": "重置",
@@ -1118,7 +1457,9 @@
     "scope_filter": {
       "all": "所有 {label}",
       "system": "系统 {label}",
-      "user": "用户 {label}"
+      "system_description": "系统维护 {label}",
+      "user": "用户 {label}",
+      "user_description": "普通用户启动了{label}"
     },
     "search": "搜索",
     "search blueprint": "搜索蓝图",
@@ -1194,6 +1535,7 @@
           "label": "语言和地区",
           "note": "请注意，此设置用于在UI中显示日期和时间属性。要在UTC以外的时区安排你的流程，请确保在流程代码或插件默认值中的Schedule触发器上设置时区属性。"
         },
+        "reset_section_to_defaults": "恢复此部分的默认值",
         "save": {
           "discard": "丢弃",
           "label": "保存偏好设置",
@@ -1347,7 +1689,6 @@
     "task_id_exists": "任务ID已存在",
     "task_id_message": "任务ID ${existingTask} 已经存在于flow中。",
     "taskid column details": "最后执行的任务及其尝试次数。",
-    "taskruns": "任务运行",
     "tasks": "任务",
     "template": "模板",
     "template creation": "模板创建",
@@ -1361,6 +1702,7 @@
       "name": "租户",
       "names": "租户"
     },
+    "tenantId": "租户 ID",
     "test-badge-text": "测试",
     "test-badge-tooltip": "此执行由测试创建",
     "theme": "主题",
@@ -1384,6 +1726,7 @@
       "zoom-out": "缩小",
       "zoom-reset": "重置缩放"
     },
+    "total_duration": "总持续时间",
     "total_executions": "总执行次数",
     "trigger": "触发器",
     "trigger details": "触发器详情",
@@ -1398,6 +1741,7 @@
       "title": "过滤子执行"
     },
     "trigger refresh": "触发刷新",
+    "triggerId": "触发器 ID",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "trigger_id_exists": "Trigger Id 已经存在",
     "trigger_id_message": "触发器 Id ${existingTrigger} 已经存在于 flow 中。",

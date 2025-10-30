@@ -14,7 +14,7 @@ import python from "shiki/langs/python.mjs";
 import javascript from "shiki/langs/javascript.mjs";
 import {createOnigurumaEngine} from "shiki/engine-oniguruma.mjs";
 
-const langs = [yaml, python, javascript]
+const langs = {yaml, python, javascript}
 const onigurumaEngine = createOnigurumaEngine(() => import("shiki/wasm"));
 
 export {

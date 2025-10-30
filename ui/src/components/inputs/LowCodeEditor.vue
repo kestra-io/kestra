@@ -3,20 +3,20 @@
         <slot name="top-bar" />
         <Topology
             :id="vueflowId"
-            :is-horizontal="isHorizontal"
-            :is-read-only="isReadOnly"
-            :is-allowed-edit="isAllowedEdit"
+            :isHorizontal="isHorizontal"
+            :isReadOnly="isReadOnly"
+            :isAllowedEdit="isAllowedEdit"
             :source="source"
-            :toggle-orientation-button="toggleOrientationButton"
-            :flow-graph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
-            :flow-id="flowId"
+            :toggleOrientationButton="toggleOrientationButton"
+            :flowGraph="playgroundStore.enabled ? (executionsStore.flowGraph ?? props.flowGraph) : props.flowGraph"
+            :flowId="flowId"
             :namespace="namespace"
-            :expanded-subflows="props.expandedSubflows"
+            :expandedSubflows="props.expandedSubflows"
             :icons="pluginsStore.icons"
             :execution="executionsStore.execution"
-            :subflows-executions="executionsStore.subflowsExecutions"
-            :playground-enabled="playgroundStore.enabled"
-            :playground-ready-to-start="playgroundStore.readyToStart"
+            :subflowsExecutions="executionsStore.subflowsExecutions"
+            :playgroundEnabled="playgroundStore.enabled"
+            :playgroundReadyToStart="playgroundStore.readyToStart"
             @toggle-orientation="toggleOrientation"
             @edit="onEditTask"
             @delete="onDelete"
@@ -31,10 +31,64 @@
             @expand-subflow="expandSubflow"
             @run-task="playgroundStore.runUntilTask($event.task.id)"
         />
+
+        <Drawer v-if="isDrawerOpen && selectedTask" v-model="isDrawerOpen">
+            <template #header>
+                <code>{{ selectedTask.id }}</code>
+            </template>
+            <div v-if="isShowLogsOpen">
+                <Collapse>
+                    <el-form-item>
+                        <SearchField
+                            :router="false"
+                            @search="onSearch"
+                            class="me-2"
+                        />
+                    </el-form-item>
+                    <el-form-item>
+                        <LogLevelSelector
+                            :value="logLevel"
+                            @update:model-value="onLevelChange"
+                        />
+                    </el-form-item>
+                </Collapse>
+                <TaskRunDetails
+                    v-for="taskRun in selectedTask.taskRuns"
+                    :key="taskRun.id"
+                    :targetExecutionId="selectedTask.execution?.id"
+                    :taskRunId="taskRun.id"
+                    :filter="logFilter"
+                    :excludeMetas="[
+                        'namespace',
+                        'flowId',
+                        'taskId',
+                        'executionId',
+                    ]"
+                    :level="logLevel"
+                    @follow="emit('follow', $event)"
+                />
+            </div>
+            <div v-if="isShowDescriptionOpen">
+                <Markdown
+                    :source="selectedTask.description"
+                />
+            </div>
+            <div v-if="isShowConditionOpen">
+                <Editor
+                    :readOnly="true"
+                    :input="true"
+                    :fullHeight="false"
+                    :navbar="false"
+                    :modelValue="selectedTask.runIf"
+                    lang="yaml"
+                    class="mt-3"
+                />
+            </div>
+        </Drawer>
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     // Core
     import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
 
@@ -43,23 +97,33 @@
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
 
-    // Topology
-    import {Topology} from "@kestra-io/ui-libs";
+    // @ts-expect-error no types for SearchField yet
+    import SearchField from "../layout/SearchField.vue";
+    // @ts-expect-error no types for LogLevelSelector yet
+    import LogLevelSelector from "../logs/LogLevelSelector.vue";
+    // @ts-expect-error no types for TaskRunDetails yet
+    import TaskRunDetails from "../logs/TaskRunDetails.vue";
+    // @ts-expect-error no types for Collapse yet
+    import Collapse from "../layout/Collapse.vue";
+    import Drawer from "../Drawer.vue";
+    import Markdown from "../layout/Markdown.vue";
+    import Editor from "./Editor.vue";
 
-    // Utils
+    import {Topology} from "@kestra-io/ui-libs";
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../no-code/injectionKeys";
+    import {useCoreStore} from "../../stores/core";
+    import {usePluginsStore} from "../../stores/plugins";
+    import {useExecutionsStore} from "../../stores/executions";
+    import {usePlaygroundStore} from "../../stores/playground";
 
     const router = useRouter();
 
     const vueflowId = ref(Math.random().toString());
     const {fitView} = useVueFlow(vueflowId.value);
 
-    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
-    import {useCoreStore} from "../../stores/core";
-    import {usePluginsStore} from "../../stores/plugins";
-    import {useExecutionsStore} from "../../stores/executions";
-    import {usePlaygroundStore} from "../../stores/playground";
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
 
     const executionsStore = useExecutionsStore();
@@ -114,6 +178,8 @@
     const taskEditData = ref();
     const taskEditDomElement = ref();
     const isShowLogsOpen = ref(false);
+    const logFilter = ref("");
+    const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
     const isDrawerOpen = ref(false);
     const isShowDescriptionOpen = ref(false);
     const isShowConditionOpen = ref(false);
@@ -166,9 +232,9 @@
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             () => {
-                const section = event.section ? event.section : SECTIONS.TASKS;
+                const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase();
                 if (
-                    section === SECTIONS.TASKS &&
+                    section === SECTIONS.TASKS.toLowerCase() &&
                     flowParsed.tasks.length === 1 &&
                     flowParsed.tasks.map((e: any) => e.id).includes(event.id)
                 ) {
@@ -277,6 +343,14 @@
         selectedTask.value = event;
         isShowLogsOpen.value = true;
         isDrawerOpen.value = true;
+    };
+
+    const onSearch = (search: string) => {
+        logFilter.value = search;
+    };
+
+    const onLevelChange = (level: string) => {
+        logLevel.value = level;
     };
 
     const showDescription = (event: string) => {

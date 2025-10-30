@@ -53,36 +53,36 @@ import java.util.List;
 )
 public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
     @Schema(
-        title = "Namespace whose logs need to be purged, or namespace of the logs that needs to be purged.",
+        title = "Namespace of logs that need to be purged",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
     )
     private Property<String> namespace;
 
     @Schema(
-        title = "The flow ID of the logs to be purged.",
-        description = "You need to provide the `namespace` properties if you want to purge a flow logs."
+        title = "The flow ID of the logs to be purged",
+        description = "You need to provide the `namespace` property if you want to purge flow logs."
     )
     private Property<String> flowId;
 
     @Schema(
-        title = "The Execution ID of the logs to be purged."
+        title = "The Execution ID of the logs to be purged"
     )
     private Property<String> executionId;
 
     @Schema(
-        title = "The levels of the logs to be purged.",
-        description = "If not set, log for any levels will be purged."
+        title = "The levels of the logs to be purged",
+        description = "If not set, log for all levels will be purged."
     )
     private Property<List<Level>> logLevels;
 
     @Schema(
-        title = "The minimum date to be purged.",
+        title = "The minimum date to be purged",
         description = "All logs after this date will be purged."
     )
     private Property<String> startDate;
 
     @Schema(
-        title = "The maximum date to be purged.",
+        title = "The maximum date to be purged",
         description = "All logs before this date will be purged."
     )
     @NotNull
@@ -121,7 +121,7 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The count of deleted logs."
+            title = "The count of deleted logs"
         )
         private int count;
     }

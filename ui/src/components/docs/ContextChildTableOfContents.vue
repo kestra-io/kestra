@@ -1,8 +1,8 @@
 <template>
-    <ChildTableOfContents :page-url="pageUrl" :max="max" :render-link="ContextDocsTOCLink" />
+    <ChildTableOfContents :pageUrl="pageUrl" :max="max" :renderLink="ContextDocsTOCLink" />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {h} from "vue";
     import ChildTableOfContents from "../content/ChildTableOfContents.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";

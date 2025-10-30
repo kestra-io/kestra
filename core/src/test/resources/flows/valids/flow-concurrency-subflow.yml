@@ -1,0 +1,8 @@
+id: flow-concurrency-subflow
+namespace: io.kestra.tests
+
+tasks:
+  - id: subflow
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: flow-concurrency-cancel

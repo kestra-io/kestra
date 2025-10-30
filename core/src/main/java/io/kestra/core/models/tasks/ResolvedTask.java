@@ -30,7 +30,7 @@ public class ResolvedTask {
 
     public NextTaskRun toNextTaskRunIncrementIteration(Execution execution, Integer iteration) {
         return new NextTaskRun(
-            TaskRun.of(execution, this).withIteration(iteration != null ? iteration : 1),
+            TaskRun.of(execution, this).withIteration(iteration != null ? iteration : 0),
             this.getTask()
         );
     }

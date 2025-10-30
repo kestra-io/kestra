@@ -77,7 +77,7 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     private Property<List<String>> tasksId;
 
     @Schema(
-        title = "The lowest log level that you want to fetch."
+        title = "The lowest log level that you want to fetch"
     )
     @Builder.Default
     private Property<Level> level = Property.ofValue(Level.INFO);
@@ -129,12 +129,12 @@ public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The number of rows fetched."
+            title = "The number of rows fetched"
         )
         private Long size;
 
         @Schema(
-            title = "Internal storage URI of stored results.",
+            title = "Internal storage URI of stored results",
             description = "Stored as Amazon ION file in a row per row format."
         )
         private URI uri;

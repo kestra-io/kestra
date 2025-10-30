@@ -17,12 +17,15 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Map;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest(rebuildContext = true)
+@Execution(ExecutionMode.SAME_THREAD)
 class IsFileEmptyFunctionTest {
 
     private static final String NAMESPACE = "my.namespace";

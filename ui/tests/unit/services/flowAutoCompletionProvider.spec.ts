@@ -1,5 +1,4 @@
-import type {Store} from "vuex";
-import {describe, expect, it, Mock, vi} from "vitest"
+import {describe, expect, it, vi} from "vitest"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
@@ -43,34 +42,6 @@ const propertiesSchemaWrapper = (properties: Record<string, any>) => ({
         }
     }
 })
-
-interface MockStore<T> extends Store<T> {
-    dispatch: Mock<() => Promise<any>>
-}
-
-const mockedStore: MockStore<Record<string, any>> = {
-    state: {
-        namespace: {}
-    },
-    dispatch: vi.fn((type, payload) => {
-        if (type === "namespace/loadNamespacesForDatatype" && payload.dataType === "flow") {
-            return Promise.resolve(["my.namespace", "another.namespace"])
-        } else if (type === "namespace/inheritedSecrets") {
-            if (payload.id === "my.namespace") {
-                return Promise.resolve({"my.namespace": ["myFirstSecret", "mySecondSecret"], "my": ["myInheritedSecret"]});
-            } else if (payload.id === "another.namespace") {
-                return Promise.resolve({"another.namespace": ["anotherNsFirstSecret", "anotherNsSecondSecret"]});
-            }
-        } else if (type === "namespace/kvsList") {
-            if (payload.id === "my.namespace") {
-                return Promise.resolve([{key: "myFirstKv"}, {key: "mySecondKv"}]);
-            } else if (payload.id === "another.namespace") {
-                return Promise.resolve([{key: "anotherNsFirstKv"}, {key: "anotherNsSecondKv"}]);
-            }
-        }
-        return Promise.reject("404")
-    })
-} as any
 
 const pluginsStore = {
     load: vi.fn((payload: any) =>{
@@ -132,14 +103,14 @@ const flowStore = {
 
 const namespacesStore = {
     datatypeNamespaces: undefined,
-    loadNamespacesForDatatype: vi.fn(() => ["my.namespace", "another.namespace"]),
-    loadInheritedSecrets: vi.fn((params: {id: string}) => {
-        if (params.id === "my.namespace") {
-            return {"my.namespace": ["myFirstSecret", "mySecondSecret"], "my": ["myInheritedSecret"]};
-        } else if (params.id === "another.namespace") {
-            return {"another.namespace": ["anotherNsFirstSecret", "anotherNsSecondSecret"]};
+    loadAutocomplete: vi.fn(() => ["my.namespace", "another.namespace"]),
+    usableSecrets: vi.fn((id: string) => {
+        if (id === "my.namespace") {
+            return ["myFirstSecret", "mySecondSecret", "myInheritedSecret"];
+        } else if (id === "another.namespace") {
+            return ["anotherNsFirstSecret", "anotherNsSecondSecret"];
         }
-        return {};
+        return [];
     }),
     kvsList: vi.fn((params: {id: string}) => {
         if (params.id === "my.namespace") {
@@ -151,12 +122,12 @@ const namespacesStore = {
     })
 } as any
 
-const provider = new FlowAutoCompletion(mockedStore, flowStore, pluginsStore, namespacesStore);
+const provider = new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore);
 const parsed = YAML_UTILS.parse(defaultFlow);
 
 describe("FlowAutoCompletionProvider", () => {
     it("root autocompletions", async () => {
-        expect(await new FlowAutoCompletion(mockedStore, flowStore, pluginsStore, namespacesStore).rootFieldAutoCompletion()).toEqual([
+        expect(await new FlowAutoCompletion(flowStore, pluginsStore, namespacesStore).rootFieldAutoCompletion()).toEqual([
             "outputs",
             "inputs",
             "vars",
@@ -220,12 +191,12 @@ describe("FlowAutoCompletionProvider", () => {
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("namespace:") + "namespace:".length))).toEqual(["my.namespace", "another.namespace"]);
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("flowId:") + "flowId:".length))).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);
 
-        expect(namespacesStore.loadNamespacesForDatatype).toHaveBeenCalledOnce();
+        expect(namespacesStore.loadAutocomplete).toHaveBeenCalledOnce();
         expect(flowStore.flowsByNamespace).toHaveBeenCalledWith("another.namespace");
         const firstInputIndex = defaultFlow.indexOf("first-input");
-        namespacesStore.loadNamespacesForDatatype.mockClear();
+        namespacesStore.loadAutocomplete.mockClear();
         expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
-        expect(namespacesStore.loadNamespacesForDatatype).not.toHaveBeenCalled();
+        expect(namespacesStore.loadAutocomplete).not.toHaveBeenCalled();
         expect(flowStore.loadFlow).toHaveBeenCalledOnce();
 
         // Subflow inputs cache kicks in

@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div>
         <span class="markdown" v-html="markdownRenderer" />
     </div>
 </template>
@@ -157,7 +157,6 @@
                 }
             }
             padding: 5px ;
-            border-left: 4px solid var(--ks-border-primary);
         }
 
         strong > code,

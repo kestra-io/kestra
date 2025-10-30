@@ -3,7 +3,6 @@ package io.kestra.core.models.triggers.multipleflows;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.TimeWindow;
 import io.kestra.core.utils.Rethrow;
 import org.slf4j.Logger;
@@ -24,7 +23,7 @@ public interface MultipleCondition extends Rethrow.PredicateChecked<ConditionCon
 
     /**
      * This conditions will only validate previously calculated value on
-     * {@link io.kestra.core.services.FlowTriggerService#computeExecutionsFromFlowTriggers(Execution, List, Optional)}} and {@link MultipleConditionStorageInterface#save(List)} by the executor.
+     * io.kestra.executor.FlowTriggerService#computeExecutionsFromFlowTriggers(Execution, List, Optional) and {@link MultipleConditionStorageInterface#save(List)} by the executor.
      * The real validation is done here.
      */
     @Override

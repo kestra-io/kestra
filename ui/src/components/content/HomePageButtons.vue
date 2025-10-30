@@ -8,18 +8,24 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import ContextDocsLink from "../docs/ContextDocsLink.vue";
 
-    defineProps({
-        buttons: {
-            type: Array,
-            default: () => []
-        }
-    })
+    interface Button {
+        label: string;
+        href: string;
+    }
+
+    interface Props {
+        buttons?: Button[];
+    }
+
+    withDefaults(defineProps<Props>(), {
+        buttons: () => []
+    });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .docs-button-row {
     display: flex;
     justify-content: flex-start;

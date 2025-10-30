@@ -48,13 +48,13 @@ import java.util.function.Predicate;
 )
 public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
     @Schema(
-        title = "The key for which to get the value."
+        title = "The key for which to get the values"
     )
     private Property<String> prefix;
 
     @NotNull
     @Schema(
-        title = "The namespace on which to get the value."
+        title = "The namespace from which to get the KV pairs"
     )
     @Builder.Default
     private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
@@ -84,7 +84,7 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "Found keys for given prefix."
+            title = "Found keys for given prefix"
         )
         private final List<String> keys;
     }

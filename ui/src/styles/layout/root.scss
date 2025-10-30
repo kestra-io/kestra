@@ -39,7 +39,7 @@
         #{--el-color-alert-#{$type}}: var(--ks-content-#{$type});
     }
 
-    --bs-code-color: $base-purple-600;
+    #{--bs-code-color}: $base-purple-600;
 
     #{--card-bg}: var(--ks-background-card);
     #{--input-bg}: var(--ks-background-input);
@@ -147,4 +147,8 @@ $logLevels: "trace", "debug", "info", "warn", "error";
         padding-left: .5rem;
         padding-right: .5rem;
     }
+}
+
+.keep-whitespace {
+    white-space: pre-wrap;
 }

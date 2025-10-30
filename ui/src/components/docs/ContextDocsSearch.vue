@@ -11,7 +11,7 @@
             :loading="loading"
         >
             <template #prefix>
-                <magnify class="search-icon" />
+                <Magnify class="search-icon" />
             </template>
         </el-input>
         <div v-if="loading" class="loading-indicator">
@@ -19,13 +19,13 @@
         </div>
         <div v-if="showResults" class="search-results">
             <template v-if="searchResults.length > 0">
-                <context-docs-link
+                <ContextDocsLink
                     v-for="(result, index) in searchResults"
                     :key="result.url"
                     class="search-result"
                     :class="{'selected': index === selectedIndex}"
                     :href="result.parsedUrl.replace(/^docs\//, '')"
-                    use-raw
+                    useRaw
                     :data-index="index"
                     @click="resetSearch"
                 >
@@ -35,7 +35,7 @@
                     <p class="result-preview">
                         {{ result.preview }}
                     </p>
-                </context-docs-link>
+                </ContextDocsLink>
             </template>
             <div v-else class="no-results">
                 {{ t("no_results_found") }}
@@ -44,7 +44,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted} from "vue";
     import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
@@ -56,33 +56,33 @@
     const docStore = useDocStore();
 
     const searchQuery = ref("");
-    const searchResults = ref([]);
+    const searchResults = ref<Array<{ title: string; preview: string; url: string; parsedUrl: string }>>([]);
     const loading = ref(false);
     const selectedIndex = ref(0);
-    const searchContainer = ref(null);
+    const searchContainer = ref<HTMLDivElement | null>(null);
 
     const showResults = computed(() => {
         return searchQuery.value.trim().length > 0;
     });
 
-    const handleKeyUp = (e) => {
+    const handleKeyUp = (e: KeyboardEvent) => {
         e.preventDefault();
         if (searchResults.value.length > 0) {
             selectedIndex.value = Math.max(0, selectedIndex.value - 1);
         }
     };
 
-    const handleKeyDown = (e) => {
+    const handleKeyDown = (e: KeyboardEvent) => {
         e.preventDefault();
         if (searchResults.value.length > 0) {
             selectedIndex.value = Math.min(searchResults.value.length - 1, selectedIndex.value + 1);
         }
     };
 
-    const handleEnterKey = (e) => {
+    const handleEnterKey = (e: KeyboardEvent) => {
         e.preventDefault();
         if (searchResults.value.length > 0) {
-            const selectedResult = document.querySelector(`.search-result[data-index="${selectedIndex.value}"]`);
+            const selectedResult = document.querySelector(`.search-result[data-index="${selectedIndex.value}"]`) as HTMLElement;
             if (selectedResult) {
                 selectedResult.click();
             }
@@ -94,7 +94,7 @@
         searchResults.value = [];
     };
 
-    const performSearch = async (query) => {
+    const performSearch = async (query: string) => {
         if (!query) {
             searchResults.value = [];
             selectedIndex.value = 0;
@@ -123,8 +123,8 @@
         debouncedSearch(searchQuery.value.trim());
     };
 
-    const handleClickOutside = (event) => {
-        if (searchContainer.value && !searchContainer.value.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+        if (searchContainer.value && !searchContainer.value.contains(event.target as Node)) {
             resetSearch();
         }
     };
@@ -139,7 +139,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .search-container {
         position: relative;
         margin-bottom: 0;

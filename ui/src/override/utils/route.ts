@@ -1,4 +1,4 @@
-import type {Store} from "vuex"
+import {RouteLocationNormalizedLoaded} from "vue-router";
 
 declare global {
     interface Window {
@@ -13,9 +13,11 @@ const createBaseUrl = (): string => {
 
 export const baseUrl = createBaseUrl().replace(/\/$/, "")
 export const basePath = () => "/api/v1/main"
+export const basePathWithoutTenant = () => "/api/v1"
 
-export const apiUrl = (_: Store<any>): string => {
+export const apiUrl = (): string => {
     return `${baseUrl}${basePath()}`;
 }
 
-export const apiUrlWithoutTenants = (): string => `${baseUrl}/api/v1`
+export const apiUrlWithTenant = (_: RouteLocationNormalizedLoaded): string => apiUrl();
+export const apiUrlWithoutTenants = (): string => `${baseUrl}${basePathWithoutTenant()}`;

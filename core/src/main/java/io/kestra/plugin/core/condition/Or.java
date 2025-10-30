@@ -31,7 +31,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Plugin(
     examples = {
         @Example(
-            title = "Trigger condition to execute the flow when any of the condition is satisfied.",
+            title = "Trigger condition to execute the flow when any of the conditions are satisfied.",
             full = true,
             code = """
                 id: schedule_condition_or

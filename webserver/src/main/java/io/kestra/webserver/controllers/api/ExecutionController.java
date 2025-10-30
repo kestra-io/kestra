@@ -25,7 +25,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.runners.pebble.functions.SecretFunction;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.InternalNamespace;
 import io.kestra.core.storages.Namespace;
@@ -49,7 +48,6 @@ import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.kestra.webserver.utils.filepreview.FileRender;
 import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
@@ -125,14 +123,7 @@ public class ExecutionController {
     protected String basePath;
 
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
-    @Nullable
-    private VariableRenderer.VariableConfiguration variableConfiguration;
-
-    @Inject
-    private FlowRepositoryInterface flowRepository;
+    protected FlowRepositoryInterface flowRepository;
 
     @Inject
     private FlowService flowService;
@@ -150,7 +141,7 @@ public class ExecutionController {
     private StorageInterface storageInterface;
 
     @Inject
-    private ExecutionService executionService;
+    protected ExecutionService executionService;
 
     @Inject
     private ConditionService conditionService;
@@ -195,11 +186,15 @@ public class ExecutionController {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+
     @Inject
     private ExecutionStreamingService executionStreamingService;
 
     @Inject
     private LocalPathFactory localPathFactory;
+
+    @Inject
+    private SecureVariableRendererFactory secureVariableRendererFactory;
 
     @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
     private boolean enableLocalFilePreview;
@@ -330,7 +325,7 @@ public class ExecutionController {
             execution,
             taskRun,
             false,
-            new VariableRenderer(applicationContext, variableConfiguration, List.of(SecretFunction.NAME))
+            secureVariableRendererFactory.createOrGet()
         ).render(expression);
     }
 
@@ -486,7 +481,7 @@ public class ExecutionController {
     @Post(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
     @SingleResult
-    public Publisher<HttpResponse<WebhookResponse>> triggerExecutionByPostWebhook(
+    public Publisher<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -499,7 +494,7 @@ public class ExecutionController {
     @Get(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
     @SingleResult
-    public Publisher<HttpResponse<WebhookResponse>> triggerExecutionByGetWebhook(
+    public Publisher<HttpResponse<?>> triggerExecutionByGetWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -512,7 +507,7 @@ public class ExecutionController {
     @Put(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
     @SingleResult
-    public Publisher<HttpResponse<WebhookResponse>> triggerExecutionByPutWebhook(
+    public Publisher<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -521,7 +516,7 @@ public class ExecutionController {
         return this.webhook(namespace, id, key, request);
     }
 
-    private Publisher<HttpResponse<WebhookResponse>> webhook(
+    private Publisher<HttpResponse<?>> webhook(
         String namespace,
         String id,
         String key,
@@ -531,7 +526,7 @@ public class ExecutionController {
         return webhook(find, key, request);
     }
 
-    protected Publisher<HttpResponse<WebhookResponse>> webhook(
+    protected Publisher<HttpResponse<?>> webhook(
         Optional<Flow> maybeFlow,
         String key,
         HttpRequest<String> request
@@ -549,7 +544,7 @@ public class ExecutionController {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
-        Optional<Webhook> webhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
+        Optional<Webhook> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
             .getTriggers())
             .stream()
             .filter(o -> o instanceof Webhook)
@@ -567,11 +562,12 @@ public class ExecutionController {
             })
             .findFirst();
 
-        if (webhook.isEmpty()) {
+        if (maybeWebhook.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
         }
-
-        Optional<Execution> execution = webhook.get().evaluate(request, flow);
+        
+        final Webhook webhook = maybeWebhook.get();
+        Optional<Execution> execution = webhook.evaluate(request, flow);
 
         if (execution.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
@@ -581,11 +577,24 @@ public class ExecutionController {
         if (flow.getLabels() != null) {
             result = result.withLabels(LabelService.labelsExcludingSystem(flow));
         }
-
+        
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
         var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
-        if (!conditionService.isValid(flow, webhook.get(), conditionContext)) {
+        if (!conditionService.isValid(flow, webhook, conditionContext)) {
             return Mono.just(HttpResponse.noContent());
+        }
+        
+        // inject trigger inputs
+        if (webhook.getInputs() != null) {
+            RunContext runContext = runContextFactory.of(flow, result);
+            try {
+                Map<String, Object> inputs = runContext.render(webhook.getInputs());
+                inputs = flowInputOutput.readExecutionInputs(flow, result, inputs);
+                result = result.withInputs(inputs);
+            } catch (Exception e) {
+                log.warn("Unable to render the webhook inputs. Webhook will be ignored", e);
+                throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
+            }
         }
 
         try {
@@ -601,7 +610,7 @@ public class ExecutionController {
             executionQueue.emit(result);
             eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
 
-            if (webhook.get().getWait()) {
+            if (webhook.getWait()) {
                 var subscriberId = UUID.randomUUID().toString();
                 var executionId = result.getId();
                 return Flux.<Event<Execution>>create(emitter -> {
@@ -613,7 +622,17 @@ public class ExecutionController {
                         );
                     })
                     .last()
-                    .map(event -> (HttpResponse<WebhookResponse>) HttpResponse.ok(WebhookResponse.fromExecution(event.getData(), executionUrl(event.getData()))))
+                    .map(event -> {
+                        if (webhook.getReturnOutputs()) {
+                            return HttpResponse.ok(event.getData().getOutputs());
+
+                        } else {
+                            return (HttpResponse<?>) HttpResponse.ok(WebhookResponse.fromExecution(
+                                event.getData(),
+                                executionUrl(event.getData())
+                            ));
+                        }
+                    })
                     .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
             } else {
                 return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));
@@ -673,6 +692,7 @@ public class ExecutionController {
     @Post(uri = "/{namespace}/{id}", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Executions"}, summary = "Create a new execution for a flow")
     @ApiResponse(responseCode = "409", description = "if the flow is disabled")
+    @ApiResponse(responseCode = "200", description = "On execution created", content = {@Content(schema = @Schema(implementation = ExecutionResponse.class))})
     @SingleResult
     public Publisher<ExecutionResponse> createExecution(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -1058,6 +1078,32 @@ public class ExecutionController {
         return innerReplay(execution.get(), taskRunId, revision, breakpoints);
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/replay-with-inputs", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(tags = {"Executions"}, summary = "Create a new execution from an old one and start it from a specified task run id")
+    public Mono<Execution> replayExecutionWithinputs(
+        @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
+        @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
+        @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
+        @RequestBody(description = "The inputs") @Body MultipartBody inputs
+    ) {
+        Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
+        if (execution.isEmpty()) {
+            return null;
+        }
+        Execution current = execution.get();
+
+        this.controlRevision(current, revision);
+
+        Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), current.getNamespace(), current.getFlowId(), Optional.ofNullable(revision));
+
+        return flowInputOutput.readExecutionInputs(flow, current, inputs)
+            .flatMap(newInputs -> Mono.fromCallable(() ->
+                innerReplay(current.withInputs(newInputs), taskRunId, revision, breakpoints)));
+
+    }
+
     private Execution innerReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
         Execution replay = executionService.replay(execution, taskRunId, revision)
             .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
@@ -1107,7 +1153,7 @@ public class ExecutionController {
 
         Flow flow = flowRepository.findByExecution(execution.get());
 
-        Execution replay = executionService.markAs(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
         List<Label> newLabels = new ArrayList<>(replay.getLabels());
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
@@ -1281,6 +1327,7 @@ public class ExecutionController {
             throw new IllegalStateException("Execution is already finished, can't kill it");
         }
 
+        eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
         killQueue.emit(ExecutionKilledExecution
             .builder()
             .state(ExecutionKilled.State.REQUESTED)
@@ -1337,6 +1384,7 @@ public class ExecutionController {
         }
 
         executions.forEach(throwConsumer(execution -> {
+            eventPublisher.publishEvent(CrudEvent.of(execution, execution.withState(State.Type.KILLING)));
             killQueue.emit(ExecutionKilledExecution
                 .builder()
                 .state(ExecutionKilled.State.REQUESTED)
@@ -1380,6 +1428,11 @@ public class ExecutionController {
     ) throws Exception {
         Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId, true);
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        return resumeFoundExecution(inputs, execution, flow);
+    }
+
+    protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution,
+        Flow flow) {
         Pause.Resumed resumed = createResumed();
 
         return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)
@@ -1809,7 +1862,12 @@ public class ExecutionController {
                     streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
 
                     // Fetch again the execution to avoid race when execution is ended before we are subscribed
-                    execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null);
+                    Execution finalExecution = execution;
+                    execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseGet(() -> {
+                        log.error("Execution not found but we previously found it, this is a bug, executionId: '{}'", executionId);
+                        // return the old execution fallback
+                        return finalExecution;
+                    });
                     if (streamingService.isStopFollow(flow, execution)) {
                         emitter.next(Event.of(execution).id("end"));
                         emitter.complete();
@@ -2272,9 +2330,9 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/flow")
     @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
     public FlowForExecution getFlowFromExecutionById(
-        @Parameter(description = "The execution that you want flow information's") String executionId
+        @Parameter(description = "The execution that you want flow informations") String executionId
     ) {
-        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow();
+        Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 
         return FlowForExecution.of(flowRepository.findByExecutionWithoutAcl(execution));
     }
@@ -2439,6 +2497,8 @@ public class ExecutionController {
             Object value,
             @Parameter(description = "Specifies whether the input is enabled")
             boolean enabled,
+            @Parameter(description = "Specifies whether the input value is the default")
+            boolean isDefault,
             @Parameter(description = "The validation errors")
             List<ApiInputError> errors
         ) {
@@ -2460,6 +2520,7 @@ public class ExecutionController {
                     it.input(),
                     it.value(),
                     it.enabled(),
+                    it.isDefault(),
                     Optional.ofNullable(it.exception()).map(exception ->
                         exception.getConstraintViolations()
                             .stream()

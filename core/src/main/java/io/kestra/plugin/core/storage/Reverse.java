@@ -44,7 +44,7 @@ import java.nio.charset.StandardCharsets;
 )
 public class Reverse extends Task implements RunnableTask<Reverse.Output> {
     @Schema(
-        title = "The file to be split."
+        title = "The file to be split"
     )
     @NotNull
     @PluginProperty(internalStorageURI = true)
@@ -99,7 +99,7 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The URIs of reverse files in the Kestra's internal storage."
+            title = "The URIs of reverse files in the Kestra's internal storage"
         )
         private final URI uri;
     }

@@ -7,13 +7,13 @@
             :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
-            :inline-message="true"
+            :inlineMessage="true"
         >
             <template #label>
-                <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+                <Markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
-            <editor
-                :full-height="false"
+            <Editor
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
@@ -23,14 +23,14 @@
                 @confirm="onSubmit"
             />
             <el-select
-                :full-height="false"
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-testid="`input-form-${input.id}`"
                 v-model="selectedTriggerLocal[input.id]"
                 @update:model-value="onChange(input)"
-                :allow-create="input.allowCustomValue"
+                :allowCreate="input.allowCustomValue"
                 filterable
                 clearable
             >
@@ -40,7 +40,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <markdown :source="item" />
+                    <Markdown :source="item" />
                 </el-option>
             </el-select>
             <el-radio-group
@@ -58,7 +58,7 @@
                 />
             </el-radio-group>
             <el-select
-                :full-height="false"
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'MULTISELECT'"
@@ -68,7 +68,7 @@
                 multiple
                 filterable
                 clearable
-                :allow-create="input.allowCustomValue"
+                :allowCreate="input.allowCustomValue"
             >
                 <el-option
                     v-for="item in (input.values ?? input.options)"
@@ -76,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    <markdown :source="item" />
+                    <Markdown :source="item" />
                 </el-option>
             </el-select>
             <el-input
@@ -85,7 +85,7 @@
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
-                show-password
+                showPassword
             />
             <span v-if="input.type === 'INT'">
                 <el-input-number
@@ -155,6 +155,7 @@
                         :id="input.id+'-file'"
                         class="el-input__inner custom-file-input"
                         type="file"
+                        :accept="getAcceptedFileTypes(input)"
                         @change="onFileChange(input, $event)"
                         autocomplete="off"
                     >
@@ -216,33 +217,33 @@
                     </div>
                 </div>
             </div>
-            <editor
-                :full-height="false"
+            <Editor
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'JSON'"
-                :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
+                :showScroll="inputsValues[input.id]?.length > 530 ? true : false"
                 :data-testid="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
             />
-            <editor
-                :full-height="false"
+            <Editor
+                :fullHeight="false"
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
                 :data-testid="`input-form-${input.id}`"
                 lang="yaml"
-                :model-value="inputsValues[input.id]"
+                :modelValue="inputsValues[input.id]"
                 @change="onYamlChange(input, $event)"
             />
-            <duration-picker
+            <DurationPicker
                 v-if="input.type === 'DURATION'"
                 :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             />
-            <markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <Markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
             <template v-if="executeClicked">
                 <template v-for="err in input.errors ?? []" :key="err">
                     <el-text type="warning">
@@ -256,16 +257,14 @@
         </div>
     </template>
 
-    <el-alert type="info" :show-icon="true" :closable="false" class="mb-3" v-else>
+    <el-alert type="info" :showIcon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>
-<script setup>
+<script lang="ts">
+    import {ElMessage} from "element-plus";
     import ValidationError from "../flows/ValidationError.vue";
-</script>
-<script>
     import {toRaw} from "vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
@@ -273,18 +272,17 @@
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
     import DurationPicker from "./DurationPicker.vue";
-    import {inputsToFormData} from "../../utils/submitTask"
-
+    import {inputsToFormData} from "../../utils/submitTask";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
 
+
     export default {
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useExecutionsStore),
             inputErrors() {
                 // we only keep errors that don't target an input directly
@@ -295,7 +293,7 @@
                     null
             }
         },
-        components: {Editor, Markdown, DurationPicker},
+        components: {Editor, Markdown, DurationPicker, ValidationError, ChevronUp, ChevronDown},
         props: {
             executeClicked: {
                 type: Boolean,
@@ -339,9 +337,14 @@
                 selectedTriggerLocal: {},
                 editingArrayId: null,
                 editableItems: {},
+                // expose icon components to the template so linters and the template can resolve them
+                DeleteOutline,
+                Pencil,
+                Plus,
+                ContentSave,
             };
         },
-        emits: ["update:modelValue", "confirm", "validation"],
+        emits: ["update:modelValue", "update:modelValueNoDefault", "confirm", "validation"],
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
             this.debouncedValidation = debounce(this.validateInputs, 500)
@@ -358,6 +361,7 @@
                             // to avoid too many calls to the server
                             this.debouncedValidation();
                             this.$emit("update:modelValue", this.inputsValues);
+                            this.$emit("update:modelValueNoDefault", this.inputsValuesWithNoDefault());
                         }
                         this.previousInputsValues = JSON.parse(JSON.stringify(val))
                     },
@@ -387,6 +391,21 @@
             document.removeEventListener("keydown", this._keyListener);
         },
         methods: {
+            normalizeJSON(value) {
+                try {
+                    // Step 1: Remove trailing commas in objects and arrays
+                    let cleaned = value.replace(/,\s*([}\]])/g, "$1");
+
+                    // Step 2: Quote unquoted keys (simple case: keys with letters, numbers, or _)
+                    cleaned = cleaned.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, "$1\"$2\":");
+
+                    // Step 3: Parse into JS object
+                    return JSON.parse(cleaned);
+                } catch (e) {
+                    console.error("Failed to normalize JSON:", e.message);
+                    return null;
+                }
+            },
             inputError(id) {
                 // if this input has not been edited yet
                 // showing any error is annoying
@@ -404,12 +423,19 @@
             },
             updateDefaults() {
                 for (const input of this.inputsMetaData || []) {
-                    if (this.inputsValues[input.id] === undefined || this.inputsValues[input.id] === null) {
-                        const {type, defaults} = input;
+                    const {type, id, value} = input;
+                    if (this.inputsValues[id] === undefined || this.inputsValues[id] === null || input.isDefault) {
                         if (type === "MULTISELECT") {
-                            this.multiSelectInputs[input.id] = input.defaults;
+                            this.multiSelectInputs[id] = value;
+                        } else if(type === "JSON" && value == undefined && input.isDefault) {
+                            /*
+                            * Handle multiline JSON default values
+                            * See https://github.com/kestra-io/kestra/issues/11449
+                            */
+                            this.inputsValues[id] = Inputs.normalize(type, this.normalizeJSON(input.defaults));
+                        } else {
+                            this.inputsValues[id] = Inputs.normalize(type, value);
                         }
-                        this.inputsValues[input.id] = Inputs.normalize(type, defaults);
                     }
                 }
             },
@@ -419,7 +445,9 @@
                 setTimeout(() => {
                     this.inputsValidated.add(input.id);
                 }, 2000);
+                input.isDefault = false;
                 this.$emit("update:modelValue", this.inputsValues);
+                this.$emit("update:modelValueNoDefault", this.inputsValuesWithNoDefault());
             },
             onSubmit() {
                 this.$emit("confirm");
@@ -439,12 +467,53 @@
                     return;
                 }
 
-                this.inputsValues[input.id] = files[0];
+                const file = files[0];
+                
+                // Sanitize the filename: remove spaces and special characters
+                const sanitizedName = file.name
+                    .replace(/[^a-zA-Z0-9.-]/g, "_") // Replace special chars with underscore
+                    .replace(/\s+/g, "_");           // Replace spaces with underscore
+                
+                // Create a new File object with the sanitized name
+                const sanitizedFile = new File([file], sanitizedName, {
+                    type: file.type,
+                    lastModified: file.lastModified,
+                });
+                
+                const acceptedTypes = this.getAcceptedFileTypes(input);
+                if (acceptedTypes) {
+                    const allowedTypes = acceptedTypes.toLowerCase().split(",");
+                    const fileName = sanitizedName.toLowerCase();
+                    const fileType = file.type.toLowerCase();
+                    
+                    const isAllowed = allowedTypes.some(type => {
+                        type = type.trim();
+                        if (type.startsWith(".")) {
+                            return fileName.endsWith(type);
+                        } else {
+                            return fileType === type;
+                        }
+                    });
+                    
+                    if (!isAllowed) {
+                        ElMessage.error(this.$t("fileTypeNotAllowed", {types: acceptedTypes}));
+                        e.target.value = "";
+                        return;
+                    }
+                }
+
+                this.inputsValues[input.id] = sanitizedFile;
                 setTimeout(() => this.onChange(input), 300);
             },
             onYamlChange(input, e) {
                 this.inputsValues[input.id] = e.target.value;
                 this.onChange(input);
+            },
+            inputsValuesWithNoDefault() {
+                return this.inputsMetaData.reduce((acc, input) => {
+                    acc[input.id] = input.isDefault ? undefined : this.inputsValues[input.id];
+                    return acc;
+                }, {});
             },
             numberHint(input){
                 const {min, max} = input;
@@ -462,13 +531,15 @@
                 if (this.inputsMetaData === undefined || this.inputsMetaData.length === 0) {
                     return;
                 }
-
-                const formData = inputsToFormData(this, this.inputsMetaData, this.inputsValues);
+              
+                const inputsValuesWithNoDefault = this.inputsValuesWithNoDefault();
+                
+                const formData = inputsToFormData(this, this.inputsMetaData, inputsValuesWithNoDefault);
 
                 const metadataCallback = (response) => {
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
                         if(it.enabled){
-                            acc.push({...it.input, errors: it.errors});
+                            acc.push({...it.input, errors: it.errors, value: it.value || it.input.prefill, isDefault: it.isDefault});
                         }
                         return acc;
                     }, [])
@@ -585,6 +656,12 @@
                     return value.name;
                 }
                 return this.$t("no_file_choosen");
+            },
+            getAcceptedFileTypes(input: { allowedFileExtensions?: string[]; accept?: string; }) {
+                if (input.allowedFileExtensions && input.allowedFileExtensions.length > 0) {
+                    return input.allowedFileExtensions.join(",");
+                }
+                return input.accept || "";
             },
         },
         watch: {
@@ -771,9 +848,34 @@
   visibility: hidden;
 }
 
-.file-placeholder {
-  margin-left: 8px;
-  color: var(--ks-content-secondary);
-  font-size: 0.9em;
+.el-input-file {
+  .el-input__wrapper {
+    display: flex;
+    align-items: center;
+    padding: 4px 0 4px 0;
+    position: relative;
+    max-width: 100%;
+  }
+
+  .custom-file-input {
+    max-width: 110px;
+    min-width: 110px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .file-placeholder {
+    margin-left: 8px;
+    color: var(--ks-content-secondary) !important;
+    font-size: 0.9em;
+    flex: 1;
+    max-width: calc(100% - 140px); /* 110px for button + 30px for margins/padding */
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 16px;
+  }
 }
 </style>

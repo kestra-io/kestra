@@ -17,11 +17,14 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Map;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
+@Execution(ExecutionMode.SAME_THREAD)
 @KestraTest(rebuildContext = true)
 class FileExistsFunctionTest {
 
@@ -191,7 +194,7 @@ class FileExistsFunctionTest {
     }
 
     private URI createFile() throws IOException {
-        File tempFile = File.createTempFile("file", ".txt");
+        File tempFile = File.createTempFile("%s-file".formatted(IdUtils.create()), ".txt");
         Files.write(tempFile.toPath(), "Hello World".getBytes());
         return tempFile.toPath().toUri();
     }

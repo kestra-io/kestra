@@ -4,9 +4,9 @@
             effect="light"
             :placement="(global ? 'bottom' : 'left')"
             :persistent="false"
-            :hide-after="0"
+            :hideAfter="0"
             transition=""
-            :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
+            :popperClass="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
         >
             <template #content>
                 <span v-html="tooltipContent" />
@@ -22,7 +22,7 @@
     import {Bar} from "vue-chartjs";
     import Utils, {useTheme} from "../../utils/utils";
     import {useScheme} from "../../utils/scheme";
-    import {defaultConfig, tooltip, chartClick, getFormat} from "../dashboard/composables/charts.js";
+    import {defaultConfig, tooltip, chartClick, getFormat} from "../dashboard/composables/charts";
     import {useI18n} from "vue-i18n";
 
     export default defineComponent({

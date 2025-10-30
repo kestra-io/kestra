@@ -19,7 +19,7 @@
                         {{ title }}
                     </h5>
                     <div class="cat_description">
-                        <markdown :source="$t(`welcome.${category}.text`)" />
+                        <Markdown :source="$t(`welcome.${category}.text`)" />
                     </div>
                 </div>
             </div>
@@ -37,7 +37,11 @@
 
     interface Props {
         title: string;
+        content: string;
+        link: string;
         category: string;
+        [key: string]: any;
+
     }
 
     const props = defineProps<Props>();

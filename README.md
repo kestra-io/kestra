@@ -19,9 +19,12 @@
 <br />
 
 <p align="center">
-    <a href="https://x.com/kestra_io"><img height="25" src="https://kestra.io/twitter.svg" alt="X(formerly Twitter)" /></a> &nbsp;
-    <a href="https://www.linkedin.com/company/kestra/"><img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" /></a> &nbsp;
-<a href="https://www.youtube.com/@kestra-io"><img height="25" src="https://kestra.io/youtube.svg" alt="youtube" /></a> &nbsp;
+  <a href="https://twitter.com/kestra_io" style="margin: 0 10px;">
+        <img height="25" src="https://kestra.io/twitter.svg" alt="twitter" width="35" height="25" /></a>
+  <a href="https://www.linkedin.com/company/kestra/" style="margin: 0 10px;">
+        <img height="25" src="https://kestra.io/linkedin.svg" alt="linkedin" width="35" height="25" /></a> 
+  <a href="https://www.youtube.com/@kestra-io" style="margin: 0 10px;">
+        <img height="25" src="https://kestra.io/youtube.svg" alt="youtube" width="35" height="25" /></a>
 </p>
 
 <p align="center">
@@ -33,10 +36,10 @@
 
 <p align="center">
     <a href="https://go.kestra.io/video/product-overview" target="_blank">
-        <img src="https://kestra.io/startvideo.png" alt="Get started in 4 minutes with Kestra" width="640px" />
+        <img src="https://kestra.io/startvideo.png" alt="Get started in 3 minutes with Kestra" width="640px" />
     </a>
 </p>
-<p align="center" style="color:grey;"><i>Click on the image to learn how to get started with Kestra in 4 minutes.</i></p>
+<p align="center" style="color:grey;"><i>Click on the image to learn how to get started with Kestra in 3 minutes.</i></p>
 
 
 ## 🌟 What is Kestra?
@@ -64,6 +67,12 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 ---
 
 ## 🚀 Quick Start
+
+### Launch on AWS (CloudFormation)
+
+Deploy Kestra on AWS using our CloudFormation template:
+
+[![Launch Stack](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?templateURL=https://kestra-deployment-templates.s3.eu-west-3.amazonaws.com/aws/cloudformation/ec2-rds-s3/kestra-oss.yaml&stackName=kestra-oss)
 
 ### Get Started Locally in 5 Minutes
 
@@ -95,7 +104,7 @@ If you're on Windows and use WSL (Linux-based environment in Windows):
 ```bash
 docker run --pull=always --rm -it -p 8080:8080 --user=root \
     -v "/var/run/docker.sock:/var/run/docker.sock" \
-    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+    -v "/mnt/c/Temp:/tmp" kestra/kestra:latest server local
 ```
 
 Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).

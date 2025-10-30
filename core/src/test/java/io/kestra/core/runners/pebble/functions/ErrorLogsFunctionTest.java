@@ -9,6 +9,8 @@ import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.event.Level;
 
 import java.time.Instant;
@@ -18,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 @Property(name = "kestra.server-type", value = "WORKER")
+@Execution(ExecutionMode.SAME_THREAD)
 class ErrorLogsFunctionTest {
     @Inject
     private LogRepositoryInterface logRepository;

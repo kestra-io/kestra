@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-    const layout = (span, offset) => {
+    const layout = (span: number, offset: number) => {
         return {span, offset};
     };
 </script>

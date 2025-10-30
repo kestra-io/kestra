@@ -36,7 +36,7 @@ import java.net.URI;
 )
 public class Size extends Task implements RunnableTask<Size.Output> {
     @Schema(
-        title = "The file whose size needs to be fetched."
+        title = "The file where size needs to be fetched"
     )
     @NotNull
     @PluginProperty(internalStorageURI = true)
@@ -58,7 +58,7 @@ public class Size extends Task implements RunnableTask<Size.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The size of the file."
+            title = "The size of the file"
         )
         private final Long size;
     }

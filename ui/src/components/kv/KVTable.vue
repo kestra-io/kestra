@@ -1,106 +1,141 @@
 <template>
-    <KestraFilter
-        :placeholder="$t('search')"
-        legacy-query
-    />
-
-    <SelectTable
-        :data="filteredKvs"
-        ref="selectTable"
-        :default-sort="{prop: 'id', order: 'ascending'}"
-        table-layout="auto"
-        fixed
-        @selection-change="handleSelectionChange"
-        @sort-change="handleSort"
-        :infinite-scroll-load="namespace === undefined ? fetchKvs : undefined"
-        :no-data-text="$t('no_results.kv_pairs')"
-        class="fill-height"
-    >
-        <template #select-actions>
-            <BulkSelect
-                :select-all="queryBulkAction"
-                :selections="selection"
-                @update:select-all="toggleAllSelection"
-                @unselect="toggleAllUnselected"
-            >
-                <el-button :icon="Delete" type="default" @click="removeKvs()">
-                    {{ $t("delete") }}
-                </el-button>
-            </BulkSelect>
+    <DataTable @page-changed="onPageChanged" ref="dataTable" :total="total">
+        <template #top>
+            <KSFilter
+                :configuration="kvFilter"
+                :tableOptions="{
+                    chart: {shown: false},
+                    columns: {shown: true},
+                    refresh: {shown: true, callback: refresh}
+                }"
+                prefix="kv"
+                :properties="{
+                    shown: true,
+                    columns: optionalColumns,
+                    displayColumns: visibleColumns,
+                    storageKey: storageKey
+                }"
+                @update-properties="updateVisibleColumns"
+            />
         </template>
-        <el-table-column
-            v-if="namespace === undefined"
-            prop="namespace"
-            sortable="custom"
-            :sort-orders="['ascending', 'descending']"
-            :label="$t('namespace')"
-        />
-        <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
-            <template #default="scope">
-                <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
-            </template>
-        </el-table-column>
-        <el-table-column
-            prop="description"
-            sortable="custom"
-            :sort-orders="['ascending', 'descending']"
-            :label="$t('description')"
-        />
-        <el-table-column
-            prop="updateDate"
-            sortable="custom"
-            :sort-orders="['ascending', 'descending']"
-            :label="$t('last modified')"
-        />
-        <el-table-column
-            prop="expirationDate"
-            sortable="custom"
-            :sort-orders="['ascending', 'descending']"
-            :label="$t('expiration date')"
-        />
 
-        <el-table-column column-key="copy" class-name="row-action">
-            <template #default="scope">
-                <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
-                    <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)" />
-                </el-tooltip>
-            </template>
-        </el-table-column>
+        <template #table>
+            <SelectTable
+                :data="kvs"
+                ref="selectTable"
+                :defaultSort="{prop: 'key', order: 'ascending'}"
+                tableLayout="auto"
+                fixed
+                @selection-change="handleSelectionChange"
+                @sort-change="onSort"
+                :no-data-text="$t('no_results.kv_pairs')"
+                class="fill-height"
+                :showSelection="!paneView"
+                :rowKey="(row: any) => `${row.namespace}-${row.key}`"
+            >
+                <template #select-actions>
+                    <BulkSelect
+                        :selectAll="queryBulkAction"
+                        :selections="selection"
+                        @update:select-all="toggleAllSelection"
+                        @unselect="toggleAllUnselected"
+                    >
+                        <el-button :icon="Delete" type="default" @click="removeKvs()">
+                            {{ $t("delete") }}
+                        </el-button>
+                    </BulkSelect>
+                </template>
 
-        <el-table-column column-key="update" class-name="row-action">
-            <template #default="scope">
-                <el-button
-                    v-if="canUpdate(scope.row)"
-                    :icon="FileDocumentEdit"
-                    link
-                    @click="updateKvModal(scope.row.namespace, scope.row.key)"
-                />
-            </template>
-        </el-table-column>
+                <template v-for="colProp in orderedVisibleColumns" :key="colProp">
+                    <el-table-column
+                        v-if="colProp === 'namespace' && namespace === undefined && !paneView"
+                        prop="namespace"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('namespace')"
+                    />
+                    <el-table-column
+                        v-else-if="colProp === 'key'"
+                        prop="key"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('key')"
+                    >
+                        <template #default="scope">
+                            <Id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                        v-else-if="colProp === 'description' && !paneView"
+                        prop="description"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('description')"
+                    />
+                    <el-table-column
+                        v-else-if="colProp === 'updateDate'"
+                        prop="updateDate"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('last modified')"
+                    />
+                    <el-table-column
+                        v-else-if="colProp === 'expirationDate' && !paneView"
+                        prop="expirationDate"
+                        sortable="custom"
+                        :sortOrders="['ascending', 'descending']"
+                        :label="$t('expiration date')"
+                    />
+                </template>
 
-        <el-table-column column-key="delete" class-name="row-action">
-            <template #default="scope">
-                <el-button
-                    v-if="canDelete(scope.row)"
-                    :icon="Delete"
-                    link
-                    @click="removeKv(scope.row.namespace, scope.row.key)"
-                />
-            </template>
-        </el-table-column>
-    </SelectTable>
+                <el-table-column columnKey="copy" className="row-action">
+                    <template #default="scope">
+                        <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
+                            <el-button
+                                :icon="ContentCopy"
+                                link
+                                @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
+                            />
+                        </el-tooltip>
+                    </template>
+                </el-table-column>
+
+                <el-table-column v-if="!paneView" columnKey="update" className="row-action">
+                    <template #default="scope">
+                        <el-button
+                            v-if="canUpdate(scope.row)"
+                            :icon="FileDocumentEdit"
+                            link
+                            @click="updateKvModal(scope.row)"
+                        />
+                    </template>
+                </el-table-column>
+
+                <el-table-column v-if="!paneView" columnKey="delete" className="row-action">
+                    <template #default="scope">
+                        <el-button
+                            v-if="canDelete(scope.row)"
+                            :icon="Delete"
+                            link
+                            @click="removeKv(scope.row.namespace, scope.row.key)"
+                        />
+                    </template>
+                </el-table-column>
+            </SelectTable>
+        </template>
+    </DataTable>
 
     <Drawer
         v-if="addKvDrawerVisible"
         v-model="addKvDrawerVisible"
         :title="kvModalTitle"
     >
-        <el-form class="ks-horizontal" :model="kv" :rules="rules" ref="form">
+        <el-form class="ks-horizontal" :model="kv" :rules="rules" ref="formRef">
             <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
                 <NamespaceSelect
                     v-model="kv.namespace"
                     :readonly="kv.update"
-                    :include-system-namespace="true"
+                    :includeSystemNamespace="true"
                     all
                 />
             </el-form-item>
@@ -129,10 +164,10 @@
                 <el-input v-else-if="kv.type === 'NUMBER'" type="number" v-model="kv.value" />
                 <el-switch
                     v-else-if="kv.type === 'BOOLEAN'"
-                    :active-text="$t('true')"
+                    :activeText="$t('true')"
                     v-model="kv.value"
                     class="switch-text"
-                    :active-action-icon="Check"
+                    :activeActionIcon="Check"
                 />
                 <el-date-picker
                     v-else-if="kv.type === 'DATETIME'"
@@ -146,14 +181,14 @@
                 />
                 <TimeSelect
                     v-else-if="kv.type === 'DURATION'"
-                    :from-now="false"
-                    :time-range="kv.value"
+                    :fromNow="false"
+                    :timeRange="kv.value"
                     clearable
-                    allow-custom
+                    allowCustom
                     @update:model-value="kv.value = $event.timeRange"
                 />
                 <Editor
-                    :full-height="false"
+                    :fullHeight="false"
                     :input="true"
                     :navbar="false"
                     v-else-if="kv.type === 'JSON'"
@@ -168,332 +203,415 @@
 
             <el-form-item :label="$t('expiration')" prop="ttl">
                 <TimeSelect
-                    :from-now="false"
-                    allow-infinite
-                    allow-custom
+                    :fromNow="false"
+                    allowInfinite
+                    allowCustom
                     :placeholder="kv.ttl ? $t('datepicker.custom') : $t('datepicker.never')"
-                    :time-range="kv.ttl"
+                    :timeRange="kv.ttl"
                     clearable
-                    include-never
+                    includeNever
                     @update:model-value="onTtlChange"
                 />
             </el-form-item>
         </el-form>
 
         <template #footer>
-            <el-button :icon="ContentSave" @click="saveKv($refs.form)" type="primary">
+            <el-button :icon="ContentSave" @click="saveKv(formRef)" type="primary">
                 {{ $t('save') }}
             </el-button>
         </template>
     </Drawer>
+
+    <Drawer
+        v-if="namespacesStore.inheritedKVModalVisible"
+        v-model="namespacesStore.inheritedKVModalVisible"
+        :title="$t('kv.inherited')"
+    >
+        <InheritedKVs :namespace="namespacesStore?.namespace?.id" />
+    </Drawer>
 </template>
 
 <script setup lang="ts">
-    import BulkSelect from "../layout/BulkSelect.vue";
-    import SelectTable from "../layout/SelectTable.vue";
-    import Editor from "../inputs/Editor.vue";
-    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
+    import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
+    import _groupBy from "lodash/groupBy";
+    import {computed, ref, useTemplateRef, watch} from "vue";
+
+    import Check from "vue-material-design-icons/Check.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import TimeSelect from "../executions/date-select/TimeSelect.vue";
-    import Check from "vue-material-design-icons/Check.vue";
-    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+    import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
-    import Utils from "../../utils/utils";
-    import KestraFilter from "../filter/KestraFilter.vue";
-</script>
-
-<script lang="ts">
-    import {mapState} from "vuex";
-    import {mapStores} from "pinia";
-    import {groupBy} from "lodash";
-    import {useNamespacesStore} from "override/stores/namespaces";
-    import useNamespaces from "../../composables/useNamespaces";
-    import {NamespaceIterator} from "../../composables/useNamespaces";
-    import SelectTableActions from "../../mixins/selectTableActions";
-    import action from "../../models/action";
-    import permission from "../../models/permission";
     import Id from "../Id.vue";
     import Drawer from "../Drawer.vue";
+    import Editor from "../inputs/Editor.vue";
+    import InheritedKVs from "./InheritedKVs.vue";
+    import BulkSelect from "../layout/BulkSelect.vue";
+    //@ts-expect-error No declaration file
+    import SelectTable from "../layout/SelectTable.vue";
+    import KSFilter from "../filter/components/KSFilter.vue";
+    import TimeSelect from "../executions/date-select/TimeSelect.vue";
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
-    export default {
-        inheritAttrs: false,
-        mixins: [SelectTableActions],
-        components: {
-            Id,
-            Drawer
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useNamespacesStore),
-            searchQuery() {
-                return this.$route.query.q;
-            },
-            filteredKvs() {
-                return this.kvs?.filter(kv =>
-                    !this.searchQuery ||
-                    kv.key.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                    kv.description.toLowerCase().includes(this.searchQuery.toLowerCase())
-                );
-            },
-            kvModalTitle() {
-                return this.kv.key ? this.$t("kv.update", {key: this.kv.key}) : this.$t("kv.add");
-            },
-            addKvDrawerVisible: {
-                get() {
-                    return this.namespacesStore.addKvModalVisible;
-                },
-                set(newValue:boolean) {
-                    this.namespacesStore.addKvModalVisible = newValue;
-                }
-            }
-        },
-        mounted() {
-            if (this.namespace !== undefined) {
-                this.fetchKvs();
-            }
-        },
-        props: {
-            namespace: {
-                type: String,
-                default: undefined
-            }
-        },
-        watch: {
-            addKvDrawerVisible(newValue) {
-                if (!newValue) {
-                    this.resetKv();
-                }
-            },
-            "kv.type"() {
-                if (this.$refs.form) {
-                    this.$refs.form.clearValidate("value");
-                }
-            },
-            searchQuery(newValue, oldValue) {
-                if (newValue !== oldValue) {
-                    this.reloadKvs();
-                }
-            }
-        },
-        data() {
-            return {
-                kv: {
-                    namespace: this.namespace,
-                    key: undefined,
-                    type: "STRING",
-                    value: undefined,
-                    ttl: undefined,
-                    update: undefined
-                },
-                kvs: undefined,
-                namespaceIterator: undefined,
-                rules: {
-                    key: [
-                        {required: true, trigger: "change"},
-                        {validator: this.kvKeyDuplicate, trigger: "change"},
-                    ],
-                    value: [
-                        {required: true, trigger: "change"},
-                        {
-                            validator: (rule, value, callback) => {
-                                if (this.kv.type === "DURATION") {
-                                    this.durationValidator(rule, value, callback);
-                                } else if (this.kv.type === "JSON") {
-                                    this.jsonValidator(rule, value, callback)
-                                } else {
-                                    callback();
-                                }
-                            },
-                            trigger: "change"
+    import action from "../../models/action";
+    import permission from "../../models/permission";
+
+    import Utils from "../../utils/utils";
+    import {useToast} from "../../utils/toast";
+    import {storageKeys} from "../../utils/constants";
+    import {useKvFilter} from "../filter/configurations";
+
+    import {useTableColumns} from "../../composables/useTableColumns";
+    import {useSelectTableActions} from "../../composables/useSelectTableActions";
+
+    import {useAuthStore} from "override/stores/auth";
+    import {useNamespacesStore} from "override/stores/namespaces";
+    import {useKvStore} from "../../stores/kvs.ts";
+
+    import DataTable from "../layout/DataTable.vue";
+    import _merge from "lodash/merge";
+    import {type DataTableRef, useDataTableActions} from "../../composables/useDataTableActions.ts";
+
+    const dataTable = useTemplateRef<DataTableRef>("dataTable");
+
+    const loadData = async (callback?: () => void) => {
+        try {
+            const kvsResponse = await kvStore.find(loadQuery({
+                size: parseInt(String(route.query?.size ?? 25)),
+                page: parseInt(String(route.query?.page ?? 1)),
+                sort: route.query.sort || "name:asc",
+                ...(props.namespace === undefined ? {} : {
+                    filters: {
+                        namespace: {
+                            EQUALS: props.namespace
                         }
-                    ],
-                    ttl: [
-                        {validator: this.durationValidator, trigger: "change"}
-                    ]
-                }
-            };
+                    }
+                })
+            }));
+
+            kvs.value = kvsResponse.results;
+            total.value = kvsResponse.total;
+        } finally {
+            if (callback) callback();
+        }
+    }
+
+    const {onPageChanged, queryWithFilter, onSort} = useDataTableActions({
+        loadData: loadData,
+        dataTableRef: dataTable
+    });
+
+    const loadQuery = (base: any) => {
+        const queryFilter = queryWithFilter();
+        return _merge(base, queryFilter);
+    };
+
+    const props = withDefaults(defineProps<{
+        namespace?: string;
+        paneView?: boolean;
+    }>(), {
+        namespace: undefined,
+        paneView: false
+    });
+
+    const route = useRoute();
+    const toast = useToast();
+
+    const kvFilter = useKvFilter();
+
+    const authStore = useAuthStore();
+    const namespacesStore = useNamespacesStore();
+    const kvStore = useKvStore();
+
+    const selectTable = useTemplateRef<typeof SelectTable>("selectTable");
+
+    interface KvItem {
+        namespace?: string;
+        key?: string;
+        type: string;
+        value?: any;
+        ttl?: string;
+        update?: boolean;
+        description?: string;
+    }
+
+    const kv = ref<KvItem>({
+        namespace: props.namespace,
+        key: undefined,
+        type: "STRING",
+        value: undefined,
+        ttl: undefined,
+        update: undefined,
+        description: undefined
+    });
+
+    const {t} = useI18n();
+
+    const kvs = ref<any[] | undefined>(undefined);
+
+    const storageKey = storageKeys.DISPLAY_KV_COLUMNS;
+
+    const optionalColumns = computed(() => {
+        const columns = [
+            {
+                label: t("namespace"),
+                prop: "namespace",
+                default: true,
+                description: t("filter.table_column.kv.namespace")
+            },
+            {
+                label: t("key"),
+                prop: "key",
+                default: true,
+                description: t("filter.table_column.kv.key")
+            },
+            {
+                label: t("description"),
+                prop: "description",
+                default: true,
+                description: t("filter.table_column.kv.description")
+            },
+            {
+                label: t("last modified"),
+                prop: "updateDate",
+                default: true,
+                description: t("filter.table_column.kv.last modified")
+            },
+            {
+                label: t("expiration date"),
+                prop: "expirationDate",
+                default: true,
+                description: t("filter.table_column.kv.expiration date")
+            }
+        ];
+
+        return columns.filter(col => {
+            if (props.paneView && (col.prop === "namespace" || col.prop === "description" || col.prop === "expirationDate")) {
+                return false;
+            }
+            return true;
+        });
+    });
+
+    const {visibleColumns, orderedVisibleColumns, updateVisibleColumns} = useTableColumns({
+        columns: optionalColumns.value,
+        storageKey: storageKey
+    });
+
+    const {
+        selection,
+        queryBulkAction,
+        handleSelectionChange,
+        toggleAllUnselected,
+        toggleAllSelection
+    } = useSelectTableActions({
+        dataTableRef: selectTable
+    });
+
+    const kvModalTitle = computed(() => {
+        return kv.value.key ? "kv.update" : "kv.add";
+    });
+
+    const addKvDrawerVisible = computed({
+        get() {
+            return namespacesStore.addKvModalVisible;
         },
-        methods: {
-            canUpdate(kv) {
-                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
-            },
-            canDelete(kv) {
-                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
-            },
-            jsonValidator(rule, value, callback) {
-                try {
-                    const parsed = JSON.parse(value);
-                    if (typeof parsed !== "object" || parsed === null) {
-                        callback(new Error(this.$t("Invalid input: Expected a JSON object or array")));
+        set(newValue: boolean) {
+            namespacesStore.addKvModalVisible = newValue;
+        }
+    });
+
+    const rules = ref({
+        key: [
+            {required: true, trigger: "change"},
+            {validator: kvKeyDuplicate, trigger: "change"},
+        ],
+        value: [
+            {required: true, trigger: "change"},
+            {
+                validator: (rule: any, value: string, callback: (error?: Error) => void) => {
+                    if (kv.value.type === "DURATION") {
+                        durationValidator(rule, value, callback);
+                    } else if (kv.value.type === "JSON") {
+                        jsonValidator(rule, value, callback);
                     } else {
                         callback();
                     }
-                } catch {
-                    callback(new Error(this.$t("Invalid input: Expected a JSON formatted string")));
-                }
-            },
-            durationValidator(rule, value, callback) {
-                if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
-                    callback(new Error(this.$t("datepicker.error")));
-                } else {
-                    callback();
-                }
-            },
-            async fetchKvs() {
-                let kvFetch;
-                if (this.namespace === undefined) {
-                    if (this.namespaceIterator === undefined) {
-                        this.namespaceIterator = useNamespaces(this.$store, 20);
-                    }
-
-                    const namespaces = (await ((this.namespaceIterator as NamespaceIterator).next())).map(n => n.id);
-                    if (namespaces.length !== 0) {
-                        const kvsPromises = Promise.all(namespaces.filter(n => this.user.isAllowed(permission.KVSTORE, action.READ, n)).map(async n => {
-                            const kvs = await this.namespacesStore.kvsList({id: n});
-
-                            return kvs.map(kv => {
-                                kv.namespace = n;
-                                return kv;
-                            });
-                        }));
-
-                        kvFetch = (await kvsPromises).flat();
-                    }
-                } else {
-                    kvFetch = (await this.namespacesStore.kvsList({id: this.namespace})).map(kv => {
-                        kv.namespace = this.namespace;
-                        return kv;
-                    });
-                }
-
-                if (kvFetch === undefined) {
-                    return undefined;
-                }
-
-                this.kvs = this.kvs?.concat(kvFetch) ?? kvFetch;
-
-                if (this.namespace === undefined && this.filteredKvs.length === 0) {
-                    return this.fetchKvs();
-                }
-
-                return kvFetch;
-            },
-            kvKeyDuplicate(rule, value, callback) {
-                if (this.kv.update === undefined && this.kvs && this.kvs.find(r => r.namespace === this.kv.namespace && r.key === value)) {
-                    return callback(new Error(this.$t("kv.duplicate")));
-                } else {
-                    callback();
-                }
-            },
-            async updateKvModal(namespace, key) {
-                this.kv.namespace = namespace;
-                this.kv.key = key;
-                const {type, value} = await this.namespacesStore.kv({namespace, key});
-                this.kv.type = type;
-                if (type === "JSON") {
-                    this.kv.value = JSON.stringify(value);
-                } else if (type === "BOOLEAN") {
-                    this.kv.value = value;
-                } else {
-                    this.kv.value = value.toString();
-                }
-                this.kv.update = true;
-                this.addKvDrawerVisible = true;
-            },
-            removeKv(namespace, key) {
-                this.$toast().confirm(this.$t("delete confirm", {name: key}), () => {
-                    return this.namespacesStore
-                        .deleteKv({namespace, key: key})
-                        .then(() => {
-                            this.$toast().deleted(key);
-                            this.reloadKvs();
-                        });
-                });
-            },
-            removeKvs() {
-                const groupedByNamespace = groupBy(this.selection, "namespace");
-                const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => this.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
-                const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
-                const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
-                this.$toast().confirm(
-                    this.$t("kv.delete multiple.confirm", {name: Object.values(withDeletePermissionGroupedKvs).reduce((count, kvs) => count + kvs.length, 0)}) +
-                        (withoutDeletePermissionNamespaces.length === 0 ? "" : `\n${this.$t("kv.delete multiple.warning", {namespaces: withoutDeletePermissionNamespaces.join(", ")})}`),
-                    () => {
-                        Object.entries(withDeletePermissionGroupedKvs).forEach(([namespace, kvs]) => {
-                            this.namespacesStore
-                                .deleteKvs({namespace, request: {keys: kvs.map(kv => kv.key)}})
-                                .then(() => {
-                                    this.$toast().deleted(`${kvs.length} KV(s) from ${namespace} namespace`);
-                                    this.reloadKvs();
-                                });
-                        });
-                    });
-            },
-            async reloadKvs() {
-                this.namespaceIterator = undefined;
-
-                const previousLength = this.secrets?.length ?? 0;
-                await this.$refs.selectTable.resetInfiniteScroll();
-                this.kvs = [];
-
-                // If we are in the global KV view we let the infinite scroll handling the fetch
-                if (this.namespace !== undefined || previousLength === 0) {
-                    this.fetchKvs();
-                }
-            },
-            saveKv(formRef) {
-                formRef.validate((valid) => {
-                    if (!valid) {
-                        return false;
-                    }
-
-                    const type = this.kv.type;
-                    let value = this.kv.value;
-
-                    if (["STRING", "DURATION"].includes(type)) {
-                        value = JSON.stringify(value);
-                    } else if (type === "DATETIME") {
-                        value = this.$moment(value).toISOString()
-                    } else if (type === "DATE") {
-                        value = this.$moment(value).toISOString(true).split("T")[0]
-                    }
-
-                    return this.namespacesStore
-                        .createKv({
-                            ...this.kv,
-                            contentType: ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json",
-                            value
-                        })
-                        .then(() => {
-                            this.$toast().saved(this.kv.key);
-                            this.addKvDrawerVisible = false;
-                            this.reloadKvs();
-                        })
-                });
-            },
-            resetKv() {
-                this.kv = {
-                    namespace: this.namespace,
-                    type: "STRING"
-                }
-            },
-            onTtlChange(value) {
-                this.kv.ttl = value.timeRange
-            },
-            handleSort({prop, order}) {
-                if (prop && order) {
-                    this.kvs.sort((a, b) => {
-                        const [valueA, valueB] = [a[prop] ?? "", b[prop] ?? ""];
-                        const modifier = order === "ascending" ? 1 : -1;
-
-                        return typeof valueA === "string"
-                            ? modifier * valueA.localeCompare(valueB)
-                            : modifier * (valueA - valueB);
-                    });
-                }
+                },
+                trigger: "change"
             }
-        },
-    };
+        ],
+        ttl: [
+            {validator: durationValidator, trigger: "change"}
+        ]
+    });
+
+    function canUpdate(kvItem: {namespace: string}) {
+        return kvItem.namespace !== undefined && authStore.user?.isAllowed(permission.KVSTORE, action.UPDATE, kvItem.namespace);
+    }
+
+    function canDelete(kvItem: {namespace: string}) {
+        return kvItem.namespace !== undefined && authStore.user?.isAllowed(permission.KVSTORE, action.DELETE, kvItem.namespace);
+    }
+
+    function jsonValidator(_rule: any, value: string, callback: (error?: Error) => void) {
+        try {
+            const parsed = JSON.parse(value);
+            if (typeof parsed !== "object" || parsed === null) {
+                callback(new Error("Invalid input: Expected a JSON object or array"));
+            } else {
+                callback();
+            }
+        } catch {
+            callback(new Error("Invalid input: Expected a JSON formatted string"));
+        }
+    }
+
+    function durationValidator(_rule: any, value: string, callback: (error?: Error) => void) {
+        if (value !== undefined && !value.match(/^P(?=[^T]|T.)(?:\d*D)?(?:T(?=.)(?:\d*H)?(?:\d*M)?(?:\d*S)?)?$/)) {
+            callback(new Error("datepicker.error"));
+        } else {
+            callback();
+        }
+    }
+
+    const total = ref(0);
+
+    function kvKeyDuplicate(_rule: any, value: string, callback: (error?: Error) => void) {
+        if (kv.value.update === undefined && kvs.value && kvs.value.find(r => r.namespace === kv.value.namespace && r.key === value)) {
+            return callback(new Error("kv.duplicate"));
+        } else {
+            callback();
+        }
+    }
+
+    async function updateKvModal(entry: any) {
+        kv.value.namespace = entry.namespace;
+        kv.value.key = entry.key;
+        const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key});
+        kv.value.type = type;
+        if (type === "JSON") {
+            kv.value.value = JSON.stringify(value);
+        } else if (type === "BOOLEAN") {
+            kv.value.value = value;
+        } else {
+            kv.value.value = value.toString();
+        }
+        kv.value.update = true;
+        kv.value.description = entry.description;
+        addKvDrawerVisible.value = true;
+    }
+
+    function removeKv(namespace: string, key: string) {
+        toast.confirm("delete confirm", async () => {
+            return namespacesStore
+                .deleteKv({namespace, key: key})
+                .then(() => {
+                    toast.deleted(key);
+                    loadData();
+                });
+        });
+    }
+
+    function removeKvs() {
+        const groupedByNamespace = _groupBy(selection.value, "namespace");
+        const withDeletePermissionGroupedKvs = Object.fromEntries(Object.entries(groupedByNamespace).filter(([namespace]) => authStore.user.isAllowed(permission.KVSTORE, action.DELETE, namespace)));
+        const withDeletePermissionNamespaces = Object.keys(withDeletePermissionGroupedKvs);
+        const withoutDeletePermissionNamespaces = Object.keys(groupedByNamespace).filter(n => !withDeletePermissionNamespaces.includes(n));
+        toast.confirm(
+            t("kv.delete multiple.confirm", {name: Object.values(withDeletePermissionGroupedKvs).reduce((count, kvs) => count + kvs.length, 0)}) +
+                (withoutDeletePermissionNamespaces.length === 0 ? "" : "\n" + t("kv.delete multiple.warning")),
+            async () => {
+                Object.entries(withDeletePermissionGroupedKvs).forEach(([namespace, kvs]) => {
+                    namespacesStore
+                        .deleteKvs({namespace, request: {keys: kvs.map(kv => kv.key)}})
+                        .then(() => {
+                            toast.deleted(`${kvs.length} KV(s) from ${namespace} namespace`);
+                            loadData();
+                        });
+                });
+            });
+    }
+
+    function saveKv(form: any) {
+        form.validate((valid: boolean) => {
+            if (!valid) {
+                return false;
+            }
+
+            const type = kv.value.type;
+            let value: any = kv.value.value;
+
+            if (type === "STRING" || type === "DURATION") {
+                value = value || "";
+            } else if (type === "DATETIME") {
+                value = new Date(value!).toISOString();
+            } else if (type === "DATE") {
+                value = new Date(value!).toISOString().split("T")[0];
+            } else if (["NUMBER", "BOOLEAN", "JSON"].includes(type)) {
+                value = JSON.stringify(value);
+            }
+
+            const contentType = ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json";
+
+            const namespace = kv.value.namespace!;
+            const key = kv.value.key!;
+            const description = kv.value.description || "";
+            const ttl = kv.value.ttl;
+
+            const payload = {
+                namespace,
+                key,
+                value,
+                contentType,
+                description,
+            };
+
+            if (ttl) {
+                (payload as any).ttl = ttl;
+            }
+
+            return namespacesStore
+                .createKv(payload)
+                .then(() => {
+                    toast.saved(key);
+                    addKvDrawerVisible.value = false;
+                    loadData();
+                });
+        });
+    }
+
+    function resetKv() {
+        kv.value = {
+            namespace: props.namespace,
+            type: "STRING"
+        };
+    }
+
+    function onTtlChange(value: any) {
+        kv.value.ttl = value.timeRange;
+    }
+
+    function refresh() {
+        loadData();
+    }
+
+    watch(addKvDrawerVisible, (newValue) => {
+        if (!newValue) {
+            resetKv();
+        }
+    });
+
+    const formRef = ref();
+
+    watch(() => kv.value.type, () => {
+        if (formRef.value) {
+            (formRef.value as any).clearValidate("value");
+        }
+    });
+
+    defineExpose({
+        updateVisibleColumns
+    });
 </script>

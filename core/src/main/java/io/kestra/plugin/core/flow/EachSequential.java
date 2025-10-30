@@ -98,8 +98,8 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
     @NotNull
     @PluginProperty(dynamic = true)
     @Schema(
-        title = "The list of values for this task.",
-        description = "The value car be passed as a string, a list of strings, or a list of objects.",
+        title = "The list of values for this task",
+        description = "The value can be passed as a string, a list of strings, or a list of objects.",
         oneOf = {String.class, Object[].class}
     )
     private Object value;

@@ -6,6 +6,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -31,4 +33,15 @@ class TaskWithRunIfTest {
         assertThat(execution.findTaskRunsByTaskId("log_test").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
     }
 
+    @Test
+    @ExecuteFlow("flows/valids/task-runif-executionupdating.yml")
+    void executionUpdatingTask(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.findTaskRunsByTaskId("skipSetVariables").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("skipUnsetVariables").getFirst().getState().getCurrent()).isEqualTo(State.Type.SKIPPED);
+        assertThat(execution.findTaskRunsByTaskId("unsetVariables").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("setVariables").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getVariables()).containsEntry("list", List.of(42));
+    }
 }

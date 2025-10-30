@@ -1,7 +1,7 @@
 package io.kestra.core.runners;
 
-import java.io.Closeable;
+import io.kestra.core.server.Service;
 
-public interface ExecutorInterface extends Closeable, Runnable {
+public interface ExecutorInterface extends Service, Runnable {
 
 }

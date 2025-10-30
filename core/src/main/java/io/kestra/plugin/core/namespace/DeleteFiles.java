@@ -74,13 +74,13 @@ import java.util.TreeSet;
 public class DeleteFiles extends Task implements RunnableTask<Output> {
     @NotNull
     @Schema(
-        title = "The namespace from which the files should be deleted."
+        title = "The namespace from which the files should be deleted"
     )
     private Property<String> namespace;
 
     @NotNull
     @Schema(
-        title = "A file or a list of files from the given namespace.",
+        title = "A file or a list of files from the given namespace",
         description = "String or a list of strings; each string can either be a regex glob pattern or a file path URI.",
         anyOf = {List.class, String.class}
     )
@@ -88,7 +88,7 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
     private Object files;
 
     @Schema(
-        title = "Whether to delete empty parent folders after deleting files.",
+        title = "Flag specifying whether to delete empty parent folders after deleting files",
         description = "If true, parent folders that become empty after file deletion will also be removed.",
         defaultValue = "false"
     )

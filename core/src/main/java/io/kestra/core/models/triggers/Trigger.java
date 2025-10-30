@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -175,9 +176,14 @@ public class Trigger extends TriggerContext implements HasUID {
     // Used to update trigger in flowListeners
     public static Trigger of(FlowInterface flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext, Optional<Trigger> lastTrigger) throws Exception {
         ZonedDateTime nextDate = null;
+        boolean disabled = lastTrigger.map(TriggerContext::getDisabled).orElse(Boolean.FALSE);
 
         if (abstractTrigger instanceof PollingTriggerInterface pollingTriggerInterface) {
-            nextDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.empty());
+            try {
+                nextDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.empty());
+            } catch (InvalidTriggerConfigurationException e) {
+                disabled = true;
+            }
         }
 
         return Trigger.builder()
@@ -188,36 +194,8 @@ public class Trigger extends TriggerContext implements HasUID {
             .date(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .nextExecutionDate(nextDate)
             .stopAfter(abstractTrigger.getStopAfter())
-            .disabled(lastTrigger.map(TriggerContext::getDisabled).orElse(Boolean.FALSE))
+            .disabled(disabled)
             .backfill(null)
-            .build();
-    }
-
-    public static Trigger update(Trigger currentTrigger, Trigger newTrigger, ZonedDateTime nextExecutionDate) throws Exception {
-        Trigger updated = currentTrigger;
-
-        // If a backfill is created, we update the currentTrigger
-        // and set the nextExecutionDate() as the previous one
-        if (newTrigger.getBackfill() != null) {
-            updated = currentTrigger.toBuilder()
-                .backfill(
-                    newTrigger
-                        .getBackfill()
-                        .toBuilder()
-                        .end(newTrigger.getBackfill().getEnd() != null ? newTrigger.getBackfill().getEnd() : ZonedDateTime.now())
-                        .currentDate(
-                            newTrigger.getBackfill().getStart()
-                        )
-                        .previousNextExecutionDate(
-                            currentTrigger.getNextExecutionDate())
-                        .build())
-                .build();
-        }
-
-        return updated.toBuilder()
-            .nextExecutionDate(newTrigger.getDisabled() ?
-                null : nextExecutionDate)
-            .disabled(newTrigger.getDisabled())
             .build();
     }
 
@@ -284,27 +262,22 @@ public class Trigger extends TriggerContext implements HasUID {
             .build();
     }
 
-    public Trigger initBackfill(Trigger newTrigger) {
-        // If a backfill is created, we update the currentTrigger
+    public Trigger withBackfill(final Backfill backfill) {
+        Trigger updated = this;
+        // If a backfill is created, we update the trigger
         // and set the nextExecutionDate() as the previous one
-        if (newTrigger.getBackfill() != null) {
-
-            return this.toBuilder()
+        if (backfill != null) {
+            updated = this.toBuilder()
                 .backfill(
-                    newTrigger
-                        .getBackfill()
+                    backfill
                         .toBuilder()
-                        .end(newTrigger.getBackfill().getEnd() != null ? newTrigger.getBackfill().getEnd() : ZonedDateTime.now())
-                        .currentDate(
-                            newTrigger.getBackfill().getStart()
-                        )
-                        .previousNextExecutionDate(
-                            this.getNextExecutionDate())
+                        .end(backfill.getEnd() != null ? backfill.getEnd() : ZonedDateTime.now())
+                        .currentDate(backfill.getStart())
+                        .previousNextExecutionDate(this.getNextExecutionDate())
                         .build())
                 .build();
         }
-
-        return this;
+        return updated;
     }
 
     // if the next date is after the backfill end, we remove the backfill

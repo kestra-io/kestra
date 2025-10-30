@@ -38,10 +38,6 @@ public abstract class AbstractTaskRunnerTest {
     @Test
     protected void run() throws Exception {
         var runContext = runContext(this.runContextFactory);
-        simpleRun(runContext);
-    }
-
-    private void simpleRun(RunContext runContext) throws Exception {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(
             Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
@@ -173,8 +169,41 @@ public abstract class AbstractTaskRunnerTest {
     @Test
     protected void canWorkMultipleTimeInSameWdir() throws Exception {
         var runContext = runContext(this.runContextFactory);
-        simpleRun(runContext);
-        simpleRun(runContext);
+
+        var commands = initScriptCommands(runContext);
+        Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
+        Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
+        Mockito.when(commands.relativeWorkingDirectoryFilesPaths()).thenCallRealMethod();
+        Mockito.when(commands.relativeWorkingDirectoryFilesPaths(false)).thenCallRealMethod();
+
+        var taskRunner = taskRunner();
+        Property<List<String>> renderedCommands = Property.ofValue(ScriptService.replaceInternalStorage(
+            runContext,
+            taskRunner.additionalVars(runContext, commands),
+            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World' > " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")),
+            taskRunner instanceof RemoteRunnerInterface
+        ));
+        Mockito.when(commands.getCommands()).thenReturn(
+            renderedCommands
+        );
+
+        var result = taskRunner.run(runContext, commands, Collections.emptyList());
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
+
+        renderedCommands = Property.ofValue(ScriptService.replaceInternalStorage(
+            runContext,
+            taskRunner.additionalVars(runContext, commands),
+            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("cat " + (needsToSpecifyWorkingDirectory() ? "{{workingDir}}/" : "") + "file.txt")),
+            taskRunner instanceof RemoteRunnerInterface
+        ));
+        Mockito.when(commands.getCommands()).thenReturn(
+            renderedCommands
+        );
+
+        result = taskRunner.run(runContext, commands, Collections.emptyList());
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isZero();
     }
 
     protected RunContext runContext(RunContextFactory runContextFactory) {
@@ -182,6 +211,10 @@ public abstract class AbstractTaskRunnerTest {
     }
 
     protected RunContext runContext(RunContextFactory runContextFactory, Map<String, Object> additionalVars) {
+        return this.runContext(runContextFactory, additionalVars, IdUtils.create());
+    }
+
+    protected RunContext runContext(RunContextFactory runContextFactory, Map<String, Object> additionalVars, String taskRunId) {
         // create a fake flow and execution
         Task task = new Task() {
             @Override
@@ -194,7 +227,7 @@ public abstract class AbstractTaskRunnerTest {
                 return "Task";
             }
         };
-        TaskRun taskRun = TaskRun.builder().id(IdUtils.create()).taskId("task").flowId("flow").namespace("namespace").executionId("execution")
+        TaskRun taskRun = TaskRun.builder().id(taskRunId).taskId("task").flowId("flow").namespace("namespace").executionId("execution")
             .state(new State().withState(State.Type.RUNNING))
             .build();
         Flow flow = Flow.builder().id("flow").namespace("namespace").revision(1)
@@ -234,6 +267,7 @@ public abstract class AbstractTaskRunnerTest {
         var outputDirectory = workingDirectory.resolve(IdUtils.create());
         outputDirectory.toFile().mkdirs();
         Mockito.when(commands.getOutputDirectory()).thenReturn(outputDirectory);
+        Mockito.when(commands.outputDirectoryName()).thenCallRealMethod();
         Mockito.when(commands.getAdditionalVars()).thenReturn(Collections.emptyMap());
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(true);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(true);

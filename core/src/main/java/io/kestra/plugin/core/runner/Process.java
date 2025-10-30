@@ -41,7 +41,7 @@ import java.util.Map;
 
         Note that:
 
-        - This task runner is independent of any Operating System. You can use it equally on Linux, Mac or Windows without any additional configuration.
+        - This task runner is independent of any Operating System. You can use it equally on Linux, Mac, or Windows without any additional configuration.
         - When the Kestra Worker running this task is shut down, the process will be interrupted and re-created as soon as the worker is restarted."""
 )
 @Plugin(

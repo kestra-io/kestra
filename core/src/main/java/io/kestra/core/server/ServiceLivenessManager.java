@@ -392,7 +392,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                 // More especially, this handles the case where a WORKER is configured with a short gracefulTerminationPeriod
                 // and the JVM was unresponsive for more than this period.
                 // In this context, the worker's tasks have already been resubmitted by the executor; the worker must therefore stop immediately.
-                if (state.equals(Service.ServiceState.NOT_RUNNING) || state.equals(Service.ServiceState.EMPTY)) {
+                if (state.equals(Service.ServiceState.NOT_RUNNING) || state.equals(Service.ServiceState.INACTIVE)) {
                     service.skipGracefulTermination(true);
                 }
                 KestraContext.getContext().shutdown();

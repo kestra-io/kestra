@@ -21,6 +21,8 @@
     $indigo: global-var.$indigo
 );
 
+@use "components/sidebar-menu";
+
 html, body, #app, #app-container {
     height: 100%;
 }

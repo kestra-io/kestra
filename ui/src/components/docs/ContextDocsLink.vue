@@ -32,7 +32,7 @@
     const props = withDefaults(defineProps<{
         href?: string;
         useRaw?: boolean;
-        class?: string;
+        class?: string | Record<string, boolean> | Array<string | Record<string, boolean>>;
     }>(), {
         href: undefined,
         useRaw: false,

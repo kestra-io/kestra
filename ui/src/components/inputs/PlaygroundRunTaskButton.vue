@@ -1,8 +1,8 @@
 <template>
     <el-dropdown
-        split-button
+        splitButton
         @visible-change="playgroundStore.dropdownOpened = $event"
-        :button-props="{class: 'el-button--playground'}"
+        :buttonProps="{class: 'el-button--playground'}"
         @click="playgroundStore.runUntilTask(taskId)"
         :disabled="!playgroundStore.readyToStart"
     >
@@ -35,7 +35,7 @@
     }>();
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .toggle{
     margin-right: 1rem;
 }

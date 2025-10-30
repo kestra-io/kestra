@@ -29,7 +29,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition that check labels of an execution."
+    title = "Condition that checks labels of an execution."
 )
 @Plugin(
     examples = {

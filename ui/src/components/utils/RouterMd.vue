@@ -10,19 +10,10 @@
     </span>
 </template>
 
-<script setup>
-    const props = defineProps({
-        execution: {
-            type: String,
-            required: true
-        },
-        flowId: {
-            type: String,
-            required: true
-        },
-        namespace: {
-            type: String,
-            required: true
-        }
-    })
+<script setup lang="ts">
+    const props = defineProps<{
+        execution: string;
+        flowId: string;
+        namespace: string;
+    }>();
 </script>

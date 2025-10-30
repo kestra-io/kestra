@@ -9,18 +9,18 @@
                     <span class="text-secondary">
                         {{ sectionName.toUpperCase() }}
                     </span>
-                    <recursive-toc :parent="{children}">
+                    <RecursiveToc :parent="{children}">
                         <template #default="{path, title}">
-                            <context-docs-link 
-                                @click="menuOpen = false" 
-                                :href="path.slice(5)" 
-                                use-raw
+                            <ContextDocsLink
+                                :href="path.slice(5)"
+                                useRaw
                                 :class="{'active-page': isCurrentPage(path)}"
+                                @click="menuOpen = false"
                             >
                                 {{ title.capitalize() }}
-                            </context-docs-link>
+                            </ContextDocsLink>
                         </template>
-                    </recursive-toc>
+                    </RecursiveToc>
                 </li>
             </template>
             <li v-else>
@@ -30,7 +30,7 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {ref, computed, watch} from "vue";
     import {useDocStore} from "../../stores/doc";
     import {useI18n} from "vue-i18n";
@@ -57,49 +57,52 @@
         "Build with Kestra": [
             "Concepts",
             "Workflow Components",
-            "Expressions",
+            "Multi-Language Script Tasks",
             "Version Control & CI/CD",
             "Plugin Developer Guide",
             "How-to Guides"
         ],
         "Scale with Kestra": [
-            "Enterprise Edition",
+            "Cloud & Enterprise Edition",
             "Task Runners",
             "Best Practices"
         ],
         "Manage Kestra": [
             "Administrator Guide",
-            "Configuration Guide",
-            "Migration Guide",
+            "Migration Guide"
+        ],
+        "Reference Docs": [
+            "Configuration",
+            "Expressions",
+            "API Reference",
             "Terraform Provider",
-            "API Reference"
         ]
     }
 
-    const rawStructure = ref(undefined);
+    const rawStructure = ref<Record<string, any> | undefined>();
     const currentDocPath = computed(() => docStore.docPath);
 
-    const normalizePath = (path) => {
+    const normalizePath = (path: string) => {
         if (!path) return "";
         return path.replace(/^docs\//, "").replace(/^\/+|\/+$/g, "");
     };
 
-    const isCurrentPage = (path) => {
+    const isCurrentPage = (path: string) => {
         if (!currentDocPath.value || !path) return false;
         const normalizedCurrent = normalizePath(currentDocPath.value);
         const normalizedPath = normalizePath(path);
-        
+
         if (normalizedCurrent === normalizedPath) return true;
-        
+
         if (normalizedCurrent.startsWith(normalizedPath + "/")) return true;
-        
+
         return false;
     };
 
-    const isCurrentSection = (sectionName) => {
+    const isCurrentSection = (sectionName: string) => {
         if (!currentDocPath.value) return false;
         const sectionChildren = sectionsWithChildren.value?.find(([name]) => name === sectionName)?.[1] || [];
-        return sectionChildren.some(child => isCurrentPage(child.path));
+        return sectionChildren.some((child: { path: string }) => isCurrentPage(child.path));
     };
 
     watch(menuOpen, async (val) => {
@@ -107,13 +110,13 @@
         rawStructure.value = await docStore.children();
     });
 
-    const toc = computed(() => {
+    const toc = computed<{title: string}[]>(() => {
         if (rawStructure.value === undefined) {
             return undefined;
         }
 
         const childrenWithMetadata = Object.entries(rawStructure.value)
-            .reduce((acc, [url, metadata]) => {
+            .reduce((acc: Record<string, any>, [url, metadata]) => {
                 if(!metadata || metadata.hideSidebar){
                     return acc;
                 }
@@ -144,11 +147,11 @@
             return undefined;
         }
 
-        return Object.entries(SECTIONS).map(([section, childrenTitles]) => [section, toc.value.filter(({title}) => childrenTitles.includes(title))]);
+        return Object.entries(SECTIONS).map(([section, childrenTitles]) => [section, toc.value.filter(({title}) => childrenTitles.includes(title))] as [string, {title: string, path: string}[]]);
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     ul > li > span:first-child {
         font-size: 12px;
     }

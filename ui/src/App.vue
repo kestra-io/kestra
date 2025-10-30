@@ -1,7 +1,7 @@
 <template>
-    <doc-id-display />
+    <DocIdDisplay />
     <el-config-provider>
-        <error-toast v-if="coreStore.message" :no-auto-hide="true" :message="coreStore.message" />
+        <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
@@ -11,14 +11,12 @@
 
 <script>
     import ErrorToast from "./components/ErrorToast.vue";
-    import {mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import {shallowRef} from "vue";
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
-    import posthog from "posthog-js";
     import "@kestra-io/ui-libs/style.css";
 
     import {useApiStore} from "./stores/api";
@@ -26,7 +24,8 @@
     import {useLayoutStore} from "./stores/layout";
     import {useCoreStore} from "./stores/core";
     import {useDocStore} from "./stores/doc";
-    import {useMiscStore} from "./stores/misc";
+    import {initPostHogForSetup} from "./composables/usePosthog";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "./stores/executions";
     import * as BasicAuth from "./utils/basicAuth";
     import {useFlowStore} from "./stores/flow";
@@ -49,13 +48,9 @@
             };
         },
         computed: {
-            ...mapState("auth", ["user"]),
             ...mapStores(useApiStore, usePluginsStore, useLayoutStore, useCoreStore, useDocStore, useMiscStore, useExecutionsStore, useFlowStore),
             envName() {
                 return this.layoutStore.envName || this.miscStore.configs?.environment?.name;
-            },
-            isOSS(){
-                return true;
             },
             shouldRenderApp() {
                 return this.loaded
@@ -118,82 +113,12 @@
                     uid: uid,
                 });
 
-                this.apiStore.loadConfig()
-                    .then(apiConfig => {
-                        this.initStats(apiConfig, config, uid);
-                    })
+                await initPostHogForSetup(config);
 
                 return config;
             },
-            initStats(apiConfig, config, uid) {
-                if (!this.configs || this.configs["isAnonymousUsageEnabled"] === false) {
-                    return;
-                }
-
-                // only run posthog in production
-                if (import.meta.env.MODE === "production") {
-                    posthog.init(
-                        apiConfig.posthog.token,
-                        {
-                            api_host: apiConfig.posthog.apiHost,
-                            ui_host: "https://eu.posthog.com",
-                            capture_pageview: false,
-                            capture_pageleave: true,
-                            autocapture: false,
-                        }
-                    )
-
-                    posthog.register_once(this.statsGlobalData(config, uid));
-
-                    if (!posthog.get_property("__alias")) {
-                        posthog.alias(apiConfig.id);
-                    }
-                }
-
-
-                let surveyVisible = false;
-                window.addEventListener("PHSurveyShown", () => {
-                    surveyVisible = true;
-                });
-
-                window.addEventListener("PHSurveyClosed", () => {
-                    surveyVisible = false;
-                })
-
-                window.addEventListener("KestraRouterAfterEach", () => {
-                    if (surveyVisible) {
-                        window.dispatchEvent(new Event("PHSurveyClosed"))
-                        surveyVisible = false;
-                    }
-                })
-            },
-            statsGlobalData(config, uid) {
-                return {
-                    from: "APP",
-                    iid: config.uuid,
-                    uid: uid,
-                    app: {
-                        version: config.version,
-                        type: "OSS"
-                    }
-                }
-            },
         },
         watch: {
-            $route: {
-                async handler(route) {
-                    if(route.name === "home" && this.isOSS) {
-                        await this.flowStore.findFlows({size: 10, sort: "id:asc"})
-                        await this.executionsStore.findExecutions({size: 10}).then(response => {
-                            this.executions = response?.total ?? 0;
-                        })
-
-                        if (!this.executions && !this.flowStore.overallTotal) {
-                            this.$router.push({name: "welcome", params: {tenant: this.$route.params.tenant}});
-                        }
-                    }
-                }
-            },
             envName() {
                 this.setTitleEnvSuffix();
             }

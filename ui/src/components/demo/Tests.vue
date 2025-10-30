@@ -1,5 +1,5 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" />
+    <TopNavBar :title="routeInfo.title" />
     <Layout
         :title="t(`demos.tests.title`)"
         :image="{source: sourceImg, alt: t(`demos.tests.title`)}"
@@ -14,19 +14,16 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {computed} from "vue";
     import {useI18n} from "vue-i18n";
     import Layout from "./Layout.vue";
-    // @ts-expect-error no types in TopNavBar yet
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import sourceImg from "../../assets/demo/tests.png";
-    import useRouteContext from "../../mixins/useRouteContext";
+    import useRouteContext from "../../composables/useRouteContext";
 
     const {t} = useI18n();
 
-    const routeInfo = ref({
-        title: t("demos.tests.header"),
-    });
+    const routeInfo = computed(() => ({title: t("demos.tests.header")}));
 
     useRouteContext(routeInfo);
 </script>

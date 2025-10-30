@@ -75,25 +75,25 @@ import java.util.Optional;
 )
 public class Toggle extends Task implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "The flow identifier of the trigger to toggle.",
+        title = "The flow identifier of the trigger to toggle",
         description = "If not set, the current flow identifier will be used."
     )
     @PluginProperty(dynamic = true)
     private String flowId;
 
     @Schema(
-        title = "The namespace of the flow of the trigger to toggle.",
+        title = "The namespace of the flow of the trigger to toggle",
         description = "If not set, the current flow namespace will be used."
     )
     @PluginProperty(dynamic = true)
     private String namespace;
 
-    @Schema(title = "The identifier of the trigger to toggle.")
+    @Schema(title = "The identifier of the trigger to toggle")
     @NotNull
     @PluginProperty(dynamic = true)
     private String trigger;
 
-    @Schema(title = "Whether to enable or disable the trigger.")
+    @Schema(title = "Whether to enable or disable the trigger")
     @NotNull
     @Builder.Default
     @PluginProperty

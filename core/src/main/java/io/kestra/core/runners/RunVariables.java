@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -9,6 +10,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
+import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
@@ -97,7 +99,7 @@ public final class RunVariables {
      * @return a new immutable {@link Map}.
      */
     static Map<String, Object> of(final AbstractTrigger trigger) {
-        return ImmutableMap.of(
+        return Map.of(
             "id", trigger.getId(),
             "type", trigger.getType()
         );
@@ -138,10 +140,10 @@ public final class RunVariables {
          * @param logger    The {@link RunContextLogger logger}
          * @return          The immutable map of variables.
          */
-        Map<String, Object> build(final RunContextLogger logger);
+        Map<String, Object> build(RunContextLogger logger, PropertyContext propertyContext);
     }
 
-    public record  KestraConfiguration(String environment, String url) { }
+    public record KestraConfiguration(String environment, String url) { }
 
     /**
      * Default builder class for constructing variables.
@@ -174,7 +176,7 @@ public final class RunVariables {
 
         // Note: for performance reason, cloning maps should be avoided as much as possible.
         @Override
-        public Map<String, Object> build(final RunContextLogger logger) {
+        public Map<String, Object> build(final RunContextLogger logger, final PropertyContext propertyContext) {
             ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
 
             builder.put("envs", envs != null ? envs : Map.of());
@@ -279,10 +281,19 @@ public final class RunVariables {
                 }
 
                 if (flow != null && flow.getInputs() != null) {
+                    // Create a new PropertyContext with 'flow' variables which are required by some pebble expressions.
+                    PropertyContextWithVariables context = new PropertyContextWithVariables(propertyContext, Map.of("flow", RunVariables.of(flow)));
+                    
                     // we add default inputs value from the flow if not already set, this will be useful for triggers
                     flow.getInputs().stream()
                         .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
-                        .forEach(input -> inputs.put(input.getId(), input.getDefaults()));
+                        .forEach(input -> {
+                            try {
+                                inputs.put(input.getId(), FlowInputOutput.resolveDefaultValue(input, context));
+                            } catch (IllegalVariableEvaluationException e) {
+                                // Silent catch, if an input depends on another input, or a variable that is populated at runtime / input filling time, we can't resolve it here.
+                            }
+                        });
                 }
 
                 if (!inputs.isEmpty()) {
@@ -382,4 +393,20 @@ public final class RunVariables {
     }
 
     private RunVariables(){}
+    
+    private record PropertyContextWithVariables(
+        PropertyContext delegate,
+        Map<String, Object> variables
+    ) implements PropertyContext {
+        
+        @Override
+        public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+            return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
+        }
+        
+        @Override
+        public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+            return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
+        }
+    }
 }

@@ -36,6 +36,7 @@ public class Plugin {
     private List<PluginElementMetadata> appBlocks;
     private List<PluginElementMetadata> charts;
     private List<PluginElementMetadata> dataFilters;
+    private List<PluginElementMetadata> dataFiltersKPI;
     private List<PluginElementMetadata> logExporters;
     private List<PluginElementMetadata> additionalPlugins;
     private List<PluginSubGroup.PluginCategory> categories;
@@ -96,6 +97,7 @@ public class Plugin {
         plugin.appBlocks = filterAndGetTypeWithMetadata(registeredPlugin.getAppBlocks(), packagePredicate);
         plugin.charts = filterAndGetTypeWithMetadata(registeredPlugin.getCharts(), packagePredicate);
         plugin.dataFilters = filterAndGetTypeWithMetadata(registeredPlugin.getDataFilters(), packagePredicate);
+        plugin.dataFiltersKPI = filterAndGetTypeWithMetadata(registeredPlugin.getDataFiltersKPI(), packagePredicate);
         plugin.logExporters = filterAndGetTypeWithMetadata(registeredPlugin.getLogExporters(), packagePredicate);
         plugin.additionalPlugins = filterAndGetTypeWithMetadata(registeredPlugin.getAdditionalPlugins(), packagePredicate);
 

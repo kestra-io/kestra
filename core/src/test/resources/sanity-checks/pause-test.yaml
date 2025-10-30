@@ -1,0 +1,7 @@
+id: pause-test
+namespace: sanitychecks.core
+
+tasks:
+  - id: pause_flow
+    type: io.kestra.plugin.core.flow.Pause
+    delay: PT1S

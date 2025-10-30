@@ -13,19 +13,19 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ExecutionTest {
-    private static final TaskRun.TaskRunBuilder TASK_RUN = TaskRun.builder()
-        .id("test");
 
     @Test
     void hasTaskRunJoinableTrue() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TASK_RUN
+            .taskRunList(Collections.singletonList(TaskRun.builder()
+                .id("test")
                 .state(new State(State.Type.RUNNING, new State()))
                 .build())
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TASK_RUN
+        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
+            .id("test")
             .state(new State(State.Type.FAILED, new State()
                 .withState(State.Type.RUNNING)
             ))
@@ -36,13 +36,15 @@ class ExecutionTest {
     @Test
     void hasTaskRunJoinableSameState() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TASK_RUN
+            .taskRunList(Collections.singletonList(TaskRun.builder()
+                .id("test")
                 .state(new State())
                 .build())
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TASK_RUN
+        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
+            .id("test")
             .state(new State())
             .build()
         )).isFalse();
@@ -51,7 +53,8 @@ class ExecutionTest {
     @Test
     void hasTaskRunJoinableFailedExecutionFromExecutor() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TASK_RUN
+            .taskRunList(Collections.singletonList(TaskRun.builder()
+                .id("test")
                 .state(new State(State.Type.FAILED, new State()
                     .withState(State.Type.RUNNING)
                 ))
@@ -59,7 +62,8 @@ class ExecutionTest {
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TASK_RUN
+        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
+            .id("test")
             .state(new State(State.Type.RUNNING, new State()))
             .build()
         )).isFalse();
@@ -68,7 +72,8 @@ class ExecutionTest {
     @Test
     void hasTaskRunJoinableRestartFailed() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TASK_RUN
+            .taskRunList(Collections.singletonList(TaskRun.builder()
+                .id("test")
                 .state(new State(State.Type.CREATED, new State()
                     .withState(State.Type.RUNNING)
                     .withState(State.Type.FAILED)
@@ -77,7 +82,8 @@ class ExecutionTest {
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TASK_RUN
+        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
+            .id("test")
             .state(new State(State.Type.FAILED, new State()
                 .withState(State.Type.RUNNING)
             ))
@@ -88,7 +94,8 @@ class ExecutionTest {
     @Test
     void hasTaskRunJoinableRestartSuccess() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TASK_RUN
+            .taskRunList(Collections.singletonList(TaskRun.builder()
+                .id("test")
                 .state(new State(State.Type.CREATED, new State()
                     .withState(State.Type.RUNNING)
                     .withState(State.Type.SUCCESS)
@@ -97,7 +104,8 @@ class ExecutionTest {
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TASK_RUN
+        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
+            .id("test")
             .state(new State(State.Type.SUCCESS, new State()
                 .withState(State.Type.RUNNING)
                 .withState(State.Type.SUCCESS)
@@ -109,7 +117,8 @@ class ExecutionTest {
     @Test
     void hasTaskRunJoinableAfterRestart() {
         Execution execution = Execution.builder()
-            .taskRunList(Collections.singletonList(TASK_RUN
+            .taskRunList(Collections.singletonList(TaskRun.builder()
+                .id("test")
                 .state(new State(State.Type.CREATED, new State()
                     .withState(State.Type.RUNNING)
                     .withState(State.Type.FAILED)
@@ -118,7 +127,8 @@ class ExecutionTest {
             )
             .build();
 
-        assertThat(execution.hasTaskRunJoinable(TASK_RUN
+        assertThat(execution.hasTaskRunJoinable(TaskRun.builder()
+            .id("test")
             .state(new State(State.Type.SUCCESS, new State()
                 .withState(State.Type.RUNNING)
                 .withState(State.Type.FAILED)

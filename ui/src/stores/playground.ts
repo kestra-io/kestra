@@ -9,6 +9,7 @@ import {State} from "@kestra-io/ui-libs";
 import {useToast} from "../utils/toast";
 import {useI18n} from "vue-i18n";
 import {useFlowStore} from "./flow";
+import {useFileExplorerStore} from "./fileExplorer";
 
 interface ExecutionWithGraph extends Execution {
     graph?: VueFlowUtils.FlowGraph;
@@ -143,8 +144,10 @@ export const usePlaygroundStore = defineStore("playground", () => {
         return latestExecution.value?.state.current;
     })
 
-    const readyToStartPure = computed(() => {
-        return !latestExecution.value || !nonFinalStates.includes(executionState.value)
+    const readyToStartPure = computed(()=>{
+        const executionReady = !latestExecution.value || !nonFinalStates.includes(executionState.value);
+        const flowValid = !(flowStore.haveChange && flowStore.flowErrors);
+        return executionReady && flowValid;
     })
 
     const readyToStart = ref(readyToStartPure.value);
@@ -159,6 +162,22 @@ export const usePlaygroundStore = defineStore("playground", () => {
     });
 
     const toast = useToast();
+
+    // Ensure Files panel reflects changes after Playground executions (e.g., Namespace/Tenant sync tasks)
+    // When an execution transitions from a non-final state to a final state, refresh the files tree
+    // @see https://github.com/kestra-io/plugin-git/issues/188
+    const fileExplorerStore = useFileExplorerStore();
+    watch(() => executionState.value, (newState, oldState) => {
+        if (!latestExecution.value) return;
+
+        const wasRunning = oldState ? nonFinalStates.includes(oldState) : false;
+        const isFinalNow = newState ? !nonFinalStates.includes(newState) : false;
+
+        if (wasRunning && isFinalNow) {
+            // Trigger a refresh of the namespace files tree in the file explorer
+            fileExplorerStore.loadNodes();
+        }
+    });
 
     function runFromQuery(){
         if(route.query.runUntilTaskId) {
@@ -185,7 +204,9 @@ export const usePlaygroundStore = defineStore("playground", () => {
             console.warn("Playground is not ready to start, latest execution is still in progress");
             return
         }
-
+        if (flowStore.haveChange && flowStore.flowErrors) {
+            return;
+        }
         readyToStart.value = false;
 
         if(flowStore.isCreating){
@@ -204,7 +225,19 @@ export const usePlaygroundStore = defineStore("playground", () => {
         // the task specified by the user will not be executed.
         const {nextTasksIds, graph} = await getNextTaskIds(runDownstreamTasks ? undefined : taskId) ?? {};
 
-        const {data: execution} = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph);
+        let execution;
+        try {
+            const response = await replayOrTriggerExecution(taskId, runDownstreamTasks ? undefined : nextTasksIds, graph);
+            execution = response?.data;
+        } catch (error: any) {
+            if (error?.response?.status === 422) {
+                // Invalid entity, most likely due to invalid inputs - allow triggering the task again
+                // See: https://github.com/kestra-io/kestra/issues/11109
+                readyToStart.value = true;
+            }
+
+            throw error;
+        }
 
         // don't keep taskRunIds from previous executions
         // because of https://github.com/kestra-io/kestra/issues/10462
@@ -212,7 +245,8 @@ export const usePlaygroundStore = defineStore("playground", () => {
 
         executionsStore.execution = execution;
 
-        addExecution(execution, graph);
+        if(execution)
+            addExecution(execution, graph);
     }
 
     function updateExecution(execution: ExecutionWithGraph) {

@@ -1,7 +1,7 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.jdbc.repository.AbstractJdbcTriggerRepositoryTest;
+import io.kestra.core.repositories.AbstractTriggerRepositoryTest;
 
-public class PostgresTriggerRepositoryTest extends AbstractJdbcTriggerRepositoryTest {
+public class PostgresTriggerRepositoryTest extends AbstractTriggerRepositoryTest {
 
 }

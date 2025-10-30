@@ -1,6 +1,7 @@
 package io.kestra.core.server;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -8,9 +9,11 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -25,6 +28,7 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
     protected final ServerConfig serverConfig;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private ScheduledExecutorService scheduledExecutorService;
+    private ScheduledFuture<?> scheduledFuture;
     private Instant lastScheduledExecution;
 
     /**
@@ -98,7 +102,7 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
             scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, name));
             Duration scheduleInterval = getScheduleInterval();
             log.debug("Scheduling '{}' at fixed rate {}.", name, scheduleInterval);
-            scheduledExecutorService.scheduleAtFixedRate(
+            scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(
                 this,
                 0,
                 scheduleInterval.toSeconds(),
@@ -133,20 +137,7 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
     @Override
     public void close() {
         if (isStopped.compareAndSet(false, true) && scheduledExecutorService != null) {
-            scheduledExecutorService.shutdown();
-            if (scheduledExecutorService.isTerminated()) {
-                return;
-            }
-            try {
-                if (!scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS)) {
-                    log.debug("Failed to wait for scheduled '{}' task termination. Cause: Timeout", name);
-                }
-                log.debug("Stopped scheduled '{}' task.", name);
-            } catch (InterruptedException e) {
-                scheduledExecutorService.shutdownNow();
-                Thread.currentThread().interrupt();
-                log.debug("Failed to wait for scheduled '{}' task termination. Cause: Interrupted.", name);
-            }
+            ExecutorsUtils.closeScheduledThreadPool(scheduledExecutorService, Duration.ofSeconds(5), List.of(scheduledFuture));
         }
     }
 }

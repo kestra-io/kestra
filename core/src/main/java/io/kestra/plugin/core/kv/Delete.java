@@ -44,20 +44,20 @@ import java.util.NoSuchElementException;
 public class Delete extends Task implements RunnableTask<Delete.Output> {
     @NotNull
     @Schema(
-        title = "The key for which to delete the value."
+        title = "The key specifying the value to delete"
     )
     private Property<String> key;
 
     @NotNull
     @Schema(
-        title = "The namespace on which to set the value."
+        title = "The namespace to set the value in"
     )
     @Builder.Default
     private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
-        title = "Whether to fail if there is no value for the given key."
+        title = "Flag specifying whether to fail if there is no value for the given key"
     )
     @Builder.Default
     private Property<Boolean> errorOnMissing = Property.ofValue(false);
@@ -83,7 +83,7 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "Whether the deletion was successful and had a value."
+            title = "Flag specifying whether the deletion was successful and had a value"
         )
         private final boolean deleted;
     }

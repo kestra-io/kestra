@@ -62,6 +62,7 @@ public record ServiceUsage(
 
         List<DailyServiceStatistics> statistics = Arrays
             .stream(ServiceType.values())
+            .filter(it -> !it.equals(ServiceType.INVALID))
             .map(type -> of(from, to, repository, type, interval))
             .toList();
         return new ServiceUsage(statistics);

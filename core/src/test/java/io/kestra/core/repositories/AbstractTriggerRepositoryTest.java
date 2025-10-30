@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import jakarta.inject.Inject;
@@ -24,7 +25,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -35,8 +35,9 @@ public abstract class AbstractTriggerRepositoryTest {
     @Inject
     protected TriggerRepositoryInterface triggerRepository;
 
-    private static Trigger.TriggerBuilder<?, ?> trigger() {
+    private static Trigger.TriggerBuilder<?, ?> trigger(String tenantId) {
         return Trigger.builder()
+            .tenantId(tenantId)
             .flowId(IdUtils.create())
             .namespace(TEST_NAMESPACE)
             .triggerId(IdUtils.create())
@@ -44,9 +45,9 @@ public abstract class AbstractTriggerRepositoryTest {
             .date(ZonedDateTime.now());
     }
 
-    protected static Trigger generateDefaultTrigger(){
+    protected static Trigger generateDefaultTrigger(String tenantId){
         Trigger trigger = Trigger.builder()
-            .tenantId(MAIN_TENANT)
+            .tenantId(tenantId)
             .triggerId("triggerId")
             .namespace("trigger.namespace")
             .flowId("flowId")
@@ -59,9 +60,10 @@ public abstract class AbstractTriggerRepositoryTest {
     @ParameterizedTest
     @MethodSource("filterCombinations")
     void should_find_all(QueryFilter filter){
-        triggerRepository.save(generateDefaultTrigger());
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerRepository.save(generateDefaultTrigger(tenant));
 
-        ArrayListTotal<Trigger> entries = triggerRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter));
+        ArrayListTotal<Trigger> entries = triggerRepository.find(Pageable.UNPAGED, tenant, List.of(filter));
 
         assertThat(entries).hasSize(1);
     }
@@ -69,9 +71,10 @@ public abstract class AbstractTriggerRepositoryTest {
     @ParameterizedTest
     @MethodSource("filterCombinations")
     void should_find_all_async(QueryFilter filter){
-        triggerRepository.save(generateDefaultTrigger());
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        triggerRepository.save(generateDefaultTrigger(tenant));
 
-        List<Trigger> entries = triggerRepository.find(MAIN_TENANT, List.of(filter)).collectList().block();
+        List<Trigger> entries = triggerRepository.find(tenant, List.of(filter)).collectList().block();
 
         assertThat(entries).hasSize(1);
     }
@@ -92,7 +95,7 @@ public abstract class AbstractTriggerRepositoryTest {
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
     void should_fail_to_find_all(QueryFilter filter){
-        assertThrows(InvalidQueryFiltersException.class, () -> triggerRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
+        assertThrows(InvalidQueryFiltersException.class, () -> triggerRepository.find(Pageable.UNPAGED, TestsUtils.randomTenant(this.getClass().getSimpleName()), List.of(filter)));
     }
 
     static Stream<QueryFilter> errorFilterCombinations() {
@@ -110,7 +113,8 @@ public abstract class AbstractTriggerRepositoryTest {
 
     @Test
     void all() {
-        Trigger.TriggerBuilder<?, ?> builder = trigger();
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Trigger.TriggerBuilder<?, ?> builder = trigger(tenant);
 
         Optional<Trigger> findLast = triggerRepository.findLast(builder.build());
         assertThat(findLast.isPresent()).isFalse();
@@ -130,47 +134,47 @@ public abstract class AbstractTriggerRepositoryTest {
         assertThat(findLast.get().getExecutionId()).isEqualTo(save.getExecutionId());
 
 
-        triggerRepository.save(trigger().build());
-        triggerRepository.save(trigger().build());
-        Trigger searchedTrigger = trigger().build();
+        triggerRepository.save(trigger(tenant).build());
+        triggerRepository.save(trigger(tenant).build());
+        Trigger searchedTrigger = trigger(tenant).build();
         triggerRepository.save(searchedTrigger);
 
         List<Trigger> all = triggerRepository.findAllForAllTenants();
 
-        assertThat(all.size()).isEqualTo(4);
+        assertThat(all.size()).isGreaterThanOrEqualTo(4);
 
-        all = triggerRepository.findAll(null);
+        all = triggerRepository.findAll(tenant);
 
         assertThat(all.size()).isEqualTo(4);
 
         String namespacePrefix = "io.kestra.another";
         String namespace = namespacePrefix + ".ns";
-        Trigger trigger = trigger().namespace(namespace).build();
+        Trigger trigger = trigger(tenant).namespace(namespace).build();
         triggerRepository.save(trigger);
 
-        List<Trigger> find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, null, null, null, null);
+        List<Trigger> find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, tenant, null, null, null);
         assertThat(find.size()).isEqualTo(4);
         assertThat(find.getFirst().getNamespace()).isEqualTo(namespace);
 
-        find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, null, null, searchedTrigger.getFlowId(), null);
+        find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, tenant, null, searchedTrigger.getFlowId(), null);
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getFlowId()).isEqualTo(searchedTrigger.getFlowId());
 
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc(triggerRepository.sortMapping().apply("triggerId")))), null, null, namespacePrefix, null, null);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc(triggerRepository.sortMapping().apply("triggerId")))), null, tenant, namespacePrefix, null, null);
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(trigger.getTriggerId());
 
         // Full text search is on namespace, flowId, triggerId, executionId
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), trigger.getNamespace(), null, null, null, null);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), trigger.getNamespace(), tenant, null, null, null);
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(trigger.getTriggerId());
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getFlowId(), null, null, null, null);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getFlowId(), tenant, null, null, null);
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(searchedTrigger.getTriggerId());
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getTriggerId(), null, null, null, null);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getTriggerId(), tenant, null, null, null);
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(searchedTrigger.getTriggerId());
-        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getExecutionId(), null, null, null, null);
+        find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getExecutionId(), tenant, null, null, null);
         assertThat(find.size()).isEqualTo(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(searchedTrigger.getTriggerId());
     }
@@ -178,15 +182,17 @@ public abstract class AbstractTriggerRepositoryTest {
     @Test
     void shouldCountForNullTenant() {
         // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         triggerRepository.save(Trigger
             .builder()
+            .tenantId(tenant)
             .triggerId(IdUtils.create())
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
             .build()
         );
         // When
-        int count = triggerRepository.count(null);
+        int count = triggerRepository.count(tenant);
         // Then
         assertThat(count).isEqualTo(1);
     }

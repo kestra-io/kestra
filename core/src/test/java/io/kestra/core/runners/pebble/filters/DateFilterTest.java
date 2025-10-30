@@ -14,10 +14,13 @@ import java.util.Date;
 import java.util.Map;
 
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
+@TestInstance(Lifecycle.PER_CLASS)
 class DateFilterTest {
     public static final ZonedDateTime NOW = ZonedDateTime.parse("2013-09-08T16:19:12.123456+01");
 
@@ -144,7 +147,7 @@ class DateFilterTest {
             )
         );
 
-        assertThat(render).isEqualTo("1378653552000123456");
+        assertThat(render).isEqualTo("1378653552123456");
     }
 
     @Test

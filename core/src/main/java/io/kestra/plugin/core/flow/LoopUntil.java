@@ -92,7 +92,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
     @NotNull
     @Schema(
-        title = "The condition expression that should evaluate to `true` or `false`.",
+        title = "The condition expression that should evaluate to `true` or `false`",
         description = "Boolean coercion allows 0, -0, null and '' to evaluate to false; all other values will evaluate to true."
     )
     private Property<String> condition;
@@ -104,7 +104,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     private Property<Boolean> failOnMaxReached = Property.ofValue(false);
 
     @Schema(
-        title = "Check the frequency configuration."
+        title = "Check the frequency configuration"
     )
     @Builder.Default
     @PluginProperty
@@ -271,19 +271,19 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     @NoArgsConstructor
     public static class CheckFrequency {
         @Schema(
-            title = "Maximum count of iterations.",
+            title = "Maximum count of iterations",
             description = "If not set, defines an unlimited number of iterations."
         )
         private Property<Integer> maxIterations;
 
         @Schema(
-            title = "Maximum duration of the task.",
+            title = "Maximum duration of the task",
             description = "If not set, defines an unlimited maximum duration of iterations."
         )
         private Property<Duration> maxDuration;
 
         @Schema(
-            title = "Interval between each iteration."
+            title = "Interval between each iteration"
         )
         @NotNull
         @Builder.Default

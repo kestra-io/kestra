@@ -1,0 +1,18 @@
+id: change-state-errors
+namespace: io.kestra.tests
+
+errors:
+  - id: print_error_log
+    type: io.kestra.plugin.core.log.Log
+    message: "Failure alert for flow {{ flow.namespace }}.{{ flow.id }} with ID {{ execution.id }}"
+
+tasks:
+  - id: before_task
+    type: io.kestra.plugin.core.debug.Return
+    format: "this always works"
+  - id: make_error
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{error}}"
+  - id: after-task
+    type: io.kestra.plugin.core.debug.Return
+    format: "after"

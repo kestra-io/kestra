@@ -1,11 +1,11 @@
 <template>
     <div class="plugin-doc">
-        <template v-if="fetchPluginDocumentation && pluginsStore.editorPlugin">
+        <template v-if="fetchPluginDocumentation && currentPlugin">
             <div class="d-flex gap-3 mb-3 align-items-center">
-                <task-icon
+                <TaskIcon
                     class="plugin-icon"
-                    :cls="pluginsStore.editorPlugin.cls"
-                    only-icon
+                    :cls="currentPlugin.cls"
+                    onlyIcon
                     :icons="pluginsStore.icons"
                 />
                 <h4 class="mb-0 plugin-title text-truncate">
@@ -22,75 +22,78 @@
                 </el-button>
             </div>
             <Suspense>
-                <schema-to-html
+                <SchemaToHtml
                     class="plugin-schema"
-                    :dark-mode="miscStore.theme === 'dark'"
-                    :schema="pluginsStore.editorPlugin.schema"
-                    :plugin-type="pluginsStore.editorPlugin.cls"
-                    :force-include-properties="pluginsStore.forceIncludeProperties"
+                    :darkMode="miscStore.theme === 'dark'"
+                    :schema="currentPlugin?.schema"
+                    :pluginType="currentPlugin?.cls"
+                    :forceIncludeProperties="pluginsStore.forceIncludeProperties"
+                    noUrlChange
                 >
                     <template #markdown="{content}">
-                        <markdown font-size-var="font-size-base" :source="content" />
+                        <EnhancedMarkdown font-size-var="font-size-base" :source="content" :showSearch="false" />
                     </template>
-                </schema-to-html>
+                </SchemaToHtml>
             </Suspense>
         </template>
-        <markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />
+        <EnhancedMarkdown
+            v-else
+            :source="introContent"
+            :class="{'position-absolute': absolute}"
+            :showSearch="true"
+            :collapseExamples="true"
+        />
     </div>
 </template>
 
-<script setup>
-    import Markdown from "../layout/Markdown.vue";
+<script setup lang="ts">
+
+    import {computed} from "vue";
+    import EnhancedMarkdown from "../layout/EnhancedMarkdown.vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
-    import GitHub from "vue-material-design-icons/Github.vue";
-</script>
-
-<script>
-    import intro from "../../assets/docs/basic.md?raw";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
-    import {mapStores} from "pinia";
+    import {useMiscStore} from "override/stores/misc";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "../../stores/misc";
+    import GitHub from "vue-material-design-icons/Github.vue";
+    import intro from "../../assets/docs/basic.md?raw";
 
-    export default {
-        props: {
-            overrideIntro: {
-                type: String,
-                default: null
-            },
-            absolute: {
-                type: Boolean,
-                default: false
-            },
-            fetchPluginDocumentation: {
-                type: Boolean,
-                default: true
-            }
-        },
-        computed: {
-            ...mapStores(usePluginsStore, useMiscStore),
-            introContent () {
-                return this.overrideIntro ?? intro
-            },
-            pluginName() {
-                const split = this.pluginsStore.editorPlugin.cls.split(".");
-                return split[split.length - 1];
-            },
-            releaseNotesUrl() {
-                return getPluginReleaseUrl(this.pluginsStore.editorPlugin.cls);
-            }
-        },
-        created() {
-            this.pluginsStore.list();
-        },
-        methods: {
-            openReleaseNotes() {
-                if (this.releaseNotesUrl) {
-                    window.open(this.releaseNotesUrl, "_blank");
-                }
-            }
+    const props = withDefaults(defineProps<{
+        overrideIntro?: string | null;
+        absolute?: boolean;
+        fetchPluginDocumentation?: boolean;
+        plugin?: any;
+    }>(), {
+        overrideIntro: null,
+        absolute: false,
+        fetchPluginDocumentation: true,
+        plugin: null
+    });
+
+    const miscStore = useMiscStore();
+    const pluginsStore = usePluginsStore();
+
+    const currentPlugin = computed(() => {
+        return props.plugin ?? pluginsStore.editorPlugin;
+    });
+
+    const introContent = computed(() => {
+        return props.overrideIntro ?? intro;
+    });
+
+    const pluginName = computed(() => {
+        const split = currentPlugin.value?.cls.split(".");
+        return split[split.length - 1];
+    });
+
+    const releaseNotesUrl = computed(() => {
+        return getPluginReleaseUrl(currentPlugin.value?.cls);
+    });
+
+    const openReleaseNotes = () => {
+        if (releaseNotesUrl.value) {
+            window.open(releaseNotesUrl.value, "_blank");
         }
-    }
+    };
 </script>
 
 <style scoped lang="scss">

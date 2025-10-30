@@ -20,16 +20,18 @@ import io.kestra.core.queues.QueueInterface;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class RunContextLogger implements Supplier<org.slf4j.Logger> {
-    private static final int MAX_MESSAGE_LENGTH = 1024 * 10;
+    private static final int MAX_MESSAGE_LENGTH = 1024 * 15;
     public static final String ORIGINAL_TIMESTAMP_KEY = "originalTimestamp";
 
     private final String loggerName;
@@ -80,7 +82,6 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         }
 
         List<LogEntry> result = new ArrayList<>();
-        long i = 0;
         for (String s : split) {
             result.add(LogEntry.builder()
                 .namespace(logEntry.getNamespace())
@@ -98,7 +99,6 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 .thread(event.getThreadName())
                 .build()
             );
-            i++;
         }
 
         return result;
@@ -144,8 +144,9 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     }
 
     public void usedSecret(String secret) {
-        if (secret != null) {
+        if (secret != null && !secret.isEmpty()) {
             this.useSecrets.add(secret);
+            this.useSecrets.add(Base64.getEncoder().encodeToString(secret.getBytes(StandardCharsets.UTF_8)));
         }
     }
 
@@ -331,14 +332,11 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         protected void append(ILoggingEvent e) {
             e = this.transform(e);
 
-            logEntries(e, logEntry)
-                .forEach(l -> {
-                    try {
-                        logQueue.emitAsync(l);
-                    } catch (QueueException ex) {
-                        log.warn("Unable to emit logQueue", ex);
-                    }
-                });
+            try {
+                logQueue.emitAsync(logEntries(e, logEntry));
+            } catch (QueueException ex) {
+                log.warn("Unable to emit logQueue", ex);
+            }
         }
     }
 

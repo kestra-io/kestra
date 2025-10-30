@@ -21,7 +21,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Allow to unset execution variables."
+    title = "Unset execution variables."
 )
 @Plugin(
     examples = {
@@ -57,7 +57,7 @@ public class UnsetVariables extends Task implements ExecutionUpdatableTask {
     @NotNull
     private Property<List<String>> variables;
 
-    @Schema(title = "Whether to ignore missing variables")
+    @Schema(title = "Flag specifying whether to ignore missing variables")
     @NotNull
     @Builder.Default
     private Property<Boolean> ignoreMissing = Property.ofValue(false);

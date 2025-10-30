@@ -4,9 +4,9 @@
             <Logo class="logo" />
         </div>
 
-        <el-form @submit.prevent :model="credentials" ref="form">
+        <el-form @submit.prevent :model="credentials" ref="form" :rules="rules" :showMessage="false">
             <input type="hidden" name="from" :value="redirectPath">
-            <el-form-item>
+            <el-form-item prop="username">
                 <el-input
                     name="username"
                     size="large"
@@ -14,14 +14,18 @@
                     v-model="credentials.username"
                     :placeholder="t('email')"
                     required
-                    prop="username"
                 >
                     <template #prepend>
                         <Account />
                     </template>
+                    <template #suffix v-if="getFieldError('username')">
+                        <el-tooltip placement="top" :content="getFieldError('username')">
+                            <InformationOutline class="validation-icon error" />
+                        </el-tooltip>
+                    </template>
                 </el-input>
             </el-form-item>
-            <el-form-item>
+            <el-form-item prop="password">
                 <el-input
                     v-model="credentials.password"
                     size="large"
@@ -29,12 +33,16 @@
                     id="input-password"
                     :placeholder="t('password')"
                     type="password"
-                    show-password
+                    showPassword
                     required
-                    prop="password"
                 >
                     <template #prepend>
                         <Lock />
+                    </template>
+                    <template #suffix v-if="getFieldError('password')">
+                        <el-tooltip placement="top" :content="getFieldError('password')">
+                            <InformationOutline class="validation-icon error" />
+                        </el-tooltip>
                     </template>
                 </el-input>
             </el-form-item>
@@ -43,8 +51,8 @@
                     type="primary"
                     class="w-100"
                     size="large"
-                    native-type="submit"
-                    @click="handleSubmit"
+                    nativeType="submit"
+                    @click.prevent="handleSubmit"
                     :disabled="isLoginDisabled"
                     :loading="isLoading"
                 >
@@ -68,18 +76,19 @@
 <script setup lang="ts">
     import {ref, computed} from "vue"
     import {useRouter, useRoute} from "vue-router"
-    import {useStore} from "vuex"
     import {useI18n} from "vue-i18n"
     import {ElMessage} from "element-plus"
     import type {FormInstance} from "element-plus"
     import axios from "axios"
+    import MailChecker from "mailchecker"
 
     import Account from "vue-material-design-icons/Account.vue"
     import Lock from "vue-material-design-icons/Lock.vue"
+    import InformationOutline from "vue-material-design-icons/InformationOutline.vue"
     import Logo from "../home/Logo.vue"
 
     import {useCoreStore} from "../../stores/core"
-    import {useMiscStore} from "../../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth";
@@ -91,7 +100,6 @@
 
     const router = useRouter()
     const route = useRoute()
-    const store = useStore()
     const {t} = useI18n()
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
@@ -104,18 +112,54 @@
         password: ""
     })
 
+    const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d)\S{8,}$/
+
+    const validateEmail = (_rule: any, value: string, callback: (error?: Error) => void) => {
+        if (!value?.trim()) {
+            return callback(new Error(t("setup.validation.email_required")));
+        } else if (!EMAIL_REGEX.test(value)) {
+            return callback(new Error(t("setup.validation.email_invalid")));
+        } else if (!MailChecker.isValid(value)) {
+            return callback(new Error(t("setup.validation.email_temporary_not_allowed")));
+        } else {
+            callback();
+        }
+    };
+
+    const validatePassword = (_rule: any, value: string, callback: (error?: Error) => void) => {
+        if (!value || !PASSWORD_REGEX.test(value)) {
+            return callback(new Error(t("setup.validation.password_invalid")));
+        }
+        callback();
+    };
+
+    const rules = computed(() => ({
+        username: [{required: true, validator: validateEmail, trigger: "change"}],
+        password: [{required: true, validator: validatePassword, trigger: "change"}]
+    }))
+
+    const getFieldError = (fieldName: string) => {
+        if (!form.value) return null
+        const field = form.value.fields?.find((f: any) => f.prop === fieldName)
+        return field?.validateState === "error" ? field.validateMessage : null
+    }
+
     const redirectPath = computed(() => (route.query.from as string) ?? "/welcome")
 
     const isLoginDisabled = computed(() =>
         !credentials.value.username?.trim() ||
         !credentials.value.password?.trim() ||
+        !EMAIL_REGEX.test(credentials.value.username) ||
+        !PASSWORD_REGEX.test(credentials.value.password) ||
+        !MailChecker.isValid(credentials.value.username) ||
         isLoading.value
     )
 
     const validateCredentials = async (auth: string) => {
         try {
             document.cookie = `BASIC_AUTH=${auth};path=/;samesite=strict`;
-            await axios.get(`${apiUrl(store)}/usages/all`, {
+            await axios.get(`${apiUrl()}/usages/all`, {
                 timeout: 10000,
                 withCredentials: true
             })
@@ -136,13 +180,13 @@
     const handleNetworkError = (error: any) => {
         return error.code === "ERR_NETWORK" ||
             error.code === "ECONNREFUSED" ||
-            (!error.response && error.message.includes("Network Error"))
+            (!error.response && error.message?.includes("Network Error"))
     }
 
-    const loadAuthConfigErrors = async (showIncorrectCredsMessage = true) => {
+    const loadAuthConfigErrors = async () => {
         try {
             const errors = await miscStore.loadBasicAuthValidationErrors()
-            if (errors && errors.length > 0) {
+            if (errors?.length) {
                 errors.forEach((error: string) => {
                     ElMessage.error({
                         message: `${error}. ${t("setup.validation.config_message")}`,
@@ -150,24 +194,23 @@
                         showClose: false
                     })
                 })
-            } else if (showIncorrectCredsMessage) {
-                ElMessage.error(t("setup.validation.incorrect_creds"))
             }
-        } catch (error) {
-            console.error("Failed to load auth config errors:", error)
+        } catch {
+            ElMessage.error({
+                message: t("setup.validation.incorrect_creds")
+            })
         }
     }
 
-    const handleSubmit = async (event: Event) => {
-        coreStore.error = undefined;
-        event.preventDefault()
-        if (!form.value || isLoading.value) return
-
-        if (!(await form.value.validate().catch(() => false))) return
-
-        isLoading.value = true
-
+    const handleSubmit = async () => {
         try {
+            coreStore.error = undefined;
+            if (!form.value || isLoading.value) return
+
+            if (!(await form.value.validate().catch(() => false))) return
+
+            isLoading.value = true
+
             const {username, password} = credentials.value
 
             if (!username?.trim() || !password?.trim()) {
@@ -219,7 +262,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .basic-auth-login {
         flex-shrink: 1;
         width: 400px;
@@ -253,6 +296,13 @@
                         height: 1.5em;
                         bottom: -0.250em;
                     }
+                }
+            }
+
+            .validation-icon {
+                font-size: 1.25em;
+                &.error {
+                    color: var(--ks-content-alert);
                 }
             }
         }

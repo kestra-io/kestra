@@ -91,7 +91,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     @NotNull
     @Builder.Default
     @Schema(
-        title = "Number of concurrent parallel tasks that can be running at any point in time.",
+        title = "Number of concurrent parallel tasks that can be running at any point in time",
         description = "If the value is `0`, no concurrency limit exists for the tasks in a DAG and all tasks that can run in parallel will start at the same time."
     )
     private final Property<Integer> concurrent = Property.ofValue(0);
@@ -134,7 +134,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     private void controlTask() throws IllegalVariableEvaluationException {
         List<String> dagCheckNotExistTasks = this.dagCheckNotExistTask(this.tasks);
         if (!dagCheckNotExistTasks.isEmpty()) {
-            throw new IllegalVariableEvaluationException("Some task doesn't exists on task '" + this.id + "': " +  String.join(", ", dagCheckNotExistTasks));
+            throw new IllegalVariableEvaluationException("Some task doesn't exist on task '" + this.id + "': " +  String.join(", ", dagCheckNotExistTasks));
         }
 
         ArrayList<String> cyclicDependenciesTasks = this.dagCheckCyclicDependencies(this.tasks);
@@ -238,14 +238,14 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
     public static class DagTask {
         @NotNull
         @Schema(
-            title = "The task within the DAG."
+            title = "The task within the DAG"
         )
         @PluginProperty
         private Task task;
 
         @PluginProperty
         @Schema(
-            title = "The list of task IDs that should have been successfully executed before starting this task."
+            title = "The list of task IDs that should have been successfully executed before starting this task"
         )
         private List<String> dependsOn;
     }

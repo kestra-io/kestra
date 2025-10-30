@@ -1,6 +1,6 @@
 package io.kestra.jdbc.runner;
 
-import io.kestra.core.schedulers.ScheduleContextInterface;
+import io.kestra.core.runners.ScheduleContextInterface;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import lombok.Getter;
 import org.jooq.DSLContext;

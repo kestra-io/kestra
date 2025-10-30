@@ -40,7 +40,7 @@
                      }]
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 $font-size-lg: 1.5rem;
 $font-size-sm: 1rem;
 $black-3: #2B313E;

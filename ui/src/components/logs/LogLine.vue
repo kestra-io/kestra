@@ -5,7 +5,7 @@
         v-if="filtered"
         :style="logLineStyle"
     >
-        <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="25">
+        <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
             <MenuRight />
         </el-icon>
         <span :style="levelStyle" class="el-tag log-level">{{ log.level }}</span>
@@ -69,7 +69,7 @@
             },
             level: {
                 type: String,
-                required: true,
+                default: "INFO",
             },
             excludeMetas: {
                 type: Array,
@@ -193,6 +193,7 @@
 </script>
 <style scoped lang="scss">
 div.line {
+    position: relative;
     cursor: text;
     white-space: pre-wrap;
     word-break: break-all;
@@ -212,12 +213,17 @@ div.line {
     }
 
     .icon_container {
-        margin-left: -0.90rem;
+        position: absolute;
+        left: -0.60rem;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
     }
 
     .log-level {
         padding: .25rem;
         margin-top: 0.25rem;
+        align-self: center;
     }
 
     .log-content {
@@ -273,6 +279,17 @@ div.line {
         padding: 0.25rem;
         border: 1px solid var(--ks-border-primary);
         user-select: none;
+    }
+
+    :deep(.clipboard) {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease-in-out;
+    }
+
+    &:hover :deep(.clipboard) {
+        opacity: 1;
+        pointer-events: auto;
     }
 }
 </style>

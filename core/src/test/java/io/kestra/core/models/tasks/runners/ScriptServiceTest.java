@@ -10,6 +10,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -33,17 +34,15 @@ class ScriptServiceTest {
 
     @Test
     void replaceInternalStorage() throws IOException {
-        var runContext = runContextFactory.of();
+        String tenant = IdUtils.create();
+        var runContext = runContextFactory.of("id", "namespace", tenant);
         var command  = ScriptService.replaceInternalStorage(runContext, null, false);
         assertThat(command).isEqualTo("");
 
         command = ScriptService.replaceInternalStorage(runContext, "my command", false);
         assertThat(command).isEqualTo("my command");
 
-        Path path = Path.of("/tmp/unittest/main/file.txt");
-        if (!path.toFile().exists()) {
-            Files.createFile(path);
-        }
+        Path path = createFile(tenant, "file");
 
         String internalStorageUri = "kestra://some/file.txt";
         File localFile = null;
@@ -70,12 +69,10 @@ class ScriptServiceTest {
 
     @Test
     void replaceInternalStorageUnicode() throws IOException {
-        var runContext = runContextFactory.of();
+        String tenant = IdUtils.create();
+        var runContext = runContextFactory.of("id", "namespace", tenant);
 
-        Path path = Path.of("/tmp/unittest/main/file-龍.txt");
-        if (!path.toFile().exists()) {
-            Files.createFile(path);
-        }
+        Path path = createFile(tenant, "file-龍");
 
         String internalStorageUri = "kestra://some/file-龍.txt";
         File localFile = null;
@@ -95,12 +92,10 @@ class ScriptServiceTest {
 
     @Test
     void uploadInputFiles() throws IOException {
-        var runContext = runContextFactory.of();
+        String tenant = IdUtils.create();
+        var runContext = runContextFactory.of("id", "namespace", tenant);
 
-        Path path = Path.of("/tmp/unittest/main/file.txt");
-        if (!path.toFile().exists()) {
-            Files.createFile(path);
-        }
+        Path path = createFile(tenant, "file");
 
         List<File> filesToDelete = new ArrayList<>();
         String internalStorageUri = "kestra://some/file.txt";
@@ -143,13 +138,11 @@ class ScriptServiceTest {
 
     @Test
     void uploadOutputFiles() throws IOException {
-        var runContext = runContextFactory.of();
-        Path path = Path.of("/tmp/unittest/main/file.txt");
-        if (!path.toFile().exists()) {
-            Files.createFile(path);
-        }
+        String tenant = IdUtils.create();
+        var runContext = runContextFactory.of("id", "namespace", tenant);
+        Path path = createFile(tenant, "file");
 
-        var outputFiles = ScriptService.uploadOutputFiles(runContext, Path.of("/tmp/unittest/main"));
+        var outputFiles = ScriptService.uploadOutputFiles(runContext, Path.of("/tmp/unittest/%s".formatted(tenant)));
         assertThat(outputFiles, not(anEmptyMap()));
         assertThat(outputFiles.get("file.txt")).isEqualTo(URI.create("kestra:///file.txt"));
 
@@ -231,5 +224,14 @@ class ScriptServiceTest {
             .state(new State().withState(State.Type.RUNNING))
             .build();
         return runContextFactory.of(flow, task, execution, taskRun);
+    }
+
+    private static Path createFile(String tenant, String fileName) throws IOException {
+        Path path = Path.of("/tmp/unittest/%s/%s.txt".formatted(tenant, fileName));
+        if (!path.toFile().exists()) {
+            Files.createDirectory(Path.of("/tmp/unittest/%s".formatted(tenant)));
+            Files.createFile(path);
+        }
+        return path;
     }
 }

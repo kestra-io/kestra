@@ -34,7 +34,7 @@
     let query: any[] = [];
     watch(
         () => route.query,
-        (q: any) => (query = decodeSearchParams(q, undefined, [])),
+        (q) => (query = decodeSearchParams(q)),
         {immediate: true},
     );
 
@@ -71,7 +71,7 @@
         #{--ks-tag-background}: #404559;
         #{--ks-tag-background-active}: #59607B;
     }
-    
+
     background-color: var(--ks-tag-background);
     font-weight: normal;
     color: var(--ks-content-primary);

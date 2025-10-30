@@ -44,13 +44,13 @@ export default {
         }
     },
     methods: {
-        sortString(sortItem) {
+        sortString(sortItem, sortKeyMapper) {
             if (sortItem && sortItem.prop && sortItem.order) {
-                return `${sortItem.prop}:${sortItem.order === "descending" ? "desc" : "asc"}`;
+                return `${sortKeyMapper(sortItem.prop)}:${sortItem.order === "descending" ? "desc" : "asc"}`;
             }
         },
-        onSort(sortItem) {
-            this.internalSort = this.sortString(sortItem);
+        onSort(sortItem, sortKeyMapper = (k) => k) {
+            this.internalSort = this.sortString(sortItem, sortKeyMapper);
 
             if (this.internalSort) {
                 const sort = this.internalSort;

@@ -1,5 +1,5 @@
 <template>
-    <LeftMenu v-if="miscStore.configs" @menu-collapse="onMenuCollapse" />
+    <LeftMenu v-if="miscStore.configs && !layoutStore.sideMenuCollapsed" @menu-collapse="onMenuCollapse" />
     <main>
         <Errors v-if="coreStore.error" :code="coreStore.error" />
         <slot v-else />
@@ -12,34 +12,34 @@
     />
 </template>
 
-<script setup>
+<script setup lang="ts">
     import LeftMenu from "override/components/LeftMenu.vue"
     import Errors from "../../../components/errors/Errors.vue"
     import ContextInfoBar from "../../../components/ContextInfoBar.vue"
     import SurveyDialog from "../../../components/SurveyDialog.vue"
-    import {onMounted, ref} from "vue"
+    import {onMounted, ref, watch} from "vue"
     import {useSurveySkip} from "../../../composables/useSurveyData"
     import {useCoreStore} from "../../../stores/core"
-    import {useMiscStore} from "../../../stores/misc"
+    import {useMiscStore} from "override/stores/misc"
+    import {useLayoutStore} from "../../../stores/layout"
 
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
+    const layoutStore = useLayoutStore()
     const {markSurveyDialogShown} = useSurveySkip()
     const showSurveyDialog = ref(false)
 
-    const onMenuCollapse = (collapse) => {
-        const htmlElement = document.documentElement
-        htmlElement.classList.toggle("menu-collapsed", collapse)
-        htmlElement.classList.toggle("menu-not-collapsed", !collapse)
+    function onMenuCollapse(collapse: boolean) {
+        layoutStore.setSideMenuCollapsed(collapse)
     }
 
-    const handleSurveyDialogClose = () => {
+    function handleSurveyDialogClose() {
         showSurveyDialog.value = false
         markSurveyDialogShown()
         localStorage.removeItem("showSurveyDialogAfterLogin")
     }
 
-    const checkForSurveyDialog = () => {
+    function checkForSurveyDialog() {
         const shouldShow = localStorage.getItem("showSurveyDialogAfterLogin") === "true"
         if (shouldShow) {
             setTimeout(() => {
@@ -49,8 +49,15 @@
     }
 
     onMounted(() => {
-        const isMenuCollapsed = localStorage.getItem("menuCollapsed") === "true"
-        onMenuCollapse(isMenuCollapsed)
+        // ensure UI state is synchronized with store
+        onMenuCollapse(Boolean(layoutStore.sideMenuCollapsed))
         checkForSurveyDialog()
     })
+
+    watch(
+        () => layoutStore.sideMenuCollapsed,
+        (val: boolean) => {
+            onMenuCollapse(val)
+        },
+    )
 </script>

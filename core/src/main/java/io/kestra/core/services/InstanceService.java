@@ -10,22 +10,34 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class InstanceService {
+    
+    private final SettingRepositoryInterface settingRepository;
+    
     @Inject
-    private SettingRepositoryInterface settingRepository;
-
-    private Setting instanceIdSetting;
+    public InstanceService(SettingRepositoryInterface settingRepository) {
+        this.settingRepository = settingRepository;
+    }
+    
+    private volatile Setting instanceIdSetting;
 
     public String fetch() {
         if (this.instanceIdSetting == null) {
-            instanceIdSetting = settingRepository
-                .findByKey(Setting.INSTANCE_UUID)
-                .orElseGet(() -> settingRepository.save(Setting.builder()
-                    .key(Setting.INSTANCE_UUID)
-                    .value(IdUtils.create())
-                    .build()
-                ));
+            synchronized (this) {
+                if (this.instanceIdSetting == null) {
+                    instanceIdSetting = fetchInstanceUuid();
+                }
+            }
         }
-
         return this.instanceIdSetting.getValue().toString();
+    }
+    
+    private Setting fetchInstanceUuid() {
+        return settingRepository
+            .findByKey(Setting.INSTANCE_UUID)
+            .orElseGet(() -> settingRepository.save(Setting.builder()
+                .key(Setting.INSTANCE_UUID)
+                .value(IdUtils.create())
+                .build()
+            ));
     }
 }

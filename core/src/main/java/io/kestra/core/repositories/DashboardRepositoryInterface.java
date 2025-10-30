@@ -16,6 +16,14 @@ import java.util.Map;
 import java.util.Optional;
 
 public interface DashboardRepositoryInterface {
+    
+    /**
+     * Gets the total number of Dashboards.
+     *
+     * @return the total number.
+     */
+    long count();
+    
     Boolean isEnabled();
 
     Optional<Dashboard> get(String tenantId, String id);

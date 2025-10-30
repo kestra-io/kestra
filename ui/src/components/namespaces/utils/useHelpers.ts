@@ -6,11 +6,12 @@ import BlueprintsBrowser from "../../../override/components/flows/blueprints/Blu
 import Dashboard from "../../../components/dashboard/Dashboard.vue";
 import Flows from "../../../components/flows/Flows.vue";
 import Executions from "../../../components/executions/Executions.vue";
-import Dependencies from "../../../components/namespaces/components/content/Dependencies.vue";
-import EditorView from "../../../components/inputs/EditorView.vue";
+import Dependencies from "../../../components/dependencies/Dependencies.vue";
+import NamespaceFilesEditorView from "../../../components/namespaces/components/NamespaceFilesEditorView.vue";
 
 export interface Tab {
     locked?: boolean;
+    disabled?: boolean;
     maximized?: boolean;
 
     name: string;
@@ -20,9 +21,21 @@ export interface Tab {
     props?: Record<string, any>;
 }
 
+export interface Breadcrumb {
+    label: string;
+    link?: {
+        name?: string,
+        params?: {
+            id: string,
+            tab: string,
+        }
+    },
+    disabled?: boolean;
+}
+
 interface Details {
     title: string;
-    breadcrumb: Record<string, any>[];
+    breadcrumb: Breadcrumb[];
 }
 
 export const ORDER = [
@@ -52,7 +65,7 @@ export function useHelpers() {
         title: parts.value.at(-1) || t("namespaces"),
         breadcrumb: [
             {label: t("namespaces"), link: {name: "namespaces/list"}},
-            ...parts.value.map((_: string, index: number) => ({
+            ...parts.value.map((_: string, index: number): Breadcrumb => ({
                 label: parts.value[index],
                 link: {
                     name: "namespaces/update",
@@ -63,7 +76,7 @@ export function useHelpers() {
                 },
                 disabled: index === parts.value.length - 1,
             })),
-        ],
+        ] ,
     }));
 
     const tabs: Tab[] = [
@@ -104,18 +117,14 @@ export function useHelpers() {
             name: "dependencies",
             title: t("dependencies"),
             component: Dependencies,
-            props: {namespace: namespace.value, type: "dependencies"},
+            maximized: true,
         },
         {
-            maximized: true,
             name: "files",
             title: t("files"),
-            component: EditorView,
-            props: {
-                namespace: namespace.value,
-                isNamespace: true,
-                isReadOnly: false,
-            },
+            component: NamespaceFilesEditorView,
+            props: {namespace: namespace.value},
+            maximized: true,
         },
     ];
 

@@ -39,6 +39,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 @Slf4j
@@ -173,8 +174,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     }
 
     @Override
-    public void emitAsync(String consumerGroup, T message) throws QueueException {
-        this.asyncPoolExecutor.submit(throwRunnable(() -> this.emit(consumerGroup, message)));
+    public void emitAsync(String consumerGroup, List<T> messages) throws QueueException {
+        this.asyncPoolExecutor.submit(throwRunnable(() -> messages.forEach(throwConsumer(message -> this.emit(consumerGroup, message)))));
     }
 
     @Override

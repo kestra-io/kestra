@@ -5,10 +5,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
@@ -29,6 +26,7 @@ import org.apache.commons.lang3.stream.Streams;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.trace.Tracer.throwCallable;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -153,14 +151,22 @@ public final class ExecutableUtils {
                     currentFlow.getNamespace(),
                     currentFlow.getId()
                 )
-                .orElseThrow(() -> new IllegalStateException("Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision '" + subflowRevision.orElse(0) + "'"));
+                .orElseThrow(() -> {
+                    String msg = "Unable to find flow '" + subflowNamespace + "'.'" + subflowId + "' with revision '" + subflowRevision.orElse(0) + "'";
+                    runContext.logger().error(msg);
+                    return new IllegalStateException(msg);
+                });
 
             if (flow.isDisabled()) {
-                throw new IllegalStateException("Cannot execute a flow which is disabled");
+                String msg = "Cannot execute a flow which is disabled";
+                runContext.logger().error(msg);
+                throw new IllegalStateException(msg);
             }
 
             if (flow instanceof FlowWithException fwe) {
-                throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
+                String msg = "Cannot execute an invalid flow: " + fwe.getException();
+                runContext.logger().error(msg);
+                throw new IllegalStateException(msg);
             }
 
             List<Label> newLabels = inheritLabels ? new ArrayList<>(filterLabels(currentExecution.getLabels(), flow)) : new ArrayList<>(systemLabels(currentExecution));
@@ -201,7 +207,20 @@ public final class ExecutableUtils {
                     .build()
                 )
                 .withScheduleDate(scheduleOnDate);
-
+                if(execution.getInputs().size()<inputs.size()) {
+                    Map<String,Object>resolvedInputs=execution.getInputs();
+                    for (var inputKey : inputs.keySet()) {
+                        if (!resolvedInputs.containsKey(inputKey)) {
+                            runContext.logger().warn(
+                                "Input {} was provided by parent execution {} for subflow {}.{} but isn't declared at the subflow inputs",
+                                inputKey,
+                                currentExecution.getId(),
+                                currentTask.subflowId().namespace(),
+                                currentTask.subflowId().flowId()
+                            );
+                        }
+                    }
+                }
             // inject the traceparent into the new execution
             propagator.ifPresent(pg -> pg.inject(Context.current(), execution, ExecutionTextMapSetter.INSTANCE));
 

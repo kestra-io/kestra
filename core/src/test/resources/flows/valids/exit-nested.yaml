@@ -1,0 +1,36 @@
+id: exit-nested
+namespace: io.kestra.tests
+
+inputs:
+  - id: someBool
+    type: BOOL
+    defaults: true
+
+  - id: secondBool
+    type: BOOL
+    defaults: false
+
+tasks:
+  - id: if_some_bool
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ inputs.someBool }}"
+    then:
+      - id: was_true
+        type: io.kestra.plugin.core.log.Log
+        message: The value was true
+
+      - id: nested_bool_check
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ inputs.secondBool }}"
+        then:
+          - id: was_also_true
+            type: io.kestra.plugin.core.log.Log
+            message: Was also true
+        else:
+          - id: nested_was_false
+            type: io.kestra.plugin.core.execution.Exit
+            state: FAILED
+    else:
+      - id: was_false
+        type: io.kestra.plugin.core.execution.Exit
+        state: FAILED

@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER" class="position-relative">
+    <div class="position-relative">
         <div v-if="hasSelection && data.length" class="bulk-select-header">
             <slot name="select-actions" />
         </div>
@@ -7,15 +7,16 @@
         <el-table
             ref="table"
             v-bind="$attrs"
-            :data="data"
-            :empty-text="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
+            :data
+            :rowKey
+            :emptyText="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
             @selection-change="selectionChanged"
             v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
-            :infinite-scroll-disabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
-            :infinite-scroll-delay="0"
+            :infiniteScrollDisabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
+            :infiniteScrollDelay="0"
             :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
         >
-            <el-table-column type="selection" v-if="selectable" />
+            <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
             <slot name="default" />
         </el-table>
     </div>
@@ -91,11 +92,12 @@
             setSelection(selection) {
                 this.$refs.table.clearSelection();
                 if (Array.isArray(selection)) {
+                    const isFunction = typeof this.rowKey === "function";
                     selection.forEach(sel => {
-                        const row = this.data.find(r => r.id === sel.id);
-                        if (row) {
-                            this.$refs.table.toggleRowSelection(row, true);
-                        }
+                        const row = this.data.find(r => isFunction 
+                            ? this.rowKey(r) === this.rowKey(sel) 
+                            : r[this.rowKey] === sel[this.rowKey]);
+                        if (row) this.$refs.table.toggleRowSelection(row, true);
                     });
                 }
                 this.selectionChanged(selection);
@@ -122,9 +124,9 @@
                 return this.stillHaveDataToFetch || this.tableView === undefined ? "100%" : `min(${this.tableView.scrollHeight}px, 100%)`;
             },
             async infiniteScrollLoadWithDisableHandling() {
-                let load = await this.infiniteScrollLoad();
+                let load = await this.infiniteScrollLoad?.();
                 while (load !== undefined && load.length === 0) {
-                    load = await this.infiniteScrollLoad();
+                    load = await this.infiniteScrollLoad?.();
                 }
 
                 this.infiniteScrollDisabled = load === undefined;
@@ -133,26 +135,13 @@
             }
         },
         props: {
-            selectable: {
-                type: Boolean,
-                default: true
-            },
-            expandable: {
-                type: Boolean,
-                default: false
-            },
-            data: {
-                type: Array,
-                default: () => []
-            },
-            noDataText: {
-                type: String,
-                default: undefined
-            },
-            infiniteScrollLoad: {
-                type: Function,
-                default: undefined
-            }
+            showSelection: {type: Boolean, default: true},
+            selectable: {type: Boolean, default: true},
+            expandable: {type: Boolean, default: false},
+            data: {type: Array, default: () => []},
+            noDataText: {type: String, default: undefined},
+            infiniteScrollLoad: {type: Function, default: undefined},
+            rowKey: {type: [String, Function], default: "id"}
         },
         emits: [
             "selection-change"

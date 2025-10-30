@@ -1,0 +1,19 @@
+configurations {
+    implementation.extendsFrom(micronaut)
+}
+
+dependencies {
+    annotationProcessor project(':processor')
+    implementation project(":core")
+
+    // test
+    testAnnotationProcessor project(':processor')
+    testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':storage-local')
+
+    testImplementation project(':tests')
+    testImplementation project(':jdbc')
+    testImplementation project(':jdbc').sourceSets.test.output
+    testImplementation project(':jdbc-h2')
+    testImplementation("io.micronaut.sql:micronaut-jooq")
+}

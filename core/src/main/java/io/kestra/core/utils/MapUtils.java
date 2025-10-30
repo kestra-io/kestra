@@ -206,22 +206,17 @@ public class MapUtils {
 
     /**
      * Utility method that flatten a nested map.
-     * <p>
-     * NOTE: for simplicity, this method didn't allow to flatten maps with conflicting keys that would end up in different flatten keys,
-     * this could be related later if needed by flattening {k1: k2: {k3: v1}, k1: {k4: v2}} to {k1.k2.k3: v1, k1.k4: v2} is prohibited for now.
      *
      * @param nestedMap the nested map.
      * @return the flattened map.
-     *
-     * @throws IllegalArgumentException if any entry contains a map of more than one element.
      */
     public static Map<String, Object> nestedToFlattenMap(@NotNull Map<String, Object> nestedMap) {
         Map<String, Object> result = new TreeMap<>();
 
         for (Map.Entry<String, Object> entry : nestedMap.entrySet()) {
             if (entry.getValue() instanceof Map<?, ?> map) {
-                Map.Entry<String, Object> flatten = flattenEntry(entry.getKey(), (Map<String, Object>) map);
-                result.put(flatten.getKey(), flatten.getValue());
+                Map<String, Object> flatten = flattenEntry(entry.getKey(), (Map<String, Object>) map);
+                result.putAll(flatten);
             } else {
                 result.put(entry.getKey(), entry.getValue());
             }
@@ -229,18 +224,19 @@ public class MapUtils {
         return result;
     }
 
-    private static Map.Entry<String, Object> flattenEntry(String key, Map<String, Object> value) {
-        if (value.size() > 1) {
-            throw new IllegalArgumentException("You cannot flatten a map with an entry that is a map of more than one element, conflicting key: " + key);
+    private static Map<String, Object> flattenEntry(String key, Map<String, Object> value) {
+        Map<String, Object> result = new TreeMap<>();
+
+        for (Map.Entry<String, Object> entry : value.entrySet()) {
+            String newKey = key + "." + entry.getKey();
+            Object newValue = entry.getValue();
+            if (newValue instanceof Map<?, ?> map) {
+                result.putAll(flattenEntry(newKey, (Map<String, Object>) map));
+            } else {
+                result.put(newKey, newValue);
+            }
         }
 
-        Map.Entry<String, Object> entry = value.entrySet().iterator().next();
-        String newKey = key + "." + entry.getKey();
-        Object newValue = entry.getValue();
-        if (newValue instanceof Map<?, ?> map) {
-            return flattenEntry(newKey, (Map<String, Object>) map);
-        } else {
-            return Map.entry(newKey, newValue);
-        }
+        return result;
     }
 }

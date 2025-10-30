@@ -1,11 +1,12 @@
 import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
 import NProgress from "nprogress"
-import {Router} from "vue-router"
-import {Store} from "vuex"
+import {Router, useRouter} from "vue-router"
 import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
 import * as BasicAuth from "../utils/basicAuth"
+import {useAuthStore} from "override/stores/auth"
+import {getCurrentInstance} from "vue"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -70,13 +71,11 @@ interface QueueItem {
     resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void
 }
 
-export default (
-    callback: (instance: AxiosInstance) => void,
-    store: Store<any>,
-    router: Router,
-    oss: boolean = false
-): void => {
-    const instance: AxiosInstance = axios.create({
+export const createAxios = (
+    router: Router | undefined,
+    oss: boolean
+) => {
+    const instance = axios.create({
         timeout: 15000,
         headers: {"Content-Type": "application/json"},
         withCredentials: true,
@@ -114,8 +113,10 @@ export default (
                 return Promise.reject(errorResponse)
             }
 
+            const authStore = useAuthStore()
+
             if (errorResponse.response.status === 401
-                && (oss || !store.getters["auth/isLogged"])) {
+                && (oss || !authStore.isLogged)) {
                 const base_path = window.KESTRA_BASE_PATH.endsWith("/") ? window.KESTRA_BASE_PATH.slice(0, -1) : window.KESTRA_BASE_PATH
 
                 if (window.location.pathname.startsWith(base_path + "/ui/login")) {
@@ -127,11 +128,11 @@ export default (
                 return
             }
 
-            const impersonate = localStorage.getItem(storageKeys.IMPERSONATE)
+            const impersonate = window.sessionStorage.getItem(storageKeys.IMPERSONATE)
 
             // Authentication expired
             if (errorResponse.response.status === 401 &&
-                store.getters["auth/isLogged"] && !oss &&
+                authStore.isLogged && !oss &&
                 !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")
                 && !impersonate) {
 
@@ -153,16 +154,14 @@ export default (
                     BasicAuth.logout()
                     delete instance.defaults.headers.common["Authorization"]
 
-                    store.dispatch("auth/logout").catch(() => {})
+                    authStore.logout().catch(() => {})
 
                     const currentPath = window.location.pathname
                     const isLoginPath = currentPath.includes("/login")
 
-                    router.push({
+                    router?.push({
                         name: "login",
-                        query: {
-                            ...(isLoginPath ? {} : {from: currentPath})
-                        }
+                        query: (isLoginPath ? {} : {from: currentPath})
                     })
 
                     return Promise.reject(errorResponse)
@@ -217,16 +216,14 @@ export default (
                         BasicAuth.logout()
                         delete instance.defaults.headers.common["Authorization"]
 
-                        store.dispatch("auth/logout").catch(() => {})
+                        authStore.logout().catch(() => {})
 
                         const currentPath = window.location.pathname
                         const isLoginPath = currentPath.includes("/login")
 
-                        router.push({
+                        router?.push({
                             name: "login",
-                            query: {
-                                ...(isLoginPath ? {} : {from: currentPath})
-                            }
+                            query: (isLoginPath ? {} : {from: currentPath})
                         })
 
                         return Promise.reject(errorResponse)
@@ -268,7 +265,7 @@ export default (
         indexes: null
     };
 
-    router.beforeEach((_to, _from, next) => {
+    router?.beforeEach((_to, _from, next) => {
         if (pendingRoute) {
             requestsTotal--;
         }
@@ -278,13 +275,31 @@ export default (
         next();
     });
 
-    router.afterEach(() => {
+    router?.afterEach(() => {
         if (pendingRoute) {
             increaseProgress();
             pendingRoute = false;
         }
     })
 
-    callback(instance);
+    return instance;
 };
 
+export default (
+    callback: (instance: AxiosInstance) => void,
+    _store: any,
+    ...args: Parameters<typeof createAxios>
+) => {
+    callback(createAxios(...args));
+}
+
+let axiosInstance: AxiosInstance | null = null;
+
+export const useAxios = () => {
+    const router = useRouter();
+    if (!axiosInstance) {
+        const isOSS = getCurrentInstance()?.appContext.config.globalProperties.$isOSS ?? false;
+        axiosInstance = createAxios(router, isOSS);
+    }
+    return axiosInstance;
+};

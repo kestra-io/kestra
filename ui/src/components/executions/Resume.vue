@@ -9,15 +9,15 @@
         {{ $t('resume') }}
     </component>
 
-    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="$t('resumed title', {id: execution.id})" />
         </template>
-        <el-form :model="inputs" label-position="top" ref="form" @submit.prevent="false">
-            <inputs-form :initial-inputs="inputsList" :execution="execution" v-model="inputs" />
+        <el-form :model="inputs" labelPosition="top" ref="form" @submit.prevent="false">
+            <InputsForm :initialInputs="inputsList" :execution="execution" v-model="inputs" />
         </el-form>
         <template #footer>
-            <el-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" native-type="submit">
+            <el-button :icon="PlayBox" type="primary" @click="resumeWithInputs($refs.form)" nativeType="submit">
                 {{ $t('resume') }}
             </el-button>
         </template>
@@ -29,16 +29,16 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
     import FlowUtils from "../../utils/flowUtils";
-    import ExecutionUtils from "../../utils/executionUtils";
+    import * as ExecutionUtils from "../../utils/executionUtils";
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import {inputsToFormData} from "../../utils/submitTask";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
+    import {useAuthStore} from "override/stores/auth"
 
     export default {
         components: {InputsForm},
@@ -108,10 +108,9 @@
             },
         },
         computed: {
-            ...mapState("auth", ["user"]),
-            ...mapStores(useExecutionsStore),
+            ...mapStores(useExecutionsStore, useAuthStore),
             enabled() {
-                if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
+                if (!(this.authStore.user?.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
                 }
 
@@ -134,7 +133,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     button.el-button {
         cursor: pointer !important;
         border-color: var(--ks-border-success);

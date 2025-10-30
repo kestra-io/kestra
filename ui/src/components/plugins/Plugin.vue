@@ -1,70 +1,74 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
+    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
     <template v-if="!pluginIsSelected">
-        <plugin-home v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins" />
+        <PluginHome v-if="filteredPlugins" :plugins="filteredPlugins" />
     </template>
-    <docs-layout v-else>
+    <DocsLayout v-else>
         <template #menu>
             <Toc @router-change="onRouterChange" v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins.filter(p => !p.subGroup)" />
         </template>
         <template #content>
             <div class="plugin-doc">
-                <div class="versions" v-if="pluginsStore.versions?.length > 0">
-                    <el-select
-                        v-model="version"
-                        placeholder="Version"
-                        size="small"
-                        :disabled="pluginsStore.versions?.length === 1"
-                        @change="selectVersion(version)"
-                    >
-                        <template #label="{value}">
-                            <span>Version: </span>
-                            <span style="font-weight: bold">{{ value }}</span>
-                        </template>
-                        <el-option
-                            v-for="item in pluginsStore.versions"
-                            :key="item"
-                            :label="item"
-                            :value="item"
+                <div class="d-flex align-items-center justify-content-between gap-3">
+                    <div class="d-flex gap-3 mb-3 align-items-center">
+                        <TaskIcon
+                            class="plugin-icon"
+                            :cls="pluginType"
+                            onlyIcon
+                            :icons="pluginsStore.icons"
                         />
-                    </el-select>
-                </div>
-                <div class="d-flex gap-3 mb-3 align-items-center">
-                    <task-icon
-                        class="plugin-icon"
-                        :cls="pluginType"
-                        only-icon
-                        :icons="pluginsStore.icons"
-                    />
-                    <h4 class="mb-0">
-                        {{ pluginName }}
-                    </h4>
-                    <el-button
-                        v-if="releaseNotesUrl"
-                        size="small"
-                        class="release-notes-btn"
-                        :icon="GitHub"
-                        @click="openReleaseNotes"
-                    >
-                        {{ $t('plugins.release') }}
-                    </el-button>
+                        <h4 class="mb-0">
+                            {{ pluginName }}
+                        </h4>
+                        <el-button
+                            v-if="releaseNotesUrl"
+                            size="small"
+                            class="release-notes-btn"
+                            :icon="GitHub"
+                            @click="openReleaseNotes"
+                        >
+                            {{ $t('plugins.release') }}
+                        </el-button>
+                    </div>
+
+                    <div class="mb-3 versions" v-if="pluginsStore.versions?.length > 0">
+                        <el-select
+                            v-model="version"
+                            placeholder="Version"
+                            size="small"
+                            :disabled="pluginsStore.versions?.length === 1"
+                            @change="selectVersion(version)"
+                        >
+                            <template #label="{value}">
+                                <span>Version: </span>
+                                <span style="font-weight: bold">{{ value }}</span>
+                            </template>
+                            <el-option
+                                v-for="item in pluginsStore.versions"
+                                :key="item"
+                                :label="item"
+                                :value="item"
+                            />
+                        </el-select>
+                    </div>
                 </div>
                 <Suspense v-loading="isLoading">
-                    <schema-to-html
+                    <SchemaToHtml
                         class="plugin-schema"
-                        :dark-mode="miscStore.theme === 'dark'"
+                        :darkMode="miscStore.theme === 'dark'"
                         :schema="pluginsStore.plugin.schema"
-                        :props-initially-expanded="true"
-                        :plugin-type="pluginType"
+                        :propsInitiallyExpanded="true"
+                        :pluginType="pluginType"
+                        noUrlChange
                     >
                         <template #markdown="{content}">
-                            <markdown font-size-var="font-size-base" :source="content" />
+                            <Markdown font-size-var="font-size-base" :source="content" />
                         </template>
-                    </schema-to-html>
+                    </SchemaToHtml>
                 </Suspense>
             </div>
         </template>
-    </docs-layout>
+    </DocsLayout>
 </template>
 
 <script setup>
@@ -83,7 +87,7 @@
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     export default {
         mixins: [RouteContext],
@@ -117,12 +121,17 @@
             return {
                 isLoading: false,
                 version: undefined,
-                pluginType: undefined
+                pluginType: undefined,
+                filteredPlugins: undefined,
+                hash: undefined
             };
         },
         created() {
-            this.loadToc();
-            this.loadPlugin()
+            this.miscStore.loadConfigs().then(config => {
+                this.hash = config.pluginsHash;
+                this.loadToc();
+                this.loadPlugin();
+            });
         },
         watch: {
             $route: {
@@ -136,6 +145,15 @@
                     }
                 },
                 immediate: true
+            },
+            async "pluginsStore.plugins"() {
+                this.filteredPlugins = await this.pluginsStore.filteredPlugins([
+                    "apps",
+                    "appBlocks",
+                    "charts",
+                    "dataFilters",
+                    "dataFiltersKPI"
+                ])
             }
         },
         methods: {
@@ -153,7 +171,7 @@
                 if (this.$route.params.version) {
                     this.version = this.$route.params.version;
                 }
-                const params = {...this.$route.params};
+                const params = {...this.$route.params, hash: this.hash};
                 if (params.cls) {
                     this.isLoading = true;
                     Promise.all([
@@ -194,8 +212,6 @@
 
     .versions {
         min-width: 200px;
-        display: inline-grid;
-        float: right;
     }
 
     :deep(.main-container) {

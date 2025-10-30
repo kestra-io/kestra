@@ -7,8 +7,8 @@ tasks:
     condition: "{{ outputs.check_migration_task.values['test'] == 'FINISHED' }}"
     failOnMaxReached: true
     checkFrequency:
-      interval: PT5S
-      maxDuration: PT10S
+      interval: PT1S
+      maxDuration: PT3S
     tasks:
 
       ## forcing a Warning

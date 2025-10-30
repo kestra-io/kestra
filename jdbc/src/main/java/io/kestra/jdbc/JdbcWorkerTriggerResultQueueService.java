@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.runners.WorkerJobRunningStateStore;
+import io.kestra.executor.WorkerJobRunningStateStore;
 import io.kestra.core.runners.WorkerTriggerResult;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.runner.JdbcQueue;

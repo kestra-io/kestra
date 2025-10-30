@@ -26,7 +26,7 @@ import java.util.*;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a flow if the list of preconditions are met in a time window.",
+    title = "Run a flow if the list of preconditions is met in a time window.",
     description = """
         **This task is deprecated**, use the `preconditions` property of the `io.kestra.plugin.core.trigger.Flow` trigger instead.
         Will trigger an executions when all the flows defined by the preconditions are successfully executed in a specific period of time.

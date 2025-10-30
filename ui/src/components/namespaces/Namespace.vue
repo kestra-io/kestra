@@ -4,26 +4,28 @@
             <Actions />
         </template>
     </TopNavBar>
-    <Tabs :tabs :route-name="namespace ? 'namespaces/update' : ''" :namespace />
+    <Tabs :tabs :routeName="namespace ? 'namespaces/update' : ''" :namespace />
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, Ref, watch, onMounted} from "vue";
-    import {useRoute} from "vue-router";
+    import {computed, Ref, watch, onMounted} from "vue";
+    import {useRoute, useRouter} from "vue-router";
     import {useTabs} from "override/components/namespaces/useTabs";
     import {useHelpers} from "./utils/useHelpers";
-    import useRouteContext from "../../mixins/useRouteContext";
+    import useRouteContext from "../../composables/useRouteContext";
     import {useNamespacesStore} from "override/stores/namespaces";
     import TopNavBar from "../layout/TopNavBar.vue";
     import Actions from "override/components/namespaces/Actions.vue";
+    // @ts-expect-error no types in Tabs yet
     import Tabs from "../Tabs.vue";
 
     const {tabs} = useTabs();
     const {details} = useHelpers();
 
     const route = useRoute();
+    const router = useRouter();
 
-    const context = ref({title: details.value.title});
+    const context = computed(() => ({title:details.value.title}));
     useRouteContext(context);
 
     const namespace = computed(() => route.params?.id) as Ref<string>;
@@ -36,7 +38,21 @@
         }
     });
 
+    watch(() => route.params.tab, (newTab) => {
+        if (newTab === "overview") {
+            const dateTimeKeys = ["startDate", "endDate", "timeRange"];
+
+            if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+                const newQuery = {...route.query, "filters[timeRange][EQUALS]": "PT168H"};
+                router.replace({name: route.name, params: route.params, query: newQuery});
+            }
+        }
+    }, {immediate: true});
+
     onMounted(() => {
+        const main = document.querySelector("main");
+        if(main) main.scrollTop = 0;
+
         if (namespace.value) {
             namespacesStore.load(namespace.value);
         }

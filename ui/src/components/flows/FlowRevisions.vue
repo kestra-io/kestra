@@ -23,13 +23,13 @@
                         <el-button :icon="FileCode" @click="seeRevision(revisionLeftIndex, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="Restore" :disabled="revisionNumber(revisionLeftIndex) === flow.revision" @click="restoreRevision(revisionLeftIndex, revisionLeftText)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionLeftIndex) === flow?.revision" @click="restoreRevision(revisionLeftIndex, revisionLeftText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
                         </el-button>
                     </el-button-group>
                 </div>
 
-                <crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionLeftIndex)}" />
+                <Crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionLeftIndex)}" />
             </el-col>
             <el-col :span="12" v-if="revisionRightIndex !== undefined">
                 <div class="revision-select mb-3">
@@ -45,49 +45,48 @@
                         <el-button :icon="FileCode" @click="seeRevision(revisionRightIndex, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
                         </el-button>
-                        <el-button :icon="Restore" :disabled="revisionNumber(revisionRightIndex) === flow.revision" @click="restoreRevision(revisionRightIndex, revisionRightText)">
+                        <el-button :icon="Restore" :disabled="revisionNumber(revisionRightIndex) === flow?.revision" @click="restoreRevision(revisionRightIndex, revisionRightText)">
                             <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
                         </el-button>
                     </el-button-group>
                 </div>
 
-                <crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionRightIndex)}" />
+                <Crud class="mt-3" permission="FLOW" :detail="{namespace: route.params.namespace, flowId: route.params.id, revision: revisionNumber(revisionRightIndex)}" />
             </el-col>
         </el-row>
 
-        <editor
+        <Editor
             class="mt-1"
             v-if="revisionLeftText && revisionRightText && !isLoadingRevisions"
-            :diff-side-by-side="sideBySide"
-            :model-value="revisionRightText"
+            :diffSideBySide="sideBySide"
+            :modelValue="revisionRightText"
             :original="revisionLeftText"
-            read-only
+            readOnly
             lang="yaml"
-            :show-doc="false"
+            :showDoc="false"
         />
 
         <div v-if="isLoadingRevisions" class="text-center p-4">
             <span class="ml-2">Loading revisions...</span>
         </div>
 
-        <drawer v-if="isModalOpen" v-model="isModalOpen">
+        <Drawer v-if="isModalOpen" v-model="isModalOpen">
             <template #header>
                 <h5>{{ t("revision") + `: ` + revision }}</h5>
             </template>
 
-            <editor v-model="revisionYaml" lang="yaml" :full-height="false" :input="true" :navbar="false" :read-only="true" />
-        </drawer>
+            <Editor v-model="revisionYaml" lang="yaml" :fullHeight="false" :input="true" :navbar="false" :readOnly="true" />
+        </Drawer>
     </div>
     <div v-else>
-        <el-alert class="mb-0" show-icon :closable="false">
+        <el-alert class="mb-0" showIcon :closable="false">
             {{ t('no revisions found') }}
         </el-alert>
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {ref, computed, watch} from "vue";
-    import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import FileCode from "vue-material-design-icons/FileCode.vue";
@@ -96,7 +95,6 @@
     import Crud from "override/components/auth/Crud.vue";
     import Drawer from "../Drawer.vue";
 
-    import {saveFlowTemplate} from "../../utils/flowTemplate";
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
 
@@ -106,7 +104,6 @@
     }
 
     const {t} = useI18n();
-    const store = useStore();
     const route = useRoute();
     const router = useRouter();
     const toast = useToast();
@@ -159,7 +156,7 @@
             ) {
                 revisionLeftIndex.value = revisionRightIndex.value - 1;
             }
-        } else if (currentRevision > 0) {
+        } else if (currentRevision && currentRevision > 0) {
             revisionRightIndex.value = currentRevision - 1;
         }
 
@@ -167,7 +164,7 @@
             revisionLeftIndex.value = revisionIndex(
                 route.query.revisionLeft.toString()
             );
-        } else if (currentRevision > 1) {
+        } else if (currentRevision && currentRevision > 1) {
             revisionLeftIndex.value = currentRevision - 2;
         }
     }
@@ -195,13 +192,10 @@
 
     function restoreRevision(index: number, revisionSource: string) {
         toast.confirm(t("restore confirm", {revision: revisionNumber(index)}), () => {
-            return saveFlowTemplate({
-                $store: store,
-                $toast: () => toast,
-            }, revisionSource, "flow")
+            return flowStore.saveFlow({flow: revisionSource})
                 .then((response:any) => {
+                    toast.saved(response.id);
                     flowStore.flowYaml = response.source;
-                    flowStore.flowYamlBeforeAdd = response.source;
                     load()
                 })
                 .then(() => {

@@ -7,7 +7,7 @@ set -e
 # run tests on this image
 
 
-LOCAL_IMAGE_VERSION="local-e2e"
+LOCAL_IMAGE_VERSION="local-e2e-$(date +%s)"
 
 echo "Running E2E"
 echo "Start time: $(date '+%Y-%m-%d %H:%M:%S')"
@@ -15,6 +15,7 @@ start_time=$(date +%s)
 
 echo ""
 echo "Building the image for this current repository"
+make clean
 make build-docker VERSION=$LOCAL_IMAGE_VERSION
 
 end_time=$(date +%s)
@@ -32,7 +33,7 @@ echo "npm i"
 npm i
 
 echo 'sh ./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"'
-sh ./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"
+./run-e2e-tests.sh --kestra-docker-image-to-test "kestra/kestra:$LOCAL_IMAGE_VERSION"
 
 end_time2=$(date +%s)
 elapsed2=$(( end_time2 - start_time2 ))

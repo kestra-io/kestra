@@ -1,7 +1,7 @@
 <template>
     <div class="ai-trigger-box" v-if="show">
         <el-button 
-            v-if="enabled && !opened" 
+            v-if="!opened"
             class="ai-trigger-button" 
             :icon="AiIcon" 
             @click="handleClick"
@@ -11,13 +11,12 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {useI18n} from "vue-i18n";
     import AiIcon from "./AiIcon.vue";
 
     interface AITriggerButtonProps {
         show: boolean;
-        enabled: boolean;
         opened: boolean;
     }
 
@@ -29,7 +28,6 @@
 
     withDefaults(defineProps<AITriggerButtonProps>(), {
         show: false,
-        enabled: false,
         opened: false,
     });
 

@@ -10,7 +10,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ import java.util.concurrent.TimeoutException;
 @KestraTest(startRunner = true)
 class ParallelTest {
     @Inject
-    protected RunnerUtils runnerUtils;
+    protected TestRunnerUtils runnerUtils;
 
     @Inject
     private FlowInputOutput flowIO;
@@ -57,5 +57,16 @@ class ParallelTest {
         assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("a1").getFirst().getState().getEndDate().orElseThrow())).isTrue();
         assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getStartDate().isAfter(execution.findTaskRunsByTaskId("e1").getFirst().getState().getEndDate().orElseThrow())).isTrue();
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/parallel-fail-with-flowable.yaml")
+    void parallelFailWithFlowable(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        // all tasks must be terminated except the Sleep that will ends later as everything is concurrent
+        execution.getTaskRunList().stream()
+            .filter(taskRun -> !"sleep".equals(taskRun.getTaskId()))
+            .forEach(run -> assertThat(run.getState().isTerminated()).isTrue());
     }
 }

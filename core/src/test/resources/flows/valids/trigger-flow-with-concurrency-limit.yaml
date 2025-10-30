@@ -1,0 +1,17 @@
+id: trigger-flow-with-concurrency-limit
+namespace: io.kestra.tests.trigger.concurrency
+
+concurrency:
+  limit: 1
+  behavior: QUEUE
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT0.5S
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: "we are between sleeps"
+  - id: sleep_2
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT0.5S

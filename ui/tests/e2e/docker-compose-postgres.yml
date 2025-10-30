@@ -42,6 +42,7 @@ services:
         condition: service_completed_successfully
 
   kestra:
+    container_name: kestra-e2e-backend
     image: "${KESTRA_DOCKER_IMAGE:-kestra/kestra:develop}"
     entrypoint:
       - bash

@@ -21,6 +21,7 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -37,11 +39,59 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
+@Slf4j
 abstract public class TestsUtils {
+    private static final ThreadLocal<List<Runnable>> queueConsumersCancellations = ThreadLocal.withInitial(ArrayList::new);
+
     private static final ObjectMapper mapper = JacksonMapper.ofYaml();
+
+    public static void queueConsumersCleanup() {
+        queueConsumersCancellations.get().forEach(Runnable::run);
+        queueConsumersCancellations.get().clear();
+    }
+
+    public static String randomNamespace(String... prefix) {
+        return TestsUtils.randomString(prefix);
+    }
+
+    public static String randomTenant(String... prefix) {
+        return TestsUtils.randomString(prefix);
+    }
+
+    private static String[] stackTraceToParts() {
+        // We take the stacktrace from the util caller to troubleshoot more easily
+        StackTraceElement stackTraceElement = Thread.currentThread().getStackTrace()[4];
+        String[] packageSplit = stackTraceElement.getClassName().split("\\.");
+        return new String[]{packageSplit[packageSplit.length - 1].toLowerCase(), stackTraceElement.getMethodName().toLowerCase()};
+    }
+
+    /**
+     * there is at least one bug in {@link io.kestra.cli.services.FileChangedEventListener#getTenantIdFromPath(Path)} forbidding use to use '_' character
+     * @param prefix
+     * @return
+     */
+    private static String randomString(String... prefix) {
+        if (prefix.length == 0) {
+            prefix = new String[]{String.join("-", stackTraceToParts())};
+        }
+        var tenantRegex = "^[a-z0-9][a-z0-9_-]*";
+        var validTenantPrefixes = Arrays.stream(prefix)
+            .map(s -> s.replace(".", "-").replace("$", "-"))
+            .map(String::toLowerCase)
+            .peek(p -> {
+                if (!p.matches(tenantRegex)) {
+                    throw new IllegalArgumentException("random tenant prefix %s should match tenant regex %s".formatted(p, tenantRegex));
+                }
+            }).toList();
+        String[] parts = Stream
+            .concat(validTenantPrefixes.stream(), Stream.of(IdUtils.create().toLowerCase()))
+            .toArray(String[]::new);
+        return IdUtils.fromPartsAndSeparator('-',parts);
+    }
 
     public static <T> T map(String path, Class<T> cls) throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
@@ -155,6 +205,7 @@ abstract public class TestsUtils {
         Trigger triggerContext = Trigger.builder()
             .triggerId(trigger.getId())
             .flowId(flow.getId())
+            .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now())
             .build();
@@ -213,6 +264,7 @@ abstract public class TestsUtils {
             }
         };
         Runnable receiveCancellation = queueType == null ? queue.receive(consumerGroup, eitherConsumer, false) : queue.receive(consumerGroup, queueType, eitherConsumer, false);
+        queueConsumersCancellations.get().add(receiveCancellation);
 
         return Flux.<T>create(sink -> {
                 DeserializationException exception = exceptionRef.get();
@@ -229,5 +281,14 @@ abstract public class TestsUtils {
 
     public static <T> Property<List<T>> propertyFromList(List<T> list) throws JsonProcessingException {
         return Property.ofExpression(JacksonMapper.ofJson().writeValueAsString(list));
+    }
+
+    public static String stringify(Object object) {
+        try {
+            return JacksonMapper.ofJson().writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            log.error("failed to serialize object to json string", e);
+            return object !=null ?  object.toString() : "null";
+        }
     }
 }

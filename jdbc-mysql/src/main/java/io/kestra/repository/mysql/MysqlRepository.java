@@ -61,12 +61,9 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
 
     @Override
     public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
+        Integer rows = context.fetchCount(select);
         Result<R> records = this.pageable(select, pageable).fetch();
-
-        return dslContextWrapper.transactionResult(configuration -> {
-            Integer rows = context.fetchOne("SELECT FOUND_ROWS()").into(Integer.class);
-            return new ArrayListTotal<>(records.map(mapper), rows);
-        });
+        return new ArrayListTotal<>(records.map(mapper), rows);
     }
 
     @Override

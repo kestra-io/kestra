@@ -1,6 +1,6 @@
 <template>
     <div class="onboarding-bottom">
-        <onboarding-card
+        <OnboardingCard
             v-for="card in cards"
             :key="card.title"
             :title="card.title"
@@ -48,7 +48,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .onboarding-bottom {
         display: flex;
         gap: 1rem;

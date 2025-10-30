@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER" v-if="name" id="environment">
+    <div v-if="name" id="environment">
         <strong>{{ name }}</strong>
     </div>
 </template>
@@ -8,7 +8,7 @@
     import {mapStores} from "pinia";
     import {cssVariable} from "@kestra-io/ui-libs";
     import {useLayoutStore} from "../../stores/layout";
-    import {useMiscStore} from "../../stores/misc";
+    import {useMiscStore} from "override/stores/misc";
 
     export default {
         computed: {
@@ -31,7 +31,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 #environment {
     margin-bottom: 1.5rem;
     text-align: center;

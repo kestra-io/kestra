@@ -1,7 +1,7 @@
 package io.kestra.repository.h2;
 
-import io.kestra.jdbc.repository.AbstractJdbcLogRepositoryTest;
+import io.kestra.core.repositories.AbstractLogRepositoryTest;
 
-public class H2LogRepositoryTest extends AbstractJdbcLogRepositoryTest {
+public class H2LogRepositoryTest extends AbstractLogRepositoryTest {
 
 }

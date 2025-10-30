@@ -9,18 +9,21 @@
 
     <el-table
         :data="results"
-        :empty-text="t('dependency.search.no_results', {term: search})"
-        :show-header="false"
+        :emptyText="t('dependency.search.no_results', {term: search})"
+        :showHeader="false"
         class="nodes"
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"
-        :row-class-name="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
+        :rowClassName="({row}: { row: { data: Node } }) => row.data.id === props.selected ? 'selected' : ''"
     >
         <el-table-column>
             <template #default="{row}">
                 <section id="row">
                     <section id="left">
                         <div id="link">
-                            <Link :node="row.data" :subtype="row.data.metadata.subtype" />
+                            <Link
+                                :node="row.data"
+                                :subtype="row.data.metadata.subtype"
+                            />
                         </div>
 
                         <p class="description">
@@ -34,6 +37,16 @@
                             :status="row.data.metadata.state"
                             size="small"
                         />
+                        <RouterLink
+                            v-if="[FLOW, NAMESPACE].includes(row.data.metadata.subtype)"
+                            :to="{
+                                name: 'flows/update',
+                                params: {namespace: row.data.namespace, id: row.data.flow}}"
+                        >
+                            <el-icon :size="16">
+                                <OpenInNew />
+                            </el-icon>
+                        </RouterLink>
                     </section>
                 </section>
             </template>
@@ -49,10 +62,12 @@
     import Link from "./Link.vue";
     import Status from "../../Status.vue";
 
+    import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {NODE, EXECUTION, type Node} from "../utils/types";
+    import {NODE, FLOW, EXECUTION, NAMESPACE, type Node} from "../utils/types";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{
@@ -60,21 +75,24 @@
         selected: Node["id"] | undefined;
     }>();
 
-    const focusSelectedRow = ()=>{
+    const focusSelectedRow = () => {
         const row = document.querySelector<HTMLElement>(".el-table__row.selected");
 
         if (!row) return;
 
         row.scrollIntoView({behavior: "smooth", block: "center"});
-    }
+    };
 
-    watch(() => props.selected, async (ID) => {
-        if (!ID) return;
+    watch(
+        () => props.selected,
+        async (ID) => {
+            if (!ID) return;
 
-        await nextTick();
+            await nextTick();
 
-        focusSelectedRow();
-    });
+            focusSelectedRow();
+        },
+    );
 
     const search = ref("");
     const results = computed(() => {
@@ -87,7 +105,10 @@
         return NODES.filter(({data}) => {
             const {flow, namespace} = data;
 
-            return (flow?.toLowerCase().includes(f) || namespace?.toLowerCase().includes(f));
+            return (
+                flow?.toLowerCase().includes(f) ||
+                namespace?.toLowerCase().includes(f)
+            );
         });
     });
 </script>
@@ -96,7 +117,7 @@
 section#input {
     position: sticky;
     top: 0;
-    z-index: 10; // keeps it above table rows
+    z-index: 10; // Keeps it above table rows
     padding: 0.5rem;
     background-color: var(--ks-background-input);
 

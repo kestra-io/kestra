@@ -1,6 +1,6 @@
 import Utils from "./utils";
 import {getCurrentInstance} from "vue";
-import {DATE_FORMAT_STORAGE_KEY, TIMEZONE_STORAGE_KEY} from "../components/settings/BasicSettings.vue";
+import {storageKeys} from "../utils/constants";
 import moment from "moment-timezone";
 
 export function invisibleSpace (value:string) {
@@ -25,12 +25,18 @@ export function date (dateString:string, format?:string) {
     if (format === "iso") {
         f = "YYYY-MM-DD HH:mm:ss.SSS";
     } else {
-        f = format ?? localStorage.getItem(DATE_FORMAT_STORAGE_KEY) ?? "llll";
+        f = format ?? localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll";
     }
     // Apply timezone and format using the correct locale
     return momentInstance
-        .tz(localStorage.getItem(TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
+        .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
         .format(f);
+}
+
+export interface FilterObject{
+    field: string;
+    value: string | string[];
+    operation: string;
 }
 
 export default {

@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
-
+import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
@@ -70,6 +71,7 @@ public class TriggerController {
     private TenantService tenantService;
 
     @Inject
+    
     private RunContextFactory runContextFactory;
 
     @Inject
@@ -84,12 +86,11 @@ public class TriggerController {
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
         // Deprecated params
-        @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
         @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
-        @Parameter(description = "The flow identifier",deprecated = true) @Nullable @QueryValue String flowId
-
-
+        @Parameter(description = "The flow identifier", deprecated = true) @Nullable @QueryValue String flowId,
+        @Parameter(description = "Filter triggers by locked state (true for locked triggers, false for unlocked, null for all)") @Nullable @QueryValue Boolean locked
     ) throws HttpStatusException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -103,43 +104,49 @@ public class TriggerController {
             null,
             null,
             workerId,
-            null);
+            null  // ← locked is NOT a legacy param
+        );
 
+        // Step 2: Manually add locked filter
+        if (locked != null) {
+            List<QueryFilter> mutableFilters = new ArrayList<>(filters);
+            mutableFilters.add(new QueryFilter(Field.LOCKED, Op.EQUALS, locked));
+            filters = mutableFilters;
+        }
+    
         ArrayListTotal<Trigger> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             tenantService.resolveTenant(),
             filters
-
         );
-
+    
         List<Triggers> triggers = new ArrayList<>();
         triggerContexts.forEach(tc -> {
             Optional<Flow> flow = flowRepository.findById(tc.getTenantId(), tc.getNamespace(), tc.getFlowId());
             if (flow.isEmpty()) {
                 // Warn instead of throwing to avoid blocking the trigger UI
                 log.warn(String.format("Flow %s not found for trigger %s", tc.getFlowId(), tc.getTriggerId()));
-
                 return;
             }
-
+    
             if (flow.get().getTriggers() == null) {
                 // a trigger was removed from the flow but still in the trigger table
                 return;
             }
-
+    
             AbstractTrigger abstractTrigger = flow.get().getTriggers().stream().filter(t -> t.getId().equals(tc.getTriggerId())).findFirst().orElse(null);
             if (abstractTrigger == null) {
                 // Warn instead of throwing to avoid blocking the trigger UI
                 log.warn(String.format("Flow %s has no trigger %s", tc.getFlowId(), tc.getTriggerId()));
             }
-
+    
             triggers.add(Triggers.builder()
                 .abstractTrigger(abstractTrigger)
                 .triggerContext(tc)
                 .build()
             );
         });
-
+    
         return PagedResults.of(new ArrayListTotal<>(triggers, triggerContexts.getTotal()));
     }
 

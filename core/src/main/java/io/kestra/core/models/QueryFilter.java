@@ -4,10 +4,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.utils.Enums;
 import lombok.Builder;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -168,8 +168,13 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS);
             }
+        },
+        LOCKED("locked") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+            }
         };
-
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
             .collect(Collectors.toMap(Field::value, Function.identity()));
 
@@ -240,8 +245,16 @@ public record QueryFilter(
         TRIGGER {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID,
-                    Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID
+                return List.of(
+                    Field.QUERY,
+                    Field.SCOPE,
+                    Field.NAMESPACE,
+                    Field.WORKER_ID,
+                    Field.FLOW_ID,
+                    Field.START_DATE,
+                    Field.END_DATE,
+                    Field.TRIGGER_ID,
+                    Field.LOCKED
                 );
             }
         };
@@ -309,5 +322,4 @@ public record QueryFilter(
             throw new InvalidQueryFiltersException(errors);
         }
     }
-
 }

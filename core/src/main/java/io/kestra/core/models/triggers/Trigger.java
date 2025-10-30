@@ -36,6 +36,14 @@ public class Trigger extends TriggerContext implements HasUID {
     @Nullable
     @Setter // it's unfortunate but neither toBuilder() not @With works so using @Setter here
     private String workerId;
+    /**
+     * Checks if the trigger is locked, i.e., has a non-null executionId.
+     *
+     * @return true if the trigger is locked (executionId is not null), false otherwise.
+     */
+    public boolean isLocked() {
+        return this.executionId != null;
+    }
 
     protected Trigger(TriggerBuilder<?, ?> b) {
         super(b);

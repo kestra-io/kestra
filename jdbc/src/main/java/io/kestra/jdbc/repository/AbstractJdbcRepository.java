@@ -286,6 +286,14 @@ public abstract class AbstractJdbcRepository {
         if (field.equals(QueryFilter.Field.MIN_LEVEL)) {
             return handleMinLevelField(value, operation);
         }
+        // Handling for Field.LOCKED
+        if (field.equals(QueryFilter.Field.LOCKED)) {
+            if (!(value instanceof Boolean)) {
+                throw new InvalidQueryFiltersException("Field 'locked' requires a Boolean value");
+            }
+            boolean locked = (Boolean) value;
+            return locked ? field("execution_id").isNotNull() : field("execution_id").isNull();
+        }
 
         // Special handling for START_DATE and END_DATE
         if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {

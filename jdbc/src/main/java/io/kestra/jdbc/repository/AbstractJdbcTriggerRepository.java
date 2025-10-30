@@ -1,6 +1,7 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;   // ← ADDED
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
@@ -25,8 +26,7 @@ import io.kestra.plugin.core.dashboard.data.Triggers;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
-import org.jooq.*;
-import org.jooq.Record;
+import org.jooq.*;                                   // ← ADDED: org.jooq.Record
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -287,25 +287,42 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 return null;
             });
     }
+
     @Override
     public ArrayListTotal<Trigger> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                SelectConditionStep<?> select = generateSelect(context, tenantId, filters);
+                SelectConditionStep<org.jooq.Record> select = generateSelect(context, tenantId, filters);
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 
-    private SelectConditionStep<?> generateSelect(DSLContext context, String tenantId, List<QueryFilter> filters){
-        SelectConditionStep<?> select = context
+    private SelectConditionStep<org.jooq.Record> generateSelect(DSLContext context, String tenantId, List<QueryFilter> filters) {
+        SelectConditionStep<org.jooq.Record> select = context
             .select(field("value"))
             .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId));
 
-        return select.and(filter(filters, "next_execution_date", Resource.TRIGGER));
+        // Apply next_execution_date filter (existing)
+        select = select.and(filter(filters, "next_execution_date", Resource.TRIGGER));
+
+        // NEW: Handle locked filter
+        filters.stream()
+            .filter(f -> f.field() == Field.LOCKED && f.value() instanceof Boolean)
+            .findFirst()
+            .ifPresent(f -> {
+                Boolean isLocked = (Boolean) f.value();
+                if (isLocked) {
+                    select = select.and(field("execution_id").isNotNull());
+                } else {
+                    select = select.and(field("execution_id").isNull());
+                }
+            });
+
+        return select;
     }
 
     @Override
@@ -323,17 +340,17 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     .and(this.defaultFilter(tenantId));
 
                 if (namespace != null) {
-                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
+                    select = select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
                 }
 
                 if (flowId != null) {
-                    select.and(field("flow_id").eq(flowId));
+                    select = select.and(field("flow_id").eq(flowId));
                 }
 
                 if (workerId != null) {
-                    select.and(field("worker_id").eq(workerId));
+                    select = select.and(field("worker_id").eq(workerId));
                 }
-                select.and(this.defaultFilter());
+                select = select.and(this.defaultFilter());
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
@@ -347,7 +364,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 .getDslContextWrapper()
                 .transaction(configuration -> {
                     DSLContext context = DSL.using(configuration);
-                    SelectConditionStep<?> select = generateSelect(context, tenantId, filters);
+                    SelectConditionStep<org.jooq.Record> select = generateSelect(context, tenantId, filters);
 
                     select.fetch()
                     .map(this.jdbcRepository::map)
@@ -411,7 +428,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields());
 
                 // Init request
-                SelectConditionStep<Record> selectConditionStep = select(
+                SelectConditionStep<org.jooq.Record> selectConditionStep = select(
                     context,
                     filterService,
                     columnsWithoutDate,
@@ -429,7 +446,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     .toList();
 
                 // Apply GroupBy for aggregation
-                SelectHavingStep<Record> selectHavingStep = groupBy(
+                SelectHavingStep<org.jooq.Record> selectHavingStep = groupBy(
                     selectConditionStep,
                     columnsWithoutDateWithOutAggs,
                     dateFields,
@@ -437,14 +454,12 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 );
 
                 // Apply OrderBy
-                SelectSeekStepN<Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
+                SelectSeekStepN<org.jooq.Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
 
                 // Fetch and paginate if provided
                 return fetchSeekStep(selectSeekStep, pageable);
             });
     }
-
-
 
     public Double fetchValue(String tenantId, DataFilterKPI<ITriggers.Fields, ? extends ColumnDescriptor<ITriggers.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
@@ -461,7 +476,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 filters.addAll(dataFilter.getNumerator());
             }
 
-            SelectConditionStep selectStep = context
+            SelectConditionStep<org.jooq.Record> selectStep = context
                 .select(field)
                 .from(this.jdbcRepository.getTable())
                 .where(this.defaultFilter(tenantId));
@@ -473,7 +488,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 getFieldsMapping()
             );
 
-            Record result = selectConditionStep.fetchOne();
+            org.jooq.Record result = selectConditionStep.fetchOne();
             if (result != null) {
                 return result.getValue(field, Double.class);
             } else {
@@ -481,7 +496,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             }
         });
     }
-
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
 }

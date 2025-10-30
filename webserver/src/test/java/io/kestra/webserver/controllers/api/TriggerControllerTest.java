@@ -410,6 +410,44 @@ class TriggerControllerTest {
         assertThat(triggers.getResults().get(1).getTriggerContext().getNextExecutionDate()).isNotNull();
     }
 
+    @Test
+    void searchWithLockedFilter() {
+        // Given: one locked, one unlocked trigger
+        Trigger locked = Trigger.builder()
+            .namespace(NAMESPACE)
+            .flowId("test-flow-locked")
+            .triggerId("test-trigger-locked")
+            .executionId("exec-123")
+            .tenantId(TENANT_ID)
+            .build();
+
+        Trigger unlocked = Trigger.builder()
+            .namespace(NAMESPACE)
+            .flowId("test-flow-unlocked")
+            .triggerId("test-trigger-unlocked")
+            .tenantId(TENANT_ID)
+            .build();
+
+        jdbcTriggerRepository.save(locked);
+        jdbcTriggerRepository.save(unlocked);
+
+        // When: locked=true
+        PagedResults<TriggerController.Triggers> result = client.toBlocking().retrieve(
+            HttpRequest.GET(TRIGGER_PATH + "/search?locked=true"),
+            Argument.of(PagedResults.class, TriggerController.Triggers.class)
+        );
+        assertThat(result.getTotal()).isEqualTo(1L);
+        assertThat(result.getResults().get(0).getTriggerContext().getExecutionId()).isEqualTo("exec-123");
+
+        // When: locked=false
+        result = client.toBlocking().retrieve(
+            HttpRequest.GET(TRIGGER_PATH + "/search?locked=false"),
+            Argument.of(PagedResults.class, TriggerController.Triggers.class)
+        );
+        assertThat(result.getTotal()).isEqualTo(1L);
+        assertThat(result.getResults().get(0).getTriggerContext().getExecutionId()).isNull();
+    }
+
     private Flow generateFlow(String flowId) {
         return Flow.builder()
             .id(flowId)
@@ -433,6 +471,4 @@ class TriggerControllerTest {
             ))
             .build();
     }
-
-
 }

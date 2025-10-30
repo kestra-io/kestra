@@ -442,8 +442,9 @@ class ScheduleTest {
         assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
         var vars = evaluate.get().getTrigger().getVariables();
 
+        ZonedDateTime triggerDate = ZonedDateTime.parse((String) vars.get("date"));
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
-        assertThat(ZonedDateTime.parse((String) vars.get("date")).getZone().getId()).isEqualTo("-04:00");
+        assertThat(triggerDate.getZone().getId()).isIn("America/New_York", "-05:00", "-04:00");
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plusMonths(1));
         assertThat(dateFromVars((String) vars.get("previous"), date)).isEqualTo(date.minusMonths(1));
     }

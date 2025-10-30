@@ -80,6 +80,12 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
         if (nextDate.isPresent()) {
             log.info("Schedule execution on {}", nextDate.get());
 
+            ZonedDateTime finalDate = nextDate.get();
+            if (timezone != null) {
+                String renderedTimezone = runContext.render(timezone);
+                finalDate = finalDate.withZoneSameInstant(ZoneId.of(renderedTimezone));
+            }
+
             Execution execution = TriggerService.generateScheduledExecution(
                 this,
                 conditionContext,
@@ -87,7 +93,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
                 LabelService.fromTrigger(runContext, conditionContext.getFlow(), this),
                 this.inputs != null ? runContext.render(this.inputs) : Collections.emptyMap(),
                 Collections.emptyMap(),
-                nextDate
+                Optional.of(finalDate)
             );
 
             return Optional.of(execution);

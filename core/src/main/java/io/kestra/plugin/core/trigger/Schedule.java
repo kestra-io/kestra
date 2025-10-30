@@ -423,11 +423,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         }
 
         Map<String, Object> variables;
-        if (this.timezone != null) {
-            variables = scheduleDates.toMap(ZoneId.of(this.timezone));
-        } else {
-            variables = scheduleDates.toMap();
-        }
+        ZoneId targetZone = this.timezone != null ? ZoneId.of(this.timezone) : ZoneId.systemDefault();
+        variables = scheduleDates.toMap(targetZone);
 
         Execution execution = TriggerService.generateScheduledExecution(
             this,
@@ -630,5 +627,23 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         @Schema(title = "The date of the previous schedule")
         @NotNull
         private ZonedDateTime previous;
+        
+        public Map<String, Object> toMap(ZoneId zoneId) {
+            Map<String, Object> map = new HashMap<>();
+            if (date != null) {
+                map.put("date", date.withZoneSameInstant(zoneId));
+            }
+            if (next != null) {
+                map.put("next", next.withZoneSameInstant(zoneId));
+            }
+            if (previous != null) {
+                map.put("previous", previous.withZoneSameInstant(zoneId));
+            }
+            return map;
+        }
+        
+        public Map<String, Object> toMap() {
+            return toMap(ZoneId.systemDefault());
+        }
     }
 }

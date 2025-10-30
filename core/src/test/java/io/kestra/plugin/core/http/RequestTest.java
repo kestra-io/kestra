@@ -160,6 +160,7 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
+            assertThat((String) output.getBody()).contains("hello=world");
             assertThat((String) output.getBody()).contains("foo=baz");
             assertThat((String) output.getBody()).contains("foo=bar");
             assertThat((String) output.getBody()).contains("bar=foo1");

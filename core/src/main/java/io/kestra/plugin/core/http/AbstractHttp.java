@@ -110,7 +110,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
         if (this.params != null) {
             runContext
                 .render(this.params)
-                .asMap(String.class, String.class)
+                .asMap(String.class, Object.class)
                 .forEach((s, o) -> {
                     if (o instanceof List<?> oList) {
                         oList.stream().map(Object::toString).forEach(s1 -> {

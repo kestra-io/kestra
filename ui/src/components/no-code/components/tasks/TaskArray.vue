@@ -27,7 +27,6 @@
                         :root="`${root}[${index}]`"
                         :properties="{}"
                         :schema="props.schema.items"
-                        :definitions="props.definitions"
                         @update:model-value="handleInput($event, index)"
                     />
                 </template>
@@ -61,20 +60,18 @@
     const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
         schema: any;
-        definitions: any;
         modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
         required?: boolean;
         root?: string;
     }>(), {
         modelValue: undefined,
         schema: () => ({}),
-        definitions: () => ({}),
         required: false,
         root: undefined,
     });
 
     const componentType = computed(() => {
-        return getTaskComponent(props.schema.items, "", props.definitions);
+        return getTaskComponent(props.schema.items, props.root);
     });
 
     const needWrapper = computed(() => {

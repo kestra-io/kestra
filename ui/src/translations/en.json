@@ -1224,6 +1224,7 @@
         }
       },
       "select": {
+        "default": "Select a type",
         "task": "Select a task",
         "tasks": "Select a task",
         "triggers": "Select a trigger",
@@ -1238,6 +1239,7 @@
         "numerator": "Select a numerator"
       },
       "creation": {
+        "default": "Add",
         "tasks": "Add a task",
         "triggers": "Add a trigger",
         "errors": "Add an error handler",
@@ -1250,15 +1252,9 @@
         "where": "Filter your data",
         "numerator": "Add a numerator"
       },
-      "close": {
-        "tasks": "Close task",
-        "triggers": "Close trigger",
-        "errors": "Close error handler",
-        "finally": "Close finally task",
-        "afterExecution": "Close after execution task",
-        "input": "Close input",
-        "pluginDefaults": "Close plugin default",
-        "conditions": "Close condition"
+      "remove": {
+        "default": "Remove this entry",
+        "cases": "Remove this case"
       }
     },
     "properties": {

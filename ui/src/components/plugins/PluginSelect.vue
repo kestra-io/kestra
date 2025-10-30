@@ -1,7 +1,7 @@
 <template>
     <el-select
         v-model="modelValue"
-        :placeholder="t(`no_code.select.${blockType}`)"
+        :placeholder="te(`no_code.select.${blockType}`) ? t(`no_code.select.${blockType}`) : t('no_code.select.default')"
         filterable
     >
         <el-option
@@ -113,7 +113,7 @@
         return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => taskModels.value.includes(plugin)).length > 0;
     });
 
-    const {t} = useI18n();
+    const {t, te} = useI18n();
 
     const modelValue = defineModel({
         type: String,

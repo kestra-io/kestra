@@ -20,11 +20,11 @@
     import {computed, ref} from "vue";
     import {useRoute, useRouter} from "vue-router"
     import {Bar} from "vue-chartjs";
+    import moment from "moment";
     import Utils, {useTheme} from "../../utils/utils";
     import {useScheme} from "../../utils/scheme";
     import {defaultConfig, tooltip, chartClick, getFormat} from "../dashboard/composables/charts";
     import {useI18n} from "vue-i18n";
-    import {getCurrentInstance} from "vue";
 
     interface ExecutionData {
         startDate: string;
@@ -52,16 +52,14 @@
         datasets: Dataset[];
     }
 
-    interface Props {
+    const props = withDefaults(defineProps<{
         data: ExecutionData[];
         duration?: boolean;
         global?: boolean;
         big?: boolean;
         namespace?: string;
         flowId?: string;
-    }
-
-    const props = withDefaults(defineProps<Props>(), {
+    }>(), {
         duration: false,
         global: false,
         big: false,
@@ -69,7 +67,6 @@
         flowId: undefined,
     });
 
-    const moment = getCurrentInstance()?.appContext.config.globalProperties?.$moment;
     const route = useRoute();
     const router = useRouter();
     const {t} = useI18n({useScope: "global"});

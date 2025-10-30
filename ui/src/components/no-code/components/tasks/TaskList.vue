@@ -70,7 +70,7 @@
             // if second part is a property not defined in properties, 
             // it can only be defined by additionalProperties
             const s = schemaAtBlockPathInjected.value?.properties?.[rootParts[0]]
-            if(s.properties?.[rootParts[1]] === undefined && s?.additionalProperties){
+            if(s && s.properties?.[rootParts[1]] === undefined && s.additionalProperties){
                 rootParts[1] = "additionalProperties"
             } else {
                 rootParts.splice(1, 0, "properties")

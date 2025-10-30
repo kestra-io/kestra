@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount, ref, useTemplateRef} from "vue";
+    import {computed, onBeforeMount, onMounted, ref, useTemplateRef} from "vue";
     import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
@@ -104,6 +104,28 @@
 
         if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
         else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
+    });
+
+    onMounted(() => {
+        const query = {...route.query};
+        let queryHasChanged = false;
+
+        const queryKeys = Object.keys(query);
+        
+        const dateTimeKeys = ["startDate", "endDate", "timeRange"];
+        if (!queryKeys.some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
+            query["filters[timeRange][EQUALS]"] = "PT168H";
+            queryHasChanged = true;
+        }
+        
+        if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
+            query["filters[scope][EQUALS]"] = "USER";
+            queryHasChanged = true;
+        }
+
+        if (queryHasChanged) {
+            router.replace({query});
+        }
     });
 </script>
 

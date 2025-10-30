@@ -21,6 +21,20 @@ function maybeAddTimeRangeFilter(to) {
     return false;
 }
 
+function maybeAddDefaultFilters(to) {
+    let hasChanged = false;
+
+    hasChanged = maybeAddTimeRangeFilter(to) || hasChanged;
+
+    // Add scope USER filter for dashboard if not present
+    if (to.name === "home" && !Object.keys(to.query).some((key) => key.startsWith("filters[scope]"))) {
+        to.query["filters[scope][EQUALS]"] = "USER";
+        hasChanged = true;
+    }
+
+    return hasChanged;
+}
+
 export default [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}}},
@@ -32,7 +46,7 @@ export default [
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
         beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
+            if (maybeAddDefaultFilters(to)) {
                 next({
                     name: to.name,
                     params: to.params,

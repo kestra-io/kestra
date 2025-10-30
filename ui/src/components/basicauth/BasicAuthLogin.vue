@@ -135,8 +135,8 @@
     };
 
     const rules = computed(() => ({
-        username: [{required: true, validator: validateEmail, trigger: "change"}],
-        password: [{required: true, validator: validatePassword, trigger: "change"}]
+        username: [{required: true, validator: validateEmail, trigger: "blur"}],
+        password: [{required: true, validator: validatePassword, trigger: "blur"}]
     }))
 
     const getFieldError = (fieldName: string) => {
@@ -206,6 +206,9 @@
         try {
             coreStore.error = undefined;
             if (!form.value || isLoading.value) return
+
+            // Clear any existing validation states before submitting
+            form.value.clearValidate()
 
             if (!(await form.value.validate().catch(() => false))) return
 

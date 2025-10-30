@@ -16,34 +16,26 @@
         </el-option>
     </el-select>
 </template>
-<script>
-    export default {
-        emits: ["update:modelValue"],
-        data() {
-            return {
-                levelOptions: [
-                    "TRACE",
-                    "DEBUG",
-                    "INFO",
-                    "WARN",
-                    "ERROR",
-                ],
-            };
-        },
-        props: {
-            router: {
-                type: Boolean,
-                default: true
-            },
-            value: {
-                type: String,
-                default: "INFO"
-            }
-        },
-        methods: {
-            onInput(value) {
-                this.$emit("update:modelValue", value);
-            },
-        },
+<script setup lang="ts">
+    const emit = defineEmits<{(e: 'update:modelValue', value: string): void;}>()
+
+    withDefaults(defineProps<{
+        value?: string,
+        router?: boolean
+    }>(), {
+        value: "INFO",
+        router: true
+    })
+
+    const levelOptions = [
+        "TRACE",
+        "DEBUG",
+        "INFO",
+        "WARN",
+        "ERROR",
+    ];
+
+    const onInput = (value: string) => {
+        emit("update:modelValue", value);
     };
 </script>

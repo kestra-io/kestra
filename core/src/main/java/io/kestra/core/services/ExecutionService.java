@@ -727,7 +727,7 @@ public class ExecutionService {
             // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
             try {
                 newExecution = this.resume(execution, flow, State.Type.KILLING, null);
-                newExecution = newExecution.withState(afterKillState.orElse(newExecution.getState().getCurrent()));
+                newExecution = newExecution.withState(killingOrAfterKillState);
             } catch (Exception e) {
                 // if we cannot resume, we set it anyway to killing, so we don't throw
                 log.warn("Unable to resume a paused execution before killing it", e);
@@ -741,6 +741,7 @@ public class ExecutionService {
         // immediately without publishing a CrudEvent like it's done on pause/resume method.
         return newExecution;
     }
+
     public Execution kill(Execution execution, FlowInterface flow) {
         return this.kill(execution, flow, Optional.empty());
     }

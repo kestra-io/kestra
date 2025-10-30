@@ -7,16 +7,17 @@
         :closable="false"
         class="mb-2"
     />
-    <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
-        <el-col :span="componentType ? 22 : 6">
-            <InputText
-                :modelValue="item[0]"
-                @update:model-value="onKey(index, $event)"
-                margin="m-0"
-                placeholder="Key"
-                :haveError="duplicatedKeys.includes(item[0])"
-            />
-            <div v-if="componentType" class="task-container">
+    <template v-if="componentType">
+        <Wrapper v-for="(item, index) in currentValue" :key="index" style="background-color: var(--ks-background-card);">
+            <template #tasks>
+                <InputText
+                    :modelValue="item[0]"
+                    @update:model-value="onKey(index, $event)"
+                    margin="m-0"
+                    placeholder="Key"
+                    :haveError="duplicatedKeys.includes(item[0])"
+                />
+                <hr>
                 <component
                     ref="valueComponent"
                     :is="componentType"
@@ -28,22 +29,40 @@
                     :disabled
                     merge
                 />
-            </div>
-        </el-col>
-        <el-col v-if="!componentType" :span="16">
-            <TaskExpression
-                :modelValue="item[1]"
-                @update:model-value="onValueChange(index, $event)"
-                :root="getKey(item[0])"
-                :schema="schema.additionalProperties"
-                :required="isRequired(item[0])"
-                :disabled
-            />
-        </el-col>
-        <el-col :span="2" class="col align-self-center delete">
-            <DeleteOutline @click="removeItem(index)" />
-        </el-col>
-    </el-row>
+                <div class="delete-container">
+                    <el-button link @click="removeItem(index)">
+                        delete <DeleteOutline />
+                    </el-button>
+                </div>
+            </template>
+        </Wrapper>
+    </template>
+    <template v-else>
+        <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
+            <el-col :span="6">
+                <InputText
+                    :modelValue="item[0]"
+                    @update:model-value="onKey(index, $event)"
+                    margin="m-0"
+                    placeholder="Key"
+                    :haveError="duplicatedKeys.includes(item[0])"
+                />
+            </el-col>
+            <el-col :span="16">
+                <TaskExpression
+                    :modelValue="item[1]"
+                    @update:model-value="onValueChange(index, $event)"
+                    :root="getKey(item[0])"
+                    :schema="schema.additionalProperties"
+                    :required="isRequired(item[0])"
+                    :disabled
+                />
+            </el-col>
+            <el-col :span="2" class="col align-self-center delete">
+                <DeleteOutline @click="removeItem(index)" />
+            </el-col>
+        </el-row>
+    </template>
     <Add v-if="!props.disabled" :disabled="addButtonDisabled" @add="addItem()" />
 </template>
 
@@ -57,6 +76,7 @@
     import Add from "../Add.vue";
     import getTaskComponent from "./getTaskComponent";
     import debounce from "lodash/debounce";
+    import Wrapper from "./Wrapper.vue";
 
     const {t} = useI18n();
 
@@ -164,12 +184,13 @@
 @import "../../styles/code.scss";
 
 .task-container{
-    margin-top: -4px;
     margin-bottom: 1rem;
-    border-left: 4px solid var(--ks-border-primary);
-    border-bottom: 1px solid var(--ks-border-secondary);
-    padding-top: 1rem;
-    padding-left: 1rem;
-    border-bottom-left-radius: 4px;
+}
+
+.delete-container{
+    display: flex;
+    align-items: center;
+    margin-left: 1rem;
+    justify-content: end;
 }
 </style>

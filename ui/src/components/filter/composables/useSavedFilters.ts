@@ -1,6 +1,6 @@
 import {computed} from "vue";
 import {useRoute} from "vue-router";
-import {useLocalStorage} from "@vueuse/core";
+import {useStorage} from "@vueuse/core";
 import {SavedFilter} from "../utils/filterTypes";
 import {storageKeys} from "../../../utils/constants";
 
@@ -28,7 +28,7 @@ export function useSavedFilters(prefix: string) {
         return `${storageKeys.SAVED_FILTERS_PREFIX}_${prefix}_${routeKey}`;
     });
 
-    const savedFilters = useLocalStorage<SavedFilter[]>(storageKey, [], {
+    const savedFilters = useStorage<SavedFilter[]>(storageKey, [], localStorage, {
         serializer: {
             read: (v: string) => JSON.parse(v).map(deserializeDates),
             write: (v: SavedFilter[]) => JSON.stringify(v)

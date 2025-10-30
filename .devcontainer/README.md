@@ -32,12 +32,6 @@ In the meantime, you can move onto the next step...
 
 ### Development:
 
-- (Optional) By default, your dev server will target `localhost:8080`. If your backend is running elsewhere, you can create `.env.development.local` under `ui` folder with this content:
-```
-VITE_APP_API_URL=http://localhost:8080
-```
-**Important:** The URL must include the protocol (`http://` or `https://`). A URL without the protocol (e.g., `localhost:8080`) will cause the frontend to fail with connection errors.
-
 - Navigate into the `ui` folder and run `npm install` to install the dependencies for the frontend project.
 
 - Now go to the `cli/src/main/resources` folder and create a `application-override.yml` file.

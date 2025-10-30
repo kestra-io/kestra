@@ -10,11 +10,13 @@ import io.kestra.core.storages.kv.KVMetadata;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.storages.kv.KVValue;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.time.Duration;
@@ -225,6 +227,27 @@ class InternalKVStoreTest {
         Assertions.assertEquals(val.value(), result.get().value());
         Assertions.assertEquals(val.metadata().getDescription(), result.get().metadata().getDescription());
         Assertions.assertEquals(val.metadata().getExpirationDate().truncatedTo(ChronoUnit.MILLIS), result.get().metadata().getExpirationDate().truncatedTo(ChronoUnit.MILLIS));
+    }
+
+    @Test
+    void getShouldStillWorkWithoutMetadata() throws IOException, ResourceExpiredException {
+        // Given
+        InternalKVStore kv = kv();
+        String key = IdUtils.create();
+        URI kvStorageUri = URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(kv.namespace()) + "/" + key + ".ion");
+        String value = "someValue";
+        KVValueAndMetadata kvValueAndMetadata = new KVValueAndMetadata(new KVMetadata("some description", Instant.now().plus(Duration.ofMinutes(5))), value);
+        storageInterface.put(TenantService.MAIN_TENANT, kv.namespace(), kvStorageUri, new StorageObject(
+            kvValueAndMetadata.metadataAsMap(),
+            new ByteArrayInputStream(JacksonMapper.ofIon().writeValueAsBytes(kvValueAndMetadata.value()))
+        ));
+
+        // When
+        Optional<KVValue> result = kv.getValue(key);
+
+        // Then
+        assertThat(result.isPresent()).isTrue();
+        assertThat(result.get().value()).isEqualTo(value);
     }
 
     @Test

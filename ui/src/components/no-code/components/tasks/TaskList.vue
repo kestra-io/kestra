@@ -57,6 +57,7 @@
     } from "../../injectionKeys";
     import {SECTIONS_MAP} from "../../../../utils/constants";
     import {getValueAtJsonPath} from "../../../../utils/utils";
+    import {useI18n} from "vue-i18n";
 
 
     const blockSchemaPathInjected = inject(BLOCK_SCHEMA_PATH_INJECTION_KEY, ref(""))
@@ -66,9 +67,11 @@
     const blockSchemaPath = computed(() => {
         const rootParts = props.root ? props.root.split(".") : []
         if(rootParts.length > 1){
-            if(schemaAtBlockPathInjected.value?.properties?.[rootParts[0]]?.additionalProperties){
+            // if second part is a property not defined in properties, 
+            // it can only be defined by additionalProperties
+            const s = schemaAtBlockPathInjected.value?.properties?.[rootParts[0]]
+            if(s.properties?.[rootParts[1]] === undefined && s?.additionalProperties){
                 rootParts[1] = "additionalProperties"
-    
             } else {
                 rootParts.splice(1, 0, "properties")
             }
@@ -113,16 +116,19 @@
         emits("update:modelValue", localItems);
     };
 
+    const {t} = useI18n();
+
     const section = computed(() => {
-        return props.root ?? "tasks";
+        if(props.merge){
+            return t("tasks");
+        }
+        return props.root ?? t("tasks");
     });
-
-
 
     const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
 
     const filteredElements = computed(() => elements.value?.filter(Boolean) ?? []);
-    const expanded = props.merge ? computed(() => props.root) : ref<CollapseItem["title"]>(props.root ?? "tasks");
+    const expanded = props.merge ? computed(() => section.value) : ref<CollapseItem["title"]>(props.root ?? "tasks");
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);

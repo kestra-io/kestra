@@ -17,10 +17,9 @@ import java.util.List;
 public class PostgresKvMetadataRepository extends AbstractJdbcKvMetadataRepository {
     @Inject
     public PostgresKvMetadataRepository(
-        @Named("kvMetadata") PostgresRepository<PersistedKvMetadata> repository,
-        ApplicationContext applicationContext
+        @Named("kvMetadata") PostgresRepository<PersistedKvMetadata> repository
     ) {
-        super(repository, applicationContext);
+        super(repository);
     }
 
     @Override

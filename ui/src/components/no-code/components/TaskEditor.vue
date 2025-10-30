@@ -26,7 +26,6 @@
             @update:model-value="onTaskInput"
             :schema
             :properties
-            :definitions="fullSchema.definitions"
         />
     </div>
 </template>

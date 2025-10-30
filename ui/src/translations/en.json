@@ -295,6 +295,7 @@
     "stream": "Stream",
     "execution statistics": "Execution statistics",
     "stats": "Stats",
+    "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
     "your usage": "Your usage",
     "namespaces": "Namespaces",
@@ -320,6 +321,10 @@
     "input": "Input",
     "variables": "Variables",
     "download": "Download",
+    "concurrency_limit": {
+        "dialog_title": "Concurrency Limits",
+        "warning": "Changing the running counter may corrupt concurrency so executions may exceed the allowed limit"
+    },
     "documentation": {
       "documentation": "Documentation",
       "github": "Open a GitHub issue"
@@ -1224,6 +1229,7 @@
         }
       },
       "select": {
+        "default": "Select a type",
         "task": "Select a task",
         "tasks": "Select a task",
         "triggers": "Select a trigger",
@@ -1238,6 +1244,7 @@
         "numerator": "Select a numerator"
       },
       "creation": {
+        "default": "Add",
         "tasks": "Add a task",
         "triggers": "Add a trigger",
         "errors": "Add an error handler",
@@ -1250,15 +1257,9 @@
         "where": "Filter your data",
         "numerator": "Add a numerator"
       },
-      "close": {
-        "tasks": "Close task",
-        "triggers": "Close trigger",
-        "errors": "Close error handler",
-        "finally": "Close finally task",
-        "afterExecution": "Close after execution task",
-        "input": "Close input",
-        "pluginDefaults": "Close plugin default",
-        "conditions": "Close condition"
+      "remove": {
+        "default": "Remove this entry",
+        "cases": "Remove this case"
       }
     },
     "properties": {

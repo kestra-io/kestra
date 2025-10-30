@@ -418,9 +418,9 @@ class ExecutionServiceTest {
 
         Execution killed = executionService.kill(execution, flow);
 
-        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLING);
         assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
-        assertThat(killed.getState().getHistories()).hasSize(4);
+        assertThat(killed.getState().getHistories()).hasSize(5);
     }
 
     @Test

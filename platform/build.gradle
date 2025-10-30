@@ -40,6 +40,8 @@ dependencies {
     api platform("dev.langchain4j:langchain4j-community-bom:$langchain4jCommunityVersion")
 
     constraints {
+        // downgrade to proto 1.3.2-alpha as 1.5.0 needs protobuf 4
+        api("io.opentelemetry.proto:opentelemetry-proto:1.3.2-alpha")
         // need to force this dep as mysql-connector brings a version incompatible with the Google Cloud libs
         api("com.google.protobuf:protobuf-java:$protobufVersion")
         api("com.google.protobuf:protobuf-java-util:$protobufVersion")

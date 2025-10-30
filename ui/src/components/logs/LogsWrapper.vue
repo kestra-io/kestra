@@ -98,7 +98,7 @@
                 isLoading: false,
                 lastRefreshDate: new Date(),
                 canAutoRefresh: false,
-                showChart: localStorage.getItem(storageKeys.SHOW_LOGS_CHART) === "true",
+                showChart: localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false",
             };
         },
         computed: {
@@ -162,12 +162,6 @@
             const queryKeys = Object.keys(query);
             if (defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
                 query["filters[namespace][PREFIX]"] = defaultNamespace();
-                queryHasChanged = true;
-            }
-
-
-            if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
-                query["filters[scope][EQUALS]"] = "USER";
                 queryHasChanged = true;
             }
 

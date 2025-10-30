@@ -500,7 +500,7 @@
     const changeStatusDialogVisible = ref(false);
     const actionOptions = ref<Record<string, any>>({});
     const dblClickRouteName = ref("executions/update");
-    const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) === "true");
+    const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false");
 
     const optionalColumns = ref([
         {

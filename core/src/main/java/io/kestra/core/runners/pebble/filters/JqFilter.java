@@ -61,7 +61,7 @@ public class JqFilter implements Filter {
             final List<Object> out = new ArrayList<>();
 
             try {
-                q.apply(SCOPE, in, v -> {
+                q.apply(Scope.newChildScope(SCOPE), in, v -> {
                     if (v instanceof TextNode) {
                         out.add(v.textValue());
                     } else if (v instanceof NullNode) {

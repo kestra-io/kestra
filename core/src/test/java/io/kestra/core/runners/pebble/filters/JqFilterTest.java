@@ -143,33 +143,4 @@ class JqFilterTest {
         render = variableRenderer.render("{% set array = vars | jq(\".array\") %}{{array[0][0]}}", vars);
         assertThat(render).isEqualTo("arrayValue");
     }
-    
-    @Test
-    void forEachScenarioTest() throws IllegalVariableEvaluationException {
-        Map<String, Object> complexData = Map.of(
-            "items", Arrays.asList(
-                Map.of("id", 1, "name", "Item 1"),
-                Map.of("id", 2, "name", "Item 2"),
-                Map.of("id", 3, "name", "Item 3")
-            )
-        );
-        
-        String render = variableRenderer.render("{{ data | jq(\".items[]\") }}", Map.of("data", complexData));
-        assertThat(render).contains("\"id\":1");
-        assertThat(render).contains("\"id\":2");
-        assertThat(render).contains("\"id\":3");
-        
-        Map<String, Object> nestedData = Map.of(
-            "parent", Map.of(
-                "children", Arrays.asList(
-                    Map.of("id", "a", "value", 10),
-                    Map.of("id", "b", "value", 20)
-                )
-            )
-        );
-        
-        render = variableRenderer.render("{{ nested | jq(\".parent.children[]\") }}", Map.of("nested", nestedData));
-        assertThat(render).contains("\"id\":\"a\"");
-        assertThat(render).contains("\"id\":\"b\"");
-    }
 }

@@ -105,7 +105,7 @@ public class RetryCaseTest {
             () -> "flow should have ended in Failed state",
             () -> executionRepository.findLatestForStates(flow.getTenantId(), flow.getNamespace(), flow.getId(), List.of(State.Type.FAILED)).isPresent(),
             Duration.ofMillis(100),
-            Duration.ofSeconds(30)
+            Duration.ofSeconds(10)
         );
         var executions = executionRepository.findByFlowId(flow.getTenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED);
         assertThat(executions.stream().map(e -> e.getState().getCurrent())).contains(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED);

@@ -22,17 +22,14 @@ function maybeAddTimeRangeFilter(to) {
 }
 
 function maybeAddDefaultFilters(to) {
-    let hasChanged = false;
+    const timeRangeChanged = maybeAddTimeRangeFilter(to);
 
-    hasChanged = maybeAddTimeRangeFilter(to) || hasChanged;
-
-    // Add scope USER filter for dashboard if not present
-    if (to.name === "home" && !Object.keys(to.query).some((key) => key.startsWith("filters[scope]"))) {
+    const scopeChanged = to.name === "home" && !Object.keys(to.query).some((key) => key.startsWith("filters[scope]"));
+    if (scopeChanged) {
         to.query["filters[scope][EQUALS]"] = "USER";
-        hasChanged = true;
     }
 
-    return hasChanged;
+    return timeRangeChanged || scopeChanged;
 }
 
 export default [

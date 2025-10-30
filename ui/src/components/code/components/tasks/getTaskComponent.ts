@@ -1,4 +1,5 @@
 import {pascalCase} from "change-case";
+import {resolve$ref} from "../../../../utils/utils";
 
 const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true});
 
@@ -70,7 +71,8 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if (property.type === "array") {
-        if (property.items?.anyOf?.length === 0 || property.items?.anyOf?.length > 10 || key === "pluginDefaults" || key === "layout") {
+        const items = schema ? resolve$ref({definitions: schema}, property.items) : property.items;
+        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10 || key === "pluginDefaults" || key === "layout") {
             return "list";
         }
 

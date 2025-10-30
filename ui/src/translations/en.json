@@ -1081,7 +1081,7 @@
     "cron": "Cron",
     "execution_failed": "Execution failed! Last error was",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
-    "execution replay": "This execution is a replay of <code>{originalId}</code>.",
+    "execution replay": "This execution is a replay of  <code>{originalId}</code>.",
     "execution replayed": "This execution has been replayed.",
     "task run id": "TaskRun ID",
     "active": "Active",
@@ -1201,6 +1201,7 @@
         }
       },
       "select": {
+        "default": "Select a type",
         "task": "Select a task",
         "tasks": "Select a task",
         "triggers": "Select a trigger",
@@ -1212,6 +1213,7 @@
         "inputs": "Select an input field type"
       },
       "creation": {
+        "default": "Add",
         "tasks": "Add a task",
         "triggers": "Add a trigger",
         "errors": "Add an error handler",
@@ -1230,6 +1232,10 @@
         "input": "Close input",
         "pluginDefaults": "Close plugin default",
         "conditions": "Close condition"
+      },
+      "remove": {
+        "default": "Remove this entry",
+        "cases": "Remove this case"
       }
     },
     "properties": {

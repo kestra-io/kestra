@@ -30,9 +30,9 @@
                     merge
                 />
                 <div class="delete-container">
-                    <el-button link @click="removeItem(index)">
-                        delete <DeleteOutline />
-                    </el-button>
+                    <button @click="removeItem(index)" class="remove-entry">
+                        {{ te(`no_code.remove.${root}`) ? t(`no_code.remove.${root}`) : t('no_code.remove.default') }} <DeleteOutline />
+                    </button>
                 </div>
             </template>
         </Wrapper>
@@ -78,7 +78,7 @@
     import debounce from "lodash/debounce";
     import Wrapper from "./Wrapper.vue";
 
-    const {t} = useI18n();
+    const {t, te} = useI18n();
 
     defineOptions({
         inheritAttrs: false,
@@ -192,5 +192,20 @@
     align-items: center;
     margin-left: 1rem;
     justify-content: end;
+}
+
+.remove-entry{
+    color: var(--ks-content-secondary);
+    background-color: var(--ks-button-background-secondary);
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: .5rem; 
+    opacity: 0.7;
+    padding: 0;
+    &:hover {
+        color: var(--ks-content-secondary);
+        opacity: 1;
+    }
 }
 </style>

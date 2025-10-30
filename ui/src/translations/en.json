@@ -1251,6 +1251,10 @@
         "charts": "Add a chart",
         "where": "Filter your data",
         "numerator": "Add a numerator"
+      },
+      "remove": {
+        "default": "Remove this entry",
+        "cases": "Remove this case"
       }
     },
     "properties": {

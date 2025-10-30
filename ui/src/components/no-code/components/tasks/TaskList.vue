@@ -4,6 +4,8 @@
             <el-collapse-item
                 :name="section"
                 :title="merge ? '' : `${section}${elements ? ` (${elements.length})` : ''}`"
+                :disabled="merge"
+                :class="{merge}"
             >
                 <template #icon>
                     <Creation
@@ -64,7 +66,7 @@
     const blockSchemaPath = computed(() => {
         const rootParts = props.root ? props.root.split(".") : []
         if(rootParts.length > 1){
-            if(schemaAtBlockPathInjected.value.properties?.[rootParts[0]]?.additionalProperties){
+            if(schemaAtBlockPathInjected.value?.properties?.[rootParts[0]]?.additionalProperties){
                 rootParts[1] = "additionalProperties"
     
             } else {
@@ -120,7 +122,7 @@
     const flow = inject(FULL_SOURCE_INJECTION_KEY, ref(""));
 
     const filteredElements = computed(() => elements.value?.filter(Boolean) ?? []);
-    const expanded = ref<CollapseItem["title"]>(props.root ?? "tasks");
+    const expanded = props.merge ? computed(() => props.root) : ref<CollapseItem["title"]>(props.root ?? "tasks");
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
@@ -199,5 +201,9 @@
     opacity: 0.5;
     pointer-events: none;
     cursor: not-allowed;
+}
+
+.merge :deep(.el-collapse-item__header){
+    cursor: default;
 }
 </style>

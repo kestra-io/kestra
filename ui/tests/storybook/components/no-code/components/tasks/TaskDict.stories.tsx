@@ -154,3 +154,62 @@ export const ValuesAsObjects: Story = {
         }
     }
 }
+
+export const ValuesAsTaskLists: Story = {
+    render(args){
+        return {
+            setup() {
+                const model = ref(args.modelValue || {});
+
+                provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
+                return () => <div style={{width: "1200px", display: "flex", gap: "20px"}}>
+                    <Wrapper>
+                        {{
+                            tasks: () => <TaskDict root="layout" modelValue={model.value} schema={{
+                                additionalProperties: {
+                                    type: "array",
+                                    items: {
+                                        anyOf: [   
+                                            "Python", 
+                                            "Bash", 
+                                            "JavaScript", 
+                                        ].map(lang => ({
+                                            type: "object",
+                                            properties: {
+                                                id: {type: "string"},
+                                                type: {"const": `io.kestra.core.tasks.scripts.${lang}`},
+                                            }
+                                        })),
+                                    }
+                                }
+                            }} onUpdate:modelValue={val => model.value = val}/>
+                        }}
+                    </Wrapper>
+                    <pre data-testid="sb-meta-data-result" style={{background: "var(--ks-background-card)", padding: "10px", borderRadius: "4px", width: "100%"}}>
+                        {JSON.stringify(model.value, null, 2)}
+                    </pre>
+                </div>
+            }
+        }
+    },
+    args: {
+        modelValue: {
+            "taskList1": [
+                {
+                    "id": "task1",
+                    "type": "io.kestra.core.tasks.scripts.Bash"
+                },
+                {
+                    "id": "task2",
+                    "type": "io.kestra.core.tasks.scripts.Python"
+                }
+            ],
+            "taskList2": [
+                {
+                    "id": "task3",
+                    "type": "io.kestra.core.tasks.scripts.JavaScript"
+                }
+            ]
+        }
+    }
+}

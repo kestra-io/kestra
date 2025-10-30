@@ -16,162 +16,148 @@
     </div>
 </template>
 
-<script>
-    import {computed, defineComponent, ref, getCurrentInstance} from "vue";
-    import {useRoute, useRouter} from "vue-router"
-    import {Bar} from "vue-chartjs";
-    import Utils, {useTheme} from "../../utils/utils";
-    import {useScheme} from "../../utils/scheme";
-    import {defaultConfig, tooltip, chartClick, getFormat} from "../dashboard/composables/charts";
+<script setup lang="ts">
+    import {computed, ref} from "vue";
+    import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
+    import {Bar} from "vue-chartjs";
+    import moment from "moment";
+    import {useScheme} from "../../utils/scheme";
+    import Utils, {useTheme} from "../../utils/utils";
+    import {defaultConfig, tooltip, chartClick, getFormat} from "../dashboard/composables/charts";
 
-    export default defineComponent({
-        components: {Bar},
-        props: {
-            data: {
-                type: Array,
-                required: true
-            },
-            duration: {
-                type: Boolean,
-                default: () => false
-            },
-            global: {
-                type: Boolean,
-                default: () => false
-            },
-            big: {
-                type: Boolean,
-                default: () => false
-            },
-            namespace: {
-                type: String,
-                required: false,
-                default: undefined
-            },
-            flowId: {
-                type: String,
-                required: false,
-                default: undefined
-            },
-        },
-        setup(props) {
-            const moment = getCurrentInstance().appContext.config.globalProperties.$moment;
-            const route = useRoute();
-            const router = useRouter();
-            const {t} = useI18n({useScope: "global"});
+    interface ExecutionData {
+        startDate: string;
+        groupBy: string;
+        executionCounts: Record<string, number>;
+        duration: {
+            avg: number;
+        };
+    }
 
-            let duration = t("duration")
-
-            const chartRef = ref();
-            const tooltipContent = ref("");
-
-            const dataReady = computed(() => props.data.length > 0)
-            const theme = useTheme();
-            const scheme = useScheme();
-
-            const options = computed(() => defaultConfig({
-                barThickness: 4,
-                onClick: (e, elements) => {
-                    if (elements.length > 0 && elements[0].index !== undefined && elements[0].datasetIndex !== undefined) {
-                        chartClick(
-                            moment,
-                            router,
-                            route,
-                            {
-                                date: e.chart.data.labels[elements[0].index],
-                                state: e.chart.data.datasets[elements[0].datasetIndex].label,
-                                namespace: props.namespace,
-                                flowId: props.flowId
-                            }
-                        )
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        external: function (context) {
-                            let content = tooltip(context.tooltip);
-                            tooltipContent.value = content;
-                        },
-                        callbacks: {
-                            label: function (context) {
-                                if (context.dataset.yAxisID === "yB" && context.raw !== 0) {
-                                    return context.dataset.label + ": " + Utils.humanDuration(context.raw);
-                                } else if (context.formattedValue !== "0") {
-                                    return context.dataset.label + ": " + context.formattedValue
-                                }
-                            }
-                        },
-                        filter: (e) => {
-                            return e.raw > 0;
-                        },
-                    },
-                },
-                scales: {
-                    x: {
-                        stacked: true,
-                    },
-                    y: {
-                        display: false,
-                        position: "left",
-                        stacked: true,
-                    },
-                    yB: {
-                        display: false,
-                        position: "right",
-                    }
-                },
-            }, theme.value));
-
-            const darkTheme = computed(() => theme.value === "dark");
-
-            const chartData = computed(() => {
-                let datasets = props.data
-                    .reduce(function (accumulator, value) {
-                        Object.keys(value.executionCounts).forEach(function (state) {
-                            if (accumulator[state] === undefined) {
-                                accumulator[state] = {
-                                    label: state,
-                                    backgroundColor: scheme.value[state],
-                                    yAxisID: "y",
-                                    data: []
-                                };
-                            }
-
-                            accumulator[state].data.push(value.executionCounts[state]);
-                        });
-
-                        return accumulator;
-                    }, Object.create(null))
-
-                return {
-                    labels: props.data.map(r => moment(r.startDate).format(getFormat(r.groupBy))),
-                    datasets: props.big || props.global || props.duration ?
-                        [{
-                            type: "line",
-                            label: duration,
-                            fill: "start",
-                            pointRadius: 0,
-                            borderWidth: 0.2,
-                            backgroundColor: Utils.hexToRgba(!darkTheme.value ? "#eaf0f9" : "#292e40", 0.5),
-                            borderColor: !darkTheme.value ? "#7081b9" : "#7989b4",
-                            yAxisID: "yB",
-                            data: props.data
-                                .map((value) => {
-                                    return value.duration.avg === 0 ? 0 : Utils.duration(value.duration.avg);
-                                })
-                        }, ...Object.values(datasets)] :
-                        Object.values(datasets)
-                }
-            })
-
-            return {chartData, tooltipContent, chartRef, options, dataReady};
-        },
-        data() {
-            return {
-                uuid: Utils.uid(),
-            };
-        },
+    const props = withDefaults(defineProps<{
+        data: ExecutionData[];
+        duration?: boolean;
+        global?: boolean;
+        big?: boolean;
+        namespace?: string;
+        flowId?: string;
+    }>(), {
+        duration: false,
+        global: false,
+        big: false,
+        namespace: undefined,
+        flowId: undefined
     });
+
+    const route = useRoute();
+    const router = useRouter();
+    const {t} = useI18n({useScope: "global"});
+
+    const chartRef = ref();
+    const tooltipContent = ref("");
+
+    const theme = useTheme();
+    const scheme = useScheme();
+    
+    const dataReady = computed(() => props.data?.length > 0);
+
+    const options = computed(() => defaultConfig({
+        barThickness: 4,
+        onClick: (e: any, elements: any[]) => {
+            if (elements.length > 0 && elements[0].index !== undefined && elements[0].datasetIndex !== undefined) {
+                chartClick(
+                    moment,
+                    router,
+                    route,
+                    {
+                        date: e.chart.data.labels[elements[0].index],
+                        state: e.chart.data.datasets[elements[0].datasetIndex].label,
+                        namespace: props.namespace,
+                        flowId: props.flowId
+                    },
+                    undefined,
+                    undefined
+                )
+            }
+        },
+        plugins: {
+            tooltip: {
+                external: function (context: any) {
+                    let content = tooltip(context.tooltip);
+                    tooltipContent.value = content ?? "";
+                },
+                callbacks: {
+                    label: function (context: any) {
+                        if (context.dataset.yAxisID === "yB" && context.raw !== 0) {
+                            return context.dataset.label + ": " + Utils.humanDuration(context.raw);
+                        } else if (context.formattedValue !== "0") {
+                            return context.dataset.label + ": " + context.formattedValue
+                        }
+                    }
+                },
+                filter: (e: any) => {
+                    return e.raw > 0;
+                },
+            },
+        },
+        scales: {
+            x: {
+                stacked: true,
+            },
+            y: {
+                display: false,
+                position: "left",
+                stacked: true,
+            },
+            yB: {
+                display: false,
+                position: "right",
+            }
+        },
+    }, theme.value) as any);
+
+    const darkTheme = computed(() => theme.value === "dark");
+
+    const chartData = computed(() => {
+        let datasets = props.data
+            .reduce(function (accumulator: Record<string, any>, value: ExecutionData) {
+                Object.keys(value.executionCounts).forEach(function (state: string) {
+                    if (accumulator[state] === undefined) {
+                        accumulator[state] = {
+                            label: state,
+                            backgroundColor: (scheme.value as any)[state],
+                            yAxisID: "y",
+                            data: []
+                        };
+                    }
+
+                    accumulator[state].data.push(value.executionCounts[state]);
+                });
+
+                return accumulator;
+            }, Object.create(null))
+
+        return {
+            labels: props.data.map((r: ExecutionData) => moment(r.startDate).format(getFormat(r.groupBy))),
+            datasets: props.big || props.global || props.duration ?
+                [{
+                    type: "line",
+                    label: t("duration"),
+                    fill: "start",
+                    pointRadius: 0,
+                    borderWidth: 0.2,
+                    backgroundColor: Utils.hexToRgba(!darkTheme.value ? "#eaf0f9" : "#292e40", 0.5),
+                    borderColor: !darkTheme.value ? "#7081b9" : "#7989b4",
+                    yAxisID: "yB",
+                    data: props.data
+                        .map((value: ExecutionData) => {
+                            return value.duration.avg === 0 ? 0 : Utils.duration(String(value.duration.avg));
+                        })
+                }, ...Object.values(datasets)] :
+                Object.values(datasets)
+        }
+    });
+
 </script>
 

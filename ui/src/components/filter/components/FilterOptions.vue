@@ -91,7 +91,7 @@
     watch(
         () => filter.chartVisible.value,
         (newVal) => {
-            localChartVisible.value = newVal ?? false;
+            localChartVisible.value = newVal ?? true;
         }
     );
 

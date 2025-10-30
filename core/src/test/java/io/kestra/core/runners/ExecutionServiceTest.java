@@ -123,6 +123,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count()).isGreaterThan(1L);
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count()).isGreaterThan(1L);
+
         assertThat(restart.getTaskRunList().getFirst().getId()).isEqualTo(restart.getTaskRunList().getFirst().getId());
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
     }

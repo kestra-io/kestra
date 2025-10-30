@@ -360,4 +360,14 @@ public interface StorageInterface extends AutoCloseable, Plugin {
 
         return path;
     }
+
+    /**
+     * Returns the maximum allowed length for an object name in this storage.
+     *
+     * @return the maximum object name length, default is unlimited
+     */
+    default int maxObjectNameLength() {
+        return Integer.MAX_VALUE;
+    }
+
 }

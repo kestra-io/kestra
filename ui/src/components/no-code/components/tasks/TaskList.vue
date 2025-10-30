@@ -3,7 +3,7 @@
         <el-collapse v-model="expanded" class="collapse">
             <el-collapse-item
                 :name="section"
-                :title="merge ? '' : `${section}${elements ? ` (${elements.length})` : ''}`"
+                :title="`${section}${elements ? ` (${elements.length})` : ''}`"
                 :disabled="merge"
                 :class="{merge}"
             >

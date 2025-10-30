@@ -170,6 +170,11 @@
       "back": "Wstecz"
     },
     "concurrency": "Współbieżność",
+    "concurrency limits": "Limity Równoczesności",
+    "concurrency_limit": {
+      "dialog_title": "Limity Równoczesności",
+      "warning": "Zmiana bieżącego licznika może uszkodzić współbieżność, co może spowodować przekroczenie dozwolonego limitu przez wykonania."
+    },
     "conditions": "Warunki",
     "configure basic auth": "Skonfiguruj podstawowe uwierzytelnianie",
     "confirm": "Potwierdź",

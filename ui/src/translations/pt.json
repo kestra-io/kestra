@@ -170,6 +170,11 @@
       "back": "Voltar"
     },
     "concurrency": "Concorrência",
+    "concurrency limits": "Limites de Concurrency",
+    "concurrency_limit": {
+      "dialog_title": "Limites de Concurrency",
+      "warning": "Alterar o contador em execução pode corromper a concorrência, fazendo com que as execuções excedam o limite permitido."
+    },
     "conditions": "Condições",
     "configure basic auth": "Configurar Autenticação Básica",
     "confirm": "Confirmar",

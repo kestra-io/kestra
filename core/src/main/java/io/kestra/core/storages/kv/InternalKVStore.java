@@ -113,19 +113,23 @@ public class InternalKVStore implements KVStore {
         KVStore.validateKey(key);
 
         Optional<PersistedKvMetadata> maybeMetadata = this.kvMetadataRepository.findByName(this.tenant, this.namespace, key);
-        if (maybeMetadata.isEmpty() || maybeMetadata.get().isDeleted()) {
-            return Optional.empty();
-        }
 
-        PersistedKvMetadata metadata = maybeMetadata.get();
-        if (Optional.ofNullable(metadata.getExpirationDate()).map(Instant.now()::isAfter).orElse(false)) {
-            this.delete(key);
-            throw new ResourceExpiredException("The requested value has expired");
+        int version = maybeMetadata.map(PersistedKvMetadata::getVersion).orElse(1);
+        if (maybeMetadata.isPresent()) {
+            PersistedKvMetadata metadata = maybeMetadata.get();
+            if (metadata.isDeleted()) {
+                return Optional.empty();
+            }
+
+            if (Optional.ofNullable(metadata.getExpirationDate()).map(Instant.now()::isAfter).orElse(false)) {
+                this.delete(key);
+                throw new ResourceExpiredException("The requested value has expired");
+            }
         }
 
         StorageObject withMetadata;
         try {
-            withMetadata = this.storage.getWithMetadata(this.tenant, this.namespace, this.storageUri(key, metadata.getVersion()));
+            withMetadata = this.storage.getWithMetadata(this.tenant, this.namespace, this.storageUri(key, version));
         } catch (FileNotFoundException e) {
             return Optional.empty();
         }

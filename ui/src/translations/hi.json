@@ -1174,20 +1174,11 @@
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
       "clearSelection": "चयन साफ़ करें",
-      "close": {
-        "afterExecution": "कार्य पूरा होने के बाद बंद करें",
-        "conditions": "बंद करने की शर्त",
-        "errors": "त्रुटि हैंडलर बंद करें",
-        "finally": "टास्क बंद करें",
-        "input": "इनपुट बंद करें",
-        "pluginDefaults": "प्लगइन डिफ़ॉल्ट बंद करें",
-        "tasks": "टास्क बंद करें",
-        "triggers": "ट्रिगर बंद करें"
-      },
       "creation": {
         "afterExecution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "charts": "चार्ट जोड़ें",
         "conditions": "एक शर्त जोड़ें",
+        "default": "जोड़ें",
         "errors": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
         "inputs": "इनपुट फ़ील्ड जोड़ें",
@@ -1223,6 +1214,10 @@
         "variable": "वेरिएबल",
         "yaml": "YAML संपादक"
       },
+      "remove": {
+        "cases": "इस केस को हटाएं",
+        "default": "इस प्रविष्टि को हटाएं"
+      },
       "sections": {
         "afterExecution": "Execution के बाद",
         "connection": "कनेक्शन गुणधर्म",
@@ -1240,6 +1235,7 @@
         "afterExecution": "एक task चुनें",
         "charts": "चार्ट प्रकार चुनें",
         "conditions": "कंडीशन चुनें",
+        "default": "एक प्रकार चुनें",
         "errors": "एक task चुनें",
         "finally": "एक task चुनें",
         "inputs": "इनपुट फ़ील्ड प्रकार चुनें",

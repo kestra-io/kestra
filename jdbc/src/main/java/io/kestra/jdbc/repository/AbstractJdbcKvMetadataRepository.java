@@ -1,14 +1,11 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.TenantAndNamespace;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import org.jooq.*;
@@ -22,15 +19,12 @@ import java.util.stream.Stream;
 
 public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcRepository implements KvMetadataRepositoryInterface {
     protected final io.kestra.jdbc.AbstractJdbcRepository<PersistedKvMetadata> jdbcRepository;
-    private final ApplicationEventPublisher<CrudEvent<PersistedKvMetadata>> eventPublisher;
 
     @SuppressWarnings("unchecked")
     public AbstractJdbcKvMetadataRepository(
-        io.kestra.jdbc.AbstractJdbcRepository<PersistedKvMetadata> jdbcRepository,
-        ApplicationContext applicationContext
+        io.kestra.jdbc.AbstractJdbcRepository<PersistedKvMetadata> jdbcRepository
     ) {
         this.jdbcRepository = jdbcRepository;
-        this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
     }
 
     private static Condition lastCondition(boolean isLast) {
@@ -138,13 +132,7 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcRepos
                             ))).toList()));
                     }
 
-                    int deletedAmount = deleteCondition
-                        .execute();
-
-                    e.getValue().forEach(kvMetadata -> eventPublisher.publishEvent(CrudEvent.of(
-                        kvMetadata,
-                        null
-                    )));
+                    int deletedAmount = deleteCondition.execute();
 
                     return totalForTenantNamespace + deletedAmount;
                 }, Integer::sum);
@@ -173,10 +161,6 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcRepos
                     }
                 }
 
-                eventPublisher.publishEvent(CrudEvent.of(
-                    maybePrevious.orElse(null),
-                    kvMetadataToPersist
-                ));
                 Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(kvMetadataToPersist);
                 this.jdbcRepository.persist(kvMetadataToPersist, context, fields);
 

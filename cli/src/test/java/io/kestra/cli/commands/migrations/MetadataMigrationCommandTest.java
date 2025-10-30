@@ -18,6 +18,7 @@ import io.kestra.plugin.core.log.Log;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
+import io.micronaut.core.annotation.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,8 +54,14 @@ public class MetadataMigrationCommandTest {
             String anotherDescription = "another description";
             putOldKv(storage, anotherNamespace, anotherKey, anotherDescription, "anotherValue");
 
-            KvMetadataRepositoryInterface kvMetadataRepository = ctx.getBean(KvMetadataRepositoryInterface.class);
             String tenantId = TenantService.MAIN_TENANT;
+
+            // Expired KV should not be migrated + should be purged from the storage
+            String expiredKey = "expiredKey";
+            putOldKv(storage, namespace, expiredKey, Instant.now().minus(Duration.ofMinutes(5)), "some expired description", "expiredValue");
+            assertThat(storage.exists(tenantId, null, getKvStorageUri(namespace, expiredKey))).isTrue();
+
+            KvMetadataRepositoryInterface kvMetadataRepository = ctx.getBean(KvMetadataRepositoryInterface.class);
             assertThat(kvMetadataRepository.findByName(tenantId, namespace, key).isPresent()).isFalse();
 
             String[] kvMetadataMigrationCommand = {
@@ -63,7 +71,7 @@ public class MetadataMigrationCommandTest {
 
 
             assertThat(out.toString()).contains("✅ Metadata migration complete.");
-            // Still it's not in the metadata repository because no flow exist to find that secret
+            // Still it's not in the metadata repository because no flow exist to find that kv
             assertThat(kvMetadataRepository.findByName(tenantId, namespace, key).isPresent()).isFalse();
             assertThat(kvMetadataRepository.findByName(tenantId, anotherNamespace, anotherKey).isPresent()).isFalse();
 
@@ -79,9 +87,9 @@ public class MetadataMigrationCommandTest {
             PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
 
             assertThat(out.toString()).contains("✅ Metadata migration complete.");
-            Optional<PersistedKvMetadata> foundSecret = kvMetadataRepository.findByName(tenantId, namespace, key);
-            assertThat(foundSecret.isPresent()).isTrue();
-            assertThat(foundSecret.get().getDescription()).isEqualTo(description);
+            Optional<PersistedKvMetadata> foundKv = kvMetadataRepository.findByName(tenantId, namespace, key);
+            assertThat(foundKv.isPresent()).isTrue();
+            assertThat(foundKv.get().getDescription()).isEqualTo(description);
             assertThat(kvMetadataRepository.findByName(tenantId, anotherNamespace, anotherKey).isPresent()).isFalse();
 
             KVStore kvStore = new InternalKVStore(tenantId, namespace, storage, kvMetadataRepository);
@@ -92,15 +100,26 @@ public class MetadataMigrationCommandTest {
             Optional<KVValue> actualValue = kvStore.getValue(key);
             assertThat(actualValue.isPresent()).isTrue();
             assertThat(actualValue.get().value()).isEqualTo(value);
+
+            assertThat(kvMetadataRepository.findByName(tenantId, namespace, expiredKey).isPresent()).isFalse();
+            assertThat(storage.exists(tenantId, null, getKvStorageUri(namespace, expiredKey))).isFalse();
         }
     }
 
     private static void putOldKv(StorageInterface storage, String namespace, String key, String description, String value) throws IOException {
-        URI kvStorageUri = URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(namespace) + "/" + key + ".ion");
-        KVValueAndMetadata kvValueAndMetadata = new KVValueAndMetadata(new KVMetadata(description, Duration.ofMinutes(5)), value);
+        putOldKv(storage, namespace, key, Instant.now().plus(Duration.ofMinutes(5)), description, value);
+    }
+
+    private static void putOldKv(StorageInterface storage, String namespace, String key, Instant expirationDate, String description, String value) throws IOException {
+        URI kvStorageUri = getKvStorageUri(namespace, key);
+        KVValueAndMetadata kvValueAndMetadata = new KVValueAndMetadata(new KVMetadata(description, expirationDate), value);
         storage.put(TenantService.MAIN_TENANT, namespace, kvStorageUri, new StorageObject(
             kvValueAndMetadata.metadataAsMap(),
             new ByteArrayInputStream(JacksonMapper.ofIon().writeValueAsBytes(kvValueAndMetadata.value()))
         ));
+    }
+
+    private static @NonNull URI getKvStorageUri(String namespace, String key) {
+        return URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(namespace) + "/" + key + ".ion");
     }
 }

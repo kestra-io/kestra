@@ -1174,20 +1174,11 @@
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
       "clearSelection": "Wyczyść zaznaczenie",
-      "close": {
-        "afterExecution": "Zamknij po wykonaniu task",
-        "conditions": "Zamknij warunek",
-        "errors": "Zamknij obsługę błędów",
-        "finally": "Zamknij task",
-        "input": "Zamknij input",
-        "pluginDefaults": "Zamknij domyślną wtyczkę",
-        "tasks": "Zamknij task",
-        "triggers": "Zamknij trigger"
-      },
       "creation": {
         "afterExecution": "Dodaj blok po wykonaniu",
         "charts": "Dodaj wykres",
         "conditions": "Dodaj warunek",
+        "default": "Dodaj",
         "errors": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
         "inputs": "Dodaj pole input",
@@ -1223,6 +1214,10 @@
         "variable": "Zmienna",
         "yaml": "Edytor YAML"
       },
+      "remove": {
+        "cases": "Usuń ten przypadek",
+        "default": "Usuń ten wpis"
+      },
       "sections": {
         "afterExecution": "Po wykonaniu",
         "connection": "Właściwości połączenia",
@@ -1240,6 +1235,7 @@
         "afterExecution": "Wybierz task",
         "charts": "Wybierz typ wykresu",
         "conditions": "Wybierz warunek",
+        "default": "Wybierz typ",
         "errors": "Wybierz task",
         "finally": "Wybierz task",
         "inputs": "Wybierz typ pola input",

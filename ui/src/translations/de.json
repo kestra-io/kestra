@@ -1174,20 +1174,11 @@
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
       "clearSelection": "Auswahl aufheben",
-      "close": {
-        "afterExecution": "Nach Ausführung Task schließen",
-        "conditions": "Bedingung schließen",
-        "errors": "Fehlerbehandler schließen",
-        "finally": "Task schließen",
-        "input": "Eingabe schließen",
-        "pluginDefaults": "Plugin-Standard schließen",
-        "tasks": "Task schließen",
-        "triggers": "Trigger schließen"
-      },
       "creation": {
         "afterExecution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "charts": "Ein Diagramm hinzufügen",
         "conditions": "Bedingung hinzufügen",
+        "default": "Hinzufügen",
         "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
         "inputs": "Ein Eingabefeld hinzufügen",
@@ -1223,6 +1214,10 @@
         "variable": "Variable",
         "yaml": "YAML-Editor"
       },
+      "remove": {
+        "cases": "Diesen Fall entfernen",
+        "default": "Diesen Eintrag entfernen"
+      },
       "sections": {
         "afterExecution": "Nach Ausführung",
         "connection": "Verbindungseigenschaften",
@@ -1240,6 +1235,7 @@
         "afterExecution": "Wählen Sie eine Task aus",
         "charts": "Wählen Sie einen Diagrammtyp aus",
         "conditions": "Wählen Sie eine Bedingung aus",
+        "default": "Wählen Sie einen Typ aus",
         "errors": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
         "inputs": "Wählen Sie einen Input-Feldtyp aus",

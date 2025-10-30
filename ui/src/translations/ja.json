@@ -1174,20 +1174,11 @@
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
       "clearSelection": "選択をクリア",
-      "close": {
-        "afterExecution": "実行後にタスクを閉じる",
-        "conditions": "クローズ条件",
-        "errors": "エラーハンドラーを閉じる",
-        "finally": "タスクを閉じる",
-        "input": "入力を閉じる",
-        "pluginDefaults": "プラグインのデフォルトを閉じる",
-        "tasks": "タスクを閉じる",
-        "triggers": "トリガーを閉じる"
-      },
       "creation": {
         "afterExecution": "実行後ブロックを追加",
         "charts": "チャートを追加",
         "conditions": "条件を追加",
+        "default": "追加",
         "errors": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "inputs": "入力フィールドを追加",
@@ -1223,6 +1214,10 @@
         "variable": "変数",
         "yaml": "YAMLエディター"
       },
+      "remove": {
+        "cases": "このケースを削除",
+        "default": "このエントリを削除"
+      },
       "sections": {
         "afterExecution": "実行後",
         "connection": "接続プロパティ",
@@ -1240,6 +1235,7 @@
         "afterExecution": "タスクを選択",
         "charts": "チャートタイプを選択",
         "conditions": "条件を選択",
+        "default": "タイプを選択",
         "errors": "タスクを選択",
         "finally": "タスクを選択",
         "inputs": "入力フィールドタイプを選択",

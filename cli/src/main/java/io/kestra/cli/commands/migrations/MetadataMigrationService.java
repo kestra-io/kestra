@@ -6,6 +6,7 @@ import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.tenant.TenantService;
 import jakarta.inject.Inject;
@@ -19,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -57,11 +59,25 @@ public class MetadataMigrationService {
         this.namespacesPerTenant().entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
             .flatMap(throwFunction(namespaceForTenant -> {
+                InternalKVStore kvStore = new InternalKVStore(namespaceForTenant.getKey(), namespaceForTenant.getValue(), storageInterface, kvMetadataRepository);
                 List<FileAttributes> list = listAllFromStorage(storageInterface, namespaceForTenant.getKey(), namespaceForTenant.getValue());
-                return list.stream()
+                Map<Boolean, List<KVEntry>> entriesByIsExpired = list.stream()
                     .map(throwFunction(fileAttributes -> KVEntry.from(namespaceForTenant.getValue(), fileAttributes)))
-                    .filter(kvEntry -> Optional.ofNullable(kvEntry.expirationDate()).map(expirationDate -> Instant.now().isBefore(expirationDate)).orElse(true))
-                    .map(kvEntry -> PersistedKvMetadata.from(namespaceForTenant.getKey(), kvEntry));
+                    .collect(Collectors.partitioningBy(kvEntry -> Optional.ofNullable(kvEntry.expirationDate()).map(expirationDate -> Instant.now().isAfter(expirationDate)).orElse(false)));
+
+                entriesByIsExpired.get(true).forEach(kvEntry -> {
+                    try {
+                        storageInterface.delete(
+                            namespaceForTenant.getKey(),
+                            namespaceForTenant.getValue(),
+                            kvStore.storageUri(kvEntry.key())
+                        );
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+                return entriesByIsExpired.get(false).stream().map(kvEntry -> PersistedKvMetadata.from(namespaceForTenant.getKey(), kvEntry));
             }))
             .forEach(kvMetadataRepository::save);
     }

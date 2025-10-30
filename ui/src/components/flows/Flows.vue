@@ -66,7 +66,7 @@
                         tableLayout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"
-                        @sort-change="onSort"
+                        @sort-change="multiSortHandler"
                         :rowClassName="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
@@ -109,6 +109,7 @@
                                 prop="id"
                                 sortable="custom"
                                 :sortOrders="['ascending', 'descending']"
+                                :sortOrder="getSortOrder('id')"
                                 :label="t('id')"
                             >
                                 <template #default="scope">
@@ -160,6 +161,7 @@
                                     prop="namespace"
                                     sortable="custom"
                                     :sortOrders="['ascending', 'descending']"
+                                    :sortOrder="getSortOrder('namespace')"
                                     :label="t('namespace')"
                                     :formatter="(_: any, __: any, cellValue: string) =>
                                         FILTERS.invisibleSpace(cellValue)
@@ -324,6 +326,7 @@
     const lastExecutionByFlowReady = ref(false);
     const latestExecutions = ref<any[]>([]);
     const file = ref<HTMLInputElement | null>(null);
+    const sortStates = ref<{prop: string, order: "ascending" | "descending"}[]>([]);
 
     const optionalColumns = ref([
         {
@@ -619,6 +622,39 @@
         let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
         MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
         return MAPPED_CHARTS;
+    }
+
+    function getSortOrder(prop: string) {
+        const found = sortStates.value.find(s => s.prop === prop);
+        return found ? found.order : undefined;
+    }
+
+    function multiSortHandler({prop, order}: { prop: string; order: "ascending" | "descending" | undefined }) {
+        if (!prop || !["id", "namespace"].includes(prop)) {
+            // fallback to existing handler
+            if (typeof onSort === "function") {
+                onSort({prop, order});
+            }
+            return;
+        }
+
+        // Remove previous entry for this column
+        let states = sortStates.value.filter(s => s.prop !== prop);
+        // If this column was just clicked off (i.e., no sort), remove it from the array
+        if (order === undefined) {
+            sortStates.value = states;
+            applySort();
+            return;
+        }
+        // Add this column as the newest (secondary if already one exists)
+        states.push({prop, order});
+        sortStates.value = states;
+        applySort();
+    }
+
+    function applySort() {
+        const sortStr = sortStates.value.map(s => `${s.prop}:${s.order === "ascending" ? "asc" : "desc"}`).join(",");
+        router.replace({query: {...route.query, sort: sortStr}});
     }
 
     onMounted(() => {

@@ -4,7 +4,7 @@
         :class="{playgroundMode}"
         :editorElements="EDITOR_ELEMENTS"
         :defaultActiveTabs="TABS"
-        :saveKey="`el-fl-${flowStore.flow?.namespace ?? `creation-${flowStore.creationId}`}${flowStore.flow?.id ? `-${flowStore.flow?.id}` : ''}`"
+        :saveKey
         :preSerializePanels="preSerializePanels"
         :bottomVisible="playgroundMode"
         @set-tab-value="setTabValue"
@@ -54,6 +54,16 @@
     const coreStore = useCoreStore()
     const flowStore = useFlowStore()
     const {showKeyShortcuts} = useKeyShortcuts()
+
+    const alwaysSaveKey = computed(() => `el-fl-${flowStore.flow?.namespace}-${flowStore.flow?.id}`);
+    const saveKey = computed(() => flowStore.isCreating ? undefined : alwaysSaveKey.value);
+
+    watch(() => flowStore.isCreating, (isCreating) => {
+        if(!isCreating){
+            // when switching from creating to editing, ensure the saveKey is updated
+            editorView.value?.saveState(alwaysSaveKey.value);
+        }
+    })
 
     const route = useRoute();
     const editorView = ref<InstanceType<typeof MultiPanelGenericEditorView> | null>(null)
@@ -115,16 +125,6 @@
 
     flowStore.creationId = flowStore.creationId ?? Utils.uid()
 
-    // Track initial tabs opened while editing or creating flow.
-    let hasTrackedInitialTabs = false;
-    watch(panels, (newPanels) => {
-        if (!hasTrackedInitialTabs && newPanels && newPanels.length > 0) {
-            hasTrackedInitialTabs = true;
-            const allTabs = newPanels.flatMap(panel => panel.tabs);
-            allTabs.forEach(tab => trackTabOpen(tab));
-        }
-    }, {immediate: true});
-
     useFilesPanels(panels, computed(() => flowStore.flowParsed?.namespace))
 
     useTopologyPanels(panels, actions.openAddTaskTab, actions.openEditTaskTab)
@@ -141,6 +141,16 @@
             }
         }
     })
+
+    // Track initial tabs opened while editing or creating flow.
+    let hasTrackedInitialTabs = false;
+    watch(panels, (newPanels) => {
+        if (!hasTrackedInitialTabs && newPanels && newPanels.length > 0) {
+            hasTrackedInitialTabs = true;
+            const allTabs = newPanels.flatMap(panel => panel.tabs);
+            allTabs.forEach(tab => trackTabOpen(tab));
+        }
+    }, {immediate: true});
 </script>
 
 <style lang="scss" scoped>

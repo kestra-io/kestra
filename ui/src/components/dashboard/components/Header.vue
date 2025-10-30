@@ -7,6 +7,14 @@
         <template v-if="isAllowed" #additional-right>
             <ul>
                 <li
+                    v-if="ALLOWED_CREATION_ROUTES.includes(String(route.name))"
+                >
+                    <Dashboards
+                        @dashboard="(value: any) => props.load?.(value)"
+                        class="me-1"
+                    />
+                </li>
+                <li
                     v-if="props.dashboard?.id && props.dashboard?.id !== 'default'"
                 >
                     <router-link
@@ -31,22 +39,28 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-
+    import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
-    const {t} = useI18n();
-
     import {useAuthStore} from "override/stores/auth";
+    
+    const {t} = useI18n();
+    const route = useRoute();
     const authStore = useAuthStore();
 
     import TopNavBar from "../../layout/TopNavBar.vue";
+    import Dashboards from "./selector/Selector.vue";
 
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
 
     import permission from "../../../models/permission";
     import action from "../../../models/action";
+    import {ALLOWED_CREATION_ROUTES} from "../composables/useDashboards";
 
-    const props = defineProps({dashboard: {type: Object, default: undefined}});
+    const props = defineProps({
+        dashboard: {type: Object, default: undefined},
+        load: {type: Function, default: undefined},
+    });
 
     const user = computed(() => authStore.user);
     const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));

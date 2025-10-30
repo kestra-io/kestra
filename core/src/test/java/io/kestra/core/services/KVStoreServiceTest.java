@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.micronaut.test.annotation.MockBean;
@@ -16,8 +17,10 @@ import java.util.Optional;
 
 @KestraTest
 class KVStoreServiceTest {
-
     private static final String TEST_EXISTING_NAMESPACE = "io.kestra.unittest";
+
+    @Inject
+    KvMetadataRepositoryInterface kvMetadataRepository;
 
     @Inject
     KVStoreService storeService;
@@ -43,7 +46,7 @@ class KVStoreServiceTest {
 
     @Test
     void shouldGetKVStoreFromNonExistingNamespaceWithAKV() throws IOException {
-        KVStore kvStore = new InternalKVStore(MAIN_TENANT, "system", storageInterface);
+        KVStore kvStore = new InternalKVStore(MAIN_TENANT, "system", storageInterface, kvMetadataRepository);
         kvStore.put("key", new KVValueAndMetadata(new KVMetadata("myDescription", Duration.ofHours(1)), "value"));
         Assertions.assertNotNull(storeService.get(MAIN_TENANT, "system", null));
     }

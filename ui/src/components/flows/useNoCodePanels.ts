@@ -139,8 +139,7 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
     }
 }
 
-export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, handlers: Handlers, flowYaml: string) {
-    const {t, te} = useI18n()
+export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, handlers: Handlers, flowYaml: string, t: (key: string) => string, te: (key: string) => boolean) {
     if (tab === NOCODE_PREFIX) {
         return getTabFromNoCodeTab(Comp, parseTabId(tab), t, handlers, flowYaml, te)
     }
@@ -154,7 +153,7 @@ export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, handlers: 
         }
     }
 
-    return setupInitialNoCodeTab(Comp, tab, handlers, flowYaml)
+    return setupInitialNoCodeTab(Comp, tab, handlers, flowYaml, t, te)
 }
 
 function parseTabId(tabId: string) {
@@ -170,8 +169,7 @@ function parseTabId(tabId: string) {
     }
 }
 
-export function setupInitialNoCodeTab(Comp: any, tab: string, handlers: Handlers, flowYaml: string) {
-    const {t, te} = useI18n()
+export function setupInitialNoCodeTab(Comp: any, tab: string, handlers: Handlers, flowYaml: string, t: (key: string) => string, te: (key: string) => boolean) {
     if (!tab.startsWith(NOCODE_PREFIX)) {
         return undefined
     }
@@ -355,13 +353,15 @@ export function useNoCodePanelsFull(options: {
         options.editorView.value?.focusTab(tabValue)
     }
 
+    const {t, te} = useI18n();
+
     const actions = useNoCodePanels(options.RawNoCode, panels, openTabs, focusTab)
     const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, actions)
 
     options.editorElements.find(e => e.uid === "nocode")!.deserialize = (value, allowCreate) => {
         return allowCreate
-            ? setupInitialNoCodeTab(options.RawNoCode, value, noCodeHandlers, options.source.value ?? "")
-            : setupInitialNoCodeTabIfExists(options.RawNoCode, value, noCodeHandlers, options.source.value ?? "")
+            ? setupInitialNoCodeTab(options.RawNoCode, value, noCodeHandlers, options.source.value ?? "", t, te)
+            : setupInitialNoCodeTabIfExists(options.RawNoCode, value, noCodeHandlers, options.source.value ?? "", t, te)
     }
 
     return {

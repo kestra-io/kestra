@@ -8,7 +8,7 @@
         class="mb-2"
     />
     <template v-if="componentType">
-        <Wrapper v-for="(item, index) in currentValue" :key="index" style="background-color: var(--ks-background-card);">
+        <Wrapper v-for="(item, index) in currentValue" :key="index" class="item-wrapper">
             <template #tasks>
                 <InputText
                     :modelValue="item[0]"
@@ -203,9 +203,15 @@
     gap: .5rem; 
     opacity: 0.7;
     padding: 0;
+    height: .75rem;
     &:hover {
         color: var(--ks-content-secondary);
         opacity: 1;
     }
+}
+
+.item-wrapper {
+    margin: .25rem 0;
+    background-color: var(--ks-background-card);
 }
 </style>

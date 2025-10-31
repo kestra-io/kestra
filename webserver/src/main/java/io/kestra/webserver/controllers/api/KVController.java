@@ -3,13 +3,20 @@ package io.kestra.webserver.controllers.api;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.kv.KVType;
+import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.NamespaceUtils;
+import io.kestra.webserver.converters.QueryFilterFormat;
+import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -22,21 +29,45 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 
-import java.io.*;
-import java.time.*;
+import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 
 @Validated
-@Controller("/api/v1/{tenant}/namespaces/{namespace}/kv")
+@Controller("/api/v1/{tenant}")
 public class KVController {
     @Inject
+    private KvMetadataRepositoryInterface kvMetadataRepository;
+
+    @Inject
     private StorageInterface storageInterface;
+
     @Inject
     protected TenantService tenantService;
 
+    private String sortMapper(String key) {
+        if (key != null && key.equals("key")) {
+            return "name";
+        }
+        return key;
+    }
+
     @ExecuteOn(TaskExecutors.IO)
-    @Get
+    @Get("/kv")
+    @Operation(tags = {"KV"}, summary = "List all keys")
+    public PagedResults<KVEntry> listAllKeys(
+        @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
+        @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
+        @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
+        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
+        ) throws IOException {
+        return PagedResults.of(globalKvStore().list(PageableUtils.from(page, size, sort, this::sortMapper), filters));
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get("/namespaces/{namespace}/kv")
     @Operation(tags = {"KV"}, summary = "List all keys for a namespace")
+    @Deprecated
     public List<KVEntry> listKeys(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
@@ -44,7 +75,7 @@ public class KVController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get("/inheritance")
+    @Get("/namespaces/{namespace}/kv/inheritance")
     @Operation(tags = {"KV"}, summary = "List all keys for inherited namespaces")
     public List<KVEntry> listKeysWithInheritence(
         @Parameter(description = "The namespace id") @PathVariable String namespace
@@ -62,7 +93,7 @@ public class KVController {
             .sorted(Comparator.comparingInt(String::length).reversed())
             .toList();
         for (String ns : sortedNamespaces) {
-            List<KVEntry> entries = kvStore(ns).list();
+            List<KVEntry> entries = kvStore(ns).list(Pageable.UNPAGED);
             entries.forEach(key -> {
                 if (!keys.contains(key.key())) {
                     keys.add(key.key());
@@ -74,7 +105,7 @@ public class KVController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "{key}")
+    @Get(uri = "/namespaces/{namespace}/kv/{key}")
     @Operation(tags = {"KV"}, summary = "Get value for a key")
     public TypedValue getKeyValue(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -91,7 +122,7 @@ public class KVController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "{key}", consumes = {MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @Put(uri = "/namespaces/{namespace}/kv/{key}", consumes = {MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
     @Operation(tags = {"KV"}, summary = "Puts a key-value pair in store")
     public void setKeyValue(
         HttpHeaders httpHeaders,
@@ -112,7 +143,7 @@ public class KVController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "{key}")
+    @Delete(uri = "/namespaces/{namespace}/kv/{key}")
     @Operation(tags = {"KV"}, summary = "Delete a key-value pair")
     public boolean deleteKeyValue(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -122,7 +153,7 @@ public class KVController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete
+    @Delete("/namespaces/{namespace}/kv")
     @Operation(tags = {"KV"}, summary = "Bulk-delete multiple key/value pairs from the given namespace.")
     public HttpResponse<ApiDeleteBulkResponse> deleteKeyValues(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
@@ -177,6 +208,10 @@ public class KVController {
         }
     }
 
+    protected KVStore globalKvStore() {
+        return new InternalKVStore(tenantService.resolveTenant(), null, storageInterface, kvMetadataRepository);
+    }
+
     /**
      * Create a new {@link KVStore} facade for the given namespace.
      *
@@ -184,7 +219,7 @@ public class KVController {
      * @return a new {@link KVStore}.
      */
     protected KVStore kvStore(final String namespace) {
-        return new InternalKVStore(tenantService.resolveTenant(), namespace, storageInterface);
+        return new InternalKVStore(tenantService.resolveTenant(), namespace, storageInterface, kvMetadataRepository);
     }
 
     public record TypedValue(

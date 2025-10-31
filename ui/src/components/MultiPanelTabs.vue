@@ -197,6 +197,7 @@
 
     import {trackTabOpen, trackTabClose} from "../utils/tabTracking";
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes";
+    import {usePanelDefaultSize} from "../composables/usePanelDefaultSize";
 
     const {t} = useI18n();
     const {showKeyShortcuts} = useKeyShortcuts();
@@ -448,7 +449,7 @@
         }
     }
 
-    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length));
+    const defaultSize = usePanelDefaultSize(panels);
 
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return;

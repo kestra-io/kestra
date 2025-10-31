@@ -1,8 +1,28 @@
+import {inject} from "vue";
 import {pascalCase} from "change-case";
+import {resolve$ref} from "../../../../utils/utils";
+import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys";
 
 const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true});
 
-function getType(property: any, key?: string, schema?: any): string {
+export interface Schema{
+    $ref?: string;
+    $required?: boolean;
+    type: string | {const: string};
+    properties?: Record<string, Schema>;
+    required?: string[];
+    default?: any;
+    allOf?: Schema[];
+    anyOf?: Schema[];
+    oneOf?: Schema[];
+    items?: Schema;
+    const?: string;
+    format?: string;
+}
+
+function getType(property: any, key?: string): string {
+    const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY);
+    const definitions = definitionsRef?.value;
     if (property.enum !== undefined) {
         return "enum";
     }
@@ -33,7 +53,7 @@ function getType(property: any, key?: string, schema?: any): string {
     if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
         if (key === "labels" && property.anyOf.length === 2
             && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
-            return "KV-pairs";
+            return "dict";
         }
 
         // for dag tasks
@@ -59,7 +79,7 @@ function getType(property: any, key?: string, schema?: any): string {
         return "namespace";
     }
 
-    const properties = Object.keys(schema?.properties ?? {});
+    const properties = Object.keys(definitions?.properties ?? {});
     const hasNamespaceProperty = properties.includes("namespace");
     if (key === "flowId" && hasNamespaceProperty) {
         return "subflow-id";
@@ -70,7 +90,8 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if (property.type === "array") {
-        if (property.items?.anyOf?.length === 0 || property.items?.anyOf?.length > 10 || key === "pluginDefaults" || key === "layout") {
+        const items = definitions ? resolve$ref({definitions: definitions}, property.items) : property.items;
+        if (items?.anyOf?.length === 0 || items?.anyOf?.length > 10 || key === "pluginDefaults" || key === "layout") {
             return "list";
         }
 
@@ -82,14 +103,14 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if (property.type === "object" && !property.properties) {
-        return "KV-pairs";
+        return "dict";
     }
 
     return property.type || "expression";
 }
 
-export default function getTaskComponent(property: any, key?: string, schema?: any) {
-    const typeString = getType(property, key, schema);
+export default function getTaskComponent(property: any, key?: string): any {
+    const typeString = getType(property, key);
     const type = pascalCase(typeString);
     const component = TasksComponents[`./Task${type}.vue`]?.default;
     if (component) {

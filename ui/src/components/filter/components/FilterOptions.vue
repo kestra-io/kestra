@@ -91,7 +91,7 @@
     watch(
         () => filter.chartVisible.value,
         (newVal) => {
-            localChartVisible.value = newVal ?? false;
+            localChartVisible.value = newVal ?? true;
         }
     );
 
@@ -114,7 +114,7 @@
 .expand-panel {
     animation: slideDown 0.2s ease-out;
     border-top: 1px solid var(--ks-border-secondary);
-    padding: 0.5rem 0;
+    padding-top: 0.5rem;
 
     .options-row {
         display: flex;

@@ -18,54 +18,86 @@
     </TopNavBar>
     <TemplatesDeprecated />
     <section class="container d-flex flex-fill">
-        <editor @save="save" v-model="content" schemaType="template" lang="yaml" @update:model-value="onChange" @cursor="updatePluginDocumentation" class="w-100 h-auto" />
+        <Editor 
+            @save="save" 
+            v-model="content" 
+            schemaType="template" 
+            lang="yaml"
+            @update:model-value="onChange"
+            @cursor="updatePluginDocumentation"
+            class="w-100 h-auto"
+        />
     </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {onMounted, onUnmounted, watch} from "vue";
+    import {useRoute, useRouter} from "vue-router";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
+    // @ts-expect-error no types available
     import TemplatesDeprecated from "./TemplatesDeprecated.vue";
-    import TopNavBar from "../layout/TopNavBar.vue"
-</script>
-
-<script>
-    import flowTemplateEdit from "../../mixins/flowTemplateEdit";
-    import {mapStores} from "pinia";
+    import TopNavBar from "../layout/TopNavBar.vue";
+    import {useFlowTemplateEdit} from "../../composables/useFlowTemplateEdit";
+    import useRouteContext from "../../composables/useRouteContext";
     import {useTemplateStore} from "../../stores/template";
+    import {useCoreStore} from "../../stores/core";
+    import Editor from "../inputs/Editor.vue";
 
-    export default {
-        mixins: [flowTemplateEdit],
-        data() {
-            return {
-                dataType: "template",
-            };
-        },
-        computed: {
-            ...mapStores(useTemplateStore),
-        },
-        watch: {
-            "$route.params"() {
-                this.reload()
-            },
-        },
-        created() {
-            this.reload()
-        },
-        unmounted() {
-            this.templateStore.template = undefined;
-        },
-        methods: {
-            reload() {
-                if (this.$route.name === "templates/update") {
-                    this.templateStore
-                        .loadTemplate(this.$route.params)
-                        .then(this.loadFile);
-                }
-            },
-            onChange() {
-                this.coreStore.unsavedChange = this.previousContent !== this.content;
-            }
+    const route = useRoute();
+    const router = useRouter();
+    const templateStore = useTemplateStore();
+    const coreStore = useCoreStore();
+
+    const dataType = "template";
+
+    const {
+        content,
+        previousContent,
+        routeInfo,
+        canSave,
+        canDelete,
+        loadFile,
+        deleteFile,
+        save,
+        updatePluginDocumentation
+    } = useFlowTemplateEdit(
+        dataType,
+        route,
+        router,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+    );
+
+    const onChange = () => {
+        coreStore.unsavedChange = previousContent.value !== content.value;
+    };
+
+    const reload = () => {
+        if (route.name === "templates/update") {
+            templateStore
+                .loadTemplate(route.params as { namespace: string; id: string })
+                .then(loadFile);
         }
     };
+
+    useRouteContext(routeInfo, false);
+
+    watch(
+        () => route.params,
+        () => {
+            reload();
+        },
+        {deep: true}
+    );
+
+    onMounted(() => {
+        reload();
+    });
+
+    onUnmounted(() => {
+        templateStore.template = undefined;
+    });
 </script>

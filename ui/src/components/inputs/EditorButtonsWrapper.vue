@@ -11,7 +11,7 @@
         />
 
         <EditorButtons
-            :isCreating="isCreating"
+            :isCreating="flowStore.isCreating"
             :isReadOnly="isReadOnly"
             :canDelete="true"
             :isAllowedEdit="isAllowedEdit"
@@ -77,7 +77,6 @@
     // If playground is not defined, enable it by default
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
 
-    const isCreating = computed(() => flowStore.isCreating === true)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
     const flowHaveTasks = computed(() => flowStore.flowHaveTasks)
@@ -110,10 +109,12 @@
     const onSaveAll = inject(FILES_SAVE_ALL_INJECTION_KEY);
 
     async function save(){
-        const creating = isCreating.value
+        // Save the isCreating before saving.
+        // saveAll can change its value.
+        const isCreating = flowStore.isCreating
         await flowStore.saveAll()
 
-        if(creating){
+        if(isCreating){
             await router.push({
                 name: "flows/update",
                 params: {

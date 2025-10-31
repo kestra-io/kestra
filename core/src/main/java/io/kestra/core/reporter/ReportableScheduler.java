@@ -14,19 +14,19 @@ import java.time.Instant;
 @Requires(property = "kestra.server-type")
 @Slf4j
 public class ReportableScheduler {
-    
+
     private final ReportableRegistry registry;
     private final ServerEventSender sender;
     private final Clock clock;
-    
+
     @Inject
     public ReportableScheduler(ReportableRegistry registry, ServerEventSender sender) {
         this.registry = registry;
         this.sender = sender;
         this.clock = Clock.systemDefaultZone();
     }
-    
-    @Scheduled(fixedDelay = "5m", initialDelay = "${kestra.anonymous-usage-report.initial-delay}")
+
+    @Scheduled(fixedDelay = "5m", initialDelay = "${kestra.anonymous-usage-report.initial-delay:5m}")
     public void tick() {
         Instant now = clock.instant();
         for (Reportable<?> r : registry.getAll()) {

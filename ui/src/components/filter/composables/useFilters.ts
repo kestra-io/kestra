@@ -9,14 +9,21 @@ import {
     getUniqueFilters,
     clearFilterQueryParams
 } from "../utils/helpers";
+import {usePreAppliedFilters} from "./usePreAppliedFilters";
 
 export function useFilters(configuration: FilterConfiguration, showSearchInput = true, legacyQuery = false) {
     const router = useRouter();
     const route = useRoute();
 
     const appliedFilters = ref<AppliedFilter[]>([]);
-    const preAppliedFilterKeys = ref<Set<string>>(new Set());
     const searchQuery = ref("");
+
+    const {
+        markAsPreApplied,
+        hasPreApplied,
+        getPreApplied,
+        getAllPreApplied
+    } = usePreAppliedFilters();
 
     /**
      * Appends value to query param, handling arrays.
@@ -24,6 +31,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
      * @param key - Query parameter key
      * @param value - Value to append
      */
+
     const appendQueryParam = (query: Record<string, any>, key: string, value: string) => {
         if (query[key]) {
             if (Array.isArray(query[key])) {
@@ -269,8 +277,14 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
             return {value: combinedValue, valueLabel: combinedValue.join(", ")};
         } else {
             const param = params[0];
-            const value = Array.isArray(param?.value) ? param.value[0] : param?.value as string;
-            return {value, valueLabel: value};
+            let value = Array.isArray(param?.value) ? param.value[0] : param?.value as string;
+            
+            if (config?.valueType === "date" && typeof value === "string") {
+                value = new Date(value);
+            }
+            
+            const valueLabel = value instanceof Date ? value.toLocaleDateString() : value;
+            return {value, valueLabel};
         }
     };
 
@@ -351,7 +365,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
             : parseEncodedFilters();
 
         if (appliedFilters.value?.length === 0 && parsedFilters.length > 0) {
-            parsedFilters.forEach(filter => preAppliedFilterKeys.value?.add(filter.key));
+            markAsPreApplied(parsedFilters);
         }
 
         appliedFilters.value = parsedFilters;
@@ -405,10 +419,10 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
     };
 
     /**
-     * Resets user-applied filters while preserving pre-applied filters.
+     * Resets all filters to their pre-applied state and clears the search query
      */
     const resetToPreApplied = () => {
-        appliedFilters.value = appliedFilters.value?.filter(f => preAppliedFilterKeys.value?.has(f.key));
+        appliedFilters.value = getAllPreApplied();
         searchQuery.value = "";
         updateRoute();
     };
@@ -427,5 +441,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         updateFilter,
         clearFilters,
         resetToPreApplied,
+        hasPreApplied,
+        getPreApplied,
     };
 }

@@ -17,12 +17,10 @@ public class MetadataMigrationCommand extends AbstractCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
-        try {
-            metadataMigrationService.migrateMetadata();
+        int returnCode = metadataMigrationService.migrateMetadata();
+        if (returnCode == 0) {
             System.out.println("✅ Metadata migration complete.");
-            return 0;
-        } catch (Exception e) {
-            return 1;
         }
+        return returnCode;
     }
 }

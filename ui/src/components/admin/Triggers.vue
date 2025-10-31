@@ -36,6 +36,7 @@
                         expandable
                         :rowClassName="getClasses"
                         :no-data-text="$t('no_results.triggers')"
+                        :rowKey="(row: any) => `${row.namespace}-${row.flowId}-${row.triggerId}`"
                     >
                         <template #expand>
                             <el-table-column type="expand">
@@ -444,12 +445,6 @@
             sort: String(route.query?.sort ?? "triggerId:asc")
         });
 
-        for (const key in query) {
-            if (key.startsWith("filters[trigger_state]")) {
-                delete query[key];
-            }
-        }
-
         const previousSelection = selection.value;
         triggerStore.search(query).then(async triggersData => {
             triggers.value = triggersData?.results;
@@ -746,10 +741,7 @@
             };
         }) ?? [];
 
-        if (!route.query?.["filters[trigger_state][EQUALS]"]) return all;
-
-        const disabled = String(route.query["filters[trigger_state][EQUALS]"]) === "DISABLED" ? true : false;
-        return all.filter((trigger: any) => trigger.disabled === disabled);
+        return all;
     });
 
     watch(ready, (newReady: any) => {

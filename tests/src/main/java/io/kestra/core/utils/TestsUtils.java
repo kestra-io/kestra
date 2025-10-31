@@ -80,7 +80,7 @@ abstract public class TestsUtils {
         }
         var tenantRegex = "^[a-z0-9][a-z0-9_-]*";
         var validTenantPrefixes = Arrays.stream(prefix)
-            .map(s -> s.replace(".", "-"))
+            .map(s -> s.replace(".", "-").replace("$", "-"))
             .map(String::toLowerCase)
             .peek(p -> {
                 if (!p.matches(tenantRegex)) {

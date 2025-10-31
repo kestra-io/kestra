@@ -2,10 +2,7 @@
     <BasicSettings />
 </template>
 
-<script>
+<script setup lang="ts">
+    // @ts-expect-error no types defined yet
     import BasicSettings from "../../../components/settings/BasicSettings.vue";
-
-    export default {
-        components: {BasicSettings}
-    }
 </script>

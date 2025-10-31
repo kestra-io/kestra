@@ -423,8 +423,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         }
 
         Map<String, Object> variables;
-        ZoneId targetZone = this.timezone != null ? ZoneId.of(this.timezone) : ZoneId.systemDefault();
-        variables = scheduleDates.toMap(targetZone);
+        variables = scheduleDates.toMap();
 
         Execution execution = TriggerService.generateScheduledExecution(
             this,
@@ -479,15 +478,19 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             return Optional.empty();
         }
 
+        ZoneId targetZone = this.timezone != null ? ZoneId.of(this.timezone) : ZoneId.systemDefault();
+
         Output.OutputBuilder<?, ?> outputDatesBuilder = Output.builder()
-            .date(convertDateTime(next.get()));
+            .date(convertDateTime(next.get()).withZoneSameInstant(targetZone));
 
         computeNextEvaluationDate(executionTime, next.get())
             .map(this::convertDateTime)
+            .map(zdt -> zdt.withZoneSameInstant(targetZone))
             .ifPresent(outputDatesBuilder::next);
 
         executionTime.lastExecution(date)
             .map(this::convertDateTime)
+            .map(zdt -> zdt.withZoneSameInstant(targetZone))
             .ifPresent(outputDatesBuilder::previous);
 
         Output scheduleDates = outputDatesBuilder.build();
@@ -628,22 +631,18 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         @NotNull
         private ZonedDateTime previous;
         
-        public Map<String, Object> toMap(ZoneId zoneId) {
+        public Map<String, Object> toMap() {
             Map<String, Object> map = new HashMap<>();
             if (date != null) {
-                map.put("date", date.withZoneSameInstant(zoneId));
+                map.put("date", date);
             }
             if (next != null) {
-                map.put("next", next.withZoneSameInstant(zoneId));
+                map.put("next", next);
             }
             if (previous != null) {
-                map.put("previous", previous.withZoneSameInstant(zoneId));
+                map.put("previous", previous);
             }
             return map;
-        }
-        
-        public Map<String, Object> toMap() {
-            return toMap(ZoneId.systemDefault());
         }
     }
 }

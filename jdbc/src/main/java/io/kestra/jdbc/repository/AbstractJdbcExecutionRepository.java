@@ -802,6 +802,38 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             });
     }
 
+    @Override
+    public Execution save(TransactionContext txContext, Execution execution) {
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(execution);
+        this.jdbcRepository.persist(execution, txContext.unwrap(JdbcTransactionContext.class).getDslContext(), fields);
+        return execution;
+    }
+
+    @Override
+    public <TX extends TransactionContext> boolean supports(Class<TX> clazz) {
+        return JdbcTransactionContext.class.isAssignableFrom(clazz);
+    }
+
+    @Override
+    public Class<Execution> getItemClass() {
+        return Execution.class;
+    }
+
+    @Override
+    public Execution update(Execution execution) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSL.using(configuration)
+                    .update(this.jdbcRepository.getTable())
+                    .set(this.jdbcRepository.persistFields((execution)))
+                    .where(field("key").eq(execution.getId()))
+                    .execute();
+
+                return execution;
+            });
+    }
+
     @SneakyThrows
     @Override
     public Execution delete(Execution execution) {

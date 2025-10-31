@@ -1,0 +1,32 @@
+id: dummy_processing
+namespace: org.icij.datashare
+
+inputs:
+  - id: batch
+    type: STRING
+
+tasks:
+  - id: sum
+    type: io.kestra.plugin.scripts.python.Script
+    taskRunner:
+      type: io.kestra.plugin.core.runner.Process
+    dependencies:
+      - kestra
+    script: |
+      import json
+      from pathlib import Path
+
+      from kestra import Kestra
+
+      batch_sum = 0
+      with Path("{{inputs.batch}}").open() as f:
+          for l in f:
+              l = l.strip()
+              if l:
+                 batch_sum += int(json.loads(l)["n"])
+      Kestra.outputs({"batch_sum": batch_sum})
+
+outputs:
+  - id: batch_sum
+    type: INT
+    value: "{{ outputs.sum.vars.batch_sum }}"

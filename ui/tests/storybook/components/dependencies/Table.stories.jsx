@@ -1,19 +1,24 @@
 import {ref} from "vue";
-import {FLOW, type Node} from "../../../../src/components/dependencies/utils/types";
+import {vueRouter} from "storybook-vue3-router";
+import {FLOW} from "../../../../src/components/dependencies/utils/types";
 import Table from "../../../../src/components/dependencies/components/Table.vue";
 import {getDependencies} from "../../../fixtures/dependencies/getDependencies";
 
 export default {
     title: "Components/Dependencies/Table",
     component: Table,
+    decorators: [vueRouter([
+        {path: "/", name: "home", component: {template: "<div />"}},
+        {path: "/flows/:namespace/:id", name: "flows/update", component: {template: "<div />"}},
+    ])],
 };
 
-const Template = () => ({
+export const Default = () => ({
     components: {Table},
     setup() {
         const elements = getDependencies({subtype: FLOW});
-        const selected = ref<Node["id"] | undefined>(undefined);
-        const onSelect = (id: Node["id"]) => selected.value = id;
+        const selected = ref(undefined);
+        const onSelect = (id) => selected.value = id;
         return {elements, selected, onSelect};
     },
     template: `
@@ -22,7 +27,3 @@ const Template = () => ({
       </div>
     `,
 });
-
-export const Default = Template.bind({});
-
-

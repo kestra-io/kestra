@@ -1,4 +1,4 @@
-package io.kestra.cli.commands.migrations;
+package io.kestra.cli.commands.migrations.metadata;
 
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -43,19 +43,7 @@ public class MetadataMigrationService {
         return Map.of(tenantId, flowRepository.findDistinctNamespace(tenantId));
     }
 
-    public int migrateMetadata() {
-        try {
-            kvMigration();
-        } catch (IOException e) {
-            System.err.println("❌ KV metadata migration failed: " + e.getMessage());
-            e.printStackTrace();
-            return 1;
-        }
-
-        return 0;
-    }
-
-    private void kvMigration() throws IOException {
+    public void kvMigration() throws IOException {
         this.namespacesPerTenant().entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
             .flatMap(throwFunction(namespaceForTenant -> {
@@ -80,6 +68,10 @@ public class MetadataMigrationService {
                 return entriesByIsExpired.get(false).stream().map(kvEntry -> PersistedKvMetadata.from(namespaceForTenant.getKey(), kvEntry));
             }))
             .forEach(kvMetadataRepository::save);
+    }
+
+    public void secretMigration() throws Exception {
+        throw new UnsupportedOperationException("Secret migration is not needed in the OSS version");
     }
 
     private static List<FileAttributes> listAllFromStorage(StorageInterface storage, String tenant, String namespace) throws IOException {

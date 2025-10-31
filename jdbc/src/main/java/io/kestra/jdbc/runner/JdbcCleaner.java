@@ -22,7 +22,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 @Singleton
-@JdbcRunnerEnabled
+@JdbcQueueEnabled
 @Slf4j
 @Requires(property = "kestra.jdbc.cleaner")
 public class JdbcCleaner {

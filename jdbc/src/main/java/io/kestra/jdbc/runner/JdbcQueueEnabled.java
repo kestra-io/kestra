@@ -10,5 +10,5 @@ import java.lang.annotation.*;
 @Target({ElementType.PACKAGE, ElementType.TYPE})
 @Requires(property = "kestra.queue.type", pattern = "mysql|postgres|h2|memory")
 @DefaultImplementation
-public @interface JdbcRunnerEnabled {
+public @interface JdbcQueueEnabled {
 }

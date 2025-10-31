@@ -165,6 +165,11 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
     }
 
     @Override
+    public <TX extends TransactionContext> boolean supports(Class<TX> clazz) {
+        return JdbcTransactionContext.class.isAssignableFrom(clazz);
+    }
+
+    @Override
     public Class<FlowTopology> getItemClass() {
         return FlowTopology.class;
     }

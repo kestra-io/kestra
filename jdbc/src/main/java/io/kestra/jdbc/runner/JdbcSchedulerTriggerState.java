@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Singleton
-@JdbcRunnerEnabled
+@JdbcRepositoryEnabled
 public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface {
     protected AbstractJdbcTriggerRepository triggerRepository;
 

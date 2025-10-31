@@ -6,4 +6,9 @@ public final class NoTransactionContext implements TransactionContext {
     private NoTransactionContext() {
         // should only have one instance
     }
+
+    @Override
+    public <T extends TransactionContext> boolean supports(Class<T> clazz) {
+        return NoTransactionContext.class.isAssignableFrom(clazz);
+    }
 }

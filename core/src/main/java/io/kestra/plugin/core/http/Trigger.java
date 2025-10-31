@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -112,6 +113,8 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
     private Property<String> method = Property.ofValue("GET");
 
     private Property<String> body;
+
+    private Property<Map<String, Object>> params;
 
     private Property<Map<String, Object>> formData;
 

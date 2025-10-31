@@ -1296,13 +1296,14 @@ class ExecutionControllerRunnerTest {
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
-        // resume the execution
-        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+        // kill the execution
+        HttpResponse<?> killResponse = client.toBlocking().exchange(
             HttpRequest.DELETE("/api/v1/main/executions/" + pausedExecution.getId() + "/kill"));
-        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
 
-        // check that the execution is no more paused
-        awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
+        // check that the execution is killed
+        Execution killedExecution = awaitExecution(pausedExecution.getId(), exec -> exec.getState().getCurrent().isKilled());
+        assertThat(killedExecution.getTaskRunList()).hasSize(1);
     }
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow

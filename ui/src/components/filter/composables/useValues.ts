@@ -56,7 +56,6 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         EXECUTION_STATES: buildFromArray(
             State.arrayAllStates().map((state: { name: string }) => state.name),
         ),
-        TRIGGER_STATES: buildFromArray(["ENABLED", "DISABLED"], true),
         SCOPES: [
             {
                 label: t("scope_filter.user", {label: SCOPE_LABEL}),

@@ -23,7 +23,7 @@
                 <label class="input-label">{{ $t('filter.key') }}</label>
                 <el-input
                     v-model="newKey"
-                    placeholder="e.g. type"
+                    placeholder="e.g. flowId"
                     :disabled="isMax"
                     @keydown.enter="addPair"
                 />
@@ -32,7 +32,7 @@
                 <label class="input-label">{{ $t('filter.value') }}</label>
                 <el-input
                     v-model="newValue"
-                    placeholder="e.g. io.kestra.ee.models..."
+                    placeholder="e.g. orchestrator-1234"
                     :disabled="isMax"
                     @keydown.enter="addPair"
                 />

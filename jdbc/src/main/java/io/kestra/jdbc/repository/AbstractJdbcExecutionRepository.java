@@ -902,8 +902,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     public Execution save(TransactionContext txContext, Execution execution) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(execution);
         this.jdbcRepository.persist(execution, txContext.unwrap(JdbcTransactionContext.class).getDslContext(), fields);
-
         return execution;
+    }
+
+    @Override
+    public <TX extends TransactionContext> boolean supports(Class<TX> clazz) {
+        return JdbcTransactionContext.class.isAssignableFrom(clazz);
     }
 
     @Override

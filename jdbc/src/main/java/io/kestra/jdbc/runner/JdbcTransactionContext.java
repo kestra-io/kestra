@@ -14,4 +14,9 @@ public class JdbcTransactionContext implements TransactionContext {
     public DSLContext getDslContext() {
         return dslContext;
     }
+
+    @Override
+    public <T extends TransactionContext> boolean supports(Class<T> clazz) {
+        return JdbcTransactionContext.class.isAssignableFrom(clazz);
+    }
 }

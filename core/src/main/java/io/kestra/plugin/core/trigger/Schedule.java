@@ -630,19 +630,5 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         @Schema(title = "The date of the previous schedule")
         @NotNull
         private ZonedDateTime previous;
-        
-        public Map<String, Object> toMap() {
-            Map<String, Object> map = new HashMap<>();
-            if (date != null) {
-                map.put("date", date);
-            }
-            if (next != null) {
-                map.put("next", next);
-            }
-            if (previous != null) {
-                map.put("previous", previous);
-            }
-            return map;
-        }
     }
 }

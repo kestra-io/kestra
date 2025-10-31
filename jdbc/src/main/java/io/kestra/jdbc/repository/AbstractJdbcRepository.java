@@ -304,10 +304,12 @@ public abstract class AbstractJdbcRepository {
         }
 
         if (field.equals(QueryFilter.Field.LABELS)) {
-            if (value instanceof Map<?, ?> map){
-                return findLabelCondition(map, operation);
+            if (value instanceof Map<?, ?> map ){
+                return findLabelCondition(Either.left(map), operation);
+            } else if(value instanceof String string ) {
+                return findLabelCondition(Either.right(string), operation);
             } else {
-                throw new InvalidQueryFiltersException("Label field value must but instance of Map");
+                throw new InvalidQueryFiltersException("Label field value must be instance of Map or String");
             }
         }
 

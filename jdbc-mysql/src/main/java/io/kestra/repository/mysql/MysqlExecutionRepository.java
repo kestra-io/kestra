@@ -16,8 +16,9 @@ import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import java.sql.Timestamp;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
+
+import static io.kestra.core.models.QueryFilter.Op.EQUALS;
 
 @Singleton
 @MysqlRepositoryEnabled
@@ -36,8 +37,8 @@ public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     }
 
     @Override
-    protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return MysqlExecutionRepositoryService.findCondition(value, operation);
+    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+        return MysqlExecutionRepositoryService.findLabelCondition(input, operation);
     }
 
     @Override

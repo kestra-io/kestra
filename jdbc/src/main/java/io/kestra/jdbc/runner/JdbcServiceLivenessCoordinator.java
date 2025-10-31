@@ -7,13 +7,8 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.server.AbstractServiceLivenessCoordinator;
-import io.kestra.core.server.ServerConfig;
+import io.kestra.core.server.*;
 import io.kestra.core.server.Service.ServiceState;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceRegistry;
-import io.kestra.core.server.ServiceType;
-import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.services.LogService;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.utils.IdUtils;
@@ -42,13 +37,14 @@ import static io.kestra.core.server.Service.ServiceState.allRunningStates;
  * @see ServiceInstance
  */
 @Singleton
-@JdbcRunnerEnabled
+@JdbcQueueEnabled
 @Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
 public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenessCoordinator {
 
     private final static Logger log = LoggerFactory.getLogger(JdbcServiceLivenessCoordinator.class);
 
     private final AbstractJdbcServiceInstanceRepository serviceInstanceRepository;
+    private final ServiceLivenessUpdater serviceLivenessUpdater;
     private final LockService lockService;
     private final Duration purgeRetention;
     private final MetricRegistry metricRegistry;
@@ -62,6 +58,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
      */
     @Inject
     public JdbcServiceLivenessCoordinator(final AbstractJdbcServiceInstanceRepository serviceInstanceRepository,
+                                          final ServiceLivenessUpdater serviceLivenessUpdater,
                                           final LockService lockService,
                                           final ServiceRegistry serviceRegistry,
                                           final ServerConfig serverConfig,
@@ -73,6 +70,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
                                           @Value("${kestra.server.service.purge.retention}") final Duration purgeRetention) {
         super(serviceInstanceRepository, serviceRegistry, skipExecutionService, workerJobQueue, workerJobRunningStateStore, logService, serverConfig);
         this.serviceInstanceRepository = serviceInstanceRepository;
+        this.serviceLivenessUpdater = serviceLivenessUpdater;
         this.lockService = lockService;
         this.metricRegistry = metricRegistry;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
@@ -124,7 +122,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
      **/
     @Override
     protected void update(ServiceInstance instance, ServiceState state, String reason) {
-        serviceInstanceRepository.update(instance, state, reason);
+        serviceLivenessUpdater.update(instance, state, reason);
     }
 
     /**

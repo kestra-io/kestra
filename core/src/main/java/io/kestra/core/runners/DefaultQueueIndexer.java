@@ -60,17 +60,25 @@ public class DefaultQueueIndexer implements QueueIndexer {
                 if (indexerRepository instanceof FlowTopologyRepositoryInterface) {
                     // we allow flow topology to fail indexation
                     try {
-                        indexerRepository.save(txContext, cast(item));
+                        save(indexerRepository, txContext, item);
                     } catch (Exception e) {
                         log.error("Unable to index a flow topology, skipping it", e);
                     }
                 } else {
-                    indexerRepository.save(txContext, cast(item));
+                    save(indexerRepository, txContext, cast(item));
                 }
 
                 this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT_DESCRIPTION, "type", item.getClass().getName()).increment();
             });
 
+        }
+    }
+
+    private void save(QueueIndexerRepository<?> indexerRepository, TransactionContext txContext, Object item) {
+        if (indexerRepository.supports(txContext.getClass())) {
+            indexerRepository.save(txContext, cast(item));
+        } else {
+            indexerRepository.save(cast(item));
         }
     }
 

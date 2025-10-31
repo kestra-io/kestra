@@ -62,11 +62,17 @@ export const AppTableBlock: Story = {
     render: AppTableBlockRender,
     async play({canvasElement}) {
         const canvas = within(canvasElement);
-        canvas.getByText("+ Add a new value").click();
         await waitFor(() => {
-            expect(canvas.getByText(/null/)).toBeVisible();
+            expect(canvas.getByText("+ Add a new value")).toBeVisible();
         });
-        canvas.getByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}).click();
+        fireEvent.click(canvas.getByText("+ Add a new value"));
+        await waitFor(() => {
+            expect(canvas.getByText(/null/, {selector: "pre"})).toBeVisible();
+        });
+        await waitFor(() => {
+            expect(canvas.getByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"})).toBeVisible();
+        });
+        fireEvent.click(canvas.getByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}));
 
         await waitFor(function getByPlaceholderKey() {
             expect(canvas.getByPlaceholderText("Key")).toBeVisible();

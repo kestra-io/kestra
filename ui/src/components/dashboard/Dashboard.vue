@@ -111,7 +111,7 @@
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 .filterPadding {
-    margin: 2rem 0.25rem 0;
+    margin: 1rem 0.25rem 0;
     padding: 0 2rem;
 }
 </style>

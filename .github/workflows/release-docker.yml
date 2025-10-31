@@ -28,7 +28,7 @@ jobs:
   publish-docker:
     name: Publish Docker
     if: startsWith(github.ref, 'refs/tags/v')
-    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@poc-release-docker-dry-run
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
       plugin-version: ${{ inputs.plugin-version }}
       retag-latest: ${{ inputs.retag-latest }}

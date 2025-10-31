@@ -16,6 +16,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.hc.core5.net.URIBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -29,6 +30,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.AbstractMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -50,6 +52,8 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
     protected Property<String> body;
 
     protected Property<Map<String, Object>> formData;
+
+    protected Property<Map<String, Object>> params;
 
     @Builder.Default
     protected Property<String> contentType = Property.ofValue("application/json");
@@ -100,9 +104,29 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
     protected HttpRequest request(RunContext runContext) throws IllegalVariableEvaluationException, URISyntaxException, IOException {
         // ideally we should URLEncode the path of the UI, but as we cannot URLEncode everything, we handle the common case of space in the URI.
         String renderedUri = runContext.render(this.uri).as(String.class).map(s -> s.replace(" ", "%20")).orElseThrow();
+
+        URIBuilder uriBuilder = new URIBuilder(renderedUri);
+
+        if (this.params != null) {
+            runContext
+                .render(this.params)
+                .asMap(String.class, Object.class)
+                .forEach((s, o) -> {
+                    if (o instanceof List<?> oList) {
+                        oList.stream().map(Object::toString).forEach(s1 -> {
+                            uriBuilder.addParameter(s, s1);
+                        });
+                    } else if (o instanceof String oString) {
+                        uriBuilder.addParameter(s, oString);
+                    } else {
+                        throw new IllegalArgumentException("Unsupported param type: " + o.getClass());
+                    }
+                });
+        }
+
         HttpRequest.HttpRequestBuilder request = HttpRequest.builder()
             .method(runContext.render(this.method).as(String.class).orElse(null))
-            .uri(new URI(renderedUri));
+            .uri(uriBuilder.build());
 
         var renderedFormData = runContext.render(this.formData).asMap(String.class, Object.class);
         if (!renderedFormData.isEmpty()) {

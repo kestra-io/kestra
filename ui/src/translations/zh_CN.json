@@ -170,6 +170,11 @@
       "back": "返回"
     },
     "concurrency": "并发",
+    "concurrency limits": "并发限制",
+    "concurrency_limit": {
+      "dialog_title": "并发限制",
+      "warning": "更改运行计数器可能会破坏并发性，因此执行可能会超出允许的限制。"
+    },
     "conditions": "条件",
     "configure basic auth": "配置基本认证",
     "confirm": "确认",
@@ -912,7 +917,6 @@
         "status": "状态",
         "task": "任务",
         "text": "文本",
-        "trigger_state": "状态",
         "type": "类型",
         "user": "用户"
       },

@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -313,10 +314,12 @@ public abstract class AbstractJdbcRepository {
         }
 
         if (field.equals(QueryFilter.Field.LABELS)) {
-            if (value instanceof Map<?, ?> map){
-                return findLabelCondition(map, operation);
+            if (value instanceof Map<?, ?> map ){
+                return findLabelCondition(Either.left(map), operation);
+            } else if(value instanceof String string ) {
+                return findLabelCondition(Either.right(string), operation);
             } else {
-                throw new InvalidQueryFiltersException("Label field value must but instance of Map");
+                throw new InvalidQueryFiltersException("Label field value must be instance of Map or String");
             }
         }
         if (field == QueryFilter.Field.KIND) {
@@ -349,7 +352,7 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: ");
     }
 
-    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
+    protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 

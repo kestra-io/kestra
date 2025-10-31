@@ -1,7 +1,5 @@
-import {inject} from "vue";
 import {pascalCase} from "change-case";
 import {resolve$ref} from "../../../../utils/utils";
-import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys";
 
 const TasksComponents = import.meta.glob<{ default: any }>("./Task*.vue", {eager: true});
 
@@ -108,7 +106,7 @@ function getType(property: any, definitions: Record<string, any>, key?: string):
     return property.type || "expression";
 }
 
-function getTaskComponent(property: any, definitions: Record<string, any>, key?: string): any {
+export function getTaskComponent(property: any, definitions: Record<string, any>, key?: string): any {
     const typeString = getType(property, definitions, key);
     const type = pascalCase(typeString);
     const component = TasksComponents[`./Task${type}.vue`]?.default;
@@ -116,10 +114,4 @@ function getTaskComponent(property: any, definitions: Record<string, any>, key?:
         component.ksTaskName = typeString;
     }
     return component ?? {}
-}
-
-export function useGetTaskComponent() {
-    const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY);
-    const definitions = definitionsRef?.value ?? {};
-    return (property: any, key?: string) => getTaskComponent(property, definitions, key);
 }

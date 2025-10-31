@@ -38,7 +38,7 @@
                 </el-tooltip>
             </template>
             <component
-                :is="getTaskComponent(schema, key, properties)"
+                :is="getBlockComponent(schema, key, properties)"
                 :modelValue="getPropertiesValue(key)"
                 @update:model-value="onObjectInput(key, $event)"
                 :root="getKey(key)"
@@ -55,16 +55,16 @@
 </script>
 <script>
     import Task from "./MixinTask";
-    import {useGetTaskComponent} from "./getTaskComponent";
+    import {useBlockComponent} from "./useBlockComponent";
 
     export default {
         name: "TaskBasic",
         mixins: [Task],
         emits: ["update:modelValue"],
         setup() {
-            const getTaskComponent = useGetTaskComponent();
+            const {getBlockComponent} = useBlockComponent();
             return {
-                getTaskComponent,
+                getBlockComponent,
             };
         },
         computed: {

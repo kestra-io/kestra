@@ -45,9 +45,9 @@
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
 
     import Add from "../Add.vue";
-    import {useGetTaskComponent} from "./getTaskComponent";
     import Wrapper from "./Wrapper.vue";
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
+    import {useBlockComponent} from "./useBlockComponent";
 
     defineOptions({inheritAttrs: false});
 
@@ -70,10 +70,10 @@
         root: undefined,
     });
 
-    const getTaskComponent = useGetTaskComponent();
+    const {getBlockComponent} = useBlockComponent();
 
     const componentType = computed(() => {
-        return getTaskComponent(props.schema.items, props.root);
+        return getBlockComponent.value?.(props.schema.items, props.root);
     });
 
     const needWrapper = computed(() => {

@@ -69,7 +69,8 @@
     import Markdown from "../../../layout/Markdown.vue";
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
     import ClearButton from "./ClearButton.vue";
-    import {useGetTaskComponent} from "./getTaskComponent";
+    import {useBlockComponent} from "./useBlockComponent";
+    
 
     const props = defineProps<{
         schema: any;
@@ -134,10 +135,10 @@
         return type.value.ksTaskName;
     })
 
-    const getTaskComponent = useGetTaskComponent();
+    const {getBlockComponent} = useBlockComponent();
 
     const type = computed(() => {
-        return getTaskComponent(props.schema, props.fieldKey)
+        return getBlockComponent.value(props.schema, props.fieldKey)
     })
 </script>
 

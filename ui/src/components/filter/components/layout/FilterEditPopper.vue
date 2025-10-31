@@ -43,7 +43,7 @@
     import FilterFooter from "./FilterFooter.vue";
     import FilterHeader from "./FilterHeader.vue";
     import FilterSelect from "./FilterSelect.vue";
-    import FilterDetails from "./FilterDetails.vue";
+    import FilterKVPairs from "./FilterKVPairs.vue";
     import FilterDateTime from "./FilterDateTime.vue";
     import FilterMultiSelect from "./FilterMultiSelect.vue";
     import FilterComparatorSelect from "./FilterComparatorSelect.vue";
@@ -68,7 +68,7 @@
         selectValue: "",
         radioValue: "ALL",
         dateValue: null as Date | null,
-        multiSelectValue: [] as string[],
+        keyValuePair: [] as string[],
         endDateValue: null as Date | null,
         valueOptions: [] as FilterValue[],
         startDateValue: null as Date | null,
@@ -77,7 +77,7 @@
     });
 
     const shouldShowComparator = computed(
-        () => props.filterKey.showComparatorSelection ?? props.showComparatorSelection ?? false
+        () => props.filterKey?.showComparatorSelection ?? props.showComparatorSelection ?? false
     );
 
     const TEXT_COMPARATORS = [
@@ -86,8 +86,17 @@
         Comparators.CONTAINS
     ];
 
+    const LABELS_COMPARATORS = [
+        Comparators.EQUALS,
+        Comparators.NOT_EQUALS
+    ];
+
     const isTextComparator = computed(() => 
-        TEXT_COMPARATORS.includes(state.selectedComparator) && props.filterKey.key !== "resources"
+        TEXT_COMPARATORS.includes(state.selectedComparator) && props.filterKey?.key !== "resources"
+    );
+
+    const isLabelKV = computed(() =>
+        props.filterKey?.key === "labels" && LABELS_COMPARATORS.includes(state.selectedComparator)
     );
 
     const valueComponent = computed(() => {
@@ -96,10 +105,24 @@
                 component: FilterText,
                 props: {
                     textValue: state.textValue,
-                    label: props.filterKey.label
+                    label: props.filterKey?.label
                 },
                 events: {
                     "update:text-value": (value: string) => (state.textValue = value)
+                }
+            };
+        }
+
+        // Label key-value pairs should be added via separate input fields.
+        if (isLabelKV.value) {
+            return {
+                component: FilterKVPairs,
+                props: {
+                    modelValue: state.keyValuePair,
+                    maxPairs: 1
+                },
+                events: {
+                    "update:modelValue": (value: string[]) => (state.keyValuePair = value)
                 }
             };
         }
@@ -111,8 +134,8 @@
                 props: {
                     modelValue: state.selectValue,
                     options: state.valueOptions,
-                    searchable: props.filterKey.searchable,
-                    label: props.filterKey.label,
+                    searchable: props.filterKey?.searchable,
+                    label: props.filterKey?.label,
                     filterKey: props.filterKey,
                     timeRangeMode: state.timeRangeMode,
                     startDateValue: state.startDateValue,
@@ -131,7 +154,7 @@
                 component: FilterText,
                 props: {
                     textValue: state.textValue,
-                    label: props.filterKey.label
+                    label: props.filterKey?.label
                 },
                 events: {
                     "update:text-value": (value: string) => (state.textValue = value)
@@ -140,33 +163,33 @@
             "multi-select": {
                 component: FilterMultiSelect,
                 props: {
-                    modelValue: state.multiSelectValue,
+                    modelValue: state.keyValuePair,
                     options: state.valueOptions,
-                    searchable: props.filterKey.searchable,
-                    label: props.filterKey.label,
-                    filterKey: props.filterKey.key
+                    searchable: props.filterKey?.searchable,
+                    label: props.filterKey?.label,
+                    filterKey: props.filterKey?.key
                 },
                 events: {
-                    "update:modelValue": (value: string[]) => (state.multiSelectValue = value)
+                    "update:modelValue": (value: string[]) => (state.keyValuePair = value)
                 }
             },
             date: {
                 component: FilterDateTime,
                 props: {
                     dateValue: state.dateValue,
-                    label: props.filterKey.label
+                    label: props.filterKey?.label
                 },
                 events: {
                     "update:date-value": (value: Date | null) => (state.dateValue = value)
                 }
             },
             details: {
-                component: FilterDetails,
+                component: FilterKVPairs,
                 props: {
-                    modelValue: state.multiSelectValue
+                    modelValue: state.keyValuePair
                 },
                 events: {
-                    "update:modelValue": (value: string[]) => (state.multiSelectValue = value)
+                    "update:modelValue": (value: string[]) => (state.keyValuePair = value)
                 }
             },
             radio: {
@@ -191,18 +214,24 @@
             return state.textValue ?? "";
         }
 
-        switch (props.filterKey.valueType) {
+        if (isLabelKV.value) {
+            return state.keyValuePair.length === 1
+                ? state.keyValuePair[0]
+                : "";
+        }
+
+        switch (props.filterKey?.valueType) {
         case "multi-select":
-            return `${state.multiSelectValue.length} ${props.filterKey.label} selected`;
+            return `${state.keyValuePair.length} ${props.filterKey?.label} selected`;
         case "details":
-            return state.multiSelectValue.length > 1
-                ? `${state.multiSelectValue.length} key:value pairs`
-                : state.multiSelectValue.length === 1
-                    ? state.multiSelectValue[0]
+            return state.keyValuePair.length > 1
+                ? `${state.keyValuePair.length} key:value pairs`
+                : state.keyValuePair.length === 1
+                    ? state.keyValuePair[0]
                     : "";
         case "select":
             if (state.selectValue) {
-                const option = state.valueOptions.find(opt => opt.value === state.selectValue);
+                const option = state.valueOptions?.find(opt => opt.value === state.selectValue);
                 return option ? option.label : state.selectValue;
             }
             return "";
@@ -226,7 +255,7 @@
         
         state.textValue = "";
         state.selectValue = "";
-        state.multiSelectValue = [];
+        state.keyValuePair = [];
         state.radioValue = "ALL";
         state.dateValue = null;
         state.timeRangeMode = "predefined";
@@ -243,6 +272,11 @@
         if (isTextComparator.value) {
             filterValue = state.textValue;
             valueLabel = state.textValue;
+        } else if (isLabelKV.value) {
+            filterValue = state.keyValuePair;
+            valueLabel = state.keyValuePair.length === 1
+                ? state.keyValuePair[0]
+                : "";
         } else {
             switch (props.filterKey.valueType) {
             case "text":
@@ -250,7 +284,7 @@
                 valueLabel = state.textValue;
                 break;
             case "select":
-                if (props.filterKey.key === "timeRange" && state.timeRangeMode === "custom") {
+                if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
                     filterValue = {
                         startDate: state.startDateValue!,
                         endDate: state.endDateValue!
@@ -259,26 +293,26 @@
                 } else {
                     filterValue = state.selectValue;
                     valueLabel =
-                        state.valueOptions.find((opt: FilterValue) => opt.value === state.selectValue)
+                        state.valueOptions?.find((opt: FilterValue) => opt.value === state.selectValue)
                             ?.label || state.selectValue;
                 }
                 break;
             case "multi-select":
-                filterValue = state.multiSelectValue;
-                valueLabel = state.multiSelectValue
+                filterValue = state.keyValuePair;
+                valueLabel = state.keyValuePair
                     .map(
                         val =>
-                            state.valueOptions.find((opt: FilterValue) => opt.value === val)?.label ??
+                            state.valueOptions?.find((opt: FilterValue) => opt.value === val)?.label ??
                             val
                     )
                     .join(", ");
                 break;
             case "details":
-                filterValue = state.multiSelectValue;
-                valueLabel = state.multiSelectValue.length > 1
-                    ? `${state.multiSelectValue.length} Details key/value pairs`
-                    : state.multiSelectValue.length === 1
-                        ? state.multiSelectValue[0]
+                filterValue = state.keyValuePair;
+                valueLabel = state.keyValuePair.length > 1
+                    ? `${state.keyValuePair.length} Details key/value pairs`
+                    : state.keyValuePair.length === 1
+                        ? state.keyValuePair[0]
                         : "";
                 break;
             case "date":
@@ -315,7 +349,7 @@
 
     const initializeTimeRange = (filter: AppliedFilter) => {
         if (
-            props.filterKey.key === "timeRange" &&
+            props.filterKey?.key === "timeRange" &&
             typeof filter.value === "object" &&
             filter.value !== null &&
             "startDate" in filter.value
@@ -335,10 +369,17 @@
         state.selectedComparator = filter.comparator;
         initializeTimeRange(filter);
         
-        const isTextComp = TEXT_COMPARATORS.includes(filter.comparator) && props.filterKey.key !== "resources";
+        const isTextComp = TEXT_COMPARATORS.includes(filter.comparator) && props.filterKey?.key !== "resources";
+        const isLabelKVInit = props.filterKey?.key === "labels" && LABELS_COMPARATORS.includes(filter.comparator);
         
         if (isTextComp) {
             state.textValue = typeof filter.value === "string" ? filter.value : "";
+        } else if (isLabelKVInit) {
+            state.keyValuePair = Array.isArray(filter.value) 
+                ? filter.value 
+                : typeof filter.value === "string" 
+                    ? [filter.value] 
+                    : [];
         } else {
             switch (props.filterKey.valueType) {
             case "text":
@@ -356,7 +397,7 @@
                 break;
             case "multi-select":
             case "details":
-                state.multiSelectValue = Array.isArray(filter.value) ? filter.value : [];
+                state.keyValuePair = Array.isArray(filter.value) ? filter.value : [];
                 break;
             case "date":
                 state.dateValue = filter.value instanceof Date 
@@ -377,11 +418,11 @@
     };
 
     const loadValueOptions = async () => {
-        if (!props.filterKey.valueProvider) return;
+        if (!props.filterKey?.valueProvider) return;
 
         state.valueOptions = await props.filterKey.valueProvider();
 
-        if (props.filterKey.key === "timeRange" && typeof props.filter.value === "string") {
+        if (props.filterKey?.key === "timeRange" && typeof props.filter.value === "string") {
             const currentValue = props.filter.value;
             const exists = state.valueOptions.some(option => option.value === currentValue);
             if (!exists && isTimeRangeValue(currentValue)) {

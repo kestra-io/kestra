@@ -69,7 +69,7 @@
     import Markdown from "../../../layout/Markdown.vue";
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
     import ClearButton from "./ClearButton.vue";
-    import getTaskComponent from "./getTaskComponent";
+    import {useGetTaskComponent} from "./getTaskComponent";
 
     const props = defineProps<{
         schema: any;
@@ -133,6 +133,8 @@
     const simpleType = computed(() => {
         return type.value.ksTaskName;
     })
+
+    const getTaskComponent = useGetTaskComponent();
 
     const type = computed(() => {
         return getTaskComponent(props.schema, props.fieldKey)

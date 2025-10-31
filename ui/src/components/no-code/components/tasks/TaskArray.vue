@@ -45,7 +45,7 @@
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
 
     import Add from "../Add.vue";
-    import getTaskComponent from "./getTaskComponent";
+    import {useGetTaskComponent} from "./getTaskComponent";
     import Wrapper from "./Wrapper.vue";
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
 
@@ -69,6 +69,8 @@
         required: false,
         root: undefined,
     });
+
+    const getTaskComponent = useGetTaskComponent();
 
     const componentType = computed(() => {
         return getTaskComponent(props.schema.items, props.root);

@@ -74,9 +74,9 @@
     import InputText from "../inputs/InputText.vue";
     import TaskExpression from "./TaskExpression.vue";
     import Add from "../Add.vue";
-    import getTaskComponent from "./getTaskComponent";
     import debounce from "lodash/debounce";
     import Wrapper from "./Wrapper.vue";
+    import {useGetTaskComponent} from "./getTaskComponent";
 
     const {t, te} = useI18n();
 
@@ -98,8 +98,13 @@
         schema: () => ({type: "object"})
     });
 
+    const getTaskComponent = useGetTaskComponent();
+
     const componentType = computed(() => {
-        return props.schema.additionalProperties ? getTaskComponent(props.schema.additionalProperties, props.root) : null;
+        return props.schema?.additionalProperties ? getTaskComponent(
+            props.schema.additionalProperties, 
+            props.root
+        ) : undefined;
     });
 
     const currentValue = ref<[string, any][]>([])

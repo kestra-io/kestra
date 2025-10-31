@@ -20,9 +20,8 @@ export interface Schema{
     format?: string;
 }
 
-function getType(property: any, key?: string): string {
-    const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY);
-    const definitions = definitionsRef?.value;
+function getType(property: any, definitions: Record<string, any>, key?: string): string {
+    
     if (property.enum !== undefined) {
         return "enum";
     }
@@ -109,12 +108,18 @@ function getType(property: any, key?: string): string {
     return property.type || "expression";
 }
 
-export default function getTaskComponent(property: any, key?: string): any {
-    const typeString = getType(property, key);
+function getTaskComponent(property: any, definitions: Record<string, any>, key?: string): any {
+    const typeString = getType(property, definitions, key);
     const type = pascalCase(typeString);
     const component = TasksComponents[`./Task${type}.vue`]?.default;
     if (component) {
         component.ksTaskName = typeString;
     }
     return component ?? {}
+}
+
+export function useGetTaskComponent() {
+    const definitionsRef = inject(SCHEMA_DEFINITIONS_INJECTION_KEY);
+    const definitions = definitionsRef?.value ?? {};
+    return (property: any, key?: string) => getTaskComponent(property, definitions, key);
 }

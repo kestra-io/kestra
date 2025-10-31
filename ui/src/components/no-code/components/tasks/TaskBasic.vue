@@ -50,17 +50,23 @@
     </el-form>
 </template>
 <script setup>
-    import getTaskComponent from "./getTaskComponent";
     import Help from "vue-material-design-icons/HelpBox.vue";
     import Markdown from "../../../layout/Markdown.vue";
 </script>
 <script>
     import Task from "./MixinTask";
+    import {useGetTaskComponent} from "./getTaskComponent";
 
     export default {
         name: "TaskBasic",
         mixins: [Task],
         emits: ["update:modelValue"],
+        setup() {
+            const getTaskComponent = useGetTaskComponent();
+            return {
+                getTaskComponent,
+            };
+        },
         computed: {
             properties() {
                 if (this.schema) {

@@ -37,9 +37,10 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, inject} from "vue";
-    import getTaskComponent, {Schema} from "./getTaskComponent";
+    import {Schema, useGetTaskComponent} from "./getTaskComponent";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys";
+    
 
     const props = defineProps<{
         schema: Schema,
@@ -160,6 +161,8 @@
         const rawSchema = definitions.value[delayedSelectedSchema.value] ?? schemaByType.value[delayedSelectedSchema.value];
         return consolidateAllOfSchemas(rawSchema, definitions.value);
     });
+
+    const getTaskComponent = useGetTaskComponent();
 
     const currentSchemaType = computed(() =>
         delayedSelectedSchema.value ? getTaskComponent(currentSchema.value) : undefined

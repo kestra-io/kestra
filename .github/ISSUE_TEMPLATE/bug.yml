@@ -1,5 +1,9 @@
 name: Bug report
-description: File a bug report
+description: Report a bug or unexpected behavior in the project
+
+labels: ["bug", "area/backend", "area/frontend"]
+type: Bug
+
 body:
   - type: markdown
     attributes:
@@ -20,7 +24,3 @@ body:
         - Kestra Version: develop
     validations:
       required: false
-labels:
-  - bug
-  - area/backend
-  - area/frontend

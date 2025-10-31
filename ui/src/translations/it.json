@@ -1174,20 +1174,11 @@
       "adding": "+ Aggiungi un {what}",
       "adding_default": "+ Aggiungi un nuovo value",
       "clearSelection": "Cancella selezione",
-      "close": {
-        "afterExecution": "Chiudi dopo l'esecuzione del task",
-        "conditions": "Condizione di chiusura",
-        "errors": "Chiudi error handler",
-        "finally": "Chiudi task",
-        "input": "Chiudi input",
-        "pluginDefaults": "Chiudi plugin predefinito",
-        "tasks": "Chiudi task",
-        "triggers": "Chiudi trigger"
-      },
       "creation": {
         "afterExecution": "Aggiungi un blocco after execution",
         "charts": "Aggiungi un grafico",
         "conditions": "Aggiungi una condizione",
+        "default": "Aggiungi",
         "errors": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
         "inputs": "Aggiungi un campo di input",
@@ -1223,6 +1214,10 @@
         "variable": "Variabile",
         "yaml": "Editor YAML"
       },
+      "remove": {
+        "cases": "Rimuovi questo caso",
+        "default": "Rimuovi questa voce"
+      },
       "sections": {
         "afterExecution": "Dopo l'Esecuzione",
         "connection": "Proprietà di connessione",
@@ -1240,6 +1235,7 @@
         "afterExecution": "Seleziona un task",
         "charts": "Seleziona un tipo di grafico",
         "conditions": "Seleziona una condizione",
+        "default": "Seleziona un tipo",
         "errors": "Seleziona un task",
         "finally": "Seleziona un task",
         "inputs": "Seleziona un tipo di input field",

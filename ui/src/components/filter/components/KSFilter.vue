@@ -1,7 +1,7 @@
 <template>
     <section class="filter">
         <div class="top">
-            <LeftFilter />
+            <MainFilter />
             <RightFilter>
                 <template #extra>
                     <slot name="extra" />
@@ -14,10 +14,9 @@
 
 <script setup lang="ts">
     import {ref, computed, provide, onMounted, watch} from "vue";
-    import {useRoute} from "vue-router";
     import {useFilters} from "../composables/useFilters";
     import {useSavedFilters} from "../composables/useSavedFilters";
-    import {useTableOptions} from "../composables/useTableOptions";
+    import {useDataOptions} from "../composables/useDataOptions";
     
     import {
         SavedFilter,
@@ -29,7 +28,7 @@
 
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
 
-    import LeftFilter from "./LeftFilter.vue";
+    import MainFilter from "./MainFilter.vue";
     import RightFilter from "./RightFilter.vue";
     import FilterOptions from "./FilterOptions.vue";
 
@@ -64,19 +63,26 @@
         updateProperties: [columns: string[]];
     }>();
 
-    const route = useRoute();
-
-    const {appliedFilters, searchQuery, addFilter, removeFilter, updateFilter, resetToPreApplied} = useFilters(
+    const {
+        appliedFilters,
+        searchQuery,
+        addFilter,
+        removeFilter,
+        updateFilter,
+        resetToPreApplied,
+        hasPreApplied,
+        getPreApplied
+    } = useFilters(
         props.configuration,
         props.showSearchInput,
         props.legacyQuery
     );
 
-    const {savedFilters, loadSavedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
+    const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
         props.prefix
     );
 
-    const {showOptions, chartVisible, toggleOptions, updateChart, refreshData: tableRefreshData} = useTableOptions(
+    const {showOptions, chartVisible, toggleOptions, updateChart, refreshData: tableRefreshData} = useDataOptions(
         props.tableOptions
     );
 
@@ -129,6 +135,8 @@
         updateChart,
         refreshData,
         resetToPreApplied,
+        hasPreApplied,
+        getPreApplied,
         editSavedFilter: (filter: SavedFilter) => {
             editingFilter.value = filter;
         },
@@ -141,7 +149,6 @@
     });
 
     onMounted(() => {
-        loadSavedFilters();
         if (props.showSearchInput && searchQuery.value) {
             emits("search", searchQuery.value);
         }
@@ -159,9 +166,6 @@
     watch(appliedFilters, (newFilters) => {
         emits("filter", newFilters);
     }, {deep: true});
-
-    watch(() => route.name, loadSavedFilters);
-    watch(() => props.prefix, loadSavedFilters);
 </script>
 
 <style lang="scss" scoped>

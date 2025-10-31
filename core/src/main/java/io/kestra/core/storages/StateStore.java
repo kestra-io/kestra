@@ -17,6 +17,10 @@ import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * @deprecated use KVStore instead
+ */
+@Deprecated(since = "1.1.0", forRemoval = true)
 public record StateStore(RunContext runContext, boolean hashTaskRunValue) {
 
     public InputStream getState(String stateName, @Nullable String stateSubName, String taskRunValue) throws IOException, ResourceExpiredException {

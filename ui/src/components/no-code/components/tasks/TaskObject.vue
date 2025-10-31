@@ -51,7 +51,6 @@
                 :root
                 :schema="schema ?? {}"
                 :required
-                :definitions
             />
         </template>
     </el-form>
@@ -80,7 +79,6 @@
         modelValue?: Model;
         required?: boolean;
         schema?: Schema;
-        definitions?: any;
         root?: string;
     }>();
 
@@ -198,7 +196,6 @@
             fieldKey: key,
             task: props.modelValue,
             schema: schema,
-            definitions: props.definitions,
             required: props.schema?.required,
         } as const;
     }

@@ -195,17 +195,17 @@ public class TaskRun implements TenantInterface {
             taskRunBuilder.attempts = new ArrayList<>();
 
             taskRunBuilder.attempts.add(TaskRunAttempt.builder()
-                .state(new State(this.state, State.Type.KILLED))
+                .state(new State(this.state, State.Type.RESUBMITTED))
                 .build()
             );
         } else {
             ArrayList<TaskRunAttempt> taskRunAttempts = new ArrayList<>(taskRunBuilder.attempts);
             TaskRunAttempt lastAttempt = taskRunAttempts.get(taskRunBuilder.attempts.size() - 1);
             if (!lastAttempt.getState().isTerminated()) {
-                taskRunAttempts.set(taskRunBuilder.attempts.size() - 1, lastAttempt.withState(State.Type.KILLED));
+                taskRunAttempts.set(taskRunBuilder.attempts.size() - 1, lastAttempt.withState(State.Type.RESUBMITTED));
             } else {
                 taskRunAttempts.add(TaskRunAttempt.builder()
-                    .state(new State().withState(State.Type.KILLED))
+                    .state(new State().withState(State.Type.RESUBMITTED))
                     .build()
                 );
             }

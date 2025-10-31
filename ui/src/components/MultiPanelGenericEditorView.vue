@@ -63,7 +63,12 @@
         }
     };
 
-    const panels = useStoredPanels(props.saveKey, props.editorElements, props.defaultActiveTabs, props.preSerializePanels);
+    const {panels, saveState} = useStoredPanels(
+        props.saveKey, 
+        props.editorElements, 
+        props.defaultActiveTabs, 
+        props.preSerializePanels,
+    );
 
     const emit = defineEmits<{
         (e: "set-tab-value", tabValue: string): void | false;
@@ -110,6 +115,7 @@
         openTabs,
         focusTab,
         setTabValue,
+        saveState,
     });
 </script>
 

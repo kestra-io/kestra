@@ -7,37 +7,67 @@
         :closable="false"
         class="mb-2"
     />
-    <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
-        <el-col :span="6">
-            <InputText
-                :modelValue="item[0]"
-                @update:model-value="onKey(index, $event)"
-                margin="m-0"
-                placeholder="Key"
-                :haveError="duplicatedKeys.includes(item[0])"
-            />
-        </el-col>
-        <el-col :span="16">
-            <component
-                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties) : TaskExpression"
-                :modelValue="item[1]"
-                @update:model-value="onValueChange(index, $event)"
-                :root="getKey(item[0])"
-                :schema="schema.additionalProperties"
-                :required="isRequired(item[0])"
-                :definitions="definitions"
-                :disabled
-            />
-        </el-col>
-        <el-col :span="2" class="col align-self-center delete">
-            <DeleteOutline @click="removeItem(index)" />
-        </el-col>
-    </el-row>
-    <Add v-if="!disabledAdding" @add="addItem()" />
+    <template v-if="componentType">
+        <Wrapper v-for="(item, index) in currentValue" :key="index" class="item-wrapper">
+            <template #tasks>
+                <InputText
+                    :modelValue="item[0]"
+                    @update:model-value="onKey(index, $event)"
+                    margin="m-0"
+                    placeholder="Key"
+                    :haveError="duplicatedKeys.includes(item[0])"
+                />
+                <hr>
+                <component
+                    ref="valueComponent"
+                    :is="componentType"
+                    :modelValue="item[1]"
+                    @update:model-value="onValueChange(index, $event)"
+                    :root="getKey(item[0])"
+                    :schema="schema.additionalProperties"
+                    :required="isRequired(item[0])"
+                    :disabled
+                    merge
+                />
+                <div class="delete-container">
+                    <button @click="removeItem(index)" class="remove-entry">
+                        {{ te(`no_code.remove.${root}`) ? t(`no_code.remove.${root}`) : t('no_code.remove.default') }} <DeleteOutline />
+                    </button>
+                </div>
+            </template>
+        </Wrapper>
+    </template>
+    <template v-else>
+        <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
+            <el-col :span="6">
+                <InputText
+                    :modelValue="item[0]"
+                    @update:model-value="onKey(index, $event)"
+                    margin="m-0"
+                    placeholder="Key"
+                    :haveError="duplicatedKeys.includes(item[0])"
+                />
+            </el-col>
+            <el-col :span="16">
+                <TaskExpression
+                    :modelValue="item[1]"
+                    @update:model-value="onValueChange(index, $event)"
+                    :root="getKey(item[0])"
+                    :schema="schema.additionalProperties"
+                    :required="isRequired(item[0])"
+                    :disabled
+                />
+            </el-col>
+            <el-col :span="2" class="col align-self-center delete">
+                <DeleteOutline @click="removeItem(index)" />
+            </el-col>
+        </el-row>
+    </template>
+    <Add v-if="!props.disabled" :disabled="addButtonDisabled" @add="addItem()" />
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue";
+    import {computed, ref, useTemplateRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {DeleteOutline} from "../../utils/icons";
 
@@ -46,34 +76,30 @@
     import Add from "../Add.vue";
     import getTaskComponent from "./getTaskComponent";
     import debounce from "lodash/debounce";
+    import Wrapper from "./Wrapper.vue";
 
-    const {t} = useI18n();
+    const {t, te} = useI18n();
 
     defineOptions({
         inheritAttrs: false,
     });
 
-    const props = defineProps({
-        modelValue: {
-            type: Object,
-            default: () => ({}),
-        },
-        schema: {
-            type: Object,
-            required: true,
-        },
-        definitions: {
-            type: Object,
-            default: () => ({}),
-        },
-        root: {
-            type: String,
-            default: undefined,
-        },
-        disabled: {
-            type: Boolean,
-            default: false,
-        },
+    const valueComponent = useTemplateRef<any[]>("valueComponent");
+
+    const props = withDefaults(defineProps<{
+        modelValue?: Record<string, any>;
+        schema?: any;
+        root?: string;
+        disabled?: boolean;
+    }>(), {
+        disabled: false,
+        modelValue: () => ({}),
+        root: undefined,
+        schema: () => ({type: "object"})
+    });
+
+    const componentType = computed(() => {
+        return props.schema.additionalProperties ? getTaskComponent(props.schema.additionalProperties, props.root) : null;
     });
 
     const currentValue = ref<[string, any][]>([])
@@ -142,15 +168,50 @@
     }
 
     function addItem() {
+        if(addButtonDisabled.value) {
+            return;
+        }
         currentValue.value.push(["", undefined]);
         emitUpdate()
     }
 
-    const disabledAdding = computed(() => {
-        return props.disabled || currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
+    const addButtonDisabled = computed(() => {
+        return currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
     });
 </script>
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
+
+.task-container{
+    margin-bottom: 1rem;
+}
+
+.delete-container{
+    display: flex;
+    align-items: center;
+    margin-left: 1rem;
+    justify-content: end;
+}
+
+.remove-entry{
+    color: var(--ks-content-secondary);
+    background-color: var(--ks-button-background-secondary);
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: .5rem; 
+    opacity: 0.7;
+    padding: 0;
+    height: .75rem;
+    &:hover {
+        color: var(--ks-content-secondary);
+        opacity: 1;
+    }
+}
+
+.item-wrapper {
+    margin: .25rem 0;
+    background-color: var(--ks-background-card);
+}
 </style>

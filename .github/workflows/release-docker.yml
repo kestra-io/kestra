@@ -13,11 +13,6 @@ on:
         required: true
         type: boolean
         default: false
-      plugin-version:
-        description: '(deprecated) Plugin version window for old Kestra releases using .plugins file (0.22 to 0.24). If omitted, then plugin list will be fetched from the API compatible versions endpoint'
-        required: false
-        type: string
-        default: ''
       dry-run:
         description: 'Dry run mode that will not write or release anything'
         required: true
@@ -30,7 +25,6 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
-      plugin-version: ${{ inputs.plugin-version }}
       retag-latest: ${{ inputs.retag-latest }}
       retag-lts: ${{ inputs.retag-lts }}
       dry-run: ${{ inputs.dry-run }}

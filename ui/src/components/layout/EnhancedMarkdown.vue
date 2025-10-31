@@ -1,5 +1,5 @@
 <template>
-    <div class="enhanced-documentation" data-component="EnhancedMarkdown">
+    <div class="enhanced-documentation">
         <div v-if="showSearch" class="doc-toolbar">
             <el-input
                 v-model="searchQuery"
@@ -741,6 +741,7 @@
         display: grid;
         gap: var(--spacer, 1rem);
         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        align-items: start;
     }
 
     :deep(.doc-card) {

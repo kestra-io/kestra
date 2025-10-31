@@ -57,7 +57,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     :deep(.markdown) {
         p {
             margin-bottom: auto;

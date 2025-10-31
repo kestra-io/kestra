@@ -6,23 +6,29 @@
     </SideBar>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {useLeftMenu} from "override/components/useLeftMenu";
     import SideBar from "../../components/layout/SideBar.vue";
     import Auth from "../../override/components/auth/Auth.vue";
 
-    defineProps({showLink: {type: Boolean, default: true}})
+    withDefaults(defineProps<{
+        showLink: boolean
+    }>(), {
+        showLink: true
+    });
 
-    const $emit = defineEmits(["menu-collapse"])
+    const emit = defineEmits<{
+        (e: "menu-collapse", folded: boolean): void
+    }>();
 
-    function onCollapse(folded) {
-        $emit("menu-collapse", folded);
+    function onCollapse(folded: boolean) {
+        emit("menu-collapse", folded);
     }
 
     const {menu} = useLeftMenu();
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 #side-menu {
     .el-select {
         padding: 0 30px;

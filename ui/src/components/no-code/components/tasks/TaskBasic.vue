@@ -44,7 +44,6 @@
                 :root="getKey(key)"
                 :schema="schema"
                 :required="isRequired(key)"
-                :definitions="definitions"
                 :min="getExclusiveMinimum(key)"
             />
         </el-form-item>
@@ -146,7 +145,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 @import "../../styles/code.scss";
 
 .type-tag {

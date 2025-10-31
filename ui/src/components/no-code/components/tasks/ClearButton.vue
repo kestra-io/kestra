@@ -8,7 +8,7 @@
     </button>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import CloseIcon from "vue-material-design-icons/Close.vue";
     import {useI18n} from "vue-i18n";
     const {t} = useI18n();

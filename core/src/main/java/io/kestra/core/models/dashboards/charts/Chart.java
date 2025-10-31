@@ -12,6 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import static io.kestra.core.utils.RegexPatterns.JAVA_IDENTIFIER_REGEX;
+
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
@@ -26,7 +28,7 @@ public abstract class Chart<P extends ChartOption> implements io.kestra.core.mod
 
     @NotNull
     @NotBlank
-    @Pattern(regexp = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = JAVA_IDENTIFIER_REGEX)
     protected String type;
 
     @Valid

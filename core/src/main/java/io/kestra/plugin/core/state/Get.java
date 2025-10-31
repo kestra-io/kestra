@@ -18,7 +18,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get a state from the state store (Deprecated)."
+    title = "Get a state from the state store (Deprecated, use KV store instead)."
 )
 @Plugin(
     examples = {
@@ -42,6 +42,7 @@ import java.util.Map;
     },
     aliases = "io.kestra.core.tasks.states.Get"
 )
+@Deprecated(since = "1.1.0", forRemoval = true)
 public class Get extends AbstractState implements RunnableTask<Get.Output> {
     @Schema(
         title = "Raise an error if the state file is not found."

@@ -1,5 +1,5 @@
 <template>
-    <span data-component="FILENAME_PLACEHOLDER" v-if="description">
+    <span v-if="description">
         <a @click="open()">
             <HelpCircle
                 title=""
@@ -45,7 +45,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     a {
         cursor: pointer;
     }

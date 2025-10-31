@@ -2,121 +2,44 @@ package io.kestra.core.runners;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.pebble.*;
-import io.kestra.core.runners.pebble.functions.RenderingFunctionInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
 import io.pebbletemplates.pebble.error.AttributeNotFoundException;
 import io.pebbletemplates.pebble.error.PebbleException;
-import io.pebbletemplates.pebble.extension.Extension;
-import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Singleton
 public class VariableRenderer {
     private static final Pattern RAW_PATTERN = Pattern.compile("(\\{%-*\\s*raw\\s*-*%}(.*?)\\{%-*\\s*endraw\\s*-*%})");
     public static final int MAX_RENDERING_AMOUNT = 100;
 
-    private final PebbleEngine pebbleEngine;
+    private PebbleEngine pebbleEngine;
     private final VariableConfiguration variableConfiguration;
 
     @Inject
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
-        this(applicationContext, variableConfiguration, Collections.emptyList());
+        this(applicationContext.getBean(PebbleEngineFactory.class), variableConfiguration);
     }
-
-    public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration, List<String> functionsToMask) {
+    
+    public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
-
-        PebbleEngine.Builder pebbleBuilder = new PebbleEngine.Builder()
-            .registerExtensionCustomizer(ExtensionCustomizer::new)
-            .strictVariables(true)
-            .cacheActive(this.variableConfiguration.getCacheEnabled())
-            .newLineTrimming(false)
-            .autoEscaping(false);
-
-        List<Extension> extensions = applicationContext.getBeansOfType(Extension.class).stream()
-            .map(e -> functionsToMask.stream().anyMatch(excludedFunction -> e.getFunctions().containsKey(excludedFunction))
-                ? extensionWithMaskedFunctions(e, functionsToMask)
-                : e)
-            .toList();
-
-        extensions.forEach(pebbleBuilder::extension);
-
-        if (this.variableConfiguration.getCacheEnabled()) {
-            pebbleBuilder.templateCache(new PebbleLruCache(this.variableConfiguration.getCacheSize()));
-        }
-
-        this.pebbleEngine = pebbleBuilder.build();
+        this.pebbleEngine = pebbleEngineFactory.create();
     }
-
-    private Extension extensionWithMaskedFunctions(Extension initialExtension, List<String> maskedFunctions) {
-        return (Extension) Proxy.newProxyInstance(
-            initialExtension.getClass().getClassLoader(),
-            new Class[]{Extension.class},
-            (proxy, method, methodArgs) -> {
-                if (method.getName().equals("getFunctions")) {
-                    return initialExtension.getFunctions().entrySet().stream()
-                        .map(entry -> {
-                            if (maskedFunctions.contains(entry.getKey())) {
-                                return Map.entry(entry.getKey(), this.maskedFunctionProxy(entry.getValue()));
-                            } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
-                                return Map.entry(entry.getKey(), this.variableRendererProxy(entry.getValue()));
-                            }
-
-                            return entry;
-                        }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-                }
-
-                return method.invoke(initialExtension, methodArgs);
-            }
-        );
+    
+    public void setPebbleEngine(final PebbleEngine pebbleEngine) {
+        this.pebbleEngine = pebbleEngine;
     }
-
-    private Function variableRendererProxy(Function initialFunction) {
-        return (Function) Proxy.newProxyInstance(
-            initialFunction.getClass().getClassLoader(),
-            new Class[]{Function.class, RenderingFunctionInterface.class},
-            (functionProxy, functionMethod, functionArgs) -> {
-                if (functionMethod.getName().equals("variableRenderer")) {
-                    return this;
-                }
-                return functionMethod.invoke(initialFunction, functionArgs);
-            }
-        );
-    }
-
-    private Function maskedFunctionProxy(Function initialFunction) {
-        return (Function) Proxy.newProxyInstance(
-            initialFunction.getClass().getClassLoader(),
-            new Class[]{Function.class},
-            (functionProxy, functionMethod, functionArgs) -> {
-                Object result;
-                try {
-                    result = functionMethod.invoke(initialFunction, functionArgs);
-                } catch (InvocationTargetException e) {
-                    throw e.getCause();
-                }
-                if (functionMethod.getName().equals("execute")) {
-                    return "******";
-                }
-                return result;
-            }
-        );
-    }
-
+    
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
         if (initialExtension instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(

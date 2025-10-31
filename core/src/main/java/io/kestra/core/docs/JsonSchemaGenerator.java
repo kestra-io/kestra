@@ -15,6 +15,7 @@ import com.github.victools.jsonschema.generator.impl.DefinitionKey;
 import com.github.victools.jsonschema.generator.naming.DefaultSchemaDefinitionNamingStrategy;
 import com.github.victools.jsonschema.module.jackson.JacksonModule;
 import com.github.victools.jsonschema.module.jackson.JacksonOption;
+import com.github.victools.jsonschema.module.jackson.JsonUnwrappedDefinitionProvider;
 import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationModule;
 import com.github.victools.jsonschema.module.jakarta.validation.JakartaValidationOption;
 import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
@@ -45,6 +46,9 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.*;
 import java.time.*;
@@ -58,7 +62,9 @@ import static io.kestra.core.docs.AbstractClassDocumentation.required;
 import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 
 @Singleton
+@Slf4j
 public class JsonSchemaGenerator {
+    
     private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
     private static final List<Class<?>> SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA = List.of(Task.class, AbstractTrigger.class);
 
@@ -270,8 +276,22 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
-            .with(Option.ALLOF_CLEANUP_AT_THE_END);;
-
+            .with(Option.ALLOF_CLEANUP_AT_THE_END);
+            
+        // HACK: Registered a custom JsonUnwrappedDefinitionProvider prior to the JacksonModule 
+        // to be able to return an CustomDefinition with an empty node when the ResolvedType can't be found.
+        builder.forTypesInGeneral().withCustomDefinitionProvider(new JsonUnwrappedDefinitionProvider(){
+            @Override
+            public CustomDefinition provideCustomSchemaDefinition(ResolvedType javaType, SchemaGenerationContext context) {
+                try {
+                    return super.provideCustomSchemaDefinition(javaType, context);
+                } catch (NoClassDefFoundError e) {
+                    // This error happens when a non-supported plugin type exists in the classpath.
+                    log.debug("Cannot create schema definition for type '{}'. Cause: NoClassDefFoundError", javaType.getTypeName());
+                    return new CustomDefinition(context.getGeneratorConfig().createObjectNode(), true);
+                }
+            }
+        });
         if (!draft7) {
             builder.with(new JacksonModule(JacksonOption.IGNORE_TYPE_INFO_TRANSFORM));
         } else {
@@ -300,6 +320,7 @@ public class JsonSchemaGenerator {
         // inline some type
         builder.forTypesInGeneral()
             .withCustomDefinitionProvider(new CustomDefinitionProviderV2() {
+                
                 @Override
                 public CustomDefinition provideCustomSchemaDefinition(ResolvedType javaType, SchemaGenerationContext context) {
                     if (javaType.isInstanceOf(Map.class) || javaType.isInstanceOf(Enum.class)) {

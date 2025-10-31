@@ -3,7 +3,7 @@
         {{ $t("onboarding.finish") }}
     </el-button>
 </template>
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .alternative {
         border: 1px solid #8405FF;
         animation: glowAnimation 1s infinite alternate;

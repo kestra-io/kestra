@@ -85,7 +85,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {ref, computed, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
@@ -196,7 +196,6 @@
                 .then((response:any) => {
                     toast.saved(response.id);
                     flowStore.flowYaml = response.source;
-                    flowStore.flowYamlBeforeAdd = response.source;
                     load()
                 })
                 .then(() => {

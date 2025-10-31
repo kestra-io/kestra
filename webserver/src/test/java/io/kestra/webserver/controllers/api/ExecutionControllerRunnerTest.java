@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
@@ -686,7 +687,7 @@ class ExecutionControllerRunnerTest {
 
                     assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
                     assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-                    assertThat(restartedExec.getTaskRunList().get(2).getAttempts()).isNull();
+                    assertThat(restartedExec.getTaskRunList().get(2).getAttempts()).isNotNull();
                     assertThat(restartedExec.getTaskRunList().get(3).getAttempts().size()).isEqualTo(1);
                     });
             },
@@ -700,7 +701,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(1);
         assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size()).isEqualTo(1);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).isNull();
+        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).isNotNull();
         assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getHistories().stream().filter(state -> state.getState() == State.Type.PAUSED).count()).isEqualTo(1L);
         assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts().size()).isEqualTo(2);
         assertThat(finishedRestartedExecution.getTaskRunList().get(4).getAttempts().size()).isEqualTo(1);
@@ -977,6 +978,29 @@ class ExecutionControllerRunnerTest {
         // resume the execution
         HttpResponse<?> resumeResponse = client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", null));
+        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+
+        // check that the execution is no more paused
+        Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
+        assertThat((Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("resumed")).containsKey("on");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/resume-validate.yaml"})
+    @SuppressWarnings("unchecked")
+    void resumeValidateExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {
+        // Run execution until it is paused
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "resume-validate");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        // validate inputs to resume a paused execution
+        HttpResponse<?> resumeValidateResponse = client.toBlocking().exchange(
+          HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume/validate", null));
+        assertThat(resumeValidateResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // resume the execution
+        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+          HttpRequest.POST("/api/v1/main/executions/" + pausedExecution.getId() + "/resume", null));
         assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
         // check that the execution is no more paused
@@ -1264,20 +1288,22 @@ class ExecutionControllerRunnerTest {
         assertThat(executions.getTotal()).isEqualTo(4L);
     }
 
-    @RetryingTest(5)
+    @FlakyTest
+    @Test
     @LoadFlows({"flows/valids/pause-test.yaml"})
-    void killExecutionPaused() throws TimeoutException, InterruptedException, QueueException {
+    void killExecutionPaused() throws TimeoutException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
 
-        // resume the execution
-        HttpResponse<?> resumeResponse = client.toBlocking().exchange(
+        // kill the execution
+        HttpResponse<?> killResponse = client.toBlocking().exchange(
             HttpRequest.DELETE("/api/v1/main/executions/" + pausedExecution.getId() + "/kill"));
-        assertThat(resumeResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+        assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
 
-        // check that the execution is no more paused
-        awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
+        // check that the execution is killed
+        Execution killedExecution = awaitExecution(pausedExecution.getId(), exec -> exec.getState().getCurrent().isKilled());
+        assertThat(killedExecution.getTaskRunList()).hasSize(1);
     }
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
@@ -2094,6 +2120,7 @@ class ExecutionControllerRunnerTest {
         assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
+    @FlakyTest
     @Test
     @LoadFlows({"flows/valids/subflow-parent.yaml", "flows/valids/subflow-child.yaml", "flows/valids/subflow-grand-child.yaml"})
     void triggerExecutionAndFollowDependencies() throws InterruptedException {
@@ -2269,6 +2296,20 @@ class ExecutionControllerRunnerTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getCount()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows("flows/valids/webhook-outputs.yaml")
+    void webhookWithOutputs() {
+        Map<String, Object> outputs = client.toBlocking().retrieve(
+            GET(
+                "/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS + "/webhook-outputs/webhook-outputs"
+            ),
+            Argument.mapOf(String.class, Object.class)
+        );
+
+        assertThat(outputs).hasFieldOrPropertyWithValue("status", "ok");
+        assertThat(outputs).containsKey("executionId");
     }
 
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {

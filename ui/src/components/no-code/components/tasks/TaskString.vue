@@ -1,7 +1,7 @@
 <template>
     <div class="wrapper">
         <el-checkbox-button
-            v-if="['duration', 'date-time'].includes(schema.format)"
+            v-if="['duration', 'date-time'].includes(schema?.format ?? '')"
             v-model="pebble"
             :label="$t('no_code.toggle_pebble')"
             :title="$t('no_code.toggle_pebble')"
@@ -9,129 +9,232 @@
         >
             <IconCodeBracesBox />
         </el-checkbox-button>
-        <el-time-picker
-            v-if="!pebble && schema.format === 'duration'"
-            :modelValue="durationValue"
-            type="time"
-            :defaultValue="defaultDuration"
-            :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'duration'}`"
-            @update:model-value="onInputDuration"
-        />
+
         <el-date-picker
-            v-else-if="!pebble && schema.format === 'date-time'"
+            v-if="!pebble && schema?.format === 'date-time'"
             :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
             @update:model-value="onInput($event.toISOString())"
         />
+        <el-input-number
+            v-if="!pebble && showDurationDays"
+            :modelValue="daysDurationValue"
+            align="right"
+            style="width:200px"
+            :min="0"
+            :controls="false"
+            @update:model-value="onInputDaysDuration"
+        >
+            <template #suffix>
+                <span class="duration-unit">{{ $t("days") }}</span>
+            </template>
+        </el-input-number>
+        <el-time-picker
+            v-if="!pebble && schema?.format === 'duration'"
+            :modelValue="timeDurationValue"
+            type="time"
+            :defaultValue="defaultDuration"
+            :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'duration'}`"
+            @update:model-value="onInputDuration"
+            @clear="onInputDaysDuration(undefined)"
+        />
         <InputText
-            v-else-if="disabled"
+            v-if="disabled"
             :modelValue="modelValue"
             disabled
             class="w-100 disabled-field"
         />
         <Editor
-            v-else
+            v-else-if="pebble || !schema?.format"
             :modelValue="editorValue"
             :navbar="false"
             :fullHeight="false"
             :shouldFocus="false"
             schemaType="flow"
-            lang="plaintext-pebble"
+            :lang="`${editorLanguage}-pebble`"
             input
             @update:model-value="onInput"
             :largeSuggestions="false"
         />
     </div>
 </template>
-<script setup>
+<script lang="ts" setup>
+    import {ref, computed, onMounted} from "vue";
+    import $moment from "moment";
+    import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue";
     import Editor from "../../../../components/inputs/Editor.vue";
     import InputText from "../inputs/InputText.vue";
-    import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue";
-</script>
-<script>
-    import Task from "./MixinTask";
+    import {Schema} from "./getTaskComponent";
 
-    export default {
-        inheritAttrs: false,
-        mixins: [Task],
-        components: {Editor},
-        props:{
-            disabled: {
-                type: Boolean,
-                default: false,
-            },
-        },
-        data() {
-            return {
-                pebble: false,
-            };
-        },
-        emits: ["update:modelValue"],
-        mounted(){
-            if(!["duration", "date-time"].includes(this.schema.format) || !this.modelValue){
-                this.pebble = false;
-            } else if( this.schema.format === "duration" && this.values) {
-                this.pebble = !this.$moment.duration(this.modelValue).isValid();
-            } else if (this.schema.format === "date-time" && this.values) {
-                this.pebble = isNaN(Date.parse(this.modelValue));
+    const props = defineProps<{
+        disabled?: boolean;
+        modelValue?: string;
+        schema?: Schema;
+        root?: string;
+        task?: any;
+    }>();
+
+    const emit = defineEmits<{
+        (e: "update:modelValue", value: string | undefined): void;
+    }>();
+
+
+    const pebble = ref(false);
+
+    // Function to detect programming language from task type
+    function detectLanguageFromTaskType(): string {
+        if (!props.task?.type) {
+            return "plaintext";
+        }
+
+        const taskType = props.task.type;
+
+        // Check for script tasks and extract language
+        if (taskType.includes("io.kestra.plugin.scripts.")) {
+            if (taskType.includes(".python.")) {
+                return "python";
+            } else if (taskType.includes(".node.")) {
+                return "javascript";
+            } else if (taskType.includes(".shell.")) {
+                return "shell";
+            } else if (taskType.includes(".powershell.")) {
+                return "powershell";
+            } else if (taskType.includes(".r.")) {
+                return "r";
+            } else if (taskType.includes(".julia.")) {
+                return "julia";
+            } else if (taskType.includes(".ruby.")) {
+                return "ruby";
+            } else if (taskType.includes(".go.")) {
+                return "go";
+            } else if (taskType.includes(".deno.")) {
+                return "typescript";
+            } else if (taskType.includes(".lua.")) {
+                return "lua";
+            } else if (taskType.includes(".bun.")) {
+                return "javascript";
+            } else if (taskType.includes(".php.")) {
+                return "php";
+            } else if (taskType.includes(".perl.")) {
+                return "perl";
+            } else if (taskType.includes(".groovy.")) {
+                return "groovy";
             }
-        },
-        computed: {
-            isValid() {
-                if (this.required && !this.modelValue) {
-                    return false;
-                }
+        }
 
-                if (this.schema.regex && this.modelValue) {
-                    return RegExp(this.schema.regex).test(this.modelValue);
-                }
+        return "plaintext";
+    }
 
-                return true;
-            },
-            durationValue() {
-                if (typeof this.values === "string") {
-                    const duration = this.$moment.duration(this.values);
+    // Computed property for editor language
+    const editorLanguage = computed(() => {
+        // Only apply syntax highlighting for script and commands fields
+        if (props.root === "script" || props.root === "commands" ||
+            props.root?.endsWith(".script") || props.root?.endsWith(".commands")) {
+            return detectLanguageFromTaskType();
+        }
 
-                    return new Date(
-                        1981,
-                        1,
-                        1,
-                        duration.hours(),
-                        duration.minutes(),
-                        duration.seconds(),
-                    );
-                }
+        return "plaintext";
+    });
 
-                return undefined;
-            },
-            defaultDuration() {
-                return this.$moment().seconds(0).minutes(0).hours(0).toDate();
-            },
-        },
-        methods: {
-            onInputDuration(value) {
-                const emitted =
-                    value === "" || value === null
-                        ? undefined
-                        : this.$moment
-                            .duration({
-                                seconds: value.getSeconds(),
-                                minutes: value.getMinutes(),
-                                hours: value.getHours(),
-                            })
-                            .toString();
+    const values = computed(() => {
+        if (props.modelValue === undefined) {
+            return props.schema?.default;
+        }
 
-                this.$emit("update:modelValue", emitted);
-            },
-            onInput(value) {
-                this.$emit("update:modelValue", value);
-            },
-        },
-    };
+        return props.modelValue;
+    })
+
+    onMounted(() => {
+        const schema = props.schema;
+        if (!schema) return;
+
+        if (!["duration", "date-time"].includes(schema.format ?? "") || !props.modelValue) {
+            pebble.value = false;
+        } else if (schema.format === "duration" && values.value) {
+            pebble.value = !$moment.duration(props.modelValue).isValid();
+        } else if (schema.format === "date-time" && values.value) {
+            pebble.value = isNaN(Date.parse(props.modelValue as string));
+        }
+    });
+
+    // FIXME: hardcoded condition only show days input for timeWindow durations
+    const showDurationDays = computed(() => {
+        return props.schema?.format === "duration" && props.root?.startsWith("timeWindow")
+    });
+
+    const daysDurationValue = computed<number | undefined>(() => {
+        if (typeof values.value === "string") {
+            const duration = $moment.duration(values.value);
+            return Math.floor(duration.asDays());
+        }
+        return undefined;
+    });
+
+    const timeDurationValue = computed<Date | undefined>(() => {
+        if (typeof values.value === "string") {
+            const duration = $moment.duration(values.value);
+            return new Date(
+                1981,
+                1,
+                1,
+                duration.hours(),
+                duration.minutes(),
+                duration.seconds(),
+            );
+        }
+        return undefined;
+    });
+
+    const defaultDuration = computed(() => {
+        return $moment().seconds(0).minutes(0).hours(0).toDate();
+    });
+
+    function onInputDuration(value: Date | "" | null) {
+        const emitted =
+            value === "" || value === null
+                ? undefined
+                : $moment
+                    .duration({
+                        days: daysDurationValue.value || 0,
+                        seconds: value.getSeconds(),
+                        minutes: value.getMinutes(),
+                        hours: value.getHours(),
+                    })
+                    .toString();
+        emit("update:modelValue", emitted);
+    }
+
+    function onInputDaysDuration(value: number | undefined) {
+        const currentTimeDuration = timeDurationValue.value;
+        const emitted = (value === undefined)
+            ? undefined
+            : currentTimeDuration === undefined
+                ? $moment
+                    .duration({
+                        days: value,
+                    })
+                    .toString()
+                : $moment
+                    .duration({
+                        days: value,
+                        hours: currentTimeDuration.getHours(),
+                        minutes: currentTimeDuration.getMinutes(),
+                        seconds: currentTimeDuration.getSeconds(),
+                    })
+                    .toString()
+        emit("update:modelValue", emitted);
+    }
+
+    function onInput(value: string) {
+        emit("update:modelValue", value);
+    }
+
+    const editorValue = computed(() => props.modelValue);
+
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 :deep(.el-input__inner) {
     &::placeholder {
         color: var(--ks-content-inactive) !important;
@@ -172,6 +275,13 @@
         font-size: 24px;
         vertical-align: top;
     }
+}
+
+.duration-unit{
+    color: var(--ks-content-inactive);
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    background-color: transparent;
 }
 
 </style>

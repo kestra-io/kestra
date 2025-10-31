@@ -61,7 +61,7 @@
         overrideIntro?: string | null;
         absolute?: boolean;
         fetchPluginDocumentation?: boolean;
-        plugin: any;
+        plugin?: any;
     }>(), {
         overrideIntro: null,
         absolute: false,

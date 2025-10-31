@@ -37,7 +37,7 @@ class MultipleConditionTest {
                     .in(Property.ofValue(Collections.singletonList(State.Type.SUCCESS)))
                     .build(),
                 "second", Expression.builder()
-                    .expression(new Property<>("{{ flow.id }}"))
+                    .expression(Property.ofExpression("{{ flow.id }}"))
                     .build()
             ))
             .build();

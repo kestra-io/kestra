@@ -16,10 +16,9 @@
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
+                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
             </div>
-
-            <Markdown class="markdown-tooltip mt-3 postParagraph" :source="feed.description" />
+            <Markdown class="markdown-tooltip postParagraph" :source="feed.description" />
 
             <div class="newsButtonBar">
                 <el-button
@@ -41,12 +40,12 @@
                 </el-button>
             </div>
 
-            <el-divider v-if="index !== feeds.length - 1" />
+            <el-divider class="mb-2" v-if="index !== feeds.length - 1" />
         </div>
     </ContextInfoContent>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, onMounted, reactive} from "vue";
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core"
@@ -73,9 +72,9 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .post {
-        padding: 1rem;
+        padding: 1rem 1rem 0rem 1rem;
 
         h5 {
             margin-bottom: 0;
@@ -87,7 +86,7 @@
             max-width: 10rem;
             margin-right: 1rem;
             float: left;
-            border-radius: var(--border-radius-lg);
+            border-radius: var(--bs-border-radius-lg);
         }
 
         .metaBlock {
@@ -157,6 +156,6 @@
     }
 
     :deep(.news-date) {
-        color: var(--bs-gray-700);
+        color: var(--ks-content-secondary);
     }
 </style>

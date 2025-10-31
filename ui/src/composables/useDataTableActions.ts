@@ -14,7 +14,7 @@ interface PageChangeItem {
     page: number;
 }
 
-interface DataTableRef {
+export interface DataTableRef {
     isLoading: boolean;
 }
 
@@ -101,11 +101,12 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
         internalPageNumber.value = item.page;
 
         if (!embed.value) {
+            const {size: _size, page: _page, ...otherQuery} = route.query;
             router.push({
                 query: {
-                    ...route.query,
                     size: item.size,
-                    page: item.page
+                    page: item.page,
+                    ...otherQuery
                 }
             });
         } else {
@@ -158,14 +159,14 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
     };
 
     const refreshPaging = () => {
-        internalPageSize.value = pageSize.value || Number(route.query.size) || 25;
-        internalPageNumber.value = pageNumber.value || Number(route.query.page) || 1;
+        internalPageSize.value = pageSize.value ?? Number(route.query.size ?? 25);
+        internalPageNumber.value = pageNumber.value ?? Number(route.query.page ?? 1);
     };
 
     watch(
-        () => route,
-        (newValue, oldValue) => {
-            if (oldValue?.name === newValue?.name && !_isEqual(newValue.query, oldValue.query)) {
+        () => route.query,
+        (newQuery, oldQuery) => {
+            if (!_isEqual(newQuery, oldQuery)) {
                 refreshPaging();
                 load(onDataLoaded);
             }

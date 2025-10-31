@@ -17,7 +17,7 @@
 
                 <hr class="my-4">
 
-                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :merge="shouldMerge(v.schema)" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
+                <Wrapper :key="v.fieldKey" v-for="(v) in fieldsFromSchemaRest" :transparent="SECTIONS_IDS.includes(v.fieldKey)">
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
@@ -60,7 +60,6 @@
     import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
     import debounce from "lodash/debounce";
     import {NoCodeProps} from "../flows/noCodeTypes";
-    import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
     import {usePluginsStore} from "../../stores/plugins";
     import {useKeyboardSave} from "./utils/useKeyboardSave";
@@ -82,13 +81,13 @@
             typeof val === "object" && !Array.isArray(val)
                 ? removeNullAndUndefined(val)
                 : val; // Handle null values
+        
 
-
-        const currentFlow = parsedFlow.value;
-
-        currentFlow[key] = realValue;
-
-        editorUpdate(YAML_UTILS.stringify(currentFlow));
+        editorUpdate(YAML_UTILS.replaceBlockWithPath({
+            source: flowStore.flowYaml ?? "",
+            path: key,
+            newContent: YAML_UTILS.stringify(realValue),
+        }));
     }
 
     const lastValidFlowYaml = computed<string>(
@@ -105,10 +104,9 @@
     const {
         fieldsFromSchemaTop,
         fieldsFromSchemaRest,
-        parsedFlow,
     } = useFlowFields(lastValidFlowYaml)
 
-    useKeyboardSave(lastValidFlowYaml)
+    useKeyboardSave()
 
     const flowStore = useFlowStore();
     const flowYaml = computed<string>(() => flowStore.flowYaml ?? "");
@@ -118,28 +116,29 @@
     }, 500);
 
     const timeout = ref();
-    const editorStore = useEditorStore();
 
     const editorUpdate = (source: string) => {
+        let parsedSource: any = {}
+        try {
+            parsedSource = YAML_UTILS.parse(source);
+        } catch {
+            // ignore parse errors here
+            return;
+        }
+        
         // if no-code would not change the structure of the flow,
         // do not trigger an update as it would remove all formatting and comments
-        if(deepEqual(YAML_UTILS.parse(source), flowStore.flowParsed)) {
+        if(deepEqual(parsedSource, flowStore.flowParsed)) {
             return;
         }
         flowStore.flowYaml = source;
-        flowStore.haveChange = true;
         validateFlow();
-        editorStore.setTabDirty({
-            name: "Flow",
-            dirty: true
-        });
 
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {
             flowStore.onEdit({
                 source,
-                currentIsFlow: true,
                 topologyVisible: true,
             });
         }, 1000);
@@ -199,7 +198,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .no-code {
         height: 100%;
         overflow-y: auto;

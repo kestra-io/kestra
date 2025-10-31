@@ -41,8 +41,8 @@ class GetTest {
         Get get = Get.builder()
             .id(Get.class.getSimpleName())
             .type(Get.class.getName())
-            .namespace(new Property<>("{{ inputs.namespace }}"))
-            .key(new Property<>("{{ inputs.key }}"))
+            .namespace(Property.ofExpression("{{ inputs.namespace }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
             .build();
 
 
@@ -71,7 +71,7 @@ class GetTest {
         Get get = Get.builder()
             .id(Get.class.getSimpleName())
             .type(Get.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
             .build();
 
 
@@ -99,8 +99,8 @@ class GetTest {
         Get get = Get.builder()
             .id(Get.class.getSimpleName())
             .type(Get.class.getName())
-            .namespace(new Property<>(namespaceId))
-            .key(new Property<>("my-key"))
+            .namespace(Property.ofValue(namespaceId))
+            .key(Property.ofValue("my-key"))
             .build();
 
         // When

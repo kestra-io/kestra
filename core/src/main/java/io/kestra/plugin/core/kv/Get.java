@@ -84,7 +84,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         } else {
             FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
             flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
-            value =  runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
+            value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
         }
 
         if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && value.isEmpty()) {

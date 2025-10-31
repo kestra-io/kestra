@@ -1,6 +1,5 @@
 <template>
     <el-select
-        data-component="FILENAME_PLACEHOLDER"
         :modelValue="value"
         @update:model-value="onInput"
         filterable

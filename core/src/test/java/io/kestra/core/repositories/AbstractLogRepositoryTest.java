@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
@@ -358,5 +359,17 @@ public abstract class AbstractLogRepositoryTest {
             null);
 
         assertThat(results).hasSize(1);
+    }
+
+    @Test
+    void purge() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        logRepository.save(logEntry(tenant, Level.INFO, "execution1").build());
+        logRepository.save(logEntry(tenant, Level.INFO, "execution1").build());
+        logRepository.save(logEntry(tenant, Level.INFO, "execution2").build());
+        logRepository.save(logEntry(tenant, Level.INFO, "execution2").build());
+
+        var result = logRepository.purge(List.of(Execution.builder().id("execution1").build(), Execution.builder().id("execution2").build()));
+        assertThat(result).isEqualTo(4);
     }
 }

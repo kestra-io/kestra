@@ -48,7 +48,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .label-container {
     white-space: nowrap;
     overflow-x: auto;

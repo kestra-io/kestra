@@ -27,7 +27,7 @@ class ExecutionOutputsTest {
             Map.of("test", "value"));
 
         ExecutionOutputs build = ExecutionOutputs.builder()
-            .expression(new Property<>("{{ trigger.outputs.test == 'value' }}"))
+            .expression(Property.ofExpression("{{ trigger.outputs.test == 'value' }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -44,7 +44,7 @@ class ExecutionOutputsTest {
             Map.of("test", "value"));
 
         ExecutionOutputs build = ExecutionOutputs.builder()
-            .expression(new Property<>("{{ unknown is defined }}"))
+            .expression(Property.ofExpression("{{ unknown is defined }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -58,7 +58,7 @@ class ExecutionOutputsTest {
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
 
         ExecutionOutputs build = ExecutionOutputs.builder()
-            .expression(new Property<>("{{ not evaluated }}"))
+            .expression(Property.ofExpression("{{ not evaluated }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

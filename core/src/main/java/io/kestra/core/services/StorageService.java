@@ -14,8 +14,12 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -32,7 +36,11 @@ public abstract class StorageService {
         try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runContext.storage().getFile(from)))) {
             List<Path> splited;
 
-            if (storageSplitInterface.getBytes() != null) {
+            if (storageSplitInterface.getRegexPattern() != null) {
+                String renderedPattern = runContext.render(storageSplitInterface.getRegexPattern()).as(String.class).orElseThrow();
+                String separator = runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow();
+                splited = StorageService.splitByRegex(runContext, extension, separator, bufferedReader, renderedPattern);
+            } else if (storageSplitInterface.getBytes() != null) {
                 ReadableBytesTypeConverter readableBytesTypeConverter = new ReadableBytesTypeConverter();
                 Number convert = readableBytesTypeConverter.convert(runContext.render(storageSplitInterface.getBytes()).as(String.class).orElseThrow(), Number.class)
                     .orElseThrow(() -> new IllegalArgumentException("Invalid size with value '" + storageSplitInterface.getBytes() + "'"));
@@ -47,7 +55,7 @@ public abstract class StorageService {
                 splited = StorageService.split(runContext, extension, runContext.render(storageSplitInterface.getSeparator()).as(String.class).orElseThrow(),
                     bufferedReader, (bytes, size) -> size >= renderedRows);
             } else {
-                throw new IllegalArgumentException("Invalid configuration with no size, count, nor rows");
+                throw new IllegalArgumentException("Invalid configuration with no size, count, rows, nor regexPattern");
             }
 
             return splited
@@ -114,6 +122,38 @@ public abstract class StorageService {
 
         writers.forEach(throwConsumer(RandomAccessFile::close));
 
+        return files.stream().filter(p -> p.toFile().length() > 0).toList();
+    }
+
+    private static List<Path> splitByRegex(RunContext runContext, String extension, String separator, BufferedReader bufferedReader, String regexPattern) throws IOException {
+        List<Path> files = new ArrayList<>();
+        Map<String, RandomAccessFile> writers = new HashMap<>();
+        Pattern pattern = Pattern.compile(regexPattern);
+        
+        String row;
+        while ((row = bufferedReader.readLine()) != null) {
+            Matcher matcher = pattern.matcher(row);
+            
+            if (matcher.find() && matcher.groupCount() > 0) {
+                String routingKey = matcher.group(1);
+                
+                // Get or create writer for this routing key
+                RandomAccessFile writer = writers.get(routingKey);
+                if (writer == null) {
+                    Path path = runContext.workingDir().createTempFile(extension);
+                    files.add(path);
+                    writer = new RandomAccessFile(path.toFile(), "rw");
+                    writers.put(routingKey, writer);
+                }
+                
+                byte[] bytes = (row + separator).getBytes(StandardCharsets.UTF_8);
+                writer.getChannel().write(ByteBuffer.wrap(bytes));
+            }
+            // Lines that don't match the pattern are ignored
+        }
+        
+        writers.values().forEach(throwConsumer(RandomAccessFile::close));
+        
         return files.stream().filter(p -> p.toFile().length() > 0).toList();
     }
 

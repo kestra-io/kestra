@@ -1,0 +1,32 @@
+id: allow-failure-with-retry
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+
+  - id: retry_block
+    type: io.kestra.plugin.core.flow.AllowFailure
+    tasks:
+      - id: failing_task
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ taskrun.attemptsCount == 3 ? 'success' : ko }}"
+        retry:
+          type: constant
+          behavior: RETRY_FAILED_TASK
+          interval: PT0.1S
+          maxAttempts: 3
+          warningOnRetry: true
+    errors:
+      - id: error_handler
+        type: io.kestra.plugin.core.log.Log
+        message: "Error handler executed"
+    finally:
+      - id: finally_task
+        type: io.kestra.plugin.core.log.Log
+        message: "Finally block executed"
+
+  - id: downstream_task
+    type: io.kestra.plugin.core.log.Log
+    message: "Downstream task executed"

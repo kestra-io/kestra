@@ -59,7 +59,20 @@
             <el-alert type="info" :closable="false" class="mb-4 main-info">
                 <template #title>
                     <div>
-                        <span v-html="$t('execution replay', {originalId: execution?.originalId})" />
+                        {{ $t("execution replay") }}
+                        <router-link
+                            :to="{
+                                name: 'executions/update',
+                                params: {
+                                    tenant: execution.tenantId,
+                                    namespace: execution.namespace,
+                                    flowId: execution.flowId,
+                                    id: execution.originalId,
+                                }
+                            }"
+                        >
+                            <Id :value="execution.originalId " :shrink="false" />
+                        </router-link>
                     </div>
                 </template>
             </el-alert>
@@ -91,7 +104,7 @@
                             params: scope.row.link
                         }"
                     >
-                        <code class="parent-execution">{{ scope.row.value }}</code>
+                        <Id :value="scope.row.value " :shrink="false" />
                     </router-link>
                     <span v-else-if="scope.row.date">
                         <DateAgo :date="scope.row.value" />
@@ -189,6 +202,7 @@
         </div>
     </div>
 </template>
+
 <script>
     import Status from "../Status.vue";
     import SetLabels from "./SetLabels.vue";
@@ -216,6 +230,7 @@
     import Markdown from "../../components/layout/Markdown.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
+    import Id from "../Id.vue";
 
     export default {
         inheritAttrs: false,
@@ -241,7 +256,8 @@
             ChevronUp,
             ChevronLeft,
             ChevronRight,
-            Markdown
+            Markdown,
+            Id
         },
         emits: ["follow"],
         methods: {
@@ -634,9 +650,5 @@
         padding: .5rem;
         border-top: 1px solid var(--ks-log-background-error);
     }
-}
-
-code.parent-execution {
-    color: var(--ks-content-link);
 }
 </style>

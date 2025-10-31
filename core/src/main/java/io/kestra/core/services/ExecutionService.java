@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
@@ -56,8 +57,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
-import static io.kestra.core.utils.Rethrow.throwPredicate;
+import static io.kestra.core.utils.Rethrow.*;
 
 @Singleton
 @Slf4j
@@ -122,21 +122,38 @@ public class ExecutionService {
      * Retry set the given taskRun in created state
      * and return the execution in running state
      **/
-    public Execution retryTask(Execution execution, String taskRunId) {
-        List<TaskRun> newTaskRuns = execution
-            .getTaskRunList()
-            .stream()
-            .map(taskRun -> {
-                if (taskRun.getId().equals(taskRunId)) {
-                    return taskRun
-                        .withState(State.Type.CREATED);
+    public Execution retryTask(Execution execution, Flow flow, String taskRunId) throws InternalException {
+        TaskRun taskRun = execution.findTaskRunByTaskRunId(taskRunId).withState(State.Type.CREATED);
+        List<TaskRun> taskRunList = execution.getTaskRunList();
+
+        if (taskRun.getParentTaskRunId() != null) {
+            // we need to find the parent to remove any errors or finally tasks already executed
+            TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
+            Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
+            if (parentTask instanceof FlowableTask<?> flowableTask) {
+                if (flowableTask.getErrors() != null) {
+                    List<Task> allErrors = Stream.concat(flowableTask.getErrors().stream()
+                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getErrors() != null)
+                                .flatMap(task -> ((FlowableTask<?>) task).getErrors().stream()),
+                            flowableTask.getErrors().stream())
+                        .toList();
+                    allErrors.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
                 }
 
-                return taskRun;
-            })
-            .toList();
+                if (flowableTask.getFinally() != null) {
+                    List<Task> allFinally = Stream.concat(flowableTask.getFinally().stream()
+                                .filter(task -> task.isFlowable() && ((FlowableTask<?>) task).getFinally() != null)
+                                .flatMap(task -> ((FlowableTask<?>) task).getFinally().stream()),
+                            flowableTask.getFinally().stream())
+                        .toList();
+                    allFinally.forEach(error -> taskRunList.removeIf(t -> t.getTaskId().equals(error.getId())));
+                }
+            }
 
-        return execution.withTaskRunList(newTaskRuns).withState(State.Type.RUNNING);
+            return execution.withTaskRunList(taskRunList).withTaskRun(taskRun).withState(State.Type.RUNNING);
+        }
+
+        return execution.withTaskRun(taskRun).withState(State.Type.RUNNING);
     }
 
     public Execution retryWaitFor(Execution execution, String flowableTaskRunId) {
@@ -431,7 +448,8 @@ public class ExecutionService {
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state
+        @Nullable List<State.Type> state,
+        int batchSize
     ) throws IOException {
         PurgeResult purgeResult = this.executionRepository
             .find(
@@ -448,24 +466,27 @@ public class ExecutionService {
                 null,
                 true
             )
-            .map(throwFunction(execution -> {
+            .buffer(batchSize)
+            .map(throwFunction(executions -> {
                 PurgeResult.PurgeResultBuilder<?, ?> builder = PurgeResult.builder();
 
                 if (purgeExecution) {
-                    builder.executionsCount(this.executionRepository.purge(execution));
+                    builder.executionsCount(this.executionRepository.purge(executions));
                 }
 
                 if (purgeLog) {
-                    builder.logsCount(this.logRepository.purge(execution));
+                    builder.logsCount(this.logRepository.purge(executions));
                 }
 
                 if (purgeMetric) {
-                    builder.metricsCount(this.metricRepository.purge(execution));
+                    builder.metricsCount(this.metricRepository.purge(executions));
                 }
 
                 if (purgeStorage) {
-                    URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
-                    builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), execution.getNamespace(), uri).size());
+                    executions.forEach(throwConsumer(execution -> {
+                        URI uri = StorageContext.forExecution(execution).getExecutionStorageURI(StorageContext.KESTRA_SCHEME);
+                        builder.storagesCount(storageInterface.deleteByPrefix(execution.getTenantId(), execution.getNamespace(), uri).size());
+                    }));
                 }
 
                 return (PurgeResult) builder.build();
@@ -706,7 +727,7 @@ public class ExecutionService {
             // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
             try {
                 newExecution = this.resume(execution, flow, State.Type.KILLING, null);
-                newExecution = newExecution.withState(afterKillState.orElse(newExecution.getState().getCurrent()));
+                newExecution = newExecution.withState(killingOrAfterKillState);
             } catch (Exception e) {
                 // if we cannot resume, we set it anyway to killing, so we don't throw
                 log.warn("Unable to resume a paused execution before killing it", e);
@@ -715,11 +736,12 @@ public class ExecutionService {
         } else {
             newExecution = execution.withState(killingOrAfterKillState);
         }
-        
-        // Because this method is expected to be called by the Executor we can return the Execution 
+
+        // Because this method is expected to be called by the Executor we can return the Execution
         // immediately without publishing a CrudEvent like it's done on pause/resume method.
         return newExecution;
     }
+
     public Execution kill(Execution execution, FlowInterface flow) {
         return this.kill(execution, flow, Optional.empty());
     }

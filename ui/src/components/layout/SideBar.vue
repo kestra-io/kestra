@@ -1,7 +1,6 @@
 <template>
     <SidebarMenu
         ref="sideBarRef"
-        data-component="FILENAME_PLACEHOLDER"
         id="side-menu"
         :menu
         @update:collapsed="onToggleCollapse"
@@ -127,7 +126,7 @@
     const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .collapseButton {
     position: absolute;
     top: .5rem;

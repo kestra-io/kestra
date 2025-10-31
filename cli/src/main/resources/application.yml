@@ -49,6 +49,8 @@ micronaut:
           - /ui/.+
           - /health
           - /health/.+
+          - /metrics
+          - /metrics/.+
           - /prometheus
     http-version: HTTP_1_1
   caches:

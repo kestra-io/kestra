@@ -23,7 +23,8 @@
                 <label class="input-label">{{ $t('filter.key') }}</label>
                 <el-input
                     v-model="newKey"
-                    placeholder="e.g. type"
+                    placeholder="e.g. flowId"
+                    :disabled="isMax"
                     @keydown.enter="addPair"
                 />
             </div>
@@ -31,7 +32,8 @@
                 <label class="input-label">{{ $t('filter.value') }}</label>
                 <el-input
                     v-model="newValue"
-                    placeholder="e.g. io.kestra.ee.models..."
+                    placeholder="e.g. orchestrator-1234"
+                    :disabled="isMax"
                     @keydown.enter="addPair"
                 />
             </div>
@@ -42,6 +44,7 @@
                 size="small"
                 :icon="Plus"
                 class="add-btn"
+                :disabled="isMax"
                 @click="addPair"
             >
                 {{ $t('filter.add key value pair') }}
@@ -51,12 +54,15 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
+    import {ref, watch, computed} from "vue";
     import {Plus} from "../../utils/icons";
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         modelValue: string[];
-    }>();
+        maxPairs?: number;
+    }>(), {
+        maxPairs: undefined
+    });
 
     const emits = defineEmits<{
         "update:modelValue": [value: string[]];
@@ -65,6 +71,10 @@
     const newKey = ref("");
     const newValue = ref("");
     const detailPairs = ref<Array<{ key: string; value: string }>>([]);
+
+    const isMax = computed(() => 
+        props.maxPairs !== undefined && detailPairs.value.length >= props.maxPairs
+    );
 
     // For Auditlogs Details KV pairs parsing and serialization
     const parseDetailPairs = (values: string[]) =>
@@ -91,6 +101,7 @@
         if (existingIndex !== -1) {
             detailPairs.value[existingIndex].value = value;
         } else {
+            if (isMax.value) return;
             detailPairs.value.push({key, value});
         }
 

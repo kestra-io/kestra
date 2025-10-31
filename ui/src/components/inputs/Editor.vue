@@ -184,7 +184,7 @@
         return (
             props.input === true &&
             !props.shouldFocus &&
-            (!props.modelValue || props.modelValue.trim() === "") &&
+            (!props.modelValue || (typeof props.modelValue === "string" && props.modelValue.trim() === "")) &&
             !focus.value
         );
     })

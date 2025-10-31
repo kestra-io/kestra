@@ -146,7 +146,7 @@
     z-index: 1000;
 
     .edit-popup {
-        background: var(--ks-background-body);
+        background: var(--ks-dropdown-background);
         border: 1px solid var(--ks-border-primary);
         border-radius: 8px;
         box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
@@ -158,12 +158,12 @@
 
 .filter-popup-enter-active,
 .filter-popup-leave-active {
-    transition: all 0.2s ease-out;
+    transition: all 0.1s ease-out;
 }
 
 .filter-popup-enter-from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-4px);
 }
 
 .filter-popup-enter-to,
@@ -174,6 +174,6 @@
 
 .filter-popup-leave-to {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-4px);
 }
 </style>

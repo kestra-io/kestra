@@ -41,4 +41,6 @@
     function onPageChanged(pagination: any) {
         emit("page-changed", pagination);
     }
+
+    defineExpose({isLoading})
 </script>

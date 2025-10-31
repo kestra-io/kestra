@@ -14,7 +14,7 @@ interface PageChangeItem {
     page: number;
 }
 
-interface DataTableRef {
+export interface DataTableRef {
     isLoading: boolean;
 }
 

@@ -44,7 +44,6 @@
                 :root="getKey(key)"
                 :schema="schema"
                 :required="isRequired(key)"
-                :definitions="definitions"
                 :min="getExclusiveMinimum(key)"
             />
         </el-form-item>

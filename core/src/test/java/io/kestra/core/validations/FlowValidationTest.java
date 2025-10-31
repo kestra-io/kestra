@@ -70,7 +70,7 @@ class FlowValidationTest {
     }
     
     @Test
-    void shouldGetConstraintErrorGivenInputWithBothDefaultsAndSuggestion() {
+    void shouldGetConstraintErrorGivenInputWithBothDefaultsAndPrefill() {
         // Given
         GenericFlow flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
             id: test
@@ -88,7 +88,7 @@ class FlowValidationTest {
         
         // Then
         assertThat(validate.isPresent()).isEqualTo(true);
-        assertThat(validate.get().getMessage()).contains("Inputs with a default value cannot also have a suggestion.");
+        assertThat(validate.get().getMessage()).contains("Inputs with a default value cannot also have a prefill.");
     }
     
     @Test

@@ -494,13 +494,13 @@ public class JdbcExecutor implements ExecutorInterface {
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.WARN,
-                                "Re-emitting WorkerTask."
+                                "Re-resubmitting WorkerTask."
                             );
                         } catch (QueueException e) {
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.ERROR,
-                                "Unable to re-emit WorkerTask.",
+                                "Unable to re-resubmit WorkerTask.",
                                 e
                             );
                         }

@@ -123,7 +123,7 @@
     --el-input-bg-color: var(--ks-background-input);
 }
 
-.el-input, .el-input-number, .el-select, .el-date-editor.el-input {
+.el-input, .el-input-number, .el-date-editor.el-input {
 
     background-color: var(--ks-background-body);
     width: 100%;
@@ -732,12 +732,12 @@ form.ks-horizontal {
 
     &.is-light {
         border: 1px solid var(--ks-border-primary);
-        background: var(--ks-background-body);
+        background: var(--ks-dropdown-background);
         box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
         
         .el-popper__arrow::before {
             border: 1px solid var(--ks-border-primary);
-            background-color: var(--ks-background-body);
+            background-color: var(--ks-dropdown-background);
         }
     }
 
@@ -804,7 +804,7 @@ form.ks-horizontal {
 
     .el-dropdown-menu {
         padding: 0;
-        background-color: transparent;
+        background-color: var(--ks-dropdown-background);
     }
 
     // no longer require focus to get hover effect on dropdowns
@@ -827,7 +827,7 @@ form.ks-horizontal {
         }
 
         &:not(.is-disabled):hover {
-            background-color: var(--el-dropdown-menuItem-hover-fill);
+            background-color: var(--ks-dropdown-background-hover);
         }
     }
 }

@@ -21,7 +21,7 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "7.0.0.6105"
+    id "org.sonarqube" version "7.0.1.6134"
     id 'jacoco-report-aggregation'
 
     // helper

@@ -79,7 +79,7 @@
                 'filters-hidden': filter.searchInputFullWidth?.value,
                 'read-only': filter.readOnly?.value
             }"
-            class="filter-chip shadow-sm"
+            class="filter-chip"
             @remove="filter.removeFilter"
             @update="filter.updateFilter"
         />
@@ -134,7 +134,7 @@
 
 <style lang="scss" scoped>
 .filter-container {
-    --ks-box-shadow: 0 2px 4px var(--ks-card-shadow);
+    --ks-box-shadow: 0 1px 2px var(--ks-card-shadow);
 
     display: flex;
     align-items: flex-start;
@@ -204,6 +204,7 @@
 
 .filter-chip {
     flex-shrink: 0;
+    box-shadow: 0 1px 2px var(--ks-card-shadow);
 
     &.filters-hidden {
         display: none;

@@ -10,6 +10,7 @@
             :placeholder="placeholder"
             v-model="internalValue"
             @input="handleInput"
+            @keydown.enter.prevent="handleEnter"
         >
         <button class="reset" type="button" @click="clearInput">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -37,6 +38,10 @@
     const handleInput = (e: Event) => {
         const value = (e.target as HTMLInputElement).value;
         emits("update:model-value", value);
+    };
+
+    const handleEnter = () => {
+        emits("update:model-value", internalValue.value);
     };
 
     const clearInput = () => {

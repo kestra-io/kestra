@@ -100,7 +100,7 @@ public record QueryFilter(
         LABELS("labels") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
         FLOW_ID("flowId") {

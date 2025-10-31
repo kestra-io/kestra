@@ -1,8 +1,9 @@
 import TaskObject from "../../../../../../src/components/no-code/components/tasks/TaskObject.vue";
-import {ref} from "vue"
+import {computed, provide, ref} from "vue"
 import {StoryObj} from "@storybook/vue3-vite";
 import {waitFor, within, expect, fireEvent} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
+import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../../../../../src/components/no-code/injectionKeys";
 
 export default {
     decorators: [vueRouter([
@@ -34,6 +35,7 @@ const schema = {
 
 const AppTableBlockRender = () => ({
     setup() {
+        provide(SCHEMA_DEFINITIONS_INJECTION_KEY, computed(() => ({})));
         const model = ref<Record<string, any> | undefined>({})
         return () => <div style={{display: "flex", gap: "16px"}}>
             <div style={{width: "500px"}}>
@@ -46,10 +48,10 @@ const AppTableBlockRender = () => ({
             <div style={{width: "500px"}}>
                 <h2>Resulting object</h2>
                 <pre style={{
-                    border: "1px solid #555",
+                    border: "1px solid var(--ks-border-primary)",
                     borderRadius: "4px",
                     padding: "2px",
-                    background: "#222"
+                    background: "var(--ks-background-card)"
                 }} data-testid="resulting-object">{JSON.stringify(model.value, null, 2)}</pre>
             </div>
         </div>
@@ -66,16 +68,16 @@ export const AppTableBlock: Story = {
         });
         canvas.getByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}).click();
 
-        await waitFor(() => {
+        await waitFor(function getByPlaceholderKey() {
             expect(canvas.getByPlaceholderText("Key")).toBeVisible();
         });
 
         fireEvent.input(canvas.getByPlaceholderText("Key"), {target: {value: "key1"}})
         fireEvent.input(canvas.getByTestId("monaco-editor-hidden-synced-textarea"), {target: {value: "value1"}})
 
-        canvas.getByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}).click();
+        fireEvent.click(canvas.getByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}))
 
-        await waitFor(() => {
+        await waitFor(function getByPlaceholderKey() {
             expect(canvas.getAllByPlaceholderText("Key")[1]).toBeVisible();
         });
 

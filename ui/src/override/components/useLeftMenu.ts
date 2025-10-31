@@ -251,6 +251,11 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        href: {name: "admin/concurrency-limits"},
+                        routes: routeStartWith("admin/concurrency-limits"),
+                        title: t("concurrency limits"),
+                    },
+                    {
                         href: {name: "admin/stats"},
                         routes: routeStartWith("admin/stats"),
                         title: t("system overview"),

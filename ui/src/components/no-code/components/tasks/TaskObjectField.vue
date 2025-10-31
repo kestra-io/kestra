@@ -73,7 +73,6 @@
 
     const props = defineProps<{
         schema: any;
-        definitions: any;
         root?: string;
         fieldKey: string;
         task: any;
@@ -106,8 +105,7 @@
             task: props.task,
             root: props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey,
             schema: props.schema,
-            required: isRequired.value,
-            definitions: props.definitions
+            required: isRequired.value
         }
     })
 
@@ -137,7 +135,7 @@
     })
 
     const type = computed(() => {
-        return getTaskComponent(props.schema, props.fieldKey, props.definitions)
+        return getTaskComponent(props.schema, props.fieldKey)
     })
 </script>
 

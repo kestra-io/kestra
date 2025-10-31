@@ -27,7 +27,6 @@
             :task="task"
             @update:model-value="onInputValueChange(inputWithValue[0], $event)"
             :schema="schema"
-            :definitions="definitions"
         />
         <div class="flex-shrink-1">
             <el-button-group class="d-flex flex-nowrap">

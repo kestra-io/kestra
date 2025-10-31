@@ -1,10 +1,12 @@
-import {computed, h, markRaw, provide, Ref} from "vue"
+import {h, markRaw, provide, Ref} from "vue"
 import EditorWrapper, {EditorTabProps, FILES_SET_DIRTY_INJECTION_KEY, FILES_UPDATE_CONTENT_INJECTION_KEY} from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
 import {FILES_CLOSE_TAB_INJECTION_KEY, FILES_OPEN_TAB_INJECTION_KEY} from "../inputs/FileExplorer.vue";
 import {FILES_SAVE_ALL_INJECTION_KEY} from "../inputs/EditorButtonsWrapper.vue";
 import {useNamespacesStore} from "../../override/stores/namespaces";
+import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize";
+import {useFlowStore} from "../../stores/flow";
 
 export const CODE_PREFIX = "code"
 
@@ -22,7 +24,7 @@ export function getTabFromFilesTab(tab: EditorTabProps): Tab {
             label: tab.name,
             icon: () => h(TypeIcon, {name:tab.name}),
         },
-        component: () => h(markRaw(EditorWrapper), tab)
+        component: () => h(markRaw(EditorWrapper), tab),
     } satisfies Tab
 }
 
@@ -67,6 +69,8 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         }
     }
 
+    const flowStore = useFlowStore();
+
     provide(FILES_OPEN_TAB_INJECTION_KEY, (tab) => {
         if(!tab.path){
             return
@@ -75,6 +79,9 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         const existing = panels.value.some(p => p.tabs.some(t => t.uid === uid))
         if(!existing){
             const panelTab = getTabFromFilesTab(tab)
+            if(flowStore.haveChange && tab.flow){
+                (panelTab as TabLive).dirty = true
+            }
             const firstPanelWithCodeTab = panels.value.find(p => p.tabs.some(t => t.uid.startsWith("code")))
             if(firstPanelWithCodeTab){
                 firstPanelWithCodeTab.tabs.push(panelTab)
@@ -139,5 +146,5 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         }
     });
 
-    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, p) => acc + (p.size ?? 0), 0) / panels.value.length))
+    const defaultSize = usePanelDefaultSize(panels);
 }

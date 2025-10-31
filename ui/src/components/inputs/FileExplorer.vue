@@ -120,10 +120,13 @@
                 nodeBeforeDrag = {
                     parent: $event.parent.data.id,
                     path: filesStore.getPath($event.data.id) ?? '',
-                }
+                };
+                handleDragStart();
             "
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
+            @dragover.prevent
+            @dragenter.prevent
         >
             <template #empty>
                 <div class="m-4 empty">
@@ -433,6 +436,7 @@
     const selectedFiles = ref<string[]>([]);
     const selectedNodes = ref<any[]>([]);
     const lastClickedIndex = ref<number | null>(null);
+    const isDragging = ref(false);
 
     const {t} = useI18n();
     const toast = useToast();
@@ -450,6 +454,16 @@
         else labels.message = t("namespace files.dialog.deletion.files", {count: files});
         return labels;
     });
+
+    function handleDragStart() {
+        isDragging.value = true;
+        document.body.classList.add("drag-active");
+    }
+
+    function handleDragEnd() {
+        isDragging.value = false;
+        document.body.classList.remove("drag-active");
+    }
 
     function nodeClass(data: any) {
         if (selectedNodes.value.includes(data.id)) {
@@ -612,6 +626,7 @@
             tree.value.remove(draggedNode.data.id);
             tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent);
         }
+        handleDragEnd();
     }
 
     const creation_name = ref<any>();
@@ -900,5 +915,13 @@
             }
         }
     }
+}
+
+body.drag-active {
+    cursor: not-allowed;
+}
+
+body.drag-active .sidebar{
+    cursor: grabbing;
 }
 </style>

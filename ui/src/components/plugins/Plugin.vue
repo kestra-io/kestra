@@ -31,12 +31,12 @@
                         </el-button>
                     </div>
 
-                    <div class="mb-3 versions" v-if="pluginsStore.versions?.length > 0">
+                    <div class="mb-3 versions" v-if="(pluginsStore.versions?.length ?? 0) > 0">
                         <el-select
                             v-model="version"
                             placeholder="Version"
                             size="small"
-                            :disabled="pluginsStore.versions?.length === 1"
+                            :disabled="(pluginsStore.versions?.length ?? 0) === 1"
                             @change="selectVersion(version)"
                         >
                             <template #label="{value}">
@@ -56,9 +56,9 @@
                     <SchemaToHtml
                         class="plugin-schema"
                         :darkMode="miscStore.theme === 'dark'"
-                        :schema="pluginsStore.plugin.schema"
+                        :schema="pluginsStore.plugin!.schema"
                         :propsInitiallyExpanded="true"
-                        :pluginType="pluginType"
+                        :pluginType="pluginType!"
                         noUrlChange
                     >
                         <template #markdown="{content}">
@@ -72,7 +72,6 @@
 </template>
 
 <script setup lang="ts">
-
     import {ref, computed, onMounted, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
@@ -102,7 +101,6 @@
     const filteredPlugins = ref<any[] | undefined>(undefined);
     const hash = ref<string | undefined>(undefined);
 
-
     const routeInfo = computed(() => ({
         title: pluginType.value ?? t("plugins.names"),
         breadcrumb:
@@ -131,7 +129,7 @@
         pluginsStore.listWithSubgroup({includeDeprecated: false});
     }
 
-    function selectVersion(ver: string) {
+    function selectVersion(ver: string | undefined) {
         router.push({
             name: "plugins/view",
             params: {cls: pluginType.value, version: ver},
@@ -209,7 +207,6 @@
         },
         {immediate: true}
     );
-
 
     onMounted(async () => {
         const config = await miscStore.loadConfigs();

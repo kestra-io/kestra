@@ -27,7 +27,7 @@ public class MapUtils {
             return a;
         }
 
-        Map<String, Object> result = HashMap.newHashMap(Math.max(a.size(), b.size()));
+        Map<String, Object> result = LinkedHashMap.newLinkedHashMap(Math.max(a.size(), b.size()));
         result.putAll(a);
 
         for (Map.Entry<String, Object> entry : b.entrySet()) {

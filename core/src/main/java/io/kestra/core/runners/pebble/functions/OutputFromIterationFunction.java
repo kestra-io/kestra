@@ -54,30 +54,26 @@ public class OutputFromIterationFunction implements Function {
 
 
         Map<?, ?> outputs = (Map<?, ?>) context.getVariable("outputs");
-        Map<?, ?> taskPrevIterationOutputs = (Map<?, ?>) outputs.get(taskId);
-
-
+        Map<?, ?> taskOutputs = (Map<?, ?>) outputs.get(taskId);
         //  output of current or future iterations can't occur in current iteration
-        if (index == taskPrevIterationOutputs.size()) {
+        if (index == taskOutputs.size()) {
             throw new PebbleException(null,
                     "The provided index (" + index + ") refers to the current iteration, "
                             + "whose outputs are not yet available at runtime.",
                     lineNumber, self.getName());
         }
-        if (index > taskPrevIterationOutputs.size()) {
+        if (index > taskOutputs.size()) {
             throw new PebbleException(null,
                     "The provided index (" + index + ") is out of range. "
                             + "It refers to a future iteration whose outputs do not exist yet. "
-                            + "Maximum valid index is " + (taskPrevIterationOutputs.size() - 1) + ".",
+                            + "Maximum valid index is " + (taskOutputs.size() - 1) + ".",
                     lineNumber, self.getName());
         }
 
-        Map<?,?> iterativeTaskValues= (Map<?,?>) context.getVariable("iterativeTaskValues");
+       List<?>taskValues= taskOutputs.keySet().stream().toList();
 
-        Map<?,?> targetTaskIterations= (Map<?,?>) iterativeTaskValues.get(taskId);
-
-        Object value = targetTaskIterations.get(indexObj.toString());
-        Map<?, ?> finalOutput = (Map<?, ?>) taskPrevIterationOutputs.get(value);
+        Object targetValue = taskValues.get(index);
+        Map<?, ?> finalOutput = (Map<?, ?>) taskOutputs.get(targetValue);
 
         return finalOutput.get("value");
     }

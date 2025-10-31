@@ -275,25 +275,7 @@ public final class RunVariables {
                     });
 
                     builder.put("tasks", tasksMap);
-                    // useful for maintaining task run iterations list order for cases we want to retrieve previous values
-                        Map<String, LinkedHashMap<Integer,String>> taskRunsMap = new HashMap<>();
-                        execution.getTaskRunList().forEach(taskRun->{
-
-                            if(taskRun.getIteration() != null && taskRun.getValue() != null) {
-                                LinkedHashMap<Integer, String> innerMap = taskRunsMap.computeIfAbsent(
-                                    taskRun.getTaskId(),
-                                    k -> new LinkedHashMap<>()
-                                );
-
-                                innerMap.put(taskRun.getIteration(),taskRun.getValue());
-                            }
-
-                        });
-
-                        builder.put("iterativeTaskValues", taskRunsMap);
-
                 }
-
                 // Inputs
                 Map<String, Object> inputs = this.inputs == null ? new HashMap<>() : new HashMap<>(this.inputs);
                 if (execution.getInputs() != null) {

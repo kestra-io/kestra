@@ -170,6 +170,11 @@
       "back": "Zurück"
     },
     "concurrency": "Nebenläufigkeit",
+    "concurrency limits": "Nebenläufigkeitsgrenzen",
+    "concurrency_limit": {
+      "dialog_title": "Nebenläufigkeitsgrenzen",
+      "warning": "Das Ändern des laufenden Zählers kann die Nebenläufigkeit beeinträchtigen, sodass Ausführungen das erlaubte Limit überschreiten können."
+    },
     "conditions": "Bedingungen",
     "configure basic auth": "Basis-Authentifizierung konfigurieren",
     "confirm": "Bestätigen",
@@ -586,6 +591,7 @@
       "title": "Was gibt's Neues bei Kestra"
     },
     "file preview truncated": "Angezeigter Inhalt wurde abgeschnitten",
+    "fileTypeNotAllowed": "Dateityp nicht erlaubt. Akzeptierte Typen: {types}",
     "files": "Dateien",
     "filter": {
       "active key value pairs": "Aktive Key/Value-Paare",
@@ -911,7 +917,6 @@
         "status": "Status",
         "task": "Aufgabe",
         "text": "I'm sorry, but it seems that there is no text provided after \"----------\" for translation. Could you please provide the text you would like me to translate?",
-        "trigger_state": "Zustand",
         "type": "Typ",
         "user": "Benutzer"
       },
@@ -1173,20 +1178,11 @@
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
       "clearSelection": "Auswahl aufheben",
-      "close": {
-        "afterExecution": "Nach Ausführung Task schließen",
-        "conditions": "Bedingung schließen",
-        "errors": "Fehlerbehandler schließen",
-        "finally": "Task schließen",
-        "input": "Eingabe schließen",
-        "pluginDefaults": "Plugin-Standard schließen",
-        "tasks": "Task schließen",
-        "triggers": "Trigger schließen"
-      },
       "creation": {
         "afterExecution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "charts": "Ein Diagramm hinzufügen",
         "conditions": "Bedingung hinzufügen",
+        "default": "Hinzufügen",
         "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
         "inputs": "Ein Eingabefeld hinzufügen",
@@ -1222,6 +1218,10 @@
         "variable": "Variable",
         "yaml": "YAML-Editor"
       },
+      "remove": {
+        "cases": "Diesen Fall entfernen",
+        "default": "Diesen Eintrag entfernen"
+      },
       "sections": {
         "afterExecution": "Nach Ausführung",
         "connection": "Verbindungseigenschaften",
@@ -1239,6 +1239,7 @@
         "afterExecution": "Wählen Sie eine Task aus",
         "charts": "Wählen Sie einen Diagrammtyp aus",
         "conditions": "Wählen Sie eine Bedingung aus",
+        "default": "Wählen Sie einen Typ aus",
         "errors": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
         "inputs": "Wählen Sie einen Input-Feldtyp aus",

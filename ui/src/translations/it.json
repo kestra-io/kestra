@@ -170,6 +170,11 @@
       "back": "Indietro"
     },
     "concurrency": "Concurrency",
+    "concurrency limits": "Limiti di Concorrenza",
+    "concurrency_limit": {
+      "dialog_title": "Limiti di Concorrenza",
+      "warning": "Modificare il contatore in esecuzione può corrompere la concorrenza, quindi le esecuzioni potrebbero superare il limite consentito."
+    },
     "conditions": "Condizioni",
     "configure basic auth": "Configura Autenticazione di Base",
     "confirm": "Conferma",
@@ -586,6 +591,7 @@
       "title": "Novità su Kestra"
     },
     "file preview truncated": "Il contenuto visualizzato è stato troncato",
+    "fileTypeNotAllowed": "Tipo di file non consentito. Tipi accettati: {types}",
     "files": "File",
     "filter": {
       "active key value pairs": "Coppie chiave/valore attive",
@@ -911,7 +917,6 @@
         "status": "Stato",
         "task": "Compito",
         "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text you would like translated?",
-        "trigger_state": "Stato",
         "type": "Tipo",
         "user": "Utente"
       },
@@ -1173,20 +1178,11 @@
       "adding": "+ Aggiungi un {what}",
       "adding_default": "+ Aggiungi un nuovo value",
       "clearSelection": "Cancella selezione",
-      "close": {
-        "afterExecution": "Chiudi dopo l'esecuzione del task",
-        "conditions": "Condizione di chiusura",
-        "errors": "Chiudi error handler",
-        "finally": "Chiudi task",
-        "input": "Chiudi input",
-        "pluginDefaults": "Chiudi plugin predefinito",
-        "tasks": "Chiudi task",
-        "triggers": "Chiudi trigger"
-      },
       "creation": {
         "afterExecution": "Aggiungi un blocco after execution",
         "charts": "Aggiungi un grafico",
         "conditions": "Aggiungi una condizione",
+        "default": "Aggiungi",
         "errors": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
         "inputs": "Aggiungi un campo di input",
@@ -1222,6 +1218,10 @@
         "variable": "Variabile",
         "yaml": "Editor YAML"
       },
+      "remove": {
+        "cases": "Rimuovi questo caso",
+        "default": "Rimuovi questa voce"
+      },
       "sections": {
         "afterExecution": "Dopo l'Esecuzione",
         "connection": "Proprietà di connessione",
@@ -1239,6 +1239,7 @@
         "afterExecution": "Seleziona un task",
         "charts": "Seleziona un tipo di grafico",
         "conditions": "Seleziona una condizione",
+        "default": "Seleziona un tipo",
         "errors": "Seleziona un task",
         "finally": "Seleziona un task",
         "inputs": "Seleziona un tipo di input field",

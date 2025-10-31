@@ -100,7 +100,7 @@
 
 <style lang="scss" scoped>
 .filter-container {
-    --ks-box-shadow: 0 2px 4px var(--ks-card-shadow);
+    --ks-box-shadow: 0 1px 2px var(--ks-card-shadow);
 
     display: flex;
     align-items: center;

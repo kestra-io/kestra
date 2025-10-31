@@ -170,6 +170,11 @@
       "back": "Wstecz"
     },
     "concurrency": "Współbieżność",
+    "concurrency limits": "Limity Równoczesności",
+    "concurrency_limit": {
+      "dialog_title": "Limity Równoczesności",
+      "warning": "Zmiana bieżącego licznika może uszkodzić współbieżność, co może spowodować przekroczenie dozwolonego limitu przez wykonania."
+    },
     "conditions": "Warunki",
     "configure basic auth": "Skonfiguruj podstawowe uwierzytelnianie",
     "confirm": "Potwierdź",
@@ -586,6 +591,7 @@
       "title": "Co nowego w Kestra"
     },
     "file preview truncated": "Wyświetlana zawartość została skrócona",
+    "fileTypeNotAllowed": "Niedozwolony typ pliku. Akceptowane typy: {types}",
     "files": "Pliki",
     "filter": {
       "active key value pairs": "Aktywne pary klucz/wartość",
@@ -911,7 +917,6 @@
         "status": "Status",
         "task": "Zadanie",
         "text": "tekst",
-        "trigger_state": "Stan",
         "type": "Typ",
         "user": "Użytkownik"
       },
@@ -1173,20 +1178,11 @@
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
       "clearSelection": "Wyczyść zaznaczenie",
-      "close": {
-        "afterExecution": "Zamknij po wykonaniu task",
-        "conditions": "Zamknij warunek",
-        "errors": "Zamknij obsługę błędów",
-        "finally": "Zamknij task",
-        "input": "Zamknij input",
-        "pluginDefaults": "Zamknij domyślną wtyczkę",
-        "tasks": "Zamknij task",
-        "triggers": "Zamknij trigger"
-      },
       "creation": {
         "afterExecution": "Dodaj blok po wykonaniu",
         "charts": "Dodaj wykres",
         "conditions": "Dodaj warunek",
+        "default": "Dodaj",
         "errors": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
         "inputs": "Dodaj pole input",
@@ -1222,6 +1218,10 @@
         "variable": "Zmienna",
         "yaml": "Edytor YAML"
       },
+      "remove": {
+        "cases": "Usuń ten przypadek",
+        "default": "Usuń ten wpis"
+      },
       "sections": {
         "afterExecution": "Po wykonaniu",
         "connection": "Właściwości połączenia",
@@ -1239,6 +1239,7 @@
         "afterExecution": "Wybierz task",
         "charts": "Wybierz typ wykresu",
         "conditions": "Wybierz warunek",
+        "default": "Wybierz typ",
         "errors": "Wybierz task",
         "finally": "Wybierz task",
         "inputs": "Wybierz typ pola input",

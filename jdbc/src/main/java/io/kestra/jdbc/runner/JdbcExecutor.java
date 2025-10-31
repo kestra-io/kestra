@@ -494,13 +494,13 @@ public class JdbcExecutor implements ExecutorInterface {
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.WARN,
-                                "Re-emitting WorkerTask."
+                                "Re-resubmitting WorkerTask."
                             );
                         } catch (QueueException e) {
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.ERROR,
-                                "Unable to re-emit WorkerTask.",
+                                "Unable to re-resubmit WorkerTask.",
                                 e
                             );
                         }
@@ -1304,6 +1304,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
+                            findFlow(pair.getKey()),
                             executionDelay.getTaskRunId()
                         );
                         executor = executor.withExecution(newAttempt, "retryFailedTask");

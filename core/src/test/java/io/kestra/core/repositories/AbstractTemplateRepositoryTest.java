@@ -181,7 +181,7 @@ public abstract class AbstractTemplateRepositoryTest {
         }
 
         public static void reset() {
-            emits = new ArrayList<>();
+            emits = new CopyOnWriteArrayList<>();
         }
     }
 }

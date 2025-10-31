@@ -917,7 +917,6 @@
         "status": "Status",
         "task": "Zadanie",
         "text": "tekst",
-        "trigger_state": "Stan",
         "type": "Typ",
         "user": "Użytkownik"
       },

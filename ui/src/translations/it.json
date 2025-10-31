@@ -170,6 +170,11 @@
       "back": "Indietro"
     },
     "concurrency": "Concurrency",
+    "concurrency limits": "Limiti di Concorrenza",
+    "concurrency_limit": {
+      "dialog_title": "Limiti di Concorrenza",
+      "warning": "Modificare il contatore in esecuzione può corrompere la concorrenza, quindi le esecuzioni potrebbero superare il limite consentito."
+    },
     "conditions": "Condizioni",
     "configure basic auth": "Configura Autenticazione di Base",
     "confirm": "Conferma",
@@ -912,7 +917,6 @@
         "status": "Stato",
         "task": "Compito",
         "text": "I'm sorry, but it seems like the text you want me to translate is missing. Could you please provide the text you would like translated?",
-        "trigger_state": "Stato",
         "type": "Tipo",
         "user": "Utente"
       },

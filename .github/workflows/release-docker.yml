@@ -17,7 +17,7 @@ on:
         description: '(deprecated) Plugin version window for old Kestra releases using .plugins file (0.22 to 0.24). If omitted, then plugin list will be fetched from the API compatible versions endpoint'
         required: false
         type: string
-        default: '' # FIXME before merge put LATEST-SNAPSHOT
+        default: ''
       dry-run:
         description: 'Dry run mode that will not write or release anything'
         required: true
@@ -27,7 +27,7 @@ on:
 jobs:
   publish-docker:
     name: Publish Docker
-    # if: startsWith(github.ref, 'refs/tags/v') FIXME
+    if: startsWith(github.ref, 'refs/tags/v')
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@poc-release-docker-dry-run
     with:
       plugin-version: ${{ inputs.plugin-version }}

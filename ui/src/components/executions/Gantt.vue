@@ -28,7 +28,7 @@
                         :sizeDependencies="[selectedTaskRuns]"
                     >
                         <div class="d-flex flex-column">
-                            <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
+                            <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)" :style="{marginLeft: (item.depth || 0) * 20 + 'px'}">
                                 <div class="d-inline-flex">
                                     <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                     <ChevronDown v-else />
@@ -195,7 +195,7 @@
                 const sortedTasks = []
                 const tasksById = {}
                 for (let task of (this.execution.taskRunList || [])) {
-                    const taskWrapper = {task}
+                    const taskWrapper = {task,depth: 0}
                     if (task.parentTaskRunId) {
                         childTasks.push(taskWrapper)
                     } else {
@@ -212,6 +212,8 @@
                         if (!parentTask.children) {
                             parentTask.children = []
                         }
+                        taskWrapper.depth = (parentTask.depth || 0) + 1
+                        
                         parentTask.children.push(taskWrapper)
                     }
                 }
@@ -256,7 +258,8 @@
                     }
                 }
                 childrenSort(rootTasks)
-                return sortedTasks
+                return sortedTasks.map(t=>({...t,depth: tasksById[t.id].depth || 0}));
+
             },
             isExecutionStarted() {
                 return this.execution?.state?.current && !["CREATED", "QUEUED"].includes(this.execution.state.current);
@@ -350,7 +353,8 @@
                         flowId: task.flowId,
                         namespace: task.namespace,
                         executionId: task.outputs && task.outputs.executionId,
-                        attempts: task.attempts ? task.attempts.length : 1
+                        attempts: task.attempts ? task.attempts.length : 1,
+                        depth: task.depth || 0 
                     });
                 }
                 this.series = series;

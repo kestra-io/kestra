@@ -254,6 +254,47 @@ export const useFlowStore = defineStore("flow", () => {
                     const coreStore = useCoreStore();
                     coreStore.unsavedChange = false;
                     isCreating.value = false;
+                })
+                .catch((error: any) => {
+                    // Check if this is a duplicate flow error
+                    if (error?.isDuplicateFlow) {
+                        const flowData = error.flowData;
+                        const flowFullName = `${flowData.namespace}.${flowData.id}`;
+                        
+                        // Show dialog asking if user wants to create a new revision
+                        return ElMessageBox.confirm(
+                            h("div", null, [
+                                h("p", {innerHTML: t("flow already exists dialog.create.description", {flowFullName})}),
+                                h("p", {style: "margin-top: 10px;"}, t("flow already exists dialog.create.details")),
+                            ]),
+                            t("flow already exists dialog.create.title"),
+                            {
+                                type: "warning",
+                                showCancelButton: true,
+                                confirmButtonText: t("ok"),
+                                cancelButtonText: t("cancel"),
+                            }
+                        )
+                        .then(() => {
+                            // User confirmed - update the existing flow to create a new revision
+                            return saveFlow({flow: flowSource ?? ""})
+                                .then((response: Flow) => {
+                                    toast.saved(response.id);
+                                    const coreStore = useCoreStore();
+                                    coreStore.unsavedChange = false;
+                                    isCreating.value = false;
+                                    overrideFlow = true;
+                                    return "redirect_to_update";
+                                });
+                        })
+                        .catch(() => {
+                            // User cancelled - do nothing
+                            return false;
+                        });
+                    } else {
+                        // Re-throw other errors
+                        throw error;
+                    }
                 });
         } else {
             await saveFlow({flow: flowSource})
@@ -439,6 +480,36 @@ export const useFlowStore = defineStore("flow", () => {
             creationId.value = undefined;
 
             return response.data;
+        })
+        .catch((error: any) => {
+            // Check if the error is "Flow id already exists"
+            const errorMessage = error?.response?.data?.message || error?.message || "";
+            const errorContent = error?.response?.data?.content || error?.response?.data || {};
+            
+            // Check _embedded.errors array (used for constraint violations)
+            const embeddedErrors = error?.response?.data?._embedded?.errors || errorContent?._embedded?.errors || [];
+            const hasDuplicateFlowError = Array.isArray(embeddedErrors) && embeddedErrors.some((err: any) => 
+                err.message?.includes("Flow id already exists") || 
+                err.message?.includes("flow.id") && err.message?.includes("already exists")
+            );
+            
+            // Check if this is a constraint violation with "Flow id already exists"
+            if (error?.response?.status === 400 && 
+                (errorMessage.includes("Flow id already exists") || 
+                 errorContent?.message?.includes("Flow id already exists") ||
+                 (errorMessage.includes("flow.id") && errorMessage.includes("already exists")) ||
+                 hasDuplicateFlowError)) {
+                
+                // Return a special error that can be caught and handled by the caller
+                const duplicateError = new Error("FLOW_ALREADY_EXISTS");
+                (duplicateError as any).isDuplicateFlow = true;
+                (duplicateError as any).flowData = YAML_UTILS.parse(options.flow);
+                (duplicateError as any).originalError = error;
+                return Promise.reject(duplicateError);
+            }
+            
+            // Re-throw other errors
+            return Promise.reject(error);
         })
     }
 
@@ -700,7 +771,7 @@ function deleteFlowAndDependencies() {
     }
 
     function setOpenAiCopilot(value: boolean) {
-        openAiCopilot.value = value;
+        openAiCopilot.value = openAiCopilot.value;
     }
 
     function addTrigger(trigger: Trigger) {

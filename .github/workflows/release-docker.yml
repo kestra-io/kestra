@@ -14,10 +14,15 @@ on:
         type: boolean
         default: false
       plugin-version:
-        description: 'Plugin version'
+        description: '(deprecated) Plugin version window for old Kestra releases using .plugins file (0.22 to 0.24). If omitted, then plugin list will be fetched from the API compatible versions endpoint'
         required: false
         type: string
-        default: "LATEST"
+        default: "[0.24,1.0)"
+      dry-run:
+        description: 'Dry run mode that will not write or release anything'
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   publish-docker:
@@ -28,6 +33,7 @@ jobs:
       plugin-version: ${{ inputs.plugin-version }}
       retag-latest: ${{ inputs.retag-latest }}
       retag-lts: ${{ inputs.retag-lts }}
+      dry-run: ${{ inputs.dry-run }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

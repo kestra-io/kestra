@@ -917,7 +917,6 @@
         "status": "상태",
         "task": "작업",
         "text": "텍스트",
-        "trigger_state": "상태",
         "type": "유형",
         "user": "사용자"
       },

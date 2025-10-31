@@ -917,7 +917,6 @@
         "status": "Status",
         "task": "Tarefa",
         "text": "Parece que você não forneceu nenhum texto para tradução. Por favor, forneça o texto que deseja que eu traduza para o português.",
-        "trigger_state": "Estado",
         "type": "Tipo",
         "user": "Usuário"
       },

@@ -91,7 +91,8 @@
                     type: this.message.variant,
                     duration: 0,
                     dangerouslyUseHTMLString: true,
-                    customClass: "error-notification large"
+                    // remove the generic "large" class which forces wide notifications
+                    customClass: "error-notification"
                 });
             });
 
@@ -103,6 +104,10 @@
 <style lang="scss">
     .error-notification {
         max-height: 90svh;
+        /* constrain width locally so removing the global "large" class is safe */
+        max-width: 720px;
+        width: auto;
+        box-sizing: border-box;
 
         .el-notification__title {
             max-width: calc(100% - 15ch);

@@ -22,9 +22,9 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-@JdbcRunnerEnabled
 @Singleton
 @Slf4j
+@JdbcRepositoryEnabled
 public class JdbcScheduler extends AbstractScheduler {
     private final TriggerRepositoryInterface triggerRepository;
     private final JooqDSLContextWrapper dslContextWrapper;

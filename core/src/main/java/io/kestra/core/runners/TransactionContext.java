@@ -8,4 +8,6 @@ public interface TransactionContext {
 
         throw new IllegalArgumentException("Cannot unwrap " + this.getClass().getName() + " to " + clazz.getName());
     }
+
+    <T extends TransactionContext> boolean supports(Class<T> clazz);
 }

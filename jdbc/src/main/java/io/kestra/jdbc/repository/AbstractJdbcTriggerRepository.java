@@ -135,6 +135,11 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         return save(txContext.unwrap(JdbcTransactionContext.class).getDslContext(), trigger);
     }
 
+    @Override
+    public <TX extends TransactionContext> boolean supports(Class<TX> clazz) {
+        return JdbcTransactionContext.class.isAssignableFrom(clazz);
+    }
+
     private Trigger save(DSLContext dslContext, Trigger trigger) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
         this.jdbcRepository.persist(trigger, dslContext, fields);

@@ -1,4 +1,4 @@
-package io.kestra.jdbc.runner;
+package io.kestra.core.runners;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
@@ -9,8 +9,6 @@ import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.SaveRepositoryInterface;
-import io.kestra.core.runners.DefaultQueueIndexer;
-import io.kestra.core.runners.Indexer;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
@@ -30,20 +28,20 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
+// FIXME move that to a new indexer module
 /**
  * This class is responsible to batch-indexed asynchronously queue messages.<p>
- * Some queue messages are indexed synchronously via the {@link DefaultQueueIndexer}.
+ * Some queue messages are indexed synchronously via the {@link QueueIndexer}.
  */
 @SuppressWarnings("this-escape")
 @Slf4j
 @Singleton
-@JdbcRunnerEnabled
-public class JdbcIndexer implements Indexer {
+public class DefaultIndexer implements Indexer {
     private final LogRepositoryInterface logRepository;
-    private final JdbcQueue<LogEntry> logQueue;
+    private final QueueInterface<LogEntry> logQueue;
 
     private final MetricRepositoryInterface metricRepository;
-    private final JdbcQueue<MetricEntry> metricQueue;
+    private final QueueInterface<MetricEntry> metricQueue;
     private final MetricRegistry metricRegistry;
     private final List<Runnable> receiveCancellations = new ArrayList<>();
 
@@ -57,7 +55,7 @@ public class JdbcIndexer implements Indexer {
     private final QueueService queueService;
 
     @Inject
-    public JdbcIndexer(
+    public DefaultIndexer(
         LogRepositoryInterface logRepository,
         @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
         MetricRepositoryInterface metricRepositor,
@@ -68,9 +66,9 @@ public class JdbcIndexer implements Indexer {
         QueueService queueService
     ) {
         this.logRepository = logRepository;
-        this.logQueue = (JdbcQueue<LogEntry>) logQueue;
+        this.logQueue = logQueue;
         this.metricRepository = metricRepositor;
-        this.metricQueue = (JdbcQueue<MetricEntry>) metricQueue;
+        this.metricQueue = metricQueue;
         this.metricRegistry = metricRegistry;
         this.eventPublisher = eventPublisher;
         this.skipExecutionService = skipExecutionService;
@@ -92,7 +90,7 @@ public class JdbcIndexer implements Indexer {
         this.sendBatch(metricQueue, metricRepository);
     }
 
-    protected <T> void sendBatch(JdbcQueue<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
+    protected <T> void sendBatch(QueueInterface<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
         this.receiveCancellations.addFirst(queueInterface.receiveBatch(Indexer.class, eithers -> {
             // first, log all deserialization issues
             eithers.stream().filter(either -> either.isRight()).forEach(either -> log.error("unable to deserialize an item: {}", either.getRight().getMessage()));

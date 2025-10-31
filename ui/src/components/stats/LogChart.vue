@@ -16,114 +16,127 @@
     </div>
 </template>
 
-<script>
-    import {computed, defineComponent, ref, getCurrentInstance} from "vue";
+
+
+<script setup lang="ts">
+    import {computed, ref, getCurrentInstance, ComputedRef} from "vue";
     import {Bar} from "vue-chartjs";
     import {useMiscStore} from "override/stores/misc";
-    import Utils from "../../utils/utils";
     import {
         defaultConfig,
         tooltip,
         getFormat,
     } from "../dashboard/composables/charts";
     import Logs from "../../utils/logs";
+    import type {ChartData} from "chart.js";
 
-    export default defineComponent({
-        components: {Bar},
-        props: {
-            data: {
-                type: Array,
-                required: true
-            },
-            namespace: {
-                type: String,
-                required: false,
-                default: undefined
-            },
-            flowId: {
-                type: String,
-                required: false,
-                default: undefined
-            },
-        },
-        setup(props) {
-            const moment = getCurrentInstance().appContext.config.globalProperties.$moment;
-            const chartRef = ref();
-            const tooltipContent = ref("");
-            const dataReady = computed(() => props.data.length > 0)
+    // Import LogLevel type from logs utility
+    type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "TRACE";
 
-            const miscStore = useMiscStore();
+    interface ChartEntry {
+        timestamp: string;
+        groupBy: string;
+        counts: Partial<Record<LogLevel, number>>;
+    }
 
-            const options = computed(() => defaultConfig({
-                plugins: {
-                    tooltip: {
-                        external: function (context) {
-                            let content = tooltip(context.tooltip);
-                            tooltipContent.value = content;
-                        },
-                        callbacks: {
-                            label: function (context) {
-                                if (context.formattedValue !== "0") {
-                                    return context.dataset.label + ": " + context.formattedValue
-                                }
-                            }
-                        },
-                        filter: (e) => {
-                            return e.raw > 0;
-                        },
-                    },
+    interface DataSet {
+        label: string;
+        backgroundColor: string | null;
+        borderRadius: number;
+        yAxisID: string;
+        data: number[];
+    }
+
+    const props = withDefaults(defineProps<{
+        data: ChartEntry[];
+        namespace?: string;
+        flowId?: string;
+    }>(), {
+        namespace: undefined,
+        flowId: undefined
+    });
+
+    const app = getCurrentInstance();
+    const moment = app?.appContext.config.globalProperties.$moment;
+    if (!moment) {
+        throw new Error("moment is not defined in the Vue app instance");
+    }
+    
+    const chartRef = ref<InstanceType<typeof Bar> | null>(null);
+    const tooltipContent = ref("");
+    
+    const miscStore = useMiscStore();
+
+    const dataReady = computed(() => props.data?.length > 0);
+
+    const options = computed(() => defaultConfig({
+        plugins: {
+            tooltip: {
+                external: function (context: any) {
+                    let content = tooltip(context.tooltip);
+                    tooltipContent.value = content ?? "";
                 },
-                scales: {
-                    x: {
-                        stacked: true,
-                    },
-                    y: {
-                        display: false,
-                        position: "left",
-                        stacked: true,
-                    },
-                    yB: {
-                        display: false,
-                        position: "right",
+                callbacks: {
+                    label: function (context: any) {
+                        if (context.formattedValue !== "0") {
+                            return context.dataset.label + ": " + context.formattedValue
+                        }
                     }
                 },
-            }, miscStore.theme));
+                filter: (e: any) => {
+                    return e.raw > 0;
+                },
+            },
+        },
+        scales: {
+            x: {
+                stacked: true,
+            },
+            y: {
+                display: false,
+                position: "left",
+                stacked: true,
+            },
+            yB: {
+                display: false,
+                position: "right",
+            }
+        },
+    }, miscStore.theme) as any);
 
-            const chartData = computed(() => {
-                let datasets = props.data
-                    .reduce(function (accumulator, value) {
-                        Object.keys(value.counts).forEach(function (state) {
-                            if (accumulator[state] === undefined) {
-                                accumulator[state] = {
-                                    label: state,
-                                    backgroundColor: Logs.chartColorFromLevel(state),
-                                    borderRadius: 4,
-                                    yAxisID: "y",
-                                    data: []
-                                };
-                            }
-
-                            accumulator[state].data.push(value.counts[state]);
-                        });
-
-                        return accumulator;
-                    }, Object.create(null))
-
-                datasets = Logs.sort(datasets);
-
-                return {
-                    labels: props.data.map(r => moment(r.timestamp).format(getFormat(r.groupBy))),
-                    datasets: Object.values(datasets)
+    const chartData: ComputedRef<ChartData<"bar">> = computed(() => {
+        // Create a type-safe accumulator for datasets
+        const datasets = props.data.reduce((accumulator: Record<LogLevel, DataSet>, value: ChartEntry) => {
+            (Object.keys(value.counts) as LogLevel[]).forEach((state) => {
+                if (!accumulator[state]) {
+                    const backgroundColor = Logs.chartColorFromLevel(state);
+                    accumulator[state] = {
+                        label: state,
+                        backgroundColor: backgroundColor,
+                        borderRadius: 4,
+                        yAxisID: "y",
+                        data: []
+                    };
                 }
-            })
+                
+                const count = value.counts[state];
+                if (typeof count === "number") {
+                    accumulator[state].data.push(count);
+                } else {
+                    accumulator[state].data.push(0); // Default to 0 if count is undefined
+                }
+            });
 
-            return {chartData, tooltipContent, chartRef, options, dataReady};
-        },
-        data() {
-            return {
-                uuid: Utils.uid(),
-            };
-        },
+            return accumulator;
+        }, {} as Record<LogLevel, DataSet>);
+
+        const sortedDatasets = Logs.sort(datasets);
+
+        return {
+            labels: props.data.map((r: ChartEntry) => moment(r.timestamp).format(getFormat(r.groupBy))),
+            datasets: Object.values(sortedDatasets)
+        };
     });
-</script>
 
+
+</script>

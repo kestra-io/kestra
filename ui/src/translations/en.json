@@ -1126,7 +1126,6 @@
         "namespace": "Namespace",
         "flow": "Flow",
         "state": "State",
-        "trigger_state": "State",
         "scope": "Scope",
         "child": "Child",
         "level": "Log level",

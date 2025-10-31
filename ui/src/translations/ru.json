@@ -170,6 +170,11 @@
       "back": "Назад"
     },
     "concurrency": "Конкурентность",
+    "concurrency limits": "Ограничения на параллелизм",
+    "concurrency_limit": {
+      "dialog_title": "Ограничения на параллельность",
+      "warning": "Изменение счетчика выполнения может нарушить параллелизм, поэтому выполнения могут превысить допустимый лимит."
+    },
     "conditions": "Условия",
     "configure basic auth": "Настроить базовую аутентификацию",
     "confirm": "Подтвердить",
@@ -912,7 +917,6 @@
         "status": "Статус",
         "task": "Задача",
         "text": "I'm sorry, but it seems that the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
-        "trigger_state": "Состояние",
         "type": "Тип",
         "user": "Пользователь"
       },

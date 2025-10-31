@@ -33,7 +33,7 @@
       },
       "create": {
         "title": "Flow already exists",
-        "description": "A flow with the same id already exists in this namespace.",
+        "description": "Flow <code>{flowFullName}</code> already exists. Do you want to create a new revision?",
         "details": "Save to override and create a new revision."
       }
     },

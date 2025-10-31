@@ -253,6 +253,43 @@ export function useFlowTemplateEdit(dataType: string, route: any, router: any, t
                 .then(() => {
                     toast().saved(parsedItem.id)
                 })
+                .catch((error: any) => {
+                    // Check if this is a duplicate flow error
+                    if (error?.isDuplicateFlow && dataType === "flow") {
+                        const flowData = error.flowData;
+                        const flowFullName = `${flowData.namespace}.${flowData.id}`;
+                        
+                        // Show dialog asking if user wants to create a new revision
+                        toast().confirm(
+                            t("flow already exists dialog.create.description", {flowFullName}) + "<br><br>" + t("flow already exists dialog.create.details"),
+                            () => {
+                                // User confirmed - update the existing flow to create a new revision
+                                return flowStore.saveFlow({flow: content.value})
+                                    .then((data: any) => {
+                                        previousContent.value = data.source ? data.source : YAML_UTILS.stringify(data)
+                                        content.value = data.source ? data.source : YAML_UTILS.stringify(data)
+                                        onChange()
+                                        router.push({
+                                            name: `${dataType}s/update`,
+                                            params: {
+                                                ...parsedItem,
+                                                tab: "source",
+                                                tenant: route.params.tenant
+                                            }
+                                        })
+                                    })
+                                    .then(() => {
+                                        toast().saved(parsedItem.id)
+                                    })
+                            },
+                            "warning",
+                            true
+                        )
+                    } else {
+                        // Re-throw other errors - they will be handled by the error interceptor
+                        throw error;
+                    }
+                })
         }
     }
 

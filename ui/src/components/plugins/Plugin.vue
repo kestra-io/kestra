@@ -157,7 +157,7 @@
             await Promise.all([
                 pluginsStore.load(loadParams as any),
                 pluginsStore.loadVersions(loadParams as any).then((data: any) => {
-                    if (data?.versions && data.versions.length > 0) {
+                    if (data.versions?.length > 0) {
                         if (!version.value) version.value = data.versions[0];
                     }
                 }),
@@ -180,8 +180,8 @@
     }
 
     watch(
-        () => route.name,
-        (newName) => {
+        [() => route.name, () => route.params],
+        ([newName]) => {
             if (newName === "plugins/list") {
                 pluginType.value = undefined;
                 version.value = undefined;

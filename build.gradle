@@ -219,6 +219,9 @@ subprojects {subProj ->
 
             // Use Netty's built-in leak detection
             t.systemProperty 'io.netty.leakDetection.level', 'PARANOID'
+            
+            // Enable JUnit extension auto-detection for Netty leak detector
+            t.systemProperty 'junit.jupiter.extensions.autodetection.enabled', 'true'
 
             t.environment 'SECRET_MY_SECRET', "{\"secretKey\":\"secretValue\"}".bytes.encodeBase64().toString()
             t.environment 'SECRET_NEW_LINE', "cGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2\nZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZleXJsb25ncGFzc3dvcmR2ZXJ5dmVyeXZl\neXJsb25n"

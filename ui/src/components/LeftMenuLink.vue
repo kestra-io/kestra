@@ -1,9 +1,9 @@
 <template>
-    <a v-if="isHyperLink" v-bind="$attrs">
+    <a v-if="isHyperLink" v-bind="$attrs" ref="slotContainer">
         <slot />
     </a>
-    <router-link v-else :to="$attrs.href" custom v-slot="{href:linkHref, navigate}">
-        <a v-bind="$attrs" :href="linkHref" @click="navigate">
+    <router-link v-else :to="$attrs.href as string" custom v-slot="{href:linkHref, navigate}">
+        <a v-bind="$attrs" :href="linkHref" @click="navigate" ref="slotContainer">
             <EnterpriseBadge :enable="isLocked">
                 <slot />
             </EnterpriseBadge>
@@ -11,7 +11,7 @@
     </router-link>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, ref, onMounted} from "vue"
     import {useRouter} from "vue-router";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
@@ -21,25 +21,30 @@
         inheritAttrs: false,
     })
 
-    const props = defineProps({
-        item: {
-            type: Object,
-            required: true,
-        },
-    })
+    interface MenuItem{
+        href?: string;
+        external?: boolean;
+        attributes?: {
+            locked?: boolean;
+        };
+    }
+
+    const props = defineProps<{
+        item: MenuItem;
+    }>()
 
     const router = useRouter()
 
-    const isHyperLink = computed(() => {
+    const isHyperLink = computed<boolean>(() => {
         return !!(!props.item.href || props.item.external || !router)
     })
 
-    const isLocked = computed(() => {
+    const isLocked = computed<boolean>(() => {
         return props.item?.attributes?.locked || false;
     })
 
-    const slotContainer = ref(null)
-    const term = ref()
+    const slotContainer = ref<HTMLAnchorElement | null>(null)
+    const term = ref<string>()
 
     onMounted(() => {
         if (slotContainer?.value?.innerText) {

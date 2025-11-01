@@ -4,12 +4,12 @@
         <div class="log-content">
             <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="pageSize" :page="pageNumber" :embed="embed">
                 <template #navbar v-if="!embed || showFilters">
-                    <KestraFilter
-                        prefix="logs"
-                        :language="LogFilterLanguage"
-                        :buttons="{
+                    <KSFilter
+                        :configuration="logFilter"
+                        :tableOptions="{
+                            chart: {shown: true, value: showChart, callback: onShowChartChange},
                             refresh: {shown: true, callback: refresh},
-                            settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}, histogram: {shown: true, value: showHistogram, callback: onShowHistogramChange}}
+                            columns: {shown: false}
                         }"
                     />
                 </template>
@@ -21,9 +21,9 @@
                 
 
 
-                <template #table v-if="logsStore.logs !== undefined && logsStore.logs.length > 0">
+                <template #table>
                     <div v-loading="isLoading">
-                        <div class="logs-wrapper">
+                        <div v-if="logsStore.logs !== undefined && logsStore.logs.length > 0" class="logs-wrapper">
                             <LogLine
                                 v-for="(log, i) in logsStore.logs"
                                 :key="`${log.taskRunId}-${i}`"
@@ -33,6 +33,10 @@
                                 :log="log"
                             />
                         </div>
+
+                        <div v-else-if="!isLoading">
+                            <NoData :text="$t('no_logs_data_description')" />
+                        </div>
                     </div>
                 </template>
             </DataTable>
@@ -41,13 +45,15 @@
 </template>
 
 <script setup lang="ts">
-    import LogFilterLanguage from "../../composables/monaco/languages/filters/impl/logFilterLanguage";
+    import {useLogFilter} from "../filter/configurations";
+    import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";
     import DataTable from "../../components/layout/DataTable.vue";
-    import KestraFilter from "../filter/KestraFilter.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
-    import LogHistogram from "../logs/LogHistogram.vue";
+    import NoData from "../layout/NoData.vue";
+    
+    const logFilter = useLogFilter();
 </script>
 
 <script lang="ts">
@@ -75,10 +81,6 @@
                 type: Boolean,
                 default: false
             },
-            withCharts: {
-                type: Boolean,
-                default: true
-            },
             showFilters: {
                 type: Boolean,
                 default: false
@@ -99,8 +101,7 @@
                 isLoading: false,
                 lastRefreshDate: new Date(),
                 canAutoRefresh: false,
-                showHistogram: true,
-                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_LOGS_CHART)),
+                showChart: localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false",
             };
         },
         computed: {
@@ -121,8 +122,8 @@
             },
             selectedLogLevel() {
                 const decodedParams = decodeSearchParams(this.$route.query);
-                const levelFilters = decodedParams.filter(item => item.field === "level");
-                const decoded = levelFilters.length > 0 ? levelFilters[0].value : "INFO";
+                const levelFilters = decodedParams.filter(item => item?.field === "level");
+                const decoded = levelFilters.length > 0 ? levelFilters[0]?.value : "INFO";
                 return this.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
             },
             endDate() {
@@ -185,7 +186,7 @@
                 this.showChart = value;
                 localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value.toString());
                 if (this.showStatChart()) {
-                    this.loadStats();
+                    this.load();
                 }
             },
             onShowHistogramChange(value: boolean) {
@@ -193,7 +194,9 @@
             },
             refresh() {
                 this.lastRefreshDate = new Date();
-                this.$refs.dashboard.refreshCharts();
+                if (this.$refs.dashboard) {
+                    this.$refs.dashboard.refreshCharts();
+                }
                 this.load();
             },
             loadQuery(base: any) {
@@ -254,6 +257,10 @@
             margin-bottom: 1rem;
             .navbar {
                 border: 1px solid var(--ks-border-primary);
+            }
+
+            .el-empty {
+                background-color: transparent;
             }
         }
 

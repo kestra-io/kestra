@@ -1,13 +1,13 @@
 <template>
     <el-select
         :modelValue="value"
-        @update:model-value="onInput"
+        @update:model-value="emit('update:modelValue', $event)"
         filterable
         :persistent="false"
         :placeholder="$t('revisions')"
     >
         <el-option
-            v-for="item in levelOptions"
+            v-for="item in LEVELS"
             :key="item"
             :label="item"
             :value="item"
@@ -16,30 +16,22 @@
         </el-option>
     </el-select>
 </template>
-<script lang="ts">
-    import Logs from "../../utils/logs.js";
+<script setup lang="ts">
+    const emit = defineEmits<{(e: "update:modelValue", value: string): void;}>()
 
-    export default {
-        emits: ["update:modelValue"],
-        data() {
-            return {
-                levelOptions: Logs.LEVELS,
-            };
-        },
-        props: {
-            router: {
-                type: Boolean,
-                default: true
-            },
-            value: {
-                type: String,
-                default: "INFO"
-            }
-        },
-        methods: {
-            onInput(value) {
-                this.$emit("update:modelValue", value);
-            },
-        },
-    };
+    withDefaults(defineProps<{
+        value?: string,
+        router?: boolean
+    }>(), {
+        value: "INFO",
+        router: true
+    })
+
+    const LEVELS = [
+        "TRACE",
+        "DEBUG",
+        "INFO",
+        "WARN",
+        "ERROR",
+    ];
 </script>

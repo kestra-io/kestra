@@ -52,6 +52,29 @@ class AllowFailureTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
+    @Test
+    @ExecuteFlow("flows/valids/allow-failure-with-retry.yaml")
+    void withRetry(Execution execution) {
+        // Verify the execution completes in warning
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+
+        // Verify the retry_block completes with WARNING (because child task failed but was allowed)
+        assertThat(execution.findTaskRunsByTaskId("retry_block").getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
+
+        // Verify failing_task was retried (3 attempts total: initial + 2 retries)
+        assertThat(execution.findTaskRunsByTaskId("failing_task").getFirst().attemptNumber()).isEqualTo(3);
+        assertThat(execution.findTaskRunsByTaskId("failing_task").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        // Verify error handler was executed on failures
+        assertThat(execution.findTaskRunsByTaskId("error_handler").size()).isEqualTo(1);
+
+        // Verify finally block executed
+        assertThat(execution.findTaskRunsByTaskId("finally_task").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // Verify downstream_task executed (proving the flow didn't get stuck)
+        assertThat(execution.findTaskRunsByTaskId("downstream_task").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
     private static void control(Execution execution) {
         assertThat(execution.findTaskRunsByTaskId("first").getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
         assertThat(execution.findTaskRunsByTaskId("1-1-allow-failure").getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);

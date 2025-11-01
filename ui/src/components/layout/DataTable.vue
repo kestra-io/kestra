@@ -9,12 +9,6 @@
         <el-container direction="vertical" v-loading="isLoading">
             <slot name="top" />
 
-            <Pagination v-if="!embed && !hideTopPagination" :size="size" :top="true" :page="page" :total="total" @page-changed="onPageChanged">
-                <template #search>
-                    <slot name="search" />
-                </template>
-            </Pagination>
-
             <slot name="table" />
 
             <Pagination v-if="total > 0" :size="size" :page="page" :total="total" @page-changed="onPageChanged" />
@@ -22,38 +16,31 @@
     </div>
 </template>
 
-<script>
+<script lang="ts" setup>
+    import {ref, computed, useSlots} from "vue";
     import Pagination from "./Pagination.vue";
     import Collapse from "./Collapse.vue";
 
-    export default {
-        components: {Pagination, Collapse},
-        emits: ["page-changed"],
-        computed: {
-            hasNavBar() {
-                return !!this.$slots["navbar"];
-            },
-        },
-        data() {
-            return {
-                isLoading: false,
-            };
-        },
-        props: {
-            total: {type: Number, required: true},
-            size: {type: Number, default: 25},
-            page: {type: Number, default: 1},
-            embed: {type: Boolean, default: false},
-            hideTopPagination: {type: Boolean, default: false},
-        },
+    defineProps<{
+        total: number;
+        size?: number;
+        page?: number;
+        embed?: boolean;
+    }>();
 
-        methods: {
-            prevent(event) {
-                event.preventDefault();
-            },
-            onPageChanged(pagination) {
-                this.$emit("page-changed", pagination);
-            },
-        },
-    };
+    const emit = defineEmits<{
+        (e: "page-changed", pagination: any): void;
+    }>();
+
+    const slots = useSlots();
+
+    const isLoading = ref(false);
+
+    const hasNavBar = computed(() => !!slots["navbar"]);
+
+    function onPageChanged(pagination: any) {
+        emit("page-changed", pagination);
+    }
+
+    defineExpose({isLoading})
 </script>

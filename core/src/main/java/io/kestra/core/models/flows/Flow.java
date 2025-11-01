@@ -49,7 +49,7 @@ import java.util.stream.Stream;
 public class Flow extends AbstractFlow implements HasUID {
     private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofYaml()
         .copy()
-        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+        .setDefaultPropertyInclusion(JsonInclude.Include.NON_DEFAULT);
 
     private static final ObjectMapper WITHOUT_REVISION_OBJECT_MAPPER = NON_DEFAULT_OBJECT_MAPPER.copy()
         .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)

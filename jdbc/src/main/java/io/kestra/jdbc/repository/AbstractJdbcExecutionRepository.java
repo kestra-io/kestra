@@ -22,6 +22,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorState;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
@@ -53,6 +54,8 @@ import java.util.Comparator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.kestra.core.models.QueryFilter.Field.KIND;
 
 public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcQueueIndexerInterface<Execution> {
     private static final int FETCH_SIZE = 100;
@@ -201,12 +204,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return findCondition(query, Map.of());
     }
 
-    abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
-
-    @Override
-    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return findCondition(value, operation);
-    }
+    abstract protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation);
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
@@ -296,9 +294,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 field("value")
             )
             .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter(tenantId, false))
-            .and(NORMAL_KIND_CONDITION);
+            .where(this.defaultFilter(tenantId, false));
 
+        boolean hasKindFilter = filters != null && filters.stream()
+            .anyMatch(f -> KIND.value().equalsIgnoreCase(f.field().name()) );
+        if (!hasKindFilter) {
+            select = select.and(NORMAL_KIND_CONDITION);
+        }
         select = select.and(this.filter(filters, "start_date", Resource.EXECUTION));
 
         return select;

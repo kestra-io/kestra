@@ -227,7 +227,24 @@ class ExecutionControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
         assertThat(response.body()).isNull();
     }
-
+    
+    @Test
+    void webhookWithInputs() {
+        record Hello(String hello) {}
+        
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest
+                .POST(
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-inputs/webhookKey",
+                    new Hello("world")
+                ),
+            Execution.class
+        );
+        
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
+    }
+    
     @Test
     void resolveAbsoluteDateTime() {
         final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6,10, 0, ZoneId.systemDefault());
@@ -343,7 +360,7 @@ class ExecutionControllerTest {
             client.toBlocking().retrieve(GET(
                 "/api/v1/main/executions/search?filters[triggerId][EQUALS]=test"), PagedResults.class));
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(exception.getMessage()).isEqualTo("Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE: Provided query filters are invalid");
+        assertThat(exception.getMessage()).isEqualTo("Field TRIGGER_ID is not supported for resource EXECUTION. Supported fields are QUERY, SCOPE, FLOW_ID, START_DATE, END_DATE, STATE, LABELS, TRIGGER_EXECUTION_ID, CHILD_FILTER, NAMESPACE, KIND: Provided query filters are invalid");
 
         exception = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().retrieve(GET(

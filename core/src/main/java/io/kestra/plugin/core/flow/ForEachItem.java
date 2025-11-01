@@ -648,6 +648,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
         @Builder.Default
         private Property<String> separator = Property.ofValue("\n");
+
+        private Property<String> regexPattern;
     }
 
     @Builder

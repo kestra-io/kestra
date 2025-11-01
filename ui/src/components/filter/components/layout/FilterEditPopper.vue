@@ -33,9 +33,10 @@
     import {
         AppliedFilter,
         COMPARATOR_LABELS,
-        Comparators,
         FilterKeyConfig,
-        FilterValue
+        FilterValue,
+        TEXT_COMPARATORS,
+        KV_COMPARATORS
     } from "../../utils/filterTypes";
     import {FILTER_CONTEXT_INJECTION_KEY} from "../../utils/filterInjectionKeys";
     import FilterText from "./FilterText.vue";
@@ -80,50 +81,29 @@
         () => props.filterKey?.showComparatorSelection ?? props.showComparatorSelection ?? false
     );
 
-    const TEXT_COMPARATORS = [
-        Comparators.STARTS_WITH,
-        Comparators.ENDS_WITH,
-        Comparators.CONTAINS
-    ];
-
-    const LABELS_COMPARATORS = [
-        Comparators.EQUALS,
-        Comparators.NOT_EQUALS
-    ];
-
-    const isTextComparator = computed(() => 
+    const isTextOp = computed(() => 
         TEXT_COMPARATORS.includes(state.selectedComparator) && props.filterKey?.key !== "resources"
     );
 
-    const isLabelKV = computed(() =>
-        props.filterKey?.key === "labels" && LABELS_COMPARATORS.includes(state.selectedComparator)
+    const isKVPairFilter = computed(() =>
+        props.filterKey?.valueType === "key-value" || (props.filterKey?.key === "labels" && KV_COMPARATORS.includes(state.selectedComparator))
     );
 
     const valueComponent = computed(() => {
-        if (isTextComparator.value) {
+        if (isTextOp.value) {
             return {
                 component: FilterText,
-                props: {
-                    textValue: state.textValue,
-                    label: props.filterKey?.label
-                },
-                events: {
-                    "update:text-value": (value: string) => (state.textValue = value)
-                }
+                props: {textValue: state.textValue, label: props.filterKey?.label},
+                events: {"update:text-value": (value: string) => (state.textValue = value)}
             };
         }
 
-        // Label key-value pairs should be added via separate input fields.
-        if (isLabelKV.value) {
+        // Key-value pair filters (details, labels)
+        if (isKVPairFilter.value) {
             return {
                 component: FilterKVPairs,
-                props: {
-                    modelValue: state.keyValuePair,
-                    maxPairs: 1
-                },
-                events: {
-                    "update:modelValue": (value: string[]) => (state.keyValuePair = value)
-                }
+                props: {modelValue: state.keyValuePair},
+                events: {"update:modelValue": (value: string[]) => (state.keyValuePair = value)}
             };
         }
         
@@ -183,15 +163,6 @@
                     "update:date-value": (value: Date | null) => (state.dateValue = value)
                 }
             },
-            details: {
-                component: FilterKVPairs,
-                props: {
-                    modelValue: state.keyValuePair
-                },
-                events: {
-                    "update:modelValue": (value: string[]) => (state.keyValuePair = value)
-                }
-            },
             radio: {
                 component: FilterRadio,
                 props: {
@@ -210,25 +181,18 @@
     });
 
     const footerText = computed(() => {
-        if (isTextComparator.value) {
-            return state.textValue ?? "";
-        }
+        if (isTextOp.value) return state.textValue ?? "";
 
-        if (isLabelKV.value) {
-            return state.keyValuePair.length === 1
-                ? state.keyValuePair[0]
-                : "";
+        if (isKVPairFilter.value) {
+            const label = props.filterKey?.label || "key/value";
+            return state.keyValuePair.length > 1
+                ? `${state.keyValuePair.length} ${label} pairs`
+                : state.keyValuePair[0] ?? "";
         }
 
         switch (props.filterKey?.valueType) {
         case "multi-select":
             return `${state.keyValuePair.length} ${props.filterKey?.label} selected`;
-        case "details":
-            return state.keyValuePair.length > 1
-                ? `${state.keyValuePair.length} key:value pairs`
-                : state.keyValuePair.length === 1
-                    ? state.keyValuePair[0]
-                    : "";
         case "select":
             if (state.selectValue) {
                 const option = state.valueOptions?.find(opt => opt.value === state.selectValue);
@@ -243,111 +207,102 @@
     });
 
     const resetState = () => {
-        const hasPreApplied = filterContext?.hasPreApplied(props.filterKey.key);
+        const defaultFilter = filterContext?.hasPreApplied(props.filterKey.key) 
+            ? filterContext?.getPreApplied(props.filterKey.key) 
+            : null;
         
-        if (hasPreApplied) {
-            const defaultFilter = filterContext?.getPreApplied(props.filterKey.key);
-            if (defaultFilter) {
-                initializeStateFromFilter(defaultFilter);
-                return;
-            }
+        if (defaultFilter) {
+            initializeStateFromFilter(defaultFilter);
+            return;
         }
         
-        state.textValue = "";
-        state.selectValue = "";
-        state.keyValuePair = [];
-        state.radioValue = "ALL";
-        state.dateValue = null;
-        state.timeRangeMode = "predefined";
-        state.startDateValue = null;
-        state.endDateValue = null;
+        Object.assign(state, {
+            textValue: "",
+            selectValue: "",
+            keyValuePair: [],
+            radioValue: "ALL",
+            dateValue: null,
+            timeRangeMode: "predefined",
+            startDateValue: null,
+            endDateValue: null
+        });
     };
 
-    const applyFilter = () => {
-        if (!state.selectedComparator) return;
+    const getFilterValue = () => {
+        if (isTextOp.value) {
+            return {value: state.textValue, label: state.textValue};
+        }
+        if (isKVPairFilter.value) {
+            return {
+                value: state.keyValuePair,
+                label: state.keyValuePair[0] || ""
+            };
+        }
 
-        let filterValue: string | string[] | Date | {startDate: Date; endDate: Date};
-        let valueLabel: string;
-
-        if (isTextComparator.value) {
-            filterValue = state.textValue;
-            valueLabel = state.textValue;
-        } else if (isLabelKV.value) {
-            filterValue = state.keyValuePair;
-            valueLabel = state.keyValuePair.length === 1
-                ? state.keyValuePair[0]
-                : "";
-        } else {
-            switch (props.filterKey.valueType) {
-            case "text":
-                filterValue = state.textValue;
-                valueLabel = state.textValue;
-                break;
-            case "select":
-                if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
-                    filterValue = {
+        switch (props.filterKey.valueType) {
+        case "text":
+            return {value: state.textValue, label: state.textValue};
+        case "select":
+            if (props.filterKey?.key === "timeRange" && state.timeRangeMode === "custom") {
+                return {
+                    value: {
                         startDate: state.startDateValue!,
                         endDate: state.endDateValue!
-                    };
-                    valueLabel = `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`;
-                } else {
-                    filterValue = state.selectValue;
-                    valueLabel =
-                        state.valueOptions?.find((opt: FilterValue) => opt.value === state.selectValue)
-                            ?.label || state.selectValue;
-                }
-                break;
-            case "multi-select":
-                filterValue = state.keyValuePair;
-                valueLabel = state.keyValuePair
-                    .map(
-                        val =>
-                            state.valueOptions?.find((opt: FilterValue) => opt.value === val)?.label ??
-                            val
-                    )
-                    .join(", ");
-                break;
-            case "details":
-                filterValue = state.keyValuePair;
-                valueLabel = state.keyValuePair.length > 1
-                    ? `${state.keyValuePair.length} Details key/value pairs`
-                    : state.keyValuePair.length === 1
-                        ? state.keyValuePair[0]
-                        : "";
-                break;
-            case "date":
-                filterValue = state.dateValue ?? "";
-                valueLabel = state.dateValue?.toLocaleDateString() ?? "";
-                break;
-            case "radio":
-                if (state.radioValue === "ALL") {
-                    emits("remove", props.filter.id);
-                    emits("close");
-                    return;
-                }
-                filterValue = state.radioValue;
-                valueLabel = state.radioValue;
-                break;
-            default:
-                return;
+                    },
+                    label: `${state.startDateValue!.toLocaleDateString()} - ${state.endDateValue!.toLocaleDateString()}`
+                };
             }
+            return {
+                value: state.selectValue,
+                label:
+                    state.valueOptions?.find(opt => opt.value === state.selectValue)
+                        ?.label || state.selectValue
+            };
+        case "multi-select":
+            return {
+                value: state.keyValuePair,
+                label: state.keyValuePair
+                    .map(val =>
+                        state.valueOptions?.find(opt => opt.value === val)?.label ?? val
+                    )
+                    .join(", ")
+            };
+        case "date":
+            return {
+                value: state.dateValue ?? "",
+                label: state.dateValue?.toLocaleDateString() ?? ""
+            };
+        case "radio":
+            if (state.radioValue === "ALL") return null;
+            return {value: state.radioValue, label: state.radioValue};
+        default:
+            return null;
+        }
+    };
+
+    const handleApply = () => {
+        if (!state.selectedComparator) return;
+
+        const filterData = getFilterValue();
+        if (!filterData) {
+            emits("remove", props.filter.id);
+            emits("close");
+            return;
         }
 
         emits("update", {
             ...props.filter,
             comparator: state.selectedComparator,
             comparatorLabel: COMPARATOR_LABELS[state.selectedComparator],
-            value: filterValue,
-            valueLabel
+            value: filterData.value,
+            valueLabel: filterData.label
         });
-    };
-
-    const handleApply = () => {
-        applyFilter();
         emits("close");
     };
 
-    const initializeTimeRange = (filter: AppliedFilter) => {
+    const initializeStateFromFilter = (filter: AppliedFilter) => {
+        state.selectedComparator = filter.comparator;
+
         if (
             props.filterKey?.key === "timeRange" &&
             typeof filter.value === "object" &&
@@ -363,58 +318,47 @@
             state.startDateValue = null;
             state.endDateValue = null;
         }
-    };
 
-    const initializeStateFromFilter = (filter: AppliedFilter) => {
-        state.selectedComparator = filter.comparator;
-        initializeTimeRange(filter);
+        const isTextOp = TEXT_COMPARATORS.includes(filter.comparator) && props.filterKey?.key !== "resources";
+        const isKVPair = props.filterKey?.valueType === "key-value" || (props.filterKey?.key === "labels" && KV_COMPARATORS.includes(filter.comparator));
         
-        const isTextComp = TEXT_COMPARATORS.includes(filter.comparator) && props.filterKey?.key !== "resources";
-        const isLabelKVInit = props.filterKey?.key === "labels" && LABELS_COMPARATORS.includes(filter.comparator);
-        
-        if (isTextComp) {
+        if (isTextOp) {
             state.textValue = typeof filter.value === "string" ? filter.value : "";
-        } else if (isLabelKVInit) {
-            state.keyValuePair = Array.isArray(filter.value) 
-                ? filter.value 
-                : typeof filter.value === "string" 
-                    ? [filter.value] 
+        } else if (isKVPair) {
+            state.keyValuePair = Array.isArray(filter.value)
+                ? filter.value
+                : typeof filter.value === "string"
+                    ? [filter.value]
                     : [];
         } else {
             switch (props.filterKey.valueType) {
             case "text":
                 state.textValue = typeof filter.value === "string" ? filter.value : "";
                 break;
-            case "select":
-                if (typeof filter.value === "string") {
-                    const matchingOption = state.valueOptions.find(
-                        option => option.value === filter.value
-                    );
-                    state.selectValue = matchingOption ? filter.value : "";
-                } else {
-                    state.selectValue = "";
-                }
-                break;
             case "multi-select":
-            case "details":
                 state.keyValuePair = Array.isArray(filter.value) ? filter.value : [];
                 break;
+            case "select":
+                state.selectValue =
+                    typeof filter.value === "string" &&
+                    state.valueOptions.find(option => option.value === filter.value)
+                        ? filter.value
+                        : "";
+                break;
             case "date":
-                state.dateValue = filter.value instanceof Date 
-                    ? filter.value 
-                    : typeof filter.value === "string" 
-                        ? new Date(filter.value) 
+                state.dateValue = filter.value instanceof Date
+                    ? filter.value
+                    : typeof filter.value === "string"
+                        ? new Date(filter.value)
                         : null;
                 break;
             case "radio":
-                state.radioValue = typeof filter.value === "string" ? filter.value : "ALL";
+                state.radioValue = typeof filter.value === "string"
+                    ? filter.value
+                    : "ALL";
                 break;
             }
         }
-    };
-
-    const initializeValueByType = () => {
-        initializeStateFromFilter(props.filter);
     };
 
     const loadValueOptions = async () => {
@@ -422,10 +366,15 @@
 
         state.valueOptions = await props.filterKey.valueProvider();
 
-        if (props.filterKey?.key === "timeRange" && typeof props.filter.value === "string") {
+        if (
+            props.filterKey?.key === "timeRange" &&
+            typeof props.filter.value === "string"
+        ) {
             const currentValue = props.filter.value;
-            const exists = state.valueOptions.some(option => option.value === currentValue);
-            if (!exists && isTimeRangeValue(currentValue)) {
+            const exists = state.valueOptions.some(
+                option => option.value === currentValue
+            );
+            if (!exists && /^P(T?\d+[HMD]|\d+[YMDW])/.test(currentValue)) {
                 state.valueOptions.push({
                     value: currentValue,
                     label: getRelativeDateLabel(currentValue)
@@ -434,15 +383,12 @@
         }
     };
 
-    const isTimeRangeValue = (value: string): boolean =>
-        /^P(T?\d+[HMD]|\d+[YMDW])/.test(value);
-
     const initializeFilter = async () => {
         state.selectedComparator = shouldShowComparator.value
             ? props.filter.comparator
             : props.filterKey.comparators[0];
         await loadValueOptions();
-        initializeValueByType();
+        initializeStateFromFilter(props.filter);
     };
 
     onMounted(initializeFilter);

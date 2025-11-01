@@ -2,7 +2,7 @@ import {useI18n} from "vue-i18n";
 
 import {Value} from "../utils/types";
 
-import {State} from "@kestra-io/ui-libs";
+import {STATE_NAMES as stateNames} from "@kestra-io/ui-libs";
 import {auditLogTypes} from "../../../models/auditLogTypes";
 import permission from "../../../models/permission";
 import action from "../../../models/action";
@@ -34,7 +34,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
 
     const VALUES = {
         EXECUTION_STATES: buildFromArray(
-            State.arrayAllStates().map((state: { name: string }) => state.name),
+           [...stateNames],
         ),
         TRIGGER_STATES: buildFromArray(["ENABLED", "DISABLED"], true),
         SCOPES: [

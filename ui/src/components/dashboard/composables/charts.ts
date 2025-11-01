@@ -1,6 +1,6 @@
 import _merge from "lodash/merge";
 import Utils from "../../../utils/utils";
-import {cssVariable, State} from "@kestra-io/ui-libs";
+import {cssVariable, State, STATE_NAMES as stateNames} from "@kestra-io/ui-libs";
 import {getSchemeValue} from "../../../utils/scheme";
 
 export function tooltip(tooltipModel: {
@@ -105,7 +105,6 @@ export function extractState(value: any) {
     if (!value || typeof value !== "string") return value;
 
     if (value.includes(",")) {
-        const stateNames = State.arrayAllStates().map(state => state.name);
         const matchedState = value.split(",")
             .map(part => part.trim())
             .find(part => stateNames.includes(part.toUpperCase()));

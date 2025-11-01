@@ -1,23 +1,6 @@
 import {computed} from "vue";
 import {useTheme} from "./utils"
-import {cssVariable} from "@kestra-io/ui-libs";
-
-const executionStates = [
-    "CANCELLED",
-    "CREATED",
-    "FAILED",
-    "KILLED",
-    "KILLING",
-    "PAUSED",
-    "QUEUED",
-    "RESTARTED",
-    "RETRIED",
-    "RETRYING",
-    "RUNNING",
-    "SKIPPED",
-    "SUCCESS",
-    "WARNING"
-] as const;
+import {cssVariable, STATE_NAMES as executionStates} from "@kestra-io/ui-libs";
 
 const logLevels = [
     "DEBUG",

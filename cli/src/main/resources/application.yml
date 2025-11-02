@@ -2,8 +2,8 @@ micronaut:
   application:
     name: kestra
   # Disable Micronaut Open Telemetry
-  otel:
-    enabled: false
+  # otel:
+    # enabled: false
   router:
     static-resources:
       swagger:
@@ -254,11 +254,17 @@ kestra:
       - system.
       - internal.
 
-otel:
-  exclusions:
-    - /ping
-    - /metrics
-    - /health
-    - /env
-    - /prometheus
-  propagators: tracecontext, baggage
+  otel:
+    enabled: true
+    traces:
+      exporter: otlp
+    exporter:
+      otlp:
+        endpoint: http://localhost:4317
+    exclusions:
+      - /ping
+      - /metrics
+      - /health
+      - /env
+      - /prometheus
+    propagators: tracecontext, baggage

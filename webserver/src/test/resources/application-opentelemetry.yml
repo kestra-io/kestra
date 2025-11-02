@@ -1,0 +1,13 @@
+otel:
+  enabled: true
+  traces:
+    exporter: otlp
+  exporter:
+    otlp:
+      endpoint: http://localhost:4317
+
+kestra:
+  repository:
+    type: memory
+  queue:
+    type: memory

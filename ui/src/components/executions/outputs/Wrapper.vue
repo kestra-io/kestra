@@ -85,7 +85,9 @@
                                         class="w-100"
                                     />
 
+                                    <!-- FIX: Added ref for potential future enhancements -->
                                     <el-button
+                                        ref="debugButton"
                                         type="primary"
                                         @click="
                                             onDebugExpression(
@@ -97,17 +99,27 @@
                                         {{ t("eval.title") }}
                                     </el-button>
 
-                                    <Editor
-                                        v-if="debugExpression"
-                                        :readOnly="true"
-                                        :input="true"
-                                        :fullHeight="false"
-                                        :customHeight="20"
-                                        :navbar="false"
-                                        :modelValue="debugExpression"
-                                        :lang="isJSON ? 'json' : ''"
-                                        class="mt-3"
-                                    />
+                                    <!-- FIX: Wrapped output in container that shows during loading to prevent layout shift -->
+                                    <!-- Container reserves space with min-height to avoid sudden content expansion -->
+                                    <div 
+                                        v-if="debugExpression || isLoadingDebug"
+                                        class="mt-3 debug-output-container"
+                                    >
+                                        <Editor
+                                            v-if="debugExpression"
+                                            :readOnly="true"
+                                            :input="true"
+                                            :fullHeight="false"
+                                            :customHeight="20"
+                                            :navbar="false"
+                                            :modelValue="debugExpression"
+                                            :lang="isJSON ? 'json' : ''"
+                                        />
+                                        <!-- FIX: Loading placeholder provides visual feedback and maintains layout -->
+                                        <div v-else-if="isLoadingDebug" class="loading-placeholder">
+                                            Loading...
+                                        </div>
+                                    </div>
                                 </div>
                             </el-collapse-item>
                         </el-collapse>
@@ -173,6 +185,10 @@
     const debugCollapse = ref<string>("");
     const debugEditor = ref<InstanceType<typeof Editor>>();
     const debugExpression = ref<string>("");
+    // FIX: Added loading state to track API call status and prevent layout jumps
+    const isLoadingDebug = ref<boolean>(false);
+    // FIX: Added button ref for future enhancements
+    const debugButton = ref<HTMLElement | null>(null);
 
     const computedDebugValue = computed(() => {
         const formatTask = (task: string) => {
@@ -216,6 +232,16 @@
 
         if (!taskRun) return;
 
+        // FIX: Store scroll position before making changes to prevent viewport jump
+        const container = document.querySelector(".content-container");
+        const scrollTop = container?.scrollTop || 0;
+
+        // FIX: Set loading state and clear previous results to avoid visual artifacts
+        isLoadingDebug.value = true;
+        debugExpression.value = "";
+        debugError.value = "";
+        debugStackTrace.value = "";
+
         const URL = `${apiUrl()}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
         axios
             .post(URL, expression, {headers: {"Content-type": "text/plain"}})
@@ -238,6 +264,18 @@
 
                 debugError.value = response.data.error;
                 debugStackTrace.value = response.data.stackTrace;
+            })
+            .finally(() => {
+                isLoadingDebug.value = false;
+                
+                // FIX: Use setTimeout to ensure DOM has updated before restoring scroll position
+                // This prevents the page from jumping when new content is rendered
+                setTimeout(() => {
+                    if (container) {
+                        // Maintain scroll position after content is loaded
+                        container.scrollTop = scrollTop;
+                    }
+                }, 0);
             });
     };
 
@@ -529,6 +567,8 @@
         }
     }
 }
+
+/* FIX: Added smooth scrolling and overflow anchoring to prevent layout jumps */
 .content-container {
     height: calc(100vh - 0px);
     overflow-y: auto !important;
@@ -537,12 +577,15 @@
     word-break: break-word;
     position: relative;
     z-index: 0;
+    overflow-anchor: auto; /* Enables scroll anchoring to maintain scroll position */
+    scroll-behavior: smooth; /* Provides smoother visual transitions */
 }
 
 :deep(.el-collapse) {
     .el-collapse-item__wrap {
         overflow-y: auto !important;
         max-height: none !important;
+        will-change: auto !important; /* FIX: Optimizes rendering performance */
     }
 
     .el-collapse-item__content {
@@ -550,6 +593,22 @@
         word-wrap: break-word;
         word-break: break-word;
     }
+}
+
+/* FIX: Container reserves minimum space to prevent sudden layout expansion */
+/* Uses CSS containment to isolate layout calculations and prevent reflows */
+.debug-output-container {
+    min-height: 100px; /* Reserves space even when empty */
+    contain: layout; /* Isolates layout to prevent page-wide reflows */
+}
+
+/* FIX: Loading placeholder provides visual feedback and maintains consistent height */
+.loading-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px; /* Matches container min-height */
+    color: var(--ks-content-secondary);
 }
 
 :deep(.var-value) {

@@ -1238,6 +1238,7 @@ public class JdbcExecutor implements ExecutorInterface {
         flowTriggerService.withFlowTriggersOnly(allFlows.stream())
             .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().anyMatch(c -> c instanceof MultipleCondition) || f.getTrigger().getPreconditions() != null)
             .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
+            .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
             .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
     }
 

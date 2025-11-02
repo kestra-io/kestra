@@ -188,3 +188,50 @@ html.full-screen {
 body{
     background-color: var(--ks-background-body);
 }
+
+.no-code-skeleton{
+    color: var(--ks-content-secondary);
+    background-color: var(--ks-background-card);
+    width: 100%;
+    border-radius: 4px;
+    padding: 0 .5rem;
+    // slowly appearing grey background animation
+    animation: skeleton-loading 6s 1;
+    position: relative;
+    &:before{
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        background-image: linear-gradient(110deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .1) 35%, rgba(255, 255, 255, 0) 75%, rgba(255, 255, 255, 0) 100%);
+        background-size: 200% 200%;
+        background-repeat: no-repeat;
+        background-position: 0 0;
+        opacity: 0.7;
+        border-radius: 4px;
+        animation: skeleton-animation 3s infinite;
+        height: 32px;
+    }
+}
+
+@keyframes skeleton-animation {
+    0% {
+        background-position: -55% -30%;
+    }
+    100% {
+        background-position: 185% 100%;
+    }
+}
+
+@keyframes skeleton-loading {
+    0% {
+        opacity:0;
+    }
+    40% {
+        opacity:0;
+    }
+    100% {
+        opacity:.7;
+    }
+}

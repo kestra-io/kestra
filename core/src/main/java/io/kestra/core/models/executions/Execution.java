@@ -989,7 +989,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
                 for (TaskRun current : taskRuns) {
                     if (!MapUtils.isEmpty(current.getOutputs())) {
                         if (current.getIteration() != null) {
-                            Map<String, Object> merged = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                            Map<String, Object> merged = MapUtils.mergeOrdered(taskOutputs, outputs(current, byIds));
                             // If one of two of the map is null in the merge() method, we just return the other
                             // And if the not null map is a Variables (= read only), we cast it back to a simple
                             // hashmap to avoid taskOutputs becoming read-only

@@ -1,4 +1,4 @@
-id: prefix_even_indices_sums
+id: prefix_indices_sum
 namespace: io.kestra.tests
 
 tasks:
@@ -6,7 +6,7 @@ tasks:
     type: io.kestra.plugin.core.flow.ForEach
     values: '["1", "3", "5", "10", "12", "14"]'
     tasks:
-      - id: sum_even
+      - id: even_indices_prefix_sum
         type: io.kestra.plugin.core.debug.Return
         format: >-
           {% set idx = taskrun.iteration %}
@@ -16,5 +16,15 @@ tasks:
             {{ (outputFromIteration(idx - 2) | trim | number + taskrun.value | trim | number) }}
           {% else %}
             {{ outputFromIteration(idx - 1) | trim | number }}
+          {% endif %}
+
+      - id: prefix_sum
+        type: io.kestra.plugin.core.debug.Return
+        format: >-
+          {% set idx = taskrun.iteration %}
+          {% if idx == 0 %}
+            {{ taskrun.value | trim | number }}
+          {% else %}
+            {{ (outputFromIteration(idx - 1) | trim | number + taskrun.value | trim | number) }}
           {% endif %}
 

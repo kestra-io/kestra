@@ -16,39 +16,32 @@
     </div>
 </template>
 
-
-
 <script setup lang="ts">
-    import {computed, ref, getCurrentInstance, ComputedRef} from "vue";
+    import {computed, ref} from "vue";
     import {Bar} from "vue-chartjs";
+    import moment from "moment";
     import {useMiscStore} from "override/stores/misc";
     import {
         defaultConfig,
         tooltip,
         getFormat,
     } from "../dashboard/composables/charts";
+    // @ts-expect-error: chartClick typing issue
+    
     import Logs from "../../utils/logs";
-    import type {ChartData} from "chart.js";
 
-    // Import LogLevel type from logs utility
-    type LogLevel = "ERROR" | "WARN" | "INFO" | "DEBUG" | "TRACE";
-
-    interface ChartEntry {
-        timestamp: string;
-        groupBy: string;
-        counts: Partial<Record<LogLevel, number>>;
+    interface CountsData {
+        [key: string]: number;
     }
 
-    interface DataSet {
-        label: string;
-        backgroundColor: string | null;
-        borderRadius: number;
-        yAxisID: string;
-        data: number[];
+    interface ExecutionData {
+        timestamp: string;
+        groupBy: string;
+        counts: CountsData;
     }
 
     const props = withDefaults(defineProps<{
-        data: ChartEntry[];
+        data: ExecutionData[];
         namespace?: string;
         flowId?: string;
     }>(), {
@@ -56,18 +49,11 @@
         flowId: undefined
     });
 
-    const app = getCurrentInstance();
-    const moment = app?.appContext.config.globalProperties.$moment;
-    if (!moment) {
-        throw new Error("moment is not defined in the Vue app instance");
-    }
-    
-    const chartRef = ref<InstanceType<typeof Bar> | null>(null);
-    const tooltipContent = ref("");
-    
+    const chartRef = ref();
+    const tooltipContent = ref<string>("");
     const miscStore = useMiscStore();
 
-    const dataReady = computed(() => props.data?.length > 0);
+    const dataReady = computed(() => props.data.length > 0);
 
     const options = computed(() => defaultConfig({
         plugins: {
@@ -104,39 +90,32 @@
         },
     }, miscStore.theme) as any);
 
-    const chartData: ComputedRef<ChartData<"bar">> = computed(() => {
-        // Create a type-safe accumulator for datasets
-        const datasets = props.data.reduce((accumulator: Record<LogLevel, DataSet>, value: ChartEntry) => {
-            (Object.keys(value.counts) as LogLevel[]).forEach((state) => {
-                if (!accumulator[state]) {
-                    const backgroundColor = Logs.chartColorFromLevel(state);
-                    accumulator[state] = {
-                        label: state,
-                        backgroundColor: backgroundColor,
-                        borderRadius: 4,
-                        yAxisID: "y",
-                        data: []
-                    };
-                }
-                
-                const count = value.counts[state];
-                if (typeof count === "number") {
-                    accumulator[state].data.push(count);
-                } else {
-                    accumulator[state].data.push(0); // Default to 0 if count is undefined
-                }
-            });
+    const chartData = computed(() => {
+        let datasets = props.data
+            .reduce(function (accumulator: Record<string, any>, value: ExecutionData) {
+                Object.keys(value.counts).forEach(function (state: string) {
+                    if (accumulator[state] === undefined) {
+                        accumulator[state] = {
+                            label: state,
+                            backgroundColor: Logs.chartColorFromLevel(state),
+                            borderRadius: 4,
+                            yAxisID: "y",
+                            data: []
+                        };
+                    }
 
-            return accumulator;
-        }, {} as Record<LogLevel, DataSet>);
+                    accumulator[state].data.push(value.counts[state]);
+                });
 
-        const sortedDatasets = Logs.sort(datasets);
+                return accumulator;
+            }, Object.create(null))
+
+        datasets = Logs.sort(datasets);
 
         return {
-            labels: props.data.map((r: ChartEntry) => moment(r.timestamp).format(getFormat(r.groupBy))),
-            datasets: Object.values(sortedDatasets)
-        };
+            labels: props.data.map((r: ExecutionData) => moment(r.timestamp).format(getFormat(r.groupBy))),
+            datasets: Object.values(datasets)
+        }
     });
-
 
 </script>

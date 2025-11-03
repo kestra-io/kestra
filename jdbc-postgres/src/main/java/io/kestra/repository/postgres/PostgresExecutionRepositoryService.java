@@ -2,16 +2,12 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.utils.Either;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.Condition;
 import org.jooq.impl.DSL;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
-import static io.kestra.core.models.QueryFilter.Op.EQUALS;
+import java.util.*;
 
 public abstract class PostgresExecutionRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<Execution> jdbcRepository, String query, Map<String, String> labels) {
@@ -31,18 +27,37 @@ public abstract class PostgresExecutionRepositoryService {
         return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
-    public static Condition findCondition(Map<?,?> labels, QueryFilter.Op operation) {
+    public static Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
         List<Condition> conditions = new ArrayList<>();
-
+        List<Condition> inConditions = new ArrayList<>();
+        if (input.isRight()) {
+            var query = input.right().get();
+            if (Objects.requireNonNull(operation) == QueryFilter.Op.CONTAINS) {
+                String sql = "EXISTS (" +
+                    " SELECT 1 FROM jsonb_array_elements(COALESCE(value -> 'labels', '[]'::jsonb)) AS lbl" +
+                    " WHERE lower(lbl ->> 'value') LIKE lower('%' || ? || '%')" +
+                    "    OR lower(lbl ->> 'key') LIKE lower('%' || ? || '%')" +
+                    ")";
+                conditions.add(DSL.condition(sql, query, query));
+            } else {
+                throw new UnsupportedOperationException("Unsupported operation for query: " + operation);
+            }
+        } else {
+            var labels = input.getLeft();
             labels.forEach((key, value) -> {
                 String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
-                if (operation.equals(EQUALS))
-                    conditions.add(DSL.condition(sql));
-                else
-                    conditions.add(DSL.not(DSL.condition(sql)));
-
+                switch (operation) {
+                    case EQUALS -> conditions.add(DSL.condition(sql));
+                    case NOT_EQUALS, NOT_IN -> conditions.add(DSL.not(DSL.condition(sql)));
+                    case IN -> inConditions.add(DSL.condition(sql));
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                }
             });
+        }
 
+        if (!inConditions.isEmpty()) {
+            conditions.add(DSL.or(inConditions));
+        }
         return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 

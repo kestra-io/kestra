@@ -20,9 +20,8 @@ import java.util.Map;
 @H2RepositoryEnabled
 public class H2KvMetadataRepository extends AbstractJdbcKvMetadataRepository {
     @Inject
-    public H2KvMetadataRepository(@Named("kvMetadata") H2Repository<PersistedKvMetadata> repository,
-                            ApplicationContext applicationContext) {
-        super(repository, applicationContext);
+    public H2KvMetadataRepository(@Named("kvMetadata") H2Repository<PersistedKvMetadata> repository) {
+        super(repository);
     }
 
 

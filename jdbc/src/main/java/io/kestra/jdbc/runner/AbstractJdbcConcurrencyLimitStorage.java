@@ -5,13 +5,11 @@ import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.ExecutionRunning;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.Insert;
-import org.jooq.SQLDialect;
+import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -67,7 +65,7 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
                 });
 
                 var pair = consumer.apply(dslContext, selected);
-                save(dslContext, pair.getRight());
+                update(dslContext, pair.getRight());
                 return pair.getLeft();
             });
     }
@@ -83,7 +81,7 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
                 var dslContext = DSL.using(configuration);
 
                 fetchOne(dslContext, flow).ifPresent(
-                    concurrencyLimit -> save(dslContext, concurrencyLimit.withRunning(concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1))
+                    concurrencyLimit -> update(dslContext, concurrencyLimit.withRunning(concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1))
                 );
             });
     }
@@ -94,8 +92,36 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
      */
     public void increment(DSLContext dslContext, FlowInterface flow) {
         fetchOne(dslContext, flow).ifPresent(
-            concurrencyLimit -> save(dslContext, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1))
+            concurrencyLimit -> update(dslContext, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1))
         );
+    }
+
+    /**
+     * Returns all concurrency limit from the database
+     */
+    public List<ConcurrencyLimit> find(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.buildTenantCondition(tenantId));
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    /**
+     * Update a concurrency limit
+     * WARNING: this is inherently unsafe and must only be used for administration purpose
+     */
+    public ConcurrencyLimit update(ConcurrencyLimit concurrencyLimit) {
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(concurrencyLimit);
+        this.jdbcRepository.persist(concurrencyLimit, fields);
+
+        return concurrencyLimit;
     }
 
     private Optional<ConcurrencyLimit> fetchOne(DSLContext dslContext, FlowInterface flow) {
@@ -110,8 +136,23 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
             .map(record -> this.jdbcRepository.map(record));
     }
 
-    private void save(DSLContext dslContext, ConcurrencyLimit concurrencyLimit) {
+    private void update(DSLContext dslContext, ConcurrencyLimit concurrencyLimit) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(concurrencyLimit);
         this.jdbcRepository.persist(concurrencyLimit, dslContext, fields);
+    }
+
+    public Optional<ConcurrencyLimit> findById(String tenantId, String namespace, String flowId) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.buildTenantCondition(tenantId))
+                    .and(field("namespace").eq(namespace))
+                    .and(field("flow_id").eq(flowId));
+                return this.jdbcRepository.fetchOne(select);
+            });
     }
 }

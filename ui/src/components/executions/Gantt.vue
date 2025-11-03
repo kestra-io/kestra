@@ -186,14 +186,8 @@
                         !this.taskTypesToExclude.includes(this.taskTypeByTaskRunId[serie.task.id])
                     );
             },
-
-            // FIX: Guard against empty histories array to prevent "Invalid date" rendering.
-            // If the execution never started, histories will be empty.
-            // Previously, this accessed histories[0].date directly and caused bugs.
             start() {
-                // Only access date if histories array is not empty
-                return (this.execution && this.execution.state.histories.length > 0)? ts(this.execution.state.histories[0].date): ""; // Render blank/placeholder if date is missing
-                // return this.execution ? ts(this.execution.state.histories[0].date) : 0;
+                return this.execution ? ts(this.execution.state.histories[0].date) : 0;
             },
             tasks () {
                 const rootTasks = []
@@ -221,10 +215,8 @@
                         parentTask.children.push(taskWrapper)
                     }
                 }
-                
-                // FIX: Avoid "Invalid date" when task node histories are missing
-                const nodeStart = node => (node.task.state.histories.length > 0)? ts(node.task.state.histories[0].date): ""; // Render blank/placeholder
 
+                const nodeStart = node => ts(node.task.state.histories[0].date)
                 const childrenSort = nodes => {
                     nodes.sort((n1,n2) => {
                         return nodeStart(n1) > nodeStart(n2) ? 1 : -1
@@ -258,10 +250,8 @@
                 if (!this.execution || State.isRunning(this.execution.state.current)) {
                     return +new Date();
                 }
-                
-                // Defensive: Only access date if histories array is not empty
+
                 return Math.max(...(this.execution.taskRunList || []).map(r => {
-                    if (!r.state.histories.length) return 0; // Avoid invalid date if histories is empty
                     let lastIndex = r.state.histories.length - 1
                     return ts(r.state.histories[lastIndex].date)
                 }));
@@ -278,12 +268,11 @@
                     if (State.isRunning(task.state.current)) {
                         stopTs = ts(new Date());
                     } else {
-                        // Defensive: handle tasks with no history (i.e. execution never started)
-                        const lastIndex = task.state.histories.length > 0 ? task.state.histories.length - 1 : 0;
-                        stopTs = task.state.histories.length > 0 ? ts(task.state.histories[lastIndex].date) : 0;
+                        const lastIndex = task.state.histories.length - 1;
+                        stopTs = ts(task.state.histories[lastIndex].date);
                     }
 
-                    const startTs = task.state.histories.length > 0 ? ts(task.state.histories[0].date) : 0;
+                    const startTs = ts(task.state.histories[0].date);
 
                     const runningState = task.state.histories.filter(r => r.state === State.RUNNING);
                     const left = runningState.length > 0 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100) : 0;
@@ -327,16 +316,12 @@
             computeDates() {
                 const ticks = 5;
                 const date = ts => this.$moment(ts).format("h:mm:ss");
-                // Defensive: Only build timeline ticks if start is valid
                 const start = this.start;
                 const delta = this.delta() / ticks;
                 const dates = [];
-                if(start){
-                    for (let i = 0; i < ticks; i++) {
-                        dates.push(date(start + i * delta));
-                    }
+                for (let i = 0; i < ticks; i++) {
+                    dates.push(date(start + i * delta));
                 }
-               
                 this.dates = dates;
             },
             onTaskSelect(taskRunId) {

@@ -169,6 +169,7 @@ kestra:
       open-urls:
         - "/ping"
         - "/api/v1/executions/webhook/"
+        - "/api/v1/main/executions/webhook/"
     liveness:
       enabled: false
     service:

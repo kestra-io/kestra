@@ -6,6 +6,7 @@ export interface Namespace {
     id: string;
     disabled: boolean;
     deleted: boolean;
+    description?: string;
 }
 
 export class NamespaceIterator extends EntityIterator<Namespace>{

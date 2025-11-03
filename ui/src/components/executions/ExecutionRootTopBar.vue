@@ -4,8 +4,9 @@
             {{ routeInfo?.title }}
             <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
         </template>
-        <template #additional-right v-if="canDelete || isAllowedTrigger || isAllowedEdit">
-            <div class="d-flex align-items-center gap-2">
+        <template #additional-right>
+            <slot name="additional-right" />
+            <div class="d-flex align-items-center gap-2" v-if="(canDelete || isAllowedTrigger || isAllowedEdit) && $route.params.tab !== 'audit-logs'">
                 <ul class="d-none d-xl-flex align-items-center">
                     <li v-if="isAllowedEdit">
                         <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">

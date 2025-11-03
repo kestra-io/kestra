@@ -17,10 +17,7 @@ import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
+import jakarta.validation.Valid;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -28,6 +25,10 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @SuperBuilder(toBuilder = true)
@@ -45,7 +46,7 @@ import org.apache.commons.lang3.StringUtils;
             code = """
                 id: purge_kv_store
                 namespace: system
-
+                
                 tasks:
                   - id: purge_kv
                     type: io.kestra.plugin.core.kv.PurgeKV
@@ -58,7 +59,6 @@ import org.apache.commons.lang3.StringUtils;
     }
 )
 public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
-
     @Schema(
         title = "Key pattern, e.g. 'AI_*'",
         description = "Delete only keys matching the glob pattern."
@@ -78,11 +78,12 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
     private Property<String> namespacePattern;
 
     @Schema(
-        title = "Delete only expired keys",
-        description = "Defaults to true."
+        title = "Purge behavior",
+        description = "Defines how keys are purged."
     )
     @Builder.Default
-    private Property<Boolean> expiredOnly = Property.ofValue(true);
+    @Valid
+    private Property<PurgeBehavior> behavior = Property.ofValue(Key.builder().expiredOnly(true).build());
 
     @Schema(
         title = "Delete keys from child namespaces",
@@ -91,40 +92,38 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
     @Builder.Default
     private Property<Boolean> includeChildNamespaces = Property.ofValue(true);
 
+    /**
+     * @deprecated use behavior.type: key + behavior.expiredOnly instead. Setting this property will override the `behavior` property.
+     */
+    @Deprecated(since = "1.1.0", forRemoval = true)
+    private Property<Boolean> expiredOnly;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
         List<String> kvNamespaces = findNamespaces(runContext);
-        boolean purgeExpiredOnly = runContext.render(expiredOnly).as(Boolean.class).orElse(true);
         String renderedKeyPattern = runContext.render(keyPattern).as(String.class).orElse(null);
         boolean keyFiltering = StringUtils.isNotBlank(renderedKeyPattern);
         runContext.logger().info("purging {} namespaces: {}", kvNamespaces.size(), kvNamespaces);
         AtomicLong count = new AtomicLong();
+        PurgeBehavior renderedBehavior;
+        if (expiredOnly != null) {
+            renderedBehavior = Key.builder()
+                .expiredOnly(runContext.render(expiredOnly).as(Boolean.class).orElse(true))
+                .build();
+        } else {
+            renderedBehavior = runContext.render(behavior).as(PurgeBehavior.class).orElseThrow();
+        }
         for (String ns : kvNamespaces) {
             KVStore kvStore = runContext.namespaceKv(ns);
-            List<KVEntry> kvEntries = new ArrayList<>();
-            List<KVEntry> allKvEntries = kvStore.listAll();
-            if (purgeExpiredOnly){
-                Instant now = Instant.now();
-                kvEntries.addAll(allKvEntries.stream()
-                    .filter(kv -> kv.expirationDate() != null && kv.expirationDate().isBefore(now))
-                    .toList());
-            } else {
-                kvEntries.addAll(allKvEntries);
-            }
-            List<String> keys = kvEntries.stream()
-                .map(KVEntry::key)
-                .filter(key -> {
+            List<KVEntry> toPurge = renderedBehavior.entriesToPurge(kvStore).stream()
+                .filter(kv -> {
                     if (keyFiltering) {
-                        return FilenameUtils.wildcardMatch(key, renderedKeyPattern);
+                        return FilenameUtils.wildcardMatch(kv.key(), renderedKeyPattern);
                     }
                     return true;
                 })
                 .toList();
-            for (String key : keys) {
-                kvStore.delete(key);
-            }
-            count.addAndGet(keys.size());
+            count.addAndGet(kvStore.purge(toPurge));
         }
         runContext.logger().info("purged {} keys", count.get());
 
@@ -153,11 +152,11 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
                 .filter(ns -> FilenameUtils.wildcardMatch(ns, renderedNamespacePattern))
                 .toList());
         } else if (!renderedNamespaces.isEmpty()) {
-            if (runContext.render(includeChildNamespaces).as(Boolean.class).orElse(true)){
+            if (runContext.render(includeChildNamespaces).as(Boolean.class).orElse(true)) {
                 kvNamespaces.addAll(distinctNamespaces.stream()
                     .filter(ns -> {
                         for (String renderedNamespace : renderedNamespaces) {
-                            if (ns.startsWith(renderedNamespace)){
+                            if (ns.startsWith(renderedNamespace)) {
                                 return true;
                             }
                         }
@@ -167,7 +166,7 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
                 kvNamespaces.addAll(distinctNamespaces.stream()
                     .filter(ns -> {
                         for (String renderedNamespace : renderedNamespaces) {
-                            if (ns.equals(renderedNamespace)){
+                            if (ns.equals(renderedNamespace)) {
                                 return true;
                             }
                         }

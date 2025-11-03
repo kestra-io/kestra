@@ -130,7 +130,7 @@ public class FlowInputOutput {
     private Mono<Map<String, Object>> readData(List<Input<?>> inputs, Execution execution, Publisher<CompletedPart> data, boolean uploadFiles) {
         return Flux.from(data)
             .publishOn(Schedulers.boundedElastic())
-            .<AbstractMap.SimpleEntry<String, String>>handle((input, sink) -> {
+            .<Map.Entry<String, String>>handle((input, sink) -> {
                 if (input instanceof CompletedFileUpload fileUpload) {
                     boolean oldStyleInput = false;
                     if ("files".equals(fileUpload.getName())) {
@@ -150,7 +150,7 @@ public class FlowInputOutput {
                             .getContextStorageURI()
                         );
                         fileUpload.discard();
-                        sink.next(new AbstractMap.SimpleEntry<>(inputId, from.toString()));
+                        sink.next(Map.entry(inputId, from.toString()));
                     } else {
                         try {
                             final String fileExtension = FileInput.findFileInputExtension(inputs, fileName);
@@ -165,7 +165,7 @@ public class FlowInputOutput {
                                     return;
                                 }
                                 URI from = storageInterface.from(execution, inputId, fileName, tempFile);
-                                sink.next(new AbstractMap.SimpleEntry<>(inputId, from.toString()));
+                                sink.next(Map.entry(inputId, from.toString()));
                             } finally {
                                 if (!tempFile.delete()) {
                                     tempFile.deleteOnExit();
@@ -178,13 +178,13 @@ public class FlowInputOutput {
                     }
                 } else {
                     try {
-                        sink.next(new AbstractMap.SimpleEntry<>(input.getName(), new String(input.getBytes())));
+                        sink.next(Map.entry(input.getName(), new String(input.getBytes())));
                     } catch (IOException e) {
                         sink.error(e);
                     }
                 }
             })
-            .collectMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue);
+            .collectMap(Map.Entry::getKey, Map.Entry::getValue);
     }
 
     /**
@@ -287,9 +287,10 @@ public class FlowInputOutput {
         Input<?> input = resolvable.get().input();
 
         try {
-            //  resolve all input dependencies and check whether input is enabled
-            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, decryptSecrets);
-            final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, decryptSecrets);
+            // Resolve all input dependencies and check whether input is enabled
+            // Note: Secrets are always decrypted here because they can be part of expressions used to render inputs such as SELECT & MULTI_SELECT.
+            final Map<String, InputAndValue> dependencies = resolveAllDependentInputs(input, flow, execution, inputs, true);
+            final RunContext runContext = buildRunContextForExecutionAndInputs(flow, execution, dependencies, true);
 
             boolean isInputEnabled = dependencies.isEmpty() || dependencies.values().stream().allMatch(InputAndValue::enabled);
 
@@ -329,7 +330,8 @@ public class FlowInputOutput {
 
             // resolve default if needed
             if (value == null && input.getDefaults() != null) {
-                value = resolveDefaultValue(input, runContext);
+                RunContext runContextForDefault = decryptSecrets ? runContext : buildRunContextForExecutionAndInputs(flow, execution, dependencies, false);
+                value = resolveDefaultValue(input, runContextForDefault);
                 resolvable.isDefault(true);
             }
 

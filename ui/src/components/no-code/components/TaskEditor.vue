@@ -20,13 +20,12 @@
     <div @click="isPlugin && pluginsStore.updateDocumentation(taskObject as Parameters<typeof pluginsStore.updateDocumentation>[0])">
         <TaskObject
             v-loading="isLoading"
-            v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schemaProp"
+            v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
             name="root"
             :modelValue="taskObject"
             @update:model-value="onTaskInput"
-            :schema="schemaProp"
-            :properties="properties"
-            :definitions="fullSchema.definitions"
+            :schema
+            :properties
         />
     </div>
 </template>
@@ -127,7 +126,7 @@
 
 
     const properties = computed(() => {
-        const updatedProperties = schemaProp.value;
+        const updatedProperties = resolvedProperties.value ?? {};
         if(isPluginDefaults.value){
             updatedProperties["id"] = undefined
             updatedProperties["forced"] = {
@@ -148,22 +147,6 @@
         }
 
         return updatedProperties
-    });
-
-    const schemaProp = computed(() => {
-        const prop = isTaskDefinitionBasedOnType.value
-            ? resolvedProperties.value
-            : schemaAtBlockPath.value
-
-        if(!prop){
-            return undefined;
-        }
-        prop.required = prop.required || [];
-        prop.required.push("id", "data");
-        if(isPluginDefaults.value){
-            prop.required.push("forced");
-        }
-        return prop;
     });
 
     function setup() {
@@ -261,13 +244,36 @@
         return resolvedTypes.value.map((type) => definitions.value?.[type]);
     });
 
+    const REQUIRED_FIELDS = ["id", "data"];
+
+    const schema = computed(() => {
+        const localSchema = resolvedLocalSchema.value;
+        if(isTaskDefinitionBasedOnType.value){
+            localSchema.required = localSchema.required ?? [];
+            for(const field of REQUIRED_FIELDS){
+                if(!localSchema.required.includes(field) && resolvedProperties.value?.[field]){
+                    localSchema.required.push(field);
+                }
+            }
+        }
+        return localSchema;
+    });
+
+    const resolvedLocalSchema = computed(() => {
+        return isTaskDefinitionBasedOnType.value
+            ? definitions.value?.[resolvedType.value] ?? {}
+            : schemaAtBlockPath.value
+    });
+
     const resolvedProperties = computed<Schemas["properties"] | undefined>(() => {
         // try to resolve the type from local schema
-        const defs = definitions.value ?? {}
-        if (defs[resolvedType.value]) {
-            return defs[resolvedType.value].properties
+        // IE: when only one schema is available take it and run with it
+        if (resolvedLocalSchema.value?.properties) {
+            return resolvedLocalSchema.value.properties
         }
 
+        // if there is more than one schema valid, try to find common properties
+        // to all the schemas to help user narrow down the schema they want
         if(resolvedTypes.value.length > 1){
             const schemas = resolvedSchemas.value;
 
@@ -297,6 +303,7 @@
 
             return properties;
         }
+
         return undefined;
     });
 

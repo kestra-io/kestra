@@ -3,11 +3,9 @@ namespace: io.kestra.tests
 inputs:
   - name: namespace
     type: STRING
-    required: false
     defaults: "io.kestra.tests"
   - name: errorOnMissing
     type: BOOL
-    required: false
     defaults: false
 tasks:
   - id: get

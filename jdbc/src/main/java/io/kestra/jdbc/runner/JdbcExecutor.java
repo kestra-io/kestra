@@ -494,13 +494,13 @@ public class JdbcExecutor implements ExecutorInterface {
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.WARN,
-                                "Re-emitting WorkerTask."
+                                "Re-resubmitting WorkerTask."
                             );
                         } catch (QueueException e) {
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.ERROR,
-                                "Unable to re-emit WorkerTask.",
+                                "Unable to re-resubmit WorkerTask.",
                                 e
                             );
                         }
@@ -658,8 +658,24 @@ public class JdbcExecutor implements ExecutorInterface {
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
+                                            /// flowable attempt state transition to running
                                             if (workerTask.getTask().isFlowable()) {
-                                                workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
+                                                List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
+                                                    .map(ArrayList::new)
+                                                    .orElseGet(ArrayList::new);
+
+
+                                                attempts.add(
+                                                    TaskRunAttempt.builder()
+                                                        .state(new State().withState(State.Type.RUNNING))
+                                                        .build()
+                                                );
+
+                                                TaskRun updatedTaskRun = workerTask.getTaskRun()
+                                                    .withAttempts(attempts)
+                                                    .withState(State.Type.RUNNING);
+
+                                                workerTaskResults.add(new WorkerTaskResult(updatedTaskRun));
                                             }
                                         }
                                     } catch (Exception e) {
@@ -1222,6 +1238,7 @@ public class JdbcExecutor implements ExecutorInterface {
         flowTriggerService.withFlowTriggersOnly(allFlows.stream())
             .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().anyMatch(c -> c instanceof MultipleCondition) || f.getTrigger().getPreconditions() != null)
             .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
+            .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
             .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
     }
 
@@ -1288,6 +1305,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
+                            findFlow(pair.getKey()),
                             executionDelay.getTaskRunId()
                         );
                         executor = executor.withExecution(newAttempt, "retryFailedTask");

@@ -110,7 +110,11 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
                     case NUMBER -> JacksonMapper.ofJson().readValue(renderedValueStr, Number.class);
                     case BOOLEAN -> Boolean.parseBoolean((String) renderedValue);
                     case DATETIME, DATE -> Instant.parse(renderedValueStr);
-                    case DURATION -> Duration.parse(renderedValueStr);
+                    // We parse duration to make sure it's valid but we store it as a raw duration string
+                    case DURATION -> {
+                        Duration.parse(renderedValueStr);
+                        yield renderedValueStr;
+                    }
                     case JSON -> JacksonMapper.toObject(renderedValueStr);
                     default -> renderedValue;
                 };

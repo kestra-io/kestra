@@ -121,9 +121,9 @@ public class ExecutionController {
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
-    
+
     @Inject
-    private FlowRepositoryInterface flowRepository;
+    protected FlowRepositoryInterface flowRepository;
 
     @Inject
     private FlowService flowService;
@@ -141,7 +141,7 @@ public class ExecutionController {
     private StorageInterface storageInterface;
 
     @Inject
-    private ExecutionService executionService;
+    protected ExecutionService executionService;
 
     @Inject
     private ConditionService conditionService;
@@ -168,7 +168,7 @@ public class ExecutionController {
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
-    
+
     @Inject
     private RunContextFactory runContextFactory;
 
@@ -544,7 +544,7 @@ public class ExecutionController {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
 
-        Optional<Webhook> webhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
+        Optional<Webhook> maybeWebhook = (flow.getTriggers() == null ? new ArrayList<AbstractTrigger>() : flow
             .getTriggers())
             .stream()
             .filter(o -> o instanceof Webhook)
@@ -562,11 +562,12 @@ public class ExecutionController {
             })
             .findFirst();
 
-        if (webhook.isEmpty()) {
+        if (maybeWebhook.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
         }
-
-        Optional<Execution> execution = webhook.get().evaluate(request, flow);
+        
+        final Webhook webhook = maybeWebhook.get();
+        Optional<Execution> execution = webhook.evaluate(request, flow);
 
         if (execution.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
@@ -576,11 +577,24 @@ public class ExecutionController {
         if (flow.getLabels() != null) {
             result = result.withLabels(LabelService.labelsExcludingSystem(flow));
         }
-
+        
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
         var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
-        if (!conditionService.isValid(flow, webhook.get(), conditionContext)) {
+        if (!conditionService.isValid(flow, webhook, conditionContext)) {
             return Mono.just(HttpResponse.noContent());
+        }
+        
+        // inject trigger inputs
+        if (webhook.getInputs() != null) {
+            RunContext runContext = runContextFactory.of(flow, result);
+            try {
+                Map<String, Object> inputs = runContext.render(webhook.getInputs());
+                inputs = flowInputOutput.readExecutionInputs(flow, result, inputs);
+                result = result.withInputs(inputs);
+            } catch (Exception e) {
+                log.warn("Unable to render the webhook inputs. Webhook will be ignored", e);
+                throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
+            }
         }
 
         try {
@@ -596,7 +610,7 @@ public class ExecutionController {
             executionQueue.emit(result);
             eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
 
-            if (webhook.get().getWait()) {
+            if (webhook.getWait()) {
                 var subscriberId = UUID.randomUUID().toString();
                 var executionId = result.getId();
                 return Flux.<Event<Execution>>create(emitter -> {
@@ -609,7 +623,7 @@ public class ExecutionController {
                     })
                     .last()
                     .map(event -> {
-                        if (webhook.get().getReturnOutputs()) {
+                        if (webhook.getReturnOutputs()) {
                             return HttpResponse.ok(event.getData().getOutputs());
 
                         } else {
@@ -1414,6 +1428,11 @@ public class ExecutionController {
     ) throws Exception {
         Execution execution = executionService.getExecutionIfPause(tenantService.resolveTenant(), executionId, true);
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+        return resumeFoundExecution(inputs, execution, flow);
+    }
+
+    protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution,
+        Flow flow) {
         Pause.Resumed resumed = createResumed();
 
         return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)

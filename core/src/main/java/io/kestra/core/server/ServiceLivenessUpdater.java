@@ -1,12 +1,15 @@
 package io.kestra.core.server;
 
+import io.kestra.core.runners.TransactionContext;
+
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 /**
  * Service interface for updating the state of a service instance.
  *
  * @see ServiceLivenessManager
- * @see AbstractServiceLivenessCoordinator
+ * @see DefaultServiceLivenessCoordinator
  */
 public interface ServiceLivenessUpdater {
 
@@ -51,4 +54,5 @@ public interface ServiceLivenessUpdater {
     ServiceStateTransition.Response update(final ServiceInstance instance,
                                            final Service.ServiceState newState,
                                            final String reason);
+
 }

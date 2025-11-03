@@ -1,12 +1,6 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.server.ServerConfig;
-import io.kestra.core.server.ServerInstance;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceStateTransition;
-import io.kestra.core.server.ServiceType;
-import io.kestra.core.server.WorkerTaskRestartStrategy;
+import io.kestra.core.server.*;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;
 import io.kestra.jdbc.JdbcTestUtils;
@@ -37,6 +31,8 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
 
     @Inject
     protected AbstractJdbcServiceInstanceRepository repository;
+    @Inject
+    private ServiceLivenessUpdater serviceLivenessUpdater;
 
     @Inject
     JdbcTestUtils jdbcTestUtils;
@@ -53,7 +49,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
         ServiceInstance instance = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.RunningServiceInstance;
 
         // When
-        repository.update(instance);
+        repository.save(instance);
 
         // Then
         Optional<ServiceInstance> result = repository.findById(instance.uid());
@@ -63,7 +59,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
     @Test
     protected void shouldDeleteGivenServiceInstance() {
         // Given
-        AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::update);
+        AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::save);
         final ServiceInstance instance = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.EmptyServiceInstance;
 
         // When
@@ -77,7 +73,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
     @Test
     protected void shouldFindByServiceId() {
         // Given
-        AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::update);
+        AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::save);
         String uuid = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.EmptyServiceInstance.uid();
 
         // When
@@ -90,7 +86,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
     @Test
     protected void shouldFindAllServiceInstances() {
         // Given
-        AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::update);
+        AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::save);
 
         // When
         List<ServiceInstance> results = repository.findAll();
@@ -101,22 +97,9 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
     }
 
     @Test
-    protected void shouldFindAllNonRunningInstances() {
-        // Given
-        AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::update);
-
-        // When
-        List<ServiceInstance> results = repository.findAllNonRunningInstances();
-
-        // Then
-        assertEquals(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.allNonRunning().size(), results.size());
-        assertThat(results).containsExactlyInAnyOrder(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.allNonRunning().toArray(ServiceInstance[]::new));
-    }
-
-    @Test
     protected void shouldFindAllInstancesInNotRunningState() {
         // Given
-        AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::update);
+        AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().forEach(repository::save);
 
         // When
         List<ServiceInstance> results = repository.findAllInstancesInNotRunningState();
@@ -132,7 +115,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
         ServiceInstance instance = Fixtures.RunningServiceInstance;
 
         // When
-        ServiceStateTransition.Response result = repository
+        ServiceStateTransition.Response result = serviceLivenessUpdater
             .update(instance, Service.ServiceState.TERMINATING);
 
         // Then
@@ -143,10 +126,10 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
     void shouldReturnSucceedTransitionResponseForValidTransition() {
         // Given
         ServiceInstance instance = Fixtures.RunningServiceInstance;
-        repository.update(instance);
+        repository.save(instance);
 
         // When
-        ServiceStateTransition.Response response = repository
+        ServiceStateTransition.Response response = serviceLivenessUpdater
             .update(instance, Service.ServiceState.TERMINATING); // RUNNING -> TERMINATING: valid transition
 
         // Then
@@ -159,10 +142,10 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
     void shouldReturnInvalidTransitionResponseForInvalidTransition() {
         // Given
         ServiceInstance instance = Fixtures.EmptyServiceInstance;
-        repository.update(instance);
+        repository.save(instance);
 
         // When
-        ServiceStateTransition.Response response = repository
+        ServiceStateTransition.Response response = serviceLivenessUpdater
             .update(instance, Service.ServiceState.RUNNING); // EMPTY -> RUNNING: INVALID transition
 
         // Then
@@ -173,9 +156,9 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
     void shouldPurgeServiceInstance() {
         // Given
         ServiceInstance instance = Fixtures.RunningServiceInstance;
-        repository.update(instance);
+        repository.save(instance);
         instance = Fixtures.EmptyServiceInstance;
-        repository.update(instance);
+        repository.save(instance);
 
         // When
         int purged = repository.purgeEmptyInstances(Instant.now());

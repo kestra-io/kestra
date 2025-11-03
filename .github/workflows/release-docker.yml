@@ -13,11 +13,11 @@ on:
         required: true
         type: boolean
         default: false
-      plugin-version:
-        description: 'Plugin version'
-        required: false
-        type: string
-        default: "LATEST"
+      dry-run:
+        description: 'Dry run mode that will not write or release anything'
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   publish-docker:
@@ -25,9 +25,9 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
-      plugin-version: ${{ inputs.plugin-version }}
       retag-latest: ${{ inputs.retag-latest }}
       retag-lts: ${{ inputs.retag-lts }}
+      dry-run: ${{ inputs.dry-run }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

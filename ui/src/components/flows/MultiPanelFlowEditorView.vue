@@ -71,7 +71,8 @@
     onMounted(() => {
         // Ensure the Flow Code panel is open and focused when arriving with ai=open
         if(route.query.ai === "open"){
-            editorView.value?.setTabValue("code")
+            if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
+            else editorView.value?.focusTab("code")
         }
     })
 

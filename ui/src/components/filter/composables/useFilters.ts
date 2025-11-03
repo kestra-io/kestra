@@ -1,14 +1,21 @@
 import {ref, watch, computed} from "vue";
 import {useRoute, useRouter} from "vue-router";
-import {keyOfComparator} from "../utils/helpers";
-import {AppliedFilter, FilterConfiguration, COMPARATOR_LABELS, Comparators} from "../utils/filterTypes";
 import {
+    keyOfComparator,
     decodeSearchParams,
     encodeFiltersToQuery,
     isValidFilter,
     getUniqueFilters,
     clearFilterQueryParams
 } from "../utils/helpers";
+import {
+    AppliedFilter,
+    FilterConfiguration,
+    COMPARATOR_LABELS,
+    Comparators,
+    TEXT_COMPARATORS,
+    KV_COMPARATORS
+} from "../utils/filterTypes";
 import {usePreAppliedFilters} from "./usePreAppliedFilters";
 
 export function useFilters(configuration: FilterConfiguration, showSearchInput = true, legacyQuery = false) {
@@ -25,63 +32,39 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         getAllPreApplied
     } = usePreAppliedFilters();
 
-    /**
-     * Appends value to query param, handling arrays.
-     * @param query - Query object to modify
-     * @param key - Query parameter key
-     * @param value - Value to append
-     */
-
     const appendQueryParam = (query: Record<string, any>, key: string, value: string) => {
         if (query[key]) {
-            if (Array.isArray(query[key])) {
-                query[key].push(value);
-            } else {
-                query[key] = [query[key], value];
-            }
+            query[key] = Array.isArray(query[key]) ? [...query[key], value] : [query[key], value];
         } else {
             query[key] = value;
         }
     };
 
-    /**
-     * Checks if filter is a time range filter.
-     * @param filter - Filter to check
-     * @returns True if time range filter
-     */
     const isTimeRange = (filter: AppliedFilter) =>
-        typeof filter.value === "object" && "startDate" in filter.value && filter.key === "timeRange";
+        typeof filter.value === "object" &&
+        "startDate" in filter.value &&
+        filter.key === "timeRange";
 
-    /**
-     * Updates search query in URL query object.
-     * @param query - Query object to update
-     */
     const updateSearchQuery = (query: Record<string, any>) => {
         const trimmedQuery = searchQuery.value?.trim();
-        if (!trimmedQuery || !showSearchInput) {
-            delete query.q;
-            delete query.search;
-            delete query["filters[q][EQUALS]"];
-            return;
+        delete query.q;
+        delete query.search;
+        delete query["filters[q][EQUALS]"];
+        
+        if (trimmedQuery && showSearchInput) {
+            const searchKey = configuration.keys?.length > 0 && !legacyQuery
+                ? "filters[q][EQUALS]"
+                : "q";
+            query[searchKey] = trimmedQuery;
         }
-        const searchKey = configuration.keys?.length > 0 && !legacyQuery
-            ? "filters[q][EQUALS]"
-            : "q";
-        query[searchKey] = trimmedQuery;
     };
 
-    /**
-     * Clears legacy query parameters from query object.
-     * @param query - Query object to clean
-     */
     const clearLegacyParams = (query: Record<string, any>) => {
         configuration.keys?.forEach(({key}) => {
             delete query[key];
             if (key === "details") {
                 Object.keys(query).forEach(queryKey => {
-                    if (queryKey.startsWith("details.")) {
-                        delete query[queryKey];
-                    }
+                    if (queryKey.startsWith("details.")) delete query[queryKey];
                 });
             }
         });
@@ -95,13 +78,15 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
      */
     const buildLegacyQuery = (query: Record<string, any>) => {
         getUniqueFilters(appliedFilters.value.filter(isValidFilter)).forEach(filter => {
-            if (filter.key === "details") {  // AuditLogs Details
+            if (filter.key === "details") {
                 (filter.value as string[]).forEach(item => {
                     const [k, v] = item.split(":");
                     query[`details.${k}`] = v;
                 });
             } else if (Array.isArray(filter.value)) {
-                filter.value.forEach(item => appendQueryParam(query, filter.key, item?.toString() || ""));
+                filter.value.forEach(item =>
+                    appendQueryParam(query, filter.key, item?.toString() ?? "")
+                );
             } else if (isTimeRange(filter)) {
                 const {startDate, endDate} = filter.value as { startDate: Date; endDate: Date };
                 query.startDate = startDate.toISOString();
@@ -112,9 +97,6 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         });
     };
 
-    /**
-     * Updates route with current filter state.
-     */
     const updateRoute = () => {
         const query = {...route.query};
         clearFilterQueryParams(query);
@@ -131,16 +113,6 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         router.push({query});
     };
 
-    /**
-     * Creates AppliedFilter object.
-     * @param key - Filter key
-     * @param config - Filter configuration
-     * @param comparator - Comparison operator
-     * @param value - Filter value
-     * @param valueLabel - Display label for value
-     * @param idSuffix - Suffix for unique ID
-     * @returns AppliedFilter object
-     */
     const createAppliedFilter = (
         key: string,
         config: any,
@@ -158,31 +130,22 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         valueLabel
     });
 
-    /**
-     * Creates standard filter object.
-     * @param key - Filter key
-     * @param config - Filter configuration
-     * @param value - Filter value(s)
-     * @returns AppliedFilter object
-     */
-    const createFilter = (key: string, config: any, value: string | string[]): AppliedFilter => {
+    const createFilter = (
+        key: string,
+        config: any,
+        value: string | string[]
+    ): AppliedFilter => {
         const comparator = (config?.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
         const valueLabel = Array.isArray(value)
-            ? key === "details"
-                ? value.length > 1 ? `${value[0]} +${value.length - 1}` : value[0]
-                : value.join(", ")
+            ? key === "details" && value.length > 1
+                ? `${value[0]} +${value.length - 1}`
+                : Array.isArray(value)
+                    ? value.join(", ")
+                    : value[0]
             : (value as string);
         return createAppliedFilter(key, config, comparator, value, valueLabel, "EQUALS");
-    }
+    };
 
-    /**
-     * Creates time range filter object.
-     * @param config - Filter configuration
-     * @param startDate - Start date
-     * @param endDate - End date
-     * @param comparator - Comparison operator
-     * @returns Time range AppliedFilter object
-     */
     const createTimeRangeFilter = (
         config: any,
         startDate: Date,
@@ -190,16 +153,17 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         comparator = Comparators.EQUALS
     ): AppliedFilter => {
         const valueLabel = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
-        const filter = createAppliedFilter(
-            "timeRange",
-            config,
-            comparator,
-            {startDate, endDate},
-            valueLabel,
-            keyOfComparator(comparator)
-        );
-        filter.comparatorLabel = "Is Between";
-        return filter;
+        return {
+            ...createAppliedFilter(
+                "timeRange",
+                config,
+                comparator,
+                {startDate, endDate},
+                valueLabel,
+                keyOfComparator(comparator)
+            ),
+            comparatorLabel: "Is Between"
+        };
     };
 
     /**
@@ -212,11 +176,12 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
 
         Object.entries(route.query).forEach(([key, value]) => {
             if (["q", "search", "filters[q][EQUALS]"].includes(key)) return;
+
             if (key.startsWith("details.")) {
-                const detailKey = key.split(".")[1];
-                details.push(`${detailKey}:${value}`);
+                details.push(`${key.split(".")[1]}:${value}`);
                 return;
             }
+
             const config = configuration.keys?.find(k => k.key === key);
             if (!config) return;
 
@@ -224,7 +189,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
                 ? (value as string[]).filter(v => v !== null)
                 : config?.valueType === "multi-select"
                     ? ((value as string) ?? "").split(",")
-                    : (value as string) ?? "";
+                    : ((value as string) ?? "");
 
             filtersMap.set(key, createFilter(key, config, processedValue));
         });
@@ -239,11 +204,13 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         if (route.query.startDate && route.query.endDate) {
             const timeRangeConfig = configuration.keys?.find(k => k.key === "timeRange");
             if (timeRangeConfig) {
-                const startDate = new Date(route.query.startDate as string);
-                const endDate = new Date(route.query.endDate as string);
                 filtersMap.set(
                     "timeRange",
-                    createTimeRangeFilter(timeRangeConfig, startDate, endDate)
+                    createTimeRangeFilter(
+                        timeRangeConfig,
+                        new Date(route.query.startDate as string),
+                        new Date(route.query.endDate as string)
+                    )
                 );
             }
         }
@@ -251,55 +218,47 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         return Array.from(filtersMap.values());
     };
 
-    const TEXT_COMPARATORS = [
-        Comparators.STARTS_WITH,
-        Comparators.ENDS_WITH,
-        Comparators.CONTAINS
-    ];
+    const isKVFilter = (field: string, comparator: Comparators) =>
+        field === "details" || (field === "labels" && KV_COMPARATORS.includes(comparator));
 
-    /**
-     * Processes field values for filters.
-     * @param config - Filter configuration
-     * @param params - Parameter objects array
-     * @param field - Field name
-     * @param comparator - Comparison operator
-     * @returns Processed value and label
-     */
     const processFieldValue = (config: any, params: any[], field: string, comparator: Comparators) => {
-        const filterTextComparator = TEXT_COMPARATORS.includes(comparator);
+        const isTextOp = TEXT_COMPARATORS.includes(comparator);
 
-        if (config?.valueType === "multi-select" && !filterTextComparator) {
-            const combinedValue = field === "labels"
-                ? params.map(p => p?.value as string)
-                : params.flatMap(p =>
-                    Array.isArray(p?.value) ? p.value : (p?.value as string)?.split(",") ?? []
-                );
-            return {value: combinedValue, valueLabel: combinedValue.join(", ")};
-        } else {
-            const param = params[0];
-            let value = Array.isArray(param?.value) ? param.value[0] : param?.value as string;
-            
-            if (config?.valueType === "date" && typeof value === "string") {
-                value = new Date(value);
-            }
-            
-            const valueLabel = value instanceof Date ? value.toLocaleDateString() : value;
-            return {value, valueLabel};
+        if (isKVFilter(field, comparator)) {
+            const combinedValue = params.map(p => p?.value as string);
+            return {
+                value: combinedValue,
+                valueLabel: combinedValue.length > 1
+                    ? `${combinedValue[0]} +${combinedValue.length - 1}`
+                    : combinedValue[0] ?? ""
+            };
         }
+
+        if (config?.valueType === "multi-select" && !isTextOp) {
+            const combinedValue = params.flatMap(p =>
+                Array.isArray(p?.value) ? p.value : (p?.value as string)?.split(",") ?? []
+            );
+            return {
+                value: combinedValue,
+                valueLabel: combinedValue.join(", ")
+            };
+        }
+
+        const param = params[0];
+        let value = Array.isArray(param?.value)
+            ? param.value[0]
+            : (param?.value as string);
+
+        if (config?.valueType === "date" && typeof value === "string") {
+            value = new Date(value);
+        }
+
+        return {
+            value,
+            valueLabel: value instanceof Date ? value.toLocaleDateString() : value
+        };
     };
 
-    /**
-     * Checks if date filters contain valid time range.
-     * @param dateFilters - Date filter objects
-     * @returns True if both dates present
-     */
-    const hasValidTimeRange = (dateFilters: Record<string, any>) =>
-        dateFilters.startDate && dateFilters.endDate;
-
-    /**
-     * Parses filters from encoded URL parameters.
-     * @returns Array of AppliedFilter objects
-     */
     const parseEncodedFilters = (): AppliedFilter[] => {
         const filtersMap = new Map<string, AppliedFilter>();
         const dateFilters: Record<string, {comparatorKey: string; value: string}> = {};
@@ -332,17 +291,20 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
             );
         });
 
-        if (hasValidTimeRange(dateFilters)) {
+        if (dateFilters.startDate && dateFilters.endDate) {
             const timeRangeConfig = configuration.keys?.find(k => k?.key === "timeRange");
             if (timeRangeConfig) {
                 const comparator = Comparators[
                     dateFilters.startDate?.comparatorKey as keyof typeof Comparators
                 ];
-                const startDate = new Date(dateFilters.startDate?.value);
-                const endDate = new Date(dateFilters.endDate?.value);
                 filtersMap.set(
                     "timeRange",
-                    createTimeRangeFilter(timeRangeConfig, startDate, endDate, comparator)
+                    createTimeRangeFilter(
+                        timeRangeConfig,
+                        new Date(dateFilters.startDate?.value),
+                        new Date(dateFilters.endDate?.value),
+                        comparator
+                    )
                 );
             }
         }
@@ -350,9 +312,6 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         return Array.from(filtersMap.values());
     };
 
-    /**
-     * Initializes filter state from route query parameters.
-     */
     const initializeFromRoute = () => {
         if (showSearchInput) {
             searchQuery.value =
@@ -360,6 +319,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
                 (route.query?.q as string) ??
                 "";
         }
+
         const parsedFilters = legacyQuery
             ? parseLegacyFilters()
             : parseEncodedFilters();
@@ -374,38 +334,27 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
     watch(() => route.query, initializeFromRoute, {deep: true, immediate: false});
     initializeFromRoute();
 
-    /**
-     * Adds filter to applied filters list.
-     * @param filter - Filter to add
-     */
     const addFilter = (filter: AppliedFilter) => {
         const index = appliedFilters.value.findIndex(f => f?.key === filter?.key);
-        if (index === -1) {
-            appliedFilters.value.push(filter);
-        } else {
-            appliedFilters.value[index] = filter;
-        }
+        appliedFilters.value = index === -1
+            ? [...appliedFilters.value, filter]
+            : appliedFilters.value.map((f, i) => (i === index ? filter : f));
         updateRoute();
     };
 
-    /**
-     * Removes filter by ID.
-     * @param filterId - ID of filter to remove
-     */
     const removeFilter = (filterId: string) => {
         const filter = appliedFilters.value.find(f => f?.id === filterId);
         if (filter) {
             appliedFilters.value = appliedFilters.value.filter(f => f?.key !== filter?.key);
+            updateRoute();
         }
-        updateRoute();
     };
 
-    /**
-     * Updates existing filter.
-     * @param updatedFilter - Updated filter object
-     */
     const updateFilter = (updatedFilter: AppliedFilter) => {
-        appliedFilters.value = [...appliedFilters.value.filter(f => f?.key !== updatedFilter?.key), updatedFilter];
+        appliedFilters.value = [
+            ...appliedFilters.value.filter(f => f?.key !== updatedFilter?.key),
+            updatedFilter
+        ];
         updateRoute();
     };
 

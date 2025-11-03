@@ -109,6 +109,17 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             violations.add("Duplicate output with name [" + String.join(", ", duplicateIds) + "]");
         }
 
+        // preconditions unique id
+        duplicateIds = getDuplicates(ListUtils.emptyOnNull(value.getTriggers()).stream()
+            .filter(it -> it instanceof io.kestra.plugin.core.trigger.Flow)
+            .map(it -> (io.kestra.plugin.core.trigger.Flow) it)
+            .filter(it -> it.getPreconditions() != null && it.getPreconditions().getId() != null)
+            .map(it -> it.getPreconditions().getId())
+            .toList());
+        if (!duplicateIds.isEmpty()) {
+            violations.add("Duplicate preconditions with id [" + String.join(", ", duplicateIds) + "]");
+        }
+
         // system labels
         ListUtils.emptyOnNull(value.getLabels()).stream()
             .filter(label -> label.key() != null && label.key().startsWith(SYSTEM_PREFIX) && !label.key().equals(READ_ONLY))

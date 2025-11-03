@@ -37,8 +37,6 @@
                 @page-changed="onPageChanged"
                 ref="dataTable"
                 :total="flowStore.total"
-                :size="internalPageSize"
-                :page="internalPageNumber"
             >
                 <template #navbar>
                     <KSFilter
@@ -250,7 +248,7 @@
 
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch, useTemplateRef} from "vue";
+    import {ref, computed, onMounted, useTemplateRef} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
@@ -292,7 +290,7 @@
     import {useExecutionsStore} from "../../stores/executions";
 
     import {useTableColumns} from "../../composables/useTableColumns";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
+    import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
 
 
@@ -318,9 +316,6 @@
     
     const flowFilter = useFlowFilter();
 
-    const ready = ref(true);
-    const internalPageSize = ref(25);
-    const internalPageNumber = ref(1);
     const lastExecutionByFlowReady = ref(false);
     const latestExecutions = ref<any[]>([]);
     const file = ref<HTMLInputElement | null>(null);
@@ -382,14 +377,43 @@
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
+    const dataTableRef = useTemplateRef<DataTableRef>("dataTable");
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
+
+    function loadData(callback?: () => void) {
+        const q = route.query;
+        flowStore
+            .findFlows(
+                loadQuery({
+                    size: parseInt(q.size as string ?? "25"),
+                    page: parseInt(q.page as string ?? "1"),
+                    sort: (q.sort as string) ?? "id:asc",
+                })
+            )
+            .then((data: any) => {
+                if (user.value?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.READ)) {
+                    executionsStore.loadLatestExecutions({
+                        flowFilters: data.results.map((flow: any) => ({id: flow.id, namespace: flow.namespace})),
+                    }).then((latestExecs: any) => {
+                        latestExecutions.value = latestExecs;
+                        lastExecutionByFlowReady.value = true;
+                    });
+                }
+            })
+            .finally(() => callback?.());
+    }
 
     const {
         queryWithFilter, 
         onPageChanged, 
         onRowDoubleClick, 
-        onSort
-    } = useDataTableActions({dblClickRouteName: "flows/update"});
+        onSort,
+        ready
+    } = useDataTableActions({
+        dblClickRouteName: "flows/update",
+        dataTableRef,
+        loadData
+    });
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
         return {
@@ -584,29 +608,6 @@
         return _merge(base, queryFilter);
     }
 
-    function loadData(callback: () => void) {
-        const q = route.query;
-        flowStore
-            .findFlows(
-                loadQuery({
-                    size: parseInt(props.namespace ? internalPageSize.value.toString() : (q.size as string) ?? "25"),
-                    page: parseInt(props.namespace ? internalPageNumber.value.toString() : (q.page as string) ?? "1"),
-                    sort: (q.sort as string) ?? "id:asc",
-                })
-            )
-            .then((data: any) => {
-                if (user.value?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.READ)) {
-                    executionsStore.loadLatestExecutions({
-                        flowFilters: data.results.map((flow: any) => ({id: flow.id, namespace: flow.namespace})),
-                    }).then((latestExecs: any) => {
-                        latestExecutions.value = latestExecs;
-                        lastExecutionByFlowReady.value = true;
-                    });
-                }
-            })
-            .finally(callback);
-    }
-
     function refresh() {
         loadData(() => {});
     }
@@ -637,13 +638,7 @@
         }
 
         if (queryHasChanged) router.replace({query});
-
-        loadData(() => ready.value = true);
     });
-
-    watch(() => route.query, async () => {
-        await loadData(() => {});
-    }, {deep: true});
 
 </script>
 

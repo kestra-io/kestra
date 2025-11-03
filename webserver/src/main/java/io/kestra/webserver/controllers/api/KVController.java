@@ -22,8 +22,8 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 
-import java.io.*;
-import java.time.*;
+import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 
 @Validated
@@ -91,7 +91,7 @@ public class KVController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "{key}", consumes = {MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @Put(uri = "{key}", consumes = {MediaType.TEXT_PLAIN})
     @Operation(tags = {"KV"}, summary = "Puts a key-value pair in store")
     public void setKeyValue(
         HttpHeaders httpHeaders,

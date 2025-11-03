@@ -475,7 +475,7 @@
                     return this.namespacesStore
                         .createKv({
                             ...this.kv,
-                            contentType: ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json",
+                            contentType: "text/plain",
                             value
                         })
                         .then(() => {

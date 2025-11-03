@@ -4,14 +4,12 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed} from "vue";
-
-    interface Props {
+    
+    const props = defineProps<{
         encodedSvg?: string;
-    }
-
-    const props = defineProps<Props>();
+    }>();
 
     const styles = computed(() => ({
         backgroundImage: props.encodedSvg

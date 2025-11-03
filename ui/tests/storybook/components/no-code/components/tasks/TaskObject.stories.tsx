@@ -62,27 +62,21 @@ export const AppTableBlock: Story = {
     render: AppTableBlockRender,
     async play({canvasElement}) {
         const canvas = within(canvasElement);
-        canvas.getByText("+ Add a new value").click();
-        await waitFor(() => {
-            expect(canvas.getByText(/null/)).toBeVisible();
-        });
-        canvas.getByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}).click();
+        fireEvent.click(await canvas.findByText("+ Add a new value"));
+        expect(await canvas.findByText(/null/, {selector: "pre"})).toBeVisible();
+        fireEvent.click(await canvas.findByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}));
 
-        await waitFor(function getByPlaceholderKey() {
-            expect(canvas.getByPlaceholderText("Key")).toBeVisible();
-        });
+        fireEvent.input(await canvas.findByPlaceholderText("Key"), {target: {value: "key1"}})
+        fireEvent.input(await canvas.findByTestId("monaco-editor-hidden-synced-textarea"), {target: {value: "value1"}})
 
-        fireEvent.input(canvas.getByPlaceholderText("Key"), {target: {value: "key1"}})
-        fireEvent.input(canvas.getByTestId("monaco-editor-hidden-synced-textarea"), {target: {value: "value1"}})
-
-        fireEvent.click(canvas.getByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}))
+        fireEvent.click(await canvas.findByText("+ Add a new value", {selector: ".schema-wrapper .schema-wrapper button"}))
 
         await waitFor(function getByPlaceholderKey() {
             expect(canvas.getAllByPlaceholderText("Key")[1]).toBeVisible();
         });
 
-        fireEvent.input(canvas.getAllByPlaceholderText("Key")[1], {target: {value: "key2"}})
-        fireEvent.input(canvas.getAllByTestId("monaco-editor-hidden-synced-textarea")[1], {target: {value: "value2"}})
+        fireEvent.input((await canvas.findAllByPlaceholderText("Key"))[1], {target: {value: "key2"}})
+        fireEvent.input((await canvas.findAllByTestId("monaco-editor-hidden-synced-textarea"))[1], {target: {value: "value2"}})
 
         await waitFor(() => {
             expect(canvas.getByTestId("resulting-object").innerHTML).toBe(JSON.stringify({

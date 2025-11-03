@@ -37,9 +37,10 @@
 
 <script setup lang="ts">
     import {ref, computed, watch, onMounted, nextTick, inject} from "vue";
-    import getTaskComponent, {Schema} from "./getTaskComponent";
+    import {Schema} from "./getTaskComponent";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {SCHEMA_DEFINITIONS_INJECTION_KEY} from "../../injectionKeys";
+    import {useBlockComponent} from "./useBlockComponent";
 
     const props = defineProps<{
         schema: Schema,
@@ -161,8 +162,10 @@
         return consolidateAllOfSchemas(rawSchema, definitions.value);
     });
 
+    const {getBlockComponent} = useBlockComponent();
+
     const currentSchemaType = computed(() =>
-        delayedSelectedSchema.value ? getTaskComponent(currentSchema.value) : undefined
+        delayedSelectedSchema.value ? getBlockComponent.value(currentSchema.value) : undefined
     );
 
     const isSelectingPlugins = computed(() => schemas.value.length > 4);

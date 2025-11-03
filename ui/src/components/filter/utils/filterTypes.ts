@@ -14,6 +14,13 @@ export enum Comparators {
     PREFIX = "^.=",
 }
 
+export const KV_COMPARATORS = [Comparators.EQUALS, Comparators.NOT_EQUALS];
+export const TEXT_COMPARATORS = [
+    Comparators.CONTAINS,
+    Comparators.ENDS_WITH, 
+    Comparators.STARTS_WITH, 
+];
+
 export interface FilterKeyConfig {
     key: string;
     label: string;
@@ -22,7 +29,7 @@ export interface FilterKeyConfig {
     comparators: Comparators[];
     showComparatorSelection?: boolean;
     valueProvider?: () => Promise<FilterValue[]>;
-    valueType: "text" | "select" | "date" | "multi-select" | "details" | "radio";
+    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
 }
 
 export interface FilterValue {

@@ -1,7 +1,9 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.server.ServiceType;
 import io.micronaut.data.model.Pageable;
 
@@ -9,6 +11,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /**
@@ -59,20 +62,6 @@ public interface ServiceInstanceRepositoryInterface {
     ServiceInstance save(ServiceInstance service);
 
     /**
-     * Finds all service instances which are in the given state.
-     *
-     * @return the list of {@link ServiceInstance}.
-     */
-    List<ServiceInstance> findAllInstancesInState(final Service.ServiceState state);
-
-    /**
-     * Finds all service instances which are in the given state.
-     *
-     * @return the list of {@link ServiceInstance}.
-     */
-    List<ServiceInstance> findAllInstancesInStates(final Set<Service.ServiceState> states);
-
-    /**
      * Finds all service active instances between the given dates.
      *
      * @param type The service type.
@@ -84,6 +73,28 @@ public interface ServiceInstanceRepositoryInterface {
                                                   final Instant from,
                                                   final Instant to);
 
+    /**
+     * Finds all service instances which are NOT {@link Service.ServiceState#RUNNING}, then process them using the consumer.
+     */
+    void processAllNonRunningInstances(BiConsumer<TransactionContext, ServiceInstance> consumer);
+
+    /**
+     * Attempt to transition the state of a given service to a given new state.
+     * This method may not update the service if the transition is not valid.
+     *
+     * @param instance the service instance.
+     * @param newState the new state of the service.
+     * @return an optional of the {@link ServiceInstance} or {@link Optional#empty()} if the service is not running.
+     */
+    ServiceStateTransition.Response mayTransitServiceTo(final TransactionContext txContext,
+                                                        final ServiceInstance instance,
+                                                        final Service.ServiceState newState,
+                                                        final String reason);
+
+    /**
+     * Finds all service instances that are in the states, then process them using the consumer.
+     */
+    void processInstanceInStates(Set<Service.ServiceState> states, BiConsumer<TransactionContext, ServiceInstance> consumer);
     /**
      * Purge all instances in the EMPTY state older than the until date.
      *

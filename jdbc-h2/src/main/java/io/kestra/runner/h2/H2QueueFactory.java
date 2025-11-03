@@ -98,14 +98,6 @@ public class H2QueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.WORKERINSTANCE_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<WorkerInstance> workerInstance() {
-        return new H2Queue<>(WorkerInstance.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
     @Named(QueueFactoryInterface.WORKERJOBRUNNING_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerJobRunning> workerJobRunning() {

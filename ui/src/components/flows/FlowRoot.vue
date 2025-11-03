@@ -34,6 +34,7 @@
     import FlowConcurrency from "./FlowConcurrency.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
     import {useAuthStore} from "override/stores/auth"
+    import {useMiscStore} from "override/stores/misc";
 
     export default {
         mixins: [RouteContext],
@@ -62,7 +63,9 @@
                         const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
                         if (!Object.keys(this.$route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                            const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": "PT168H"};
+                            const miscStore = useMiscStore();
+                            const defaultDuration = miscStore.configs?.chartDefaultDuration || "P30D";
+                            const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": defaultDuration};
                             this.$router.replace({name: this.$route.name, params: this.$route.params, query: newQuery});
                         }
                     }
@@ -98,8 +101,8 @@
             if(!this.$route.params.tab) {
                 const tab = localStorage.getItem("flowDefaultTab") || "overview";
                 this.$router.replace({
-                    name: "flows/update", 
-                    params: {...this.$route.params, tab}, 
+                    name: "flows/update",
+                    params: {...this.$route.params, tab},
                     query: {...this.$route.query}
                 });
             }

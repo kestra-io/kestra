@@ -1,4 +1,4 @@
-package io.kestra.cli.commands.migrations;
+package io.kestra.cli.commands.migrations.metadata;
 
 import io.kestra.cli.App;
 import io.kestra.core.exceptions.ResourceExpiredException;
@@ -33,7 +33,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MetadataMigrationCommandTest {
+public class KvMetadataMigrationCommandTest {
     @Test
     void run() throws IOException, ResourceExpiredException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -65,12 +65,12 @@ public class MetadataMigrationCommandTest {
             assertThat(kvMetadataRepository.findByName(tenantId, namespace, key).isPresent()).isFalse();
 
             String[] kvMetadataMigrationCommand = {
-                "migrate", "metadata"
+                "migrate", "metadata", "kv"
             };
             PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
 
 
-            assertThat(out.toString()).contains("✅ Metadata migration complete.");
+            assertThat(out.toString()).contains("✅ KV Metadata migration complete.");
             // Still it's not in the metadata repository because no flow exist to find that kv
             assertThat(kvMetadataRepository.findByName(tenantId, namespace, key).isPresent()).isFalse();
             assertThat(kvMetadataRepository.findByName(tenantId, anotherNamespace, anotherKey).isPresent()).isFalse();
@@ -86,7 +86,7 @@ public class MetadataMigrationCommandTest {
             out.reset();
             PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
 
-            assertThat(out.toString()).contains("✅ Metadata migration complete.");
+            assertThat(out.toString()).contains("✅ KV Metadata migration complete.");
             Optional<PersistedKvMetadata> foundKv = kvMetadataRepository.findByName(tenantId, namespace, key);
             assertThat(foundKv.isPresent()).isTrue();
             assertThat(foundKv.get().getDescription()).isEqualTo(description);

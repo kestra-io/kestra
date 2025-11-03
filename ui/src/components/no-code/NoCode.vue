@@ -1,5 +1,5 @@
 <template>
-    <div class="no-code" ref="scrollContainer" @scroll="onScroll">
+    <div class="no-code" ref="scrollContainer">
         <div class="p-4">
             <Task
                 v-if="creatingTask || editingTask"
@@ -31,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onActivated, onBeforeUnmount, nextTick, onMounted, provide, ref, watch} from "vue";
+    import {computed, onActivated, provide, ref, watch} from "vue";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {removeNullAndUndefined} from "./utils/cleanUp";
@@ -64,7 +64,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useKeyboardSave} from "./utils/useKeyboardSave";
     import {deepEqual} from "../../utils/utils";
-    import {useViewStateStore} from "../../stores/viewState";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
 
 
     const props = defineProps<NoCodeProps>();
@@ -117,7 +117,6 @@
     }, 500);
 
     const timeout = ref();
-    const viewStateStore = useViewStateStore();
 
     const editorUpdate = (source: string) => {
         let parsedSource: any = {}
@@ -218,37 +217,7 @@
         return `${base}:task:${action}:parentPath:${parentPath}:refPath:${refPath}:fieldName:${fieldName}`;
     });
 
-    function restoreScroll() {
-        const el = scrollContainer.value;
-        if (!el) return;
-        const saved = viewStateStore.getScrollPosition(scrollKey.value);
-        if (typeof saved === "number") {
-            el.scrollTop = saved;
-        }
-    }
-
-    function onScroll() {
-        const el = scrollContainer.value;
-        if (!el) return;
-        viewStateStore.saveScrollPosition(scrollKey.value, el.scrollTop);
-    }
-
-    onMounted(async () => {
-        await nextTick();
-        restoreScroll();
-    });
-
-    onActivated(() => {
-        nextTick(restoreScroll);
-    });
-
-    watch(scrollKey, () => nextTick(restoreScroll));
-
-    onBeforeUnmount(() => {
-        const el = scrollContainer.value;
-        if (el) viewStateStore.saveScrollPosition(scrollKey.value, el.scrollTop);
-    });
-
+    useScrollMemory(scrollKey, scrollContainer);
 
 </script>
 

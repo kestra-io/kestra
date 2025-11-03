@@ -1,5 +1,5 @@
 <template>
-    <ContextInfoContent :title="t('feeds.title')">
+    <ContextInfoContent ref="contextInfoRef" :title="t('feeds.title')">
         <div
             class="post"
             :class="{
@@ -46,9 +46,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive} from "vue";
+    import {computed, onMounted, reactive, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core"
+    import {useScrollMemory} from "../../composables/useScrollMemory"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
@@ -62,6 +63,7 @@
     const apiStore = useApiStore();
     const {t} = useI18n({useScope: "global"});
 
+    const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null);
     const feeds = computed(() => apiStore.feeds);
 
     const expanded = reactive<Record<string, boolean>>({});
@@ -70,6 +72,9 @@
     onMounted(() => {
         lastNewsReadDate.value = feeds.value[0].publicationDate;
     });
+
+    const scrollableElement = computed(() => contextInfoRef.value?.contentRef || null)
+    useScrollMemory(ref("context-panel-news"), scrollableElement as any)
 </script>
 
 <style scoped lang="scss">

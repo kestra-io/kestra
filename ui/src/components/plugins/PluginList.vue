@@ -28,7 +28,7 @@
         </el-breadcrumb>
     </div>
 
-    <div v-if="currentView === 'list'" class="list" ref="listRef" @scroll="onScroll('list')">
+    <div v-if="currentView === 'list'" class="list" ref="listRef">
         <div
             v-for="plugin in sortedPlugins"
             :key="`${plugin.group}-${plugin.title}`"
@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    <div v-else-if="currentView === 'group'" class="group-view" ref="groupRef" @scroll="onScroll('group')">
+    <div v-else-if="currentView === 'group'" class="group-view" ref="groupRef">
         <PluginUnified
             :group="currentGroup"
             :subgroup="currentSubgroup"
@@ -57,7 +57,7 @@
         />
     </div>
 
-    <div v-else-if="currentView === 'documentation'" :class="['doc-view', {'no-padding': !currentDocumentationPlugin}]" ref="docRef" @scroll="onScroll('documentation')">
+    <div v-else-if="currentView === 'documentation'" :class="['doc-view', {'no-padding': !currentDocumentationPlugin}]" ref="docRef">
         <PluginDocumentation 
             :plugin="currentDocumentationPlugin"
         />
@@ -65,14 +65,14 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch, nextTick, onBeforeUnmount, onActivated} from "vue";
+    import {ref, computed, onMounted, watch} from "vue";
     import {TaskIcon, isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import PluginUnified from "./PluginUnified.vue";
     import PluginDocumentation from "./PluginDocumentation.vue";
     import {usePluginsStore} from "../../stores/plugins";
-    import {useViewStateStore} from "../../stores/viewState";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
     import {capitalize, formatPluginTitle} from "../../utils/global";
 
     interface Props {
@@ -88,7 +88,6 @@
     const props = defineProps<Props>();
 
     const pluginsStore = usePluginsStore();
-    const viewStateStore = useViewStateStore();
 
     const currentGroup = ref<string>("");
     const currentSubgroup = ref<string>();
@@ -101,32 +100,13 @@
     const docRef = ref<HTMLDivElement | null>(null);
     const scrollKeyBase = "plugins:documentation";
 
-    function restoreScrollFor(view: "list" | "group" | "documentation") {
-        const key = `${scrollKeyBase}:${view}`;
-        const el = view === "list" ? listRef.value : view === "group" ? groupRef.value : docRef.value;
-        if (!el) return;
-        const saved = viewStateStore.getScrollPosition(key);
-        if (typeof saved !== "number") return;
+    const listScrollKey = computed(() => `${scrollKeyBase}:list`);
+    const groupScrollKey = computed(() => `${scrollKeyBase}:group`);
+    const docScrollKey = computed(() => `${scrollKeyBase}:documentation`);
 
-        const tryRestore = (attempts = 12) => {
-            if (!el) return;
-            const canScroll = el.scrollHeight - el.clientHeight >= saved - 4;
-            if (canScroll || attempts <= 0) {
-                el.scrollTop = saved;
-                return;
-            }
-            setTimeout(() => tryRestore(attempts - 1), 50);
-        };
-
-        nextTick(() => tryRestore());
-    }
-
-    function onScroll(view: "list" | "group" | "documentation") {
-        const key = `${scrollKeyBase}:${view}`;
-        const el = view === "list" ? listRef.value : view === "group" ? groupRef.value : docRef.value;
-        if (!el) return;
-        viewStateStore.saveScrollPosition(key, el.scrollTop);
-    }
+    useScrollMemory(listScrollKey, listRef);
+    useScrollMemory(groupScrollKey, groupRef);
+    useScrollMemory(docScrollKey, docRef);
 
     const getSimpleType = (item: string) => item.split(".").pop() || item;
 
@@ -187,7 +167,6 @@
         currentGroup.value = plugin.group;
         currentView.value = "group";
         currentDocumentationPlugin.value = null;
-        nextTick(() => restoreScrollFor("group"));
 
         if (plugin.subGroup && plugin.subGroup !== plugin.group) {
             currentSubgroup.value = plugin.subGroup;
@@ -212,18 +191,15 @@
                 currentSubgroup.value = undefined;
                 currentView.value = "group";
                 currentDocumentationPlugin.value = null;
-                nextTick(() => restoreScrollFor("group"));
             },
             subgroup: () => {
                 currentSubgroup.value = targetStep.data.subgroup;
                 currentView.value = "group";
                 currentDocumentationPlugin.value = null;
-                nextTick(() => restoreScrollFor("group"));
             },
             element: () => {
                 pluginsStore.load?.({cls: targetStep.data.cls}).then(pluginData => {
                     currentDocumentationPlugin.value = pluginData ? {cls: targetStep.data.cls, ...pluginData} : null;
-                    nextTick(() => restoreScrollFor("documentation"));
                 });
                 currentView.value = "documentation";
             }
@@ -252,7 +228,6 @@
         pushNavigationItem(getSubgroupTitle(currentGroup.value, subgroup), "subgroup", {subgroup});
         currentView.value = "group";
         currentDocumentationPlugin.value = null;
-        nextTick(() => restoreScrollFor("group"));
     };
 
     const handleElementNavigation = async (cls: string) => {
@@ -260,7 +235,6 @@
         const pluginData = await pluginsStore.load({cls});
         currentDocumentationPlugin.value = pluginData ? {cls, ...pluginData} : null;
         currentView.value = "documentation";
-        nextTick(() => restoreScrollFor("documentation"));
     };
 
     const hasIcon = (cls: string) => !!icons.value?.[cls];
@@ -312,29 +286,10 @@
             currentGroup.value = "";
             currentSubgroup.value = undefined;
         }
-        nextTick(() => restoreScrollFor(currentView.value));
     }, {immediate: true, deep: true});
 
     onMounted(async () => {
         await loadPluginIcons();
-        nextTick(() => restoreScrollFor(currentView.value));
-    });
-
-    onActivated(() => {
-        nextTick(() => restoreScrollFor(currentView.value));
-    });
-
-    watch(currentDocumentationPlugin, () => {
-        if (currentView.value === "documentation") {
-            nextTick(() => restoreScrollFor("documentation"));
-        }
-    });
-
-    onBeforeUnmount(() => {
-        const view = currentView.value;
-        const el = view === "list" ? listRef.value : view === "group" ? groupRef.value : docRef.value;
-        if (!el) return;
-        viewStateStore.saveScrollPosition(`${scrollKeyBase}:${view}`, el.scrollTop);
     });
 </script>
 

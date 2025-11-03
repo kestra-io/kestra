@@ -81,8 +81,9 @@
 
 <script setup lang="ts">
     /* eslint-disable vue/enforce-style-attribute */
-    import {computed, onMounted, onActivated, ref, shallowRef, watch} from "vue";
+    import {computed, onMounted, ref, shallowRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
+    import {useThrottleFn} from "@vueuse/core";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
@@ -94,7 +95,7 @@
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus";
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-    import {useViewStateStore} from "../../stores/viewState";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
 
     const {t} = useI18n()
 
@@ -314,27 +315,27 @@
             return
         }
 
-        // Restore Monaco view state and scroll position if a key is provided
-        const viewStateStore = useViewStateStore();
         const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
-        if (props.scrollKey) {
-            const savedState = viewStateStore.getMonacoViewState<monaco.editor.ICodeEditorViewState>(props.scrollKey);
+        const scrollMemory = props.scrollKey ? useScrollMemory(ref(props.scrollKey)) : null;
+        
+        if (props.scrollKey && scrollMemory) {
+            const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
             if (savedState) {
-                try {
-                    codeEditor.restoreViewState(savedState);
-                    codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1);
-                } catch {
-                    // ignore invalid state
-                }
+                codeEditor.restoreViewState(savedState);
+                codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1);
             }
-            const top = viewStateStore.getScrollPosition(props.scrollKey);
+            
+            const top = scrollMemory.loadData<number>("scrollTop", 0);
             if (typeof top === "number") {
-                requestAnimationFrame(() => codeEditor.setScrollTop(top));
+                codeEditor.setScrollTop(top);
             }
-            codeEditor.onDidScrollChange?.(() => {
-                viewStateStore.saveMonacoViewState(props.scrollKey!, codeEditor.saveViewState());
-                viewStateStore.saveScrollPosition(props.scrollKey!, codeEditor.getScrollTop());
-            });
+            
+            const throttledSave = useThrottleFn(() => {
+                scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
+                scrollMemory.saveData(codeEditor.getScrollTop(), "scrollTop");
+            }, 100);
+            
+            codeEditor.onDidScrollChange?.(throttledSave);
         }
 
         if (!isDiff.value) {
@@ -493,6 +494,10 @@
                         position: position,
                         model: model,
                     });
+                    // Save view state when cursor changes
+                    if (scrollMemory) {
+                        scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
+                    }
                 }, 100) as unknown as number;
                 highlightPebble();
             });
@@ -505,25 +510,6 @@
             editor?.setValue(value);
         };
     }
-
-    onActivated(() => {
-        // When re-activated (KeepAlive), re-apply view state
-        if (!isCodeEditor(editor)) return;
-        if (!props.scrollKey) return;
-        const viewStateStore = useViewStateStore();
-        const savedState = viewStateStore.getMonacoViewState<monaco.editor.ICodeEditorViewState>(props.scrollKey);
-        if (savedState) {
-            try {
-                (editor as monaco.editor.IStandaloneCodeEditor).restoreViewState(savedState);
-            } catch {
-                // ignore
-            }
-        }
-        const top = viewStateStore.getScrollPosition(props.scrollKey);
-        if (typeof top === "number") {
-            requestAnimationFrame(() => (editor as monaco.editor.IStandaloneCodeEditor).setScrollTop(top));
-        }
-    })
 
     function autoFold(autoFold?: boolean) {
         if (autoFold && editor) {

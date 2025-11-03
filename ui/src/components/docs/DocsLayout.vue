@@ -14,7 +14,7 @@
                 <slot name="menu" />
             </div>
         </div>
-        <div class="container main-container" v-scroll-memory.window="scrollKey">
+        <div class="container main-container">
             <div class="content">
                 <slot name="content" />
             </div>
@@ -25,15 +25,13 @@
 <script setup lang="ts">
     import {ref, computed} from "vue"
     import {useRoute} from "vue-router";
-    import scrollMemory from "../../directives/scrollMemory";
-
-    defineOptions({
-        directives: {scrollMemory}
-    })
+    import {useScrollMemory} from "../../composables/useScrollMemory";
 
     const collapsed = ref(false);
     const route = useRoute();
     const scrollKey = computed(() => `docs:${route.fullPath}`);
+
+    useScrollMemory(scrollKey, undefined, true);
 
 </script>
 

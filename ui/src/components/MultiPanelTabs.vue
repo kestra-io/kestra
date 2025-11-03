@@ -132,8 +132,6 @@
                 <div
                     class="content-panel"
                     :data-panel-index="panelIndex"
-                    v-scroll-memory="`tab:${panel.activeTab?.uid}`"
-                    ref="contentPanelRefs"
                     @drop="drop"
                     @dragover.prevent="dragover"
                     @dragleave.prevent="removeAllPotentialTabs"
@@ -199,15 +197,6 @@
 
     import {trackTabOpen, trackTabClose} from "../utils/tabTracking";
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes";
-    import {usePanelDefaultSize} from "../composables/usePanelDefaultSize";
-    import scrollMemory from "../directives/scrollMemory";
-    import {useViewStateStore} from "../stores/viewState";
-
-    defineOptions({
-        directives: {scrollMemory}
-    })
-   
-
 
     const {t} = useI18n();
     const {showKeyShortcuts} = useKeyShortcuts();
@@ -246,41 +235,17 @@
     const movedTabInfo = ref<TabInfo | null>(null);
     const dragging = ref(false);
     const tabContainerRefs = ref<HTMLDivElement[]>([]);
-    const contentPanelRefs = ref<HTMLDivElement[]>([]);
     const draggingPanel = ref<number | null>(null);
     const realDragging = ref(false);
     const leftPanelDragover = ref(false);
     const rightPanelDragover = ref(false);
-    const viewStateStore = useViewStateStore();
 
     const handleTabClick = (panelIndex: number, panel: Panel, tab: Tab) => {
         trackTabOpen(tab);
 
-        
-        const container = contentPanelRefs.value[panelIndex];
-        const prevUid = panel.activeTab?.uid;
-        if (container && prevUid) {
-            const innerNoCode = container.querySelector(".no-code") as HTMLElement | null;
-            if (innerNoCode && innerNoCode.scrollHeight > innerNoCode.clientHeight) {
-                viewStateStore.saveScrollPosition(`tab:${prevUid}:nocode`, innerNoCode.scrollTop);
-            }
-        }
+        panel.activeTab = tab
 
-        panel.activeTab = tab;
-
-        nextTick(() => {
-            
-            ensureActiveTabVisible(panelIndex, tab.uid);
-            const cont = contentPanelRefs.value[panelIndex];
-            if (!cont) return;
-            const innerNoCode = cont.querySelector(".no-code") as HTMLElement | null;
-            const top = innerNoCode ? viewStateStore.getScrollPosition(`tab:${tab.uid}:nocode`) : undefined;
-            if (innerNoCode && typeof top === "number") {
-                requestAnimationFrame(() => {
-                    innerNoCode.scrollTop = top as number;
-                });
-            }
-        });
+        nextTick(() => ensureActiveTabVisible(panelIndex, tab.uid));
     };
 
     const showDropZones = computed(() =>
@@ -483,7 +448,7 @@
         }
     }
 
-    const defaultSize = usePanelDefaultSize(panels);
+    const defaultSize = computed(() => panels.value.length === 0 ? 1 : (panels.value.reduce((acc, panel) => acc + panel.size, 0) / panels.value.length));
 
     function newPanelDrop(_e: DragEvent, direction: "left" | "right") {
         if (!movedTabInfo.value) return;

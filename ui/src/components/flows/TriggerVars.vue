@@ -1,17 +1,12 @@
 <template>
-    <el-table
-        tableLayout="auto"
-        fixed
-        :data="Object.entries(data).map(([key, value]) => ({key, value}))"
-    >
-        <el-table-column prop="key" rowspan="3" :label="labelName">
+    <el-table tableLayout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
+        <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
                 {{ getHumanizeLabel(scope.row.key) }}
             </template>
         </el-table-column>
 
-
-        <el-table-column prop="value" :label="labelValue">
+        <el-table-column prop="value" :label="$t('value')">
             <template #default="scope">
                 <template v-if="scope.row.key === 'description'">
                     <Markdown :source="scope.row.value" />
@@ -22,15 +17,11 @@
                 <template v-else-if="scope.row.key === 'key'">
                     {{ scope.row.value }}
                     <el-button @click="emit('on-copy', null)">
-                        {{ tOr('triggerVars.copyUrl', 'Copy URL') }}
+                        {{ $t('copy url') }}
                     </el-button>
                 </template>
                 <template v-else>
-                    <VarValue
-                        :value="scope.row.value"
-                        :execution="execution"
-                        :restrictUri="true"
-                    />
+                    <VarValue :value="scope.row.value" :execution="execution" :restrictUri="true" />
                 </template>
             </template>
         </el-table-column>
@@ -43,52 +34,38 @@
     import Markdown from "../layout/Markdown.vue";
     import Cron from "../layout/Cron.vue";
 
-
     const {t, te} = useI18n();
+
     defineProps<{
         data: Record<string, any>;
         execution?: Record<string, any>;
     }>();
-
+    
     const emit = defineEmits<{ (e: "on-copy", event: any): void }>();
-    /**
-     * Translate if the key exists, otherwise fall back to a readable label.
-     * This prevents [intlify] "Not found 'xxx' key in 'en' locale messages" warnings.
-     */
-
-    const humanize = (s: string) =>
-        s.replace(/([A-Z])/g, " $1").replace(/[_-]/g, " ").trim();
-
-    const tOr = (key: string, fallback?: string): string =>
-        te(key) ? t(key) : (fallback ?? humanize(key.split(".").pop() || key));
-
 
     const getHumanizeLabel = (key: string): string => {
         const mappings: Record<string, string> = {
-            flowId: "triggerVars.flow",
-            executionId: "triggerVars.currentExecution",
-            nextExecutionDate: "triggerVars.nextEvaluationDate",
-            date: "triggerVars.lastTriggerDate",
-            updatedDate: "triggerVars.contextUpdatedDate",
-            evaluateRunningDate: "triggerVars.evaluationLockDate",
-            states: "triggerVars.states",
+            "flowId": "flow",
+            "executionId": "current execution",
+            "nextExecutionDate": "next evaluation date",
+            "date": "last trigger date",
+            "updatedDate": "context updated date",
+            "evaluateRunningDate": "evaluation lock date",
+            "states": "trigger_states",
         };
-        const translationKey = mappings[key] ?? `triggerVars.${key}`;
-        return tOr(translationKey, humanize(key));
+        const translationKey = mappings[key] ?? key;
+        return te(translationKey) && t(translationKey) || translationKey;
     };
-
-    const labelName = tOr("triggerVars.name", "Name");
-    const labelValue = tOr("triggerVars.value", "Value");
 </script>
 
 <style scoped lang="scss">
-:deep(.markdown) {
-  p {
-    margin-bottom: auto;
-  }
-}
+    :deep(.markdown) {
+        p {
+            margin-bottom: auto;
+        }
+    }
 
-:deep(.el-table__cell:nth-child(2) span) {
-  color: var(--ks-content-secondary);
-}
+    :deep(.el-table__cell:nth-child(2) span) {
+        color: var(--ks-content-secondary);
+    }
 </style>

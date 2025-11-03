@@ -98,14 +98,6 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.WORKERINSTANCE_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<WorkerInstance> workerInstance() {
-        return new MysqlQueue<>(WorkerInstance.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
     @Named(QueueFactoryInterface.WORKERJOBRUNNING_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerJobRunning> workerJobRunning() {

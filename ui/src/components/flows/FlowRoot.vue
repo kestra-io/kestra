@@ -64,7 +64,7 @@
 
                         if (!Object.keys(this.$route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
                             const miscStore = useMiscStore();
-                            const defaultDuration = miscStore.configs?.chartDefaultDuration || "PT720H";
+                            const defaultDuration = miscStore.configs?.chartDefaultDuration || "PT30D";
                             const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": defaultDuration};
                             this.$router.replace({name: this.$route.name, params: this.$route.params, query: newQuery});
                         }

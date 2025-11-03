@@ -18,7 +18,6 @@ public interface QueueFactoryInterface {
     String WORKERTASKLOG_NAMED = "workerTaskLogQueue";
     String METRIC_QUEUE = "workerTaskMetricQueue";
     String KILL_NAMED = "executionKilledQueue";
-    String WORKERINSTANCE_NAMED = "workerInstanceQueue";
     String WORKERJOBRUNNING_NAMED = "workerJobRunningQueue";
     String TRIGGER_NAMED = "triggerQueue";
     String SUBFLOWEXECUTIONRESULT_NAMED = "subflowExecutionResultQueue";
@@ -43,8 +42,6 @@ public interface QueueFactoryInterface {
     QueueInterface<FlowInterface> flow();
 
     QueueInterface<ExecutionKilled> kill();
-
-    QueueInterface<WorkerInstance> workerInstance();
 
     QueueInterface<WorkerJobRunning> workerJobRunning();
 

@@ -29,7 +29,10 @@ public interface ConcurrencyLimitService {
      *
      * @throws IllegalArgumentException in case the execution is not queued or is transitionned to an unsupported state.
      */
-    Execution unqueue(Execution execution, State.Type state) throws QueueException;
+    public Execution unqueue(Execution execution, State.Type state) {
+        if (execution.getState().getCurrent() != State.Type.QUEUED) {
+            throw new IllegalArgumentException("Only QUEUED execution can be unqueued");
+        }
 
     /**
      * Find concurrency limits.

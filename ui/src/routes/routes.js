@@ -15,7 +15,7 @@ function maybeAddTimeRangeFilter(to) {
     // Default to the configured duration if no time range is set
     if (!Object.keys(to.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
         const miscStore = useMiscStore();
-        const defaultDuration = miscStore.configs?.chartDefaultDuration || "PT30D"; // Fallback to 30 days
+        const defaultDuration = miscStore.configs?.chartDefaultDuration || "P30D"; // Fallback to 30 days
         to.query["filters[timeRange][EQUALS]"] = defaultDuration;
 
         return true;

@@ -2,12 +2,14 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
+import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceStateTransition;
 import io.kestra.core.server.ServiceType;
+import io.kestra.jdbc.runner.JdbcTransactionContext;
 import io.micronaut.data.model.Pageable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import org.jooq.SelectConditionStep;
 import org.jooq.Table;
 import org.jooq.TransactionalCallable;
 import org.jooq.TransactionalRunnable;
+import org.jooq.impl.DSL;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -28,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import static java.util.stream.Collectors.toCollection;
@@ -56,15 +60,15 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
     @Override
     public Optional<ServiceInstance> findById(final String id) {
         return jdbcRepository.getDslContextWrapper().transactionResult(
-            configuration -> findById(id, configuration, false)
+            configuration -> findById(id, DSL.using(configuration), false)
         );
     }
 
     private Optional<ServiceInstance> findById(final String id,
-                                              final Configuration configuration,
+                                              final DSLContext dslContext,
                                               final boolean isForUpdate) {
 
-        SelectConditionStep<Record1<Object>> query = using(configuration)
+        SelectConditionStep<Record1<Object>> query = dslContext
             .select(VALUE)
             .from(table())
             .where(SERVICE_ID.eq(id));
@@ -78,24 +82,21 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      * {@inheritDoc}
      **/
     @Override
+    public List<ServiceInstance> findAllInstancesInStates(final Set<Service.ServiceState> states) {
+        return this.jdbcRepository.getDslContextWrapper()
+            .transactionResult(configuration -> findAllInstancesInStates(configuration, states, false));
+    }
+
+    @Override
     public List<ServiceInstance> findAllInstancesInState(final Service.ServiceState state) {
         return this.jdbcRepository.getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> query = using(configuration)
+                var query = using(configuration)
                     .select(VALUE)
                     .from(table())
                     .where(STATE.eq(state.name()));
                 return this.jdbcRepository.fetch(query);
             });
-    }
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public List<ServiceInstance> findAllInstancesInStates(final Set<Service.ServiceState> states) {
-        return this.jdbcRepository.getDslContextWrapper()
-            .transactionResult(configuration -> findAllInstancesInStates(configuration, states, false));
     }
 
     /**
@@ -128,32 +129,32 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             this.jdbcRepository.fetch(query);
     }
 
-    /**
-     * Finds all service instances which are NOT {@link Service.ServiceState#RUNNING}.
-     *
-     * @return the list of {@link ServiceInstance}.
-     */
-    public List<ServiceInstance> findAllNonRunningInstances() {
-        return jdbcRepository.getDslContextWrapper().transactionResult(
-            configuration -> findAllNonRunningInstances(configuration, false)
-        );
+    @Override
+    public void processAllNonRunningInstances(BiConsumer<TransactionContext, ServiceInstance> consumer) {
+        jdbcRepository.getDslContextWrapper().transaction(configuration -> {
+            var dslContext = DSL.using(configuration);
+            var query = dslContext
+                .select(VALUE)
+                .from(table())
+                .where(STATE.notIn(Service.ServiceState.CREATED.name(), Service.ServiceState.RUNNING.name()));
+
+            var txContext = new JdbcTransactionContext(dslContext);
+            this.jdbcRepository.fetch(query.forUpdate().skipLocked()).forEach(instance -> consumer.accept(txContext, instance));
+        });
     }
 
-    /**
-     * Finds all service instances which are NOT {@link Service.ServiceState#RUNNING}.
-     *
-     * @return the list of {@link ServiceInstance}.
-     */
-    public List<ServiceInstance> findAllNonRunningInstances(final Configuration configuration,
-                                                            final boolean isForUpdate) {
-        SelectConditionStep<Record1<Object>> query = using(configuration)
-            .select(VALUE)
-            .from(table())
-            .where(STATE.notIn(Service.ServiceState.CREATED.name(), Service.ServiceState.RUNNING.name()));
+    @Override
+    public void processInstanceInStates(Set<Service.ServiceState> states, BiConsumer<TransactionContext, ServiceInstance> consumer) {
+        jdbcRepository.getDslContextWrapper().transaction(configuration -> {
+            var dslContext = DSL.using(configuration);
+            var query = dslContext
+                .select(VALUE)
+                .from(table())
+                .where(STATE.in(states.stream().map(Enum::name).toList()));
 
-        return isForUpdate ?
-            this.jdbcRepository.fetch(query.forUpdate().skipLocked()) :
-            this.jdbcRepository.fetch(query);
+            var txContext = new JdbcTransactionContext(dslContext);
+            this.jdbcRepository.fetch(query.forUpdate().skipLocked()).forEach(instance -> consumer.accept(txContext, instance));
+        });
     }
 
     /**
@@ -192,18 +193,6 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
                 .and(UPDATED_AT.lessOrEqual(until))
                 .execute()
         );
-    }
-
-    public void transaction(final TransactionalRunnable runnable) {
-        this.jdbcRepository
-            .getDslContextWrapper()
-            .transaction(runnable);
-    }
-
-    public <T> T transactionResult(final TransactionalCallable<T> runnable) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(runnable);
     }
 
     public void delete(DSLContext context, ServiceInstance instance) {
@@ -266,20 +255,13 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             });
     }
 
-    /**
-     * Attempt to transition the state of a given service to given new state.
-     * This method may not update the service if the transition is not valid.
-     *
-     * @param instance the service instance.
-     * @param newState the new state of the service.
-     * @return an optional of the {@link ServiceInstance} or {@link Optional#empty()} if the service is not running.
-     */
-    public ServiceStateTransition.Response mayTransitServiceTo(final Configuration configuration,
+    @Override
+    public ServiceStateTransition.Response mayTransitServiceTo(final TransactionContext txContext,
                                                                final ServiceInstance instance,
                                                                final Service.ServiceState newState,
                                                                final String reason) {
         ImmutablePair<ServiceInstance, ServiceInstance> result = mayUpdateStatusById(
-            configuration,
+            txContext,
             instance,
             newState,
             reason
@@ -296,12 +278,13 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      * @return an {@link Optional} of {@link ImmutablePair} holding the old (left), and new {@link ServiceInstance} or {@code null} if transition failed (right).
      * Otherwise, an {@link Optional#empty()} if the no service can be found.
      */
-    private ImmutablePair<ServiceInstance, ServiceInstance> mayUpdateStatusById(final Configuration configuration,
+    private ImmutablePair<ServiceInstance, ServiceInstance> mayUpdateStatusById(final TransactionContext txContext,
                                                                                 final ServiceInstance instance,
                                                                                 final Service.ServiceState newState,
                                                                                 final String reason) {
         // Find the ServiceInstance to be updated
-        Optional<ServiceInstance> optional = findById(instance.uid(), configuration, true);
+        var dslContext = txContext.unwrap(JdbcTransactionContext.class).getDslContext();
+        Optional<ServiceInstance> optional = findById(instance.uid(), dslContext, true);
 
         // Check whether service was found.
         if (optional.isEmpty()) {

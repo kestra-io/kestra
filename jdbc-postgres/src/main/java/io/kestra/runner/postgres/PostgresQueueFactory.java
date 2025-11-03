@@ -16,7 +16,6 @@ import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.apache.commons.lang3.NotImplementedException;
 
 @Factory
 @PostgresQueueEnabled
@@ -94,14 +93,6 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<ExecutionKilled> kill() {
         return new PostgresQueue<>(ExecutionKilled.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.WORKERINSTANCE_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<WorkerInstance> workerInstance() {
-        return new PostgresQueue<>(WorkerInstance.class, applicationContext);
     }
 
     @Override

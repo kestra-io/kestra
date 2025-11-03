@@ -94,6 +94,9 @@ public class CommandsWrapper implements TaskCommands {
     @With
     private TargetOS targetOS;
 
+    @With
+    private String commandsSeparator;
+
     public CommandsWrapper(RunContext runContext) {
         this.runContext = runContext;
         this.workingDirectory = runContext.workingDir().path();
@@ -125,7 +128,8 @@ public class CommandsWrapper implements TaskCommands {
             outputFiles,
             enableOutputDirectory,
             timeout,
-            targetOS
+            targetOS,
+            commandsSeparator
         );
     }
 
@@ -172,7 +176,7 @@ public class CommandsWrapper implements TaskCommands {
                 renderedInterpreter,
                 this.isBeforeCommandsWithOptions() ? getBeforeCommandsWithOptions(renderedBeforeCommands) :  renderedBeforeCommands,
                 renderedCommands,
-                Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
+                Optional.ofNullable(commandsSeparator).orElse(Optional.ofNullable(targetOS).orElse(TargetOS.AUTO).lineSeparator)
             );
 
         this.commands = Property.ofValue(finalCommands);

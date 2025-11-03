@@ -147,18 +147,14 @@ public final class ScriptService {
 
 
     public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, String command) {
-        return scriptCommands(interpreter, beforeCommands, List.of(command), TargetOS.LINUX);
+        return scriptCommands(interpreter, beforeCommands, List.of(command), TargetOS.LINUX.lineSeparator);
     }
 
     public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, List<String> commands) {
-        return scriptCommands(interpreter, beforeCommands, commands, TargetOS.LINUX);
+        return scriptCommands(interpreter, beforeCommands, commands, TargetOS.LINUX.lineSeparator);
     }
 
-    public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, String command, TargetOS targetOS) {
-        return scriptCommands(interpreter, beforeCommands, List.of(command), targetOS);
-    }
-
-    public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, List<String> commands, TargetOS targetOS) {
+    public static List<String> scriptCommands(List<String> interpreter, List<String> beforeCommands, List<String> commands, String commandSeparator) {
         ArrayList<String> commandsArgs = new ArrayList<>(interpreter);
         commandsArgs.add(
             Stream
@@ -166,7 +162,7 @@ public final class ScriptService {
                     ListUtils.emptyOnNull(beforeCommands).stream(),
                     commands.stream()
                 )
-                .collect(Collectors.joining(targetOS.lineSeparator))
+                .collect(Collectors.joining(commandSeparator))
         );
 
         return commandsArgs;

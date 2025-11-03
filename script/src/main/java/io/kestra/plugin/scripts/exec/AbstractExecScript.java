@@ -116,6 +116,12 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
     protected DockerOptions docker;
 
     @Schema(
+        title = "The separator to use between commands.",
+        description = "Defaults to OS line separator"
+    )
+    protected Property<String> commandsSeparator;
+
+    @Schema(
         title = "The task runner container image, only used if the task runner is container-based."
     )
     public abstract Property<String> getContainerImage();
@@ -165,6 +171,7 @@ public abstract class AbstractExecScript extends Task implements NamespaceFilesI
             .withEnableOutputDirectory(runContext.render(this.getOutputDirectory()).as(Boolean.class).orElse(null))
             .withTimeout(runContext.render(this.getTimeout()).as(Duration.class).orElse(null))
             .withTargetOS(runContext.render(this.getTargetOS()).as(TargetOS.class).orElseThrow())
+            .withCommandsSeparator(runContext.render(this.getCommandsSeparator()).as(String.class).orElseThrow())
             .withFailFast(runContext.render(this.getFailFast()).as(Boolean.class).orElse(false));
     }
 

@@ -6,6 +6,7 @@ import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -41,31 +42,42 @@ public class OutputFromIterationFunction implements Function {
             throw new PebbleException(null, "Cannot fetch iteration " + index + ": no previous iteration exists.", lineNumber, self.getName());
         }
 
-        List<?> parents = (List<?>) context.getVariable("parents");
-        if (parents != null && !parents.isEmpty()) {
-            throw new PebbleException(null, "The 'outputFromIteration' function is not supported inside nested loops. ", lineNumber, self.getName()
-            );
-        }
-
-
         Map<?, ?> taskMetaData = (Map<?, ?>) context.getVariable("task");
         String taskId = (String) taskMetaData.get("id");
 
         Map<?, ?> outputs = (Map<?, ?>) context.getVariable("outputs");
-        Map<?, ?> taskOutputs = (Map<?, ?>) outputs.get(taskId);
 
+        Map<?,?> targetOutputs = (Map<?, ?>) outputs.get(taskId);
+
+        List<Map<?, ?>> parents = (List<Map<?, ?>>) context.getVariable("parents");
+        if (parents != null && !parents.isEmpty()) {
+            Collections.reverse(parents);
+            for (Map<?, ?> parent : parents) {
+                Map<?, ?> taskrun = (Map<?, ?>) parent.get("taskrun");
+                if (taskrun != null) {
+                    targetOutputs = (Map<?, ?>) targetOutputs.get(taskrun.get("value"));
+                }
+            }
+
+        }
         //  output of current or future iterations can't occur in current iteration
-        if (index == taskOutputs.size()) {
-            throw new PebbleException(null, "The provided index (" + index + ") refers to the current iteration, " + "whose outputs are not yet available at runtime.", lineNumber, self.getName());
+        if (index == targetOutputs.size()) {
+            throw new PebbleException(null,
+                    "The provided index (" + index + ") refers to the current iteration, "
+                            + "whose outputs are not yet available at runtime.",
+                    lineNumber, self.getName());
         }
-        if (index > taskOutputs.size()) {
-            throw new PebbleException(null, "The provided index (" + index + ") is out of range. " + "It refers to a future iteration whose outputs do not exist yet. " + "Maximum valid index is " + (taskOutputs.size() - 1) + ".", lineNumber, self.getName());
+        if (index > targetOutputs.size()) {
+            throw new PebbleException(null,
+                    "The provided index (" + index + ") is out of range. "
+                            + "It refers to a future iteration whose outputs do not exist yet. "
+                            + "Maximum valid index is " + (targetOutputs.size() - 1) + ".",
+                    lineNumber, self.getName());
         }
-
-       List<?>taskValues= new ArrayList<>(taskOutputs.keySet());
+       List<?>taskValues= new ArrayList<>(targetOutputs.keySet());
 
         Object targetValue = taskValues.get(index);
-        Map<?, ?> finalOutput = (Map<?, ?>) taskOutputs.get(targetValue);
+        Map<?, ?> finalOutput = (Map<?, ?>) targetOutputs.get(targetValue);
 
         return finalOutput.get("value");
     }

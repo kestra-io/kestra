@@ -3,11 +3,11 @@ import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
 import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import ChartBarIcon from "vue-material-design-icons/ChartBar.vue";
-import ViewDashboardIcon from "vue-material-design-icons/ViewDashboard.vue";
+// import ViewDashboardIcon from "vue-material-design-icons/ViewDashboard.vue";
 import DashboardCodeEditor from "../components/DashboardCodeEditor.vue";
 import PluginDocumentationWrapper from "../../plugins/PluginDocumentationWrapper.vue";
 import ChartViewWrapper from "../components/ChartViewWrapper.vue";
-import PreviewDashboardWrapper from "../components/PreviewDashboardWrapper.vue";
+// import PreviewDashboardWrapper from "../components/PreviewDashboardWrapper.vue";
 
 import intro from "../../../assets/docs/dashboard_home.md?raw";
 import DashboardNoCodeEditor from "../components/DashboardNoCodeEditor.vue";
@@ -49,14 +49,14 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
         uid: "charts",
         component: markRaw(ChartViewWrapper),
     },
-    {
-        button: {
-            icon: markRaw(ViewDashboardIcon),
-            label: "Preview"
-        },
-        uid: "preview",
-        component: markRaw(PreviewDashboardWrapper),
-    }
+    // {
+    //     button: {
+    //         icon: markRaw(ViewDashboardIcon),
+    //         label: "Preview"
+    //     },
+    //     uid: "preview",
+    //     component: markRaw(PreviewDashboardWrapper),
+    // }
 ].map((e): EditorElement => ({
     // add a default deserializer
     deserialize: (value: string) => {

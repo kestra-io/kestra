@@ -8,12 +8,10 @@
 <script setup lang="ts">
     import type {Component} from "vue";
 
-    interface Props {
+    const props = defineProps<{
         icon: Component;
         label: string;
-    }
-
-    const props = defineProps<Props>();
+    }>();
 </script>
 
 <style scoped lang="scss">
@@ -26,6 +24,7 @@
         background-color: var(--ks-badge-background);
         color: var(--ks-badge-content);
         font-size: 0.75rem;
+
         .icon {
             margin-right: 5px !important;
         }

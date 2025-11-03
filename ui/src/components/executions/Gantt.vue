@@ -28,7 +28,7 @@
                         :sizeDependencies="[selectedTaskRuns]"
                     >
                         <div class="d-flex flex-column">
-                            <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)" :style="{marginLeft: (item.depth || 0) * 20 + 'px'}">
+                            <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
                                 <div class="d-inline-flex">
                                     <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                     <ChevronDown v-else />
@@ -195,7 +195,7 @@
                 const sortedTasks = []
                 const tasksById = {}
                 for (let task of (this.execution.taskRunList || [])) {
-                    const taskWrapper = {task,depth: 0}
+                    const taskWrapper = {task}
                     if (task.parentTaskRunId) {
                         childTasks.push(taskWrapper)
                     } else {
@@ -212,38 +212,9 @@
                         if (!parentTask.children) {
                             parentTask.children = []
                         }
-                        taskWrapper.depth = (parentTask.depth || 0) + 1
-                        
                         parentTask.children.push(taskWrapper)
                     }
                 }
-                function computeEnd(node) {
-                    let histories = node.task.state?.histories || [];
-                    let maxEnd ;
-                    if(histories.length>0){
-                        const lastDate=histories[histories.length-1].date;
-                        maxEnd=ts(lastDate);
-                    }
-                    else{
-                        maxEnd=ts(new Date());
-                    }
-
-    
-                    if (node.children) {
-                        for (let child of node.children) {
-                            const childEnd = computeEnd(child);
-                            if (childEnd > maxEnd) 
-                            {maxEnd = childEnd;}
-                        }
-                    }
-
-                    node.effectiveEnd = maxEnd;
-                    return maxEnd;
-                }
-
-                rootTasks.forEach(node=>computeEnd(node));
-
-
 
                 const nodeStart = node => ts(node.task.state.histories[0].date)
                 const childrenSort = nodes => {
@@ -258,8 +229,7 @@
                     }
                 }
                 childrenSort(rootTasks)
-                return sortedTasks.map(t=>({...t,depth: tasksById[t.id].depth || 0}));
-
+                return sortedTasks
             },
             isExecutionStarted() {
                 return this.execution?.state?.current && !["CREATED", "QUEUED"].includes(this.execution.state.current);
@@ -292,41 +262,24 @@
                 }
 
                 const series = [];
-                const executionDelta = this.delta(); 
+                const executionDelta = this.delta(); //caching this value matters
                 for (let task of this.tasks) {
-
-                    let startTs;
-                    const firstHistoryDate=task.state.histories?.[0]?.date;
-                    if(firstHistoryDate){
-                        startTs=ts(firstHistoryDate);
-                    }
-                    else{
-                        startTs=ts(new Date());
-                    }
                     let stopTs;
-                    if(State.isRunning(task.state.current)){
-                        stopTs=ts(new Date());
-                    } else if(task.effectiveEnd!==undefined){
-                        stopTs=task.effectiveEnd;
-                    }
-                    else{
-                        const lastHistoryDate=task.state.histories?.[task.state.histories.length-1]?.date;
-
-                        if (lastHistoryDate){
-                            stopTs=ts(lastHistoryDate);
-                        }
-                        else{
-                            stopTs=ts(new Date());
-                        }
+                    if (State.isRunning(task.state.current)) {
+                        stopTs = ts(new Date());
+                    } else {
+                        const lastIndex = task.state.histories.length - 1;
+                        stopTs = ts(task.state.histories[lastIndex].date);
                     }
 
-
+                    const startTs = ts(task.state.histories[0].date);
 
                     const runningState = task.state.histories.filter(r => r.state === State.RUNNING);
                     const left = runningState.length > 0 ? ((ts(runningState[0].date) - startTs) / (stopTs - startTs) * 100) : 0;
 
                     const start = startTs - this.start;
-                   
+                    let stop = stopTs - this.start - start;
+
                     const delta = stopTs - startTs;
                     const duration = this.$moment.duration(delta);
 
@@ -337,8 +290,10 @@
                         tooltip += `\n${this.$t("running duration")} : ${Utils.humanDuration((stopTs - ts(runningState[0].date)) / 1000)}`;
                     }
 
-                    let width = ((stopTs - startTs) / executionDelta) * 100;
-                   
+                    let width = (stop / executionDelta) * 100
+                    if (State.isRunning(task.state.current)) {
+                        width = ((this.stop() - startTs) / executionDelta) * 100 //(stop / executionDelta) * 100
+                    }
 
                     series.push({
                         id: task.id,
@@ -353,8 +308,7 @@
                         flowId: task.flowId,
                         namespace: task.namespace,
                         executionId: task.outputs && task.outputs.executionId,
-                        attempts: task.attempts ? task.attempts.length : 1,
-                        depth: task.depth || 0 
+                        attempts: task.attempts ? task.attempts.length : 1
                     });
                 }
                 this.series = series;

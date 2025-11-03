@@ -83,7 +83,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private final PluginDefaultService pluginDefaultService;
     private final WorkerGroupService workerGroupService;
     protected SchedulerExecutionStateInterface executionState;
-    private final WorkerGroupExecutorInterface workerGroupExecutorInterface;
+    private final WorkerGroupMetaStore workerGroupMetaStore;
     private final MaintenanceService maintenanceService;
 
     // must be volatile as it's updated by the flow listener thread and read by the scheduleExecutor thread
@@ -136,7 +136,7 @@ public abstract class AbstractScheduler implements Scheduler {
         this.workerGroupService = applicationContext.getBean(WorkerGroupService.class);
         this.serviceStateEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.executionEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
-        this.workerGroupExecutorInterface = applicationContext.getBean(WorkerGroupExecutorInterface.class);
+        this.workerGroupMetaStore = applicationContext.getBean(WorkerGroupMetaStore.class);
         this.maintenanceService = applicationContext.getBean(MaintenanceService.class);
 
         setState(ServiceState.CREATED);
@@ -1059,9 +1059,9 @@ public abstract class AbstractScheduler implements Scheduler {
                 String tenantId = flowWithTrigger.getFlow().getTenantId();
                 RunContext runContext = flowWithTrigger.conditionContext.getRunContext();
                 String workerGroupKey = runContext.render(workerGroup.get().getKey());
-                if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
+                if (workerGroupMetaStore.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                     // Check whether at-least one worker is available
-                    if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {
+                    if (workerGroupMetaStore.isWorkerGroupAvailableForKey(workerGroupKey)) {
                         this.workerJobQueue.emit(workerGroupKey, workerTrigger);
                     } else {
                         WorkerGroup.Fallback fallback = workerGroup.map(WorkerGroup::getFallback).orElse(WorkerGroup.Fallback.WAIT);

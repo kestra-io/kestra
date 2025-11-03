@@ -10,7 +10,7 @@ import java.util.Set;
  *
  * @see io.kestra.core.models.tasks.WorkerGroup
  */
-public interface WorkerGroupExecutorInterface {
+public interface WorkerGroupMetaStore {
 
     /**
      * Checks whether a Worker Group exists for the given key and tenant.
@@ -39,12 +39,12 @@ public interface WorkerGroupExecutorInterface {
     Set<String> listAllWorkerGroupKeys();
 
     /**
-     * Default {@link WorkerGroupExecutorInterface} implementation.
+     * Default {@link WorkerGroupMetaStore} implementation.
      * This class is only used if no other implementation exist.
      */
     @Singleton
     @Secondary
-    class DefaultWorkerGroupExecutorInterface implements WorkerGroupExecutorInterface {
+    class DefaultWorkerGroupExecutor implements WorkerGroupMetaStore {
 
         @Override
         public boolean isWorkerGroupExistForKey(String key, String tenant) {

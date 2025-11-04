@@ -1149,6 +1149,7 @@ public class DefaultExecutor implements Executor {
         }
     }
 
+    // TODO store FlowWithFlowTriggers on flow listener update to avoid recomputing them each time
     private void processFlowTriggers(Execution execution) throws QueueException {
         // directly process simple conditions
         flowTriggerService.withFlowTriggersOnly(allFlows.stream())

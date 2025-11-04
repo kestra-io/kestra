@@ -115,6 +115,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         assertThat(workerTaskResult).isNotNull();
         assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(workerTaskResult.getTaskRun().getAttempts()).hasSize(2);
+        assertThat(workerTaskResult.getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESUBMITTED)).isTrue();
         newWorker.close();
     }
 
@@ -155,6 +156,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         assertThat(workerTaskResult).isNotNull();
         assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(workerTaskResult.getTaskRun().getAttempts()).hasSize(2);
+        assertThat(workerTaskResult.getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESUBMITTED)).isTrue();
         newWorker.close();
     }
 

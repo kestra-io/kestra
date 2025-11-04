@@ -69,7 +69,7 @@ public class AbstractJdbcConcurrencyLimitStateStore extends AbstractJdbcReposito
 
                 var txContext = new JdbcTransactionContext(dslContext);
                 var pair = consumer.apply(txContext, selected);
-                save(dslContext, pair.getRight());
+                update(dslContext, pair.getRight());
                 return pair.getLeft();
             });
     }

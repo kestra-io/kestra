@@ -40,15 +40,17 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
             };
         });
 
+    function write(v: Panel[]){
+        return JSON.stringify(preSerializePanelsFn(v));
+    }
+
     const panels = key ? useStorage<Panel[]>(
         key,
         initialPanels,
         undefined,
         {
             serializer: {
-                write(v: Panel[]){
-                    return JSON.stringify(preSerializePanelsFn(v));
-                },
+                write,
                 read(v?: string) {
                     if(!v) return [];
                     const rawPanels: PreSerializedPanel[] = JSON.parse(v);
@@ -70,5 +72,12 @@ export function useStoredPanels(key: string | undefined, editorElements: Pick<Ed
         }
     ) : ref(initialPanels);
 
-    return panels;
+    function saveState(altKey: string | undefined) {
+        if (altKey) {
+            // Save the current state to local storage
+            localStorage.setItem(altKey, write(panels.value));
+        }
+    }
+
+    return {panels, saveState};
 }

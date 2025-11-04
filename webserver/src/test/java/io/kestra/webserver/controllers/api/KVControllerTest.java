@@ -202,24 +202,24 @@ class KVControllerTest {
 
     static Stream<Arguments> kvSetKeyValueArgs() {
         return Stream.of(
-            Arguments.of("{\"hello\":\"world\"}", Map.class),
-            Arguments.of("[\"hello\",\"world\"]", List.class),
-            Arguments.of("\"hello\"", String.class),
-            Arguments.of("1", Integer.class),
-            Arguments.of("1.0", BigDecimal.class),
-            Arguments.of("true", Boolean.class),
-            Arguments.of("false", Boolean.class),
-            Arguments.of("2021-09-01", LocalDate.class),
-            Arguments.of("2021-09-01T01:02:03Z", Instant.class),
-            Arguments.of("\"PT5S\"", Duration.class)
+            Arguments.of(MediaType.TEXT_PLAIN, "{\"hello\":\"world\"}", Map.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "[\"hello\",\"world\"]", List.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "\"hello\"", String.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "1", Integer.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "1.0", BigDecimal.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "true", Boolean.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "false", Boolean.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01", LocalDate.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01T01:02:03Z", Instant.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "\"PT5S\"", Duration.class)
         );
     }
 
     @ParameterizedTest
     @MethodSource("kvSetKeyValueArgs")
-    void setKeyValue(String value, Class<?> expectedClass) throws IOException, ResourceExpiredException {
+    void setKeyValue(MediaType mediaType, String value, Class<?> expectedClass) throws IOException, ResourceExpiredException {
         String myDescription = "myDescription";
-        client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", value).header("ttl", "PT5M").header("description", myDescription));
+        client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", value).contentType(mediaType).header("ttl", "PT5M").header("description", myDescription));
 
         KVStore kvStore = kvStore();
         Class<?> valueClazz = kvStore.getValue("my-key").get().value().getClass();
@@ -294,7 +294,7 @@ class KVControllerTest {
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
 
-        httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"")));
+        httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.TEXT_PLAIN)));
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
 

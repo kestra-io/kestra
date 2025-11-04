@@ -7,6 +7,7 @@ import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
+import io.kestra.core.utils.ListUtils;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import org.jooq.*;
@@ -143,6 +144,10 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
 
     @Override
     public int saveBatch(List<PersistedKvMetadata> items) {
+        if (ListUtils.isEmpty(items)) {
+            return 0;
+        }
+
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {

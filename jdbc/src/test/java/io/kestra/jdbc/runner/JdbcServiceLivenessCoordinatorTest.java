@@ -1,8 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.*;
-import io.kestra.core.server.AbstractServiceLivenessCoordinatorTest;
+import io.kestra.executor.AbstractServiceLivenessCoordinatorTest;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.context.annotation.Property;
 import jakarta.inject.Inject;
@@ -19,5 +18,13 @@ public abstract class JdbcServiceLivenessCoordinatorTest extends AbstractService
     void initSchema() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
+    }
+
+    @Inject
+    private AbstractJdbcWorkerJobRunningStateStore workerJobRunningStateStore;
+
+    @AfterEach
+    void tearDown() {
+        workerJobRunningStateStore.findAll().forEach(it -> workerJobRunningStateStore.deleteByKey(it.uid()));
     }
 }

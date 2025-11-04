@@ -1,7 +1,7 @@
 <template>
     <div
         class="py-2 line font-monospace"
-        :class="{['log-border-' + log.level.toLowerCase()]: cursor && log.level !== undefined, ['key-' + $.vnode.key]: true}"
+        :class="{['log-border-' + log.level.toLowerCase()]: cursor && log.level !== undefined}"
         v-if="filtered"
         :style="logLineStyle"
     >
@@ -16,7 +16,7 @@
                 :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
             >
                 <span class="header-badge text-secondary">
-                    {{ $filters.date(log.timestamp, "iso") }}
+                    {{ Filters.date(log.timestamp, "iso") }}
                 </span>
                 <span v-for="(meta, x) in metaWithValue" :key="x">
                     <span class="header-badge property">
@@ -39,157 +39,134 @@
         <CopyToClipboard :text="`${log.level} ${log.timestamp} ${log.message}`" link />
     </div>
 </template>
-<script>
+<script setup lang="ts">
+    import {ref, computed, onMounted, watch, nextTick} from "vue";
     import Convert from "ansi-to-html";
+    import {useStorage} from "@vueuse/core";
     import xss from "xss";
     import * as Markdown from "../../utils/markdown";
     import MenuRight from "vue-material-design-icons/MenuRight.vue";
     import linkify from "./linkify";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
+    import {LevelKey} from "../../utils/logs";
+    import {Log} from "../../stores/logs";
+    import {useRouter} from "vue-router";
+    import * as Filters from "../../utils/filters";
 
-    let convert = new Convert();
+    // Props
+    const props = defineProps<{
+        cursor?: boolean,
+        log: Log,
+        filter?: string,
+        level?: LevelKey,
+        excludeMetas?: (keyof Log)[],
+        title?: boolean
+    }>();
 
-    export default {
-        components: {
-            MenuRight,
-            CopyToClipboard
-        },
-        props: {
-            cursor: {
-                type: Boolean,
-                default: false,
-            },
-            log: {
-                type: Object,
-                required: true,
-            },
-            filter: {
-                type: String,
-                default: "",
-            },
-            level: {
-                type: String,
-                default: "INFO",
-            },
-            excludeMetas: {
-                type: Array,
-                default: () => [],
-            },
-            title: {
-                type: Boolean,
-                default: false,
-            },
-        },
-        data() {
-            return {
-                renderedMarkdown: undefined,
-                logsFontSize: parseInt(localStorage.getItem("logsFontSize") || "12"),
-            };
-        },
-        async created() {
-            this.renderedMarkdown = await Markdown.render(this.message, {onlyLink: true, html: true});
-        },
-        computed: {
-            logLineStyle() {
-                return {
-                    fontSize: `${this.logsFontSize}px`,
-                };
-            },
-            metaWithValue() {
-                const metaWithValue = [];
-                const excludes = [
-                    "message",
-                    "timestamp",
-                    "thread",
-                    "taskRunId",
-                    "level",
-                    "index",
-                    "attemptNumber",
-                    "executionKind"
-                ];
-                excludes.push.apply(excludes, this.excludeMetas);
-                for (const key in this.log) {
-                    if (this.log[key] && !excludes.includes(key)) {
-                        let meta = {key, value: this.log[key]};
-                        if (key === "executionId") {
-                            meta["router"] = {
-                                name: "executions/update",
-                                params: {
-                                    namespace: this.log["namespace"],
-                                    flowId: this.log["flowId"],
-                                    id: this.log[key],
-                                },
-                            };
-                        }
+    // State
+    const renderedMarkdown = ref<string | undefined>(undefined);
+    const logsFontSize = useStorage<number>("logsFontSize", 12);
+    const lineContent = ref<HTMLElement>();
 
-                        if (key === "namespace") {
-                            meta["router"] = {name: "flows/list", query: {namespace: this.log[key]}};
-                        }
+    const convert = new Convert();
 
-                        if (key === "flowId") {
-                            meta["router"] = {
-                                name: "flows/update",
-                                params: {namespace: this.log["namespace"], id: this.log[key]},
-                            };
-                        }
+    // Computed
+    const logLineStyle = computed(() => ({
+        fontSize: `${logsFontSize.value}px`,
+    }));
 
-                        metaWithValue.push(meta);
-                    }
+    const metaWithValue = computed(() => {
+        const metaWithValue: any[] = [];
+        const excludes:(keyof Log)[] = [
+            "message",
+            "timestamp",
+            "thread",
+            "taskRunId",
+            "level",
+            "index",
+            "attemptNumber",
+            "executionKind",
+            ...(props.excludeMetas ?? [])
+        ];
+        for (const keyString in props.log) {
+            const key = keyString as keyof Log;
+            if (props.log[key] && !excludes.includes(key)) {
+                let meta: any = {key, value: props.log[key]};
+                if (key === "executionId") {
+                    meta["router"] = {
+                        name: "executions/update",
+                        params: {
+                            namespace: props.log["namespace"],
+                            flowId: props.log["flowId"],
+                            id: props.log[key],
+                        },
+                    };
                 }
-                return metaWithValue;
-            },
-            levelStyle() {
-                const lowerCaseLevel = this.log?.level?.toLowerCase();
-                return {
-                    "border-color": `var(--ks-log-border-${lowerCaseLevel})`,
-                    "color": `var(--ks-log-content-${lowerCaseLevel})`,
-                    "background-color": `var(--ks-log-background-${lowerCaseLevel})`,
-                };
-            },
-            filtered() {
-                return (
-                    this.filter === "" || (this.log.message && this.log.message.toLowerCase().includes(this.filter))
-                );
-            },
-            iconColor() {
-                const logLevel = this.log.level?.toLowerCase();
-                return `var(--ks-log-content-${logLevel}) !important`; // Use CSS variable for icon color
-            },
-            message() {
-                let logMessage = !this.log.message
-                    ? ""
-                    : convert.toHtml(
-                        xss(this.log.message, {
-                            allowList: {span: ["style"]},
-                        })
-                    );
-
-                logMessage = logMessage.replaceAll(
-                    /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
-                    "$1<a href='$2' target='_blank'>$2</a>$3"
-                );
-                return logMessage;
-            },
-        },
-        mounted() {
-            window.addEventListener("storage", (event) => {
-                if (event.key === "logsFontSize") {
-                    this.logsFontSize = parseInt(event.newValue);
+                if (key === "namespace") {
+                    meta["router"] = {name: "flows/list", query: {namespace: props.log[key]}};
                 }
-            });
+                if (key === "flowId") {
+                    meta["router"] = {
+                        name: "flows/update",
+                        params: {namespace: props.log["namespace"], id: props.log[key]},
+                    };
+                }
+                metaWithValue.push(meta);
+            }
+        }
+        return metaWithValue;
+    });
 
-            setTimeout(() => {
-                linkify(this.$refs.lineContent, this.$router);
-            }, 200);
-        },
-        watch: {
-            renderedMarkdown() {
-                this.$nextTick(() => {
-                    linkify(this.$refs.lineContent, this.$router);
-                });
-            },
-        },
-    };
+    const levelStyle = computed(() => {
+        const lowerCaseLevel = props.log?.level?.toLowerCase();
+        return {
+            "border-color": `var(--ks-log-border-${lowerCaseLevel})`,
+            "color": `var(--ks-log-content-${lowerCaseLevel})`,
+            "background-color": `var(--ks-log-background-${lowerCaseLevel})`,
+        };
+    });
+
+    const filtered = computed(() =>
+        props.filter === "" || (props.log.message && props.log.message.toLowerCase().includes(props.filter ?? ""))
+    );
+
+    const iconColor = computed(() => {
+        const logLevel = props.log.level?.toLowerCase();
+        return `var(--ks-log-content-${logLevel}) !important`;
+    });
+
+    const message = computed(() => {
+        let logMessage = !props.log.message
+            ? ""
+            : convert.toHtml(
+                xss(props.log.message, {
+                    allowList: {span: ["style"]},
+                })
+            );
+        logMessage = logMessage.replaceAll(
+            /(['"]?)(https?:\/\/[^'"\s]+)(['"]?)/g,
+            "$1<a href='$2' target='_blank'>$2</a>$3"
+        );
+        return logMessage;
+    });
+
+    const router = useRouter()
+    onMounted(() => {
+        setTimeout(() => {
+            linkify(lineContent.value, router);
+        }, 200);
+    });
+
+    watch(renderedMarkdown, () => {
+        nextTick(() => {
+            linkify(lineContent.value, router);
+        });
+    });
+
+    // Initial markdown render
+    (async () => {
+        renderedMarkdown.value = await Markdown.render(message.value, {onlyLink: true, html: true});
+    })();
 </script>
 <style scoped lang="scss">
 div.line {

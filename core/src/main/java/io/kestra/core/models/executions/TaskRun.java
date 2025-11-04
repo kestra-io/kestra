@@ -9,6 +9,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -55,6 +56,7 @@ public class TaskRun implements TenantInterface {
     @With
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @Nullable
+    @Schema(implementation = Object.class)
     Variables outputs;
 
     @NotNull

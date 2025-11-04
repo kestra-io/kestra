@@ -142,6 +142,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         async function loadChart(chart: any) {
             const yamlChart = YAML_UTILS.stringify(chart);
+            if(selectedChart.value?.content === yamlChart){
+                return {
+                    error: chartErrors.value.length > 0 ? chartErrors.value[0] : null,
+                    data: selectedChart.value ? {...selectedChart.value, raw: chart} : null,
+                    raw: chart
+                };
+            }
             const result: { error: string | null; data: null | {
                 id?: string;
                 name?: string;

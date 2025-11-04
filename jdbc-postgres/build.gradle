@@ -15,7 +15,6 @@ dependencies {
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':jdbc').sourceSets.test.output
     testImplementation project(':executor').sourceSets.test.output
-    testImplementation project(':postgres').sourceSets.test.output
     testImplementation project(':storage-local')
     testImplementation project(':tests')
     testImplementation("io.micronaut.validation:micronaut-validation") // PostgresServiceLivenessCoordinatorTest fail to init without that

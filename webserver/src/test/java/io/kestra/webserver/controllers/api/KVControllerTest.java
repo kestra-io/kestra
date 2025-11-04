@@ -163,16 +163,16 @@ class KVControllerTest {
 
     static Stream<Arguments> kvSetKeyValueArgs() {
         return Stream.of(
-            Arguments.of(MediaType.APPLICATION_JSON, "{\"hello\":\"world\"}", Map.class),
-            Arguments.of(MediaType.APPLICATION_JSON, "[\"hello\",\"world\"]", List.class),
-            Arguments.of(MediaType.APPLICATION_JSON, "\"hello\"", String.class),
-            Arguments.of(MediaType.APPLICATION_JSON, "1", Integer.class),
-            Arguments.of(MediaType.APPLICATION_JSON, "1.0", BigDecimal.class),
-            Arguments.of(MediaType.APPLICATION_JSON, "true", Boolean.class),
-            Arguments.of(MediaType.APPLICATION_JSON, "false", Boolean.class),
-            Arguments.of(MediaType.APPLICATION_JSON, "2021-09-01", LocalDate.class),
-            Arguments.of(MediaType.APPLICATION_JSON, "2021-09-01T01:02:03Z", Instant.class),
-            Arguments.of(MediaType.APPLICATION_JSON, "\"PT5S\"", Duration.class)
+            Arguments.of(MediaType.TEXT_PLAIN, "{\"hello\":\"world\"}", Map.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "[\"hello\",\"world\"]", List.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "\"hello\"", String.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "1", Integer.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "1.0", BigDecimal.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "true", Boolean.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "false", Boolean.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01", LocalDate.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "2021-09-01T01:02:03Z", Instant.class),
+            Arguments.of(MediaType.TEXT_PLAIN, "\"PT5S\"", Duration.class)
         );
     }
 
@@ -256,7 +256,7 @@ class KVControllerTest {
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
 
-        httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.APPLICATION_JSON)));
+        httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.TEXT_PLAIN)));
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
 

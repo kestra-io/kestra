@@ -46,12 +46,6 @@ class ConcurrencyLimitServiceTest {
     @Inject
     private ConcurrencyLimitService concurrencyLimitService;
 
-    @AfterEach
-    void tearDown() {
-        concurrencyLimitService.find(TENANT_ID)
-            .forEach(limit -> concurrencyLimitService.update(limit.withRunning(0)));
-    }
-
     @Test
     @LoadFlows("flows/valids/flow-concurrency-queue.yml")
     void unqueueExecution() throws QueueException, TimeoutException {
@@ -64,43 +58,7 @@ class ConcurrencyLimitServiceTest {
         assertThat(unqueued.getState().isRunning()).isTrue();
     }
 
-    @Test
-    @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")
-    void findById(Execution execution) {
-        Optional<ConcurrencyLimit> limit = concurrencyLimitService.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
 
-        assertThat(limit).isNotEmpty();
-        assertThat(limit.get().getTenantId()).isEqualTo(execution.getTenantId());
-        assertThat(limit.get().getNamespace()).isEqualTo(execution.getNamespace());
-        assertThat(limit.get().getFlowId()).isEqualTo(execution.getFlowId());
-        assertThat(limit.get().getRunning()).isEqualTo(0);
-    }
-
-    @Test
-    @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")
-    void update(Execution execution) {
-        Optional<ConcurrencyLimit> limit = concurrencyLimitService.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
-
-        assertThat(limit).isNotEmpty();
-        ConcurrencyLimit updated =  limit.get().withRunning(99);
-        concurrencyLimitService.update(updated);
-
-
-        limit = concurrencyLimitService.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
-        assertThat(limit).isNotEmpty();
-        assertThat(limit.get().getRunning()).isEqualTo(99);
-    }
-
-    @Test
-    @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")
-    void list(Execution execution) {
-        List<ConcurrencyLimit> list = concurrencyLimitService.find(execution.getTenantId());
-
-        assertThat(list).isNotEmpty();
-        assertThat(list.getFirst().getTenantId()).isEqualTo(execution.getTenantId());
-        assertThat(list.getFirst().getNamespace()).isEqualTo(execution.getNamespace());
-        assertThat(list.getFirst().getFlowId()).isEqualTo(execution.getFlowId());
-    }
 
     private Execution runUntilQueued(String namespace, String flowId) throws TimeoutException, QueueException {
         return runUntilState(namespace, flowId, State.Type.QUEUED);

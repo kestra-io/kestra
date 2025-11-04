@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
@@ -67,7 +68,11 @@ public class MetadataMigrationService {
 
                 return entriesByIsExpired.get(false).stream().map(kvEntry -> PersistedKvMetadata.from(namespaceForTenant.getKey(), kvEntry));
             }))
-            .forEach(kvMetadataRepository::save);
+            .forEach(throwConsumer(kvMetadata -> {
+                if (kvMetadataRepository.findByName(kvMetadata.getTenantId(), kvMetadata.getNamespace(), kvMetadata.getName()).isEmpty()) {
+                    kvMetadataRepository.save(kvMetadata);
+                }
+            }));
     }
 
     public void secretMigration() throws Exception {

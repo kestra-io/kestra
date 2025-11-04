@@ -1,4 +1,4 @@
-package io.kestra.core.server;
+package io.kestra.executor;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.context.TestRunContextFactory;
@@ -20,14 +20,12 @@ import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.runner.AbstractJdbcWorkerJobRunningStateStore;
 import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -77,19 +75,10 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     @Inject
     private SkipExecutionService skipExecutionService;
 
-    @Inject
-    private AbstractJdbcWorkerJobRunningStateStore workerJobRunningRepository;
-
     @BeforeAll
     void init() {
         // Simulate that executor and workers are not running on the same JVM.
         jdbcServiceLivenessHandler.setServerInstance(IdUtils.create());
-    }
-
-    @AfterEach
-    void tearDown() {
-        List<WorkerJobRunning> workerJobRunnings = workerJobRunningRepository.findAll();
-        workerJobRunnings.forEach(workerJobRunning -> workerJobRunningRepository.deleteByKey(workerJobRunning.uid()));
     }
 
     @FlakyTest

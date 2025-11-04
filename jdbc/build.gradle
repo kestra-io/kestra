@@ -18,4 +18,5 @@ dependencies {
 
     testImplementation project(':tests')
     testImplementation project(':core').sourceSets.test.output
+    testImplementation project(':executor').sourceSets.test.output
 }

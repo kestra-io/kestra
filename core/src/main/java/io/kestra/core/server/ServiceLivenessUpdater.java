@@ -1,9 +1,6 @@
 package io.kestra.core.server;
 
-import io.kestra.core.runners.TransactionContext;
-
 import java.util.Optional;
-import java.util.function.BiConsumer;
 
 /**
  * Service interface for updating the state of a service instance.

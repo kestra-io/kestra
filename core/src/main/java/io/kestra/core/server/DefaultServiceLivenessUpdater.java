@@ -1,10 +1,6 @@
-package io.kestra.jdbc.runner;
+package io.kestra.core.server;
 
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceLivenessUpdater;
-import io.kestra.core.server.ServiceStateTransition;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.tuple.ImmutablePair;
@@ -13,13 +9,12 @@ import java.time.Instant;
 import java.util.Optional;
 
 @Singleton
-@JdbcQueueEnabled
-public class JdbcServiceLivenessUpdated implements ServiceLivenessUpdater {
+public class DefaultServiceLivenessUpdater implements ServiceLivenessUpdater {
 
     private final ServiceInstanceRepositoryInterface serviceInstanceRepository;
 
     @Inject
-    public JdbcServiceLivenessUpdated(ServiceInstanceRepositoryInterface serviceInstanceRepository) {
+    public DefaultServiceLivenessUpdater(ServiceInstanceRepositoryInterface serviceInstanceRepository) {
         this.serviceInstanceRepository = serviceInstanceRepository;
     }
 

@@ -51,12 +51,6 @@ class ConcurrencyLimitServiceTest {
     @Inject
     private ConcurrencyLimitService concurrencyLimitService;
 
-    @AfterEach
-    void tearDown() {
-        concurrencyLimitService.find(TENANT_ID)
-            .forEach(limit -> concurrencyLimitService.update(limit.withRunning(0)));
-    }
-
     @Test
     @LoadFlows(value = "flows/valids/flow-concurrency-queue.yml", tenantId = CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT)
     void unqueueExecution() throws QueueException, TimeoutException, InterruptedException {
@@ -94,6 +88,7 @@ class ConcurrencyLimitServiceTest {
         assertThat(limit.get().getNamespace()).isEqualTo(execution.getNamespace());
         assertThat(limit.get().getFlowId()).isEqualTo(execution.getFlowId());
     }
+
 
     @Test
     @ExecuteFlow(value = "flows/valids/flow-concurrency-queue.yml", tenantId = "concurrency_limit_service_test_update_tenant")

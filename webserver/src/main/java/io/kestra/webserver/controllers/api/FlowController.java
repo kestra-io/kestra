@@ -164,7 +164,7 @@ public class FlowController {
     @Get(uri = "{namespace}/{id}")
     @Operation(tags = {"Flows"}, summary = "Get a flow")
     @Schema(
-        oneOf = {FlowWithSource.class, Flow.class}
+        implementation = FlowWithSource.class
     )
     //FIXME we return Object instead of Flow as Micronaut, since 4, has an issue with subtypes serialization, see https://github.com/micronaut-projects/micronaut-core/issues/10294.
     public Object getFlow(

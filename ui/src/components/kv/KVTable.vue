@@ -277,11 +277,14 @@
 
     const loadData = async (callback?: () => void) => {
         try {
+            const queryFilter = queryWithFilter();
+            const hasSelectedFilter = queryFilter && Object.keys(queryFilter).length > 0;
+            
             const kvsResponse = await kvStore.find(loadQuery({
                 size: parseInt(String(route.query?.size ?? 25)),
                 page: parseInt(String(route.query?.page ?? 1)),
                 sort: route.query.sort || "name:asc",
-                ...(props.namespace === undefined ? {} : {
+                ...(props.namespace === undefined || hasSelectedFilter ? {} : {
                     filters: {
                         namespace: {
                             EQUALS: props.namespace

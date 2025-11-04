@@ -1,4 +1,4 @@
-package io.kestra.cli.commands.migrations;
+package io.kestra.cli.commands.migrations.metadata;
 
 import io.kestra.cli.App;
 import io.kestra.core.exceptions.ResourceExpiredException;
@@ -33,7 +33,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MetadataMigrationCommandTest {
+public class KvMetadataMigrationCommandTest {
     @Test
     void run() throws IOException, ResourceExpiredException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -42,6 +42,11 @@ public class MetadataMigrationCommandTest {
         System.setErr(new PrintStream(err));
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            /* Initial setup:
+            * - namespace 1: key, description, value
+            * - namespace 1: expiredKey
+            * - namespace 2: anotherKey, anotherDescription
+            * - Nothing in database */
             String namespace = TestsUtils.randomNamespace();
             String key = "myKey";
             StorageInterface storage = ctx.getBean(StorageInterface.class);
@@ -64,17 +69,20 @@ public class MetadataMigrationCommandTest {
             KvMetadataRepositoryInterface kvMetadataRepository = ctx.getBean(KvMetadataRepositoryInterface.class);
             assertThat(kvMetadataRepository.findByName(tenantId, namespace, key).isPresent()).isFalse();
 
+            /* Expected outcome from the migration command:
+            * - no KV has been migrated because no flow exist in the namespace so they are not picked up because we don't know they exist */
             String[] kvMetadataMigrationCommand = {
-                "migrate", "metadata"
+                "migrate", "metadata", "kv"
             };
             PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
 
 
-            assertThat(out.toString()).contains("✅ Metadata migration complete.");
+            assertThat(out.toString()).contains("✅ KV Metadata migration complete.");
             // Still it's not in the metadata repository because no flow exist to find that kv
             assertThat(kvMetadataRepository.findByName(tenantId, namespace, key).isPresent()).isFalse();
             assertThat(kvMetadataRepository.findByName(tenantId, anotherNamespace, anotherKey).isPresent()).isFalse();
 
+            // A flow is created from namespace 1, so the KV in this namespace should be migrated
             FlowRepositoryInterface flowRepository = ctx.getBean(FlowRepositoryInterface.class);
             flowRepository.create(GenericFlow.of(Flow.builder()
                 .tenantId(tenantId)
@@ -83,13 +91,18 @@ public class MetadataMigrationCommandTest {
                 .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("logging").build()))
                 .build()));
 
+            /* We run the migration again:
+            * - namespace 1 KV is seen and metadata is migrated to database
+            * - namespace 2 KV is not seen because no flow exist in this namespace
+            * - expiredKey is deleted from storage and not migrated */
             out.reset();
             PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
 
-            assertThat(out.toString()).contains("✅ Metadata migration complete.");
+            assertThat(out.toString()).contains("✅ KV Metadata migration complete.");
             Optional<PersistedKvMetadata> foundKv = kvMetadataRepository.findByName(tenantId, namespace, key);
             assertThat(foundKv.isPresent()).isTrue();
             assertThat(foundKv.get().getDescription()).isEqualTo(description);
+
             assertThat(kvMetadataRepository.findByName(tenantId, anotherNamespace, anotherKey).isPresent()).isFalse();
 
             KVStore kvStore = new InternalKVStore(tenantId, namespace, storage, kvMetadataRepository);
@@ -103,6 +116,15 @@ public class MetadataMigrationCommandTest {
 
             assertThat(kvMetadataRepository.findByName(tenantId, namespace, expiredKey).isPresent()).isFalse();
             assertThat(storage.exists(tenantId, null, getKvStorageUri(namespace, expiredKey))).isFalse();
+
+            /* We run one last time the migration without any change to verify that we don't resave an existing metadata.
+            * It covers the case where user didn't perform the migrate command yet but they played and added some KV from the UI (so those ones will already be in metadata database). */
+            out.reset();
+            PicocliRunner.call(App.class, ctx, kvMetadataMigrationCommand);
+
+            assertThat(out.toString()).contains("✅ KV Metadata migration complete.");
+            foundKv = kvMetadataRepository.findByName(tenantId, namespace, key);
+            assertThat(foundKv.get().getVersion()).isEqualTo(1);
         }
     }
 

@@ -1,4 +1,4 @@
-package io.kestra.core.server;
+package io.kestra.executor;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.lock.Lock;
@@ -9,6 +9,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
+import io.kestra.core.server.*;
 import io.kestra.core.services.LogService;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.utils.IdUtils;

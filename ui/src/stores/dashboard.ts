@@ -140,6 +140,42 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return rootSchema.value?.properties;
         });
 
+        async function loadChart(chart: any) {
+            const yamlChart = YAML_UTILS.stringify(chart);
+            const result: { error: string | null; data: null | {
+                id?: string;
+                name?: string;
+                type?: string;
+                chartOptions?: Record<string, any>;
+                dataFilters?: any[];
+                charts?: any[];
+            }; raw: any } = {
+                error: null,
+                data: null,
+                raw: {}
+            };
+            const errors = await validateChart(yamlChart);
+            
+            if (errors.constraints) {
+                result.error = errors.constraints;
+            } else {
+                result.data = {...chart, content: yamlChart, raw: chart};
+            }
+
+            selectedChart.value = typeof result.data === "object"
+                ? {
+                    ...result.data,
+                    chartOptions: {
+                        ...result.data?.chartOptions,
+                        width: 12
+                    }
+                } as any
+                : undefined;
+            chartErrors.value = [result.error].filter(e => e !== null);
+
+            return result;
+        }
+
         return {
             dashboard,
             chartErrors,
@@ -155,6 +191,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             validateChart,
             chartPreview,
             export: exportDashboard,
+            loadChart,
 
             schema,
             definitions,

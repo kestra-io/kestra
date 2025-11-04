@@ -28,33 +28,10 @@
         }
     }
 
-    async function loadChart(chart: any) {
-        const yamlChart = YAML_UTILS.stringify(chart);
-        const result: { error: string | null; data: null | {
-            id?: string;
-            name?: string;
-            type?: string;
-            chartOptions?: Record<string, any>;
-            dataFilters?: any[];
-            charts?: any[];
-        }; raw: any } = {
-            error: null,
-            data: null,
-            raw: {}
-        };
-        const errors = await dashboardStore.validateChart(yamlChart);
-        if (errors.constraints) {
-            result.error = errors.constraints;
-        } else {
-            result.data = {...chart, content: yamlChart, raw: chart};
-        }
-        return result;
-    }
-
     async function updateChartPreview(event: any) {
         const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position);
         if (chart) {
-            const result = await loadChart(chart);
+            const result = await dashboardStore.loadChart(chart);
             dashboardStore.selectedChart = typeof result.data === "object"
                 ? {
                     ...result.data,

@@ -170,6 +170,11 @@
       "back": "Retour"
     },
     "concurrency": "Concurrence",
+    "concurrency limits": "Limites de Concurrence",
+    "concurrency_limit": {
+      "dialog_title": "Limites de Concurrence",
+      "warning": "Modifier le compteur en cours peut corrompre la concurrence, de sorte que les exécutions peuvent dépasser la limite autorisée."
+    },
     "conditions": "Conditions",
     "configure basic auth": "Configurer l'authentification basique",
     "confirm": "Confirmer",
@@ -912,7 +917,6 @@
         "status": "Statut",
         "task": "Tâche",
         "text": "I'm sorry, but it seems like there is no text provided for translation. Could you please provide the text you would like to have translated into French?",
-        "trigger_state": "État",
         "type": "Type",
         "user": "Utilisateur"
       },

@@ -170,6 +170,11 @@
       "back": "뒤로"
     },
     "concurrency": "동시성",
+    "concurrency limits": "동시성 제한",
+    "concurrency_limit": {
+      "dialog_title": "동시성 제한",
+      "warning": "실행 중인 카운터를 변경하면 동시성이 손상되어 실행이 허용된 한도를 초과할 수 있습니다."
+    },
     "conditions": "조건",
     "configure basic auth": "기본 인증 구성",
     "confirm": "확인",
@@ -912,7 +917,6 @@
         "status": "상태",
         "task": "작업",
         "text": "텍스트",
-        "trigger_state": "상태",
         "type": "유형",
         "user": "사용자"
       },

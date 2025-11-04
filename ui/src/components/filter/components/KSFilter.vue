@@ -1,6 +1,6 @@
 <template>
     <section class="filter">
-        <div class="top">
+        <div class="top" :class="{'options': showOptions}">
             <MainFilter />
             <RightFilter>
                 <template #extra>
@@ -180,7 +180,10 @@
         display: flex;
         align-items: flex-start;
         flex-wrap: nowrap;
-        padding: 1rem 0;
+        
+        &.options {
+            padding-bottom: 1rem;
+        }
     }
 }
 </style>

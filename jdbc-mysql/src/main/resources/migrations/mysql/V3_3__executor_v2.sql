@@ -1,4 +1,4 @@
-ALTER TABLE queues ALTER COLUMN `type` ENUM(
+ALTER TABLE queues MODIFY COLUMN `type` ENUM(
     'io.kestra.core.models.executions.Execution',
     'io.kestra.core.models.executions.ExecutionKilled',
     'io.kestra.core.runners.WorkerJob',

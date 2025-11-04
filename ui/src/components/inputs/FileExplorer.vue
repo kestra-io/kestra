@@ -688,9 +688,8 @@
 
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return;
-        const paths = confirmation.value.nodes.map(node => filesStore.getPath(node.id) ?? "");
         await Promise.all(confirmation.value.nodes.map(async (node, i) => {
-            const path = paths[i];
+            const path = filesStore.getPath(node.id) ?? "";
             try {
                 await namespacesStore.deleteFileDirectory({
                     namespace: props.currentNS ?? route.params.namespace as string,

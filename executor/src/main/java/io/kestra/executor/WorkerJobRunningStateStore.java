@@ -1,4 +1,9 @@
-package io.kestra.core.runners;
+package io.kestra.executor;
+
+import io.kestra.core.runners.TransactionContext;
+import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerJobRunning;
+import io.kestra.core.runners.WorkerTask;
 
 import java.util.function.BiConsumer;
 

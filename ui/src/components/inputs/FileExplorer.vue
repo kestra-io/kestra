@@ -123,6 +123,7 @@
                 };
                 handleDragStart();
             "
+            @node-drag-end="handleDragEnd"
             @node-drop="nodeMoved"
             @keydown.delete.prevent="removeSelectedFiles"
             @dragover.prevent
@@ -626,7 +627,6 @@
             tree.value.remove(draggedNode.data.id);
             tree.value.append(draggedNode.data, nodeBeforeDrag.value?.parent);
         }
-        handleDragEnd();
     }
 
     const creation_name = ref<any>();

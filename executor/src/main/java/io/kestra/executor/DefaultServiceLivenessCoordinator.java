@@ -352,13 +352,13 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     logService.logTaskRun(
                         workerTaskRunning.getTaskRun(),
                         Level.WARN,
-                        "Re-emitting WorkerTask."
+                        "Resubmit WorkerTask."
                     );
                 } catch (QueueException e) {
                     logService.logTaskRun(
                         workerTaskRunning.getTaskRun(),
                         Level.ERROR,
-                        "Unable to re-emit WorkerTask.",
+                        "Unable to resubmit WorkerTask.",
                         e
                     );
                 }

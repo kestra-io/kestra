@@ -609,7 +609,7 @@
         if (formRef.value) {
             (formRef.value as any).clearValidate("value");
         }
-        else if (newType === "BOOLEAN") {
+        if (newType === "BOOLEAN") {
             kv.value.value = false;
         }
     });

@@ -553,7 +553,7 @@
                 value = JSON.stringify(value);
             }
 
-            const contentType =  "text/plain";
+            const contentType = ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json";
 
             const namespace = kv.value.namespace!;
             const key = kv.value.key!;
@@ -605,9 +605,12 @@
 
     const formRef = ref();
 
-    watch(() => kv.value.type, () => {
+    watch(() => kv.value.type, (newType) => {
         if (formRef.value) {
             (formRef.value as any).clearValidate("value");
+        }
+        else if (newType === "BOOLEAN") {
+            kv.value.value = false;
         }
     });
 

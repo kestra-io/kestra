@@ -1,6 +1,5 @@
 package io.kestra.executor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
@@ -15,13 +14,11 @@ import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerGroup;
-import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
@@ -31,7 +28,6 @@ import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
-import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.*;
@@ -50,7 +46,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.event.Level;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -65,15 +60,12 @@ import static io.kestra.core.utils.Rethrow.*;
 @Singleton
 @Slf4j
 public class DefaultExecutor implements Executor {
-    private static final ObjectMapper MAPPER = ExecutorMapper.of();
-    public static final String UNABLE_TO_DESERIALIZE_AN_EXECUTION = "Unable to deserialize an execution: {}";
-    public static final String SKIPPING_EXECUTION = "Skipping execution {}";
+    private static final String UNABLE_TO_DESERIALIZE_AN_EXECUTION = "Unable to deserialize an execution: {}";
+    private static final String SKIPPING_EXECUTION = "Skipping execution {}";
 
     @Inject
     private ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
 
-    @Inject
-    private FlowTopologyRepositoryInterface flowTopologyRepository;
     @Inject
     private TriggerRepositoryInterface triggerRepository;
     @Inject
@@ -109,9 +101,6 @@ public class DefaultExecutor implements Executor {
     @Inject
     @Named(QueueFactoryInterface.CLUSTER_EVENT_NAMED)
     private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
-    @Inject
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    private QueueInterface<FlowInterface> flowQueue;
 
     @Inject
     private SkipExecutionService skipExecutionService;
@@ -131,8 +120,6 @@ public class DefaultExecutor implements Executor {
     private SLAService slaService;
     @Inject
     private MaintenanceService maintenanceService;
-    @Inject
-    private FlowTopologyService flowTopologyService;
 
     @Inject
     private FlowMetaStoreInterface flowMetaStore;
@@ -174,7 +161,7 @@ public class DefaultExecutor implements Executor {
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
-    protected List<FlowWithSource> allFlows;
+    private List<FlowWithSource> allFlows;
 
     private final Tracer tracer;
     private final java.util.concurrent.ExecutorService workerTaskResultExecutorService;
@@ -234,7 +221,6 @@ public class DefaultExecutor implements Executor {
         }
 
         // listen to executor related queues
-        this.receiveCancellations.addFirst(this.flowQueue.receive(FlowTopology.class, this::flowQueue)); // TODO it should not be there...
         this.receiveCancellations.addFirst(this.executionQueue.receive(Executor.class, this::executionQueue));
         this.receiveCancellations.addFirst(this.executionEventQueue.receiveBatch(
             Executor.class,
@@ -322,41 +308,6 @@ public class DefaultExecutor implements Executor {
         }
         setState(ServiceState.RUNNING);
         log.info("Executor started with {} thread(s)", numberOfThreads);
-    }
-
-    private void flowQueue(Either<FlowInterface, DeserializationException> either) {
-        FlowInterface flow;
-        if (either.isRight()) {
-            log.error("Unable to deserialize a flow: {}", either.getRight().getMessage());
-            try {
-                var jsonNode = MAPPER.readTree(either.getRight().getRecord());
-                flow = FlowWithException.from(jsonNode, either.getRight()).orElseThrow(IOException::new);
-            } catch (IOException e) {
-                // if we cannot create a FlowWithException, ignore the message
-                log.error("Unexpected exception when trying to handle a deserialization error", e);
-                return;
-            }
-        } else {
-            flow = either.getLeft();
-        }
-
-        try {
-            flowTopologyRepository.save(
-                flow,
-                (flow.isDeleted() ?
-                    Stream.<FlowTopology>empty() :
-                    flowTopologyService
-                        .topology(
-                            pluginDefaultService.injectVersionDefaults(flow, true),
-                            this.allFlows.stream().filter(f -> Objects.equals(f.getTenantId(), flow.getTenantId())).toList()
-                        )
-                )
-                    .distinct()
-                    .toList()
-            );
-        } catch (Exception e) {
-            log.error("Unable to save flow topology for flow {}", flow.uid(), e);
-        }
     }
 
     // This serves as a temporal bridge between the old execution queue and the new execution event queue to avoid updating all code that uses the old queue
@@ -1011,7 +962,6 @@ public class DefaultExecutor implements Executor {
         this.workerTaskResultQueue.pause();
         this.killQueue.pause();
         this.subflowExecutionResultQueue.pause();
-        this.flowQueue.pause();
 
         this.isPaused.set(true);
         this.setState(ServiceState.MAINTENANCE);
@@ -1022,7 +972,6 @@ public class DefaultExecutor implements Executor {
         this.workerTaskResultQueue.resume();
         this.killQueue.resume();
         this.subflowExecutionResultQueue.resume();
-        this.flowQueue.resume();
 
         this.isPaused.set(false);
         this.setState(ServiceState.RUNNING);

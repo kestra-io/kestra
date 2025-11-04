@@ -553,7 +553,7 @@
                 value = JSON.stringify(value);
             }
 
-            const contentType = ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json";
+            const contentType =  "text/plain";
 
             const namespace = kv.value.namespace!;
             const key = kv.value.key!;

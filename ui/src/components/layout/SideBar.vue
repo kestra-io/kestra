@@ -77,7 +77,6 @@
                     r.disabled = true;
                 }
 
-                // route hack is still needed for blueprints
                 if (r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
                     r.class = "vsm--link_active";
                 }
@@ -99,7 +98,6 @@
     }
 
     onUpdated(() => {
-        // Required here because in mounted() the menu is not yet rendered
         expandParentIfNeeded();
     })
 
@@ -114,8 +112,6 @@
                     class: "menu-icon",
                 },
                 child: [{
-                    // here we use only one component for all bookmarks
-                    // so when one edits the bookmark, it will be updated without closing the section
                     component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
                 }]
             }] : []),
@@ -149,6 +145,23 @@
     z-index: 1039;
     border-right: 1px solid var(--ks-border-primary);
     background-color: var(--ks-background-left-menu);
+
+    @media (max-width: 992px) {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        height: 100vh; 
+        width: 100% !important; 
+        z-index: 9999;
+
+        &.vsm--collapsed {
+            transform: translateX(-100%) !important;
+            transition: transform 0.3s ease-in-out !important;
+            visibility: hidden !important;
+            pointer-events: none; 
+        }
+    }
 
     .logo {
         overflow: hidden;

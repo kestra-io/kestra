@@ -39,6 +39,8 @@ export class ExecutionsPage extends BasePage {
     }
 
     async getCountOfDisplayedExecutions() {
+        expect(this.page.getByRole("table")).toBeVisible();
+        expect(this.page.locator("#nprogress")).toBeHidden();
         const rows = this.page.getByRole("row");
         return await rows.count() - 1;
     }

@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount, ref, useTemplateRef} from "vue";
+    import {computed, onBeforeMount, ref, useTemplateRef, watch} from "vue";
     import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
@@ -111,10 +111,19 @@
 
         if (props.isFlow) {
             load(ID, processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
-            dashboardStore.loadDashboard = load;
         } else if (props.isNamespace) {
             load(ID, YAML_NAMESPACE);
-            dashboardStore.loadDashboard = load;
+        }
+    });
+
+    watch(() => getDashboard(route, "id"), (newId, oldId) => {
+        if (newId !== oldId) {
+            const defaultYAML = props.isFlow
+                ? processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string)
+                : props.isNamespace
+                    ? YAML_NAMESPACE
+                    : YAML_MAIN;
+            load(newId, defaultYAML);
         }
     });
 </script>

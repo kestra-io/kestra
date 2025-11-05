@@ -43,13 +43,13 @@
     import permission from "../../../models/permission";
     import action from "../../../models/action";
     import {useAuthStore} from "override/stores/auth";
-    import {useDashboardStore} from "../../../stores/dashboard";
 
     const {t} = useI18n();
-    const dashboardStore = useDashboardStore();
 
     const onSelectDashboard = (value: any) => {
-        dashboardStore.loadDashboard?.(value);
+        router.replace({
+            params: {...route.params, dashboard: value}
+        });
     };
 
     const coreStore = useCoreStore();

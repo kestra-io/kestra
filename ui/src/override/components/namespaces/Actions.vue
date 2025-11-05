@@ -26,22 +26,23 @@
 
 <script setup lang="ts">
     import {computed, Ref} from "vue";
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
     import {useNamespacesStore} from "override/stores/namespaces";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue";
     import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards";
-    import {useDashboardStore} from "../../../stores/dashboard";
     import FamilyTree from "vue-material-design-icons/FamilyTree.vue";
 
     const route = useRoute();
+    const router = useRouter();
     const {t} = useI18n({useScope: "global"});
     const namespacesStore = useNamespacesStore();
-    const dashboardStore = useDashboardStore();
 
     const onSelectDashboard = (value: any) => {
-        dashboardStore.loadDashboard?.(value);
+        router.replace({
+            params: {...route.params, dashboard: value}
+        });
     };
 
     const tab = computed(() => route.params?.tab);

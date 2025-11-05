@@ -444,7 +444,7 @@ class ScheduleTest {
 
         ZonedDateTime triggerDate = ZonedDateTime.parse((String) vars.get("date"));
         assertThat(dateFromVars((String) vars.get("date"), date)).isEqualTo(date);
-        assertThat(triggerDate.getZone().getId()).isIn("America/New_York", "-05:00", "-04:00", "Z");
+        assertThat(triggerDate.getZone()).isEqualTo(date.getZone());
         assertThat(dateFromVars((String) vars.get("next"), date)).isEqualTo(date.plusMonths(1));
         assertThat(dateFromVars((String) vars.get("previous"), date)).isEqualTo(date.minusMonths(1));
     }

@@ -383,6 +383,7 @@ public class ExecutionService {
             if (!isFlowable || s.equals(taskRunId)) {
                 TaskRun newTaskRun;
 
+                State.Type targetState = newState;
                 if (task instanceof Pause pauseTask) {
                     State.Type terminalState = newState == State.Type.RUNNING ? State.Type.SUCCESS : newState;
                     Pause.Resumed _resumed = resumed != null ? resumed : Pause.Resumed.now(terminalState);
@@ -392,23 +393,23 @@ public class ExecutionService {
                     // if it's a Pause task with no subtask, we terminate the task
                     if (ListUtils.isEmpty(pauseTask.getTasks()) && ListUtils.isEmpty(pauseTask.getErrors()) && ListUtils.isEmpty(pauseTask.getFinally())) {
                         if (newState == State.Type.RUNNING) {
-                            newTaskRun = newTaskRun.withState(State.Type.SUCCESS);
+                            targetState = State.Type.SUCCESS;
                         } else if (newState == State.Type.KILLING) {
-                            newTaskRun = newTaskRun.withState(State.Type.KILLED);
-                        } else {
-                            newTaskRun = newTaskRun.withState(newState);
+                            targetState = State.Type.KILLED;
                         }
                     } else {
                         // we should set the state to RUNNING so that subtasks are executed
-                        newTaskRun = newTaskRun.withState(State.Type.RUNNING);
+                        targetState = State.Type.RUNNING;
                     }
+                    newTaskRun =  newTaskRun.withState(targetState);
                 } else {
-                    newTaskRun =  originalTaskRun.withState(newState);
+                    newTaskRun = originalTaskRun.withState(targetState);
                 }
+
 
                 if (originalTaskRun.getAttempts() != null && !originalTaskRun.getAttempts().isEmpty()) {
                     ArrayList<TaskRunAttempt> attempts = new ArrayList<>(originalTaskRun.getAttempts());
-                    attempts.set(attempts.size() - 1, attempts.getLast().withState(newState));
+                    attempts.set(attempts.size() - 1, attempts.getLast().withState(targetState));
                     newTaskRun = newTaskRun.withAttempts(attempts);
                 }
 

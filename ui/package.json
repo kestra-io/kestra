@@ -65,7 +65,7 @@
         "shiki": "^3.12.2",
         "vue": "^3.5.22",
         "vue-axios": "^3.5.2",
-        "vue-chartjs": "^5.3.2",
+        "vue-chartjs": "^5.3.3",
         "vue-gtag": "^3.6.2",
         "vue-i18n": "^11.1.12",
         "vue-material-design-icons": "^5.3.1",

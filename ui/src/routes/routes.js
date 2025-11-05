@@ -7,13 +7,16 @@ import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
+import {useMiscStore} from "override/stores/misc";
 
 function maybeAddTimeRangeFilter(to) {
     const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
-    // Default to the last 7 days if no time range is set
+    // Default to the configured duration if no time range is set
     if (!Object.keys(to.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-        to.query["filters[timeRange][EQUALS]"] = "PT168H";
+        const miscStore = useMiscStore();
+        const defaultDuration = miscStore.configs?.chartDefaultDuration || "P30D"; // Fallback to 30 days
+        to.query["filters[timeRange][EQUALS]"] = defaultDuration;
 
         return true;
     }

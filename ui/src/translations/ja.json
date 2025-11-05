@@ -1745,6 +1745,7 @@
     "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために`??`コアレス演算子を追加してください。例えば、`trigger.date`の代わりに`trigger.date ?? execution.startDate`を使用してください。",
     "trigger_id_exists": "トリガーIDはすでに存在します。",
     "trigger_id_message": "フロー内に既存のTrigger Id ${existingTrigger}が既に存在します。",
+    "trigger_states": "状態",
     "triggered": "実行trigger",
     "triggered done": "実行<em>{name}</em>が正常にトリガーされました",
     "triggerflow disabled": "Flow定義からTriggerが無効になっています",

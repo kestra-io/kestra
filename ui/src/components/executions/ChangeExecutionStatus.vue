@@ -72,9 +72,7 @@
 
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
 
-    import Status from "../../components/Status.vue";
-
-    import {State} from "@kestra-io/ui-libs";
+    import {State, Status} from "@kestra-io/ui-libs";
     import * as ExecutionUtils from "../../utils/executionUtils";
     import permission from "../../models/permission";
     import action from "../../models/action";

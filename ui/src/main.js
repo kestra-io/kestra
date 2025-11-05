@@ -91,8 +91,6 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
         });
     }, null, router, true);
 
-    app.config.globalProperties.$isOss = true; // Set to true for OSS version
-
     // mount
     app.mount("#app")
 });

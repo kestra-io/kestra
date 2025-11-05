@@ -1745,6 +1745,7 @@
     "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",
     "trigger_id_exists": "ट्रिगर Id पहले से मौजूद है",
     "trigger_id_message": "ट्रिगर Id ${existingTrigger} पहले से ही flow में मौजूद है।",
+    "trigger_states": "राज्य",
     "triggered": "निष्पादन trigger",
     "triggered done": "निष्पादन <em>{name}</em> सफलतापूर्वक ट्रिगर किया गया है",
     "triggerflow disabled": "Flow परिभाषा से Trigger अक्षम है",

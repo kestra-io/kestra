@@ -128,8 +128,8 @@
                 }
             },
             getTabClasses(tab) {
-                if(tab.locked) return [];
-                return ["container", "mt-4", "px-0"];
+                if(tab.locked) return ["px-0"];
+                return ["container", "mt-4"];
             }
         },
         computed: {

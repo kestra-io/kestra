@@ -39,7 +39,7 @@
         "cytoscape": "^3.33.0",
         "dagre": "^0.8.5",
         "el-table-infinite-scroll": "^3.0.7",
-        "element-plus": "2.11.5",
+        "element-plus": "2.11.7",
         "humanize-duration": "^3.33.1",
         "js-yaml": "^4.1.0",
         "lodash": "^4.17.21",

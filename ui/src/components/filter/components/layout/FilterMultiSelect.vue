@@ -71,7 +71,7 @@
 <script setup lang="ts">
     import {computed, ref} from "vue";
     import {Magnify, InformationOutline} from "../../utils/icons";
-    import Status from "../../../Status.vue";
+    import {Status} from "@kestra-io/ui-libs";
     import Checkbox from "../../../layout/Checkbox.vue";
 
     const props = defineProps<{
@@ -243,7 +243,7 @@
     }
 }
 
-button.el-button {
+button.status-button {
     width: 10rem;
 }
 </style>

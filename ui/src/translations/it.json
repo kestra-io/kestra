@@ -1745,6 +1745,7 @@
     "trigger_check_warning": "Utilizzare le variabili trigger non funzionerà con l'esecuzione manuale del flow. Aggiungi l'operatore di coalescenza `??` per risolvere il problema. Ad esempio, invece di `trigger.date`, usa `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "L'ID del trigger esiste già",
     "trigger_id_message": "L'ID del trigger ${existingTrigger} esiste già nel flow.",
+    "trigger_states": "Stati",
     "triggered": "Execution trigger",
     "triggered done": "L'esecuzione <em>{name}</em> è stata attivata con successo",
     "triggerflow disabled": "Il trigger è disabilitato dalla definizione del flow",

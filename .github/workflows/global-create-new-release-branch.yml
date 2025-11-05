@@ -64,7 +64,8 @@ jobs:
           cd kestra
 
           # Create and push release branch
-          git checkout -b "$PUSH_RELEASE_BRANCH";
+          git checkout -B "$PUSH_RELEASE_BRANCH";
+          git pull origin "$PUSH_RELEASE_BRANCH" --rebase || echo "No existing branch to pull";
           git push -u origin "$PUSH_RELEASE_BRANCH";
 
           # Run gradle release

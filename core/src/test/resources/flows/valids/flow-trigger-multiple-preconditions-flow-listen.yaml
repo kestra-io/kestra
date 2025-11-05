@@ -1,0 +1,25 @@
+id: flow-trigger-multiple-preconditions-flow-listen
+namespace: io.kestra.tests.trigger.multiple.preconditions
+
+triggers:
+  - id: flow1
+    type: io.kestra.plugin.core.trigger.Flow
+    preconditions:
+      id: flow1
+      flows:
+        - namespace: io.kestra.tests.trigger.multiple.preconditions
+          flowId: flow-trigger-multiple-preconditions-flow-a
+          states: [SUCCESS]
+  - id: flow2
+    type: io.kestra.plugin.core.trigger.Flow
+    preconditions:
+      id: flow2
+      flows:
+        - namespace: io.kestra.tests.trigger.multiple.preconditions
+          flowId: flow-trigger-multiple-preconditions-flow-a
+          states: [FAILED]
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

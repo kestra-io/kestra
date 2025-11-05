@@ -33,6 +33,7 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
+import java.time.format.DateTimeFormatter;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -425,7 +426,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         Map<String, Object> variables;
         variables = scheduleDates.toMap();
 
-        variables.replaceAll((k, v) -> (v instanceof ZonedDateTime) ? ((ZonedDateTime) v).toString() : v);
+        variables.replaceAll((k, v) -> (v instanceof ZonedDateTime) ? DateTimeFormatter.ISO_ZONED_DATE_TIME.format((ZonedDateTime) v) : v);
 
         Execution execution = TriggerService.generateScheduledExecution(
             this,

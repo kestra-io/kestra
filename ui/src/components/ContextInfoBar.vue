@@ -43,7 +43,9 @@
             <KeepAlive>
                 <ContextDocs v-if="activeTab === 'docs'" />
                 <ContextNews v-else-if="activeTab === 'news'" />
-                <component v-else :is="activeTab" />
+                <template v-else>
+                    {{ activeTab }}
+                </template>
             </KeepAlive>
         </div>
     </div>

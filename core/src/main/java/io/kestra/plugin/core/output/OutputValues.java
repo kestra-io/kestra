@@ -52,7 +52,10 @@ tasks:
     message: |
       Got the following outputs from the previous task:
       {{ outputs.output_values.values.taskrun_data }}
-      {{ outputs.output_values.values.execution_data }}"""
+      {{ outputs.output_values.values.execution_data }}
+      {{ outputs.output_values.values.number_value }}
+      {{ outputs.output_values.values.array_value[1] }}
+      {{ outputs.output_values.values.nested_object.key2 }}"""
         )
     }
 )

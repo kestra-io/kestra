@@ -133,7 +133,7 @@
         "vue-tsc": "^3.1.2"
     },
     "optionalDependencies": {
-        "@esbuild/darwin-arm64": "^0.25.11",
+        "@esbuild/darwin-arm64": "^0.25.12",
         "@esbuild/darwin-x64": "^0.25.11",
         "@esbuild/linux-x64": "^0.25.11",
         "@rollup/rollup-darwin-arm64": "^4.52.5",

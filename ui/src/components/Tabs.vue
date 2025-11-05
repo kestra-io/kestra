@@ -128,14 +128,9 @@
                 }
             },
             getTabClasses(tab) {
-                const isEnterpriseTab = tab.locked;
-
-                return {
-                    "container": !isEnterpriseTab,
-                    "mt-4": !isEnterpriseTab,
-                    "px-0": isEnterpriseTab,
-                };
-            },
+                if(tab.locked) return ["px-0"];
+                return ["container", "mt-4"];
+            }
         },
         computed: {
             containerClass() {

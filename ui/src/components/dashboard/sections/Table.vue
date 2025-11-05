@@ -46,7 +46,7 @@
     import Duration from "./table/columns/Duration.vue";
     import Link from "./table/columns/Link.vue";
     import Namespace from "./table/columns/Namespace.vue";
-    import Status from "../../Status.vue";
+    import {Status} from "@kestra-io/ui-libs";
 
     import Pagination from "../../layout/Pagination.vue";
     import NoData from "../../layout/NoData.vue";

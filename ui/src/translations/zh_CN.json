@@ -1745,6 +1745,7 @@
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",
     "trigger_id_exists": "Trigger Id 已经存在",
     "trigger_id_message": "触发器 Id ${existingTrigger} 已经存在于 flow 中。",
+    "trigger_states": "状态",
     "triggered": "执行触发器",
     "triggered done": "执行 <em>{name}</em> 成功触发",
     "triggerflow disabled": "触发器在流程定义中被禁用",

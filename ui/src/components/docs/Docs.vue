@@ -18,7 +18,6 @@
     import TopNavBar from "../layout/TopNavBar.vue";
     import {useDocStore} from "../../stores/doc";
     import DocsLayout from "./DocsLayout.vue";
-    //@ts-expect-error no declaration
     import Toc from "./Toc.vue";
     import {computed,ref,watch,getCurrentInstance} from "vue";
     import {useRoute} from "vue-router";

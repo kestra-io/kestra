@@ -83,6 +83,7 @@
     /* eslint-disable vue/enforce-style-attribute */
     import {computed, onMounted, ref, shallowRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
+    import {useThrottleFn} from "@vueuse/core";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
@@ -94,6 +95,7 @@
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus";
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
 
     const {t} = useI18n()
 
@@ -123,6 +125,7 @@
         shouldFocus: {type: Boolean, default: true},
         showScroll: {type: Boolean, default: false},
         diffOverviewBar: {type: Boolean, default: true},
+        scrollKey: {type: String, default: undefined},
     })
 
     defineOptions({
@@ -312,6 +315,29 @@
             return
         }
 
+        const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
+        const scrollMemory = props.scrollKey ? useScrollMemory(ref(props.scrollKey)) : null;
+        
+        if (props.scrollKey && scrollMemory) {
+            const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
+            if (savedState) {
+                codeEditor.restoreViewState(savedState);
+                codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1);
+            }
+            
+            const top = scrollMemory.loadData<number>("scrollTop", 0);
+            if (typeof top === "number") {
+                codeEditor.setScrollTop(top);
+            }
+            
+            const throttledSave = useThrottleFn(() => {
+                scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
+                scrollMemory.saveData(codeEditor.getScrollTop(), "scrollTop");
+            }, 100);
+            
+            codeEditor.onDidScrollChange?.(throttledSave);
+        }
+
         if (!isDiff.value) {
             editor.onDidBlurEditorWidget?.(() => {
                 emit("focusout", isCodeEditor(editor)
@@ -468,6 +494,10 @@
                         position: position,
                         model: model,
                     });
+                    // Save view state when cursor changes
+                    if (scrollMemory) {
+                        scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
+                    }
                 }, 100) as unknown as number;
                 highlightPebble();
             });

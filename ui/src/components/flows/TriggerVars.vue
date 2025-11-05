@@ -34,7 +34,7 @@
     import Markdown from "../layout/Markdown.vue";
     import Cron from "../layout/Cron.vue";
 
-    const {t} = useI18n();
+    const {t, te} = useI18n();
 
     defineProps<{
         data: Record<string, any>;
@@ -51,9 +51,10 @@
             "date": "last trigger date",
             "updatedDate": "context updated date",
             "evaluateRunningDate": "evaluation lock date",
+            "states": "trigger_states",
         };
         const translationKey = mappings[key] ?? key;
-        return t(translationKey);
+        return te(translationKey) && t(translationKey) || translationKey;
     };
 </script>
 

@@ -2,6 +2,7 @@ package io.kestra.core.plugins;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Version;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
@@ -45,6 +46,8 @@ public class PluginCatalogService {
 
     private final boolean icons;
     private final boolean oss;
+    
+    private final Version currentStableVersion;
 
     /**
      * Creates a new {@link PluginCatalogService} instance.
@@ -59,7 +62,10 @@ public class PluginCatalogService {
         this.httpClient = httpClient;
         this.icons = icons;
         this.oss = communityOnly;
-
+        
+        Version version = Version.of(KestraContext.getContext().getVersion());
+        this.currentStableVersion = new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null);
+        
         // Immediately trigger an async load of plugin artifacts.
         this.isLoaded.set(true);
         this.plugins = CompletableFuture.supplyAsync(this::load);
@@ -189,9 +195,10 @@ public class PluginCatalogService {
     }
     
     private List<ApiPluginArtifact> getAllCompatiblePlugins() {
+
         MutableHttpRequest<Object> request = HttpRequest.create(
             HttpMethod.GET, 
-            "/v1/plugins/artifacts/core-compatibility/" + KestraContext.getContext().getVersion()
+            "/v1/plugins/artifacts/core-compatibility/" + currentStableVersion
         );
         if (oss) {
             request.getParameters().add("license", "OPENSOURCE");

@@ -74,9 +74,10 @@
     import InputText from "../inputs/InputText.vue";
     import TaskExpression from "./TaskExpression.vue";
     import Add from "../Add.vue";
-    import getTaskComponent from "./getTaskComponent";
     import debounce from "lodash/debounce";
     import Wrapper from "./Wrapper.vue";
+    import {useBlockComponent} from "./useBlockComponent";
+    import {useToast} from "../../../../utils/toast";
 
     const {t, te} = useI18n();
 
@@ -98,8 +99,13 @@
         schema: () => ({type: "object"})
     });
 
+    const {getBlockComponent} = useBlockComponent();
+
     const componentType = computed(() => {
-        return props.schema.additionalProperties ? getTaskComponent(props.schema.additionalProperties, props.root) : null;
+        return props.schema?.additionalProperties ? getBlockComponent.value(
+            props.schema.additionalProperties,
+            props.root
+        ) : undefined;
     });
 
     const currentValue = ref<[string, any][]>([])
@@ -167,8 +173,11 @@
         emitUpdate()
     }
 
+    const toast = useToast();
+
     function addItem() {
         if(addButtonDisabled.value) {
+            toast.warning(t("no_code.add.disabled_warning"));
             return;
         }
         currentValue.value.push(["", undefined]);

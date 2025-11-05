@@ -23,7 +23,7 @@
                 <label class="input-label">{{ $t('filter.key') }}</label>
                 <el-input
                     v-model="newKey"
-                    placeholder="e.g. type"
+                    placeholder="e.g. flowId"
                     @keydown.enter="addPair"
                 />
             </div>
@@ -31,7 +31,7 @@
                 <label class="input-label">{{ $t('filter.value') }}</label>
                 <el-input
                     v-model="newValue"
-                    placeholder="e.g. io.kestra.ee.models..."
+                    placeholder="e.g. orchestrator-1234"
                     @keydown.enter="addPair"
                 />
             </div>
@@ -54,9 +54,10 @@
     import {ref, watch} from "vue";
     import {Plus} from "../../utils/icons";
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         modelValue: string[];
-    }>();
+    }>(), {
+    });
 
     const emits = defineEmits<{
         "update:modelValue": [value: string[]];
@@ -68,26 +69,19 @@
 
     // For Auditlogs Details KV pairs parsing and serialization
     const parseDetailPairs = (values: string[]) =>
-        values
-            ?.map(value => {
-                const [key, ...valueParts] = value?.split(":") ?? [];
-                return {
-                    key: key ?? "",
-                    value: valueParts?.join(":") ?? ""
-                };
-            })
-            ?.filter(pair => pair?.key && pair?.value) ?? [];
+        values?.map(value => {
+            const [key, ...valueParts] = value?.split(":") ?? [];
+            return {key: key ?? "", value: valueParts?.join(":") ?? ""};
+        }).filter(pair => pair.key && pair.value) ?? [];
 
     const serializeDetailPairs = (pairs: typeof detailPairs.value) =>
         pairs.map(pair => `${pair.key}:${pair.value}`);
 
     const addPair = () => {
-        const key = newKey.value.trim();
-        const value = newValue.value.trim();
+        const key = newKey.value.trim(), value = newValue.value.trim();
         if (!key || !value) return;
 
         const existingIndex = detailPairs.value.findIndex(pair => pair.key === key);
-
         if (existingIndex !== -1) {
             detailPairs.value[existingIndex].value = value;
         } else {
@@ -95,8 +89,7 @@
         }
 
         emits("update:modelValue", serializeDetailPairs(detailPairs.value));
-        newKey.value = "";
-        newValue.value = "";
+        newKey.value = newValue.value = "";
     };
 
     const removePair = (index: number) => {
@@ -104,17 +97,14 @@
         emits("update:modelValue", serializeDetailPairs(detailPairs.value));
     };
 
-    watch(
-        () => props.modelValue,
-        (newValue) => {
-            detailPairs.value = newValue ? parseDetailPairs(newValue) : [];
-        }, {immediate: true}
-    );
+    watch(() => props.modelValue, (newValue) => {
+        detailPairs.value = newValue ? parseDetailPairs(newValue) : [];
+    }, {immediate: true});
 </script>
 
 <style lang="scss" scoped>
 .active-pairs {
-    padding: 12px;
+    padding: 1rem;
     border-bottom: 1px solid var(--ks-border-primary);
 
     .section-title {
@@ -171,7 +161,7 @@
 }
 
 .add-pair {
-    padding: 12px;
+    padding: 1rem;
 
     .input-group {
         margin-bottom: 12px;

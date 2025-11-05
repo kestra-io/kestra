@@ -1,6 +1,6 @@
 <template>
-    <div v-if="playgroundStore.enabled && isTask && taskObject?.id" class="flow-playground">
-        <PlaygroundRunTaskButton :taskId="taskObject?.id" />
+    <div v-if="playgroundStore.enabled && isTask && taskModel?.id" class="flow-playground">
+        <PlaygroundRunTaskButton :taskId="taskModel?.id" />
     </div>
     <el-form v-if="isTaskDefinitionBasedOnType" labelPosition="top">
         <el-form-item>
@@ -17,12 +17,12 @@
             />
         </el-form-item>
     </el-form>
-    <div @click="isPlugin && pluginsStore.updateDocumentation(taskObject as Parameters<typeof pluginsStore.updateDocumentation>[0])">
+    <div @click="() => onTaskEditorClick(taskModel)">
         <TaskObject
             v-loading="isLoading"
             v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
             name="root"
-            :modelValue="taskObject"
+            :modelValue="taskModel"
             @update:model-value="onTaskInput"
             :schema
             :properties
@@ -43,6 +43,7 @@
         FULL_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
         DATA_TYPES_MAP_INJECTION_KEY,
+        ON_TASK_EDITOR_CLICK_INJECTION_KEY,
     } from "../injectionKeys";
     import {removeNullAndUndefined} from "../utils/cleanUp";
     import {removeRefPrefix, usePluginsStore} from "../../../stores/plugins";
@@ -63,9 +64,9 @@
     const pluginsStore = usePluginsStore();
     const playgroundStore = usePlaygroundStore();
 
-    type PartialCodeElement = Partial<NoCodeElement>;
+    type PartialNoCodeElement = Partial<NoCodeElement>;
 
-    const taskObject = ref<PartialCodeElement | undefined>({});
+    const taskModel = ref<PartialNoCodeElement | undefined>({});
     const selectedTaskType = ref<string>();
     const isLoading = ref(false);
 
@@ -108,7 +109,7 @@
 
     watch(modelValue, (v) => {
         if (!v) {
-            taskObject.value = {};
+            taskModel.value = {};
             selectedTaskType.value = undefined;
         } else {
             setup()
@@ -150,20 +151,20 @@
     });
 
     function setup() {
-        const parsed = YAML_UTILS.parse<PartialCodeElement>(modelValue.value);
+        const parsed = YAML_UTILS.parse<PartialNoCodeElement>(modelValue.value);
         if(isPluginDefaults.value){
             const {forced, type, values} = parsed as any;
-            taskObject.value = {...values, forced, type};
+            taskModel.value = {...values, forced, type};
         }else{
-            taskObject.value = parsed;
+            taskModel.value = parsed;
         }
-        selectedTaskType.value = taskObject.value?.type;
+        selectedTaskType.value = taskModel.value?.type;
     }
 
     // when tab is opened, load the documentation
     onActivated(() => {
         if(selectedTaskType.value && parentPath !== "inputs"){
-            pluginsStore.updateDocumentation(taskObject.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
+            pluginsStore.updateDocumentation(taskModel.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
         }
     });
 
@@ -218,7 +219,7 @@
     const resolvedType = computed<string>(() => {
         if(resolvedTypes.value.length > 1 && selectedTaskType.value){
             // find the resolvedType that match the current dataType
-            const dataType = taskObject.value?.data?.type;
+            const dataType = taskModel.value?.data?.type;
             if(dataType){
                 for(const typeLocal of resolvedTypes.value){
                     const schema = definitions.value?.[typeLocal];
@@ -330,13 +331,13 @@
     watch([selectedTaskType, fullSchema], ([task]) => {
         if (task) {
             if(isPlugin.value){
-                pluginsStore.updateDocumentation(taskObject.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
+                pluginsStore.updateDocumentation(taskModel.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
             }
         }
     }, {immediate: true});
 
-    function onTaskInput(val: PartialCodeElement | undefined) {
-        taskObject.value = val;
+    function onTaskInput(val: PartialNoCodeElement | undefined) {
+        taskModel.value = val;
         if(fieldName){
             val = {
                 [fieldName]: val,
@@ -362,12 +363,21 @@
     }
 
     function onTaskTypeSelect() {
-        const value: PartialCodeElement = {
+        const value: PartialNoCodeElement = {
             type: selectedTaskType.value ?? ""
         };
 
         onTaskInput(value);
     }
+
+    const onTaskEditorClick = inject(ON_TASK_EDITOR_CLICK_INJECTION_KEY, (elt?: PartialNoCodeElement) => {
+        const type = elt?.type;
+        if(isPlugin.value && type){
+            pluginsStore.updateDocumentation({type});
+        }else{
+            pluginsStore.updateDocumentation(); 
+        }
+    });
 </script>
 
 <style scoped lang="scss">

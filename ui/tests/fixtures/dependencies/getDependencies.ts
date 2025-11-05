@@ -1,5 +1,6 @@
 import {v4 as uuid} from "uuid";
 
+import {State} from "@kestra-io/ui-libs";
 import {NODE, EDGE, FLOW, EXECUTION, NAMESPACE, type Node, type Edge, type Element} from "../../../src/components/dependencies/utils/types";
 
 type DependencyOptions = {
@@ -14,7 +15,7 @@ import {getRandomID} from "../../../scripts/id";
 
 const namespaces = ["company", "team", "github", "qa", "system", "dev", "test", "data", "infra", "cloud", "backend", "frontend", "api", "services", "database", "mobile", "security"];
 
-const states = ["CANCELLED", "CREATED", "FAILED", "KILLED", "KILLING", "PAUSED", "QUEUED", "RESTARTED", "RETRIED", "RETRYING", "RUNNING", "SKIPPED", "SUCCESS", "WARNING"];
+const states = Object.keys(State.allStates());
 
 /**
  * Returns a random integer between the given minimum and maximum values (inclusive).

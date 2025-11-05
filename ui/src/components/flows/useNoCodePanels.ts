@@ -9,8 +9,9 @@ import {NoCodeProps} from "./noCodeTypes";
 
 import {trackTabOpen, trackTabClose} from "../../utils/tabTracking";
 import {EditorElement, Panel, Tab, TabLive} from "../../utils/multiPanelTypes";
+import {usePanelDefaultSize} from "../../composables/usePanelDefaultSize";
 
-const NOCODE_PREFIX = "nocode"
+export const NOCODE_PREFIX = "nocode"
 
 interface Opener {
     panelIndex: number,
@@ -66,7 +67,7 @@ interface NoCodeTabWithAction extends NoCodeProps {
 
 let keepAliveCacheBuster = 0
 
-function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: string) => string, handlers: Handlers, flow: string): Tab {
+function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: string) => string, handlers: Handlers, flow: string, te: (key: string) => boolean): Tab {
     function getTabValues(tab: NoCodeTabWithAction) {
         // FIXME optimize by avoiding to stringify then parse again the yaml object.
         // maybe we could have a function in the YAML_UTILS that returns the parsed value.
@@ -77,12 +78,14 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
 
         const blockType = tab.parentPath?.split(".").pop() ?? ""
 
+        const newTabName = te(`no_code.creation.${blockType}`) ? t(`no_code.creation.${blockType}`) : t("no_code.creation.default")
+
         const parentName = parentBlock ? parentBlock.id ?? parentBlock.type ?? tab.parentPath : tab.parentPath
         if (tab.action === "create") {
             return {
                 uid: getCreateTabKey(tab, keepAliveCacheBuster++),
                 button: {
-                    label: `${parentName} / ${t(`no_code.creation.${blockType}`)}`,
+                    label: `${parentName} / ${newTabName}`,
                     icon: markRaw(MouseRightClickIcon),
                 },
             } satisfies Omit<Tab, "component">
@@ -99,7 +102,7 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
             return {
                 uid: getEditTabKey(tab, keepAliveCacheBuster++),
                 button: {
-                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath ?? t(`no_code.creation.${blockType}`)}`,
+                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath ?? newTabName}`,
                     icon: markRaw(MouseRightClickIcon),
                 },
             } satisfies Omit<Tab, "component">
@@ -136,9 +139,9 @@ function getTabFromNoCodeTab(Comp: any, tab: NoCodeTabWithAction, t: (key: strin
     }
 }
 
-export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, t: (key: string) => string, handlers: Handlers, flowYaml: string) {
+export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, handlers: Handlers, flowYaml: string, t: (key: string) => string, te: (key: string) => boolean) {
     if (tab === NOCODE_PREFIX) {
-        return getTabFromNoCodeTab(Comp, parseTabId(tab), t, handlers, flowYaml)
+        return getTabFromNoCodeTab(Comp, parseTabId(tab), t, handlers, flowYaml, te)
     }
 
     if (tab.startsWith(`${NOCODE_PREFIX}-`)){
@@ -150,7 +153,7 @@ export function setupInitialNoCodeTabIfExists(Comp: any, tab: string, t: (key: s
         }
     }
 
-    return setupInitialNoCodeTab(Comp, tab, t, handlers, flowYaml)
+    return setupInitialNoCodeTab(Comp, tab, handlers, flowYaml, t, te)
 }
 
 function parseTabId(tabId: string) {
@@ -166,12 +169,12 @@ function parseTabId(tabId: string) {
     }
 }
 
-export function setupInitialNoCodeTab(Comp: any, tab: string, t: (key: string) => string, handlers: Handlers, flowYaml: string) {
+export function setupInitialNoCodeTab(Comp: any, tab: string, handlers: Handlers, flowYaml: string, t: (key: string) => string, te: (key: string) => boolean) {
     if (!tab.startsWith(NOCODE_PREFIX)) {
         return undefined
     }
 
-    return getTabFromNoCodeTab(Comp, parseTabId(tab), t, handlers, flowYaml)
+    return getTabFromNoCodeTab(Comp, parseTabId(tab), t, handlers, flowYaml, te)
 }
 
 export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: string) => void, actions: ReturnType<typeof useNoCodePanels>) {
@@ -230,8 +233,10 @@ export function useNoCodeHandlers(openTabs: Ref<string[]>, focusTab: (tab: strin
 }
 
 export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: Ref<string[]>, focusTab: (tab: string) => void) {
-    const {t} = useI18n()
+    const {t, te} = useI18n()
     const flowStore = useFlowStore()
+
+    const defaultSize = usePanelDefaultSize(panels);
 
     function openAddTaskTab(
         opener: {
@@ -243,6 +248,7 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         refPath?: number,
         position: "before" | "after" = "after",
         fieldName?: string | undefined,
+        newPanelIndex?: number,
     ) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab(component, {
@@ -252,9 +258,19 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
             refPath,
             position,
             fieldName,
-        }, t, handlers, flowStore.flowYaml)
+        }, t, handlers, flowStore.flowYaml, te)
 
         trackTabOpen(tab);
+
+        if(newPanelIndex !== undefined) {
+            const targetPanel = {
+                tabs: [tab],
+                activeTab: tab,
+                size: defaultSize.value,
+            }
+            panels.value.splice(newPanelIndex, 0, targetPanel)
+            return
+        }
 
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
@@ -269,16 +285,27 @@ export function useNoCodePanels(component: any, panels: Ref<Panel[]>, openTabs: 
         opener: { panelIndex: number, tabIndex: number },
         parentPath: string,
         blockSchemaPath: string,
-        refPath?: number
+        refPath?: number,
+        newPanelIndex?: number,
     ) {
         const tab = getTabFromNoCodeTab(component, {
             action: "edit",
             parentPath,
             blockSchemaPath,
             refPath,
-        }, t, handlers, flowStore.flowYaml ?? "")
+        }, t, handlers, flowStore.flowYaml ?? "", te)
 
         trackTabOpen(tab);
+
+        if(newPanelIndex !== undefined) {
+            const targetPanel = {
+                tabs: [tab],
+                activeTab: tab,
+                size: defaultSize.value,
+            }
+            panels.value.splice(newPanelIndex, 0, targetPanel)
+            return
+        }
 
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
@@ -326,15 +353,15 @@ export function useNoCodePanelsFull(options: {
         options.editorView.value?.focusTab(tabValue)
     }
 
+    const {t, te} = useI18n();
+
     const actions = useNoCodePanels(options.RawNoCode, panels, openTabs, focusTab)
     const noCodeHandlers = useNoCodeHandlers(openTabs, focusTab, actions)
 
-    const {t} = useI18n()
-
     options.editorElements.find(e => e.uid === "nocode")!.deserialize = (value, allowCreate) => {
         return allowCreate
-            ? setupInitialNoCodeTab(options.RawNoCode, value, t, noCodeHandlers, options.source.value ?? "")
-            : setupInitialNoCodeTabIfExists(options.RawNoCode, value, t, noCodeHandlers, options.source.value ?? "")
+            ? setupInitialNoCodeTab(options.RawNoCode, value, noCodeHandlers, options.source.value ?? "", t, te)
+            : setupInitialNoCodeTabIfExists(options.RawNoCode, value, noCodeHandlers, options.source.value ?? "", t, te)
     }
 
     return {

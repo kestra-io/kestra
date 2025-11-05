@@ -1,6 +1,12 @@
 <template>
     <div class="h-100 d-flex flex-column">
+        <img 
+            v-if="['jpg', 'jpeg', 'png', 'gif', 'webp', 'webm', 'avif'].includes(extension)" 
+            :src="`${apiUrl()}/namespaces/${namespace}/files?path=/${path}`"
+            class="image-preview"
+        >
         <Editor
+            v-else
             id="editorWrapper"
             ref="editorRefElement"
             class="flex-1"
@@ -11,8 +17,9 @@
             :navbar="false"
             :readOnly="flow && flowStore.isReadOnly"
             :creating="isCreating"
-            :path="props.path"
+            :path="path"
             :diffOverviewBar="false"
+            :scrollKey="editorScrollKey"
             @update:model-value="editorUpdate"
             @cursor="updatePluginDocumentation"
             @save="flow ? saveFlowYaml(): saveFileContent()"
@@ -78,6 +85,7 @@
 <script setup lang="ts">
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue";
     import {useRoute, useRouter} from "vue-router";
+    import {apiUrl} from "override/utils/route";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
@@ -216,6 +224,19 @@
     const pluginsStore = usePluginsStore();
     const namespacesStore = useNamespacesStore();
     const miscStore = useMiscStore();
+
+    const editorScrollKey = computed(() => {
+        if (props.flow) {
+            const ns = flowStore.flow?.namespace ?? "";
+            const id = flowStore.flow?.id ?? "";
+            return `flow:${ns}/${id}:code`;
+        }
+        const ns = namespace.value;
+        if (ns && props.path) {
+            return `file:${ns}:${props.path}`;
+        }
+        return undefined;
+    });
 
     function loadPluginsHash() {
         miscStore.loadConfigs().then(config => {
@@ -436,5 +457,9 @@
             left: 0.5rem;
             bottom: 2%;
         }
+    }
+
+    .image-preview {
+        margin: 2rem;
     }
 </style>

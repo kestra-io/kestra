@@ -175,7 +175,7 @@
 <script>
     import Restart from "./Restart.vue";
     import Metrics from "./Metrics.vue";
-    import Status from "../Status.vue";
+    import {State, Status} from "@kestra-io/ui-libs";
     import ChangeStatus from "./ChangeStatus.vue";
     import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue";
@@ -189,7 +189,6 @@
     import Download from "vue-material-design-icons/Download.vue";
     import WorkerInfo from "./WorkerInfo.vue";
     import AiIcon from "../ai/AiIcon.vue";
-    import {State} from "@kestra-io/ui-libs"
     import FlowUtils from "../../utils/flowUtils";
     import _groupBy from "lodash/groupBy";
     import {TaskIcon, SECTIONS} from "@kestra-io/ui-libs";

@@ -214,8 +214,7 @@ class SetTest {
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(Instant.parse("2023-05-02T01:02:03Z"));
 
         kv = createAndPerformSetTask(key, "P1DT5S", KVType.DURATION);
-        // TODO Hack meanwhile we handle duration serialization as currently they are stored as bigint...
-        assertThat((long) Double.parseDouble(kv.getValue(key).orElseThrow().value().toString())).isEqualTo(Duration.ofDays(1).plus(Duration.ofSeconds(5)).toSeconds());
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(Duration.ofDays(1).plus(Duration.ofSeconds(5)));
 
         kv = createAndPerformSetTask(key, "[{\"some\":\"value\"},{\"another\":\"value\"}]", KVType.JSON);
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(List.of(Map.of("some", "value"), Map.of("another", "value")));

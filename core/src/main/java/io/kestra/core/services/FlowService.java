@@ -285,6 +285,10 @@ public class FlowService {
             if ((subflowId != null && subflowId.matches(regex)) || (namespace != null && namespace.matches(regex))) {
                 return;
             }
+            if (subflowId == null || namespace == null) {
+                // those fields are mandatory so the mandatory validation will apply
+                return;
+            }
             Optional<Flow> optional = findById(tenantId, subflow.getNamespace(), subflow.getFlowId());
 
             if (optional.isEmpty()) {

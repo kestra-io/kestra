@@ -57,7 +57,7 @@ import lombok.experimental.SuperBuilder;
                                 field: DURATION
                                 agg: SUM
                                 graphStyle: LINES
-                    """
+                """
             }
         )
     }

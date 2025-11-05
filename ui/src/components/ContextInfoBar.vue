@@ -35,16 +35,16 @@
             <WeatherSunny v-else />
         </el-button>
     </div>
-    <div class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
+    <div class="panelWrapper" ref="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
         <div :style="{overflow: 'hidden'}">
             <button v-if="activeTab.length" class="closeButton" @click="setActiveTab('')">
                 <Close />
             </button>
-            <ContextDocs v-if="activeTab === 'docs'" />
-            <ContextNews v-else-if="activeTab === 'news'" />
-            <template v-else>
-                {{ activeTab }}
-            </template>
+            <KeepAlive>
+                <ContextDocs v-if="activeTab === 'docs'" />
+                <ContextNews v-else-if="activeTab === 'news'" />
+                <component v-else :is="activeTab" />
+            </KeepAlive>
         </div>
     </div>
 </template>
@@ -96,6 +96,7 @@
     });
 
     const panelWidth = ref(640)
+    const panelWrapper = ref<HTMLDivElement | null>(null)
 
     const {startResizing, resizing} = useResizablePanel(activeTab)
 

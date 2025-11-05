@@ -1,0 +1,23 @@
+id: flow-trigger-multiple-conditions-flow-listen
+namespace: io.kestra.tests.trigger.multiple.conditions
+
+triggers:
+  - id: on_completion
+    type: io.kestra.plugin.core.trigger.Flow
+    states: [ SUCCESS ]
+    conditions:
+      - type: io.kestra.plugin.core.condition.ExecutionFlow
+        namespace: io.kestra.tests.trigger.multiple.conditions
+        flowId: flow-trigger-multiple-conditions-flow-a
+  - id: on_failure
+    type: io.kestra.plugin.core.trigger.Flow
+    states: [ FAILED ]
+    conditions:
+      - type: io.kestra.plugin.core.condition.ExecutionFlow
+        namespace: io.kestra.tests.trigger.multiple.conditions
+        flowId: flow-trigger-multiple-conditions-flow-a
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

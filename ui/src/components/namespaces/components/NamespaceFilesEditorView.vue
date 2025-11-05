@@ -5,7 +5,7 @@
             key="sideBar"
             :size="sideBarSize"
         >
-            <EditorSidebar
+            <FileExplorer
                 :currentNS="namespace"
                 style="width: 100%;height: 100%;"
             />
@@ -23,9 +23,9 @@
 <script setup lang="ts">
     import {computed, watch} from "vue";
     import {useMounted, useStorage} from "@vueuse/core";
-    import EditorSidebar from "../../inputs/EditorSidebar.vue";
+    import FileExplorer from "../../inputs/FileExplorer.vue";
     import MultiPanelTabs from "../../MultiPanelTabs.vue";
-    import {getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels";
+    import {CODE_PREFIX, getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels";
     import {useFlowStore} from "../../../stores/flow";
     import {useStoredPanels} from "../../../composables/useStoredPanels";
 
@@ -55,11 +55,11 @@
         editorSize.value = sizes[1]
     }
 
-    const panels = useStoredPanels(
+    const {panels} = useStoredPanels(
         `namespace-files-editor-view-panels-${props.namespace}`,
         [{
             deserialize: (value: string) => {
-                if(value.startsWith("code-")){
+                if(value.startsWith(`${CODE_PREFIX}-`)){
                     value = value.slice(5)
                 } else {
                     // not a file tab

@@ -62,7 +62,7 @@ public class KvUpdateCommand extends AbstractApiCommand {
         Duration ttl = expiration == null ? null : Duration.parse(expiration);
         MutableHttpRequest<String> request = HttpRequest
             .PUT(apiUri("/namespaces/", tenantService.getTenantId(tenantId)) + namespace + "/kv/" + key, value)
-            .contentType(MediaType.APPLICATION_JSON_TYPE);
+            .contentType(MediaType.TEXT_PLAIN);
 
         if (ttl != null) {
             request.header("ttl", ttl.toString());

@@ -1029,7 +1029,7 @@ form.ks-horizontal {
 
         @include res(lg) {
             width: 35%;
-            min-width: 800px;
+            min-width: auto;
         }
     }
 }

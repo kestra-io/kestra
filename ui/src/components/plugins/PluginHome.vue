@@ -144,7 +144,13 @@
         if (!cls) {
             return;
         }
-        router.push({name: "plugins/view", params: {cls: cls}})
+        router.push({
+            name: "plugins/view",
+            params: {
+                ...route.params,
+                cls: cls
+            }
+        })
     };
 
     const isVisible = (plugin: any) => {

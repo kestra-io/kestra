@@ -1745,6 +1745,7 @@
     "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",
     "trigger_id_exists": "트리거 ID가 이미 존재합니다.",
     "trigger_id_message": "Flow에 Trigger Id ${existingTrigger}가 이미 존재합니다.",
+    "trigger_states": "상태",
     "triggered": "Trigger 실행",
     "triggered done": "<em>{name}</em>이(가) 성공적으로 Trigger 되었습니다.",
     "triggerflow disabled": "Flow 정의에서 trigger가 비활성화되었습니다.",

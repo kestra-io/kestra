@@ -406,7 +406,7 @@
 
     import Id from "../Id.vue";
     import Kicon from "../Kicon.vue";
-    import Status from "../Status.vue";
+    import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import DataTable from "../layout/DataTable.vue";
@@ -420,7 +420,6 @@
     //@ts-expect-error no declaration file
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
 
-    import {State} from "@kestra-io/ui-libs";
     import {filterValidLabels} from "./utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";

@@ -204,7 +204,7 @@
 </template>
 
 <script>
-    import Status from "../Status.vue";
+    import {Status} from "@kestra-io/ui-libs";
     import SetLabels from "./SetLabels.vue";
     import Restart from "./Restart.vue";
     import Resume from "./Resume.vue";

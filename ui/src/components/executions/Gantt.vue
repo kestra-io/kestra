@@ -3,8 +3,8 @@
         v-if="!isExecutionStarted"
         :execution="execution"
     />
-    <el-card id="gantt" shadow="never" v-else-if="execution && executionsStore.flow">
-        <template #header>
+    <el-card id="gantt" shadow="never" :class="{'no-border': !hasValidDate}" v-else-if="execution && executionsStore.flow">
+        <template #header v-if="hasValidDate">
             <div class="d-flex">
                 <Duration class="th text-end" :histories="execution.state.histories" />
                 <span class="text-end" v-for="(date, i) in dates" :key="i">
@@ -59,13 +59,13 @@
                                             </span>
                                         </template>
                                         <div
-                                            :style="{left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
+                                            :style="item.parentEndPercent !== undefined ? {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`} : {left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
                                             class="task-progress"
                                         >
                                             <div class="progress">
                                                 <div
-                                                    class="progress-bar"
                                                     :style="{left: `${Math.min(item.left, 90)}%`, width: `${Math.max(100 - item.left, 10)}%`}"
+                                                    class="progress-bar"
                                                     :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
                                                     role="progressbar"
                                                 />
@@ -195,7 +195,7 @@
                 const sortedTasks = []
                 const tasksById = {}
                 for (let task of (this.execution.taskRunList || [])) {
-                    const taskWrapper = {task}
+                    const taskWrapper = {task, depth: task.parentTaskRunId ? undefined : 0}
                     if (task.parentTaskRunId) {
                         childTasks.push(taskWrapper)
                     } else {
@@ -208,6 +208,7 @@
                     const taskWrapper = childTasks[i];
                     const parentTask = tasksById[taskWrapper.task.parentTaskRunId]
                     if (parentTask) {
+                        taskWrapper.depth = parentTask.depth + 1
                         tasksById[taskWrapper.task.id] = taskWrapper
                         if (!parentTask.children) {
                             parentTask.children = []
@@ -222,7 +223,7 @@
                         return nodeStart(n1) > nodeStart(n2) ? 1 : -1
                     })
                     for (let node of nodes) {
-                        sortedTasks.push(node.task)
+                        sortedTasks.push(node)
                         if (node.children) {
                             childrenSort(node.children)
                         }
@@ -233,6 +234,9 @@
             },
             isExecutionStarted() {
                 return this.execution?.state?.current && !["CREATED", "QUEUED"].includes(this.execution.state.current);
+            },
+            hasValidDate() {
+                return isFinite(this.delta());
             },
         },
         methods: {
@@ -262,8 +266,11 @@
                 }
 
                 const series = [];
-                const executionDelta = this.delta(); //caching this value matters
-                for (let task of this.tasks) {
+                const executionDelta = this.delta();
+                const taskMap = {};
+                
+                for (let taskWrapper of this.tasks) {
+                    let task = taskWrapper.task
                     let stopTs;
                     if (State.isRunning(task.state.current)) {
                         stopTs = ts(new Date());
@@ -292,13 +299,21 @@
 
                     let width = (stop / executionDelta) * 100
                     if (State.isRunning(task.state.current)) {
-                        width = ((this.stop() - startTs) / executionDelta) * 100 //(stop / executionDelta) * 100
+                        width = ((this.stop() - startTs) / executionDelta) * 100
                     }
 
-                    series.push({
+                    let startPercent = (start / executionDelta) * 100;
+                    let parentEndPercent = undefined;
+                    
+                    if (task.parentTaskRunId && taskMap[task.parentTaskRunId]) {
+                        const parent = taskMap[task.parentTaskRunId];
+                        parentEndPercent = parent.start + parent.width;
+                    }
+
+                    const seriesItem = {
                         id: task.id,
                         name: task.taskId,
-                        start: (start / executionDelta) * 100,
+                        start: startPercent,
                         width,
                         left: left,
                         tooltip,
@@ -308,8 +323,13 @@
                         flowId: task.flowId,
                         namespace: task.namespace,
                         executionId: task.outputs && task.outputs.executionId,
-                        attempts: task.attempts ? task.attempts.length : 1
-                    });
+                        attempts: task.attempts ? task.attempts.length : 1,
+                        depth: taskWrapper.depth,
+                        parentEndPercent: parentEndPercent
+                    };
+                    
+                    taskMap[task.id] = seriesItem;
+                    series.push(seriesItem);
                 }
                 this.series = series;
             },
@@ -443,6 +463,9 @@
         }
     }
 
+    .no-border {
+        border: none !important;
+    }
 
     // To Separate through Line
     :deep(.vue-recycle-scroller__item-view) {

@@ -1745,6 +1745,7 @@
     "trigger_check_warning": "Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den `??`-Koaleszenz-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "Trigger-ID existiert bereits",
     "trigger_id_message": "Trigger-ID ${existingTrigger} existiert bereits im Flow.",
+    "trigger_states": "Zustände",
     "triggered": "Ausführungstrigger",
     "triggered done": "Ausführung <em>{name}</em> ist erfolgreich ausgelöst",
     "triggerflow disabled": "Trigger ist in der Flow-Definition deaktiviert",

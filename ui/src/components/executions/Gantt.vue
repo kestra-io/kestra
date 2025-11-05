@@ -3,8 +3,8 @@
         v-if="!isExecutionStarted"
         :execution="execution"
     />
-    <el-card id="gantt" shadow="never" v-else-if="execution && executionsStore.flow">
-        <template #header>
+    <el-card id="gantt" shadow="never" :class="{'no-border': !hasValidDate}" v-else-if="execution && executionsStore.flow">
+        <template #header v-if="hasValidDate">
             <div class="d-flex">
                 <Duration class="th text-end" :histories="execution.state.histories" />
                 <span class="text-end" v-for="(date, i) in dates" :key="i">
@@ -234,6 +234,9 @@
             isExecutionStarted() {
                 return this.execution?.state?.current && !["CREATED", "QUEUED"].includes(this.execution.state.current);
             },
+            hasValidDate() {
+                return isFinite(this.delta());
+            },
         },
         methods: {
             forwardEvent(type, event) {
@@ -443,6 +446,9 @@
         }
     }
 
+    .no-border {
+        border: none !important;
+    }
 
     // To Separate through Line
     :deep(.vue-recycle-scroller__item-view) {

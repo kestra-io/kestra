@@ -89,8 +89,6 @@ public class TriggerController {
         @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
         @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
         @Parameter(description = "The flow identifier",deprecated = true) @Nullable @QueryValue String flowId
-
-
     ) throws HttpStatusException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -267,7 +265,7 @@ public class TriggerController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "/")
+    @Put
     @Operation(tags = {"Triggers"}, summary = "Update a trigger")
     public HttpResponse<Trigger> updateTrigger(
         @Parameter(description = "The trigger") @Body final Trigger newTrigger
@@ -533,7 +531,7 @@ public class TriggerController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/delete/by-triggers")
+    @Delete(uri = "/delete/by-triggers")
     @Operation(tags = {"Triggers"}, summary = "Delete given triggers")
     public MutableHttpResponse<?> deleteTriggersByIds(
         @Parameter(description = "The triggers to delete") @Body List<Trigger> triggers
@@ -560,11 +558,10 @@ public class TriggerController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "/delete/by-query")
+    @Delete(uri = "/delete/by-query")
     @Operation(tags = {"Triggers"}, summary = "Delete triggers by query parameters")
     public MutableHttpResponse<?> deleteTriggersByQuery(
         @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
-
     ) {
         Integer count = triggerRepository
             .find(tenantService.resolveTenant(), filters)
@@ -577,8 +574,7 @@ public class TriggerController {
                 }
             })
             .reduce(Integer::sum)
-            .blockOptional()
-            .orElse(0);
+            .block();
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }

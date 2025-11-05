@@ -151,7 +151,7 @@ export const useTriggerStore = defineStore("trigger", {
         },
 
         async deleteByTriggers(options: TriggerBulkOptions) {
-            const response = await this.$http.post(`${apiUrl()}/triggers/delete/by-triggers`, options);
+            const response = await this.$http.delete(`${apiUrl()}/triggers/delete/by-triggers`, options);
             return response.data;
         },
     }

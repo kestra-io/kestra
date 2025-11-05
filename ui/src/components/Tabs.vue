@@ -67,15 +67,22 @@
       tabs: Tab[];
       routeName?: string;
       top?: boolean;
+      /**
+        * The active embedded tab. If this component is not embedded, keep it undefined.
+      */
       embedActiveTab?: string;
       namespace?: string | null;
       type?: string;
     }>();
 
     const emit = defineEmits<{
+      /**
+        * Especially useful when embedded since you need to handle the embedActiveTab prop change on the parent component.
+        * @property {Object} newTab the new active tab
+      */
       (e: "changed", newTab: Tab): void;
     }>();
-
+   
     const route = useRoute();
     const router = useRouter();
     const attrs = useAttrs();
@@ -93,7 +100,7 @@
 
     const containerClass = computed(() => getTabClasses(activeTab.value));
 
-    const isEditorActiveTab = computed(() => {
+    const isEditorActiveTab = computed(() => {   
     const TAB = activeTab.value?.name;
     const ROUTE = route.name as string;
 
@@ -103,12 +110,15 @@
 
     return false;
     });
-
+    // Those are passed to the rendered component
+    // We need to exclude class as it's already applied to this component root div
     const attrsWithoutClass = computed(() => {
       return Object.fromEntries(Object.entries(attrs).filter(([key]) => key !== "class"));
     });
 
     const namespaceToForward = computed(() => {
+    // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
+    // in this case this.props.namespace will be used
       return activeTab.value?.props?.namespace ?? props.namespace;
     });
 

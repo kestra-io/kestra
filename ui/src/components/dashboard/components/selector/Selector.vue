@@ -96,14 +96,19 @@
         return [DEFAULT, ...dashboards.value].filter((d) => !search.value || d.title.toLowerCase().includes(search.value.toLowerCase()));
     });
 
-    const ID = getDashboard(route, "id") as string;
-
-    const selected = ref(null);
+    const STORAGE_KEY = getDashboard(route, "key");
+    
+    const selected = ref<string | null>(null);
     const select = (dashboard: any) => {
         selected.value = dashboard?.title;
 
-        if (dashboard?.id) localStorage.setItem(ID, dashboard.id)
-        else localStorage.removeItem(ID);
+        if (STORAGE_KEY) {
+            if (dashboard?.id) {
+                localStorage.setItem(STORAGE_KEY, dashboard.id);
+            } else {
+                localStorage.removeItem(STORAGE_KEY);
+            }
+        }
 
         emits("dashboard", dashboard.id);
     };
@@ -121,7 +126,7 @@
         });
     };
 
-    const fetchLast = () => localStorage.getItem(ID);
+    const getStoredDashboard = () => STORAGE_KEY ? localStorage.getItem(STORAGE_KEY) : null;
     const fetchDashboards = () => {
         dashboardStore
             .list({})
@@ -129,13 +134,17 @@
                 dashboards.value = response.results;
 
                 const creation = Boolean(route.query.created);
-                const lastSelected = creation ? (route.params?.dashboard ?? fetchLast()) : (fetchLast() ?? route.params?.dashboard);
+                const lastSelected = creation 
+                    ? (route.params?.dashboard ?? getStoredDashboard()) 
+                    : (getStoredDashboard() ?? route.params?.dashboard);
 
                 if (lastSelected) {
                     const dashboard = dashboards.value.find((d) => d.id === lastSelected);
 
-                    if (dashboard) select(dashboard);
-                    else {
+                    if (dashboard) {
+                        selected.value = dashboard.title;
+                        emits("dashboard", dashboard.id);
+                    } else {
                         selected.value = null;
                         emits("dashboard", "default");
                     }
@@ -160,14 +169,6 @@
 .selected {
     span{
         font-size: 14px;
-    }
-
-    :deep(svg){
-        color: var(--ks-content-tertiary);
-        font-size: 1.10rem;
-        position: absolute;
-        bottom: -0.10rem;
-        right: 0.08rem;
     }
 }
 .dropdown {

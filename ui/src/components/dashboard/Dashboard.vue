@@ -89,9 +89,16 @@
         }
 
         if (!props.isFlow && !props.isNamespace) {
+            // Preserve timeRange filter when switching dashboards
+            const preservedQuery = Object.fromEntries(
+                Object.entries(route.query).filter(([key]) => 
+                    key.includes("timeRange")
+                )
+            );
+
             router.replace({
                 params: {...route.params, dashboard: id},
-                query: route.params.dashboard !== id ? {} : {...route.query},
+                query: route.params.dashboard !== id ? preservedQuery : {...route.query},
             });
         }
 
@@ -102,8 +109,13 @@
     onBeforeMount(() => {
         const ID = getDashboard(route, "id");
 
-        if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
-        else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
+        if (props.isFlow) {
+            load(ID, processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
+            dashboardStore.loadDashboard = load;
+        } else if (props.isNamespace) {
+            load(ID, YAML_NAMESPACE);
+            dashboardStore.loadDashboard = load;
+        }
     });
 </script>
 

@@ -1,4 +1,9 @@
 <template>
+    <Dashboards
+        v-if="tab === 'overview' && ALLOWED_CREATION_ROUTES.includes(String(route.name))"
+        @dashboard="onSelectDashboard"
+    />
+
     <Action
         v-if="tab === 'flows'"
         :label="t('create_flow')"
@@ -25,12 +30,19 @@
     import {useI18n} from "vue-i18n";
     import {useNamespacesStore} from "override/stores/namespaces";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
-
+    import Dashboards from "../../../components/dashboard/components/selector/Selector.vue";
+    import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards";
+    import {useDashboardStore} from "../../../stores/dashboard";
     import FamilyTree from "vue-material-design-icons/FamilyTree.vue";
 
     const route = useRoute();
     const {t} = useI18n({useScope: "global"});
     const namespacesStore = useNamespacesStore();
+    const dashboardStore = useDashboardStore();
+
+    const onSelectDashboard = (value: any) => {
+        dashboardStore.loadDashboard?.(value);
+    };
 
     const tab = computed(() => route.params?.tab);
     const namespace = computed(() => route.params?.id) as Ref<string>;

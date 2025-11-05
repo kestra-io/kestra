@@ -266,7 +266,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
 
     import Kicon from "../Kicon.vue";
-    import Status from "../Status.vue";
+    import {Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";

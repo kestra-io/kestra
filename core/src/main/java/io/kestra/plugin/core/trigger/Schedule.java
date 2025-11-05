@@ -425,6 +425,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         Map<String, Object> variables;
         variables = scheduleDates.toMap();
 
+        variables.replaceAll((k, v) -> (v instanceof ZonedDateTime) ? ((ZonedDateTime) v).toString() : v);
+
         Execution execution = TriggerService.generateScheduledExecution(
             this,
             conditionContext,

@@ -43,137 +43,126 @@
     </section>
 </template>
 
-<script>
+<script setup lang="ts">
+    import { ref, computed, watch, onMounted, nextTick, useAttrs } from "vue";
+    import { useRoute, useRouter } from "vue-router";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
     import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
 
-    export default {
-        components: {EnterpriseBadge,BlueprintDetail},
-        props: {
-            tabs: {
-                type: Array,
-                required: true
-            },
-            routeName: {
-                type: String,
-                default: ""
-            },
-            top: {
-                type: Boolean,
-                default: true
-            },
-            /**
-             * The active embedded tab. If this component is not embedded, keep it undefined.
-             */
-            embedActiveTab: {
-                type: String,
-                required: false,
-                default: undefined
-            },
-            namespace: {
-                type: String,
-                default: null
-            },
-            type: {
-                type: String,
-                default: undefined
-            }
-        },
-        emits: [
-            /**
-             * Especially useful when embedded since you need to handle the embedActiveTab prop change on the parent component.
-             * @property {Object} newTab the new active tab
-             */
-            "changed"
-        ],
-        data() {
-            return {
-                activeName: undefined,
-                selectedBlueprintId : undefined
-            }
-        },
-        watch: {
-            $route() {
-                this.setActiveName();
-            },
-            activeTab() {
-                this.$nextTick(() => {
-                    this.setActiveName();
-                });
-            }
-        },
-        mounted() {
-            this.setActiveName();
-        },
-        methods: {
-            embeddedTabChange(tab) {
-                this.$emit("changed", tab);
-            },
-            setActiveName() {
-                this.activeName = this.activeTab.name || "default";
-            },
-            click(tab) {
-                this.$router.push(this.to(this.tabs.filter(value => value.name === tab)[0]));
-            },
-            to(tab) {
-                if (this.activeTab === tab) {
-                    this.setActiveName()
-                    return this.$route;
-                } else {
-                    return {
-                        name: this.routeName || this.$route.name,
-                        params: {...this.$route.params, tab: tab.name},
-                        query: {...tab.query}
-                    };
-                }
-            },
-            getTabClasses(tab) {
-                const isEnterpriseTab = tab.locked;
+    interface Tab {
+      name: string;
+      title?: string;
+      hidden?: boolean;
+      disabled?: boolean;
+      locked?: boolean;
+      count?: number;
+      maximized?: boolean;
+      query?: Record<string, any>;
+      props?: Record<string, any>;
+      component?: any;
+      ["v-on"]?: Record<string, (...args: any[]) => void>;
+    }
 
-                return {
-                    "container": !isEnterpriseTab,
-                    "mt-4": !isEnterpriseTab,
-                    "px-0": isEnterpriseTab,
-                };
-            },
-        },
-        computed: {
-            containerClass() {
-                return this.getTabClasses(this.activeTab);
-            },
-            activeTab() {
-                return this.tabs
-                    .filter(tab => (this.embedActiveTab ?? this.$route.params.tab) === tab.name)[0] || this.tabs[0];
-            },
-            isEditorActiveTab() {
-                const TAB = this.activeTab.name;
-                const ROUTE = this.$route.name;
+    const props = defineProps<{
+      tabs: Tab[];
+      routeName?: string;
+      top?: boolean;
+      embedActiveTab?: string;
+      namespace?: string | null;
+      type?: string;
+    }>();
 
-                if (["flows/update", "flows/create"].includes(ROUTE)) {
-                    return TAB === "edit";
-                } else if (
-                    ["namespaces/update", "namespaces/create"].includes(ROUTE)
-                ) {
-                    if (TAB === "files") return true;
-                }
+    const emit = defineEmits<{
+      (e: "changed", newTab: Tab): void;
+    }>();
 
-                return false;
-            },
-            // Those are passed to the rendered component
-            // We need to exclude class as it's already applied to this component root div
-            attrsWithoutClass() {
-                return Object.fromEntries(
-                    Object.entries(this.$attrs)
-                        .filter(([key]) => key !== "class")
-                );
-            },
-            namespaceToForward(){
-                return this.activeTab.props?.namespace ?? this.namespace;
-                // in the special case of Namespace creation on Namespaces page, the tabs are loaded before the namespace creation
-                // in this case this.props.namespace will be used
-            }
-        }
-    };
+    const route = useRoute();
+    const router = useRouter();
+    const attrs = useAttrs();
+
+    const activeName = ref<string | undefined>();
+    const selectedBlueprintId = ref<string | undefined>();
+
+    const activeTab = computed<Tab>(() => {
+      return (
+        props.tabs.find(
+          (tab) => (props.embedActiveTab ?? route.params.tab) === tab.name
+        ) || props.tabs[0]
+      );
+    });
+
+    const containerClass = computed(() => getTabClasses(activeTab.value));
+
+    const isEditorActiveTab = computed(() => {
+    const TAB = activeTab.value?.name;
+    const ROUTE = route.name as string;
+
+    if (["flows/update", "flows/create"].includes(ROUTE)) return TAB === "edit";
+    if (["namespaces/update", "namespaces/create"].includes(ROUTE))
+        return TAB === "files";
+
+    return false;
+    });
+
+    const attrsWithoutClass = computed(() => {
+      return Object.fromEntries(Object.entries(attrs).filter(([key]) => key !== "class"));
+    });
+
+    const namespaceToForward = computed(() => {
+      return activeTab.value?.props?.namespace ?? props.namespace;
+    });
+
+    function embeddedTabChange(tab: Tab) {
+      emit("changed", tab);
+    }
+
+    function setActiveName() {
+      activeName.value = activeTab.value?.name || "default";
+    }
+
+    function click(tabName: string) {
+      const tab = props.tabs.find((t) => t.name === tabName);
+      if (tab) router.push(to(tab));
+    }
+
+    function to(tab: Tab) {
+      if (activeTab.value === tab) {
+        setActiveName();
+        return route;
+      }
+
+      return {
+        name: props.routeName || (route.name as string),
+        params: { ...route.params, tab: tab.name },
+        query: { ...tab.query },
+      };
+    }
+
+    function getTabClasses(tab: Tab) {
+      const isEnterpriseTab = tab.locked;
+      return {
+        container: !isEnterpriseTab,
+        "mt-4": !isEnterpriseTab,
+        "px-0": isEnterpriseTab,
+      };
+    }
+
+    watch(
+      () => route.fullPath,
+      () => setActiveName()
+    );
+
+    watch(
+      () => activeTab.value,
+      async () => {
+        await nextTick();
+        setActiveName();
+      }
+    );
+
+    onMounted(() => {
+      setActiveName();
+    });
 </script>
 
 <style scoped lang="scss">

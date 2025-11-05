@@ -19,6 +19,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.inject.Inject;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class NamespaceSecretController<META extends ApiSecretMeta> {
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") List<String> sort,
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
     ) throws IllegalArgumentException, IOException {
         final String tenantId = this.tenantService.resolveTenant();
         List<String> items = secretService.inheritedSecrets(tenantId, namespace).get(namespace).stream().toList();

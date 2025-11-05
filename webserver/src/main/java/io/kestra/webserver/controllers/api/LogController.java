@@ -27,6 +27,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Min;
 import org.slf4j.event.Level;
@@ -66,7 +67,7 @@ public class LogController {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Filters") @Nullable @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @Nullable @QueryFilterFormat List<QueryFilter> filters,
         // Deprecated params
         @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix",deprecated = true) @Nullable @QueryValue String namespace,

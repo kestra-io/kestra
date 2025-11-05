@@ -130,7 +130,7 @@
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
     import Restart from "./Restart.vue";
-    import LogUtils from "../../utils/logs";
+    import * as LogUtils from "../../utils/logs";
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";

@@ -107,25 +107,11 @@
 
     :deep(.alert-info) {
         display: flex;
-        gap: 12px;
-        padding: 16px 16px 0 16px;
+        padding: .5rem !important;
         background-color: var(--ks-background-info);
         border: 1px solid var(--ks-border-info);
-        border-left-width: 5px;
-        border-radius: 8px;
-
-        &::before {
-            content: '!';
-            min-width: 20px;
-            height: 20px;
-            margin-top: 4px;
-            border-radius: 50%;
-            background: var(--ks-content-info);
-            border: 1px solid var(--ks-border-info);
-            color: var(--ks-content-inverse);
-            font: 600 13px/20px sans-serif;
-            text-align: center;
-        }
+        border-left-width: 0.25rem;
+        border-radius: 0.5rem;
 
         p { color: var(--ks-content-info); }
     }
@@ -135,7 +121,7 @@
         color: var(--ks-content-info);
         border: 1px solid var(--ks-border-info);
         font-family: 'Courier New', Courier, monospace;
-        white-space: nowrap; // Prevent button text from wrapping
+        white-space: nowrap;
         
         .material-design-icon {
             position: absolute;

@@ -243,6 +243,10 @@ kestra:
   ui-anonymous-usage-report:
     enabled: true
 
+  ui:
+    charts:
+      default-duration: P30D
+
   anonymous-usage-report:
     enabled: true
     uri: https://api.kestra.io/v1/reports/server-events

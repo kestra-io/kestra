@@ -40,6 +40,7 @@ export const storageKeys = {
     TIMEZONE_STORAGE_KEY: "timezone",
     SAVED_FILTERS_PREFIX: "saved_filters",
     FILTER_ORDER_PREFIX: "filter-order",
+    SCROLL_MEMORY_PREFIX: "scroll",
 }
 
 export const executeFlowBehaviours = {

@@ -7,8 +7,8 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
 import io.kestra.cli.StandAloneRunner;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -75,7 +75,7 @@ public class FlowTestCommand extends AbstractApiCommand {
         LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
-        RunnerUtils runnerUtils = applicationContext.getBean(RunnerUtils.class);
+        TestRunnerUtils runnerUtils = applicationContext.getBean(TestRunnerUtils.class);
         TenantIdSelectorService tenantService =  applicationContext.getBean(TenantIdSelectorService.class);
 
         Map<String, Object> inputs = new HashMap<>();

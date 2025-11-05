@@ -111,7 +111,7 @@
                         :readOnly="true"
                         component="el-dropdown-item"
                         :taskId="currentTaskRun.taskId"
-                        :section="SECTIONS.TASKS"
+                        section="tasks"
                         :flowId="followedExecution.flowId"
                         :namespace="followedExecution.namespace"
                         :revision="followedExecution.flowRevision"

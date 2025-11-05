@@ -169,9 +169,14 @@
             ? revisions.value?.[props.revision - 1]?.source
             : flowStore.flow?.source;
     });
-
+   
     // Methods
     const load = async (taskId: string) => {
+        await flowStore.loadFlow({
+            namespace: props.namespace,
+            id: props.flowId,
+            revision: props.revision?.toString(),
+        });
         if (props.revision) {
             if (!revisions.value?.[props.revision - 1]) {
                 revisions.value = await flowStore.loadRevisions({

@@ -375,6 +375,7 @@
     "trigger details": "Trigger details",
     "triggerflow disabled": "Trigger is disabled from flow definition",
     "last trigger date": "Last triggered date",
+    "trigger_states": "States",
     "context updated date": "Context updated date",
     "next evaluation date": "Next evaluation date",
     "last trigger date tooltip": "When the trigger last executed. May be in the past when running a backfill.",

@@ -225,14 +225,15 @@
                     const debugOutput = JSON.stringify(parsedResult, null, 2);
                     debugExpression.value = debugOutput;
 
-                    selected.value.push(debugOutput);
-
+                    if (response.status === 200 && debugOutput !== null && debugOutput !== undefined) {
+                        selected.value.push(debugOutput);
+                    }
                     isJSON.value = true;
                 } catch {
                     debugExpression.value = response.data.result;
 
                     // Parsing failed, therefore, copy raw result
-                    if (response.status === 200 && response.data.result)
+                    if (response.status === 200 && response.data.result !== null && response.data.result !== undefined)
                         selected.value.push(response.data.result);
                 }
 

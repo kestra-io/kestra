@@ -1,18 +1,10 @@
-import {cssVariable} from "@kestra-io/ui-libs";
+import {cssVariable, LOG_LEVELS} from "@kestra-io/ui-libs";
 
-const LEVELS = [
-    "ERROR",
-    "WARN",
-    "INFO",
-    "DEBUG",
-    "TRACE"
-] as const
-
-export type LevelKey = typeof LEVELS[number];
+export type LevelKey = typeof LOG_LEVELS[number];
 
 
 export function color() {
-    return Object.fromEntries(LEVELS.map(level => [level, cssVariable("--log-chart-" + level.toLowerCase())]));
+    return Object.fromEntries(LOG_LEVELS.map(level => [level, cssVariable("--log-chart-" + level.toLowerCase())]));
 }
 
 export function graphColors(state: LevelKey) {
@@ -40,7 +32,7 @@ export function chartColorFromLevel(level: LevelKey, alpha = 1) {
 export function sort(value: Record<string, any>) {
     return Object.keys(value)
         .sort((a, b) => {
-            return index(LEVELS, a) - index(LEVELS, b);
+            return index(LOG_LEVELS, a) - index(LOG_LEVELS, b);
         })
         .reduce(
             (obj, key) => {
@@ -59,7 +51,7 @@ export function index(based: readonly string[], value: string) {
 
 export function levelOrLower(level: LevelKey) {
     const levels: LevelKey[] = [];
-    for (const currentLevel of LEVELS) {
+    for (const currentLevel of LOG_LEVELS) {
         levels.push(currentLevel);
         if (currentLevel === level) {
             break;

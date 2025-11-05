@@ -5,12 +5,18 @@ import Table from "../../../../src/components/dependencies/components/Table.vue"
 import {getDependencies} from "../../../fixtures/dependencies/getDependencies";
 
 export default {
-    title: "Components/Dependencies/Table",
+    title: "Dependencies/Table",
     component: Table,
-    decorators: [vueRouter([
-        {path: "/", name: "home", component: {template: "<div />"}},
-        {path: "/flows/:namespace/:id", name: "flows/update", component: {template: "<div />"}},
-    ])],
+    decorators: [
+        vueRouter([
+            {path: "/", name: "home", component: {template: "<div />"}},
+            {
+                path: "/flows/:namespace/:id",
+                name: "flows/update",
+                component: {template: "<div />"},
+            },
+        ]),
+    ],
 };
 
 export const Default = () => ({
@@ -18,7 +24,7 @@ export const Default = () => ({
     setup() {
         const elements = getDependencies({subtype: FLOW});
         const selected = ref(undefined);
-        const onSelect = (id) => selected.value = id;
+        const onSelect = (id) => (selected.value = id);
         return {elements, selected, onSelect};
     },
     template: `

@@ -494,8 +494,14 @@ public abstract class AbstractJdbcRepository {
     }
     private Condition applyTriggerStateCondition(Object value, QueryFilter.Op operation) {
         String triggerState =  value.toString();
-        boolean isDisabled = triggerState.equals("disabled");
-
+        Boolean isDisabled = switch (triggerState) {
+            case "disabled" -> true;
+            case "enabled" -> false;
+            default -> null;
+        };
+        if (isDisabled == null) {
+            return DSL.noCondition();
+        }
         return switch (operation) {
             case EQUALS -> field("value",JSONB.class).contains(JSONB.valueOf("{\"disabled\": " + isDisabled + "}"));
             case NOT_EQUALS -> field("value",JSONB.class).contains(JSONB.valueOf("{\"disabled\": " + !isDisabled + "}"));

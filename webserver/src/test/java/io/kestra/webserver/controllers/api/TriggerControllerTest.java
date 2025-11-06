@@ -78,6 +78,7 @@ class TriggerControllerTest {
             .tenantId(TENANT_ID)
             .triggerId("trigger-nextexec-schedule")
             .date(ZonedDateTime.now())
+            .nextExecutionDate(ZonedDateTime.now())
             .build();
 
         jdbcTriggerRepository.save(trigger);

@@ -1,5 +1,5 @@
 import {defineStore} from "pinia"
-import {ref, computed, toRaw} from "vue";
+import {ref, computed, toRaw, nextTick} from "vue";
 import {trackPluginDocumentationView} from "../utils/tabTracking";
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
@@ -74,7 +74,6 @@ export const usePluginsStore = defineStore("plugins", () => {
     const inputSchema = ref<any>();
     const inputsType = ref<any>();
     const schemaType = ref<Record<string, any>>();
-    const currentlyLoading = ref<{type?: string; version?: string}>();
     const forceIncludeProperties = ref<string[]>();
     const _iconsPromise = ref<Promise<Record<string, string>>>();
 
@@ -166,7 +165,9 @@ export const usePluginsStore = defineStore("plugins", () => {
         const id = options.version ? `${options.cls}/${options.version}` : options.cls;
         const cachedPluginDoc = pluginsDocumentation.value[options.hash ? options.hash + id : id];
         if (!options.all && cachedPluginDoc) {
-            plugin.value = cachedPluginDoc;
+            nextTick(() => {
+                plugin.value = cachedPluginDoc;
+            })
             return cachedPluginDoc;
         }
 
@@ -276,17 +277,19 @@ export const usePluginsStore = defineStore("plugins", () => {
         });
     }
 
+    let currentlyLoading: {type?: string; version?: string} | undefined = undefined;
+
     async function updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean} & Record<string, any>) | undefined) {
         if (!pluginElement?.type || !allTypes.value.includes(pluginElement.type)) {
             editorPlugin.value = undefined;
-            currentlyLoading.value = undefined;
+            currentlyLoading = undefined;
             return;
         }
 
         const {type, version, forceRefresh = false} = pluginElement;
 
-        if (currentlyLoading.value?.type === type &&
-            currentlyLoading.value?.version === version &&
+        if (currentlyLoading?.type === type &&
+            currentlyLoading?.version === version &&
             !forceRefresh) {
             return
         }
@@ -311,22 +314,22 @@ export const usePluginsStore = defineStore("plugins", () => {
             }
         }
 
-        currentlyLoading.value = {
+        currentlyLoading = {
             type,
             version,
         };
 
-        load(payload).then((pluginData) => {
-            editorPlugin.value = {
-                cls: type,
-                version,
-                ...pluginData,
-            };
+        const pluginData = await load(payload); 
+        
+        editorPlugin.value = {
+            cls: type,
+            version,
+            ...pluginData,
+        };
 
-            trackPluginDocumentationView(type);
+        trackPluginDocumentationView(type);
 
-            forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version" && k !== "forceRefresh");
-        });
+        forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version" && k !== "forceRefresh");
     }
 
     return {

@@ -158,7 +158,7 @@
     }
 
     watch(
-      () => route.fullPath,
+      () => route?.fullPath,
       () => setActiveName()
     );
 

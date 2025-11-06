@@ -31,6 +31,7 @@
                     noUrlChange
                 >
                     <template #markdown="{content}">
+                        <!-- Plugin schema content: search disabled -->
                         <Markdown 
                             font-size-var="font-size-base"
                             :source="content"
@@ -38,6 +39,15 @@
                     </template>
                 </SchemaToHtml>
             </Suspense>
+            
+            <!-- Optional: intro content or other Markdown block -->
+            <Markdown
+                v-if="introContent"
+                :source="introContent"
+                showSearch
+                collapseExamples
+                :class="{'position-absolute': absolute}"
+            />
         </template>
         <Markdown
             v-else

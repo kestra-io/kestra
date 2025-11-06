@@ -1,5 +1,5 @@
 <template>
-    <div class="no-code">
+    <div class="no-code" ref="scrollContainer">
         <div class="p-4">
             <Task
                 v-if="creatingTask || editingTask"
@@ -64,6 +64,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useKeyboardSave} from "./utils/useKeyboardSave";
     import {deepEqual} from "../../utils/utils";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
 
 
     const props = defineProps<NoCodeProps>();
@@ -195,6 +196,28 @@
         emit("editTask", parentPath, blockSchemaPath, refPath)
     })
 
+    // Scroll position persistence for No-code editor
+    const scrollContainer = ref<HTMLDivElement | null>(null);
+
+    const flowIdentity = computed(() => {
+        const namespace = flowStore.flow?.namespace ?? "";
+        const flowId = flowStore.flow?.id ?? "";
+        return `${namespace}/${flowId}`;
+    });
+
+    const scrollKey = computed(() => {
+        const base = `nocode:${flowIdentity.value}`;
+        // home screen
+        if (!props.creatingTask && !props.editingTask) return `${base}:home`;
+        // task-specific
+        const action = props.creatingTask ? "create" : "edit";
+        const parentPath = props.parentPath ?? "";
+        const refPath = props.refPath ?? "";
+        const fieldName = props.fieldName ?? "";
+        return `${base}:task:${action}:parentPath:${parentPath}:refPath:${refPath}:fieldName:${fieldName}`;
+    });
+
+    useScrollMemory(scrollKey, scrollContainer);
 
 </script>
 

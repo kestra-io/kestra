@@ -360,4 +360,41 @@ public interface StorageInterface extends AutoCloseable, Plugin {
 
         return path;
     }
+
+        /**
+     * Ensures the object name length does not exceed the allowed maximum.
+     * If it does, the object name is truncated and a short random prefix is added
+     * to avoid potential name collisions.
+     *
+     * @param uri                  the URI of the object
+     * @param maxObjectNameLength  the maximum allowed length for the object name
+     * @return a normalized URI respecting the length limit
+     * @throws IOException if the URI cannot be rebuilt
+     */
+    default URI limit(URI uri, int maxObjectNameLength) throws IOException {
+        if (uri == null) {
+            return null;
+        }
+
+        String path = uri.getPath();
+        String objectName = path.contains("/") ? path.substring(path.lastIndexOf("/") + 1) : path;
+
+        if (objectName.length() > maxObjectNameLength) {
+            objectName = objectName.substring(objectName.length() - maxObjectNameLength + 6);
+            String prefix = org.apache.commons.lang3.RandomStringUtils.secure()
+                .nextAlphanumeric(5)
+                .toLowerCase();
+
+            String newPath = (path.contains("/") ? path.substring(0, path.lastIndexOf("/") + 1) : "")
+                + prefix + "-" + objectName;
+
+            try {
+                return new URI(uri.getScheme(), uri.getHost(), newPath, uri.getFragment());
+            } catch (java.net.URISyntaxException e) {
+                throw new IOException(e);
+            }
+        }
+
+        return uri;
+    }
 }

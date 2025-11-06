@@ -68,9 +68,9 @@ class FlowValidationTest {
 
         assertThat(validate.isPresent()).isFalse();
     }
-    
+
     @Test
-    void shouldGetConstraintErrorGivenInputWithBothDefaultsAndSuggestion() {
+    void shouldGetConstraintErrorGivenInputWithBothDefaultsAndPrefill() {
         // Given
         GenericFlow flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
             id: test
@@ -82,15 +82,15 @@ class FlowValidationTest {
                 defaults: "defaults"
             tasks: []
             """);
-        
+
         // When
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
-        
+
         // Then
         assertThat(validate.isPresent()).isEqualTo(true);
-        assertThat(validate.get().getMessage()).contains("Inputs with a default value cannot also have a suggestion.");
+        assertThat(validate.get().getMessage()).contains("Inputs with a default value cannot also have a prefill.");
     }
-    
+
     @Test
     void shouldGetConstraintErrorGivenOptionalInputWithDefault() {
         // Given
@@ -104,13 +104,22 @@ class FlowValidationTest {
                 required: false
             tasks: []
             """);
-        
+
         // When
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
-        
+
         // Then
         assertThat(validate.isPresent()).isEqualTo(true);
         assertThat(validate.get().getMessage()).contains("Inputs with a default value must be required, since the default is always applied.");
+    }
+
+    @Test
+    void duplicatePreconditionsIdShouldFailValidation() {
+        Flow flow = this.parse("flows/invalids/duplicate-preconditions.yaml");
+        Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
+
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getMessage()).contains("Duplicate preconditions with id [flows]");
     }
 
     private Flow parse(String path) {

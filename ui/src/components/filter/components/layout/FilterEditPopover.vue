@@ -158,12 +158,12 @@
 
 .filter-popup-enter-active,
 .filter-popup-leave-active {
-    transition: all 0.2s ease-out;
+    transition: all 0.1s ease-out;
 }
 
 .filter-popup-enter-from {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-4px);
 }
 
 .filter-popup-enter-to,
@@ -174,6 +174,6 @@
 
 .filter-popup-leave-to {
     opacity: 0;
-    transform: translateY(-8px);
+    transform: translateY(-4px);
 }
 </style>

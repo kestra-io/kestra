@@ -5,17 +5,13 @@
     </div>
 </template>
 
-<script setup>
-    const props = defineProps({
-        icon: {
-            type: Object,
-            required: true
-        },
-        label: {
-            type: String,
-            required: true
-        }
-    });
+<script setup lang="ts">
+    import type {Component} from "vue";
+
+    const props = defineProps<{
+        icon: Component;
+        label: string;
+    }>();
 </script>
 
 <style scoped lang="scss">

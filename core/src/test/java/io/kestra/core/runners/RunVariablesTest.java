@@ -12,6 +12,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.runners.pebble.PebbleEngineFactory;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.StorageInterface;
@@ -42,13 +43,16 @@ class RunVariablesTest {
     
     @Inject
     StorageInterface storageInterface;
+
+    @Inject
+    KvMetadataRepositoryInterface kvMetadataRepository;
     
     @MockBean(KVStoreService.class)
     KVStoreService testKVStoreService() {
         return new KVStoreService() {
             @Override
             public KVStore get(String tenant, String namespace, @Nullable String fromNamespace) {
-                return new InternalKVStore(tenant, namespace, storageInterface) {
+                return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataRepository) {
                     @Override
                     public Optional<KVValue> getValue(String key) {
                         return Optional.of(new KVValue("value"));

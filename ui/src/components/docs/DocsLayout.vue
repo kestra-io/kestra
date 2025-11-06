@@ -23,9 +23,15 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue"
+    import {ref, computed} from "vue"
+    import {useRoute} from "vue-router";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
 
     const collapsed = ref(false);
+    const route = useRoute();
+    const scrollKey = computed(() => `docs:${route.fullPath}`);
+
+    useScrollMemory(scrollKey, undefined, true);
 
 </script>
 

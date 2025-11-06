@@ -170,6 +170,11 @@
       "back": "Назад"
     },
     "concurrency": "Конкурентность",
+    "concurrency limits": "Ограничения на параллелизм",
+    "concurrency_limit": {
+      "dialog_title": "Ограничения на параллельность",
+      "warning": "Изменение счетчика выполнения может нарушить параллелизм, поэтому выполнения могут превысить допустимый лимит."
+    },
     "conditions": "Условия",
     "configure basic auth": "Настроить базовую аутентификацию",
     "confirm": "Подтвердить",
@@ -912,7 +917,6 @@
         "status": "Статус",
         "task": "Задача",
         "text": "I'm sorry, but it seems that the text you want me to translate is missing. Could you please provide the text that needs to be translated?",
-        "trigger_state": "Состояние",
         "type": "Тип",
         "user": "Пользователь"
       },
@@ -1174,20 +1178,11 @@
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
       "clearSelection": "Очистить выбор",
-      "close": {
-        "afterExecution": "Закрыть после выполнения task",
-        "conditions": "Закрыть условие",
-        "errors": "Закрыть обработчик ошибок",
-        "finally": "Закрыть task",
-        "input": "Закрыть input",
-        "pluginDefaults": "Закрыть плагин по умолчанию",
-        "tasks": "Закрыть task",
-        "triggers": "Закрыть trigger"
-      },
       "creation": {
         "afterExecution": "Добавить блок после выполнения",
         "charts": "Добавить диаграмму",
         "conditions": "Добавить условие",
+        "default": "Добавить",
         "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
         "inputs": "Добавить поле input",
@@ -1223,6 +1218,10 @@
         "variable": "Переменная",
         "yaml": "Редактор YAML"
       },
+      "remove": {
+        "cases": "Удалить этот кейс",
+        "default": "Удалить эту запись"
+      },
       "sections": {
         "afterExecution": "После выполнения",
         "connection": "Свойства подключения",
@@ -1240,6 +1239,7 @@
         "afterExecution": "Выберите task",
         "charts": "Выберите тип диаграммы",
         "conditions": "Выберите условие",
+        "default": "Выберите тип",
         "errors": "Выберите task",
         "finally": "Выберите task",
         "inputs": "Выберите тип поля input",
@@ -1745,6 +1745,7 @@
     "trigger_check_warning": "Использование переменных trigger не будет работать с ручным выполнением flow. Добавьте оператор объединения `??`, чтобы решить проблему. Например, вместо `trigger.date` используйте `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "Идентификатор Trigger уже существует",
     "trigger_id_message": "Идентификатор Trigger ${existingTrigger} уже существует в flow.",
+    "trigger_states": "Состояния",
     "triggered": "Активирован trigger",
     "triggered done": "Выполнение <em>{name}</em> успешно запущено",
     "triggerflow disabled": "Trigger отключен в определении flow",

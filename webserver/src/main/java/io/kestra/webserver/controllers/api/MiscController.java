@@ -70,6 +70,9 @@ public class MiscController {
     @Inject
     NamespaceUtils namespaceUtils;
 
+    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:P30D}")
+private String chartDefaultDuration;
+
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
 
@@ -128,7 +131,9 @@ public class MiscController {
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
-            .pluginsHash(pluginRegistry.hash());
+            .pluginsHash(pluginRegistry.hash())
+            .chartDefaultDuration(this.chartDefaultDuration)
+            ;
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -188,6 +193,8 @@ public class MiscController {
         EditionProvider.Edition edition;
 
         String commitId;
+
+        String chartDefaultDuration;
 
         ZonedDateTime commitDate;
 

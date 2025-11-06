@@ -43,7 +43,7 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         {label: t("datepicker.last24hours"), value: "PT24H"},
         {label: t("datepicker.last48hours"), value: "PT48H"},
         {label: t("datepicker.last7days"), value: "PT168H"},
-        {label: t("datepicker.last30days"), value: "PT720H"},
+        {label: t("datepicker.last30days"), value: "P30D"},
         {label: t("datepicker.last365days"), value: "PT8760H"},
     ];
 
@@ -56,7 +56,6 @@ export function useValues(label: string | undefined, t?: ReturnType<typeof useI1
         EXECUTION_STATES: buildFromArray(
             State.arrayAllStates().map((state: { name: string }) => state.name),
         ),
-        TRIGGER_STATES: buildFromArray(["ENABLED", "DISABLED"], true),
         SCOPES: [
             {
                 label: t("scope_filter.user", {label: SCOPE_LABEL}),

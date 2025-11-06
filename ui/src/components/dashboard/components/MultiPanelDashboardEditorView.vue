@@ -13,16 +13,19 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, markRaw, useTemplateRef} from "vue";
+    import {computed, markRaw, useTemplateRef, watch} from "vue";
     import {DASHBOARD_EDITOR_ELEMENTS, DEFAULT_ACTIVE_TABS} from "../composables/useDashboardPanels";
     import {useDashboardStore} from "../../../stores/dashboard";
     import MultiPanelGenericEditorView from "../../MultiPanelGenericEditorView.vue";
+    import DashboardNoCodeEditor from "./DashboardNoCodeEditor.vue";
     import DashboardEditorButtons from "./DashboardEditorButtons.vue";
+    import {useNoCodePanelsFull} from "../../flows/useNoCodePanels";
 
     const showEditor = computed(() => dashboardStore.isCreating || dashboardStore.parsedSource?.id);
 
+    const saveKeyAlways = computed(() => `ks-dashboard-${dashboardStore.parsedSource?.id}`)
     const saveKey = computed(() => 
-        dashboardStore.isCreating ? undefined : `ks-dashboard-${dashboardStore.parsedSource?.id}`
+        dashboardStore.isCreating ? undefined : saveKeyAlways.value
     );
 
     const dashboardStore = useDashboardStore();
@@ -35,10 +38,15 @@
         emit("save", dashboardStore.sourceCode);
     }
 
-    import DashboardNoCodeEditor from "./DashboardNoCodeEditor.vue";
+    watch(() => dashboardStore.isCreating, (isCreating) => {
+        if(!isCreating){
+            // reset panels when switching from creating to editing an existing dashboard
+            editorView.value?.saveState(saveKeyAlways.value);
+        }
+    });
+    
     const editorView = useTemplateRef<InstanceType<typeof MultiPanelGenericEditorView>>("editorView");
 
-    import {useNoCodePanelsFull} from "../../flows/useNoCodePanels";
     useNoCodePanelsFull({
         RawNoCode: markRaw(DashboardNoCodeEditor),
         editorView,

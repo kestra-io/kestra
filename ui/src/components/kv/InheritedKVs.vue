@@ -1,5 +1,11 @@
 <template>
     <el-table :data="store.inheritedKVs" tableLayout="auto">
+        <el-table-column prop="namespace" :label="$t('namespace')">
+            <template #default="scope">
+                <code>{{ scope.row.namespace }}</code>
+            </template>
+        </el-table-column>
+
         <el-table-column prop="key" :label="$t('key')">
             <template #default="scope">
                 <code>{{ scope.row.key }}</code>

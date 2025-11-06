@@ -86,7 +86,6 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {apiUrl} from "override/utils/route";
-    import throttle from "lodash/throttle";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
@@ -281,7 +280,7 @@
     });
 
 
-    const updatePluginDocumentation = throttle((event: any) => {
+    function updatePluginDocumentation(event: any) {
         const source = event.model.getValue();
         const cursorOffset = event.model.getOffsetAt(event.position);
 
@@ -308,7 +307,7 @@
         let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
         result = {...result, hash: hash.value, forceRefresh: true};
         pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
-    }, 500);
+    };
 
     const saveFlowYaml = async () => {
         clearTimeout(timeout.value);

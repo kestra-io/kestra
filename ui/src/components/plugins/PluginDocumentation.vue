@@ -31,25 +31,12 @@
                     noUrlChange
                 >
                     <template #markdown="{content}">
-                        <!-- Plugin schema content: search disabled -->
-                        <Markdown
-                            font-size-var="font-size-base"
-                            :source="content"
-                        />
+                        <EnhancedMarkdown font-size-var="font-size-base" :source="content" :showSearch="false" />
                     </template>
                 </SchemaToHtml>
-
-                <!-- Optional: intro content or other Markdown block -->
-                <Markdown
-                    v-if="introContent"
-                    :source="introContent"
-                    :showSearch="true"
-                    :collapseExamples="true"
-                    :class="{'position-absolute': absolute}"
-                />
             </Suspense>
         </template>
-        <Markdown
+        <EnhancedMarkdown
             v-else
             :source="introContent"
             :class="{'position-absolute': absolute}"
@@ -59,10 +46,10 @@
     </div>
 </template>
 
-    <script setup lang="ts">
+<script setup lang="ts">
 
     import {computed} from "vue";
-    import Markdown from "../layout/Markdown.vue";
+    import EnhancedMarkdown from "../layout/EnhancedMarkdown.vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {useMiscStore} from "override/stores/misc";
@@ -107,8 +94,8 @@
             window.open(releaseNotesUrl.value, "_blank");
         }
     };
-    </script>
+</script>
 
-    <style scoped lang="scss">
-        @import "../../styles/components/plugin-doc";
-    </style>
+<style scoped lang="scss">
+    @import "../../styles/components/plugin-doc";
+</style>

@@ -206,22 +206,22 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 tasks:
                 - id: send_alert
                   type: io.kestra.plugin.notifications.sentry.SentryExecution
-                    executionId: "{{ trigger.executionId }}"
-                    transaction: "/execution/id/{{ trigger.executionId }}"
-                    dsn: "{{ secret('SENTRY_DSN') }}"
-                    level: ERROR
+                  executionId: "{{ trigger.executionId }}"
+                  transaction: "/execution/id/{{ trigger.executionId }}"
+                  dsn: "{{ secret('SENTRY_DSN') }}"
+                  level: ERROR
 
                 triggers:
                 - id: failed_prod_workflows
-                    type: io.kestra.plugin.core.trigger.Flow
-                    conditions:
-                    - type: io.kestra.plugin.core.condition.ExecutionStatus
-                        in:
-                        - FAILED
-                        - WARNING
-                    - type: io.kestra.plugin.core.condition.ExecutionNamespace
-                        namespace: company.payroll
-                        prefix: false"""
+                  type: io.kestra.plugin.core.trigger.Flow
+                  conditions:
+                  - type: io.kestra.plugin.core.condition.ExecutionStatus
+                    in:
+                      - FAILED
+                      - WARNING
+                  - type: io.kestra.plugin.core.condition.ExecutionNamespace
+                    namespace: company.payroll
+                    prefix: false"""
         )
 
     },

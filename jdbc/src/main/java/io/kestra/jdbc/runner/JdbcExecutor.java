@@ -494,13 +494,13 @@ public class JdbcExecutor implements ExecutorInterface {
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.WARN,
-                                "Re-emitting WorkerTask."
+                                "Re-resubmitting WorkerTask."
                             );
                         } catch (QueueException e) {
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.ERROR,
-                                "Unable to re-emit WorkerTask.",
+                                "Unable to re-resubmit WorkerTask.",
                                 e
                             );
                         }
@@ -1230,14 +1230,17 @@ public class JdbcExecutor implements ExecutorInterface {
     private void processFlowTriggers(Execution execution) throws QueueException {
         // directly process simple conditions
         flowTriggerService.withFlowTriggersOnly(allFlows.stream())
-            .filter(f ->ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().noneMatch(c -> c instanceof MultipleCondition) && f.getTrigger().getPreconditions() == null)
-            .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggers(execution, List.of(f.getFlow()), Optional.empty()).stream())
+            .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().noneMatch(c -> c instanceof MultipleCondition) && f.getTrigger().getPreconditions() == null)
+            .map(f -> f.getFlow())
+            .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
+            .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggers(execution, List.of(f), Optional.empty()).stream())
             .forEach(throwConsumer(exec -> executionQueue.emit(exec)));
 
         // send multiple conditions to the multiple condition queue for later processing
         flowTriggerService.withFlowTriggersOnly(allFlows.stream())
             .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().anyMatch(c -> c instanceof MultipleCondition) || f.getTrigger().getPreconditions() != null)
             .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
+            .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
             .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
     }
 
@@ -1304,6 +1307,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
+                            findFlow(pair.getKey()),
                             executionDelay.getTaskRunId()
                         );
                         executor = executor.withExecution(newAttempt, "retryFailedTask");

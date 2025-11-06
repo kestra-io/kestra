@@ -24,7 +24,7 @@ import org.apache.commons.lang3.tuple.Pair;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-
+@Deprecated(since = "1.1.0", forRemoval = true)
 public abstract class AbstractState extends Task {
     private static final TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
     public static final String TASKS_STATES = "tasks-states";

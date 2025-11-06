@@ -78,10 +78,17 @@ export const useBaseNamespacesStore = () => {
         }
         const data = response.data;
         const contentLength = response.headers?.["content-length"];
+
+        let value = data;
         if (contentLength === (data.length + 2).toString()) {
-            return `"${data}"`;
+            value = `"${data}"`;
         }
-        return data;
+        return {
+            type: response.headers?.["content-type"] || "STRING",
+            value: value,
+            description: response.headers?.["description"] || "",
+            ttl: response.headers?.["ttl"] || undefined
+        };
     }
 
     async function loadInheritedKVs(this: any, id: string) {
@@ -89,7 +96,7 @@ export const useBaseNamespacesStore = () => {
         inheritedKVs.value = response.data;
     }
 
-    async function createKv(this: any, payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl: string}) {
+    async function createKv(this: any, payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl?: string}) {
         await axios.put(
             `${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`,
             payload.value,

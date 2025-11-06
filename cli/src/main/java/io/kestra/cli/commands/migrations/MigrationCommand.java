@@ -2,6 +2,7 @@ package io.kestra.cli.commands.migrations;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
+import io.kestra.cli.commands.migrations.metadata.MetadataMigrationCommand;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

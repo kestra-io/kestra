@@ -543,13 +543,13 @@
             const type = kv.value.type;
             let value: any = kv.value.value;
 
-            if (type === "STRING" || type === "DURATION") {
+            if (["STRING", "DURATION", "JSON"].includes(type)) {
                 value = value || "";
             } else if (type === "DATETIME") {
                 value = new Date(value!).toISOString();
             } else if (type === "DATE") {
                 value = new Date(value!).toISOString().split("T")[0];
-            } else if (["NUMBER", "BOOLEAN", "JSON"].includes(type)) {
+            } else if (["NUMBER", "BOOLEAN"].includes(type)) {
                 value = JSON.stringify(value);
             }
 

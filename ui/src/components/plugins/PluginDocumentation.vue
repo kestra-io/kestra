@@ -39,16 +39,15 @@
                     </template>
                 </SchemaToHtml>
             </Suspense>
-
-            <!-- Optional: intro content or other Markdown block -->
-            <Markdown
-                v-if="introContent"
-                :source="introContent"
-                showSearch
-                collapseExamples
-                :class="{'position-absolute': absolute}"
-            />
         </template>
+
+        <Markdown
+            v-else-if="introContent"
+            :source="introContent"
+            :class="{'position-absolute': absolute}"
+            :showSearch="true"
+            :collapseExamples="true"
+        />
     </div>
 </template>
 

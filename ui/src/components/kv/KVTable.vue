@@ -490,7 +490,6 @@
         kv.value.namespace = entry.namespace;
         kv.value.key = entry.key;
         const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key});
-
         kv.value.type = type;
         if (type === "JSON") {
             kv.value.value = JSON.stringify(value);

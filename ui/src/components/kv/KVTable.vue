@@ -491,14 +491,13 @@
         kv.value.key = entry.key;
         const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key});
 
-        // From the store, `value` is returned as object with type and value fields
-        kv.value.type = value.type;
+        kv.value.type = type;
         if (type === "JSON") {
-            kv.value.value = JSON.stringify(value.value);
+            kv.value.value = JSON.stringify(value);
         } else if (type === "BOOLEAN") {
-            kv.value.value = value.value;
+            kv.value.value = value;
         } else {
-            kv.value.value = value.value.toString();
+            kv.value.value = value.toString();
         }
         kv.value.update = true;
         kv.value.description = entry.description;

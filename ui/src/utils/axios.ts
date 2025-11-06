@@ -6,7 +6,7 @@ import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
 import * as BasicAuth from "../utils/basicAuth"
 import {useAuthStore} from "override/stores/auth"
-import {getCurrentInstance} from "vue"
+import {useMiscStore} from "override/stores/misc";
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -297,9 +297,13 @@ let axiosInstance: AxiosInstance | null = null;
 
 export const useAxios = () => {
     const router = useRouter();
+
+    const miscStore = useMiscStore();
+    const {edition} = miscStore.configs || {};
+        
     if (!axiosInstance) {
-        const isOSS = getCurrentInstance()?.appContext.config.globalProperties.$isOSS ?? false;
-        axiosInstance = createAxios(router, isOSS);
+        axiosInstance = createAxios(router, edition === "OSS");
     }
+
     return axiosInstance;
 };

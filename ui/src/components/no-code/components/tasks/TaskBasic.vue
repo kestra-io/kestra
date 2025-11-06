@@ -38,7 +38,7 @@
                 </el-tooltip>
             </template>
             <component
-                :is="getTaskComponent(schema, key, properties)"
+                :is="getBlockComponent(schema, key, properties)"
                 :modelValue="getPropertiesValue(key)"
                 @update:model-value="onObjectInput(key, $event)"
                 :root="getKey(key)"
@@ -50,17 +50,23 @@
     </el-form>
 </template>
 <script setup>
-    import getTaskComponent from "./getTaskComponent";
     import Help from "vue-material-design-icons/HelpBox.vue";
     import Markdown from "../../../layout/Markdown.vue";
 </script>
 <script>
     import Task from "./MixinTask";
+    import {useBlockComponent} from "./useBlockComponent";
 
     export default {
         name: "TaskBasic",
         mixins: [Task],
         emits: ["update:modelValue"],
+        setup() {
+            const {getBlockComponent} = useBlockComponent();
+            return {
+                getBlockComponent,
+            };
+        },
         computed: {
             properties() {
                 if (this.schema) {

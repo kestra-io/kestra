@@ -1230,8 +1230,10 @@ public class JdbcExecutor implements ExecutorInterface {
     private void processFlowTriggers(Execution execution) throws QueueException {
         // directly process simple conditions
         flowTriggerService.withFlowTriggersOnly(allFlows.stream())
-            .filter(f ->ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().noneMatch(c -> c instanceof MultipleCondition) && f.getTrigger().getPreconditions() == null)
-            .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggers(execution, List.of(f.getFlow()), Optional.empty()).stream())
+            .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().noneMatch(c -> c instanceof MultipleCondition) && f.getTrigger().getPreconditions() == null)
+            .map(f -> f.getFlow())
+            .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
+            .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggers(execution, List.of(f), Optional.empty()).stream())
             .forEach(throwConsumer(exec -> executionQueue.emit(exec)));
 
         // send multiple conditions to the multiple condition queue for later processing

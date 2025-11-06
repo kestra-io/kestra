@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "types": ["@playwright/test", "node"],
-    "module": "commonjs",
+    "module": "preserve",
     "target": "esnext",
     "outDir": "dist"
   },

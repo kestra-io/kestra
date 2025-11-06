@@ -688,21 +688,22 @@
 
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return;
-        for (const node of confirmation.value.nodes) {
+        await Promise.all(confirmation.value.nodes.map(async (node, i) => {
+            const path = filesStore.getPath(node.id) ?? "";
             try {
                 await namespacesStore.deleteFileDirectory({
                     namespace: props.currentNS ?? route.params.namespace as string,
-                    path: filesStore.getPath(node) ?? "",
+                    path,
                 });
                 tree.value.remove(node.id);
                 closeTab?.({
-                    path: filesStore.getPath(node) ?? "",
+                    path,
                 });
             } catch (error) {
                 console.error(`Failed to delete file: ${node.fileName}`, error);
                 toast.error(`Failed to delete file: ${node.fileName}`);
             }
-        }
+        }));
         confirmation.value = {visible: false, nodes: []};
         toast.success("Selected files deleted successfully.");
     }

@@ -331,7 +331,7 @@ subprojects {
         }
 
         dependencies {
-            agent "org.aspectj:aspectjweaver:1.9.24"
+            agent "org.aspectj:aspectjweaver:1.9.25"
         }
 
         test {

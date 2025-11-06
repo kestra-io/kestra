@@ -78,6 +78,7 @@ export const useBaseNamespacesStore = () => {
         }
         const data = response.data;
         const contentLength = response.headers?.["content-length"];
+
         if (contentLength === (data.length + 2).toString()) {
             return `"${data}"`;
         }

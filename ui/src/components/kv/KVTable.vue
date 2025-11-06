@@ -553,7 +553,7 @@
                 value = JSON.stringify(value);
             }
 
-            const contentType = ["DATE", "DATETIME"].includes(type) ? "text/plain" : "application/json";
+            const contentType =  "text/plain";
 
             const namespace = kv.value.namespace!;
             const key = kv.value.key!;
@@ -605,10 +605,9 @@
 
     const formRef = ref();
 
-    watch(() => kv.value.type, () => {
-        if (formRef.value) {
-            (formRef.value as any).clearValidate("value");
-        }
+    watch(() => kv.value.type, (newType) => {
+        formRef.value?.clearValidate("value");
+        if (newType === "BOOLEAN") kv.value.value = false;
     });
 
     defineExpose({

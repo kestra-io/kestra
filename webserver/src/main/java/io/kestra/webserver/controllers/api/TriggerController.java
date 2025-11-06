@@ -33,6 +33,7 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -42,6 +43,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,6 +89,10 @@ public class TriggerController {
         // Deprecated params
         @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
+            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
+            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
+        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
         @Parameter(description = "The flow identifier",deprecated = true) @Nullable @QueryValue String flowId
 
@@ -101,6 +107,9 @@ public class TriggerController {
             null,
             null,
             null,
+            null,
+            null,
+            timeRange,
             null,
             null,
             workerId,

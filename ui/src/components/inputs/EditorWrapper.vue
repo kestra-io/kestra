@@ -275,6 +275,10 @@
         }, 1000);
     }
 
+    onBeforeUnmount(() => {
+        clearTimeout(timeout.value);
+    });
+
 
     function updatePluginDocumentation(event: any) {
         const source = event.model.getValue();

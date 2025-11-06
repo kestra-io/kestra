@@ -1,6 +1,7 @@
 <template>
     <TimeSeries
         :chart="mappedChart(props.flowId, props.namespace)"
+        :filters="chartFilters()"
         showDefault
         short
     />
@@ -9,6 +10,7 @@
 <script setup lang="ts">
     import TimeSeries from "../dashboard/sections/TimeSeries.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {useMiscStore} from "override/stores/misc";
 
     interface ChartDefinition {
         id: string;
@@ -40,6 +42,9 @@
         namespace: string;
     }>();
 
+    const miscStore = useMiscStore();
+
+
     // Chart base definition
     const CHART_DEFINITION: ChartDefinition = {
         id: "total_executions_timeseries",
@@ -67,6 +72,16 @@
         },
     };
     CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
+    
+    
+    function chartFilters() {
+        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "P30D";
+        return [{
+            field: "timeRange",
+            value: DEFAULT_DURATION,
+            operation: "EQUALS"
+        }];
+    }
 
     // Dynamic chart generator
     function mappedChart(id: string, namespace: string) {

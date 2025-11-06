@@ -1774,6 +1774,10 @@
       },
       "title": "过滤子执行"
     },
+    "triggerState": {
+      "label": "触发器状态",
+      "description": "按触发器状态筛选"
+    },
     "trigger refresh": "触发刷新",
     "triggerId": "触发器 ID",
     "trigger_check_warning": "使用 trigger 变量无法与手动 flow 执行一起工作。添加 `??` 合并运算符来解决此问题。例如，不要使用 `trigger.date`，而是使用 `trigger.date ?? execution.startDate`。",

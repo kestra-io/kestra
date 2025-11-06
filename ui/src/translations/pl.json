@@ -1774,6 +1774,10 @@
       },
       "title": "Filtruj wykonania dzieci"
     },
+    "triggerState": {
+      "label": "Stan wyzwalacza",
+      "description": "Filtruj według stanu wyzwalacza"
+    },
     "trigger refresh": "Odśwież",
     "triggerId": "Identyfikator Trigger",
     "trigger_check_warning": "Używanie zmiennych trigger nie zadziała przy ręcznym wykonaniu flow. Dodaj operator koalescencji `??`, aby rozwiązać problem. Na przykład, zamiast `trigger.date`, użyj `trigger.date ?? execution.startDate`.",

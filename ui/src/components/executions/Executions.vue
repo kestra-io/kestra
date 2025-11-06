@@ -495,7 +495,6 @@
     const selectedStatus = ref(undefined);
     const lastRefreshDate = ref(new Date());
     const unqueueDialogVisible = ref(false);
-    const isDefaultNamespaceAllow = ref(true);
     const changeStatusDialogVisible = ref(false);
     const actionOptions = ref<Record<string, any>>({});
     const dblClickRouteName = ref("executions/update");
@@ -613,10 +612,7 @@
     const routeInfo = computed(() => ({title: t("executions")}));
     useRouteContext(routeInfo, props.embed);
 
-    const {saveRestoreUrl} = useRestoreUrl({
-        restoreUrl: true,
-        isDefaultNamespaceAllow: isDefaultNamespaceAllow.value
-    });
+    const {saveRestoreUrl} = useRestoreUrl();
 
     const dataTableRef = ref(null);
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");

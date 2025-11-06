@@ -86,7 +86,7 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
 
     // Automatically call goToRestoreUrl on mount if needed (equivalent to created() hook)
     onMounted(() => {
-        if (Object.keys(route.query).length === 0 && restoreUrl) {
+        if (restoreUrl) {
             loadInit.value = false;
             goToRestoreUrl();
         }

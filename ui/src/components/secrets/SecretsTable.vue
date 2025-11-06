@@ -252,6 +252,7 @@
     import {useSecretsFilter} from "../filter/configurations";
     import {useTableColumns} from "../../composables/useTableColumns";
     import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
     
     const secretsFilter = useSecretsFilter();
 
@@ -304,6 +305,8 @@
     const form = ref<FormInstance>();
     const dataTable = useTemplateRef<DataTableRef>("dataTable");
     const selectTable = ref<InstanceType<typeof SelectTable>>();
+
+    const {saveRestoreUrl} = useRestoreUrl();
 
     const total = ref(0);
     const hasData = ref<boolean>();
@@ -477,7 +480,8 @@
 
     const {onPageChanged, queryWithFilter, onSort} = useDataTableActions({
         dataTableRef: dataTable,
-        loadData
+        loadData,
+        saveRestoreUrl
     });
 
     const updateSecretModal = (secretData: NamespaceSecret) => {

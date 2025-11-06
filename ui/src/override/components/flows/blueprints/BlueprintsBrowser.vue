@@ -126,9 +126,9 @@
         tagsResponseMapper: (tagsResponse: any[]) =>  Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
     });
 
-    const {onPageChanged, onDataLoaded, load, ready, internalPageNumber, internalPageSize} = useDataTableActions({loadData});
+    const {saveRestoreUrl} = useRestoreUrl();
+    const {onPageChanged, onDataLoaded, load, ready, internalPageNumber, internalPageSize} = useDataTableActions({loadData, saveRestoreUrl});
 
-    useRestoreUrl();
 
     const emit = defineEmits(["goToDetail", "loaded"]);
 

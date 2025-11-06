@@ -294,7 +294,7 @@
     import {useTableColumns} from "../../composables/useTableColumns";
     import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
-
+    import useRestoreUrl from "../../composables/useRestoreUrl";
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -318,6 +318,8 @@
     const toast = useToast()
     
     const flowFilter = useFlowFilter();
+
+    const {saveRestoreUrl} = useRestoreUrl();
 
     const lastExecutionByFlowReady = ref(false);
     const latestExecutions = ref<any[]>([]);
@@ -415,7 +417,8 @@
     } = useDataTableActions({
         dblClickRouteName: "flows/update",
         dataTableRef,
-        loadData
+        loadData,
+        saveRestoreUrl
     });
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
@@ -651,7 +654,6 @@
 
         if (queryHasChanged) router.replace({query});
     });
-
 </script>
 
 <style scoped lang="scss">

@@ -606,12 +606,8 @@
     const formRef = ref();
 
     watch(() => kv.value.type, (newType) => {
-        if (formRef.value) {
-            (formRef.value as any).clearValidate("value");
-        }
-        if (newType === "BOOLEAN") {
-            kv.value.value = false;
-        }
+        formRef.value?.clearValidate("value");
+        if (newType === "BOOLEAN") kv.value.value = false;
     });
 
     defineExpose({

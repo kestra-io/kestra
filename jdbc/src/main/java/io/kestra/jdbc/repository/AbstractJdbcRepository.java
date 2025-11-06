@@ -328,6 +328,9 @@ public abstract class AbstractJdbcRepository {
             return applyTriggerStateCondition(value,operation);
         }
 
+        if(field == QueryFilter.Field.TRIGGER_STATE){
+            return applyTriggerStateCondition(value,operation);
+        }
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -483,6 +486,16 @@ public abstract class AbstractJdbcRepository {
         if (isDisabled == null) {
             return DSL.noCondition();
         }
+        return switch (operation) {
+            case EQUALS -> field("value",JSONB.class).contains(JSONB.valueOf("{\"disabled\": " + isDisabled + "}"));
+            case NOT_EQUALS -> field("value",JSONB.class).contains(JSONB.valueOf("{\"disabled\": " + !isDisabled + "}"));
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for Trigger State: " + operation);
+        };
+    }
+    private Condition applyTriggerStateCondition(Object value, QueryFilter.Op operation) {
+        String triggerState =  value.toString();
+        boolean isDisabled = triggerState.equals("disabled");
+
         return switch (operation) {
             case EQUALS -> field("value",JSONB.class).contains(JSONB.valueOf("{\"disabled\": " + isDisabled + "}"));
             case NOT_EQUALS -> field("value",JSONB.class).contains(JSONB.valueOf("{\"disabled\": " + !isDisabled + "}"));

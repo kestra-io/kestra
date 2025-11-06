@@ -696,7 +696,7 @@
     };
 
     const loadQuery = (base: any) => {
-        let queryFilter = queryWithFilter();
+        const queryFilter = queryWithFilter("triggers");
 
         return _merge(base, queryFilter);
     };

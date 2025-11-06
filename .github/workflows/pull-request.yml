@@ -8,50 +8,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  file-changes:
+  poc:
     if: ${{ github.event.pull_request.draft == false }}
-    name: File changes detection
     runs-on: ubuntu-latest
-    timeout-minutes: 60
-    outputs:
-      ui: ${{ steps.changes.outputs.ui }}
-      translations: ${{ steps.changes.outputs.translations }}
-      backend: ${{ steps.changes.outputs.backend }}
+
     steps:
-      - uses: dorny/paths-filter@v3
-        id: changes
+      - name: Checkout - EE
+        uses: actions/checkout@v4
         with:
-          filters: |
-            ui:
-              - 'ui/**'
-            backend:
-              - '!{ui,.github}/**'
-          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: kestra-io/kestra-ee
+          path: kestra-ee
+          ref: develop
 
-  frontend:
-    name: Frontend - Tests
-    needs: [file-changes]
-    if: "needs.file-changes.outputs.ui == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - name: Checkout - current PR
+        uses: actions/checkout@v4
+        with:
+          path: kestra
 
-  backend:
-    name: Backend - Tests
-    needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      - name: GCP - Auth with unit test account
+        id: auth
+        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+        uses: 'google-github-actions/auth@v3'
+        with:
+          credentials_json: '${{ env.GOOGLE_SERVICE_ACCOUNT }}'
+      - name: setup init
+        uses: kestra-io/actions/composite/setup-build@main
+        with:
+          java-enabled: 'true'
+          node-enabled: 'true'
 
-  e2e-tests:
-    name: E2E - Tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+      - name: build OSS UI required for EE UI build
+        shell: bash
+        working-directory: kestra/ui
+        run: npm ci
 
-  generate-pull-request-docker-image:
-    name: Generate PR docker image
-    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
+      - name: OSS UI unit tests
+        working-directory: kestra/ui
+        run: npm run build && npm run test:unit
+
+      - name: Compile EE
+        env:
+          NODE_OPTIONS: "--max-old-space-size=4096"
+        working-directory: kestra-ee
+        run: |
+          ./gradlew compileJava javadoc --parallel

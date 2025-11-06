@@ -486,20 +486,20 @@
                     return;
                 }
                 if(!isCodeEditor(editor))return
-                let position = editor.getPosition();
-                let model = editor.getModel();
                 lastTimeout = setTimeout(() => {
+                    let position = editor?.getPosition();
+                    let model = editor?.getModel() as monaco.editor.ITextModel;
                     if(!position || !model) return;
                     emit("cursor", {
-                        position: position,
-                        model: model,
+                        position,
+                        model,
                     });
+                    highlightPebble();
                     // Save view state when cursor changes
                     if (scrollMemory) {
                         scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
                     }
                 }, 100) as unknown as number;
-                highlightPebble();
             });
         }
 

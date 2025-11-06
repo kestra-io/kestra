@@ -310,5 +310,20 @@
                 }
             }
         }
+
+        @media (max-width: 640px) {
+        width: 100%;
+        padding: 1rem;
+
+        .logo {
+            width: 180px;
+            margin-bottom: 1.5rem;
+        }
+
+        .el-form {
+            max-width: 100%;
+            padding: 1.5rem;
+        }
     }
+}
 </style>

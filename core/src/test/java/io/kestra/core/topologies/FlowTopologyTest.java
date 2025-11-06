@@ -56,15 +56,8 @@ public class FlowTopologyTest {
 
         // When
         computeAndSaveTopologies(List.of(child, parent, unrelatedFlow));
-        System.out.println();
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         // Then
         assertThat(dependencies.map(FlowTopologyTestData::of))
@@ -123,16 +116,8 @@ public class FlowTopologyTest {
 
         // When
         computeAndSaveTopologies(List.of(subChild, child, superParent, parent, unrelatedFlow));
-        System.out.println();
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
-        System.out.println();
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         // Then
         assertThat(dependencies.map(FlowTopologyTestData::of))
@@ -180,15 +165,7 @@ public class FlowTopologyTest {
         // When
         computeAndSaveTopologies(List.of(triggeredFlowOne, triggeredFlowTwo));
 
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
-
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", triggeredFlowTwo.getId(), false, true).toList();
-
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         // Then
         assertThat(dependencies.stream().map(FlowTopologyTestData::of))
@@ -211,7 +188,7 @@ public class FlowTopologyTest {
                   - id: a
                     type: BOOL
                     defaults: true
-                
+
                   - id: b
                     type: BOOL
                     defaults: "{{ inputs.a == true }}"
@@ -251,15 +228,8 @@ public class FlowTopologyTest {
 
         // When
         computeAndSaveTopologies(List.of(child, parent, unrelatedFlow));
-        System.out.println();
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         // Then
         assertThat(dependencies.map(FlowTopologyTestData::of))

@@ -194,6 +194,10 @@
                         showClose: false
                     })
                 })
+            } else {
+                ElMessage.error({
+                    message: t("setup.validation.incorrect_creds")
+                })
             }
         } catch {
             ElMessage.error({

@@ -41,15 +41,25 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                                             return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
                                         }, []);
                                     }))].map(namespace => ({
-                                        label: namespace,
-                                        value: namespace
-                                    }));
+                                    label: namespace,
+                                    value: namespace
+                                }));
                             }
                             return [];
                         },
                         searchable: true
                     },
                 ] : []) as any,
+                {
+                    key: "triggerState",
+                    label: t("filter.triggerState.label"),
+                    description: t("filter.triggerState.description"),
+                    comparators: [
+                        Comparators.EQUALS,
+                        Comparators.NOT_EQUALS
+                    ],
+                    valueType: "text",
+                },
                 ...(route.name !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),

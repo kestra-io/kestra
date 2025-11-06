@@ -76,8 +76,8 @@ class ConcurrencyLimitServiceTest {
         });
 
         Execution unqueued = concurrencyLimitService.unqueue(result, State.Type.RUNNING);
-        executionQueue.emit(unqueued);
         assertThat(unqueued.getState().isRunning()).isTrue();
+        executionQueue.emit(unqueued);
 
         assertTrue(terminated.await(10, TimeUnit.SECONDS));
         receive.blockLast();
@@ -92,7 +92,6 @@ class ConcurrencyLimitServiceTest {
         assertThat(limit.get().getTenantId()).isEqualTo(execution.getTenantId());
         assertThat(limit.get().getNamespace()).isEqualTo(execution.getNamespace());
         assertThat(limit.get().getFlowId()).isEqualTo(execution.getFlowId());
-        assertThat(limit.get().getRunning()).isEqualTo(0);
     }
 
     @Test

@@ -204,6 +204,7 @@
                                     <template #default="scope">
                                         <TimeSeries
                                             :chart="mappedChart(scope.row.id, scope.row.namespace)"
+                                            :filters="chartFilters()"
                                             showDefault
                                             short
                                         />
@@ -287,6 +288,7 @@
 
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
+    import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
 
     import {useTableColumns} from "../../composables/useTableColumns";
@@ -307,6 +309,7 @@
     const flowStore = useFlowStore();
     const authStore = useAuthStore();
     const executionsStore = useExecutionsStore();
+    const miscStore = useMiscStore();
 
     const route = useRoute();
     const router = useRouter();
@@ -620,6 +623,15 @@
         let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));
         MAPPED_CHARTS.content = MAPPED_CHARTS.content.replace("${namespace}", namespace).replace("${flow_id}", id);
         return MAPPED_CHARTS;
+    }
+
+    function chartFilters() {
+        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "P30D";
+        return [{
+            field: "timeRange",
+            value: DEFAULT_DURATION,
+            operation: "EQUALS"
+        }];
     }
 
     onMounted(() => {

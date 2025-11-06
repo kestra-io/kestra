@@ -28,7 +28,7 @@
         </el-breadcrumb>
     </div>
 
-    <div v-if="currentView === 'list'" class="list">
+    <div v-if="currentView === 'list'" class="list" ref="listRef">
         <div
             v-for="plugin in sortedPlugins"
             :key="`${plugin.group}-${plugin.title}`"
@@ -48,7 +48,7 @@
         </div>
     </div>
 
-    <div v-else-if="currentView === 'group'" class="group-view">
+    <div v-else-if="currentView === 'group'" class="group-view" ref="groupRef">
         <PluginUnified
             :group="currentGroup"
             :subgroup="currentSubgroup"
@@ -57,7 +57,7 @@
         />
     </div>
 
-    <div v-else-if="currentView === 'documentation'" :class="['doc-view', {'no-padding': !currentDocumentationPlugin}]">
+    <div v-else-if="currentView === 'documentation'" :class="['doc-view', {'no-padding': !currentDocumentationPlugin}]" ref="docRef">
         <PluginDocumentation 
             :plugin="currentDocumentationPlugin"
         />
@@ -72,6 +72,7 @@
     import PluginUnified from "./PluginUnified.vue";
     import PluginDocumentation from "./PluginDocumentation.vue";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
     import {capitalize, formatPluginTitle} from "../../utils/global";
 
     interface Props {
@@ -94,6 +95,18 @@
     const navigationStack = ref<NavigationItem[]>([]);
     const currentDocumentationPlugin = ref<any>(null);
     const currentView = ref<"list" | "group" | "documentation">("documentation");
+    const listRef = ref<HTMLDivElement | null>(null);
+    const groupRef = ref<HTMLDivElement | null>(null);
+    const docRef = ref<HTMLDivElement | null>(null);
+    const scrollKeyBase = "plugins:documentation";
+
+    const listScrollKey = computed(() => `${scrollKeyBase}:list`);
+    const groupScrollKey = computed(() => `${scrollKeyBase}:group`);
+    const docScrollKey = computed(() => `${scrollKeyBase}:documentation`);
+
+    useScrollMemory(listScrollKey, listRef);
+    useScrollMemory(groupScrollKey, groupRef);
+    useScrollMemory(docScrollKey, docRef);
 
     const getSimpleType = (item: string) => item.split(".").pop() || item;
 
@@ -275,7 +288,9 @@
         }
     }, {immediate: true, deep: true});
 
-    onMounted(loadPluginIcons);
+    onMounted(async () => {
+        await loadPluginIcons();
+    });
 </script>
 
 <style scoped lang="scss">

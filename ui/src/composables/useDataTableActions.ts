@@ -14,7 +14,7 @@ interface PageChangeItem {
     page: number;
 }
 
-interface DataTableRef {
+export interface DataTableRef {
     isLoading: boolean;
 }
 
@@ -101,11 +101,12 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
         internalPageNumber.value = item.page;
 
         if (!embed.value) {
+            const {size: _size, page: _page, ...otherQuery} = route.query;
             router.push({
                 query: {
-                    ...route.query,
                     size: item.size,
-                    page: item.page
+                    page: item.page,
+                    ...otherQuery
                 }
             });
         } else {

@@ -57,10 +57,15 @@ export interface Flow {
     source: string;
     revision?: number;
     deleted?: boolean;
+    disabled?: boolean;
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
     inputs?: Input[];
     errors?: { message: string; code?: string, id?: string }[];
+    concurrency?: {
+        limit: number;
+        behavior: string;
+    };
 }
 
 export const useFlowStore = defineStore("flow", () => {
@@ -90,6 +95,8 @@ export const useFlowStore = defineStore("flow", () => {
     const creationId = ref<string>();
 
     const axios = useAxios();
+
+    const coreStore = useCoreStore();
 
     const t = (key: string, values?: Record<string, any>) => {
         if (!globalI18n.value) {
@@ -160,7 +167,7 @@ export const useFlowStore = defineStore("flow", () => {
                 if (flowBeforeEdit &&
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
-                    const coreStore = useCoreStore();
+                    
                     coreStore.message = {
                         variant: "error",
                         title: t("readonly property"),
@@ -177,7 +184,6 @@ export const useFlowStore = defineStore("flow", () => {
             }
         }
 
-        const coreStore = useCoreStore();
         coreStore.unsavedChange = true;
 
         return validateFlow({
@@ -204,7 +210,6 @@ export const useFlowStore = defineStore("flow", () => {
         const flowSource = flowYaml.value ?? "";
 
         if (flowParsed.value === undefined) {
-            const coreStore = useCoreStore();
             coreStore.message = {
                 variant: "error",
                 title: t("invalid flow"),
@@ -245,7 +250,6 @@ export const useFlowStore = defineStore("flow", () => {
             await createFlow({flow: flowSource ?? ""})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    const coreStore = useCoreStore();
                     coreStore.unsavedChange = false;
                     isCreating.value = false;
                 });
@@ -253,7 +257,6 @@ export const useFlowStore = defineStore("flow", () => {
             await saveFlow({flow: flowSource})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    const coreStore = useCoreStore();
                     coreStore.unsavedChange = false;
                 });
         }
@@ -348,7 +351,6 @@ export const useFlowStore = defineStore("flow", () => {
             })
             .then((response: any) => {
                 if (response.data.exception) {
-                    const coreStore = useCoreStore();
                     coreStore.message = {
                         title: "Invalid source code",
                         message: response.data.exception,
@@ -548,7 +550,6 @@ function deleteFlowAndDependencies() {
                 }
 
                 if ([404, 422].includes(error.response?.status) && config?.params?.subflows?.length > 0) {
-                    const coreStore = useCoreStore();
                     coreStore.message = {
                         title: "Couldn't expand subflow",
                         message: error.response.data.message,

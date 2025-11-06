@@ -39,7 +39,7 @@ export const decodeSearchParams = (query: LocationQuery) =>
                 operation
             };
         })
-        .filter(Boolean);
+        .filter(v => v !== null);
 
 type Filter = Pick<AppliedFilter, "key" | "comparator" | "value">;
 

@@ -31,6 +31,7 @@
 
     const namespace = computed(() => route.params?.id) as Ref<string>;
 
+    const miscStore = useMiscStore();
     const namespacesStore = useNamespacesStore();
 
     watch(namespace, (newID) => {
@@ -40,13 +41,12 @@
     });
 
     watch(() => route.params.tab, (newTab) => {
-        if (newTab === "overview") {
+        if (newTab === "overview" || newTab === "executions") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                const miscStore = useMiscStore();
-                const defaultDuration = miscStore.configs?.chartDefaultDuration || "P30D";
-                const newQuery = {...route.query, "filters[timeRange][EQUALS]": defaultDuration};
+                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "P30D";
+                const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION};
                 router.replace({name: route.name, params: route.params, query: newQuery});
             }
         }

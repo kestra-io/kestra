@@ -19,7 +19,7 @@
         "lint": "eslint --fix",
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
-        "prepare": "cd .. && husky ui/.husky && rm -f .git/hooks/*",
+        "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks",
         "postinstall": "patch-package"
     },
     "dependencies": {
@@ -119,6 +119,7 @@
         "patch-package": "^8.0.1",
         "playwright": "^1.55.0",
         "prettier": "^3.6.2",
+        "rimraf": "^6.0.1",
         "rolldown-vite": "^7.1.20",
         "rollup-plugin-copy": "^3.5.0",
         "sass": "^1.92.3",

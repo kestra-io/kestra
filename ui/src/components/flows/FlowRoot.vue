@@ -33,7 +33,7 @@
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
     import DemoAuditLogs from "../demo/AuditLogs.vue";
-    import {useAuthStore} from "override/stores/auth"
+    import {useAuthStore} from "override/stores/auth";
     import {useMiscStore} from "override/stores/misc";
 
     export default {
@@ -59,13 +59,12 @@
             "$route.params.tab": {
                 immediate: true,
                 handler: function (newTab) {
-                    if (newTab === "overview") {
+                    if (newTab === "overview" || newTab === "executions") {
                         const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
                         if (!Object.keys(this.$route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                            const miscStore = useMiscStore();
-                            const defaultDuration = miscStore.configs?.chartDefaultDuration || "P30D";
-                            const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": defaultDuration};
+                            const DEFAULT_DURATION = this.miscStore.configs?.chartDefaultDuration ?? "P30D";
+                            const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION};
                             this.$router.replace({name: this.$route.name, params: this.$route.params, query: newQuery});
                         }
                     }
@@ -314,7 +313,7 @@
             }
         },
         computed: {
-            ...mapStores(useCoreStore, useFlowStore, useAuthStore),
+            ...mapStores(useCoreStore, useFlowStore, useAuthStore, useMiscStore),
             routeInfo() {
                 return {
                     title: this.$route.params.id,

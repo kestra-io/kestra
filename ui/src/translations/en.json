@@ -1727,6 +1727,10 @@
             "label": "Trigger Execution ID",
             "description": "Filter by trigger execution ID"
         },
+        "triggerState":{
+          "label": " Trigger State",
+          "description": "Filter by trigger state"
+        },
         "scope_flow": {
             "label": "Scope",
             "description": "Filter by flow scope"

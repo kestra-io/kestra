@@ -1774,6 +1774,10 @@
       },
       "title": "Filtrar ejecuciones hijas"
     },
+    "triggerState": {
+      "label": "Estado del disparador",
+      "description": "Filtrar por estado del disparador"
+    },
     "trigger refresh": "Actualizar trigger",
     "triggerId": "ID del Trigger",
     "trigger_check_warning": "Al usar variables de trigger no funcionará con la ejecución manual de flow. Agrega el operador de coalescencia `??` para resolver el problema. Por ejemplo, en lugar de `trigger.date`, usa `trigger.date ?? execution.startDate`.",

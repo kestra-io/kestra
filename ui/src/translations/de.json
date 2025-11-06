@@ -1774,6 +1774,10 @@
       },
       "title": "Kinder-Ausführungen filtern"
     },
+    "triggerState": {
+      "label": "Trigger-Status",
+      "description": "Nach Trigger-Status filtern"
+    },
     "trigger refresh": "Aktualisierung auslösen",
     "triggerId": "Trigger-ID",
     "trigger_check_warning": "Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den `??`-Koaleszenz-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",

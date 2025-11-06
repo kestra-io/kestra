@@ -1,44 +1,44 @@
 <template>
     <TaskObject
-        :modelValue="modelValue"
-        :schema
-        :definitions
         :properties="computedProperties"
-        :root="root"
-        :task="task"
-        :required="required"
+        :schema
         merge
-        @update:model-value="onInput"
     />
 </template>
 
-<script setup>
+<script lang="ts" setup>
+    import {computed, inject, ref} from "vue";
     import TaskObject from "./TaskObject.vue";
-</script>
+    import {resolve$ref} from "../../../../utils/utils";
+    import {FULL_SCHEMA_INJECTION_KEY} from "../../injectionKeys";
 
-<script>
-    import Task from "./MixinTask";
+    const props = withDefaults(defineProps<{
+        schema: any,
+        properties?: Record<string, any>,
+    }>(), {
+        properties: undefined,
+    });
 
-    export default {
-        inheritAttrs: false,
-        mixins: [Task],
-        computed: {
-            computedProperties() {
-                if(!this.schema?.allOf && !this.schema?.$ref) {
-                    return this.schema?.properties || {};
-                }
-                const schemas = this.schema.allOf ?? [this.schema];
-                return schemas.reduce((acc, item) => {
-                    if (item.$ref) {
-                        const type = item.$ref.split("/").pop();
-                        return {
-                            ...acc,
-                            ...this.definitions[type]?.properties
-                        };
-                    }
-                    return {...acc, ...item.properties};
-                }, {});
-            },
-        },
-    };
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}));
+
+    const computedProperties = computed(() => {
+        if(!props.schema?.allOf && !props.schema?.$ref) {
+            return props.schema?.properties || {};
+        }
+        const schemas = props.schema.allOf ?? [props.schema];
+        return schemas.reduce((
+            acc: Record<string, any>,
+            item: {
+                $ref?: string;
+                properties?: Record<string, any>
+            }) => {
+
+            const i = resolve$ref(fullSchema.value, item);
+            return {
+                ...acc,
+                ...i?.properties
+            };
+
+        }, {});
+    })
 </script>

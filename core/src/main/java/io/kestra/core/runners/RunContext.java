@@ -176,6 +176,10 @@ public abstract class RunContext implements PropertyContext {
      */
     public abstract KVStore namespaceKv(String namespace);
 
+    /**
+     * @deprecated use #namespaceKv(String) instead
+     */
+    @Deprecated(since = "1.1.0", forRemoval = true)
     public StateStore stateStore() {
         return new StateStore(this, true);
     }

@@ -22,6 +22,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorState;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
@@ -53,6 +54,8 @@ import java.util.Comparator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static io.kestra.core.models.QueryFilter.Field.KIND;
 
 public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcQueueIndexerInterface<Execution> {
     private static final int FETCH_SIZE = 100;
@@ -201,12 +204,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return findCondition(query, Map.of());
     }
 
-    abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
-
-    @Override
-    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return findCondition(value, operation);
-    }
+    abstract protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation);
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
@@ -296,9 +294,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 field("value")
             )
             .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter(tenantId, false))
-            .and(NORMAL_KIND_CONDITION);
+            .where(this.defaultFilter(tenantId, false));
 
+        boolean hasKindFilter = filters != null && filters.stream()
+            .anyMatch(f -> KIND.value().equalsIgnoreCase(f.field().name()) );
+        if (!hasKindFilter) {
+            select = select.and(NORMAL_KIND_CONDITION);
+        }
         select = select.and(this.filter(filters, "start_date", Resource.EXECUTION));
 
         return select;
@@ -859,13 +861,12 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                             DSL.partitionBy(
                                 field("namespace"),
                                 field("flow_id")
-                            ).orderBy(field("end_date").desc())
+                            ).orderBy(DSL.coalesce(field("end_date"), field("start_date")).desc())
                         ).as("row_num")
                     )
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
                     .and(NORMAL_KIND_CONDITION)
-                    .and(field("end_date").isNotNull())
                     .and(DSL.or(
                         ListUtils.emptyOnNull(flows).isEmpty() ?
                             DSL.trueCondition()
@@ -957,6 +958,22 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         int delete = this.jdbcRepository.delete(execution);
         eventPublisher.publishEvent(CrudEvent.delete(execution));
         return delete;
+    }
+
+    @Override
+    public Integer purge(List<Execution> executions) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                // we send the event before to be sure that if sending the event crash, we would not delete the exec
+                executions.forEach(execution -> eventPublisher.publishEvent(CrudEvent.delete(execution)));
+
+                return context.delete(this.jdbcRepository.getTable())
+                    .where(field("key", String.class).in(executions.stream().map(Execution::getId).toList()))
+                    .execute();
+            });
     }
 
     public Executor lock(String executionId, Function<Pair<Execution, ExecutorState>, Pair<Executor, ExecutorState>> function) {

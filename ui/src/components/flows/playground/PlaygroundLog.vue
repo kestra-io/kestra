@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import Status from "../../Status.vue";
+    import {Status} from "@kestra-io/ui-libs";
     import {date, humanizeDuration} from "../../../utils/filters";
     import {Execution, useExecutionsStore} from "../../../stores/executions";
 
@@ -33,7 +33,7 @@
     }>();
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .playground-log{
         display: flex;
         flex-direction: column;

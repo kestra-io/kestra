@@ -13,8 +13,14 @@ interface LogsState {
     results: any[];
 }
 
+export interface Label{
+    key: string;
+    value: string;
+}
+
 export interface Execution{
     id: string;
+    flowId?: string;
     taskRunList:  {
         id: string,
         taskId: string,
@@ -28,6 +34,8 @@ export interface Execution{
         duration: string;
     }
     inputs?: Record<string, any>;
+    labels?: any[];
+    namespace: string;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {
@@ -250,6 +258,11 @@ export const useExecutionsStore = defineStore("executions", () => {
                 executions.value = response.data.results;
                 total.value = response.data.total;
             }
+
+            if (options.onlyTotal) {
+                return response.data.total;
+            }
+
             return response.data;
         })
     }

@@ -53,8 +53,10 @@ import java.util.OptionalInt;
                     type: io.kestra.plugin.core.http.Request
                     uri: http://host.docker.internal:8080/api/v1/executions/dev/inputs_demo
                     options:
-                      basicAuthUser: admin
-                      basicAuthPassword: admin
+                      auth:
+                        type: BASIC
+                        username: "{{ secret('API_USERNAME') }}"
+                        password: "{{ secret('API_PASSWORD') }}"
                     method: POST
                     contentType: multipart/form-data
                     formData:

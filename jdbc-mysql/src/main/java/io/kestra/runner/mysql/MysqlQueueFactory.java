@@ -147,9 +147,9 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.EXECUTION_RUNNING_NAMED)
+    @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
     @Bean(preDestroy = "close")
-    public QueueInterface<ExecutionRunning> executionRunning() {
-        return new MysqlQueue<>(ExecutionRunning.class, applicationContext);
+    public QueueInterface<MultipleConditionEvent> multipleConditionEvent() {
+        return new MysqlQueue<>(MultipleConditionEvent.class, applicationContext);
     }
 }

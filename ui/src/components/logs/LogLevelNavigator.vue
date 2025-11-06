@@ -34,7 +34,7 @@
             ? {border: `1px solid var(--ks-log-border-${level.toLowerCase()})`}
             : {};
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .el-select__wrapper {
     cursor: unset;
 

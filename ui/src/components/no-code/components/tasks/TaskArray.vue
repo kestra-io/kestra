@@ -3,9 +3,10 @@
         v-for="(element, index) in items"
         :key="'array-' + index"
         :gutter="10"
+        align="top"
         class="w-100"
     >
-        <el-col :span="2" class="d-flex flex-column justify-content-center mt-1 mb-2 reorder" v-if="items.length > 1">
+        <el-col :span="2" class="d-flex flex-column justify-content-center reorder" v-if="items.length > 1">
             <ChevronUp
                 @click.prevent.stop="moveItem(index, 'up')"
                 :class="{disabled: index === 0}"
@@ -26,13 +27,12 @@
                         :root="`${root}[${index}]`"
                         :properties="{}"
                         :schema="props.schema.items"
-                        :definitions="props.definitions"
                         @update:model-value="handleInput($event, index)"
                     />
                 </template>
             </Wrapper>
         </el-col>
-        <el-col :span="2" class="d-flex align-items-center justify-content-center delete">
+        <el-col :span="2" class="delete">
             <DeleteOutline @click="removeItem(index)" />
         </el-col>
     </el-row>
@@ -45,9 +45,9 @@
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
 
     import Add from "../Add.vue";
-    import getTaskComponent from "./getTaskComponent";
     import Wrapper from "./Wrapper.vue";
     import {BLOCK_SCHEMA_PATH_INJECTION_KEY} from "../../injectionKeys";
+    import {useBlockComponent} from "./useBlockComponent";
 
     defineOptions({inheritAttrs: false});
 
@@ -60,20 +60,20 @@
     const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
         schema: any;
-        definitions: any;
         modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
         required?: boolean;
         root?: string;
     }>(), {
         modelValue: undefined,
         schema: () => ({}),
-        definitions: () => ({}),
         required: false,
         root: undefined,
     });
 
+    const {getBlockComponent} = useBlockComponent();
+
     const componentType = computed(() => {
-        return getTaskComponent(props.schema.items, "", props.definitions);
+        return getBlockComponent.value?.(props.schema.items, props.root);
     });
 
     const needWrapper = computed(() => {

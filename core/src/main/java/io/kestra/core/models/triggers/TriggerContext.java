@@ -4,6 +4,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.Getter;
@@ -46,6 +47,7 @@ public class TriggerContext {
     @Nullable
     private List<State.Type> stopAfter;
 
+    @Schema(defaultValue = "false")
     private Boolean disabled = Boolean.FALSE;
 
     protected TriggerContext(TriggerContextBuilder<?, ?> b) {

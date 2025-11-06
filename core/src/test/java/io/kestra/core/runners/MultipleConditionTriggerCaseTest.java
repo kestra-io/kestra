@@ -10,6 +10,9 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 
 import io.micronaut.data.model.Pageable;
+
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -18,6 +21,7 @@ import jakarta.inject.Singleton;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Singleton
 public class MultipleConditionTriggerCaseTest {
@@ -165,5 +169,67 @@ public class MultipleConditionTriggerCaseTest {
 
         assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
         assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    public void forEachItemWithFlowTrigger() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.foreachitem",
+            "flow-trigger-for-each-item-parent");
+        assertThat(execution.getTaskRunList().size()).isEqualTo(5);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // trigger is done
+        List<Execution> childExecutions = runnerUtils.awaitFlowExecutionNumber(5, MAIN_TENANT, "io.kestra.tests.trigger.foreachitem", "flow-trigger-for-each-item-child");
+        assertThat(childExecutions).hasSize(5);
+        childExecutions.forEach(exec -> {
+            assertThat(exec.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(exec.getTaskRunList().size()).isEqualTo(1);
+        });
+
+        List<Execution> grandchildExecutions = runnerUtils.awaitFlowExecutionNumber(5, MAIN_TENANT, "io.kestra.tests.trigger.foreachitem", "flow-trigger-for-each-item-grandchild");
+        assertThat(grandchildExecutions).hasSize(5);
+        grandchildExecutions.forEach(exec -> {
+            assertThat(exec.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(exec.getTaskRunList().size()).isEqualTo(2);
+        });
+    }
+
+    public void flowTriggerMultiplePreconditions() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.multiple.preconditions",
+            "flow-trigger-multiple-preconditions-flow-a");
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // trigger is done
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.multiple.preconditions", "flow-trigger-multiple-preconditions-flow-listen");
+        executionRepository.delete(triggerExecution);
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // we assert that we didn't have any other flow triggered
+        assertThrows(RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.multiple.preconditions", "flow-trigger-multiple-preconditions-flow-listen", Duration.ofSeconds(1)));
+    }
+
+    public void flowTriggerMultipleConditions() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.multiple.conditions",
+            "flow-trigger-multiple-conditions-flow-a");
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // trigger is done
+        Execution triggerExecution = runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.multiple.conditions", "flow-trigger-multiple-conditions-flow-listen");
+        executionRepository.delete(triggerExecution);
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // we assert that we didn't have any other flow triggered
+        assertThrows(RuntimeException.class, () -> runnerUtils.awaitFlowExecution(
+            e -> e.getState().getCurrent().equals(Type.SUCCESS),
+            MAIN_TENANT, "io.kestra.tests.trigger.multiple.conditions", "flow-trigger-multiple-conditions-flow-listen", Duration.ofSeconds(1)));
     }
 }

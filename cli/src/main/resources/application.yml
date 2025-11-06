@@ -49,6 +49,8 @@ micronaut:
           - /ui/.+
           - /health
           - /health/.+
+          - /metrics
+          - /metrics/.+
           - /prometheus
     http-version: HTTP_1_1
   caches:
@@ -240,6 +242,10 @@ kestra:
 
   ui-anonymous-usage-report:
     enabled: true
+
+  ui:
+    charts:
+      default-duration: P30D
 
   anonymous-usage-report:
     enabled: true

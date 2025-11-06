@@ -4,26 +4,25 @@
     </component>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, toRef} from "vue";
     import {useRoute} from "vue-router";
     import {useDocsLink} from "../docs/useDocsLink";
 
     const route = useRoute();
 
-    const props = defineProps({
-        href: {
-            type: String,
-            default: ""
-        },
-        target: {
-            type: String,
-            default: undefined,
-            required: false
-        }
+    const props = withDefaults(defineProps<{
+        href?: string;
+        target?: string;
+    }>(), {
+        href: "",
+        target: undefined
     });
 
-    const {href, isRemote} = useDocsLink(toRef(props.href), computed(() => route.path));
+    const {href, isRemote} = useDocsLink(
+        toRef(props, "href"),
+        computed(() => route.path)
+    );
 
     const linkType = computed(() => {
         return isRemote.value ? "a" : "router-link";
@@ -33,7 +32,7 @@
         if (isRemote.value) {
             return {
                 href: href.value,
-                target: "_blank"
+                target: props.target ?? "_blank"
             };
         }
 

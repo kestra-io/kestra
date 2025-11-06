@@ -7,6 +7,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.conditions.Condition;
@@ -283,10 +284,22 @@ public abstract class AbstractScheduler implements Scheduler {
                         workerTriggerResult.getExecution().get(),
                         workerTriggerResult.getTriggerContext()
                     );
-                    ZonedDateTime nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
+                    ZonedDateTime nextExecutionDate;
+                    try {
+                        nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
+                    } catch (InvalidTriggerConfigurationException e) {
+                        disableInvalidTrigger(workerTriggerResult.getTriggerContext(), e);
+                        return;
+                    }
                     this.handleEvaluateWorkerTriggerResult(triggerExecution, nextExecutionDate);
                 } else {
-                    ZonedDateTime nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
+                    ZonedDateTime nextExecutionDate;
+                    try {
+                        nextExecutionDate = this.nextEvaluationDate(workerTriggerResult.getTrigger());
+                    } catch (InvalidTriggerConfigurationException e) {
+                        disableInvalidTrigger(workerTriggerResult.getTriggerContext(), e);
+                        return;
+                    }
                     this.triggerState.update(Trigger.of(workerTriggerResult.getTriggerContext(), nextExecutionDate));
                 }
             }
@@ -450,7 +463,7 @@ public abstract class AbstractScheduler implements Scheduler {
         // by default: do nothing
     }
 
-    private ZonedDateTime nextEvaluationDate(AbstractTrigger abstractTrigger) {
+    private ZonedDateTime nextEvaluationDate(AbstractTrigger abstractTrigger) throws InvalidTriggerConfigurationException {
         if (abstractTrigger instanceof PollingTriggerInterface interval) {
             return interval.nextEvaluationDate();
         } else {
@@ -458,7 +471,7 @@ public abstract class AbstractScheduler implements Scheduler {
         }
     }
 
-    private ZonedDateTime nextEvaluationDate(AbstractTrigger abstractTrigger, ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception {
+    private ZonedDateTime nextEvaluationDate(AbstractTrigger abstractTrigger, ConditionContext conditionContext, Optional<? extends TriggerContext> last) throws Exception, InvalidTriggerConfigurationException {
         if (abstractTrigger instanceof PollingTriggerInterface interval) {
             return interval.nextEvaluationDate(conditionContext, last);
         } else {
@@ -514,6 +527,10 @@ public abstract class AbstractScheduler implements Scheduler {
                             triggerContext = lastTrigger.toBuilder()
                                 .nextExecutionDate(this.nextEvaluationDate(abstractTrigger, conditionContext, Optional.of(lastTrigger)))
                                 .build();
+                        } catch (InvalidTriggerConfigurationException e) {
+                            logError(conditionContext, flow, abstractTrigger, e);
+                            disableInvalidTrigger(flow, abstractTrigger, e);
+                            return null;
                         } catch (Exception e) {
                             logError(conditionContext, flow, abstractTrigger, e);
                             return null;
@@ -535,6 +552,47 @@ public abstract class AbstractScheduler implements Scheduler {
                 })
             )
             .filter(Objects::nonNull).toList();
+    }
+
+    private void disableInvalidTrigger(TriggerContext triggerContext, Throwable e) {
+        try {
+            var disabledTrigger = Trigger.builder()
+                .tenantId(triggerContext.getTenantId())
+                .namespace(triggerContext.getNamespace())
+                .flowId(triggerContext.getFlowId())
+                .triggerId(triggerContext.getTriggerId())
+                .date(triggerContext.getDate())
+                .backfill(triggerContext.getBackfill())
+                .stopAfter(triggerContext.getStopAfter())
+                .disabled(true)
+                .updatedDate(Instant.now())
+                .build();
+
+            triggerState.update(disabledTrigger);
+
+            triggerQueue.emit(disabledTrigger);
+
+            log.warn("Disabled trigger {}.{} due to invalid configuration: {}", disabledTrigger.getFlowId(), disabledTrigger.getTriggerId(), e.getMessage());
+        } catch (Exception ex) {
+            log.error("Failed to disable trigger {}.{}: {}", triggerContext.getFlowId(), triggerContext.getTriggerId(), ex.getMessage(), ex);
+        }
+    }
+
+    private void disableInvalidTrigger(FlowWithSource flow, AbstractTrigger trigger, Throwable e) {
+        var disabledTrigger = Trigger.builder()
+            .tenantId(flow.getTenantId())
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .triggerId(trigger.getId())
+            .disabled(true)
+            .updatedDate(Instant.now())
+            .build();
+
+        disableInvalidTrigger(disabledTrigger, e);
+    }
+
+    private void disableInvalidTrigger(FlowWithWorkerTrigger f, Throwable e) {
+        disableInvalidTrigger(f.getTriggerContext(), e);
     }
 
     abstract public void handleNext(List<FlowWithSource> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer);
@@ -681,6 +739,10 @@ public abstract class AbstractScheduler implements Scheduler {
                             ZonedDateTime nextExecutionDate = null;
                             try {
                                 nextExecutionDate = this.nextEvaluationDate(f.getAbstractTrigger(), f.getConditionContext(), Optional.of(f.getTriggerContext()));
+                            } catch (InvalidTriggerConfigurationException e) {
+                                logError(f, e);
+                                disableInvalidTrigger(f, e);
+                                return;
                             } catch (Exception e) {
                                 logError(f, e);
                             }
@@ -700,7 +762,15 @@ public abstract class AbstractScheduler implements Scheduler {
                             .labels(LabelService.labelsExcludingSystem(f.getFlow()))
                             .state(new State().withState(State.Type.FAILED))
                             .build();
-                        ZonedDateTime nextExecutionDate = this.nextEvaluationDate(f.getAbstractTrigger());
+                        ZonedDateTime nextExecutionDate;
+                        try {
+                            nextExecutionDate = this.nextEvaluationDate(f.getAbstractTrigger());
+                        } catch (InvalidTriggerConfigurationException e2) {
+                            logError(f, e2);
+                            disableInvalidTrigger(f, e2);
+                            return;
+                        }
+
                         var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
                         this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handle/save/on-error"));
                     }

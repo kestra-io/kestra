@@ -11,6 +11,7 @@ import org.jooq.impl.DSL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRepository {
@@ -25,12 +26,12 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
         this.jdbcRepository.persist(executionQueued, dslContext, fields);
     }
 
-    public void pop(String tenantId, String namespace, String flowId, Consumer<Execution> consumer) {
+    public void pop(String tenantId, String namespace, String flowId, BiConsumer<DSLContext, Execution> consumer) {
         this.jdbcRepository
             .getDslContextWrapper()
             .transaction(configuration -> {
-                var select = DSL
-                    .using(configuration)
+                var dslContext = DSL.using(configuration);
+                var select = dslContext
                     .select(AbstractJdbcRepository.field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(buildTenantCondition(tenantId))
@@ -43,7 +44,7 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
 
                 Optional<ExecutionQueued> maybeExecution = this.jdbcRepository.fetchOne(select);
                 if (maybeExecution.isPresent()) {
-                    consumer.accept(maybeExecution.get().getExecution());
+                    consumer.accept(dslContext, maybeExecution.get().getExecution());
                     this.jdbcRepository.delete(maybeExecution.get());
                 }
             });

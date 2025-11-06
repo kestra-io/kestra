@@ -4,7 +4,7 @@
             data-test-id="time-selector"
             :modelValue="value"
             :placeholder="placeholder"
-            @change="$emit('change', $event)"
+            @change="emit('change', $event)"
             :clearable="clearable"
         >
             <template #prefix>
@@ -20,37 +20,23 @@
     </el-tooltip>
 </template>
 
-<script>
+<script setup lang="ts">
     import ClockOutline from "vue-material-design-icons/ClockOutline.vue";
 
-    export default {
-        components: {
-            ClockOutline
-        },
-        emits: [
-            "change"
-        ],
-        props: {
-            placeholder: {
-                type: String,
-                default: undefined
-            },
-            value: {
-                type: String,
-                default: undefined
-            },
-            options: {
-                type: Array,
-                default: () => []
-            },
-            tooltip: {
-                type: String,
-                default: undefined
-            },
-            clearable: {
-                type: Boolean,
-                default: false
-            }
-        }
+    interface Option {
+        value: string;
+        label: string;
     }
+
+    defineProps<{
+        placeholder?: string,
+        value?: string,
+        options: Option[],
+        tooltip?: string,
+        clearable?: boolean
+    }>();
+
+    const emit = defineEmits<{
+        (e: "change", value: string): void
+    }>();
 </script>

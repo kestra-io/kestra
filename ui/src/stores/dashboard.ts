@@ -1,4 +1,4 @@
-import {ref} from "vue";
+import {computed, ref} from "vue";
 import {defineStore} from "pinia";
 
 import type {AxiosRequestConfig, AxiosResponse} from "axios";
@@ -19,22 +19,26 @@ import Utils from "../utils/utils";
 
 import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/composables/useDashboards";
 import {useAxios} from "../utils/axios";
+import {removeRefPrefix, usePluginsStore} from "./plugins";
+import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
 
 export const useDashboardStore = defineStore("dashboard", () => {
-
+        const selectedChart = ref<Chart>();
         const dashboard = ref<Dashboard>();
         const chartErrors = ref<string[]>([]);
+        const isCreating = ref<boolean>(false);
+
+        const sourceCode = ref("")
+        const parsedSource = computed<{ id?: string, [key:string]: any } | undefined>((previous) => {
+            try {
+                return YAML_UTILS.parse(sourceCode.value);
+            } catch {
+                return previous;
+            }
+        })
 
         const axios = useAxios();
-
-        function setDashboard(dashboard: Dashboard) {
-            dashboard.value = dashboard;
-        }
-
-        function setChartErrors(errors: string[]) {
-            chartErrors.value = errors;
-        }
 
         async function list(options: Record<string, any>) {
             const {sort, ...params} = options;
@@ -45,13 +49,15 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
         async function load(id: Dashboard["id"]) {
             const response = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus});
-            let dashboard;
+            let dashboardLoaded: Dashboard;
 
-            if (response.status === 200) dashboard = response.data;
-            else dashboard = {title: "Default", id};
+            if (response.status === 200) dashboardLoaded = response.data;
+            else dashboardLoaded = {title: "Default", id, charts: [], sourceCode: ""};
 
-            setDashboard(dashboard);
-            return dashboard;
+            dashboard.value = dashboardLoaded;
+            sourceCode.value = dashboardLoaded.sourceCode ?? ""
+
+            return dashboardLoaded;
         }
 
         async function create(source: Dashboard["sourceCode"]) {
@@ -79,9 +85,9 @@ export const useDashboardStore = defineStore("dashboard", () => {
             return response.data;
         }
 
-        async function validateChart(source: Chart["source"]) {
+        async function validateChart(source: string) {
             const response = await axios.post(`${apiUrl()}/dashboards/validate/chart`, source, header);
-            setChartErrors(response.data);
+            chartErrors.value = response.data;
             return response.data;
         }
 
@@ -103,11 +109,85 @@ export const useDashboardStore = defineStore("dashboard", () => {
                 .then((res) => downloadHandler(res, filename));
         }
 
+        const pluginsStore = usePluginsStore();
+
+        const InitialSchema = {}
+
+        const schema = computed<{
+                definitions: any,
+                $ref: string,
+        }>(() =>  {
+            return pluginsStore.schemaType?.dashboard ?? InitialSchema;
+        })
+
+        const definitions = computed<Record<string, any>>(() =>  {
+            return schema.value.definitions ?? {};
+        });
+
+        function recursivelyLoopUpSchemaRef(a: any, definitions: Record<string, any>): any {
+            if (a.$ref) {
+                const ref = removeRefPrefix(a.$ref);
+                return recursivelyLoopUpSchemaRef(definitions[ref], definitions);
+            }
+            return a;
+        }
+
+        const rootSchema = computed<Record<string, any> | undefined>(() => {
+            return recursivelyLoopUpSchemaRef(schema.value, definitions.value);
+        });
+
+        const rootProperties = computed<Record<string, any> | undefined>(() => {
+            return rootSchema.value?.properties;
+        });
+
+        async function loadChart(chart: any) {
+            const yamlChart = YAML_UTILS.stringify(chart);
+            if(selectedChart.value?.content === yamlChart){
+                return {
+                    error: chartErrors.value.length > 0 ? chartErrors.value[0] : null,
+                    data: selectedChart.value ? {...selectedChart.value, raw: chart} : null,
+                    raw: chart
+                };
+            }
+            const result: { error: string | null; data: null | {
+                id?: string;
+                name?: string;
+                type?: string;
+                chartOptions?: Record<string, any>;
+                dataFilters?: any[];
+                charts?: any[];
+            }; raw: any } = {
+                error: null,
+                data: null,
+                raw: {}
+            };
+            const errors = await validateChart(yamlChart);
+            
+            if (errors.constraints) {
+                result.error = errors.constraints;
+            } else {
+                result.data = {...chart, content: yamlChart, raw: chart};
+            }
+
+            selectedChart.value = typeof result.data === "object"
+                ? {
+                    ...result.data,
+                    chartOptions: {
+                        ...result.data?.chartOptions,
+                        width: 12
+                    }
+                } as any
+                : undefined;
+            chartErrors.value = [result.error].filter(e => e !== null);
+
+            return result;
+        }
+
         return {
             dashboard,
             chartErrors,
-            setDashboard,
-            setChartErrors,
+            isCreating,
+            selectedChart,
             list,
             load,
             create,
@@ -118,5 +198,13 @@ export const useDashboardStore = defineStore("dashboard", () => {
             validateChart,
             chartPreview,
             export: exportDashboard,
+            loadChart,
+
+            schema,
+            definitions,
+            rootSchema,
+            rootProperties,
+            sourceCode,
+            parsedSource,
         };
 });

@@ -5,7 +5,6 @@ import {useI18n} from "vue-i18n";
 import BlueprintsBrowser from "../../../override/components/flows/blueprints/BlueprintsBrowser.vue";
 import Dashboard from "../../../components/dashboard/Dashboard.vue";
 import Flows from "../../../components/flows/Flows.vue";
-// @ts-expect-error no types for executions yet
 import Executions from "../../../components/executions/Executions.vue";
 import Dependencies from "../../../components/dependencies/Dependencies.vue";
 import NamespaceFilesEditorView from "../../../components/namespaces/components/NamespaceFilesEditorView.vue";
@@ -121,15 +120,11 @@ export function useHelpers() {
             maximized: true,
         },
         {
-            maximized: true,
             name: "files",
             title: t("files"),
             component: NamespaceFilesEditorView,
-            props: {
-                namespace: namespace.value,
-                isNamespace: true,
-                isReadOnly: false,
-            },
+            props: {namespace: namespace.value},
+            maximized: true,
         },
     ];
 

@@ -10,7 +10,7 @@
     <NoData v-else />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {PropType, computed, watch} from "vue";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
@@ -132,7 +132,7 @@
         const grouped = {};
 
         const rawData = generated.value.results;
-        rawData.forEach((item) => {
+        rawData?.forEach((item) => {
             const key = validColumns.map((col) => item[col]).join(", "); // Use '|' as a delimiter
 
             if (!grouped[item[column]]) {
@@ -146,7 +146,7 @@
         });
 
         const labels = Object.keys(grouped);
-        const xLabels = [...new Set(rawData.map((item) => item[column]))];
+        const xLabels = [...new Set(rawData?.map((item) => item[column]))];
 
         const datasets = xLabels.flatMap((xLabel) => {
             return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
@@ -175,7 +175,7 @@
     }, {deep: true});
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .chart {
         #{--chart-height}: 200px;
 

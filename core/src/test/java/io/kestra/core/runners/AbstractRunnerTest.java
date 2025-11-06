@@ -12,7 +12,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.plugin.core.flow.*;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -242,7 +241,6 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.flowTriggerPreconditions();
     }
 
-    @Disabled
     @Test
     @LoadFlows(value = {"flows/valids/flow-trigger-preconditions-flow-listen.yaml",
         "flows/valids/flow-trigger-preconditions-flow-a.yaml",
@@ -255,6 +253,24 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({"flows/valids/flow-trigger-paused-listen.yaml", "flows/valids/flow-trigger-paused-flow.yaml"})
     void flowTriggerOnPaused() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerOnPaused();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-for-each-item-parent.yaml", "flows/valids/flow-trigger-for-each-item-child.yaml", "flows/valids/flow-trigger-for-each-item-grandchild.yaml"})
+    void forEachItemWithFlowTrigger() throws Exception {
+        multipleConditionTriggerCaseTest.forEachItemWithFlowTrigger();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-multiple-preconditions-flow-a.yaml", "flows/valids/flow-trigger-multiple-preconditions-flow-listen.yaml"})
+    void flowTriggerMultiplePreconditions() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerMultiplePreconditions();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-multiple-conditions-flow-a.yaml", "flows/valids/flow-trigger-multiple-conditions-flow-listen.yaml"})
+    void flowTriggerMultipleConditions() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerMultipleConditions();
     }
 
     @Test
@@ -281,7 +297,7 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = {"flows/valids/switch.yaml",
         "flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml"}, tenantId = TENANT_1)
-    void flowWaitFailed() throws Exception {
+    public void flowWaitFailed() throws Exception {
         flowCaseTest.waitFailed(TENANT_1);
     }
 

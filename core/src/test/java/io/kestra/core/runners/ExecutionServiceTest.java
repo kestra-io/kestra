@@ -20,7 +20,6 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Pause;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.slf4j.event.Level;
@@ -73,7 +72,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(3);
         assertThat(restart.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(4);
+        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(5);
         assertThat(restart.getId()).isEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(2).getId()).isEqualTo(execution.getTaskRunList().get(2).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
@@ -106,7 +105,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(3);
         assertThat(restart.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(4);
+        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(5);
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(2).getId()).isNotEqualTo(execution.getTaskRunList().get(2).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
@@ -124,6 +123,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count()).isGreaterThan(1L);
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count()).isGreaterThan(1L);
+
         assertThat(restart.getTaskRunList().getFirst().getId()).isEqualTo(restart.getTaskRunList().getFirst().getId());
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
     }
@@ -194,7 +194,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(2);
         assertThat(restart.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getTaskRunList().get(1).getState().getHistories()).hasSize(4);
+        assertThat(restart.getTaskRunList().get(1).getState().getHistories()).hasSize(5);
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
@@ -218,7 +218,6 @@ class ExecutionServiceTest {
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
     }
 
-    @Disabled
     @Test
     @LoadFlows({"flows/valids/parallel-nested.yaml"})
     void replayParallel() throws Exception {
@@ -290,7 +289,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(3);
         assertThat(restart.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(4);
+        assertThat(restart.getTaskRunList().get(2).getState().getHistories()).hasSize(5);
 
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getTaskRunList().get(1).getId()).isNotEqualTo(execution.getTaskRunList().get(1).getId());
@@ -335,7 +334,7 @@ class ExecutionServiceTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("1_each", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getHistories()).hasSize(4);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getAttempts()).isNull();
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         restart = executionService.markAs(execution, flow, execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId(), State.Type.FAILED);
 
@@ -345,7 +344,7 @@ class ExecutionServiceTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("1_each", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getHistories()).hasSize(4);
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getState().getHistories()).hasSize(5);
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
@@ -419,9 +418,9 @@ class ExecutionServiceTest {
 
         Execution killed = executionService.kill(execution, flow);
 
-        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLING);
         assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
-        assertThat(killed.getState().getHistories()).hasSize(4);
+        assertThat(killed.getState().getHistories()).hasSize(5);
     }
 
     @Test

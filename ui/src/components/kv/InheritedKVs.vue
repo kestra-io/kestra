@@ -1,5 +1,11 @@
 <template>
     <el-table :data="store.inheritedKVs" tableLayout="auto">
+        <el-table-column prop="namespace" :label="$t('namespace')">
+            <template #default="scope">
+                <code>{{ scope.row.namespace }}</code>
+            </template>
+        </el-table-column>
+
         <el-table-column prop="key" :label="$t('key')">
             <template #default="scope">
                 <code>{{ scope.row.key }}</code>
@@ -26,15 +32,21 @@
     </el-table>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {onMounted} from "vue";
 
     import {useNamespacesStore} from "override/stores/namespaces";
 
-    const props = defineProps({namespace: {type: String, required: true}});
+    interface Props {
+        namespace: string;
+    }
+
+    const props = defineProps<Props>();
 
     const store = useNamespacesStore();
 
-    const loadItem = () => store.loadInheritedKVs(props.namespace);
+    const loadItem = (): void => {
+        store.loadInheritedKVs(props.namespace);
+    };
     onMounted(() => loadItem());
 </script>

@@ -1,6 +1,5 @@
 <template>
     <el-select
-        data-component="FILENAME_PLACEHOLDER"
         :modelValue="value"
         @update:model-value="onInput"
         filterable
@@ -21,8 +20,7 @@
     </el-select>
 </template>
 <script>
-    import {State} from "@kestra-io/ui-libs"
-    import Status from "../Status.vue";
+    import {State, Status} from "@kestra-io/ui-libs"
 
     export default {
         components: {Status},

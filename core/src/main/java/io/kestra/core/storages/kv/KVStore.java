@@ -1,12 +1,16 @@
 package io.kestra.core.storages.kv;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
+import io.kestra.core.models.FetchVersion;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.storages.StorageContext;
+import io.micronaut.data.model.Pageable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URI;
-import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -25,11 +29,15 @@ public interface KVStore {
     String namespace();
 
     default URI storageUri(String key) {
-        return this.storageUri(key, namespace());
+        return this.storageUri(key, 1);
     }
 
-    default URI storageUri(String key, String namespace) {
-        String filePath = key == null ? "" : ("/" + key + ".ion");
+    default URI storageUri(String key, int version) {
+        return this.storageUri(key, namespace(), version);
+    }
+
+    default URI storageUri(String key, String namespace, int version) {
+        String filePath = key == null ? "" : ("/" + key + ".ion") + (version > 1 ? (".v" + version) : "");
         return URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.kvPrefix(namespace) + filePath);
     }
 
@@ -73,12 +81,29 @@ public interface KVStore {
     boolean delete(String key) throws IOException;
 
     /**
+     * Purge the provided KV entries.
+     */
+    Integer purge(List<KVEntry> kvToDelete) throws IOException;
+
+    default ArrayListTotal<KVEntry> list() throws IOException {
+        return this.list(Pageable.UNPAGED);
+    }
+
+    default ArrayListTotal<KVEntry> list(Pageable pageable) throws IOException {
+        return this.list(pageable, Collections.emptyList());
+    }
+
+    default ArrayListTotal<KVEntry> list(Pageable pageable, List<QueryFilter> queryFilters) throws IOException {
+        return this.list(pageable, queryFilters, false, false, FetchVersion.LATEST);
+    }
+
+    /**
      * Lists all the K/V store entries.
      *
      * @return  The list of {@link KVEntry}.
      * @throws IOException if an error occurred while executing the operation on the K/V store.
      */
-    List<KVEntry> list() throws IOException;
+    ArrayListTotal<KVEntry> list(Pageable pageable, List<QueryFilter> queryFilters, boolean allowDeleted, boolean allowExpired, FetchVersion fetchBehavior) throws IOException;
 
     /**
      * Lists all the K/V store entries, expired or not.
@@ -97,22 +122,22 @@ public interface KVStore {
     Optional<KVEntry> get(String key) throws IOException;
 
     /**
-     * Checks whether a K/V entry exists for teh given key.
+     * Checks whether a K/V entry exists for the given key.
      *
      * @param key The entry key.
      * @return {@code true} of an entry exists.
      * @throws IOException if an error occurred while executing the operation on the K/V store.
      */
     default boolean exists(String key) throws IOException {
-        return list().stream().anyMatch(kvEntry -> kvEntry.key().equals(key));
+        return get(key).isPresent();
     }
-    
+
     /**
      * Finds a KV entry with associated metadata for a given key.
      *
      * @param key   the KV entry key.
      * @return an optional of {@link KVValueAndMetadata}.
-     * 
+     *
      * @throws UncheckedIOException if an error occurred while executing the operation on the K/V store.
      */
     default Optional<KVValueAndMetadata> findMetadataAndValue(final String key) throws UncheckedIOException {
@@ -132,7 +157,7 @@ public interface KVStore {
             throw new UncheckedIOException(e);
         }
     }
-    
+
     Pattern KEY_VALIDATOR_PATTERN = Pattern.compile("[a-zA-Z0-9][a-zA-Z0-9._-]*");
 
     /**

@@ -44,7 +44,7 @@ public class Template implements DeletedInterface, TenantInterface, HasUID {
                 return exclusions.contains(m.getName()) || super.hasIgnoreMarker(m);
             }
         })
-        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+        .setDefaultPropertyInclusion(JsonInclude.Include.NON_DEFAULT);
 
     @Setter
     @Hidden

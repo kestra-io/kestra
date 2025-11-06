@@ -1,6 +1,7 @@
 package io.kestra.core.models.flows;
 
 import io.micronaut.core.annotation.Introspected;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,6 +34,12 @@ public class Output implements Data {
      * The output value. Can be a dynamic expression.
      */
     @NotNull
+    @Schema(
+        oneOf = {
+            Object.class,
+            String.class
+        }
+    )
     Object value;
 
     /**

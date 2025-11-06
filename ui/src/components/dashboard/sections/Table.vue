@@ -10,6 +10,7 @@
                 v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
                 :label="value.displayName || key"
                 :key
+                :width="value.field === 'STATE' ? 140 : null"
             >
                 <template #default="scope">
                     <component :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)">
@@ -33,7 +34,7 @@
     <NoData v-else :text="EMPTY_TEXT" />
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {PropType, watch, ref, computed} from "vue";
 
     import type {RouteLocation} from "vue-router";
@@ -45,7 +46,7 @@
     import Duration from "./table/columns/Duration.vue";
     import Link from "./table/columns/Link.vue";
     import Namespace from "./table/columns/Namespace.vue";
-    import Status from "../../Status.vue";
+    import {Status} from "@kestra-io/ui-libs";
 
     import Pagination from "../../layout/Pagination.vue";
     import NoData from "../../layout/NoData.vue";
@@ -117,11 +118,16 @@
 
     const dashboardID = (route: RouteLocation) => getDashboard(route, "id") as string;
 
-    const handlePageChange = (options: { page: number; size: number }) => {
+    const handlePageChange = (options: { page?: number; size?: number | string }) => {
         if (pageNumber.value === options.page && pageSize.value === options.size) return;
 
-        pageNumber.value = options.page;
-        pageSize.value = options.size;
+        pageNumber.value = options.page ?? 1;
+        const sizeNumber = typeof options.size === "string" ? parseInt(options.size, 10) : options.size;
+        if (sizeNumber && isNaN(sizeNumber)) {
+            pageSize.value = 25;
+            return;
+        };
+        pageSize.value = sizeNumber ?? 25;
 
         return getData(dashboardID(route));
     };
@@ -138,3 +144,9 @@
         refresh();
     }, {deep: true, immediate: true});
 </script>
+
+<style lang="scss" scoped>
+section#table :deep(.el-scrollbar__thumb) {
+    background-color: var(--ks-button-background-primary) !important;
+}
+</style>

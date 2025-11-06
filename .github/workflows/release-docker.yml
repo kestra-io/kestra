@@ -1,0 +1,34 @@
+name: Publish docker
+
+on:
+  workflow_dispatch:
+    inputs:
+      retag-latest:
+        description: 'Retag latest Docker images'
+        required: true
+        type: boolean
+        default: false
+      retag-lts:
+        description: 'Retag LTS Docker images'
+        required: true
+        type: boolean
+        default: false
+      dry-run:
+        description: 'Dry run mode that will not write or release anything'
+        required: true
+        type: boolean
+        default: false
+
+jobs:
+  publish-docker:
+    name: Publish Docker
+    if: startsWith(github.ref, 'refs/tags/v')
+    uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
+    with:
+      retag-latest: ${{ inputs.retag-latest }}
+      retag-lts: ${{ inputs.retag-lts }}
+      dry-run: ${{ inputs.dry-run }}
+    secrets:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

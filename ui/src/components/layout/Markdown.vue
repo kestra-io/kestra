@@ -69,19 +69,6 @@
     const hasMatches = computed(() => hasMatchesRef.value);
 
     /**
-     * Replace custom alert syntax (legacy component behavior)
-     * ::alert{type="info"} ... ::: -> ::: info ... :::
-     */
-    function replaceAlertSyntax(source: string | undefined) {
-        if (!source) return "";
-        return source.replace(
-            /(\n)?:\s*:\s*alert\{type="(.*?)"\}\s*\n([\s\S]*?)\n:\s*:(\n)?/g,
-            (_, newLine1, type, content, newLine2) =>
-                `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
-        );
-    }
-
-    /**
      * RENDERING
      */
     watch(
@@ -109,9 +96,7 @@
             return;
         }
 
-        const source = replaceAlertSyntax(props.source);
-
-        markdownHtml.value = await Markdown.render(source, {
+        markdownHtml.value = await Markdown.render(props.source, {
             permalink: props.permalink,
             html: props.html,
             variant: props.variant,

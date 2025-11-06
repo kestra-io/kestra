@@ -40,7 +40,7 @@
             <button v-if="activeTab.length" class="closeButton" @click="setActiveTab('')">
                 <Close />
             </button>
-            <KeepAlive>
+            <KeepAlive v-if="activeTab">
                 <ContextDocs v-if="activeTab === 'docs'" />
                 <ContextNews v-else-if="activeTab === 'news'" />
                 <template v-else>

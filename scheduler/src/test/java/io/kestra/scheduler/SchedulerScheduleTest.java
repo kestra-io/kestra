@@ -42,7 +42,6 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-@TestInstance(Lifecycle.PER_CLASS)
 public class SchedulerScheduleTest extends AbstractSchedulerTest {
     @Inject
     protected FlowListeners flowListenersService;

@@ -1,9 +1,8 @@
 package io.kestra.core.queues;
 
 import io.kestra.core.models.executions.Execution;
-import io.micronaut.context.annotation.Bean;
-import io.micronaut.context.annotation.Factory;
-import io.micronaut.context.annotation.Replaces;
+import io.micronaut.context.annotation.*;
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
@@ -13,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Factory
+@Requires(bean = QueueFactoryInterface.class)
 public class TestQueueFactory {
     private QueueInterface<Execution> delegate;
     private List<Execution> testExecutions;
@@ -25,6 +25,7 @@ public class TestQueueFactory {
         this.testExecutions = testExecutions;
     }
 
+    @SuppressWarnings("unchecked")
     @Singleton
     @Replaces(named = QueueFactoryInterface.EXECUTION_NAMED)
     @Named(QueueFactoryInterface.EXECUTION_NAMED)

@@ -1,14 +1,18 @@
 package io.kestra.core.junit.extensions;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.TestQueueFactory;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.TestRunner;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.test.annotation.MicronautTestValue;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
@@ -16,10 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.List;
 
 @Slf4j
 public class KestraTestExtension extends MicronautJunit5Extension {
+    public static final ThreadLocal<List<Execution>> testExecutions = ThreadLocal.withInitial(ArrayList::new);
+
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(KestraTestExtension.class);
 
     @Override
@@ -58,6 +66,7 @@ public class KestraTestExtension extends MicronautJunit5Extension {
         KestraTest kestraTest = extensionContext.getTestClass()
             .orElseThrow()
             .getAnnotation(KestraTest.class);
+
         if (kestraTest.startRunner()) {
             TestRunner runner = applicationContext.getBean(TestRunner.class);
             if (!runner.isRunning()) {
@@ -65,6 +74,14 @@ public class KestraTestExtension extends MicronautJunit5Extension {
                 runner.setWorkerEnabled(kestraTest.startWorker());
                 runner.run();
             }
+        }
+    }
+
+    @Override
+    public void beforeTestExecution(ExtensionContext context) {
+        if (applicationContext.containsBean(TestQueueFactory.class)) {
+            TestQueueFactory testQueueFactory = applicationContext.getBean(TestQueueFactory.class);
+            testQueueFactory.setTestExecutionsList(testExecutions.get());
         }
     }
 
@@ -77,7 +94,8 @@ public class KestraTestExtension extends MicronautJunit5Extension {
         KestraTest kestraTest = context.getTestClass()
             .orElseThrow()
             .getAnnotation(KestraTest.class);
-        if (kestraTest.startRunner()
+        if (!testExecutions.get().isEmpty() &&
+            kestraTest.startRunner()
             && applicationContext.containsBean(ExecutionRepositoryInterface.class)
             && applicationContext.containsBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED))) {
             ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
@@ -85,15 +103,15 @@ public class KestraTestExtension extends MicronautJunit5Extension {
 
             retryingExecutionKill(executionRepository, killQueue, 10);
 
-            TestRunner.testExecutions.get().clear();
+            testExecutions.get().clear();
         }
     }
 
     private void retryingExecutionKill(ExecutionRepositoryInterface executionRepository, QueueInterface<ExecutionKilled> killQueue, int retriesLeft) throws InterruptedException {
         try {
-            TestRunner.testExecutions.get().stream()
+            testExecutions.get().stream()
                 .flatMap(launchedExecution -> executionRepository.findById(launchedExecution.getTenantId(), launchedExecution.getId()).stream())
-                .filter(inRepository -> inRepository.getState().isRunning())
+                .filter(inRepository -> inRepository.getState().isRunning() || inRepository.getState().isPaused() || inRepository.getState().isQueued())
                 .forEach(inRepository -> {
                     log.warn("Execution {} is still running after test execution, killing it", inRepository.getId());
                     try {

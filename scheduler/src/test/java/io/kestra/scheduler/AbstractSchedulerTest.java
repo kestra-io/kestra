@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-@KestraTest(rebuildContext = true)
+@KestraTest
 abstract public class AbstractSchedulerTest {
     @Inject
     protected ApplicationContext applicationContext;

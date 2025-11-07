@@ -1,6 +1,8 @@
 import {computed, nextTick, onMounted, ref} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {defaultNamespace} from "./useNamespaces";
+import {useDefaultFilter} from "../components/filter/composables/useDefaultFilter";
+import isEqual from "lodash/isEqual";
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
@@ -84,9 +86,11 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         }
     };
 
+    const {query: defaultQuery} = useDefaultFilter();
+
     // Automatically call goToRestoreUrl on mount if needed (equivalent to created() hook)
     onMounted(() => {
-        if (restoreUrl) {
+        if (restoreUrl && !isEqual(defaultQuery, route.query)) {
             loadInit.value = false;
             goToRestoreUrl();
         }

@@ -1,11 +1,15 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.queues.TestQueueFactory;
+import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.server.Service;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.worker.DefaultWorker;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -25,6 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @Singleton
 public class TestRunner implements Runnable, AutoCloseable {
+    public static final ThreadLocal<List<Execution>> testExecutions = ThreadLocal.withInitial(ArrayList::new);
+
     @Setter private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors()) * 16;
     @Setter private boolean schedulerEnabled = true;
     @Setter private boolean workerEnabled = true;
@@ -46,6 +52,9 @@ public class TestRunner implements Runnable, AutoCloseable {
 
     @Override
     public void run() {
+        TestQueueFactory executionQueue = applicationContext.getBean(TestQueueFactory.class);
+        executionQueue.setTestExecutionsList(testExecutions.get());
+
         running.set(true);
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");

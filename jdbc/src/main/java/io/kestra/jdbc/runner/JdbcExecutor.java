@@ -293,7 +293,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
         Await.until(() -> this.allFlows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
 
-        this.receiveCancellations.addFirst(((JdbcQueue<Execution>) this.executionQueue).receiveBatch(
+        this.receiveCancellations.addFirst(this.executionQueue.receiveBatch(
             Executor.class,
             executions -> {
                 List<CompletableFuture<Void>> futures = executions.stream()
@@ -302,7 +302,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             }
         ));
-        this.receiveCancellations.addFirst(((JdbcQueue<WorkerTaskResult>) this.workerTaskResultQueue).receiveBatch(
+        this.receiveCancellations.addFirst(this.workerTaskResultQueue.receiveBatch(
             Executor.class,
             workerTaskResults -> {
                 List<CompletableFuture<Void>> futures = workerTaskResults.stream()
@@ -1121,14 +1121,14 @@ public class JdbcExecutor implements ExecutorInterface {
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
             // NOTE: we may also purge ExecutionKilled events, but as there may not be a lot of them, it may not be worth it.
             if (cleanExecutionQueue && isTerminated) {
-                ((JdbcQueue<Execution>) executionQueue).deleteByKey(executor.getExecution().getId());
+                executionQueue.deleteByKey(executor.getExecution().getId());
             }
 
             // emit for other consumers than the executor if no failure
             if (hasFailure) {
                 this.executionQueue.emit(executor.getExecution());
             } else {
-                ((JdbcQueue<Execution>) this.executionQueue).emitOnly(null, executor.getExecution());
+                this.executionQueue.emitOnly(null, executor.getExecution());
             }
 
             Execution execution = executor.getExecution();
@@ -1206,8 +1206,8 @@ public class JdbcExecutor implements ExecutorInterface {
                     List<String> taskRunKeys = executor.getExecution().getTaskRunList().stream()
                         .map(taskRun -> taskRun.getId())
                         .toList();
-                    ((JdbcQueue<WorkerTaskResult>) workerTaskResultQueue).deleteByKeys(taskRunKeys);
-                    ((JdbcQueue<WorkerJob>) workerJobQueue).deleteByKeys(taskRunKeys);
+                    workerTaskResultQueue.deleteByKeys(taskRunKeys);
+                    workerJobQueue.deleteByKeys(taskRunKeys);
                 }
             }
         } catch (QueueException e) {

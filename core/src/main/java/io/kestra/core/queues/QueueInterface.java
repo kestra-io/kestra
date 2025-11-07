@@ -3,6 +3,7 @@ package io.kestra.core.queues;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.Pauseable;
 import io.kestra.core.utils.Either;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.io.Closeable;
 import java.util.List;
@@ -54,4 +55,20 @@ public interface QueueInterface<T> extends Closeable, Pauseable {
     }
 
     Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate);
+
+    default void deleteByKey(String key) throws QueueException {
+        throw new NotImplementedException();
+    }
+
+    default void deleteByKeys(List<String> keys) throws QueueException {
+        throw new NotImplementedException();
+    }
+
+    default void emitOnly(String consumerGroup, T message) throws QueueException {
+        throw new NotImplementedException();
+    }
+
+    default Runnable receiveBatch(Class<?> queueType, Consumer<List<Either<T, DeserializationException>>> consumer) {
+        throw new NotImplementedException();
+    }
 }

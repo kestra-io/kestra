@@ -1,13 +1,24 @@
 package io.kestra.core.junit.extensions;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.TestRunner;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.test.annotation.MicronautTestValue;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
+import java.util.ConcurrentModificationException;
+
+@Slf4j
 public class KestraTestExtension extends MicronautJunit5Extension {
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(KestraTestExtension.class);
 
@@ -47,9 +58,9 @@ public class KestraTestExtension extends MicronautJunit5Extension {
         KestraTest kestraTest = extensionContext.getTestClass()
             .orElseThrow()
             .getAnnotation(KestraTest.class);
-        if (kestraTest.startRunner()){
+        if (kestraTest.startRunner()) {
             TestRunner runner = applicationContext.getBean(TestRunner.class);
-            if (!runner.isRunning()){
+            if (!runner.isRunning()) {
                 runner.setSchedulerEnabled(kestraTest.startScheduler());
                 runner.setWorkerEnabled(kestraTest.startWorker());
                 runner.run();
@@ -62,5 +73,49 @@ public class KestraTestExtension extends MicronautJunit5Extension {
         super.afterTestExecution(context);
 
         TestsUtils.queueConsumersCleanup();
+
+        KestraTest kestraTest = context.getTestClass()
+            .orElseThrow()
+            .getAnnotation(KestraTest.class);
+        if (kestraTest.startRunner()
+            && applicationContext.containsBean(ExecutionRepositoryInterface.class)
+            && applicationContext.containsBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED))) {
+            ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
+            QueueInterface<ExecutionKilled> killQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
+
+            retryingExecutionKill(executionRepository, killQueue, 10);
+
+            TestRunner.testExecutions.get().clear();
+        }
+    }
+
+    private void retryingExecutionKill(ExecutionRepositoryInterface executionRepository, QueueInterface<ExecutionKilled> killQueue, int retriesLeft) throws InterruptedException {
+        try {
+            TestRunner.testExecutions.get().stream()
+                .flatMap(launchedExecution -> executionRepository.findById(launchedExecution.getTenantId(), launchedExecution.getId()).stream())
+                .filter(inRepository -> inRepository.getState().isRunning())
+                .forEach(inRepository -> {
+                    log.warn("Execution {} is still running after test execution, killing it", inRepository.getId());
+                    try {
+                        killQueue.emit(ExecutionKilledExecution.builder()
+                            .tenantId(inRepository.getTenantId())
+                            .executionId(inRepository.getId())
+                            .state(ExecutionKilled.State.REQUESTED)
+                            .isOnKillCascade(true)
+                            .build()
+                        );
+                    } catch (QueueException e) {
+                        log.warn("Couldn't kill execution {} after test execution", inRepository.getId(), e);
+                    }
+                });
+        } catch (ConcurrentModificationException e) {
+            // We intentionally don't use a CopyOnWriteArrayList to retry on concurrent modification exceptions to make sure to get rid of flakiness due to overflowing executions
+            if (retriesLeft <= 0) {
+                log.warn("Couldn't kill executions after test execution, due to concurrent modifications, this could impact further tests", e);
+                return;
+            }
+            Thread.sleep(100);
+            retryingExecutionKill(executionRepository, killQueue, retriesLeft - 1);
+        }
     }
 }

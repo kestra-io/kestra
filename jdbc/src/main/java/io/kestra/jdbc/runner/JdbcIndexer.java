@@ -39,10 +39,10 @@ import lombok.extern.slf4j.Slf4j;
 @JdbcRunnerEnabled
 public class JdbcIndexer implements Indexer {
     private final LogRepositoryInterface logRepository;
-    private final JdbcQueue<LogEntry> logQueue;
+    private final QueueInterface<LogEntry> logQueue;
 
     private final MetricRepositoryInterface metricRepository;
-    private final JdbcQueue<MetricEntry> metricQueue;
+    private final QueueInterface<MetricEntry> metricQueue;
     private final MetricRegistry metricRegistry;
     private final List<Runnable> receiveCancellations = new ArrayList<>();
 
@@ -67,9 +67,9 @@ public class JdbcIndexer implements Indexer {
         QueueService queueService
     ) {
         this.logRepository = logRepository;
-        this.logQueue = (JdbcQueue<LogEntry>) logQueue;
+        this.logQueue = logQueue;
         this.metricRepository = metricRepositor;
-        this.metricQueue = (JdbcQueue<MetricEntry>) metricQueue;
+        this.metricQueue = metricQueue;
         this.metricRegistry = metricRegistry;
         this.eventPublisher = eventPublisher;
         this.skipExecutionService = skipExecutionService;
@@ -91,7 +91,7 @@ public class JdbcIndexer implements Indexer {
         this.sendBatch(metricQueue, metricRepository);
     }
 
-    protected <T> void sendBatch(JdbcQueue<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
+    protected <T> void sendBatch(QueueInterface<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
         this.receiveCancellations.addFirst(queueInterface.receiveBatch(Indexer.class, eithers -> {
             // first, log all deserialization issues
             eithers.stream().filter(either -> either.isRight()).forEach(either -> log.error("unable to deserialize an item: {}", either.getRight().getMessage()));

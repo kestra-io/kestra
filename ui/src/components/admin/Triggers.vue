@@ -272,6 +272,7 @@
     import Id from "../Id.vue";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
+    import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import KestraFilter from "../filter/KestraFilter.vue"
     import {mapStores} from "pinia";
@@ -499,6 +500,15 @@
             },
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
+
+                const timeRange = queryFilter["filters[timeRange][EQUALS]"];
+                if (timeRange) {
+                    const end = new Date();
+                    const start = new Date(end.getTime() - moment.duration(timeRange).asMilliseconds());
+                    queryFilter["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = start.toISOString();
+                    queryFilter["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = end.toISOString();
+                    delete queryFilter["filters[timeRange][EQUALS]"];
+                }
 
                 return _merge(base, queryFilter)
             },

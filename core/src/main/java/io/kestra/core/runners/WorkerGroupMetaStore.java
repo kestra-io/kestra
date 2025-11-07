@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Secondary;
 import jakarta.inject.Singleton;
 
@@ -43,8 +44,8 @@ public interface WorkerGroupMetaStore {
      * This class is only used if no other implementation exist.
      */
     @Singleton
-    @Secondary
-    class DefaultWorkerGroupExecutor implements WorkerGroupMetaStore {
+    @Requires(missingBeans = WorkerGroupMetaStore.class)
+    class DefaultWorkerGroupMetaStore implements WorkerGroupMetaStore {
 
         @Override
         public boolean isWorkerGroupExistForKey(String key, String tenant) {

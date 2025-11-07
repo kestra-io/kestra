@@ -1,5 +1,5 @@
 <template>
-    <SideBar v-if="menu" :menu :showLink="showLink" @menu-collapse="onCollapse">
+    <SideBar v-if="menu" :menu="menu" :showLink="showLink" @menu-collapse="onCollapse">
         <template #footer>
             <Auth />    
         </template>

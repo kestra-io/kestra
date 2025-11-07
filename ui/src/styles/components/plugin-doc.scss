@@ -114,20 +114,10 @@
         border-left-width: 5px;
         border-radius: 8px;
 
-        &::before {
-            content: '!';
-            min-width: 20px;
-            height: 20px;
-            margin-top: 4px;
-            border-radius: 50%;
-            background: var(--ks-content-info);
-            border: 1px solid var(--ks-border-info);
-            color: var(--ks-content-inverse);
-            font: 600 13px/20px sans-serif;
-            text-align: center;
-        }
 
-        p { color: var(--ks-content-info); }
+        p { color: var(--ks-content-info); 
+            padding: 0 0 10px;
+        }
     }
 
     :deep(.release-notes-btn) {

@@ -1776,7 +1776,9 @@
     },
     "triggerState": {
       "label": "ट्रिगर स्थिति",
-      "description": "ट्रिगर स्थिति द्वारा फ़िल्टर करें"
+      "description": "ट्रिगर स्थिति द्वारा फ़िल्टर करें",
+      "enabled": "सक्षम",
+      "disabled": "अक्षम"
     },
     "trigger refresh": "ताज़ा करें",
     "triggerId": "ट्रिगर ID",

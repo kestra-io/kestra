@@ -1776,7 +1776,9 @@
     },
     "triggerState": {
       "label": "Estado do gatilho",
-      "description": "Filtrar por estado do gatilho"
+      "description": "Filtrar por estado do gatilho",
+      "enabled": "Ativado",
+      "disabled": "Desativado"
     },
     "trigger refresh": "Atualizar trigger",
     "triggerId": "ID do Trigger",

@@ -2,23 +2,24 @@
     <TaskObject
         :properties="computedProperties"
         :schema
-        :definitions
         merge
     />
 </template>
 
 <script lang="ts" setup>
-    import {computed} from "vue";
+    import {computed, inject, ref} from "vue";
     import TaskObject from "./TaskObject.vue";
+    import {resolve$ref} from "../../../../utils/utils";
+    import {FULL_SCHEMA_INJECTION_KEY} from "../../injectionKeys";
 
     const props = withDefaults(defineProps<{
         schema: any,
-        definitions?: Record<string, any>,
         properties?: Record<string, any>,
     }>(), {
-        definitions: () => ({}),
         properties: undefined,
     });
+
+    const fullSchema = inject(FULL_SCHEMA_INJECTION_KEY, ref({}));
 
     const computedProperties = computed(() => {
         if(!props.schema?.allOf && !props.schema?.$ref) {
@@ -32,16 +33,10 @@
                 properties?: Record<string, any>
             }) => {
 
-            if (item.$ref) {
-                const type = item.$ref.split("/").pop()!;
-                return {
-                    ...acc,
-                    ...props.definitions[type]?.properties
-                };
-            }
+            const i = resolve$ref(fullSchema.value, item);
             return {
                 ...acc,
-                ...item.properties
+                ...i?.properties
             };
 
         }, {});

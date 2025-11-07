@@ -28,6 +28,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -77,10 +78,12 @@ public class Execution implements DeletedInterface, TenantInterface {
 
     @With
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(implementation = Object.class)
     Map<String, Object> inputs;
 
     @With
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Schema(implementation = Object.class)
     Map<String, Object> outputs;
 
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
@@ -88,6 +91,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     List<Label> labels;
 
     @With
+    @Schema(implementation = Object.class)
     Map<String, Object> variables;
 
     @NotNull

@@ -12,7 +12,7 @@
     import Auth from "../../override/components/auth/Auth.vue";
 
     withDefaults(defineProps<{
-        showLink: boolean
+        showLink?: boolean
     }>(), {
         showLink: true
     });

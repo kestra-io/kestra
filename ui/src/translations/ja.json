@@ -98,6 +98,7 @@
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
     "bulk delete backfills": "{count}個のbackfillを削除",
+    "bulk delete triggers": "{count} 個のtriggerを削除してもよろしいですか？",
     "bulk disabled status": {
       "false": "{count}個のtriggersを有効化",
       "true": "{count}個のtriggersを無効化"
@@ -111,6 +112,7 @@
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk set labels": "<code>{executionCount}</code>件の実行にラベルを設定してもよろしいですか？",
     "bulk success delete backfills": "{count}個のbackfillsが削除されました",
+    "bulk success delete triggers": "{count} 個のtriggerが正常に削除されました",
     "bulk success disabled status": {
       "false": "{count}個のtrigger(s)が有効化されました",
       "true": "{count}個のtrigger(s)が無効化されました"
@@ -170,6 +172,11 @@
       "back": "戻る"
     },
     "concurrency": "並行性",
+    "concurrency limits": "同時実行制限",
+    "concurrency_limit": {
+      "dialog_title": "同時実行制限",
+      "warning": "実行中のカウンターを変更すると、並行性が損なわれ、実行が許可された制限を超える可能性があります。"
+    },
     "conditions": "条件",
     "configure basic auth": "基本認証を設定",
     "confirm": "確認",
@@ -288,6 +295,11 @@
     "delete logs": "Logsを削除",
     "delete ok": "削除されました",
     "delete task confirm": "task<code>{taskId}</code>を削除してもよろしいですか？",
+    "delete trigger": "トリガーを削除",
+    "delete trigger confirmation": "トリガー {id} を削除してもよろしいですか？WARNING: トリガーがまだflowでアクティブな場合、削除すると重複した実行が発生する可能性があります。",
+    "delete trigger error": "トリガー {id} の削除エラー",
+    "delete trigger success": "トリガー{id}が正常に削除されました",
+    "delete triggers": "トリガーを削除",
     "delete_all_logs": "すべてのLogsを削除してもよろしいですか？",
     "delete_log": "ログを削除してもよろしいですか？",
     "deleted": "正常に削除されました",
@@ -912,7 +924,6 @@
         "status": "ステータス",
         "task": "タスク",
         "text": "申し訳ありませんが、翻訳するためのテキストが提供されていないようです。翻訳が必要なテキストをもう一度送信してください。",
-        "trigger_state": "状態",
         "type": "タイプ",
         "user": "ユーザー"
       },
@@ -1174,20 +1185,11 @@
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
       "clearSelection": "選択をクリア",
-      "close": {
-        "afterExecution": "実行後にタスクを閉じる",
-        "conditions": "クローズ条件",
-        "errors": "エラーハンドラーを閉じる",
-        "finally": "タスクを閉じる",
-        "input": "入力を閉じる",
-        "pluginDefaults": "プラグインのデフォルトを閉じる",
-        "tasks": "タスクを閉じる",
-        "triggers": "トリガーを閉じる"
-      },
       "creation": {
         "afterExecution": "実行後ブロックを追加",
         "charts": "チャートを追加",
         "conditions": "条件を追加",
+        "default": "追加",
         "errors": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "inputs": "入力フィールドを追加",
@@ -1223,6 +1225,10 @@
         "variable": "変数",
         "yaml": "YAMLエディター"
       },
+      "remove": {
+        "cases": "このケースを削除",
+        "default": "このエントリを削除"
+      },
       "sections": {
         "afterExecution": "実行後",
         "connection": "接続プロパティ",
@@ -1240,6 +1246,7 @@
         "afterExecution": "タスクを選択",
         "charts": "チャートタイプを選択",
         "conditions": "条件を選択",
+        "default": "タイプを選択",
         "errors": "タスクを選択",
         "finally": "タスクを選択",
         "inputs": "入力フィールドタイプを選択",
@@ -1745,6 +1752,7 @@
     "trigger_check_warning": "トリガー変数を使用すると、手動でのflow実行では機能しません。問題を解決するために`??`コアレス演算子を追加してください。例えば、`trigger.date`の代わりに`trigger.date ?? execution.startDate`を使用してください。",
     "trigger_id_exists": "トリガーIDはすでに存在します。",
     "trigger_id_message": "フロー内に既存のTrigger Id ${existingTrigger}が既に存在します。",
+    "trigger_states": "状態",
     "triggered": "実行trigger",
     "triggered done": "実行<em>{name}</em>が正常にトリガーされました",
     "triggerflow disabled": "Flow定義からTriggerが無効になっています",

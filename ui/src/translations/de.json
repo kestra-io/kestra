@@ -98,6 +98,7 @@
     "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?",
     "bulk delete": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) löschen möchten?",
     "bulk delete backfills": "{count} Backfill löschen",
+    "bulk delete triggers": "Möchten Sie wirklich {count} Trigger löschen?",
     "bulk disabled status": {
       "false": "{count} Trigger aktivieren",
       "true": "{count} Trigger deaktivieren"
@@ -111,6 +112,7 @@
     "bulk resume": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) fortsetzen möchten?",
     "bulk set labels": "Sind Sie sicher, dass Sie Labels für <code>{executionCount}</code> Ausführung(en) festlegen möchten?",
     "bulk success delete backfills": "{count} Backfills gelöscht",
+    "bulk success delete triggers": "{count} Trigger wurden erfolgreich gelöscht",
     "bulk success disabled status": {
       "false": "{count} Trigger aktiviert",
       "true": "{count} Trigger deaktiviert"
@@ -170,6 +172,11 @@
       "back": "Zurück"
     },
     "concurrency": "Nebenläufigkeit",
+    "concurrency limits": "Nebenläufigkeitsgrenzen",
+    "concurrency_limit": {
+      "dialog_title": "Nebenläufigkeitsgrenzen",
+      "warning": "Das Ändern des laufenden Zählers kann die Nebenläufigkeit beeinträchtigen, sodass Ausführungen das erlaubte Limit überschreiten können."
+    },
     "conditions": "Bedingungen",
     "configure basic auth": "Basis-Authentifizierung konfigurieren",
     "confirm": "Bestätigen",
@@ -288,6 +295,11 @@
     "delete logs": "Logs löschen",
     "delete ok": "ist gelöscht",
     "delete task confirm": "Möchten Sie den Task <code>{taskId}</code> wirklich löschen?",
+    "delete trigger": "Trigger löschen",
+    "delete trigger confirmation": "Möchten Sie den Trigger {id} wirklich löschen? WARNING: Das Löschen eines Triggers kann zu doppelten Ausführungen führen, wenn der Trigger noch in einem flow aktiv ist.",
+    "delete trigger error": "Fehler beim Löschen des Triggers {id}",
+    "delete trigger success": "Trigger {id} wurde erfolgreich gelöscht",
+    "delete triggers": "Trigger löschen",
     "delete_all_logs": "Sind Sie sicher, dass Sie alle Logs löschen möchten?",
     "delete_log": "Sind Sie sicher, dass Sie das Log löschen möchten?",
     "deleted": "Erfolgreich gelöscht",
@@ -912,7 +924,6 @@
         "status": "Status",
         "task": "Aufgabe",
         "text": "I'm sorry, but it seems that there is no text provided after \"----------\" for translation. Could you please provide the text you would like me to translate?",
-        "trigger_state": "Zustand",
         "type": "Typ",
         "user": "Benutzer"
       },
@@ -1174,20 +1185,11 @@
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
       "clearSelection": "Auswahl aufheben",
-      "close": {
-        "afterExecution": "Nach Ausführung Task schließen",
-        "conditions": "Bedingung schließen",
-        "errors": "Fehlerbehandler schließen",
-        "finally": "Task schließen",
-        "input": "Eingabe schließen",
-        "pluginDefaults": "Plugin-Standard schließen",
-        "tasks": "Task schließen",
-        "triggers": "Trigger schließen"
-      },
       "creation": {
         "afterExecution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "charts": "Ein Diagramm hinzufügen",
         "conditions": "Bedingung hinzufügen",
+        "default": "Hinzufügen",
         "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
         "inputs": "Ein Eingabefeld hinzufügen",
@@ -1223,6 +1225,10 @@
         "variable": "Variable",
         "yaml": "YAML-Editor"
       },
+      "remove": {
+        "cases": "Diesen Fall entfernen",
+        "default": "Diesen Eintrag entfernen"
+      },
       "sections": {
         "afterExecution": "Nach Ausführung",
         "connection": "Verbindungseigenschaften",
@@ -1240,6 +1246,7 @@
         "afterExecution": "Wählen Sie eine Task aus",
         "charts": "Wählen Sie einen Diagrammtyp aus",
         "conditions": "Wählen Sie eine Bedingung aus",
+        "default": "Wählen Sie einen Typ aus",
         "errors": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
         "inputs": "Wählen Sie einen Input-Feldtyp aus",
@@ -1745,6 +1752,7 @@
     "trigger_check_warning": "Die Verwendung von Trigger-Variablen funktioniert nicht bei manueller Flow-Ausführung. Fügen Sie den `??`-Koaleszenz-Operator hinzu, um das Problem zu lösen. Verwenden Sie zum Beispiel anstelle von `trigger.date` den Ausdruck `trigger.date ?? execution.startDate`.",
     "trigger_id_exists": "Trigger-ID existiert bereits",
     "trigger_id_message": "Trigger-ID ${existingTrigger} existiert bereits im Flow.",
+    "trigger_states": "Zustände",
     "triggered": "Ausführungstrigger",
     "triggered done": "Ausführung <em>{name}</em> ist erfolgreich ausgelöst",
     "triggerflow disabled": "Trigger ist in der Flow-Definition deaktiviert",

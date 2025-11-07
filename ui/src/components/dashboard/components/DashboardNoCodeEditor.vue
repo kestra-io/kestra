@@ -37,6 +37,7 @@
         FIELDNAME_INJECTION_KEY,
         FULL_SCHEMA_INJECTION_KEY,
         FULL_SOURCE_INJECTION_KEY,
+        ON_TASK_EDITOR_CLICK_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY,
         POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY,
@@ -111,6 +112,15 @@
     provide(BLOCK_SCHEMA_PATH_INJECTION_KEY, computed(() => props.blockSchemaPath ?? dashboardStore.schema.$ref ?? ""));
     provide(FULL_SOURCE_INJECTION_KEY, computed(() => dashboardStore.sourceCode ?? ""));
     provide(POSITION_INJECTION_KEY, props.position ?? "after");
+    provide(ON_TASK_EDITOR_CLICK_INJECTION_KEY, (elt) => {
+        const type = elt?.type;
+        dashboardStore.loadChart(elt);
+        if(type){
+            pluginsStore.updateDocumentation({type});
+        }else{
+            pluginsStore.updateDocumentation(); 
+        }
+    })
 
     const pluginsStore = usePluginsStore();
 

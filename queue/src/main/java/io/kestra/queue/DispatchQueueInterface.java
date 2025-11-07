@@ -9,5 +9,5 @@ public interface DispatchQueueInterface <T extends DispatchEvent> extends Generi
 
     void emit(List<T> messages) throws QueueException;
 
-    QueueSubscriber<T> subscriber();
+    QueueSubscriber<T> subscriber() throws QueueException;
 }

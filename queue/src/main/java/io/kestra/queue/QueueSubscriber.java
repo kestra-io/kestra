@@ -1,46 +1,32 @@
 package io.kestra.queue;
 
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Rethrow;
-import lombok.SneakyThrows;
-import reactor.core.Disposable;
-import reactor.core.publisher.Mono;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.function.BiFunction;
+public interface QueueSubscriber<T extends GenericEvent> {
+    /**
+     * Start a subscription.
+     *
+     * @param consumer the consumer that will process messages
+     * @return self
+     * @throws QueueException if subscription fails
+     */
+    QueueSubscriber<T> subscribe(Rethrow.ConsumerChecked<Either<T, DeserializationException>, Exception> consumer) throws QueueException;
 
-public class QueueSubscriber<T extends GenericEvent> extends AbstractQueue<T> {
-    private final BiFunction<Rethrow.ConsumerChecked<Either<T, DeserializationException>, Exception>, IsReady, Mono<Void>> function;
+    /**
+     * Pauses this subscriber.
+     */
+    void pause();
 
-    public QueueSubscriber(Class<T> cls, BiFunction<Rethrow.ConsumerChecked<Either<T, DeserializationException>, Exception>, IsReady, Mono<Void>> function) {
-        super(cls);
+    /**
+     * Resumes this subscriber if currently paused.
+     */
+    void resume();
 
-        this.function = function;
-    }
-
-    public QueueDisposable subscribe(Rethrow.ConsumerChecked<Either<T, DeserializationException>, Exception> consumer) {
-        var isReady = new IsReady();
-
-        Disposable subscribe = function.apply(consumer, isReady)
-            .subscribe();
-
-        isReady.await();
-
-        return new QueueDisposable(subscribe);
-    }
-
-    public static class IsReady {
-        private final CountDownLatch countDownLatch = new CountDownLatch(1);
-
-        public void ready() {
-            countDownLatch.countDown();
-        }
-
-        @SneakyThrows
-        public void await() {
-            countDownLatch.await();
-        }
-    }
+    /**
+     * close this subscriber.
+     */
+    void close();
 }
-

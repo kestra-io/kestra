@@ -9,5 +9,5 @@ public interface KeyedDispatchQueueInterface<T extends KeyedDispatchEvent> exten
 
     void emit(String key, List<T> messages) throws QueueException;
 
-    QueueSubscriber<T> subscriber(String key);
+    QueueSubscriber<T> subscriber(String key) throws QueueException;
 }

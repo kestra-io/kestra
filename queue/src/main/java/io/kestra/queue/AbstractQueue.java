@@ -9,21 +9,24 @@ import io.kestra.core.utils.Either;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.ExecutorService;
 
 public abstract class AbstractQueue<T extends GenericEvent> {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson(false).copy();
     protected final Class<T> cls;
-    private final AtomicBoolean isRunning = new AtomicBoolean(true);
-    private final AtomicBoolean isPaused = new AtomicBoolean(false);
-    private final AtomicBoolean isClosed = new AtomicBoolean(false);
+    protected final ExecutorService executorService;
 
-    public AbstractQueue(Class<T> cls) {
+    public AbstractQueue(Class<T> cls, ExecutorService executorService) {
         this.cls = cls;
+        this.executorService = executorService;
     }
 
     protected String queueName() {
         return "test";
+    }
+
+    public void execute(Runnable runnable) {
+        this.executorService.execute(runnable);
     }
 
     protected String serialize(T message) throws QueueException {
@@ -48,30 +51,5 @@ public abstract class AbstractQueue<T extends GenericEvent> {
         } catch (IOException e) {
             return Either.right(new DeserializationException(e, record));
         }
-    }
-
-    public void pause() {
-        this.isPaused.set(true);
-    }
-
-    public void resume() {
-        this.isPaused.set(false);
-    }
-
-    public void isPaused() {
-        this.isPaused.get();
-    }
-
-    public void isRunning() {
-        this.isRunning.get();
-    }
-
-    public void isClosed() {
-        this.isClosed.get();
-    }
-
-    public void close() {
-        this.isClosed.set(true);
-        this.isRunning.set(false);
     }
 }

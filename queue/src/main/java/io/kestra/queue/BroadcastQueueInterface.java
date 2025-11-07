@@ -9,5 +9,5 @@ public interface BroadcastQueueInterface <T extends BroadcastEvent> extends Gene
 
     void emit(List<T> messages) throws QueueException;
 
-    QueueSubscriber<T> subscriber();
+    QueueSubscriber<T> subscriber() throws QueueException;
 }

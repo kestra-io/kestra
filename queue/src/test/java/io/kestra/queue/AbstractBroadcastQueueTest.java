@@ -13,6 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractBroadcastQueueTest {
@@ -26,7 +27,7 @@ public abstract class AbstractBroadcastQueueTest {
         CountDownLatch countDownLatch = new CountDownLatch(3);
         Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
 
-        io.kestra.core.utils.Disposable disposable = broadcastQueue
+        QueueSubscriber<TestBroadcast> subscriber = broadcastQueue
             .subscriber()
             .subscribe(e -> {
                 list.add(e.getLeft().id);
@@ -38,7 +39,7 @@ public abstract class AbstractBroadcastQueueTest {
         broadcastQueue.emit(new TestBroadcast(3));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        disposable.dispose();
+        subscriber.close();
 
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
@@ -50,23 +51,24 @@ public abstract class AbstractBroadcastQueueTest {
         int rand = ThreadLocalRandom.current().nextInt(10, 50);;
         CountDownLatch countDownLatch = new CountDownLatch(3 * rand);
         Collection<String> list = Collections.synchronizedCollection(new ArrayList<>());
-        List<io.kestra.core.utils.Disposable> disposables = new ArrayList<>();
+        List<QueueSubscriber<TestBroadcast>> subscribers = new ArrayList<>();
 
         IntStream.range(0, rand)
-            .forEach(i -> disposables.add(broadcastQueue
+            .boxed()
+            .forEach(throwConsumer(i -> subscribers.add(broadcastQueue
                 .subscriber()
                 .subscribe(e -> {
                     list.add("c" + String.format("%03d", i) + "-i" + String.format("%03d", e.getLeft().id));
                     countDownLatch.countDown();
                 })
-            ));
+            )));
 
         broadcastQueue.emit(new TestBroadcast(1));
         broadcastQueue.emit(new TestBroadcast(2));
         broadcastQueue.emit(new TestBroadcast(3));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        io.kestra.core.utils.Disposable.of(disposables).dispose();
+        subscribers.forEach(QueueSubscriber::close);
 
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);

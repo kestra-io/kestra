@@ -27,13 +27,13 @@ export function useScrollMemory(keyRef: Ref<string>, elementRef?: Ref<HTMLElemen
             : () => { if (elementRef?.value) elementRef.value.scrollTo({top: scrollTop, behavior: "smooth"}) }
         setTimeout(applyScroll, 10)
     }
+    onActivated(() => nextTick(restoreScroll))
 
     const throttledSave = useThrottleFn((top: number) => saveScroll(top), 100)
 
     if (useWindow) {
         const {y} = useWindowScroll({throttle: 16, onScroll: () => throttledSave(y.value)})
         watch(keyRef, () => nextTick(restoreScroll), {immediate: true})
-        onActivated(() => nextTick(restoreScroll))
     } else {
         useScroll(elementRef || ref(null), {
             throttle: 16,
@@ -42,7 +42,6 @@ export function useScrollMemory(keyRef: Ref<string>, elementRef?: Ref<HTMLElemen
         watch([keyRef, () => elementRef?.value], ([newKey, newElement]) => {
             if (newElement && newKey) nextTick(restoreScroll)
         }, {immediate: true})
-        onActivated(() => nextTick(restoreScroll))
     }
 
     return {saveData: saveToStorage, loadData: loadFromStorage}

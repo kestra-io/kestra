@@ -154,15 +154,19 @@
 
     onBeforeMount(() => fetchDashboards());
 
-    const tenant = ref(route.params.tenant);
-    watch(route, (r) => {
-              if (tenant.value !== r.params.tenant) {
-                  fetchDashboards();
-                  tenant.value = r.params.tenant;
-              }
-          },
-          {deep: true},
-    );
+    const tenant = ref();
+    watch(() => route.params.tenant, (t) => {
+        if (tenant.value !== t) {
+            fetchDashboards();
+            tenant.value = t;
+        }
+    }, {immediate: true});
+
+    watch(() => route.params?.dashboard, (val) => {
+        if(route.name === "home" && STORAGE_KEY) {
+            localStorage.setItem(STORAGE_KEY, val as string);
+        }
+    }, {immediate: true});
 </script>
 
 <style scoped lang="scss">

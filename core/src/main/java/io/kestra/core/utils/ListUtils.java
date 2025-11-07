@@ -2,6 +2,10 @@ package io.kestra.core.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class ListUtils {
     public static <T> List<T> emptyOnNull(List<T> list) {
@@ -70,5 +74,14 @@ public class ListUtils {
         } else {
             throw new IllegalArgumentException("%s in not an instance of List of String".formatted(object));
         }
+    }
+
+    private static <T> Predicate<T> distinctByKeyPredicate(Function<? super T,Object> keyExtractor) {
+        Map<Object,Boolean> seen = new ConcurrentHashMap<>();
+        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+    }
+
+    public static <T> List<T> distinctByKey(List<T> withDuplicates, Function<? super T, Object> keyExtractor) {
+        return withDuplicates.stream().filter(distinctByKeyPredicate(keyExtractor)).toList();
     }
 }

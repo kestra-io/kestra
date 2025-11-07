@@ -10,9 +10,8 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.TestQueueFactory;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.TestRunner;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.micronaut.core.annotation.NonNull;
-import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.test.annotation.MicronautTestValue;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
@@ -20,14 +19,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 public class KestraTestExtension extends MicronautJunit5Extension {
-    public static final ThreadLocal<List<Execution>> testExecutions = ThreadLocal.withInitial(ArrayList::new);
-
     private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(KestraTestExtension.class);
 
     @Override
@@ -78,14 +76,6 @@ public class KestraTestExtension extends MicronautJunit5Extension {
     }
 
     @Override
-    public void beforeTestExecution(ExtensionContext context) {
-        if (applicationContext.containsBean(TestQueueFactory.class)) {
-            TestQueueFactory testQueueFactory = applicationContext.getBean(TestQueueFactory.class);
-            testQueueFactory.setTestExecutionsList(testExecutions.get());
-        }
-    }
-
-    @Override
     public void afterTestExecution(ExtensionContext context) throws Exception {
         super.afterTestExecution(context);
 
@@ -94,24 +84,27 @@ public class KestraTestExtension extends MicronautJunit5Extension {
         KestraTest kestraTest = context.getTestClass()
             .orElseThrow()
             .getAnnotation(KestraTest.class);
-        if (!testExecutions.get().isEmpty() &&
-            kestraTest.startRunner()
+        Optional<TestQueueFactory> testQueueFactory = Optional.of(applicationContext.containsBean(TestQueueFactory.class)).flatMap(contains -> contains ? Optional.of(applicationContext.getBean(TestQueueFactory.class)) : Optional.empty());
+        List<Execution> testExecutions = testQueueFactory.map(TestQueueFactory::getTestExecutions).orElse(Collections.emptyList());
+        if (!testExecutions.isEmpty()
             && applicationContext.containsBean(ExecutionRepositoryInterface.class)
             && applicationContext.containsBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED))) {
             ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
             QueueInterface<ExecutionKilled> killQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
 
-            retryingExecutionKill(executionRepository, killQueue, 10);
+            retryingExecutionKill(testExecutions, executionRepository, killQueue, 10);
 
-            testExecutions.get().clear();
+            testExecutions.clear();
         }
     }
 
-    private void retryingExecutionKill(ExecutionRepositoryInterface executionRepository, QueueInterface<ExecutionKilled> killQueue, int retriesLeft) throws InterruptedException {
+
+    private void retryingExecutionKill(List<Execution> testExecutions, ExecutionRepositoryInterface executionRepository, QueueInterface<ExecutionKilled> killQueue, int retriesLeft) throws InterruptedException {
         try {
-            testExecutions.get().stream()
-                .flatMap(launchedExecution -> executionRepository.findById(launchedExecution.getTenantId(), launchedExecution.getId()).stream())
-                .filter(inRepository -> inRepository.getState().isRunning() || inRepository.getState().isPaused() || inRepository.getState().isQueued())
+            ListUtils.distinctByKey(
+                    testExecutions.stream().flatMap(launchedExecution -> executionRepository.findById(launchedExecution.getTenantId(), launchedExecution.getId()).stream()).toList(),
+                    Execution::getId
+                ).stream().filter(inRepository -> inRepository.getState().isRunning() || inRepository.getState().isPaused() || inRepository.getState().isQueued())
                 .forEach(inRepository -> {
                     log.warn("Execution {} is still running after test execution, killing it", inRepository.getId());
                     try {
@@ -133,7 +126,7 @@ public class KestraTestExtension extends MicronautJunit5Extension {
                 return;
             }
             Thread.sleep(100);
-            retryingExecutionKill(executionRepository, killQueue, retriesLeft - 1);
+            retryingExecutionKill(testExecutions, executionRepository, killQueue, retriesLeft - 1);
         }
     }
 }

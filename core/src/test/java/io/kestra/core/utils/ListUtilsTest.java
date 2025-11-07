@@ -1,7 +1,11 @@
 package io.kestra.core.utils;
 
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 
@@ -51,5 +55,20 @@ class ListUtilsTest {
 
         assertThrows(IllegalArgumentException.class, () -> ListUtils.convertToListString("not a list"));
         assertThrows(IllegalArgumentException.class, () -> ListUtils.convertToListString(List.of(1, 2, 3)));
+    }
+
+    @Test
+    void distinctByKey() {
+        List<Execution> executions = List.of(
+            Execution.builder().id("1").flowId("flow1").state(State.of(State.Type.CREATED, Collections.emptyList())).build(),
+            Execution.builder().id("1").flowId("flow1").state(State.of(State.Type.RUNNING, List.of(new State.History(State.Type.CREATED, Instant.now().minus(Duration.ofSeconds(2)))))).build(),
+            Execution.builder().id("2").flowId("flow2").build()
+        );
+
+        List<Execution> distinctExecutions = ListUtils.distinctByKey(executions, Execution::getId);
+
+        assertThat(distinctExecutions.size()).isEqualTo(2);
+        assertThat(distinctExecutions.stream().map(Execution::getId)).containsExactlyInAnyOrder("1", "2");
+        assertThat(distinctExecutions.stream().filter(e -> e.getId().equals("1")).findFirst().get().getState().getCurrent()).isEqualTo(State.Type.CREATED);
     }
 }

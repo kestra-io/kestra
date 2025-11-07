@@ -5,8 +5,11 @@ import io.micronaut.context.annotation.*;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -15,14 +18,11 @@ import java.util.Optional;
 @Requires(bean = QueueFactoryInterface.class)
 public class TestQueueFactory {
     private QueueInterface<Execution> delegate;
-    private List<Execution> testExecutions;
+    @Getter
+    private List<Execution> testExecutions = new ArrayList<>();
 
     public TestQueueFactory(QueueFactoryInterface queueFactoryInterface) {
         this.delegate = queueFactoryInterface.execution();
-    }
-
-    public void setTestExecutionsList(List<Execution> testExecutions) {
-        this.testExecutions = testExecutions;
     }
 
     @SuppressWarnings("unchecked")

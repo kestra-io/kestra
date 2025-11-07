@@ -1776,7 +1776,9 @@
     },
     "triggerState": {
       "label": "État du déclencheur",
-      "description": "Filtrer par état du déclencheur"
+      "description": "Filtrer par état du déclencheur",
+      "enabled": "Activé",
+      "disabled": "Désactivé"
     },
     "trigger refresh": "Déclencher le rafraîchissement",
     "triggerId": "ID de trigger",

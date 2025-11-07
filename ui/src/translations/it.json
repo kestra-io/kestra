@@ -1776,7 +1776,9 @@
     },
     "triggerState": {
       "label": "Stato del trigger",
-      "description": "Filtra per stato del trigger"
+      "description": "Filtra per stato del trigger",
+      "enabled": "Abilitato",
+      "disabled": "Disabilitato"
     },
     "trigger refresh": "Aggiorna",
     "triggerId": "ID del trigger",

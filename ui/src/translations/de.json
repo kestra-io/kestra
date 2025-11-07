@@ -1776,7 +1776,9 @@
     },
     "triggerState": {
       "label": "Trigger-Status",
-      "description": "Nach Trigger-Status filtern"
+      "description": "Nach Trigger-Status filtern",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert"
     },
     "trigger refresh": "Aktualisierung auslösen",
     "triggerId": "Trigger-ID",

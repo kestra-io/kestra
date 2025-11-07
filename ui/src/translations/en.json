@@ -1729,7 +1729,9 @@
         },
         "triggerState":{
           "label": " Trigger State",
-          "description": "Filter by trigger state"
+          "description": "Filter by trigger state",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
         },
         "scope_flow": {
             "label": "Scope",

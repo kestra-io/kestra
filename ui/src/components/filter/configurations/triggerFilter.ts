@@ -59,6 +59,10 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.NOT_EQUALS
                     ],
                     valueType: "text",
+                    valueProvider: async () => {
+                        const {VALUES} = useValues("triggers");
+                        return VALUES.TRIGGER_STATES;
+                    }
                 },
                 ...(route.name !== "flows/update" ? [{
                     key: "flowId",

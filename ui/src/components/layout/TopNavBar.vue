@@ -6,7 +6,7 @@
                     v-if="layoutStore.sideMenuCollapsed"
                     @toggle="layoutStore.setSideMenuCollapsed(false)"
                 />
-                <div class="d-flex flex-column gap-2">
+                <div class="d-flex md:flex-column gap-2">
                     <el-breadcrumb v-if="breadcrumb">
                         <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
                             <a v-if="item.disabled || !item.link">
@@ -36,20 +36,33 @@
                 </div>
             </div>
         </div>
-        <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
-            <div class="d-none d-lg-flex align-items-center">
-                <GlobalSearch class="trigger-flow-guided-step" />
-            </div>
-            <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
-                <el-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
-                    <TrashCan class="me-2" />
-                    <span>{{ $t("delete logs") }}</span>
-                </el-button>
-            </div>
+
+        <div class="d-none d-lg-flex side gap-2 flex-shrink-0 align-items-center">
+            <GlobalSearch class="trigger-flow-guided-step" />
+            <el-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
+                <TrashCan class="me-2" />
+                <span>{{ $t("delete logs") }}</span>
+            </el-button>
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons icons">
                 <Impersonating />
             </div>
+        </div>
+
+        <div class="d-flex d-lg-none side gap-2 flex-shrink-0 align-items-center">
+            <HamburgerDropdown>
+                <div class="d-flex flex-column gap-3 p-3">
+                    <GlobalSearch class="trigger-flow-guided-step" />
+                    <el-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
+                        <TrashCan class="me-2" />
+                        <span>{{ $t("delete logs") }}</span>
+                    </el-button>
+                    <slot name="additional-right" />
+                    <div class="d-flex fixed-buttons icons">
+                        <Impersonating />
+                    </div>
+                </div>
+            </HamburgerDropdown>
         </div>
     </nav>
 </template>
@@ -71,6 +84,7 @@
     import {useFlowStore} from "../../stores/flow";
     import {useLayoutStore} from "../../stores/layout";
     import SidebarToggleButton from "./SidebarToggleButton.vue";
+    import HamburgerDropdown from "../HamburgerDropdown.vue"; // Ensure this is imported
 
     type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"];
 
@@ -210,29 +224,6 @@
                 margin: 0;
                 gap: .5rem;
                 align-items: center;
-            }
-        }
-        @media (max-width: 768px) {
-            .mycontainer {
-                display: grid;
-                grid-template-columns: repeat(3, minmax(0, auto));
-                grid-template-rows: repeat(2, auto);
-                gap: 10px;
-                overflow: hidden;
-            }
-            .icons {
-                grid-row: 2;
-                grid-column: 2;
-                display: contents;
-            }
-        }
-        @media (max-width: 664px) {
-            .mycontainer {
-                display: grid;
-                grid-template-columns: repeat(2, minmax(0, auto));
-                grid-template-rows: repeat(2, auto);
-                gap: 10px;
-                overflow: hidden;
             }
         }
     }

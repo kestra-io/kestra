@@ -9,12 +9,17 @@
 </script>
 
 <style scoped>
+
 .fullscreen-layout {
     width: 100vw;
     height: 100vh;
     display: flex;
-    align-items: center;
     justify-content: center;
     background: var(--ks-background-body);
+    overflow-y: scroll;
+    
+    @media (min-width:992px) {
+        align-items: center;
+    }
 }
 </style>

@@ -125,7 +125,7 @@
                     <el-text class="align-self-start">
                         {{ t("setup.confirm.config_title") }}
                     </el-text>
-                    <div class="d-flex align-self-start">
+                    <div class="d-flex align-self-start flex-wrap">
                         <el-button @click="previousStep()">
                             {{ t("setup.confirm.not_valid") }}
                         </el-button>
@@ -561,7 +561,7 @@ $mobile-breakpoint: 992px;
     box-shadow: 0 2px 4px var(--ks-card-shadow);
     display: flex;
     flex-direction: column;
-
+    
     @media (min-width: $mobile-breakpoint) {
         padding: 2rem;
     }
@@ -569,7 +569,7 @@ $mobile-breakpoint: 992px;
 
 .setup-card {
     min-width: 100%;
-
+    
     &-body {
         flex: 1;
         display: flex;
@@ -648,6 +648,7 @@ $mobile-breakpoint: 992px;
     display: flex;
     gap: 1rem;
     margin-top: 1rem;
+    flex-wrap: wrap;
 
     :deep(.el-radio) {
         margin: 0 !important;
@@ -700,7 +701,7 @@ $mobile-breakpoint: 992px;
     margin-top: 16px;
     display: flex;
     align-items: center;
-
+    width: 100%;
     :deep(.el-checkbox__label) {
         padding-left: 8px;
     }
@@ -748,6 +749,7 @@ $mobile-breakpoint: 992px;
         padding-left: 0;
         line-height: 1.4;
         align-self: center;
+        text-wrap:wrap;
         color: var(--ks-content-primary);
     }
 }
@@ -765,7 +767,7 @@ $mobile-breakpoint: 992px;
     }
 
     .success-content {
-        margin-top: -8rem;
+        margin-top: -6rem;
         position: relative;
         padding: 2rem;
     }
@@ -777,7 +779,7 @@ $mobile-breakpoint: 992px;
         color: var(--ks-content-primary);
         margin: 0;
     }
-
+    
     .success-subtitle {
         font-weight: 600;
         font-size: 18.4px;

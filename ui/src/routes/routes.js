@@ -1,5 +1,6 @@
 import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
-import FullScreenLayout from "../components/layout/FullScreenLayout.vue"
+import FullScreenLayoutLogin from "../components/layout/FullScreenLayoutLogin.vue"
+import FullScreenLayoutSetup from "../components/layout/FullScreenLayoutSetup.vue"
 import Errors from "../components/errors/Errors.vue"
 import DemoIAM from "../components/demo/IAM.vue"
 import DemoTenants from "../components/demo/Tenants.vue"
@@ -142,9 +143,9 @@ export default [
     {name: "admin/concurrency-limits", path: "/:tenant?/admin/concurrency-limits", component: () => import("../components/admin/ConcurrencyLimits.vue")},
 
     //Setup
-    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout}},
+    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayoutSetup}},
     //Login
-    {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout}},
+    {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayoutLogin}},
 
     //Errors
     {name: "errors/404-wildcard", path: "/:tenant?/:pathMatch(.*)", component: Errors, props: {code: 404}},

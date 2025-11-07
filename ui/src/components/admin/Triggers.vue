@@ -41,8 +41,12 @@
                         <template #expand>
                             <el-table-column type="expand">
                                 <template #default="props">
-                                    <LogsWrapper class="m-3" :filters="props.row" v-if="hasLogsContent(props.row)"
-                                                 :withCharts="false" embed
+                                    <LogsWrapper
+                                        class="m-3"
+                                        :filters="props.row"
+                                        v-if="hasLogsContent(props.row)"
+                                        :withCharts="false"
+                                        embed
                                     />
                                 </template>
                             </el-table-column>
@@ -100,22 +104,31 @@
                             :sortOrders="['flowId', 'namespace', 'nextExecutionDate'].includes(col.prop) ? ['ascending', 'descending'] : undefined"
                         >
                             <template #header v-if="col.prop === 'date'">
-                                <el-tooltip :content="$t('last trigger date tooltip')" placement="top" effect="light"
-                                            popperClass="wide-tooltip"
+                                <el-tooltip
+                                    :content="$t('last trigger date tooltip')"
+                                    placement="top"
+                                    effect="light"
+                                    popperClass="wide-tooltip"
                                 >
                                     <span>{{ col.label }}</span>
                                 </el-tooltip>
                             </template>
                             <template #header v-else-if="col.prop === 'updatedDate'">
-                                <el-tooltip :content="$t('context updated date tooltip')" placement="top" effect="light"
-                                            popperClass="wide-tooltip"
+                                <el-tooltip
+                                    :content="$t('context updated date tooltip')"
+                                    placement="top"
+                                    effect="light"
+                                    popperClass="wide-tooltip"
                                 >
                                     <span>{{ col.label }}</span>
                                 </el-tooltip>
                             </template>
                             <template #header v-else-if="col.prop === 'nextExecutionDate'">
-                                <el-tooltip :content="$t('next evaluation date tooltip')" placement="top" effect="light"
-                                            popperClass="wide-tooltip"
+                                <el-tooltip
+                                    :content="$t('next evaluation date tooltip')"
+                                    placement="top"
+                                    effect="light"
+                                    popperClass="wide-tooltip"
                                 >
                                     <span>{{ col.label }}</span>
                                 </el-tooltip>
@@ -207,8 +220,10 @@
                             <template #default="scope">
                                 <div class="backfillContainer items-center gap-2">
                                     <span v-if="scope.row.backfill" class="statusIcon">
-                                        <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')"
-                                                    effect="light"
+                                        <el-tooltip
+                                            v-if="!scope.row.backfill.paused"
+                                            :content="$t('backfill running')"
+                                            effect="light"
                                         >
                                             <PlayBox font />
                                         </el-tooltip>
@@ -319,7 +334,8 @@
 </template>
 <script setup lang="ts">
     import _merge from "lodash/merge";
-    import {computed, ref, watch} from "vue";
+    import {ref, computed, watch} from "vue";
+    import moment from "moment";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {ElMessage} from "element-plus";
@@ -755,7 +771,16 @@
     };
 
     const loadQuery = (base: any) => {
-        const queryFilter = queryWithFilter("triggers");
+        const queryFilter = queryWithFilter();
+
+        const timeRange = queryFilter["filters[timeRange][EQUALS]"];
+        if (timeRange) {
+            const end = new Date();
+            const start = new Date(end.getTime() - moment.duration(timeRange).asMilliseconds());
+            queryFilter["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = start.toISOString();
+            queryFilter["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = end.toISOString();
+            delete queryFilter["filters[timeRange][EQUALS]"];
+        }
 
         return _merge(base, queryFilter);
     };

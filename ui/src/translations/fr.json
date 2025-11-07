@@ -1774,12 +1774,6 @@
       },
       "title": "Filtrer les enfants"
     },
-    "triggerState": {
-      "label": "État du déclencheur",
-      "description": "Filtrer par état du déclencheur",
-      "enabled": "Activé",
-      "disabled": "Désactivé"
-    },
     "trigger refresh": "Déclencher le rafraîchissement",
     "triggerId": "ID de trigger",
     "trigger_check_warning": "L'utilisation des variables de trigger ne fonctionnera pas avec l'exécution manuelle du flow. Ajoutez l'opérateur de coalescence `??` pour résoudre le problème. Par exemple, au lieu de `trigger.date`, utilisez `trigger.date ?? execution.startDate`.",

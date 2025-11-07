@@ -1774,12 +1774,6 @@
       },
       "title": "자식 실행 필터링"
     },
-    "triggerState": {
-      "label": "트리거 상태",
-      "description": "트리거 상태로 필터링",
-      "enabled": "활성화됨",
-      "disabled": "비활성화됨"
-    },
     "trigger refresh": "새로 고침 trigger",
     "triggerId": "트리거 ID",
     "trigger_check_warning": "트리거 변수를 사용하는 것은 수동 flow 실행과 함께 작동하지 않습니다. 문제를 해결하려면 `??` 병합 연산자를 추가하세요. 예를 들어, `trigger.date` 대신 `trigger.date ?? execution.startDate`를 사용하세요.",

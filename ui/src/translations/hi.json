@@ -1774,12 +1774,6 @@
       },
       "title": "बाल निष्पादन फ़िल्टर करें"
     },
-    "triggerState": {
-      "label": "ट्रिगर स्थिति",
-      "description": "ट्रिगर स्थिति द्वारा फ़िल्टर करें",
-      "enabled": "सक्षम",
-      "disabled": "अक्षम"
-    },
     "trigger refresh": "ताज़ा करें",
     "triggerId": "ट्रिगर ID",
     "trigger_check_warning": "ट्रिगर वेरिएबल्स का उपयोग मैनुअल flow निष्पादन के साथ काम नहीं करेगा। समस्या को हल करने के लिए `??` कोएलस ऑपरेटर जोड़ें। उदाहरण के लिए, `trigger.date` के बजाय `trigger.date ?? execution.startDate` का उपयोग करें।",

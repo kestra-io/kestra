@@ -4,6 +4,7 @@ import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import jakarta.annotation.Nullable;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -361,7 +362,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         return path;
     }
 
-        /**
+    /**
      * Ensures the object name length does not exceed the allowed maximum.
      * If it does, the object name is truncated and a short random prefix is added
      * to avoid potential name collisions.
@@ -378,10 +379,9 @@ public interface StorageInterface extends AutoCloseable, Plugin {
 
         String path = uri.getPath();
         String objectName = path.contains("/") ? path.substring(path.lastIndexOf("/") + 1) : path;
-
         if (objectName.length() > maxObjectNameLength) {
             objectName = objectName.substring(objectName.length() - maxObjectNameLength + 6);
-            String prefix = org.apache.commons.lang3.RandomStringUtils.secure()
+            String prefix = RandomStringUtils.secure()
                 .nextAlphanumeric(5)
                 .toLowerCase();
 

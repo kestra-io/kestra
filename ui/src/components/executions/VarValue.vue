@@ -32,6 +32,18 @@
     <span v-else-if="value === null">
         <em>null</em>
     </span>
+    <div v-else-if="isComplexValue(value)">
+        <Editor
+            :readOnly="true"
+            :input="true"
+            :fullHeight="false"
+            :customHeight="Math.min(20, Math.max(5, JSON.stringify(getDisplayValue(value), null, 2).split('\n').length))"
+            :navbar="false"
+            :modelValue="JSON.stringify(getDisplayValue(value), null, 2)"
+            lang="json"
+            class="complex-value-editor"
+        />
+    </div>
     <span v-else>
         {{ value }}
     </span>
@@ -42,6 +54,7 @@
     import Download from "vue-material-design-icons/Download.vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import FilePreview from "./FilePreview.vue";
+    import Editor from "../inputs/Editor.vue";
     import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
 
@@ -88,6 +101,42 @@
         }
     };
 
+    const isComplexValue = (value: unknown): boolean => {
+        if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
+            return true;
+        }
+        
+        if (typeof value === "string") {
+            try {
+                const parsed = JSON.parse(value);
+                return (typeof parsed === "object" && parsed !== null) || Array.isArray(parsed);
+            } catch {
+                return false;
+            }
+        }
+        
+        return false;
+    };
+
+    const getDisplayValue = (value: unknown): unknown => {
+        if ((typeof value === "object" && value !== null) || Array.isArray(value)) {
+            return value;
+        }
+        
+        if (typeof value === "string") {
+            try {
+                const parsed = JSON.parse(value);
+                if ((typeof parsed === "object" && parsed !== null) || Array.isArray(parsed)) {
+                    return parsed;
+                }
+            } catch {
+                return value;
+            }
+        }
+        
+        return value;
+    };
+
     const itemUrl = (value: string): string => {
         return `${apiUrl()}/executions/${props.execution?.id}/file?path=${encodeURI(value)}`;
     };
@@ -118,3 +167,11 @@
         getFileSize();
     });
 </script>
+
+<style scoped lang="scss">
+.complex-value-editor {
+    margin-top: 0.5rem;
+    border: 1px solid var(--ks-border-primary);
+    border-radius: 4px;
+}
+</style>

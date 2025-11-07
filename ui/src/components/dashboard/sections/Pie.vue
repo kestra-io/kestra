@@ -121,16 +121,32 @@
             const dataset = chart.data.datasets[0];
             const meta = chart.getDatasetMeta(0);
 
-            const thicknessScale = dataset.thicknessScale;
+            //dynamically calculate thickness based on chart size
+            const chartArea = chart.chartArea;
+            if (!chartArea || !meta || !meta.data) return;
+            // Available radius = half of the smaller dimension (width or height)
+            const availableRadius = Math.min(chartArea.width, chartArea.height) / 2;
+            // define thickness bounds relative to available radius 
+            const minThicknessPx = Math.max(6, availableRadius * 0.05); // >0
+            const maxThicknessPx = Math.max(12, availableRadius * 0.3);  // >0 
+            // Reading weights from dataset with fallback weight(1)
+            const weights: number[] = (dataset.thicknessWeight && Array.isArray(dataset.thicknessWeight))? dataset.thicknessWeight.map((w: any) => 
+            {
+                const n = Number(w);
+                return Number.isFinite(n) ? Math.min(Math.max(n, 0), 1) : 1;
+            })
+                : meta.data.map(() => 1);
+            for (let i = 0; i < meta.data.length; i++) {
+                const arc = meta.data[i];
+                const w = weights[i] ?? 1;
+                const thicknessPx = minThicknessPx + w * (maxThicknessPx - minThicknessPx);
 
-            meta.data.forEach((arc, index) => {
-                const baseRadius = arc.innerRadius;
-                const additionalThickness = thicknessScale[index];
-                arc.outerRadius = baseRadius + additionalThickness;
+                const baseRadius = arc.innerRadius ?? Math.max(0, availableRadius - thicknessPx);
+                arc.outerRadius = baseRadius + thicknessPx;
                 arc.innerRadius = baseRadius;
 
                 arc.draw(ctx);
-            });
+            }
         },
     };
 
@@ -199,9 +215,9 @@
 </script>
 
 <style scoped lang="scss">
-    $height: 200px;
-
-    .chart {
-        max-height: $height;
+   
+   .chart {
+    height: 100% !important;
+    width: 100% !important;
     }
 </style>

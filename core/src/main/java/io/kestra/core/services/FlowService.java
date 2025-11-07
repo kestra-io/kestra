@@ -548,6 +548,8 @@ public class FlowService {
 
         var flowTopologies = flowTopologyRepository.get().findByFlow(tenantId, namespace, id, destinationOnly);
 
+        var visitedNodes = new ArrayList<String>();
+        visitedNodes.add(id);
         return flowTopologies.stream()
             // ignore already visited topologies
             .filter(x -> !visitedTopologies.contains(x.uid()))
@@ -555,8 +557,13 @@ public class FlowService {
                 visitedTopologies.add(topology.uid());
                 Stream<FlowTopology> subTopologies = Stream
                     .of(topology.getDestination(), topology.getSource())
+                    // ignore already visited nodes
+                    .filter(x -> !visitedNodes.contains(x.getId()))
                     // recursively visit children and parents nodes
-                    .flatMap(relationNode -> recursiveFlowTopology(visitedTopologies, relationNode.getTenantId(), relationNode.getNamespace(), relationNode.getId(), destinationOnly));
+                    .flatMap(relationNode -> {
+                        visitedNodes.add(relationNode.getId());
+                        return recursiveFlowTopology(visitedTopologies, relationNode.getTenantId(), relationNode.getNamespace(), relationNode.getId(), destinationOnly);
+                    });
                 return Stream.concat(Stream.of(topology), subTopologies);
             });
     }

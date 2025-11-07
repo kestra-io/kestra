@@ -18,7 +18,7 @@ dependencies {
     def jollydayVersion = "1.5.6"
     def jsonschemaVersion = "4.38.0"
     def kafkaVersion = "4.1.0"
-    def opensearchVersion = "3.3.0"
+    def opensearchVersion = "3.2.0"
     def opensearchRestVersion = "3.3.2"
     def flyingSaucerVersion = "10.0.3"
     def jacksonVersion = "2.20.1"

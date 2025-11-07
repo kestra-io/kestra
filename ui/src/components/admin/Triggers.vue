@@ -298,6 +298,7 @@
 <script setup lang="ts">
     import _merge from "lodash/merge";
     import {ref, computed, watch} from "vue";
+    import moment from "moment";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {ElMessage} from "element-plus";
@@ -696,7 +697,16 @@
     };
 
     const loadQuery = (base: any) => {
-        const queryFilter = queryWithFilter("triggers");
+        const queryFilter = queryWithFilter();
+
+        const timeRange = queryFilter["filters[timeRange][EQUALS]"];
+        if (timeRange) {
+            const end = new Date();
+            const start = new Date(end.getTime() - moment.duration(timeRange).asMilliseconds());
+            queryFilter["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = start.toISOString();
+            queryFilter["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = end.toISOString();
+            delete queryFilter["filters[timeRange][EQUALS]"];
+        }
 
         return _merge(base, queryFilter);
     };

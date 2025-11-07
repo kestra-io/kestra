@@ -141,7 +141,7 @@ export function useChartGenerator(props: {chart: Chart; filters: FilterObject[];
         const filters = props.filters.concat(decodeSearchParams(route.query) ?? []);
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
         const execStatistics = localStorage.getItem(storageKeys.EXECUTION_STATISTICS)
-        const {startDate, endDate}  = getStartAndEndDate(execStatistics ?? "")
+        const {startDate, endDate}  = getStartAndEndDate(execStatistics ?? "PT336H")
         Object.assign(parameters, {startDate, endDate});
 
 

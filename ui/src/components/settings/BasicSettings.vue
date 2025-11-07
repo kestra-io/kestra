@@ -690,6 +690,9 @@
                         Utils.switchTheme(this.miscStore, this.pendingSettings[key]);
                         localStorage.setItem(key, Utils.getTheme())
                         break
+                    case "executionStatistics":
+                        localStorage.setItem(storageKeys.EXECUTION_STATISTICS, "14 days" )
+                        break
                     case "lang":
                     {
                         if(this.pendingSettings[key]) {

@@ -15,6 +15,7 @@ import io.kestra.core.services.FlowListenersInterface;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -30,8 +31,8 @@ public class FlowListeners implements FlowListenersInterface {
     private final AtomicBoolean isStarted = new AtomicBoolean(false);
     private final QueueInterface<FlowInterface> flowQueue;
     private final List<FlowWithSource> flows;
-    private final List<Consumer<List<FlowWithSource>>> consumers = new ArrayList<>();
-    private final List<BiConsumer<FlowWithSource, FlowWithSource>> consumersEach = new ArrayList<>();
+    private final List<Consumer<List<FlowWithSource>>> consumers = new CopyOnWriteArrayList<>();
+    private final List<BiConsumer<FlowWithSource, FlowWithSource>> consumersEach = new CopyOnWriteArrayList<>();
 
     private final PluginDefaultService pluginDefaultService;
 

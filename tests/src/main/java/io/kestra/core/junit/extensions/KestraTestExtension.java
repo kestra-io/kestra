@@ -10,19 +10,20 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.TestQueueFactory;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.TestRunner;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.test.annotation.MicronautTestValue;
+import io.micronaut.test.context.TestContext;
 import io.micronaut.test.extensions.junit5.MicronautJunit5Extension;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
-import java.util.Collections;
-import java.util.ConcurrentModificationException;
-import java.util.List;
-import java.util.Optional;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 public class KestraTestExtension extends MicronautJunit5Extension {
@@ -59,9 +60,12 @@ public class KestraTestExtension extends MicronautJunit5Extension {
     }
 
     @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        super.beforeAll(extensionContext);
-        KestraTest kestraTest = extensionContext.getTestClass()
+    public void beforeTestExecution(ExtensionContext context) throws Exception {
+        super.beforeTestExecution(context);
+
+        TestQueueFactory.testExecutions.set(new ArrayList<>());
+
+        KestraTest kestraTest = context.getTestClass()
             .orElseThrow()
             .getAnnotation(KestraTest.class);
 
@@ -81,52 +85,81 @@ public class KestraTestExtension extends MicronautJunit5Extension {
 
         TestsUtils.queueConsumersCleanup();
 
-        KestraTest kestraTest = context.getTestClass()
-            .orElseThrow()
-            .getAnnotation(KestraTest.class);
-        Optional<TestQueueFactory> testQueueFactory = Optional.of(applicationContext.containsBean(TestQueueFactory.class)).flatMap(contains -> contains ? Optional.of(applicationContext.getBean(TestQueueFactory.class)) : Optional.empty());
-        List<Execution> testExecutions = testQueueFactory.map(TestQueueFactory::getTestExecutions).orElse(Collections.emptyList());
-        if (!testExecutions.isEmpty()
+        List<Execution> executionsToKill = TestQueueFactory.testExecutions.get();
+        if (!executionsToKill.isEmpty()
             && applicationContext.containsBean(ExecutionRepositoryInterface.class)
             && applicationContext.containsBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED))) {
             ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
             QueueInterface<ExecutionKilled> killQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
 
-            retryingExecutionKill(testExecutions, executionRepository, killQueue, 10);
+            KestraTest kestraTest = context.getTestClass()
+                .orElseThrow()
+                .getAnnotation(KestraTest.class);
+            // We only wait for KILLED state if the runner is started, otherwise we just emit the kill event and it may be processed upon starting a test with a runner
+            List<Execution> killedExecutions = retryingExecutionKill(executionsToKill, executionRepository, killQueue, 10, kestraTest.startRunner());
 
-            testExecutions.clear();
+            executionsToKill.removeIf(execution -> killedExecutions.stream().anyMatch(killedExecution ->
+                Objects.equals(execution.getTenantId(), killedExecution.getTenantId())
+                    && Objects.equals(execution.getId(), killedExecution.getId())
+            ));
         }
     }
 
 
-    private void retryingExecutionKill(List<Execution> testExecutions, ExecutionRepositoryInterface executionRepository, QueueInterface<ExecutionKilled> killQueue, int retriesLeft) throws InterruptedException {
+    private List<Execution> retryingExecutionKill(List<Execution> testExecutions, ExecutionRepositoryInterface executionRepository, QueueInterface<ExecutionKilled> killQueue, int retriesLeft, boolean shouldWaitForKill) throws InterruptedException {
         try {
-            ListUtils.distinctByKey(
-                    testExecutions.stream().flatMap(launchedExecution -> executionRepository.findById(launchedExecution.getTenantId(), launchedExecution.getId()).stream()).toList(),
-                    Execution::getId
-                ).stream().filter(inRepository -> inRepository.getState().isRunning() || inRepository.getState().isPaused() || inRepository.getState().isQueued())
-                .forEach(inRepository -> {
-                    log.warn("Execution {} is still running after test execution, killing it", inRepository.getId());
-                    try {
-                        killQueue.emit(ExecutionKilledExecution.builder()
-                            .tenantId(inRepository.getTenantId())
-                            .executionId(inRepository.getId())
-                            .state(ExecutionKilled.State.REQUESTED)
-                            .isOnKillCascade(true)
-                            .build()
-                        );
-                    } catch (QueueException e) {
-                        log.warn("Couldn't kill execution {} after test execution", inRepository.getId(), e);
-                    }
-                });
+            List<Execution> runningExecutions = ListUtils.distinctByKey(
+                testExecutions.stream().flatMap(launchedExecution -> executionRepository.findById(launchedExecution.getTenantId(), launchedExecution.getId()).stream()).toList(),
+                Execution::getId
+            ).stream().filter(inRepository -> !inRepository.getState().isTerminated()).toList();
+
+            runningExecutions.forEach(inRepository -> emitKillMessage(killQueue, inRepository));
+
+            if (shouldWaitForKill) {
+                try {
+                    waitForKilled(executionRepository, runningExecutions);
+                } catch (TimeoutException e) {
+                    log.warn("Some executions remained in KILLING", e);
+                }
+            }
+            return runningExecutions;
         } catch (ConcurrentModificationException e) {
             // We intentionally don't use a CopyOnWriteArrayList to retry on concurrent modification exceptions to make sure to get rid of flakiness due to overflowing executions
             if (retriesLeft <= 0) {
                 log.warn("Couldn't kill executions after test execution, due to concurrent modifications, this could impact further tests", e);
-                return;
+                return Collections.emptyList();
             }
             Thread.sleep(100);
-            retryingExecutionKill(testExecutions, executionRepository, killQueue, retriesLeft - 1);
+            return retryingExecutionKill(testExecutions, executionRepository, killQueue, retriesLeft - 1, shouldWaitForKill);
         }
+    }
+
+    private void emitKillMessage(QueueInterface<ExecutionKilled> killQueue, Execution inRepository) {
+        log.warn("Execution {} is still running after test execution, killing it", inRepository.getId());
+        try {
+            killQueue.emit(ExecutionKilledExecution.builder()
+                .tenantId(inRepository.getTenantId())
+                .executionId(inRepository.getId())
+                .state(ExecutionKilled.State.REQUESTED)
+                .isOnKillCascade(true)
+                .build()
+            );
+        } catch (QueueException e) {
+            log.warn("Couldn't kill execution {} after test execution", inRepository.getId(), e);
+        }
+    }
+
+    private void waitForKilled(ExecutionRepositoryInterface executionRepository, List<Execution> runningExecutions) throws TimeoutException {
+        Await.until(() -> runningExecutions.stream()
+                .map(execution -> executionRepository.findById(execution.getTenantId(), execution.getId()))
+                .allMatch(maybeExecution -> maybeExecution.map(inRepository -> {
+                        boolean terminated = inRepository.getState().isTerminated();
+                        if (!terminated) {
+                            log.warn("Execution {} has a pending KILL request but is still in state {} ", inRepository.getId(), inRepository.getState().getCurrent());
+                        }
+                        return terminated;
+                    })
+                    .orElse(true))
+            , Duration.ofMillis(50), Duration.ofSeconds(10));
     }
 }

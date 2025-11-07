@@ -312,12 +312,12 @@
             }
         }
 
-    @container (max-width: 640px) {
+    @media (max-width: 640px) {
         width: 100%;
         padding: 1rem;
 
         .logo {
-            width: 180px;
+            width: 200px;
             margin-bottom: 1.5rem;
         }
 

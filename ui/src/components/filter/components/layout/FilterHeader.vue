@@ -2,7 +2,7 @@
     <div class="filter-header">
         <label class="filter-label">{{ label }}</label>
         <el-button
-            type="text"
+            link
             size="small"
             :icon="Close"
             @click="emits('close')"

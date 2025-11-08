@@ -24,8 +24,7 @@
     </div>
 </template>
 
-<script lang="ts">
-    import type {ScrollbarDirection} from "element-plus";
+<script>
     export default {
         data() {
             return {
@@ -56,11 +55,10 @@
         },
         directives: {},
         methods: {
-            async onEndReached(direction: ScrollbarDirection) {
+            async onEndReached(direction) {
                 if (direction !== "bottom") return;
                 if (this.infiniteScrollDisabled || !this.infiniteScrollLoad) return;
                 await this.infiniteScrollLoadWithDisableHandling();
-                // Recompute height in case new rows change scroll dynamics
                 this.tableHeight = await this.computeTableHeight();
             },
             async resetInfiniteScroll() {

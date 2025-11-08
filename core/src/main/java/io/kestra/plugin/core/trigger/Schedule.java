@@ -401,7 +401,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             try {
                 boolean conditionResults = this.validateScheduleCondition(conditionContext);
                 if (!conditionResults) {
-                    return Optional.empty();
+                    return Optional.of(scheduleDates);
                 }
             } catch(InternalException ie) {
                 // validate schedule condition can fail to render variables

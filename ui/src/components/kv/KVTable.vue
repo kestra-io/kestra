@@ -272,11 +272,7 @@
     import DataTable from "../layout/DataTable.vue";
     import _merge from "lodash/merge";
     import {type DataTableRef, useDataTableActions} from "../../composables/useDataTableActions.ts";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
-
     const dataTable = useTemplateRef<DataTableRef>("dataTable");
-
-    const {saveRestoreUrl} = useRestoreUrl();
 
     const loadData = async (callback?: () => void) => {
         try {
@@ -302,8 +298,7 @@
 
     const {onPageChanged, queryWithFilter, onSort} = useDataTableActions({
         loadData: loadData,
-        dataTableRef: dataTable,
-        saveRestoreUrl
+        dataTableRef: dataTable
     });
 
     const loadQuery = (base: any) => {

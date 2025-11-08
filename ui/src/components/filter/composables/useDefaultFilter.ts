@@ -1,50 +1,70 @@
 import {onMounted} from "vue";
+import {LocationQuery, useRoute, useRouter} from "vue-router";
+import {useMiscStore} from "override/stores/misc";
 import {defaultNamespace} from "../../../composables/useNamespaces";
-import {RouteLocation, useRoute, useRouter} from "vue-router";
-import {useMiscStore} from "../../../override/stores/misc";
 
-export function useDefaultFilter(props?: { namespace?: string }, query: Record<string, any> = {}) {
-    let queryHasChanged = false;
-    const queryKeys = Object.keys(query);
-    if (props?.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-        query["filters[namespace][PREFIX]"] = defaultNamespace();
-        queryHasChanged = true;
-    }
-
-    if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
-        query["filters[scope][EQUALS]"] = "USER";
-        queryHasChanged = true;
-    }
-
-    return {queryHasChanged, query};
+interface DefaultFilterOptions {
+    namespace?: string;
+    includeTimeRange?: boolean;
+    includeScope?: boolean;
+    legacyQuery?: boolean;
 }
 
-export function maybeAddTimeRangeFilter(to: RouteLocation) {
-    const dateTimeKeys = ["startDate", "endDate", "timeRange"];
+const NAMESPACE_FILTER_PREFIX = "filters[namespace]";
+const SCOPE_FILTER_PREFIX = "filters[scope]";
+const TIME_RANGE_FILTER_PREFIX = "filters[timeRange]";
 
-    // Default to the configured duration if no time range is set
-    if (!Object.keys(to.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-        const miscStore = useMiscStore();
-        const defaultDuration = miscStore.configs?.chartDefaultDuration || "P30D"; // Fallback to 30 days
-        to.query["filters[timeRange][EQUALS]"] = defaultDuration;
+const hasFilterKey = (query: LocationQuery, prefix: string): boolean =>
+    Object.keys(query).some(key => key.startsWith(prefix));
 
-        return true;
-    }
-
-    return false;
-}
-
-export function useApplyDefaultFilter(props: { namespace?: string }) {
-    onMounted(() => {
-        const router = useRouter();
-        const route = useRoute();
-        const query = {...route.query};
+export function applyDefaultFilters(
+    currentQuery: LocationQuery, 
+    options: DefaultFilterOptions & { 
+        configuration?: any; 
+        route?: any 
+    } = {}): { query: LocationQuery; hasChanges: boolean } {
+        
+    const {configuration, route, namespace, includeTimeRange, includeScope, legacyQuery = false} = options;
     
-        const {queryHasChanged} = useDefaultFilter(props, query);
+    const hasTimeRange = configuration && route 
+        ? configuration.keys?.some((k: any) => k.key === "timeRange") ?? false
+        : includeTimeRange ?? false;
+    const hasScope = configuration && route
+        ? route?.name !== "logs/list" && (configuration.keys?.some((k: any) => k.key === "scope") ?? false)
+        : includeScope ?? false;
+        
+    const query = {...currentQuery};
+    let hasChanges = false;
 
-        if (queryHasChanged || maybeAddTimeRangeFilter(route)) {
+    if (namespace === undefined && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
+        query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
+        hasChanges = true;
+    }
+
+    if (hasScope && !hasFilterKey(query, SCOPE_FILTER_PREFIX)) {
+        query[legacyQuery ? "scope" : `${SCOPE_FILTER_PREFIX}[EQUALS]`] = "USER";
+        hasChanges = true;
+    }
+
+    const TIME_FILTER_KEYS = /startDate|endDate|timeRange/;
+
+    if (hasTimeRange && !Object.keys(query).some(key => TIME_FILTER_KEYS.test(key))) {
+        const defaultDuration = useMiscStore().configs?.chartDefaultDuration ?? "P30D";
+        query[legacyQuery ? "timeRange" : `${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = defaultDuration;
+        hasChanges = true;
+    }
+
+    return {query, hasChanges};
+}
+
+export function useApplyDefaultFilter(options?: DefaultFilterOptions) {
+    const router = useRouter();
+    const route = useRoute();
+
+    onMounted(() => {
+        const {query, hasChanges} = applyDefaultFilters(route.query, options);
+        if (hasChanges) {
             router.replace({query});
         }
     });
-};
-
+}

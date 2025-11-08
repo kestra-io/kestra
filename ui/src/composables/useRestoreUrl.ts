@@ -1,8 +1,6 @@
 import {computed, nextTick, onMounted, ref} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {defaultNamespace} from "./useNamespaces";
-import {useDefaultFilter} from "../components/filter/composables/useDefaultFilter";
-import isEqual from "lodash/isEqual";
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
@@ -49,6 +47,11 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         }
     };
 
+    /**
+     * Merges saved URL query parameters from sessionStorage with current route.
+     * Only adds missing parameters to avoid overwriting user changes.
+     * Updates route only when changes are made.
+     */
     const goToRestoreUrl = () => {
         if (!restoreUrl) {
             return;
@@ -86,11 +89,12 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         }
     };
 
-    const {query: defaultQuery} = useDefaultFilter();
-
-    // Automatically call goToRestoreUrl on mount if needed (equivalent to created() hook)
+    /**
+     * Automatically restores saved URL state from sessionStorage on mount.
+     * Only triggers when restoreUrl is enabled and saved state exists.
+     */
     onMounted(() => {
-        if (restoreUrl && !isEqual(defaultQuery, route.query)) {
+        if (restoreUrl && localStorageValue.value) {
             loadInit.value = false;
             goToRestoreUrl();
         }

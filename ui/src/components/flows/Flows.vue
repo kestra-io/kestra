@@ -249,8 +249,8 @@
 
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, useTemplateRef} from "vue";
-    import {useRoute, useRouter} from "vue-router";
+    import {ref, computed, useTemplateRef} from "vue";
+    import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
     import * as FILTERS from "../../utils/filters";
@@ -284,7 +284,6 @@
     import permission from "../../models/permission";
 
     import {useToast} from "../../utils/toast";
-    import {defaultNamespace} from "../../composables/useNamespaces";
 
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
@@ -294,7 +293,6 @@
     import {useTableColumns} from "../../composables/useTableColumns";
     import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -312,14 +310,11 @@
     const miscStore = useMiscStore();
 
     const route = useRoute();
-    const router = useRouter();
 
     const {t} = useI18n();
     const toast = useToast()
     
     const flowFilter = useFlowFilter();
-
-    const {saveRestoreUrl} = useRestoreUrl();
 
     const lastExecutionByFlowReady = ref(false);
     const latestExecutions = ref<any[]>([]);
@@ -417,8 +412,7 @@
     } = useDataTableActions({
         dblClickRouteName: "flows/update",
         dataTableRef,
-        loadData,
-        saveRestoreUrl
+        loadData
     });
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
@@ -636,24 +630,6 @@
             operation: "EQUALS"
         }];
     }
-
-    onMounted(() => {
-        const query = {...route.query};
-        const queryKeys = Object.keys(query);
-        let queryHasChanged = false;
-
-        if (props.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-            query["filters[namespace][PREFIX]"] = defaultNamespace();
-            queryHasChanged = true;
-        }
-
-        if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
-            query["filters[scope][EQUALS]"] = "USER";
-            queryHasChanged = true;
-        }
-
-        if (queryHasChanged) router.replace({query});
-    });
 </script>
 
 <style scoped lang="scss">

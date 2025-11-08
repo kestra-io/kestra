@@ -7,22 +7,7 @@ import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
-import {useMiscStore} from "override/stores/misc";
-
-function maybeAddTimeRangeFilter(to) {
-    const dateTimeKeys = ["startDate", "endDate", "timeRange"];
-
-    // Default to the configured duration if no time range is set
-    if (!Object.keys(to.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-        const miscStore = useMiscStore();
-        const defaultDuration = miscStore.configs?.chartDefaultDuration || "P30D"; // Fallback to 30 days
-        to.query["filters[timeRange][EQUALS]"] = defaultDuration;
-
-        return true;
-    }
-
-    return false;
-}
+import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
 export default [
     //Initial
@@ -35,11 +20,13 @@ export default [
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
         beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
+            const {query, hasChanges} = applyDefaultFilters(to.query, {includeTimeRange: true, includeScope: false});
+            
+            if (hasChanges) {
                 next({
                     name: to.name,
                     params: to.params,
-                    query: to.query,
+                    query,
                 });
                 return;
             }
@@ -62,7 +49,25 @@ export default [
     {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("override/components/dashboard/Edit.vue")},
 
     //Flows
-    {name: "flows/list", path: "/:tenant?/flows", component: () => import("../components/flows/Flows.vue")},
+    {
+        name: "flows/list",
+        path: "/:tenant?/flows",
+        component: () => import("../components/flows/Flows.vue"),
+        beforeEnter: (to, from, next) => {
+            const {query, hasChanges} = applyDefaultFilters(to.query, {includeTimeRange: false, includeScope: true});
+
+            if (hasChanges) {
+                next({
+                    name: to.name,
+                    params: to.params,
+                    query,
+                });
+                return;
+            }
+
+            next();
+        }
+    },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
     {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
     {name: "flows/update", path: "/:tenant?/flows/edit/:namespace/:id/:tab?", component: () => import("../components/flows/FlowRoot.vue")},
@@ -73,11 +78,13 @@ export default [
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
         beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
+            const {query, hasChanges} = applyDefaultFilters(to.query, {includeTimeRange: true, includeScope: true});
+
+            if (hasChanges) {
                 next({
                     name: to.name,
                     params: to.params,
-                    query: to.query,
+                    query,
                 });
                 return;
             }
@@ -112,11 +119,13 @@ export default [
         path: "/:tenant?/logs",
         component: () => import("../components/logs/LogsWrapper.vue"),
         beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
+            const {query, hasChanges} = applyDefaultFilters(to.query, {includeTimeRange: true} );
+
+            if (hasChanges) {
                 next({
                     name: to.name,
                     params: to.params,
-                    query: to.query,
+                    query,
                 });
                 return;
             }

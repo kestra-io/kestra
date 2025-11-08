@@ -83,9 +83,6 @@
     
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useDataTableActions} from "../../composables/useDataTableActions";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
-
-    const {saveRestoreUrl} = useRestoreUrl();
 
     const {t} = useI18n();
 
@@ -166,8 +163,7 @@
     } = useDataTableActions({
         embed: props.embed,
         dataTableRef: dataTable,
-        loadData: loadData,
-        saveRestoreUrl
+        loadData: loadData
     });
 
     watch(() => props.taskRunId, () => {

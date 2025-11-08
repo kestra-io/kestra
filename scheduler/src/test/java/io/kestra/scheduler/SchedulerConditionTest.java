@@ -56,7 +56,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             .conditions(List.of(
                 DayWeekInMonth.builder()
                     .type(DayWeekInMonth.class.getName())
-                    .date("{{ trigger.date }}")
+                    .date(Property.ofValue("2021-09-06T02:00:00+01:00"))
                     .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                     .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
                     .build()

@@ -79,7 +79,7 @@ class ScheduleTest {
 
         return TriggerContext.builder()
             .namespace(flow.getNamespace())
-            .flowId(flow.getNamespace())
+            .flowId(flow.getId())
             .triggerId(schedule.getId())
             .date(date)
             .build();
@@ -231,8 +231,8 @@ class ScheduleTest {
         TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
             .backfill(Backfill
                 .builder()
-                .currentDate(ZonedDateTime.now().with(LocalTime.MIN))
-                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .currentDate(now.with(LocalTime.MIN))
+                .end(now.with(LocalTime.MAX))
                 .build()
             ).build();
         // When
@@ -247,7 +247,7 @@ class ScheduleTest {
         // Given
         Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron(TEST_CRON_EVERYDAY_AT_8).build();
         ZonedDateTime now = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
-        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
             .backfill(Backfill
                 .builder()
                 .currentDate(now.with(LocalTime.MIN).plus(Duration.ofHours(8)))
@@ -310,7 +310,7 @@ class ScheduleTest {
     @Test
     void conditions() throws Exception {
         Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
+            .id("schedule")
             .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
@@ -319,14 +319,14 @@ class ScheduleTest {
                     .type(DayWeekInMonth.class.getName())
                     .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
                     .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
-                    .date("{{ trigger.date }}")
+                    .date(Property.ofExpression("{{ trigger.date }}"))
                     .build()
             ))
             .build();
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
-        ZonedDateTime previous = ZonedDateTime.parse("2021-07-05T12:00:00+02:00");
-        ZonedDateTime next = ZonedDateTime.parse("2021-09-06T12:00:00+02:00");
+        ZonedDateTime previous = ZonedDateTime.parse("2021-07-26T12:00:00+02:00");
+        ZonedDateTime next = ZonedDateTime.parse("2021-08-09T12:00:00+02:00");
 
         Optional<Execution> evaluate = trigger.evaluate(
             conditionContext(trigger),
@@ -344,21 +344,21 @@ class ScheduleTest {
     @Test
     void impossibleNextConditions() throws Exception {
         Schedule trigger = Schedule.builder()
-            .id("schedule").type(Schedule.class.getName())
+            .id("schedule")
             .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
-                    .before(Property.ofValue(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
-                    .date("{{ trigger.date }}")
+                    .before(Property.ofValue(ZonedDateTime.parse("2021-08-02T12:00:00+02:00")))
+                    .date(Property.ofExpression("{{ trigger.date }}"))
                     .build()
             ))
             .build();
 
         ZonedDateTime date = ZonedDateTime.parse("2021-08-02T12:00:00+02:00");
-        ZonedDateTime previous = ZonedDateTime.parse("2021-07-26T12:00:00+02:00");
+        ZonedDateTime previous = ZonedDateTime.parse("2021-07-05T12:00:00+02:00");
 
         Optional<Execution> evaluate = trigger.evaluate(
             conditionContext(trigger),
@@ -459,7 +459,8 @@ class ScheduleTest {
             .timezone("America/New_York")
             .build();
 
-        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+        ZonedDateTime fixedDate = ZonedDateTime.parse("2025-01-15T00:00:00-05:00[America/New_York]");
+        TriggerContext triggerContext = triggerContext(fixedDate, trigger).toBuilder()
             .backfill(Backfill
                 .builder()
                 .currentDate(ZonedDateTime.parse("2025-01-15T08:00-05:00[America/New_York]"))

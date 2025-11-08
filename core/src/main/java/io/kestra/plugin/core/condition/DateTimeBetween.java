@@ -84,8 +84,7 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String date = "{{ trigger.date }}";
+    private final Property<String> date = Property.ofExpression("{{ trigger.date }}");
 
     @Schema(
         title = "The date to test must be after this one.",
@@ -102,18 +101,19 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         Map<String, Object> vars = conditionContext.getVariables();
-        String render = conditionContext.getRunContext().render(date, vars);
-        ZonedDateTime currentDate = DateUtils.parseZonedDateTime(render);
+        String render = conditionContext.getRunContext().render(date).as(String.class, vars).orElseThrow();
+        
+        ZonedDateTime currentDate = (render != null) ? DateUtils.parseZonedDateTime(render) : ZonedDateTime.now();
 
         ZonedDateTime afterRendered = conditionContext.getRunContext().render(this.after).as(ZonedDateTime.class, vars).orElse(null);
         ZonedDateTime beforeRendered = conditionContext.getRunContext().render(this.before).as(ZonedDateTime.class, vars).orElse(null);
 
         if (beforeRendered != null && afterRendered != null) {
-            return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);
+            return !currentDate.isBefore(afterRendered) && !currentDate.isAfter(beforeRendered);
         } else if (beforeRendered != null) {
-            return currentDate.isBefore(beforeRendered);
+            return !currentDate.isAfter(beforeRendered);
         } else if (afterRendered != null) {
-            return currentDate.isAfter(afterRendered);
+            return !currentDate.isBefore(afterRendered);
         } else {
             throw new IllegalConditionEvaluation("Invalid condition with no before nor after");
         }

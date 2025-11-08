@@ -43,7 +43,7 @@ class DayWeekInMonthTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         DayWeekInMonth build = DayWeekInMonth.builder()
-            .date(date)
+            .date(Property.ofValue(date))
             .dayOfWeek(Property.ofValue(dayOfWeek))
             .dayInMonth(Property.ofValue(dayInMonth))
             .build();

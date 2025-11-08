@@ -606,8 +606,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     private boolean validateScheduleCondition(ConditionContext conditionContext) throws InternalException {
-        if (conditions != null) {
-            ConditionService conditionService = ((DefaultRunContext)conditionContext.getRunContext()).getApplicationContext().getBean(ConditionService.class);
+        if (conditions != null && !conditions.isEmpty()) {
+            ConditionService conditionService = ((DefaultRunContext) conditionContext.getRunContext()).getApplicationContext().getBean(ConditionService.class);
             return conditionService.isValid(
                 conditions.stream().filter(c -> c instanceof ScheduleCondition).map(c -> (ScheduleCondition) c).toList(),
                 conditionContext

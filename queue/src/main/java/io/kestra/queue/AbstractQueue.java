@@ -2,6 +2,7 @@ package io.kestra.queue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.CaseFormat;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.serializers.JacksonMapper;
@@ -22,7 +23,7 @@ public abstract class AbstractQueue<T extends GenericEvent> {
     }
 
     protected String queueName() {
-        return "test";
+        return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, this.cls.getSimpleName());
     }
 
     public void execute(Runnable runnable) {

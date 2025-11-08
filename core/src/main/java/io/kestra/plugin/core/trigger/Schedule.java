@@ -401,7 +401,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             try {
                 boolean conditionResults = this.validateScheduleCondition(conditionContext);
                 if (!conditionResults) {
-                    return Optional.empty();
+                    return Optional.of(scheduleDates);
                 }
             } catch(InternalException ie) {
                 // validate schedule condition can fail to render variables
@@ -536,12 +536,12 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
             .date(output.getDate());
 
-        Optional<ZonedDateTime> nextWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), true);
+        Optional<ZonedDateTime> nextWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), true);
         if (nextWithCondition.isPresent()) {
             outputBuilder.next(nextWithCondition.get());
         }
 
-        Optional<ZonedDateTime> previousWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), false);
+        Optional<ZonedDateTime> previousWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), false);
         if (previousWithCondition.isPresent()) {
             outputBuilder.previous(previousWithCondition.get());
         }
@@ -571,6 +571,15 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             }
 
             ConditionContext currentConditionContext = this.conditionContext(conditionContext, currentOutput.get());
+
+            if (!currentConditionContext.getVariables().containsKey("trigger")) {
+                currentConditionContext = currentConditionContext.withVariables(
+                    ImmutableMap.<String, Object>builder()
+                        .putAll(currentConditionContext.getVariables())
+                        .put("trigger", currentOutput.get().toMap())
+                        .build()
+                );
+            }
 
             boolean conditionResults = this.validateScheduleCondition(currentConditionContext);
             if (conditionResults) {
@@ -612,6 +621,15 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     }
 
     private boolean validateScheduleCondition(ConditionContext conditionContext) throws InternalException {
+        if (!conditionContext.getVariables().containsKey("trigger") && conditionContext.getVariables().containsKey("schedule")) {
+            conditionContext = conditionContext.withVariables(
+                ImmutableMap.<String, Object>builder()
+                    .putAll(conditionContext.getVariables())
+                    .put("trigger", conditionContext.getVariables().get("schedule"))
+                    .build()
+            );
+        }
+
         if (conditions != null && !conditions.isEmpty()) {
             ConditionService conditionService = ((DefaultRunContext) conditionContext.getRunContext()).getApplicationContext().getBean(ConditionService.class);
             return conditionService.isValid(

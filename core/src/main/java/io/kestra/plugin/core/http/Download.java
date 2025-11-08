@@ -20,7 +20,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -115,9 +114,6 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
             if (response.getHeaders().firstValue("Content-Disposition").isPresent()) {
                 String contentDisposition = response.getHeaders().firstValue("Content-Disposition").orElseThrow();
                 filename = filenameFromHeader(runContext, contentDisposition);
-            }
-            if (filename != null) {
-                filename = URLEncoder.encode(filename, StandardCharsets.UTF_8);
             }
 
             logger.debug("File '{}' downloaded with size '{}'", from, size);

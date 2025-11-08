@@ -536,11 +536,15 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
             .date(output.getDate());
 
-        this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), true)
-            .ifPresent(outputBuilder::next);
+        Optional<ZonedDateTime> nextWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), true);
+        if (nextWithCondition.isPresent()) {
+            outputBuilder.next(nextWithCondition.get());
+        }
 
-        this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), false)
-            .ifPresent(outputBuilder::previous);
+        Optional<ZonedDateTime> previousWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, output.getDate(), false);
+        if (previousWithCondition.isPresent()) {
+            outputBuilder.previous(previousWithCondition.get());
+        }
 
         return outputBuilder.build();
     }
@@ -573,7 +577,9 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 return currentDate;
             }
 
-            toTestDate = currentDate.get();
+            toTestDate = next
+                ? currentDate.get().plusSeconds(1)
+                : currentDate.get().minusSeconds(1);
         }
 
         return Optional.empty();

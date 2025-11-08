@@ -116,10 +116,6 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
                 String contentDisposition = response.getHeaders().firstValue("Content-Disposition").orElseThrow();
                 filename = filenameFromHeader(runContext, contentDisposition);
             }
-            if (filename != null) {
-                filename = URLEncoder.encode(filename, StandardCharsets.UTF_8);
-            }
-
             logger.debug("File '{}' downloaded with size '{}'", from, size);
 
             return Output.builder()

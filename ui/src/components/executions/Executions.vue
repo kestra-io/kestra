@@ -1034,7 +1034,11 @@
         emit("state-count", {runningCount, totalCount});
     };
 
-    useApplyDefaultFilter({namespace: props.namespace});
+    useApplyDefaultFilter({
+        namespace: props.namespace,
+        includeTimeRange: true,
+        includeScope: true
+    });
 
     watch(isOpenLabelsModal, (opening) => {
         if (opening) {

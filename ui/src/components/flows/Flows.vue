@@ -293,6 +293,7 @@
     import {useTableColumns} from "../../composables/useTableColumns";
     import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
+    import {useApplyDefaultFilter} from "../filter/composables/useDefaultFilter";
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -493,6 +494,11 @@
     function updateDisplayColumns(newColumns: string[]) {
         updateVisibleColumns(newColumns);
     }
+
+    useApplyDefaultFilter({
+        namespace: props.namespace,
+        includeScope: true
+    });
 
     function exportFlows() {
         toast.confirm(

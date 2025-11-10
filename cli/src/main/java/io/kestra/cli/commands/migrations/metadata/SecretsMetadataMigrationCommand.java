@@ -2,6 +2,7 @@ package io.kestra.cli.commands.migrations.metadata;
 
 import io.kestra.cli.AbstractCommand;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -12,13 +13,13 @@ import picocli.CommandLine;
 @Slf4j
 public class SecretsMetadataMigrationCommand extends AbstractCommand {
     @Inject
-    private MetadataMigrationService metadataMigrationService;
+    private Provider<MetadataMigrationService> metadataMigrationServiceProvider;
 
     @Override
     public Integer call() throws Exception {
         super.call();
         try {
-            metadataMigrationService.secretMigration();
+            metadataMigrationServiceProvider.get().secretMigration();
         } catch (Exception e) {
             System.err.println("❌ Secrets Metadata migration failed: " + e.getMessage());
             e.printStackTrace();

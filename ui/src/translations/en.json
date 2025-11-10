@@ -1836,6 +1836,13 @@
             "search_blueprints": "Search blueprints",
             "search_plugins": "Search {count}+ plugins"
         }
-    }
+    },
+    "delete trigger": "Delete trigger",
+    "delete triggers": "Delete triggers",
+    "bulk delete triggers": "Are you sure you want to delete {count} triggers?",
+    "bulk success delete triggers": "{count} triggers have been deleted successfully",
+    "delete trigger confirmation": "Are you sure you want to delete trigger {id}? WARNING: deleting a trigger may lead to duplicate executions if the trigger is still active in a flow",
+    "delete trigger success": "Trigger {id} has been deleted successfully",
+    "delete trigger error": "Error deleting trigger {id}"
   }
 }

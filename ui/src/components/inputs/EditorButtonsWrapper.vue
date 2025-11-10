@@ -59,12 +59,12 @@
     const {t} = useI18n();
 
     const exportYaml = () => {
-        const src = flowStore.flowYaml
-        if(!src) {
-            return;
-        }
-        const blob = new Blob([src], {type: "text/yaml"});
-        localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
+        if(!flowStore.flow || !flowStore.flowYaml) return;
+
+        const {id, namespace} = flowStore.flow;
+        const blob = new Blob([flowStore.flowYaml], {type: "text/yaml"});
+
+        localUtils.downloadUrl(window.URL.createObjectURL(blob), `${namespace}.${id}.yaml`);
     };
 
     const flowStore = useFlowStore();

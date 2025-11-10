@@ -292,6 +292,8 @@
         return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor
     }
 
+    const scrollMemory = props.scrollKey ? useScrollMemory(ref(props.scrollKey)) : null;
+
     function editorDidMount(monacoMounted?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
 
         const monacoRef = monacoEditor.value
@@ -302,8 +304,6 @@
             console.error("Monaco editor is not mounted properly.");
             return;
         }
-
-
 
         // avoid double import of monaco editor, use a reference
         const KeyCode = monacoRef.monaco.KeyCode;
@@ -316,7 +316,7 @@
         }
 
         const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
-        const scrollMemory = props.scrollKey ? useScrollMemory(ref(props.scrollKey)) : null;
+        
         
         if (props.scrollKey && scrollMemory) {
             const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");

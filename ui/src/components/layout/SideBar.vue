@@ -31,149 +31,113 @@
     import {
         onUpdated,
         ref,
-        computed,
+        computed, 
         h,
-        onMounted,
-        nextTick,
-        onBeforeUnmount
+        onMounted
     } from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
+
     import {SidebarMenu} from "vue-sidebar-menu";
+
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
+
+    import Environment from "./Environment.vue";
     import BookmarkLinkList from "./BookmarkLinkList.vue";
     import {useBookmarksStore} from "../../stores/bookmarks";
     import type {MenuItem} from "override/components/useLeftMenu";
     import {useLayoutStore} from "../../stores/layout";
     import SidebarToggleButton from "./SidebarToggleButton.vue";
 
-    const props = withDefaults(
-        defineProps<{
-            menu: MenuItem[];
-            showLink: boolean;
-        }>(),
-        {
-            showLink: true
-        }
-    );
 
-    const $emit = defineEmits(["menu-collapse"]);
-    const $route = useRoute();
+    const props = withDefaults(defineProps<{
+        menu: MenuItem[],
+        showLink: boolean
+    }>(), {
+        showLink: true
+    })
+
+    const $emit = defineEmits(["menu-collapse"])
+
+    const $route = useRoute()
     const {t} = useI18n({useScope: "global"});
-    const layoutStore = useLayoutStore();
 
-    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true");
+    const layoutStore = useLayoutStore();
 
     function onToggleCollapse(folded: boolean) {
         collapsed.value = folded;
         layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
-        localStorage.setItem("menuCollapsed", String(folded));
+
         return folded;
     }
 
     function disabledCurrentRoute(items: MenuItem[]) {
-        return items.map(r => {
-            if (r.href?.path === $route.path) {
-                r.disabled = true;
-            }
+        return items
+            .map(r => {
+                if (r.href?.path === $route.path) {
+                    r.disabled = true;
+                }
 
-            if (
-                r.href !== "/" &&
-                ($route.path.startsWith(r.href) || r.routes?.includes($route.name))
-            ) {
-                r.class = "vsm--link_active";
-            }
+                // route hack is still needed for blueprints
+                if (r.href !== "/" && ($route.path.startsWith(r.href) || r.routes?.includes($route.name))) {
+                    r.class = "vsm--link_active";
+                }
 
-            if (
-                r.child &&
-                r.child.some(
-                    c => $route.path.startsWith(c.href) || c.routes?.includes($route.name)
-                )
-            ) {
-                r.class = "vsm--link_active";
-                r.child = disabledCurrentRoute(r.child);
-            }
+                if (r.child && r.child.some(c => $route.path.startsWith(c.href) || c.routes?.includes($route.name))) {
+                    r.class = "vsm--link_active";
+                    r.child = disabledCurrentRoute(r.child);
+                }
 
-            return r;
+                return r;
+            })
+    }
+
+
+    function expandParentIfNeeded() {
+        document.querySelectorAll(".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]").forEach(e => {
+            (e as HTMLElement).click()
         });
     }
 
-    function expandParentIfNeeded() {
-        document
-            .querySelectorAll(
-                ".vsm--link.vsm--link_level-1.vsm--link_active:not(.vsm--link_open)[aria-haspopup]"
-            )
-            .forEach(e => (e as HTMLElement).click());
-    }
-
-    onUpdated(() => expandParentIfNeeded());
+    onUpdated(() => {
+        expandParentIfNeeded();
+    })
 
     const bookmarksStore = useBookmarksStore();
 
     const menu = computed(() => {
         return [
-            ...(bookmarksStore.pages?.length
-                ? [
-                    {
-                        title: t("bookmark"),
-                        icon: {element: StarOutline, class: "menu-icon"},
-                        child: [
-                            {
-                                component: () =>
-                                    h(BookmarkLinkList, {pages: bookmarksStore.pages})
-                            }
-                        ]
-                    }
-                ]
-                : []),
+            ...(bookmarksStore.pages?.length ? [{
+                title: t("bookmark"),
+                icon: {
+                    element: StarOutline,
+                    class: "menu-icon",
+                },
+                child: [{
+                    // here we use only one component for all bookmarks
+                    // so when one edits the bookmark, it will be updated without closing the section
+                    component: () => h(BookmarkLinkList, {pages: bookmarksStore.pages}),
+                }]
+            }] : []),
             ...(props.menu ? disabledCurrentRoute(props.menu) : [])
         ];
     });
 
-    function attachLinkListeners() {
+    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
+    onMounted(() => {
         const sidebar = document.getElementById("side-menu");
         const links = sidebar?.querySelectorAll("a");
-        links?.forEach(link => link.addEventListener("click", handleLinkClick));
-    }
 
-    function removeLinkListeners() {
-        const sidebar = document.getElementById("side-menu");
-        const links = sidebar?.querySelectorAll("a");
-        links?.forEach(link => link.removeEventListener("click", handleLinkClick));
-    }
-
-    function handleLinkClick() {
-        if (window.innerWidth < 768) {
-            collapsed.value = true;
-            layoutStore.setSideMenuCollapsed(true);
-            localStorage.setItem("menuCollapsed", "true");
-        }
-    }
-
-    let observer: MutationObserver | null = null;
-
-    onMounted(async () => {
-        await nextTick();
-        attachLinkListeners();
-
-        const sidebar = document.getElementById("side-menu");
-        if (sidebar) {
-            observer = new MutationObserver(() => {
-                removeLinkListeners();
-                attachLinkListeners();
+        links?.forEach(link => {
+            link.addEventListener("click", () => {
+                if (window.innerWidth < 768) {
+                    collapsed.value = true;
+                    layoutStore.setSideMenuCollapsed(true);
+                    localStorage.setItem("menuCollapsed", "true");
+                }
             });
-            observer.observe(sidebar, {childList: true, subtree: true});
-        }
-
-        const savedState = localStorage.getItem("menuCollapsed");
-        collapsed.value = savedState === "true";
-        layoutStore.setSideMenuCollapsed(collapsed.value);
-    });
-
-    onBeforeUnmount(() => {
-        removeLinkListeners();
-        if (observer) observer.disconnect();
+        });
     });
 </script>
 

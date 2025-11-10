@@ -1,5 +1,6 @@
 package io.kestra.queue;
 
+import io.kestra.core.queues.QueueException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CountDownLatch;
@@ -20,7 +21,7 @@ public abstract class AbstractSubscriber<T extends GenericEvent> extends Abstrac
         super(cls, executorService);
     }
 
-    protected void waitIfPaused() throws InterruptedException {
+    protected void waitIfPaused() throws QueueException {
         if (!this.state.get().equals(State.PAUSED)) {
             return; // return immediately if not paused.
         }
@@ -28,9 +29,19 @@ public abstract class AbstractSubscriber<T extends GenericEvent> extends Abstrac
         pauseLock.lock();
         try {
             while (this.state.get().equals(State.PAUSED)) {
-                log.debug("Paused. Waiting for {} to resume", AbstractSubscriber.class.getSimpleName());
-                unpaused.await(); // Wait until resume() signals
-                log.debug("Resumed");
+                if (log.isDebugEnabled()) {
+                    log.debug("[{}] paused, waiting to resume", this.cls.getSimpleName());
+                }
+
+                try {
+                    unpaused.await(); // Wait until resume() signals
+                } catch (InterruptedException e) {
+                    throw new QueueException("[" + this.cls.getSimpleName() + "] interrupted while paused", e);
+                }
+
+                if (log.isDebugEnabled()) {
+                    log.debug("[{}] resumed", this.cls.getSimpleName());
+                }
             }
         } finally {
             pauseLock.unlock();
@@ -41,21 +52,46 @@ public abstract class AbstractSubscriber<T extends GenericEvent> extends Abstrac
         return this.state.get() == State.RUNNING;
     }
 
-    protected void markReady() {
-        if (!this.state.compareAndSet(State.STOPPED, State.RUNNING)) {
-            throw new IllegalStateException("Subscriber can't be ready, current state: " + this.state.get());
-        }
+    protected boolean isPaused() {
+        return this.state.get() == State.PAUSED;
     }
 
+    private boolean changeState(State expected, State newState) {
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] change state requested {} to {}", this.cls.getSimpleName(), expected, newState);
+        }
+
+        if (this.state.compareAndSet(expected, newState)) {
+            return true;
+        }
+
+        throw new IllegalStateException("[" + this.cls.getSimpleName() + "] illegal state change to " + newState + " from " + newState + ", current state is " + this.state.get());
+    }
+
+    protected void markReady() {
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] Mark ready received", this.cls.getSimpleName());
+        }
+
+        this.changeState(State.STOPPED, State.RUNNING);
+    }
 
     public void pause() {
-        this.state.set(State.PAUSED);
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] pause received", this.cls.getSimpleName());
+        }
+
+        this.changeState(State.RUNNING, State.PAUSED);
     }
 
     public void resume() {
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] resume received", this.cls.getSimpleName());
+        }
+
         pauseLock.lock();
         try {
-            if (state.compareAndSet(State.PAUSED, State.RUNNING)) {
+            if (this.changeState(State.PAUSED, State.RUNNING)) {
                 unpaused.signalAll();
             }
         } finally {
@@ -64,20 +100,31 @@ public abstract class AbstractSubscriber<T extends GenericEvent> extends Abstrac
     }
 
     protected void markEnd() {
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] mark end received", this.cls.getSimpleName());
+        }
 
-        if (!this.state.compareAndSet(State.STOPPED, State.RUNNING)) {
-            throw new IllegalStateException("Subscriber can't be ready, current state: " + this.state.get());
+        if (this.isRunning()) {
+            this.changeState(State.RUNNING, State.STOPPED);
         }
 
         this.stopped.countDown();
     }
 
     public void close() {
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] close received", this.cls.getSimpleName());
+        }
+
         // in case it's paused and blocked
-        resume();
+        if (this.isPaused()) {
+            resume();
+        }
 
         // already stopped
-        if (!this.state.compareAndSet(State.RUNNING, State.STOPPED)) {
+        try {
+            this.changeState(State.RUNNING, State.STOPPED);
+        } catch (IllegalStateException ignored) {
             return;
         }
 
@@ -86,7 +133,7 @@ public abstract class AbstractSubscriber<T extends GenericEvent> extends Abstrac
             stopped.await();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.warn("Interrupted while waiting for {} to be stopped.", this.getClass().getSimpleName());
+            log.warn("[{}}] interrupted while waiting to be stopped.", this.cls.getSimpleName());
         }
     }
 

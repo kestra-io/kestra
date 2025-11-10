@@ -25,7 +25,6 @@ import io.kestra.core.services.GraphService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
-import io.kestra.core.utils.Rethrow;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
@@ -43,7 +42,6 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
-import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -53,7 +51,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -68,8 +65,6 @@ import java.util.stream.Stream;
 @Controller("/api/v1/{tenant}/flows")
 @Slf4j
 public class FlowController {
-    private static final String WARNING_JSON_FLOW_ENDPOINT = "This endpoint is deprecated. Handling flows as 'application/json' is no longer supported and will be removed in a future release. Please use the same endpoint with an 'application/x-yaml' content type.";
-
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -275,22 +270,6 @@ public class FlowController {
         return HttpResponse.ok(doCreate(parseFlowSource(flow)));
     }
 
-    /**
-     * @deprecated use {@link #createFlow(String)} (String)} instead
-     */
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(consumes = MediaType.ALL)
-    @Operation(tags = {"Flows"}, summary = "Create a flow from json object", deprecated = true, hidden = true)
-    @Deprecated(forRemoval = true, since = "0.18")
-    @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the YAML one.
-    public HttpResponse<Flow> createFlowFromJson(
-        @RequestBody(description = "The flow") @Body Flow flow
-    ) throws ConstraintViolationException {
-        log.warn(WARNING_JSON_FLOW_ENDPOINT);
-
-        return HttpResponse.ok(doCreate(parseFlowSource(flow.sourceOrGenerateIfNull())).toFlow());
-    }
-
     @SneakyThrows
     protected FlowWithSource doCreate(final GenericFlow flow) {
         try {
@@ -325,46 +304,6 @@ public class FlowController {
             .toList();
 
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false);
-    }
-
-    /**
-     * @deprecated use {@link #updateFlowsInNamespace(String, String, Boolean)} instead
-     */
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{namespace}")
-    @Operation(
-        tags = {"Flows"},
-        summary = "Update a complete namespace from json object",
-        description = "All flow will be created / updated for this namespace.\n" +
-                      "Flow that already created but not in `flows` will be deleted if the query delete is `true`",
-        deprecated = true,
-        hidden = true
-    )
-    @Deprecated(forRemoval = true, since = "0.18")
-    @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the YAML one.
-    public List<Flow> updateFlowsInNamespaceFromJson(
-        @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @RequestBody(description = "A list of flows") @Body @Valid List<Flow> flows,
-        @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
-    ) throws ConstraintViolationException, FlowProcessingException {
-        log.warn(WARNING_JSON_FLOW_ENDPOINT);
-
-        List<GenericFlow> genericFlows = flows.stream()
-            .map(flow -> parseFlowSource(flow.sourceOrGenerateIfNull())).toList();
-
-        return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false).stream()
-            .map(Rethrow.throwFunction(flow -> {
-                try {
-                    return pluginDefaultService.injectVersionDefaults(flow, false).toFlow();
-                } catch (FlowProcessingException e) {
-                    if (e.getCause() instanceof ConstraintViolationException cve) {
-                        throw cve;
-                    } else {
-                        throw e;
-                    }
-                }
-            }))
-            .toList();
     }
 
     protected List<FlowInterface> bulkUpdateOrCreate(@Nullable String namespace, List<GenericFlow> flows, Boolean delete, Boolean allowNamespaceChild) {
@@ -475,31 +414,6 @@ public class FlowController {
                 throw e;
             }
         }
-    }
-
-    /**
-     * @deprecated use {@link #updateFlow(String, String, String)} instead
-     */
-    @Put(uri = "{namespace}/{id}", consumes = MediaType.APPLICATION_JSON)
-    @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Flows"}, operationId = "updateFlowFromJson", summary = "Update a flow", deprecated = true, hidden = true)
-    @Deprecated(forRemoval = true, since = "0.18")
-    @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the JSON one.
-    public HttpResponse<Flow> updateFlowFromJson(
-        @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @Parameter(description = "The flow id") @PathVariable String id,
-        @RequestBody(description = "The flow") @Body Flow flow
-    ) throws ConstraintViolationException {
-        log.warn(WARNING_JSON_FLOW_ENDPOINT);
-
-        Optional<Flow> existingFlow = flowRepository.findById(tenantService.resolveTenant(), namespace, id);
-        if (existingFlow.isEmpty()) {
-            return HttpResponse.status(HttpStatus.NOT_FOUND);
-        }
-
-        GenericFlow genericFlow = parseFlowSource(flow.sourceOrGenerateIfNull());
-
-        return HttpResponse.ok(updateFlow(genericFlow, existingFlow.get()).toFlow());
     }
 
     protected FlowWithSource updateFlow(GenericFlow current, FlowInterface previous) {

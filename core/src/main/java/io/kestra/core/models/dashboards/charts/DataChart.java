@@ -5,6 +5,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ChartOption;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.validations.DataChartValidation;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -20,6 +21,7 @@ import lombok.experimental.SuperBuilder;
 @DataChartValidation
 public abstract class DataChart<P extends ChartOption, D extends DataFilter<?, ?>> extends Chart<P> implements io.kestra.core.models.Plugin {
     @NotNull
+    @Valid
     private D data;
 
     public Integer minNumberOfAggregations() {

@@ -1,5 +1,5 @@
 <template>
-    <EmptyTemplate>
+    <EmptyTemplate class="demo-layout">
         <img :src="image.source" :alt="image.alt" class="img">
         <div class="message-block">
             <div class="enterprise-tag">
@@ -46,6 +46,11 @@
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
+    .demo-layout {
+        padding: 1rem 0 !important;
+        margin-top: 0 !important;
+    }
+
     .img {
         width: 253px;
         height: 212px;
@@ -59,8 +64,10 @@
     }
 
     .message-block {
-        width: 665px;
+        width: 100%;
+        max-width: 665px;
         margin: 0 auto;
+        padding: 0 1rem;
 
         .enterprise-tag::before,
         .enterprise-tag::after{
@@ -149,11 +156,14 @@
         }
     }
 
-.msg-block {
-    text-align: left;
-    width: 665px;
-    margin: 0 auto;
-    h2 {
+    .msg-block {
+        text-align: left;
+        width: 100%;
+        max-width: 665px;
+        margin: 0 auto;
+        padding: 0 1rem;
+
+        h2 {
             margin: 1.5rem 0;
             line-height: 30px;
             font-size: 20px;
@@ -186,5 +196,92 @@
                 margin: 0;
             }
         }
-}
+    }
+
+    @media (max-width: 768px) {
+        .img {
+            width: 180px;
+            height: 151px;
+            margin-bottom: -1rem;
+        }
+
+        .message-block {
+            padding: 0 1.5rem;
+
+            .enterprise-tag {
+                font-size: 0.875rem;
+                padding: .125rem 0.75rem;
+            }
+        }
+
+        .msg-block {
+            padding: 0 1.5rem;
+
+            h2 {
+                font-size: 18px;
+                line-height: 26px;
+                margin: 1rem 0;
+            }
+
+            p {
+                font-size: 13px;
+                line-height: 20px;
+            }
+        }
+    }
+
+    @media (max-width: 576px) {
+        .img {
+            width: 150px;
+            height: 126px;
+        }
+
+        .message-block {
+            padding: 0 1rem;
+
+            .enterprise-tag {
+                font-size: 0.8125rem;
+            }
+        }
+
+        .msg-block {
+            padding: 0 1rem;
+
+            h2 {
+                font-size: 16px;
+                line-height: 24px;
+            }
+
+            p {
+                font-size: 12px;
+                line-height: 18px;
+            }
+        }
+    }
+
+    @media (max-width: 400px) {
+        .img {
+            width: 120px;
+            height: 101px;
+        }
+
+        .message-block {
+            .enterprise-tag {
+                font-size: 0.75rem;
+                padding: .125rem 0.5rem;
+            }
+        }
+
+        .msg-block {
+            h2 {
+                font-size: 14px;
+                line-height: 20px;
+            }
+
+            p {
+                font-size: 11px;
+                line-height: 16px;
+            }
+        }
+    }
 </style>

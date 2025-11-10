@@ -1082,12 +1082,18 @@ form.ks-horizontal {
     }
 }
 
+//mobile responsive
+ @media (max-width:640px){
+        .el-dialog{
+            width: 80% !important;
+        }
+}
 
 // dialog
 .el-dialog {
     --el-dialog-border-radius: var(--bs-border-radius-lg);
     background-color: var(--ks-background-card);
-
+    
     &.custom-dialog {
         background-color: var(--ks-background-panel);
 

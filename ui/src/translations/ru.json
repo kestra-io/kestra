@@ -98,6 +98,7 @@
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
     "bulk delete backfills": "Удалить {count} заполнение",
+    "bulk delete triggers": "Вы уверены, что хотите удалить {count} triggers?",
     "bulk disabled status": {
       "false": "Включить {count} triggers",
       "true": "Отключить {count} triggers"
@@ -111,6 +112,7 @@
     "bulk resume": "Вы уверены, что хотите возобновить <code>{executionCount}</code> выполнение(я)?",
     "bulk set labels": "Вы уверены, что хотите установить метки для <code>{executionCount}</code> выполнения(й)?",
     "bulk success delete backfills": "{count} backfills заполнения",
+    "bulk success delete triggers": "{count} триггеры были успешно удалены",
     "bulk success disabled status": {
       "false": "{count} trigger(s) включены",
       "true": "{count} trigger(s) отключены"
@@ -293,6 +295,11 @@
     "delete logs": "Удалить логи",
     "delete ok": "удалено",
     "delete task confirm": "Вы хотите удалить task <code>{taskId}</code>?",
+    "delete trigger": "Удалить trigger",
+    "delete trigger confirmation": "Вы уверены, что хотите удалить trigger {id}? WARNING: удаление trigger может привести к дублированию выполнений, если trigger все еще активен в flow.",
+    "delete trigger error": "Ошибка при удалении trigger {id}",
+    "delete trigger success": "Триггер {id} был успешно удален",
+    "delete triggers": "Удалить triggers",
     "delete_all_logs": "Вы уверены, что хотите удалить все логи?",
     "delete_log": "Вы уверены, что хотите удалить log?",
     "deleted": "Успешно удалено",

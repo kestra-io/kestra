@@ -235,7 +235,7 @@
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import _groupBy from "lodash/groupBy";
-    import {computed, ref, useTemplateRef, watch} from "vue";
+    import {computed, nextTick, ref, useTemplateRef, watch} from "vue";
 
     import Check from "vue-material-design-icons/Check.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
@@ -491,6 +491,8 @@
         kv.value.key = entry.key;
         const {type, value} = await namespacesStore.kv({namespace: entry.namespace, key: entry.key});
         kv.value.type = type;
+        // Force the type reset before setting the value
+        await nextTick();
         if (type === "JSON") {
             kv.value.value = JSON.stringify(value);
         } else if (type === "BOOLEAN") {
@@ -504,7 +506,7 @@
     }
 
     function removeKv(namespace: string, key: string) {
-        toast.confirm("delete confirm", async () => {
+        toast.confirm(t("delete confirm"), async () => {
             return namespacesStore
                 .deleteKv({namespace, key: key})
                 .then(() => {
@@ -543,14 +545,16 @@
             const type = kv.value.type;
             let value: any = kv.value.value;
 
-            if (type === "STRING" || type === "DURATION") {
+            if (type === "STRING") {
+                value = JSON.stringify(value);
+            } else if (["DURATION", "JSON"].includes(type)) {
                 value = value || "";
             } else if (type === "DATETIME") {
                 value = new Date(value!).toISOString();
             } else if (type === "DATE") {
                 value = new Date(value!).toISOString().split("T")[0];
-            } else if (["NUMBER", "BOOLEAN", "JSON"].includes(type)) {
-                value = JSON.stringify(value);
+            } else {
+                value = String(value);
             }
 
             const contentType =  "text/plain";

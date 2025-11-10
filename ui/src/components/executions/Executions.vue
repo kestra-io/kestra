@@ -70,7 +70,7 @@
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
                     :no-data-text="$t('no_results.executions')"
-                    :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+                    :rowKey="(row: any) => row.id"
                 >
                     <template #select-actions>
                         <BulkSelect

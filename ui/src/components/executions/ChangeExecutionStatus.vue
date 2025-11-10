@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, withDefaults} from "vue";
+    import {ref, computed} from "vue";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
 

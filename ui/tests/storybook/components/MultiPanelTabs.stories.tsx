@@ -33,7 +33,7 @@ const render: Story["render"] = ({modelValue}) => ({
             fontSize: "12px",
             textAlign: "right",
             padding: "0 1rem"
-          };
+        };
 
         return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-background-body)">
             <div style={{...labelStyle, background: "red", width: "250px"}}>This is an example of 250px wide element.</div>
@@ -280,8 +280,8 @@ export const TabReorderTest: Story = {
             // Perform drop operation at the calculated position
             await fireEvent.drop(panelOverlay);
 
-             // Wait for the reorder to complete
-             await new Promise(resolve => setTimeout(resolve, 100));
+            // Wait for the reorder to complete
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             expect(canvas.getAllByRole("tab").map(tab => tab.querySelector(".tab-title")?.textContent?.trim())).toMatchObject(["Tab 3", "Tab 1", "Tab 2"]);
         }
@@ -346,8 +346,8 @@ export const TabMoveBetweenPanelsTest: Story = {
             // Perform drop operation at the calculated position
             fireEvent.drop(panelOverlay);
 
-             // Wait for the reorder to complete
-             await new Promise(resolve => setTimeout(resolve, 100));
+            // Wait for the reorder to complete
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             // Verify the tabs have been reordered
             expect(

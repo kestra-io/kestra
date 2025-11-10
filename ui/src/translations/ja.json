@@ -98,6 +98,7 @@
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
     "bulk delete backfills": "{count}個のbackfillを削除",
+    "bulk delete triggers": "{count} 個のtriggerを削除してもよろしいですか？",
     "bulk disabled status": {
       "false": "{count}個のtriggersを有効化",
       "true": "{count}個のtriggersを無効化"
@@ -111,6 +112,7 @@
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk set labels": "<code>{executionCount}</code>件の実行にラベルを設定してもよろしいですか？",
     "bulk success delete backfills": "{count}個のbackfillsが削除されました",
+    "bulk success delete triggers": "{count} 個のtriggerが正常に削除されました",
     "bulk success disabled status": {
       "false": "{count}個のtrigger(s)が有効化されました",
       "true": "{count}個のtrigger(s)が無効化されました"
@@ -293,6 +295,11 @@
     "delete logs": "Logsを削除",
     "delete ok": "削除されました",
     "delete task confirm": "task<code>{taskId}</code>を削除してもよろしいですか？",
+    "delete trigger": "トリガーを削除",
+    "delete trigger confirmation": "トリガー {id} を削除してもよろしいですか？WARNING: トリガーがまだflowでアクティブな場合、削除すると重複した実行が発生する可能性があります。",
+    "delete trigger error": "トリガー {id} の削除エラー",
+    "delete trigger success": "トリガー{id}が正常に削除されました",
+    "delete triggers": "トリガーを削除",
     "delete_all_logs": "すべてのLogsを削除してもよろしいですか？",
     "delete_log": "ログを削除してもよろしいですか？",
     "deleted": "正常に削除されました",

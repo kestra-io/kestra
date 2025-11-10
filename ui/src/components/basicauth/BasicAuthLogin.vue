@@ -194,6 +194,10 @@
                         showClose: false
                     })
                 })
+            } else {
+                ElMessage.error({
+                    message: t("setup.validation.incorrect_creds")
+                })
             }
         } catch {
             ElMessage.error({
@@ -266,6 +270,7 @@
     .basic-auth-login {
         flex-shrink: 1;
         width: 400px;
+        container-type: inline-size;
 
         .logo {
             width: 250px;
@@ -306,5 +311,20 @@
                 }
             }
         }
+
+    @media (max-width: 640px) {
+        width: 100%;
+        padding: 1rem;
+
+        .logo {
+            width: 200px;
+            margin-bottom: 1.5rem;
+        }
+
+        .el-form {
+            max-width: 100%;
+            padding: 1.5rem;
+        }
     }
+}
 </style>

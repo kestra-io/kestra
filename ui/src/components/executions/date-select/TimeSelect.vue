@@ -15,6 +15,7 @@
 <script lang="ts" setup>
     import {ref, computed, watch, PropType} from "vue";
     import DateSelect from "./DateSelect.vue";
+    import {useI18n} from "vue-i18n";
 
     interface TimePreset {
         value?: string;
@@ -64,9 +65,11 @@
         timeFilterPresets.value.map(preset => preset.value)
     );
 
+    const {t} = useI18n();
+
     const customAwarePlaceholder = computed<string | undefined>(() => {
         if (props.placeholder) return props.placeholder;
-        return props.allowCustom ? "datepicker.custom" : undefined;
+        return props.allowCustom ? t("datepicker.custom") : undefined;
     });
 
     const onTimeRangeSelect = (range: string | undefined) => {

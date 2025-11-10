@@ -24,7 +24,7 @@
             @remove="emit('remove', $event)"
         />
         <el-button
-            type="text"
+            link
             size="small"
             class="close"
             :icon="Close"

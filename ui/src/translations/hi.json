@@ -98,6 +98,7 @@
     "bulk change state": "क्या आप सुनिश्चित हैं कि आप <code>{executionCount}</code> execution(s) की स्थिति बदलना चाहते हैं?",
     "bulk delete": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को हटाना चाहते हैं?",
     "bulk delete backfills": "{count} backfill को हटाएं",
+    "bulk delete triggers": "क्या आप वाकई {count} triggers को हटाना चाहते हैं?",
     "bulk disabled status": {
       "false": "{count} triggers को सक्षम करें",
       "true": "{count} triggers को अक्षम करें"
@@ -111,6 +112,7 @@
     "bulk resume": "क्या आप वाकई <code>{executionCount}</code> निष्पादन को फिर से शुरू करना चाहते हैं?",
     "bulk set labels": "क्या आप वाकई <code>{executionCount}</code> निष्पादन के लिए लेबल्स सेट करना चाहते हैं?",
     "bulk success delete backfills": "{count} backfills हटाए गए",
+    "bulk success delete triggers": "{count} triggers सफलतापूर्वक हटा दिए गए हैं",
     "bulk success disabled status": {
       "false": "{count} trigger(s) सक्षम किए गए",
       "true": "{count} trigger(s) अक्षम किए गए"
@@ -293,6 +295,11 @@
     "delete logs": "Logs हटाएं",
     "delete ok": "हटा दिया गया है",
     "delete task confirm": "क्या आप वाकई Task <code>{taskId}</code> को हटाना चाहते हैं?",
+    "delete trigger": "ट्रिगर हटाएं",
+    "delete trigger confirmation": "क्या आप वाकई trigger {id} को हटाना चाहते हैं? WARNING: यदि trigger अभी भी किसी flow में सक्रिय है, तो उसे हटाने से duplicate executions हो सकते हैं।",
+    "delete trigger error": "ट्रिगर {id} को हटाने में त्रुटि",
+    "delete trigger success": "ट्रिगर {id} को सफलतापूर्वक हटा दिया गया है",
+    "delete triggers": "ट्रिगर्स हटाएं",
     "delete_all_logs": "क्या आप वाकई सभी Logs हटाना चाहते हैं?",
     "delete_log": "क्या आप वाकई log को हटाना चाहते हैं?",
     "deleted": "सफलतापूर्वक हटाया गया",

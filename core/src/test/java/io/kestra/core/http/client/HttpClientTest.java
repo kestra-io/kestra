@@ -429,7 +429,7 @@ class HttpClientTest {
 
     @Test
     void shouldReturnResponseForAllowedResponseCode() throws IOException, IllegalVariableEvaluationException, HttpClientException {
-        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowedResponseCodes(Property.of(List.of(404))).build()))) {
+        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowedResponseCodes(Property.ofValue(List.of(404))).build()))) {
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/error?status=404")));
 
             assertThat(response.getStatus().getCode()).isEqualTo(404);
@@ -438,7 +438,7 @@ class HttpClientTest {
 
     @Test
     void shouldThrowExceptionForNotAllowedResponseCode() throws IOException, IllegalVariableEvaluationException {
-        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowedResponseCodes(Property.of(List.of(404))).build()))) {
+        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowedResponseCodes(Property.ofValue(List.of(404))).build()))) {
             URI uri = URI.create(embeddedServerUri + "/http/error?status=405");
 
             HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {

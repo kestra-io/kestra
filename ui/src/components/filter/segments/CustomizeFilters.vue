@@ -6,7 +6,7 @@
                 <small>{{ t("filter.select filter") }}</small>
             </div>
             <el-button 
-                type="text" 
+                link 
                 :icon="Close" 
                 @click="$emit('close')" 
                 size="small" 
@@ -27,7 +27,7 @@
                 </div>
 
                 <el-button
-                    type="text"
+                    link
                     size="default"
                     :icon="isSelected(key) ? undefined : Plus"
                     :class="isSelected(key) ? 'selected' : 'unselected'"

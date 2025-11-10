@@ -2,12 +2,11 @@ package io.kestra.queue;
 
 import io.kestra.core.queues.QueueException;
 import jakarta.inject.Inject;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.time.Instant;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +74,61 @@ public abstract class AbstractBroadcastQueueTest {
         assertThat(list).hasSize(3 * rand);
         assertThat(list).contains("c000-i001", "c000-i002", "c000-i003");
         assertThat(list).contains("c" + String.format("%03d", (rand - 1))  +"-i001", "c" + String.format("%03d",(rand - 1))  +"-i002", "c" + String.format("%03d",(rand - 1))  +"-i003");
+    }
+
+    @Test
+    void pause() throws QueueException, InterruptedException {
+        CountDownLatch countDownLatchFirst = new CountDownLatch(1);
+        CountDownLatch countDownLatchSecond = new CountDownLatch(2);
+        CountDownLatch countDownLatchOthers = new CountDownLatch(2);
+        Collection<Pair<Instant, Integer>> list = Collections.synchronizedCollection(new ArrayList<>());
+
+        QueueSubscriber<TestBroadcast> subscriber = broadcastQueue
+            .subscriber()
+            .subscribe(e -> {
+                list.add(Pair.of(Instant.now(), e.getLeft().id));
+                if (e.getLeft().id == 1) {
+                    countDownLatchFirst.countDown();
+                } else if (e.getLeft().id <= 3) {
+                    countDownLatchSecond.countDown();
+                } else {
+                    countDownLatchOthers.countDown();
+                }
+            });
+
+        // first round
+        broadcastQueue.emit(new TestBroadcast(1));
+
+        subscriber.pause();
+        boolean await1 = countDownLatchFirst.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        assertThat(await1).isTrue();
+
+        // second round
+        Instant resumeTime = Instant.now();
+        subscriber.resume();
+
+        broadcastQueue.emit(new TestBroadcast(2));
+        broadcastQueue.emit(new TestBroadcast(3));
+
+        subscriber.pause();
+        boolean await2 = countDownLatchSecond.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        assertThat(await2).isTrue();
+
+        // last round
+        Instant resumeTime2 = Instant.now();
+        subscriber.resume();
+
+        broadcastQueue.emit(new TestBroadcast(4));
+        broadcastQueue.emit(new TestBroadcast(5));
+
+        boolean await3 = countDownLatchOthers.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.close();
+
+        assertThat(await3).isEqualTo(true);
+        assertThat(list).hasSize(5);
+        assertThat(list.stream().filter(i -> i.getLeft().isBefore(resumeTime)).count()).isEqualTo(1);
+        assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime)).count()).isEqualTo(4);
+        assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime2)).count()).isEqualTo(2);
     }
 
     public record TestBroadcast(Integer id) implements BroadcastEvent {}

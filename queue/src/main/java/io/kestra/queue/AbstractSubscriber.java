@@ -22,10 +22,12 @@ public abstract class AbstractSubscriber<T extends GenericEvent> extends Abstrac
     }
 
     protected void waitIfPaused() throws QueueException {
+        // return immediately if not paused.
         if (!this.state.get().equals(State.PAUSED)) {
-            return; // return immediately if not paused.
+            return;
         }
 
+        // lock and wait until resumed
         pauseLock.lock();
         try {
             while (this.state.get().equals(State.PAUSED)) {

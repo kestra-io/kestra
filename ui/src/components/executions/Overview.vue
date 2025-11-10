@@ -598,6 +598,9 @@
         line-height: 2rem;
         color: var(--ks-content-error) !important;
         font-size: var(--font-size-sm);
+        word-break: break-all;
+        overflow-wrap: anywhere;
+        white-space: normal;
 
         span {
             font-weight: normal;
@@ -605,10 +608,15 @@
 
         code{
             color: var(--ks-log-content-error) !important;
+            word-break: break-all;
+            overflow-wrap: anywhere;
+            white-space: pre-wrap;
         }
 
         > div {
             padding-right: 3rem;
+            word-break: break-all;
+            overflow-wrap: anywhere;
         }
 
         .main-icon.material-design-icon  {
@@ -633,6 +641,9 @@
 
     .el-alert__description {
         color: var(--ks-content-primary);
+        word-break: break-all;
+        overflow-wrap: anywhere;
+        white-space: normal;
     }
 
     .el-alert__content {
@@ -654,6 +665,8 @@
     .line {
         padding: .5rem;
         border-top: 1px solid var(--ks-log-background-error);
+        word-break: break-all;
+        overflow-wrap: anywhere;
     }
 }
 </style>

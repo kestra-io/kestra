@@ -222,7 +222,7 @@ class YamlParserTest {
         );
 
         assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
-        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("Duplicate field 'variables.tf'");
+        assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("Duplicate field 'message'");
     }
 
     @Test

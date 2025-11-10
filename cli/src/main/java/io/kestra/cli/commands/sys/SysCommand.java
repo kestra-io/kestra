@@ -1,7 +1,7 @@
 package io.kestra.cli.commands.sys;
 
 import io.kestra.cli.commands.sys.database.DatabaseCommand;
-import io.kestra.cli.commands.sys.statestore.StateStoreCommand;
+import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
@@ -15,7 +15,6 @@ import picocli.CommandLine;
         ReindexCommand.class,
         DatabaseCommand.class,
         SubmitQueuedCommand.class,
-        StateStoreCommand.class
     }
 )
 @Slf4j

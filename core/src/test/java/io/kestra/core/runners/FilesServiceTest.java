@@ -106,28 +106,28 @@ class FilesServiceTest {
         var runContext = runContextFactory.of();
 
         Path fileWithSpace = tempDir.resolve("with space.txt");
-        Path fileWithUnicode = tempDir.resolve("สวัสดี.txt");
+        Path fileWithUnicode = tempDir.resolve("สวัสดี&.txt");
 
         Files.writeString(fileWithSpace, "content");
         Files.writeString(fileWithUnicode, "content");
 
         Path targetFileWithSpace = runContext.workingDir().path().resolve("with space.txt");
-        Path targetFileWithUnicode = runContext.workingDir().path().resolve("สวัสดี.txt");
+        Path targetFileWithUnicode = runContext.workingDir().path().resolve("สวัสดี&.txt");
 
         Files.copy(fileWithSpace, targetFileWithSpace);
         Files.copy(fileWithUnicode, targetFileWithUnicode);
 
         Map<String, URI> outputFiles = FilesService.outputFiles(
             runContext,
-            List.of("with space.txt", "สวัสดี.txt")
+            List.of("with space.txt", "สวัสดี&.txt")
         );
 
         assertThat(outputFiles).hasSize(2);
         assertThat(outputFiles).containsKey("with space.txt");
-        assertThat(outputFiles).containsKey("สวัสดี.txt");
+        assertThat(outputFiles).containsKey("สวัสดี&.txt");
 
         assertThat(runContext.storage().getFile(outputFiles.get("with space.txt"))).isNotNull();
-        assertThat(runContext.storage().getFile(outputFiles.get("สวัสดี.txt"))).isNotNull();
+        assertThat(runContext.storage().getFile(outputFiles.get("สวัสดี&.txt"))).isNotNull();
     }
 
     private URI createFile() throws IOException {

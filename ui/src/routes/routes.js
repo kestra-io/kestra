@@ -9,6 +9,21 @@ import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
 import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
+function applyBeforeEnterFilter(to, _from, next) {
+    const {query, hasChanges} = applyDefaultFilters(to.query, {includeTimeRange: true, includeScope: false});
+    
+    if (hasChanges) {
+        next({
+            name: to.name,
+            params: to.params,
+            query,
+        });
+        return;
+    }
+
+    next();
+}
+
 export default [
     //Initial
     {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}}},
@@ -20,17 +35,6 @@ export default [
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
         beforeEnter: (to, from, next) => {
-            const {query, hasChanges} = applyDefaultFilters(to.query, {includeTimeRange: true, includeScope: false});
-            
-            if (hasChanges) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query,
-                });
-                return;
-            }
-
             if (!to.params.dashboard) {
                 next({
                     name: "home",
@@ -40,9 +44,9 @@ export default [
                     },
                     query: to.query,
                 });
-            } else {
-                next();
+                return;
             }
+            applyBeforeEnterFilter(to, from, next);
         },
     },
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
@@ -53,20 +57,7 @@ export default [
         name: "flows/list",
         path: "/:tenant?/flows",
         component: () => import("../components/flows/Flows.vue"),
-        beforeEnter: (to, from, next) => {
-            const {query, hasChanges} = applyDefaultFilters(to.query, {includeTimeRange: false, includeScope: true});
-
-            if (hasChanges) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query,
-                });
-                return;
-            }
-
-            next();
-        }
+        beforeEnter: applyBeforeEnterFilter,
     },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
     {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
@@ -77,20 +68,7 @@ export default [
         name: "executions/list",
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
-        beforeEnter: (to, from, next) => {
-            const {query, hasChanges} = applyDefaultFilters(to.query, {includeTimeRange: true, includeScope: true});
-
-            if (hasChanges) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query,
-                });
-                return;
-            }
-
-            next();
-        }
+        beforeEnter: applyBeforeEnterFilter,
     },
     {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
 
@@ -118,20 +96,7 @@ export default [
         name: "logs/list",
         path: "/:tenant?/logs",
         component: () => import("../components/logs/LogsWrapper.vue"),
-        beforeEnter: (to, from, next) => {
-            const {query, hasChanges} = applyDefaultFilters(to.query, {includeTimeRange: true} );
-
-            if (hasChanges) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query,
-                });
-                return;
-            }
-
-            next();
-        }
+        beforeEnter: applyBeforeEnterFilter,
     },
 
     //Namespaces

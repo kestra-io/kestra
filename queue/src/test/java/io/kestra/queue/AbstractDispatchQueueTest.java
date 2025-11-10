@@ -2,9 +2,11 @@ package io.kestra.queue;
 
 import io.kestra.core.queues.QueueException;
 import jakarta.inject.Inject;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -114,6 +116,61 @@ public abstract class AbstractDispatchQueueTest {
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         assertThat(list).containsExactlyInAnyOrder(1, 2, 3);
+    }
+
+    @Test
+    void pause() throws QueueException, InterruptedException {
+        CountDownLatch countDownLatchFirst = new CountDownLatch(1);
+        CountDownLatch countDownLatchSecond = new CountDownLatch(2);
+        CountDownLatch countDownLatchOthers = new CountDownLatch(2);
+        Collection<Pair<Instant, Integer>> list = Collections.synchronizedCollection(new ArrayList<>());
+
+        QueueSubscriber<TestDispatch> subscriber = dispatchQueue
+            .subscriber()
+            .subscribe(e -> {
+                list.add(Pair.of(Instant.now(), e.getLeft().id));
+                if (e.getLeft().id == 1) {
+                    countDownLatchFirst.countDown();
+                } else if (e.getLeft().id <= 3) {
+                    countDownLatchSecond.countDown();
+                } else {
+                    countDownLatchOthers.countDown();
+                }
+            });
+
+        // first round
+        dispatchQueue.emit(new TestDispatch(1));
+
+        boolean await1 = countDownLatchFirst.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.pause();
+        assertThat(await1).isTrue();
+
+        // second round
+        Instant resumeTime = Instant.now();
+        subscriber.resume();
+
+        dispatchQueue.emit(new TestDispatch(2));
+        dispatchQueue.emit(new TestDispatch(3));
+
+        boolean await2 = countDownLatchSecond.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.pause();
+        assertThat(await2).isTrue();
+
+        // last round
+        Instant resumeTime2 = Instant.now();
+        subscriber.resume();
+
+        dispatchQueue.emit(new TestDispatch(4));
+        dispatchQueue.emit(new TestDispatch(5));
+
+        boolean await3 = countDownLatchOthers.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.close();
+
+        assertThat(await3).isTrue();
+        assertThat(list).hasSize(5);
+        assertThat(list.stream().filter(i -> i.getLeft().isBefore(resumeTime)).count()).isEqualTo(1);
+        assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime)).count()).isEqualTo(4);
+        assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime2)).count()).isEqualTo(2);
     }
 
     public record TestDispatch(Integer id) implements DispatchEvent {

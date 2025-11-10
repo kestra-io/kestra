@@ -66,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
+    import {ref, computed, withDefaults} from "vue";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
 
@@ -82,7 +82,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         component: string;
         execution: {
             id: string;
@@ -93,7 +93,10 @@
             };
         };
         tooltipPosition: string;
-    }>();
+    }>(), {
+        component: "el-button",
+        tooltipPosition: "bottom"
+    });
 
     const emit = defineEmits<{
         follow: [];

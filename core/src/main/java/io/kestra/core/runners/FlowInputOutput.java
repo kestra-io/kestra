@@ -142,7 +142,7 @@ public class FlowInputOutput {
                         runContext.logger().warn("Using a deprecated way to upload a FILE input. You must set the input 'id' as part name and set the name of the file using the regular 'filename' part attribute.");
                     }
                     String inputId = oldStyleInput ? fileUpload.getFilename() : fileUpload.getName();
-                    String fileName = oldStyleInput ? FileInput.findFileInputExtension(inputs, fileUpload.getFilename()) : fileUpload.getFilename();
+                    String fileName = oldStyleInput ? FileInput.DEFAULT_EXTENSION : fileUpload.getFilename();
 
                     if (!uploadFiles) {
                         URI from = URI.create("kestra://" + StorageContext
@@ -153,7 +153,7 @@ public class FlowInputOutput {
                         sink.next(Map.entry(inputId, from.toString()));
                     } else {
                         try {
-                            final String fileExtension = FileInput.findFileInputExtension(inputs, fileName);
+                            final String fileExtension = FileInput.DEFAULT_EXTENSION;
 
                             String prefix = StringUtils.leftPad(fileName + "_", 3, "_");
                             File tempFile = File.createTempFile(prefix, fileExtension);

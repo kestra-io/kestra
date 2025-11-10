@@ -54,12 +54,7 @@ public class Property<T> {
     private String expression;
     private T value;
 
-    /**
-     * @deprecated use {@link #ofExpression(String)} instead.
-     */
-    @Deprecated
-    // Note: when not used, this constructor would not be deleted but made private so it can only be used by ofExpression(String) and the deserializer
-    public Property(String expression) {
+    private Property(String expression) {
         this(expression, false);
     }
 
@@ -128,14 +123,6 @@ public class Property<T> {
         Property<V> p = new Property<>(expression);
         p.value = value;
         return p;
-    }
-
-    /**
-     * @deprecated use {@link #ofValue(Object)} instead.
-     */
-    @Deprecated
-    public static <V> Property<V> of(V value) {
-        return ofValue(value);
     }
 
     /**

@@ -192,10 +192,6 @@
             padding: 0 1.5rem;
 
             .header-block {
-                .img-wrapper {
-                    width: 150px;
-                    height: 129px;
-                }
 
                 p {
                     font-size: 0.8125rem;
@@ -211,10 +207,6 @@
             padding: 0 1rem;
 
             .header-block {
-                .img-wrapper {
-                    width: 120px;
-                    height: 103px;
-                }
 
                 h5 {
                     font-size: 1.125rem;

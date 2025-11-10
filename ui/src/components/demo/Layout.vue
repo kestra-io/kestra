@@ -45,9 +45,10 @@
 
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
+    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
 
     .demo-layout {
-        padding: 1rem 0 !important;
+        padding: $spacer 0 !important;
         margin-top: 0 !important;
     }
 
@@ -67,7 +68,7 @@
         width: 100%;
         max-width: 665px;
         margin: 0 auto;
-        padding: 0 1rem;
+        padding: 0 1.5rem;
 
         .enterprise-tag::before,
         .enterprise-tag::after{
@@ -75,7 +76,6 @@
             display: block;
             position: absolute;
             border-radius: 1rem;
-
         }
 
         .enterprise-tag::before{
@@ -104,11 +104,12 @@
         .enterprise-tag{
             position: relative;
             background: $base-gray-200;
-            padding: .125rem 1rem;
-            border-radius: 1rem;
+            padding: .125rem 0.5rem;
+            border-radius: $border-radius;
             display: inline-block;
             z-index: 2;
             margin: 0 auto;
+            font-size: 0.75rem;
             html.dark &{
                 background: #FBFBFB26;
             }
@@ -151,7 +152,6 @@
                 html.dark &{
                     display: block;
                 }
-
             }
         }
     }
@@ -161,29 +161,29 @@
         width: 100%;
         max-width: 665px;
         margin: 0 auto;
-        padding: 0 1rem;
+        padding: 0 1.5rem;
 
         h2 {
-            margin: 1.5rem 0;
-            line-height: 30px;
-            font-size: 20px;
+            margin: 1rem 0;
+            line-height: 20px;
+            font-size: 14px;
             font-weight: 600;
             text-align: center;
         }
 
         p {
-            line-height: 22px;
-            font-size: 14px;
+            line-height: 16px;
+            font-size: 11px;
             text-align: left;
         }
 
         .video-container {
             position: relative;
             padding-bottom: 56.25%;
-            border-radius: 8px;
+            border-radius: $border-radius;
             border: 1px solid var(--ks-border-primary);
             overflow: hidden;
-            margin: 1rem auto;
+            margin: $spacer auto;
 
             iframe {
                 position: absolute;
@@ -198,55 +198,24 @@
         }
     }
 
-    @media (max-width: 768px) {
-        .img {
-            width: 180px;
-            height: 151px;
-            margin-bottom: -1rem;
-        }
-
-        .message-block {
-            padding: 0 1.5rem;
-
-            .enterprise-tag {
-                font-size: 0.875rem;
-                padding: .125rem 0.75rem;
-            }
-        }
-
-        .msg-block {
-            padding: 0 1.5rem;
-
-            h2 {
-                font-size: 18px;
-                line-height: 26px;
-                margin: 1rem 0;
-            }
-
-            p {
-                font-size: 13px;
-                line-height: 20px;
-            }
-        }
+    .img {
+        width: 60%;
+        height: auto;
+        margin-bottom: -1.5rem;
     }
 
-    @media (max-width: 576px) {
-        .img {
-            width: 150px;
-            height: 126px;
+    @include media-breakpoint-up(md) {
+        .message-block,
+        .msg-block {
+            padding: 0 1rem;
         }
 
-        .message-block {
-            padding: 0 1rem;
-
-            .enterprise-tag {
-                font-size: 0.8125rem;
-            }
+        .enterprise-tag {
+            padding: .125rem 0.75rem;
+            font-size: 0.8125rem;
         }
 
         .msg-block {
-            padding: 0 1rem;
-
             h2 {
                 font-size: 16px;
                 line-height: 24px;
@@ -259,28 +228,41 @@
         }
     }
 
-    @media (max-width: 400px) {
-        .img {
-            width: 120px;
-            height: 101px;
-        }
-
-        .message-block {
-            .enterprise-tag {
-                font-size: 0.75rem;
-                padding: .125rem 0.5rem;
-            }
+    @include media-breakpoint-up(lg) {
+        .enterprise-tag {
+            font-size: 0.875rem;
+            padding: .125rem 1rem;
         }
 
         .msg-block {
             h2 {
-                font-size: 14px;
-                line-height: 20px;
+                font-size: 18px;
+                line-height: 26px;
+                margin: 1.5rem 0;
             }
 
             p {
-                font-size: 11px;
-                line-height: 16px;
+                font-size: 13px;
+                line-height: 20px;
+            }
+        }
+
+        .img {
+            width: 253px;
+            height: 212px;
+        }
+    }
+
+    @include media-breakpoint-up(xl) {
+        .msg-block {
+            h2 {
+                font-size: 20px;
+                line-height: 30px;
+            }
+
+            p {
+                font-size: 14px;
+                line-height: 22px;
             }
         }
     }

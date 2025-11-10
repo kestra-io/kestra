@@ -98,6 +98,7 @@
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
     "bulk delete backfills": "删除 {count} 回填",
+    "bulk delete triggers": "您确定要删除 {count} 个 triggers 吗？",
     "bulk disabled status": {
       "false": "启用 {count} 触发器",
       "true": "禁用 {count} 触发器"
@@ -111,6 +112,7 @@
     "bulk resume": "确定要恢复 <code>{executionCount}</code> 个执行吗？",
     "bulk set labels": "确定要为 <code>{executionCount}</code> 个执行设置标签吗？",
     "bulk success delete backfills": "{count} 回填已删除",
+    "bulk success delete triggers": "{count} 个 trigger 已成功删除",
     "bulk success disabled status": {
       "false": "{count} 个触发器已启用",
       "true": "{count} 个触发器已禁用"
@@ -293,6 +295,11 @@
     "delete logs": "删除日志",
     "delete ok": "已删除",
     "delete task confirm": "确定要删除任务 <code>{taskId}</code> 吗？",
+    "delete trigger": "删除 trigger",
+    "delete trigger confirmation": "您确定要删除trigger {id}吗？WARNING: 如果trigger仍在flow中激活，删除trigger可能会导致重复执行。",
+    "delete trigger error": "删除触发器 {id} 时出错",
+    "delete trigger success": "触发器 {id} 已成功删除",
+    "delete triggers": "删除 triggers",
     "delete_all_logs": "确定要删除所有日志吗？",
     "delete_log": "您确定要删除这个log吗？",
     "deleted": "删除成功",

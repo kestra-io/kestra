@@ -33,7 +33,6 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -43,7 +42,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,14 +87,8 @@ public class TriggerController {
         // Deprecated params
         @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
-            @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
-            @ExampleObject(name = "Filter last 24 hours", value = "P1D")
-        }) @Nullable @QueryValue Duration timeRange,
         @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
         @Parameter(description = "The flow identifier",deprecated = true) @Nullable @QueryValue String flowId
-
-
     ) throws HttpStatusException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -107,9 +99,6 @@ public class TriggerController {
             null,
             null,
             null,
-            null,
-            null,
-            timeRange,
             null,
             null,
             workerId,
@@ -276,7 +265,7 @@ public class TriggerController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "/")
+    @Put
     @Operation(tags = {"Triggers"}, summary = "Update a trigger")
     public HttpResponse<Trigger> updateTrigger(
         @Parameter(description = "The trigger") @Body final Trigger newTrigger
@@ -512,6 +501,80 @@ public class TriggerController {
             .collectList().block();
 
         int count = triggers == null ? 0 : backfillsAction(triggers, BACKFILL_ACTION.DELETE);
+
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/{namespace}/{flowId}/{triggerId}")
+    @Operation(tags = {"Triggers"}, summary = "Delete a trigger")
+    public MutableHttpResponse<?> deleteTrigger(
+        @Parameter(description = "The namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String flowId,
+        @Parameter(description = "The trigger id") @PathVariable String triggerId
+    ) throws HttpStatusException {
+        Optional<Trigger> triggerOpt = triggerRepository.findLast(TriggerContext.builder()
+            .tenantId(tenantService.resolveTenant())
+            .namespace(namespace)
+            .flowId(flowId)
+            .triggerId(triggerId)
+            .build());
+
+        if (triggerOpt.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        Trigger trigger = triggerOpt.get();
+        triggerRepository.delete(trigger);
+
+        return HttpResponse.noContent();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/delete/by-triggers")
+    @Operation(tags = {"Triggers"}, summary = "Delete given triggers")
+    public MutableHttpResponse<?> deleteTriggersByIds(
+        @Parameter(description = "The triggers to delete") @Body List<Trigger> triggers
+    ) {
+        AtomicInteger count = new AtomicInteger();
+        triggers.forEach(trigger -> {
+            try {
+                Optional<Trigger> triggerOpt = triggerRepository.findLast(TriggerContext.builder()
+                    .tenantId(tenantService.resolveTenant())
+                    .namespace(trigger.getNamespace())
+                    .flowId(trigger.getFlowId())
+                    .triggerId(trigger.getTriggerId())
+                    .build());
+
+                if (triggerOpt.isPresent()) {
+                    triggerRepository.delete(triggerOpt.get());
+                    count.getAndIncrement();
+                }
+            } catch (Exception ignored) {
+            }
+        });
+
+        return HttpResponse.ok(BulkResponse.builder().count(count.get()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/delete/by-query")
+    @Operation(tags = {"Triggers"}, summary = "Delete triggers by query parameters")
+    public MutableHttpResponse<?> deleteTriggersByQuery(
+        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
+    ) {
+        Integer count = triggerRepository
+            .find(tenantService.resolveTenant(), filters)
+            .map(trigger -> {
+                try {
+                    triggerRepository.delete(trigger);
+                    return 1;
+                } catch (Exception ignored) {
+                    return 0;
+                }
+            })
+            .reduce(Integer::sum)
+            .block();
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }

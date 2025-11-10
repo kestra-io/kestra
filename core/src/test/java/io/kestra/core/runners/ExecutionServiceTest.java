@@ -445,6 +445,7 @@ class ExecutionServiceTest {
 
         assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
         assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(killed.getState().getHistories()).hasSize(5);
     }
 

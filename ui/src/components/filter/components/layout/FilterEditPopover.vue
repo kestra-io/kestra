@@ -3,7 +3,7 @@
         <el-button
             v-if="!!filterKey"
             ref="buttonRef"
-            type="text"
+            link
             size="small"
             :icon="PencilOutline"
             class="edit-button"

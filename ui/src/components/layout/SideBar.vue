@@ -31,7 +31,9 @@
     import {
         onUpdated,
         ref,
-        computed, h
+        computed, 
+        h,
+        onMounted
     } from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
@@ -99,7 +101,6 @@
     }
 
     onUpdated(() => {
-        // Required here because in mounted() the menu is not yet rendered
         expandParentIfNeeded();
     })
 
@@ -124,6 +125,20 @@
     });
 
     const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
+    onMounted(() => {
+        const sidebar = document.getElementById("side-menu");
+        const links = sidebar?.querySelectorAll("a");
+
+        links?.forEach(link => {
+            link.addEventListener("click", () => {
+                if (window.innerWidth < 768) {
+                    collapsed.value = true;
+                    layoutStore.setSideMenuCollapsed(true);
+                    localStorage.setItem("menuCollapsed", "true");
+                }
+            });
+        });
+    });
 </script>
 
 <style scoped lang="scss">

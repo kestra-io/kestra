@@ -401,7 +401,24 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             try {
                 boolean conditionResults = this.validateScheduleCondition(conditionContext);
                 if (!conditionResults) {
-                    return Optional.of(scheduleDates);
+                    Map<String, Object> skipVariables;
+                    if(this.timezone != null) {
+                        skipVariables = scheduleDates.toMap(ZoneId.of(this.timezone));
+                    } else {
+                        skipVariables = scheduleDates.toMap();
+                    }
+
+                    Execution skipExecution = TriggerService.generateScheduledExecution(
+                        this,
+                        conditionContext,
+                        triggerContext,
+                        generateLabels(runContext, conditionContext, backfill),
+                        generateInputs(runContext, backfill),
+                        skipVariables,
+                        Optional.empty()
+                    );
+
+                    return Optional.of(skipExecution);
                 }
             } catch(InternalException ie) {
                 // validate schedule condition can fail to render variables

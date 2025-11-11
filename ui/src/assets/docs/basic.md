@@ -110,7 +110,7 @@ inputs:
   - id: user
     type: STRING
     required: false
-    defaults: Kestrel
+    prefill: Kestrel
     description: This is an optional input — if not set at runtime, it will use the default value Kestrel
 
   - id: run_task

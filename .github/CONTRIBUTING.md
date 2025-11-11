@@ -126,7 +126,7 @@ By default, Kestra will be installed under: `$HOME/.kestra/current`. Set the `KE
 ```bash
 # build and install Kestra
 make install
-# install plugins (plugins installation is based on the `.plugins` or `.plugins.override` files located at the root of the project.
+# install plugins (plugins installation is based on the API).
 make install-plugins
 # start Kestra in standalone mode with Postgres as backend
 make start-standalone-postgres

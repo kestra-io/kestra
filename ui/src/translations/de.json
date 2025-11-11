@@ -98,6 +98,7 @@
     "bulk change state": "Sind Sie sicher, dass Sie den Zustand von <code>{executionCount}</code> Ausführung(en) ändern möchten?",
     "bulk delete": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) löschen möchten?",
     "bulk delete backfills": "{count} Backfill löschen",
+    "bulk delete triggers": "Möchten Sie wirklich {count} Trigger löschen?",
     "bulk disabled status": {
       "false": "{count} Trigger aktivieren",
       "true": "{count} Trigger deaktivieren"
@@ -111,6 +112,7 @@
     "bulk resume": "Sind Sie sicher, dass Sie <code>{executionCount}</code> Ausführung(en) fortsetzen möchten?",
     "bulk set labels": "Sind Sie sicher, dass Sie Labels für <code>{executionCount}</code> Ausführung(en) festlegen möchten?",
     "bulk success delete backfills": "{count} Backfills gelöscht",
+    "bulk success delete triggers": "{count} Trigger wurden erfolgreich gelöscht",
     "bulk success disabled status": {
       "false": "{count} Trigger aktiviert",
       "true": "{count} Trigger deaktiviert"
@@ -293,6 +295,11 @@
     "delete logs": "Logs löschen",
     "delete ok": "ist gelöscht",
     "delete task confirm": "Möchten Sie den Task <code>{taskId}</code> wirklich löschen?",
+    "delete trigger": "Trigger löschen",
+    "delete trigger confirmation": "Möchten Sie den Trigger {id} wirklich löschen? WARNING: Das Löschen eines Triggers kann zu doppelten Ausführungen führen, wenn der Trigger noch in einem flow aktiv ist.",
+    "delete trigger error": "Fehler beim Löschen des Triggers {id}",
+    "delete trigger success": "Trigger {id} wurde erfolgreich gelöscht",
+    "delete triggers": "Trigger löschen",
     "delete_all_logs": "Sind Sie sicher, dass Sie alle Logs löschen möchten?",
     "delete_log": "Sind Sie sicher, dass Sie das Log löschen möchten?",
     "deleted": "Erfolgreich gelöscht",

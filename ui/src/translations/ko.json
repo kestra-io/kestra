@@ -98,6 +98,7 @@
     "bulk change state": "<code>{executionCount}</code> 실행의 상태를 변경하시겠습니까?",
     "bulk delete": "<code>{executionCount}</code> 개의 실행을 삭제하시겠습니까?",
     "bulk delete backfills": "{count} backfill 삭제",
+    "bulk delete triggers": "{count}개의 trigger를 삭제하시겠습니까?",
     "bulk disabled status": {
       "false": "{count} triggers 활성화",
       "true": "{count} triggers 비활성화"
@@ -111,6 +112,7 @@
     "bulk resume": "<code>{executionCount}</code> 개의 실행을 재개하시겠습니까?",
     "bulk set labels": "<code>{executionCount}</code> 개의 실행에 라벨을 설정하시겠습니까?",
     "bulk success delete backfills": "{count} backfills 삭제됨",
+    "bulk success delete triggers": "{count} triggers가 성공적으로 삭제되었습니다",
     "bulk success disabled status": {
       "false": "{count} trigger(s) 활성화됨",
       "true": "{count} trigger(s) 비활성화됨"
@@ -293,6 +295,11 @@
     "delete logs": "Logs 삭제",
     "delete ok": "삭제됨",
     "delete task confirm": "task <code>{taskId}</code>을(를) 삭제하시겠습니까?",
+    "delete trigger": "트리거 삭제",
+    "delete trigger confirmation": "트리거 {id}를 삭제하시겠습니까? WARNING: 트리거가 flow에서 여전히 활성 상태인 경우 삭제하면 중복 실행이 발생할 수 있습니다.",
+    "delete trigger error": "트리거 {id} 삭제 오류",
+    "delete trigger success": "{id} 트리거가 성공적으로 삭제되었습니다",
+    "delete triggers": "트리거 삭제",
     "delete_all_logs": "모든 logs를 삭제하시겠습니까?",
     "delete_log": "로그를 삭제하시겠습니까?",
     "deleted": "성공적으로 삭제됨",

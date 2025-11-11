@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRepository {
     protected io.kestra.jdbc.AbstractJdbcRepository<ExecutionQueued> jdbcRepository;
@@ -70,18 +69,12 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
         this.jdbcRepository
             .getDslContextWrapper()
             .transaction(configuration -> {
-                var select = DSL
-                    .using(configuration)
-                    .select(AbstractJdbcRepository.field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(buildTenantCondition(execution.getTenantId()))
-                    .and(field("key").eq(IdUtils.fromParts(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId())))
-                    .forUpdate();
-
-                Optional<ExecutionQueued> maybeExecution = this.jdbcRepository.fetchOne(select);
-                if (maybeExecution.isPresent()) {
-                    this.jdbcRepository.delete(maybeExecution.get());
-                }
+                DSL
+                .using(configuration)
+                .deleteFrom(this.jdbcRepository.getTable())
+                .where(buildTenantCondition(execution.getTenantId()))
+                .and(field("key").eq(IdUtils.fromParts(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId())))
+                .execute();
             });
     }
 }

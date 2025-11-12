@@ -428,7 +428,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                         Optional.empty()
                     );
 
-                    skipExecution = skipExecution.withState(new State().withState(State.Type.CREATED));
+                    skipExecution = skipExecution.withState(State.Type.CREATED);
 
                     return Optional.of(skipExecution);
                 }

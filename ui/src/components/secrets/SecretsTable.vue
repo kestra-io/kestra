@@ -100,7 +100,7 @@
                 >
                     <NamespaceSelect
                         v-model="secret.namespace"
-                        :readonly="secret.update"
+                        :read-only="secret.update"
                         :include-system-namespace="true"
                         all
                     />

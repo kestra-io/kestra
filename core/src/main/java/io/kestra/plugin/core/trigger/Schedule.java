@@ -408,6 +408,16 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                         skipVariables = scheduleDates.toMap();
                     }
 
+                    ConditionContext skipContext = conditionContext;
+                    if (!skipContext.getVariables().containsKey("trigger")) {
+                        skipContext = skipContext.withVariables(
+                            ImmutableMap.<String, Object>builder()
+                                .putAll(skipContext.getVariables())
+                                .put("trigger", skipVariables)
+                                .build()
+                        );
+                    }
+
                     Execution skipExecution = TriggerService.generateScheduledExecution(
                         this,
                         conditionContext,
@@ -417,6 +427,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                         skipVariables,
                         Optional.empty()
                     );
+
+                    skipExecution = skipExecution.withState(new State().withState(State.Type.CREATED));
 
                     return Optional.of(skipExecution);
                 }

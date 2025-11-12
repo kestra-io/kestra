@@ -92,11 +92,12 @@
             setSelection(selection) {
                 this.$refs.table.clearSelection();
                 if (Array.isArray(selection)) {
+                    const isFunction = typeof this.rowKey === "function";
                     selection.forEach(sel => {
-                        const row = this.data.find(r => r.id === sel.id);
-                        if (row) {
-                            this.$refs.table.toggleRowSelection(row, true);
-                        }
+                        const row = this.data.find(r => isFunction 
+                            ? this.rowKey(r) === this.rowKey(sel) 
+                            : r[this.rowKey] === sel[this.rowKey]);
+                        if (row) this.$refs.table.toggleRowSelection(row, true);
                     });
                 }
                 this.selectionChanged(selection);
@@ -183,6 +184,14 @@
 
         & ~ .el-table {
             z-index: 0;
+        }
+    }
+
+    @media (max-width: 500px) {
+        :deep(.el-table__empty-text) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     }
 </style>

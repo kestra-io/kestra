@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -136,5 +137,12 @@ public abstract class JdbcRunnerRetryTest {
     @ExecuteFlow("flows/valids/retry-dynamic-task.yaml")
     void retryDynamicTask(Execution execution){
         retryCaseTest.retryDynamicTask(execution);
+    }
+
+    @FlakyTest(description = "it seems this flow sometimes stay stuck in RUNNING")
+    @Test
+    @ExecuteFlow("flows/valids/retry-with-flowable-errors.yaml")
+    void retryWithFlowableErrors(Execution execution){
+        retryCaseTest.retryWithFlowableErrors(execution);
     }
 }

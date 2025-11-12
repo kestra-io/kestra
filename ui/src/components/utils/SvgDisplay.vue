@@ -4,23 +4,18 @@
     </div>
 </template>
 
-<script>
-    export default {
-        name: "SvgDisplay",
-        props: {
-            encodedSvg: {
-                type: String,
-                default: undefined
-            }
-        },
-        computed: {
-            styles() {
-                return {
-                    backgroundImage: `url(data:image/svg+xml;base64,${this.encodedSvg})`
-                }
-            },
-        }
-    }
+<script setup lang="ts">
+    import {computed} from "vue";
+    
+    const props = defineProps<{
+        encodedSvg?: string;
+    }>();
+
+    const styles = computed(() => ({
+        backgroundImage: props.encodedSvg
+            ? `url(data:image/svg+xml;base64,${props.encodedSvg})`
+            : "none",
+    }));
 </script>
 
 <style scoped lang="scss">

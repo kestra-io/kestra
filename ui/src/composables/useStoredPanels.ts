@@ -1,5 +1,6 @@
 import {useStorage} from "@vueuse/core";
 import {EditorElement, Panel, Tab} from "../utils/multiPanelTypes";
+import {ref} from "vue";
 
 interface PreSerializedPanel {
     tabs: string[];
@@ -7,7 +8,7 @@ interface PreSerializedPanel {
     size: number;
 }
 
-export function useStoredPanels(key: string, editorElements: Pick<EditorElement, "deserialize">[], defaultPanels: string[] = [], preSerializePanels?: (panels: Panel[]) => PreSerializedPanel[]) {
+export function useStoredPanels(key: string | undefined, editorElements: Pick<EditorElement, "deserialize">[], defaultPanels: string[] = [], preSerializePanels?: (panels: Panel[]) => PreSerializedPanel[]) {
     const preSerializePanelsFn = preSerializePanels ?? ((ps: Panel[]) => ps.map(p => ({
         tabs: p.tabs.map(t => t.uid),
         activeTab: p.activeTab?.uid,
@@ -31,21 +32,25 @@ export function useStoredPanels(key: string, editorElements: Pick<EditorElement,
         }).filter(t => t !== undefined);
     }
 
-    const panels = useStorage<Panel[]>(
-        key,
-        deserializeTabTags(defaultPanels).map((t) => {
+    const initialPanels = deserializeTabTags(defaultPanels).map((t) => {
             return {
                 activeTab: t,
                 tabs: [t],
                 size: 100 / defaultPanels.length
             };
-        }),
+        });
+
+    function write(v: Panel[]){
+        return JSON.stringify(preSerializePanelsFn(v));
+    }
+
+    const panels = key ? useStorage<Panel[]>(
+        key,
+        initialPanels,
         undefined,
         {
             serializer: {
-                write(v: Panel[]){
-                    return JSON.stringify(preSerializePanelsFn(v));
-                },
+                write,
                 read(v?: string) {
                     if(!v) return [];
                     const rawPanels: PreSerializedPanel[] = JSON.parse(v);
@@ -65,7 +70,14 @@ export function useStoredPanels(key: string, editorElements: Pick<EditorElement,
                 }
             },
         }
-    );
+    ) : ref(initialPanels);
 
-    return panels;
+    function saveState(altKey: string | undefined) {
+        if (altKey) {
+            // Save the current state to local storage
+            localStorage.setItem(altKey, write(panels.value));
+        }
+    }
+
+    return {panels, saveState};
 }

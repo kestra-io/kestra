@@ -35,6 +35,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -94,7 +95,6 @@ class RequestTest {
         assertThat(output.getHeaders().get("content-length").getFirst()).isEqualTo("512789");
     }
 
-
     @Test
     void head404() throws Exception {
         final String url = "https://bdnb-data.s3.fr-par.scw.cloud/bnb_export_metropole_sql_dump.tar.gz";
@@ -134,6 +134,37 @@ class RequestTest {
             Request.Output output = task.run(runContext);
 
             assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
+            assertThat(output.getCode()).isEqualTo(200);
+        }
+    }
+
+    @Test
+    void params() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.ofValue(server.getURL().toString() + "/params?foo=baz"))
+                .params(Property.ofValue(Map.of(
+                    "hello", "world",
+                    "foo", "bar",
+                    "bar", List.of("foo1", "foo2")
+                )))
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat((String) output.getBody()).contains("hello=world");
+            assertThat((String) output.getBody()).contains("foo=baz");
+            assertThat((String) output.getBody()).contains("foo=bar");
+            assertThat((String) output.getBody()).contains("bar=foo1");
+            assertThat((String) output.getBody()).contains("bar=foo2");
             assertThat(output.getCode()).isEqualTo(200);
         }
     }
@@ -617,6 +648,11 @@ class RequestTest {
         @Get("/hello417")
         HttpResponse<String> hello417() {
             return HttpResponse.status(HttpStatus.EXPECTATION_FAILED).body("{ \"hello\": \"world\" }");
+        }
+
+        @Get("/params")
+        HttpResponse<String> params(HttpRequest<?> request) {
+            return HttpResponse.ok(request.getUri().getRawQuery());
         }
 
         @Post("/markdown")

@@ -4,6 +4,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -16,9 +17,7 @@ import org.jooq.Field;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Singleton
 @PostgresRepositoryEnabled
@@ -49,8 +48,8 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
     }
 
     @Override
-    protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return PostgresExecutionRepositoryService.findCondition(value, operation);
+    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+        return PostgresExecutionRepositoryService.findLabelCondition(input, operation);
     }
 
     @Override

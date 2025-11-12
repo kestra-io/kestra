@@ -7,14 +7,15 @@
         :imageDark="headerImageDark"
     >
         <el-row class="my-4 px-3" justify="center">
-            <el-col :xs="24" :sm="18" :md="12" :lg="10" :xl="8">
-                <el-input
-                    v-model="searchText"
-                    :placeholder="$t('pluginPage.search', {count: 900})"
-                    clearable
-                    @input="updateSearch"
-                />
-            </el-col>
+            <KSFilter
+                :configuration="pluginFilter"
+                :buttons="{
+                    savedFilters: {shown: false}, 
+                    tableOptions: {shown: false}
+                }"
+                :searchInputFullWidth="true"
+                @search="handleSearch"
+            />
         </el-row>
         <section class="px-3 plugins-container">
             <el-tooltip
@@ -61,17 +62,22 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onBeforeMount} from "vue";
+    import {ref, computed, onBeforeMount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
     import DottedLayout from "../layout/DottedLayout.vue";
+    import KSFilter from "../filter/components/KSFilter.vue";
+    import {usePluginFilter} from "../filter/configurations";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
     import {usePluginsStore} from "../../stores/plugins";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
 
     const route = useRoute();
     const router = useRouter();
     const pluginsStore = usePluginsStore();
+    
+    const pluginFilter = usePluginFilter();
 
     const props = withDefaults(defineProps<{
         plugins: any[],
@@ -80,8 +86,25 @@
         embed: false
     });
 
+    const {saveRestoreUrl} = useRestoreUrl();
+
     const icons = ref<Record<string, any>>({});
     const searchText = ref("");
+
+    const handleSearch = (query: string) => {
+        searchText.value = query;
+        const newQuery: Record<string, any> = {...route.query};
+        if (query !== undefined && query !== null && String(query).trim() !== "") {
+            newQuery.q = query;
+        } else {
+            // remove an empty `q=` in the URL on plugins/view
+            delete newQuery.q;
+        }
+
+        router.push({
+            query: newQuery
+        });
+    };
 
     const searchInput = computed(() => searchText.value.toLowerCase());
 
@@ -121,12 +144,6 @@
         }
     };
 
-    const updateSearch = (value: string) => {
-        router.push({
-            query: {...route.query, q: value ?? undefined}
-        });
-    };
-
     const openGroup = (plugin: any) => {
         const defaultElement = Object.entries(plugin)
             .filter(([elementType, elements]) => isEntryAPluginElementPredicate(elementType, elements))
@@ -138,7 +155,13 @@
         if (!cls) {
             return;
         }
-        router.push({name: "plugins/view", params: {cls: cls}})
+        router.push({
+            name: "plugins/view",
+            params: {
+                ...route.params,
+                cls: cls
+            }
+        })
     };
 
     const isVisible = (plugin: any) => {
@@ -164,6 +187,11 @@
     onBeforeMount(() => {
         loadPluginIcons();
         searchText.value = String(route.query?.q ?? "");
+    });
+
+    watch(() => route.query.q, (newQ) => {
+        searchText.value = String(newQ ?? "");
+        saveRestoreUrl();
     });
 </script>
 

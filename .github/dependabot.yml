@@ -2,18 +2,17 @@
 # https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
+
 updates:
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "08:00"
+      interval: "monthly" # Use monthly to run on the first day of each month
       timezone: "Europe/Paris"
+      time: "08:00"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
+    labels: ["dependency-upgrade", "area/devops"]
 
   # Maintain dependencies for Gradle modules
   - package-ecosystem: "gradle"
@@ -24,31 +23,37 @@ updates:
       time: "08:00"
       timezone: "Europe/Paris"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
+    labels: ["dependency-upgrade", "area/backend"]
     ignore:
+      # Ignore versions of Protobuf that are equal to or greater than 4.0.0 as Orc still uses 3
       - dependency-name: "com.google.protobuf:*"
-        # Ignore versions of Protobuf that are equal to or greater than 4.0.0 as Orc still uses 3
-        versions: [ "[4,)" ]
+        versions: ["[4,)"]
 
   # Maintain dependencies for NPM modules
   - package-ecosystem: "npm"
     directory: "/ui"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "08:00"
+      interval: "monthly" # Use monthly to run on the first day of each month
       timezone: "Europe/Paris"
+      time: "08:00"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
+    labels: ["dependency-upgrade", "area/frontend"]
+    groups:
+      minor:
+        applies-to: version-updates
+        update-types: ["minor"]
+        patterns: ["*"]
+      patch:
+        applies-to: version-updates
+        update-types: ["patch"]
+        patterns: ["*"]
     ignore:
-      # Ignore updates of version 1.x, as we're using the beta of 2.x (still in beta)
-      - dependency-name: "vue-virtual-scroller"
-        versions:
-          - "1.x"
-
       # Ignore updates to monaco-yaml, version is pinned to 5.3.1 due to patch-package script additions
       - dependency-name: "monaco-yaml"
         versions:
           - ">=5.3.2"
+
+      # Ignore updates of version 1.x, as we're using the beta of 2.x (still in beta)
+      - dependency-name: "vue-virtual-scroller"
+        versions:
+          - "1.x"

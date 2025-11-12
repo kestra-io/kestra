@@ -8,7 +8,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "monthly" # Use monthly to run on the first day of each month
+      interval: "weekly"
+      day: "wednesday"
       timezone: "Europe/Paris"
       time: "08:00"
     open-pull-requests-limit: 50
@@ -20,8 +21,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "wednesday"
-      time: "08:00"
       timezone: "Europe/Paris"
+      time: "08:00"
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade", "area/backend"]
     ignore:
@@ -33,20 +34,49 @@ updates:
   - package-ecosystem: "npm"
     directory: "/ui"
     schedule:
-      interval: "monthly" # Use monthly to run on the first day of each month
+      interval: "weekly"
+      day: "wednesday"
       timezone: "Europe/Paris"
       time: "08:00"
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade", "area/frontend"]
     groups:
+      build:
+        applies-to: version-updates
+        patterns: ["@esbuild/*", "@rollup/*", "@swc/*"]
+      types:
+        applies-to: version-updates
+        patterns: ["@types/*"]
+      storybook:
+        applies-to: version-updates
+        patterns: ["@storybook/*"]
+      vitest:
+        applies-to: version-updates
+        patterns: ["vitest", "@vitest/*"]
       minor:
         applies-to: version-updates
-        update-types: ["minor"]
         patterns: ["*"]
+        exclude-patterns: [
+            "@esbuild/*",
+            "@rollup/*",
+            "@swc/*",
+            "@storybook/*",
+            "@types/*",
+            "vitest",
+            "@vitest/*",
+            # Temporary exclusion of packages below from minor updates
+            "eslint-plugin-storybook",
+            "eslint-plugin-vue",
+            "moment-timezone",
+            "monaco-editor",
+          ]
+        update-types: ["minor"]
       patch:
         applies-to: version-updates
-        update-types: ["patch"]
         patterns: ["*"]
+        exclude-patterns:
+          ["@esbuild/*", "@rollup/*", "@swc/*", "@storybook/*", "@types/*"]
+        update-types: ["patch"]
     ignore:
       # Ignore updates to monaco-yaml, version is pinned to 5.3.1 due to patch-package script additions
       - dependency-name: "monaco-yaml"

@@ -2,6 +2,7 @@
 # https://docs.github.com/en/free-pro-team@latest/github/administering-a-repository/configuration-options-for-dependency-updates
 
 version: 2
+
 updates:
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
@@ -9,11 +10,10 @@ updates:
     schedule:
       interval: "weekly"
       day: "wednesday"
-      time: "08:00"
       timezone: "Europe/Paris"
+      time: "08:00"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
+    labels: ["dependency-upgrade", "area/devops"]
 
   # Maintain dependencies for Gradle modules
   - package-ecosystem: "gradle"
@@ -21,15 +21,14 @@ updates:
     schedule:
       interval: "weekly"
       day: "wednesday"
-      time: "08:00"
       timezone: "Europe/Paris"
+      time: "08:00"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
+    labels: ["dependency-upgrade", "area/backend"]
     ignore:
+      # Ignore versions of Protobuf that are equal to or greater than 4.0.0 as Orc still uses 3
       - dependency-name: "com.google.protobuf:*"
-        # Ignore versions of Protobuf that are equal to or greater than 4.0.0 as Orc still uses 3
-        versions: [ "[4,)" ]
+        versions: ["[4,)"]
 
   # Maintain dependencies for NPM modules
   - package-ecosystem: "npm"
@@ -37,18 +36,78 @@ updates:
     schedule:
       interval: "weekly"
       day: "wednesday"
-      time: "08:00"
       timezone: "Europe/Paris"
+      time: "08:00"
     open-pull-requests-limit: 50
-    labels:
-      - "dependency-upgrade"
+    labels: ["dependency-upgrade", "area/frontend"]
+    commit-message:
+      prefix: "[npm] "
+    groups:
+      build:
+        applies-to: version-updates
+        patterns: ["@esbuild/*", "@rollup/*", "@swc/*"]
+      types:
+        applies-to: version-updates
+        patterns: ["@types/*"]
+      storybook:
+        applies-to: version-updates
+        patterns: ["@storybook/*"]
+      vitest:
+        applies-to: version-updates
+        patterns: ["vitest", "@vitest/*"]
+      patch:
+        applies-to: version-updates
+        patterns: ["*"]
+        exclude-patterns:
+          [
+            "@esbuild/*",
+            "@rollup/*",
+            "@swc/*",
+            "@types/*",
+            "@storybook/*",
+            "vitest",
+            "@vitest/*",
+          ]
+        update-types: ["patch"]
+      minor:
+        applies-to: version-updates
+        patterns: ["*"]
+        exclude-patterns: [
+            "@esbuild/*",
+            "@rollup/*",
+            "@swc/*",
+            "@types/*",
+            "@storybook/*",
+            "vitest",
+            "@vitest/*",
+            # Temporary exclusion of packages below from minor updates
+            "moment-timezone",
+            "monaco-editor",
+          ]
+        update-types: ["minor"]
+      major:
+        applies-to: version-updates
+        patterns: ["*"]
+        exclude-patterns: [
+            "@esbuild/*",
+            "@rollup/*",
+            "@swc/*",
+            "@types/*",
+            "@storybook/*",
+            "vitest",
+            "@vitest/*",
+            # Temporary exclusion of packages below from major updates
+            "eslint-plugin-storybook",
+            "eslint-plugin-vue",
+          ]
+        update-types: ["major"]
     ignore:
-      # Ignore updates of version 1.x, as we're using the beta of 2.x (still in beta)
-      - dependency-name: "vue-virtual-scroller"
-        versions:
-          - "1.x"
-
       # Ignore updates to monaco-yaml, version is pinned to 5.3.1 due to patch-package script additions
       - dependency-name: "monaco-yaml"
         versions:
           - ">=5.3.2"
+
+      # Ignore updates of version 1.x, as we're using the beta of 2.x (still in beta)
+      - dependency-name: "vue-virtual-scroller"
+        versions:
+          - "1.x"

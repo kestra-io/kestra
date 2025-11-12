@@ -77,7 +77,7 @@
                                 <el-button @click="deleteBackfills()">
                                     {{ $t("delete backfills") }}
                                 </el-button>
-                                <el-button @click="deleteTriggers()" type="danger">
+                                <el-button @click="deleteTriggers()">
                                     {{ $t("delete triggers") }}
                                 </el-button>
                             </BulkSelect>
@@ -664,7 +664,7 @@
         );
     };
 
-    const genericConfirmAction = (toastKey: string, queryAction: string, byIdAction: string, success: string, data?: any, extraWarning = null) => {
+    const genericConfirmAction = (toastKey: string, queryAction: string, byIdAction: string, success: string, data?: any, extraWarning?: string) => {
         let message = t(toastKey, {"count": queryBulkAction.value ? total.value : selection.value?.length}) + ". " + t("bulk action async warning");
 
         if (extraWarning) {

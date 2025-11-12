@@ -1,18 +1,22 @@
 <template>
     <el-tooltip
-        data-component="FILENAME_PLACEHOLDER"
+        v-if="showTooltip && date"
         :key="uid('tooltip')"
-        v-if="date"
         :content="inverted ? from : full"
         :persistent="false"
         transition=""
         :hideAfter="0"
         effect="light"
     >
-        <span :class="className">{{ inverted ? full : from }}</span>
+        <span :class="className">
+            {{ inverted ? full : from }}
+        </span>
     </el-tooltip>
+    <span v-else-if="date" :class="className">
+        {{ inverted ? full : from }}
+    </span>
 </template>
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, getCurrentInstance} from "vue";
     import Utils from "../../utils/utils";
 
@@ -32,6 +36,10 @@
         className: {
             type: String,
             default: null
+        },
+        showTooltip:{
+            type: Boolean,
+            default: true
         }
     })
 

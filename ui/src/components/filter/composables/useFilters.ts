@@ -1,58 +1,393 @@
-import {Comparators, getComparator} from "../../../composables/monaco/languages/filters/filterCompletion";
+import {ref, watch, computed} from "vue";
+import {useRoute, useRouter} from "vue-router";
+import {
+    keyOfComparator,
+    decodeSearchParams,
+    encodeFiltersToQuery,
+    isValidFilter,
+    getUniqueFilters,
+    clearFilterQueryParams
+} from "../utils/helpers";
+import {
+    AppliedFilter,
+    FilterConfiguration,
+    COMPARATOR_LABELS,
+    Comparators,
+    TEXT_COMPARATORS,
+    KV_COMPARATORS
+} from "../utils/filterTypes";
+import {usePreAppliedFilters} from "./usePreAppliedFilters";
+import {applyDefaultFilters} from "./useDefaultFilter";
 
-type LegacyFilter = { field: string, operation: (keyof typeof Comparators) | "IN" | "NOT_IN", value: string };
-const getItem: (key: string) => { name: string, value: string | LegacyFilter[] }[] = (key) => {
-    return JSON.parse(localStorage.getItem(key) || "[]");
-};
+export function useFilters(configuration: FilterConfiguration, showSearchInput = true, legacyQuery = false) {
+    const router = useRouter();
+    const route = useRoute();
 
-const setItem = (key: string, value: object) => {
-    return localStorage.setItem(key, JSON.stringify(value));
-};
+    const appliedFilters = ref<AppliedFilter[]>([]);
+    const searchQuery = ref("");
 
-export const compare = (item: object, element: object) => {
-    return JSON.stringify(item) !== JSON.stringify(element);
-};
+    const {
+        markAsPreApplied,
+        hasPreApplied,
+        getPreApplied
+    } = usePreAppliedFilters();
 
-const filterItems = (items: object[], element: object) => {
-    return items.filter((item) => compare(item, element));
-};
+    const appendQueryParam = (query: Record<string, any>, key: string, value: string) => {
+        if (query[key]) {
+            query[key] = Array.isArray(query[key]) ? [...query[key], value] : [query[key], value];
+        } else {
+            query[key] = value;
+        }
+    };
 
-export function useFilters(prefix: string) {
-    const keys = {saved: `saved__${prefix}`};
+    const isTimeRange = (filter: AppliedFilter) =>
+        typeof filter.value === "object" &&
+        "startDate" in filter.value &&
+        filter.key === "timeRange";
 
-    function setSavedItems(value: object) {
-        return setItem(keys.saved, value);
-    }
+    const updateSearchQuery = (query: Record<string, any>) => {
+        const trimmedQuery = searchQuery.value?.trim();
+        delete query.q;
+        delete query.search;
+        delete query["filters[q][EQUALS]"];
+        
+        if (trimmedQuery && showSearchInput) {
+            const searchKey = configuration.keys?.length > 0 && !legacyQuery
+                ? "filters[q][EQUALS]"
+                : "q";
+            query[searchKey] = trimmedQuery;
+        }
+    };
 
-    return {
-        getSavedItems: () => {
-            let hasLegacyFilter = false;
-            const savedItems = getItem(keys.saved).map(({name, value}) => {
-                let stringValue;
-                if (typeof value === "string") {
-                    stringValue = value;
-                } else {
-                    hasLegacyFilter = true;
+    const clearLegacyParams = (query: Record<string, any>) => {
+        configuration.keys?.forEach(({key}) => {
+            delete query[key];
+            if (key === "details") {
+                Object.keys(query).forEach(queryKey => {
+                    if (queryKey.startsWith("details.")) delete query[queryKey];
+                });
+            }
+        });
+        delete query.startDate;
+        delete query.endDate;
+    };
 
-                    const comparator = (operation: LegacyFilter["operation"]) => getComparator(operation);
-                    stringValue = (value as LegacyFilter[]).map(f =>
-                        `${f.field}${comparator(f.operation)}${f.value.includes(" ") ? `"${f.value}"` : f.value}`
-                    ).join(" ")
-                }
+    /**
+     * Builds legacy query parameters from applied filters.
+     * @param query - Query object to populate
+     */
+    const buildLegacyQuery = (query: Record<string, any>) => {
+        getUniqueFilters(appliedFilters.value.filter(isValidFilter)).forEach(filter => {
+            if (filter.key === "details") {
+                (filter.value as string[]).forEach(item => {
+                    const [k, v] = item.split(":");
+                    query[`details.${k}`] = v;
+                });
+            } else if (Array.isArray(filter.value)) {
+                filter.value.forEach(item =>
+                    appendQueryParam(query, filter.key, item?.toString() ?? "")
+                );
+            } else if (isTimeRange(filter)) {
+                const {startDate, endDate} = filter.value as { startDate: Date; endDate: Date };
+                query.startDate = startDate.toISOString();
+                query.endDate = endDate.toISOString();
+            } else {
+                query[filter.key] = filter.value?.toString() || "";
+            }
+        });
+    };
 
-                return {name, value: stringValue}
-            });
+    const updateRoute = () => {
+        const query = {...route.query};
+        clearFilterQueryParams(query);
 
-            if (hasLegacyFilter) {
-                setSavedItems(savedItems);
+        if (legacyQuery) {
+            clearLegacyParams(query);
+            buildLegacyQuery(query);
+        } else {
+            Object.assign(query, encodeFiltersToQuery(getUniqueFilters(appliedFilters.value
+                .filter(isValidFilter)), keyOfComparator));
+        }
+
+        updateSearchQuery(query);
+        router.push({query});
+    };
+
+    const createAppliedFilter = (
+        key: string,
+        config: any,
+        comparator: Comparators,
+        value: any,
+        valueLabel: string,
+        idSuffix: string
+    ): AppliedFilter => ({
+        id: `${key}-${idSuffix}-${Date.now()}`,
+        key,
+        keyLabel: config?.label,
+        comparator,
+        comparatorLabel: COMPARATOR_LABELS[comparator],
+        value,
+        valueLabel
+    });
+
+    const createFilter = (
+        key: string,
+        config: any,
+        value: string | string[]
+    ): AppliedFilter => {
+        const comparator = (config?.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
+        const valueLabel = Array.isArray(value)
+            ? key === "details" && value.length > 1
+                ? `${value[0]} +${value.length - 1}`
+                : Array.isArray(value)
+                    ? value.join(", ")
+                    : value[0]
+            : (value as string);
+        return createAppliedFilter(key, config, comparator, value, valueLabel, "EQUALS");
+    };
+
+    const createTimeRangeFilter = (
+        config: any,
+        startDate: Date,
+        endDate: Date,
+        comparator = Comparators.EQUALS
+    ): AppliedFilter => {
+        const valueLabel = `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+        return {
+            ...createAppliedFilter(
+                "timeRange",
+                config,
+                comparator,
+                {startDate, endDate},
+                valueLabel,
+                keyOfComparator(comparator)
+            ),
+            comparatorLabel: "Is Between"
+        };
+    };
+
+    /**
+     * Parses filters from legacy URL parameters.
+     * @returns Array of AppliedFilter objects
+     */
+    const parseLegacyFilters = (): AppliedFilter[] => {
+        const filtersMap = new Map<string, AppliedFilter>();
+        const details: string[] = [];
+
+        Object.entries(route.query).forEach(([key, value]) => {
+            if (["q", "search", "filters[q][EQUALS]"].includes(key)) return;
+
+            if (key.startsWith("details.")) {
+                details.push(`${key.split(".")[1]}:${value}`);
+                return;
             }
 
-            return savedItems;
-        },
-        setSavedItems,
-        removeSavedItem: (element: object) => {
-            const filtered = filterItems(getItem(keys.saved), element);
-            return setItem(keys.saved, filtered);
+            const config = configuration.keys?.find(k => k.key === key);
+            if (!config) return;
+
+            const processedValue = Array.isArray(value)
+                ? (value as string[]).filter(v => v !== null)
+                : config?.valueType === "multi-select"
+                    ? ((value as string) ?? "").split(",")
+                    : ((value as string) ?? "");
+
+            filtersMap.set(key, createFilter(key, config, processedValue));
+        });
+
+        if (details.length > 0) {
+            const config = configuration.keys?.find(k => k.key === "details");
+            if (config) {
+                filtersMap.set("details", createFilter("details", config, details));
+            }
         }
+
+        if (route.query.startDate && route.query.endDate) {
+            const timeRangeConfig = configuration.keys?.find(k => k.key === "timeRange");
+            if (timeRangeConfig) {
+                filtersMap.set(
+                    "timeRange",
+                    createTimeRangeFilter(
+                        timeRangeConfig,
+                        new Date(route.query.startDate as string),
+                        new Date(route.query.endDate as string)
+                    )
+                );
+            }
+        }
+
+        return Array.from(filtersMap.values());
+    };
+
+    const isKVFilter = (field: string, comparator: Comparators) =>
+        field === "details" || (field === "labels" && KV_COMPARATORS.includes(comparator));
+
+    const processFieldValue = (config: any, params: any[], field: string, comparator: Comparators) => {
+        const isTextOp = TEXT_COMPARATORS.includes(comparator);
+
+        if (isKVFilter(field, comparator)) {
+            const combinedValue = params.map(p => p?.value as string);
+            return {
+                value: combinedValue,
+                valueLabel: combinedValue.length > 1
+                    ? `${combinedValue[0]} +${combinedValue.length - 1}`
+                    : combinedValue[0] ?? ""
+            };
+        }
+
+        if (config?.valueType === "multi-select" && !isTextOp) {
+            const combinedValue = params.flatMap(p =>
+                Array.isArray(p?.value) ? p.value : (p?.value as string)?.split(",") ?? []
+            );
+            return {
+                value: combinedValue,
+                valueLabel: combinedValue.join(", ")
+            };
+        }
+
+        const param = params[0];
+        let value = Array.isArray(param?.value)
+            ? param.value[0]
+            : (param?.value as string);
+
+        if (config?.valueType === "date" && typeof value === "string") {
+            value = new Date(value);
+        }
+
+        return {
+            value,
+            valueLabel: value instanceof Date ? value.toLocaleDateString() : value
+        };
+    };
+
+    const parseEncodedFilters = (): AppliedFilter[] => {
+        const filtersMap = new Map<string, AppliedFilter>();
+        const dateFilters: Record<string, {comparatorKey: string; value: string}> = {};
+        const fieldParams = new Map<string, any[]>();
+
+        decodeSearchParams(route.query).forEach(param => {
+            if (!param) return;
+            if (["startDate", "endDate"].includes(param?.field)) {
+                dateFilters[param.field] = {
+                    comparatorKey: param?.operation ?? "",
+                    value: param?.value as string
+                };
+            } else {
+                if (!fieldParams.has(param?.field)) fieldParams.set(param.field, []);
+                fieldParams.get(param?.field)!.push(param);
+            }
+        });
+
+        fieldParams.forEach((params, field) => {
+            const config = configuration.keys?.find(k => k?.key === field);
+            if (!config) return;
+
+            const comparator = Comparators[params[0]?.operation as keyof typeof Comparators];
+            if (!comparator) return;
+
+            const {value, valueLabel} = processFieldValue(config, params, field, comparator);
+            filtersMap.set(
+                field,
+                createAppliedFilter(field, config, comparator, value, valueLabel, params[0]?.operation)
+            );
+        });
+
+        if (dateFilters.startDate && dateFilters.endDate) {
+            const timeRangeConfig = configuration.keys?.find(k => k?.key === "timeRange");
+            if (timeRangeConfig) {
+                const comparator = Comparators[
+                    dateFilters.startDate?.comparatorKey as keyof typeof Comparators
+                ];
+                filtersMap.set(
+                    "timeRange",
+                    createTimeRangeFilter(
+                        timeRangeConfig,
+                        new Date(dateFilters.startDate?.value),
+                        new Date(dateFilters.endDate?.value),
+                        comparator
+                    )
+                );
+            }
+        }
+
+        return Array.from(filtersMap.values());
+    };
+
+    const initializeFromRoute = () => {
+        if (showSearchInput) {
+            searchQuery.value =
+                (route.query?.["filters[q][EQUALS]"] as string) ??
+                (route.query?.q as string) ??
+                "";
+        }
+
+        const parsedFilters = legacyQuery
+            ? parseLegacyFilters()
+            : parseEncodedFilters();
+
+        if (appliedFilters.value?.length === 0 && parsedFilters.length > 0) {
+            markAsPreApplied(parsedFilters);
+        }
+
+        appliedFilters.value = parsedFilters;
+    };
+
+    watch(() => route.query, initializeFromRoute, {deep: true, immediate: false});
+    initializeFromRoute();
+
+    const addFilter = (filter: AppliedFilter) => {
+        const index = appliedFilters.value.findIndex(f => f?.key === filter?.key);
+        appliedFilters.value = index === -1
+            ? [...appliedFilters.value, filter]
+            : appliedFilters.value.map((f, i) => (i === index ? filter : f));
+        updateRoute();
+    };
+
+    const removeFilter = (filterId: string) => {
+        const filter = appliedFilters.value.find(f => f?.id === filterId);
+        if (filter) {
+            appliedFilters.value = appliedFilters.value.filter(f => f?.key !== filter?.key);
+            updateRoute();
+        }
+    };
+
+    const updateFilter = (updatedFilter: AppliedFilter) => {
+        appliedFilters.value = [
+            ...appliedFilters.value.filter(f => f?.key !== updatedFilter?.key),
+            updatedFilter
+        ];
+        updateRoute();
+    };
+
+    /**
+     * Clears all applied filters and search query.
+     */
+    const clearFilters = () => {
+        appliedFilters.value = [];
+        searchQuery.value = "";
+        updateRoute();
+    };
+
+    const resetToPreApplied = () => {
+        const defaultQuery = applyDefaultFilters({}, {configuration, route, legacyQuery}).query;
+        searchQuery.value = "";
+        router.push({query: defaultQuery});
+    };
+
+    return {
+        appliedFilters: computed(() => appliedFilters.value),
+        searchQuery: computed({
+            get: () => searchQuery.value,
+            set: value => {
+                searchQuery.value = value;
+                updateRoute();
+            }
+        }),
+        addFilter,
+        removeFilter,
+        updateFilter,
+        clearFilters,
+        resetToPreApplied,
+        hasPreApplied,
+        getPreApplied,
     };
 }

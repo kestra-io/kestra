@@ -1,5 +1,6 @@
 package io.kestra.core.models.triggers;
 
+import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -167,9 +168,14 @@ public class Trigger extends TriggerContext implements HasUID {
     // Used to update trigger in flowListeners
     public static Trigger of(FlowInterface flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext, Optional<Trigger> lastTrigger) throws Exception {
         ZonedDateTime nextDate = null;
+        boolean disabled = lastTrigger.map(TriggerContext::getDisabled).orElse(Boolean.FALSE);
 
         if (abstractTrigger instanceof PollingTriggerInterface pollingTriggerInterface) {
-            nextDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.empty());
+            try {
+                nextDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.empty());
+            } catch (InvalidTriggerConfigurationException e) {
+                disabled = true;
+            }
         }
 
         return Trigger.builder()
@@ -180,7 +186,7 @@ public class Trigger extends TriggerContext implements HasUID {
             .date(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS))
             .nextExecutionDate(nextDate)
             .stopAfter(abstractTrigger.getStopAfter())
-            .disabled(lastTrigger.map(TriggerContext::getDisabled).orElse(Boolean.FALSE))
+            .disabled(disabled)
             .backfill(null)
             .build();
     }

@@ -4,17 +4,25 @@
             <slot name="back-button" />
             <h2>{{ title }}</h2>
         </div>
-        <div class="content">
+        <div class="content" ref="contentRef">
             <slot />
         </div>
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
+    import {ref} from "vue";
+
     defineProps<{title:string}>();
+
+    const contentRef = ref<HTMLDivElement | null>(null);
+
+    defineExpose({
+        contentRef
+    });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .wrapper {
         height: 100vh;
         display: flex;

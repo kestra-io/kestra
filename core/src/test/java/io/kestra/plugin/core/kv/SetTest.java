@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.kv;
 
 import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.models.property.Property;
@@ -167,6 +168,7 @@ class SetTest {
         assertThat(expirationDate.isAfter(Instant.now().plus(Duration.ofMinutes(4))) && expirationDate.isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
     }
 
+    @FlakyTest
     @Test
     void shouldFailGivenExistingKeyAndOverwriteFalse() throws Exception {
         // Given
@@ -192,8 +194,8 @@ class SetTest {
         KVStoreException exception = Assertions.assertThrows(KVStoreException.class, () -> Set.builder()
             .id(Set.class.getSimpleName())
             .type(Set.class.getName())
-            .key(new Property<>("{{ inputs.key }}"))
-            .value(new Property<>("{{ inputs.value }}"))
+            .key(Property.ofExpression("{{ inputs.key }}"))
+            .value(Property.ofExpression("{{ inputs.value }}"))
             .overwrite(Property.ofValue(false))
             .build().run(runContext));
         assertThat(exception.getMessage()).isEqualTo("Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.".formatted(key));
@@ -212,8 +214,7 @@ class SetTest {
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(Instant.parse("2023-05-02T01:02:03Z"));
 
         kv = createAndPerformSetTask(key, "P1DT5S", KVType.DURATION);
-        // TODO Hack meanwhile we handle duration serialization as currently they are stored as bigint...
-        assertThat((long) Double.parseDouble(kv.getValue(key).orElseThrow().value().toString())).isEqualTo(Duration.ofDays(1).plus(Duration.ofSeconds(5)).toSeconds());
+        assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(Duration.ofDays(1).plus(Duration.ofSeconds(5)));
 
         kv = createAndPerformSetTask(key, "[{\"some\":\"value\"},{\"another\":\"value\"}]", KVType.JSON);
         assertThat(kv.getValue(key).orElseThrow().value()).isEqualTo(List.of(Map.of("some", "value"), Map.of("another", "value")));

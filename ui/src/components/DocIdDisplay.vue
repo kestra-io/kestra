@@ -11,7 +11,7 @@
     </button>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {computed, ref} from "vue";
     import {useRoute} from "vue-router";
     import {useDocStore} from "../stores/doc";
@@ -36,7 +36,7 @@
     }
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .app-id-display-box {
     position: fixed;
     top: 0;

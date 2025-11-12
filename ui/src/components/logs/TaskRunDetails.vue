@@ -131,7 +131,7 @@
     import FilePreview from "../executions/FilePreview.vue";
     import {apiUrl} from "override/utils/route";
     import Utils from "../../utils/utils";
-    import LogUtils from "../../utils/logs";
+    import * as LogUtils from "../../utils/logs";
     import throttle from "lodash/throttle";
 
     export default {
@@ -665,7 +665,7 @@
         },
     };
 </script>
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .log-wrapper {

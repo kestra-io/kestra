@@ -32,7 +32,7 @@ Watch out for duplicates! If you are creating a new issue, please check existing
 #### Requirements
 The following dependencies are required to build Kestra locally:
 - Java 21+
-- Node 18+ and npm
+- Node 22+ and npm 10+
 - Python 3, pip and python venv
 - Docker & Docker Compose
 - an IDE (Intellij IDEA, Eclipse or VS Code)
@@ -126,7 +126,7 @@ By default, Kestra will be installed under: `$HOME/.kestra/current`. Set the `KE
 ```bash
 # build and install Kestra
 make install
-# install plugins (plugins installation is based on the `.plugins` or `.plugins.override` files located at the root of the project.
+# install plugins (plugins installation is based on the API).
 make install-plugins
 # start Kestra in standalone mode with Postgres as backend
 make start-standalone-postgres

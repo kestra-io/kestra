@@ -64,7 +64,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .menu-item{
     display: flex;
     align-items: center;

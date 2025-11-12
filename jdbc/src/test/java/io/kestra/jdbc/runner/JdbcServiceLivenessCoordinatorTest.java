@@ -8,6 +8,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.WorkerGroup;
@@ -97,7 +98,6 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     }
 
     @FlakyTest
-    @Disabled
     @Test
     void shouldReEmitTasksWhenWorkerIsDetectedAsNonResponding() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);
@@ -131,6 +131,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         assertThat(workerTaskResult).isNotNull();
         assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(Type.SUCCESS);
         assertThat(workerTaskResult.getTaskRun().getAttempts()).hasSize(2);
+        assertThat(workerTaskResult.getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESUBMITTED)).isTrue();
         newWorker.close();
     }
 
@@ -171,6 +172,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         assertThat(workerTaskResult).isNotNull();
         assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(Type.SUCCESS);
         assertThat(workerTaskResult.getTaskRun().getAttempts()).hasSize(2);
+        assertThat(workerTaskResult.getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESUBMITTED)).isTrue();
         newWorker.close();
     }
 
@@ -210,7 +212,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         assertThat(receive.blockLast().getTaskRun().getState().getCurrent()).isNotEqualTo(Type.SUCCESS);
     }
 
-    @Disabled
+    @FlakyTest
     @Test
     void shouldReEmitTriggerWhenWorkerIsDetectedAsNonResponding() throws Exception {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);

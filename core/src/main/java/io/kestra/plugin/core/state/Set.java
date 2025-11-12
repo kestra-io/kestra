@@ -20,7 +20,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Set a state in the state store (Deprecated).",
+    title = "Set a state in the state store (Deprecated, use KV store instead).",
     description = "Values will be merged: \n" +
         "* If you provide a new key, the new key will be added.\n" +
         "* If you provide an existing key, the previous key will be overwrite.\n" +
@@ -56,6 +56,7 @@ import java.util.Map;
     },
     aliases = "io.kestra.core.tasks.states.Set"
 )
+@Deprecated(since = "1.1.0", forRemoval = true)
 public class Set extends AbstractState implements RunnableTask<Set.Output> {
     @Schema(
         title = "The data to be stored in the state store"

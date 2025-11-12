@@ -147,14 +147,6 @@ public class H2QueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.EXECUTION_RUNNING_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<ExecutionRunning> executionRunning() {
-        return new H2Queue<>(ExecutionRunning.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
     @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<MultipleConditionEvent> multipleConditionEvent() {

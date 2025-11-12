@@ -68,8 +68,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
-    import Status from "../../components/Status.vue";
+    import {State, Status} from "@kestra-io/ui-libs"
     import * as ExecutionUtils from "../../utils/executionUtils";
     import {shallowRef} from "vue";
     import {useAuthStore} from "override/stores/auth"

@@ -1,5 +1,5 @@
 <template>
-    <div data-component="FILENAME_PLACEHOLDER">
+    <div>
         <el-autocomplete
             ref="searchInput"
             class="flex-shrink-0"
@@ -90,7 +90,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
     div {
         :deep(.el-input) {

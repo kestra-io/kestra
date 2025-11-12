@@ -1,6 +1,7 @@
 <template>
-    <Empty v-if="!isLoading && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
-    <el-splitter v-else class="dependencies">
+    <div v-if="!TESTING && isLoading" v-loading="true" class="h-100" />
+    <Empty v-if="!TESTING && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
+    <el-splitter class="dependencies">
         <el-splitter-panel id="graph" v-bind="PANEL">
             <div v-loading="isRendering" ref="container" />
 

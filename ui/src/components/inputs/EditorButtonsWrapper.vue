@@ -11,11 +11,11 @@
         />
 
         <EditorButtons
-            :isCreating="isCreating"
+            :isCreating="flowStore.isCreating"
             :isReadOnly="isReadOnly"
             :canDelete="true"
             :isAllowedEdit="isAllowedEdit"
-            :haveChange="flowStore.haveChange || tabs.some(t => t.dirty === true)"
+            :haveChange="haveChange"
             :flowHaveTasks="Boolean(flowHaveTasks)"
             :errors="flowErrors"
             :warnings="flowWarnings"
@@ -36,8 +36,12 @@
     </div>
 </template>
 
+<script lang="ts">
+    export const FILES_SAVE_ALL_INJECTION_KEY = Symbol("FILES_SAVE_ALL_INJECTION_KEY") as InjectionKey<() => void>;
+</script>
+
 <script setup lang="ts">
-    import {computed, getCurrentInstance} from "vue";
+    import {computed, getCurrentInstance, inject, InjectionKey} from "vue";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
@@ -46,22 +50,24 @@
 
     import localUtils from "../../utils/utils";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
-    import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
+
+    defineProps<{
+        haveChange: boolean;
+    }>();
 
     const {t} = useI18n();
 
     const exportYaml = () => {
-        const src = flowStore.flowYaml
-        if(!src) {
-            return;
-        }
-        const blob = new Blob([src], {type: "text/yaml"});
-        localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
+        if(!flowStore.flow || !flowStore.flowYaml) return;
+
+        const {id, namespace} = flowStore.flow;
+        const blob = new Blob([flowStore.flowYaml], {type: "text/yaml"});
+
+        localUtils.downloadUrl(window.URL.createObjectURL(blob), `${namespace}.${id}.yaml`);
     };
 
     const flowStore = useFlowStore();
-    const editorStore = useEditorStore();
     const router = useRouter()
     const route = useRoute()
     const routeParams = computed(() => route.params)
@@ -71,13 +77,11 @@
     // If playground is not defined, enable it by default
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
 
-    const isCreating = computed(() => flowStore.isCreating === true)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
     const flowHaveTasks = computed(() => flowStore.flowHaveTasks)
     const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
     const flowInfos = computed(() => flowStore.flowInfos)
-    const tabs = computed<{dirty?:boolean}[]>(() => editorStore.tabs)
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
     const flowWarnings = computed(() => {
 
@@ -102,11 +106,15 @@
         return warnings.length === 0 ? undefined : warnings;
     });
 
+    const onSaveAll = inject(FILES_SAVE_ALL_INJECTION_KEY);
+
     async function save(){
-        const creating = isCreating.value
+        // Save the isCreating before saving.
+        // saveAll can change its value.
+        const isCreating = flowStore.isCreating
         await flowStore.saveAll()
 
-        if(creating){
+        if(isCreating){
             await router.push({
                 name: "flows/update",
                 params: {
@@ -117,6 +125,8 @@
                 },
             });
         }
+
+        onSaveAll?.();
     }
 
     const deleteFlow = () => {
@@ -138,7 +148,7 @@
     };
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .button-wrapper {
         display: flex;
         align-items: center;

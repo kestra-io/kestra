@@ -19,7 +19,7 @@
     </el-card>
 </template>
 <script setup lang="ts">
-    import {onBeforeUnmount, defineProps, defineEmits} from "vue";
+    import {onBeforeUnmount} from "vue";
     import {useI18n} from "vue-i18n";
     import {useFlowStore} from "../../stores/flow";
     import LowCodeEditor from "../inputs/LowCodeEditor.vue";

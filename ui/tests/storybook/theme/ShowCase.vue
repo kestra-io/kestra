@@ -222,7 +222,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {getCurrentInstance, onMounted, ref} from "vue"
     import {ElMessage} from "element-plus"
     import Search from "vue-material-design-icons/SearchWeb.vue"

@@ -52,7 +52,7 @@
                 </div>
             </el-splitter-panel>
             <el-splitter-panel>
-                <div class="right wrapper" :style="{'z-index': 999}">
+                <div class="right wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
                         class="w-100 overflow-auto p-3 content-container"
@@ -225,14 +225,15 @@
                     const debugOutput = JSON.stringify(parsedResult, null, 2);
                     debugExpression.value = debugOutput;
 
-                    selected.value.push(debugOutput);
-
+                    if (response.status === 200 && debugOutput !== null && debugOutput !== undefined) {
+                        selected.value.push(debugOutput);
+                    }
                     isJSON.value = true;
                 } catch {
                     debugExpression.value = response.data.result;
 
                     // Parsing failed, therefore, copy raw result
-                    if (response.status === 200 && response.data.result)
+                    if (response.status === 200 && response.data.result !== null && response.data.result !== undefined)
                         selected.value.push(response.data.result);
                 }
 
@@ -433,7 +434,7 @@
     const leftWidth = ref("70%");
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 .outputs {
     display: flex;
     width: 100%;
@@ -478,6 +479,8 @@
 
 .wrapper {
     background: var(--ks-background-card);
+    position: relative;
+    z-index: 1;
 }
 
 :deep(.el-cascader-menu) {
@@ -533,6 +536,8 @@
     overflow-x: hidden;
     word-wrap: break-word;
     word-break: break-word;
+    position: relative;
+    z-index: 0;
 }
 
 :deep(.el-collapse) {
@@ -559,5 +564,12 @@
     word-wrap: break-word !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
+}
+
+:deep(.monaco-editor),
+:deep(.editor-container),
+:deep(.complex-value-editor) {
+    position: relative !important;
+    z-index: auto !important;
 }
 </style>

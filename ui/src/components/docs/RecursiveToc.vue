@@ -36,7 +36,7 @@
     </el-collapse>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
     import {ref} from "vue";
 
     const disabledPages = [
@@ -61,7 +61,7 @@
 
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
     .el-collapse {
         --el-collapse-header-font-size: 14px;
 

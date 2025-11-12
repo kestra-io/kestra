@@ -122,6 +122,7 @@ public class JsonSchemaGenerator {
             replaceOneOfWithAnyOf(objectNode);
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
+            fixLabelsSchema(objectNode);
 
             return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
         } catch (Exception e) {
@@ -195,6 +196,72 @@ public class JsonSchemaGenerator {
                 }
             }
         });
+    }
+
+    // Fix labels schema to ensure it supports both array and object formats
+    // This is needed because Swagger2Module may not properly generate oneOf/anyOf for List<Label> fields
+    private void fixLabelsSchema(ObjectNode objectNode) {
+        // Fix labels in main schema properties
+        if (objectNode.get("properties") instanceof ObjectNode properties) {
+            fixLabelsProperty(properties);
+        }
+
+        // Fix labels in all definitions
+        if (objectNode.get("definitions") instanceof ObjectNode definitions) {
+            definitions.forEach(definitionNode -> {
+                if (definitionNode instanceof ObjectNode definition) {
+                    if (definition.get("properties") instanceof ObjectNode defProperties) {
+                        fixLabelsProperty(defProperties);
+                    }
+                }
+            });
+        }
+    }
+
+    private void fixLabelsProperty(ObjectNode properties) {
+        JsonNode labelsNode = properties.get("labels");
+        if (labelsNode instanceof ObjectNode labelsSchema) {
+            // Check if it already has anyOf with both array and object
+            boolean hasCorrectAnyOf = false;
+            if (labelsSchema.has("anyOf") && labelsSchema.get("anyOf") instanceof ArrayNode anyOfArray) {
+                boolean hasArray = false;
+                boolean hasObject = false;
+                for (JsonNode item : anyOfArray) {
+                    if (item instanceof ObjectNode itemObj) {
+                        JsonNode typeNode = itemObj.get("type");
+                        if (typeNode != null && "array".equals(typeNode.asText())) {
+                            hasArray = true;
+                        }
+                        if (typeNode != null && "object".equals(typeNode.asText())) {
+                            hasObject = true;
+                        }
+                    }
+                }
+                hasCorrectAnyOf = hasArray && hasObject;
+            }
+
+            // If it doesn't have the correct anyOf structure, replace it
+            if (!hasCorrectAnyOf) {
+                // Remove type if present (it might be "array")
+                labelsSchema.remove("type");
+                
+                // Create the correct anyOf structure
+                ArrayNode anyOfArray = MAPPER.createArrayNode();
+                
+                // Array option
+                ObjectNode arrayOption = MAPPER.createObjectNode();
+                arrayOption.put("type", "array");
+                arrayOption.set("items", MAPPER.createObjectNode());
+                anyOfArray.add(arrayOption);
+                
+                // Object option
+                ObjectNode objectOption = MAPPER.createObjectNode();
+                objectOption.put("type", "object");
+                anyOfArray.add(objectOption);
+                
+                labelsSchema.set("anyOf", anyOfArray);
+            }
+        }
     }
 
     private void mutateDescription(ObjectNode collectedTypeAttributes) {
@@ -822,6 +889,7 @@ public class JsonSchemaGenerator {
             replaceOneOfWithAnyOf(objectNode);
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
+            fixLabelsSchema(objectNode);
 
             return MAPPER.convertValue(extractMainRef(objectNode), MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {

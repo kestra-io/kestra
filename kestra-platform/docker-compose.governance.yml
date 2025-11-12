@@ -1,0 +1,177 @@
+# =============================================================================
+# KESTRA PLATFORM - GOVERNANCE STACK (OPTIONAL)
+# =============================================================================
+# Adds governance tools to the base Kestra platform
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.governance.yml up
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # LangFuse Database (Separate from Kestra DB)
+  # ---------------------------------------------------------------------------
+  langfuse-db:
+    image: postgres:15-alpine
+    container_name: kestra-langfuse-postgres
+    environment:
+      POSTGRES_DB: ${LANGFUSE_DB_NAME:-langfuse}
+      POSTGRES_USER: ${LANGFUSE_DB_USER:-langfuse}
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD}
+    volumes:
+      - langfuse_data:/var/lib/postgresql/data
+    ports:
+      - "${LANGFUSE_DB_PORT:-5433}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LANGFUSE_DB_USER:-langfuse}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # LangFuse Server (LLM Observability Platform)
+  # ---------------------------------------------------------------------------
+  langfuse:
+    image: langfuse/langfuse:latest
+    container_name: kestra-langfuse
+    depends_on:
+      langfuse-db:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://${LANGFUSE_DB_USER:-langfuse}:${LANGFUSE_DB_PASSWORD}@langfuse-db:5432/${LANGFUSE_DB_NAME:-langfuse}
+
+      # Auth
+      NEXTAUTH_URL: ${LANGFUSE_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET}
+      SALT: ${LANGFUSE_SALT}
+
+      # Optional: Email configuration for user invites
+      # EMAIL_FROM: ${LANGFUSE_EMAIL_FROM}
+      # SMTP_HOST: ${SMTP_HOST}
+      # SMTP_PORT: ${SMTP_PORT}
+      # SMTP_USER: ${SMTP_USER}
+      # SMTP_PASSWORD: ${SMTP_PASSWORD}
+
+      # Optional: OAuth providers
+      # AUTH_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      # AUTH_GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      # AUTH_GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      # AUTH_GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+
+      # Telemetry (opt-out if desired)
+      TELEMETRY_ENABLED: ${LANGFUSE_TELEMETRY_ENABLED:-true}
+
+      # Logging
+      LOG_LEVEL: ${LANGFUSE_LOG_LEVEL:-info}
+
+    volumes:
+      - langfuse_uploads:/app/uploads
+    ports:
+      - "${LANGFUSE_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/public/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # Grafana (Metrics Visualization)
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: kestra-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_INSTALL_PLUGINS: ${GRAFANA_PLUGINS:-}
+      GF_AUTH_ANONYMOUS_ENABLED: ${GRAFANA_ALLOW_ANONYMOUS:-false}
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: postgres:5432
+      GF_DATABASE_NAME: ${POSTGRES_DB}
+      GF_DATABASE_USER: ${POSTGRES_USER}
+      GF_DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # Prometheus (Metrics Collection) - Optional
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: kestra-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # PGAdmin (PostgreSQL Administration) - Optional
+  # ---------------------------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: kestra-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+# =============================================================================
+# VOLUMES (Governance stack)
+# =============================================================================
+volumes:
+  langfuse_data:
+    driver: local
+  langfuse_uploads:
+    driver: local
+  grafana_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+# =============================================================================
+# NETWORKS (Use same network as base stack)
+# =============================================================================
+networks:
+  kestra-network:
+    external: true

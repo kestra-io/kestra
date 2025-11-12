@@ -1164,6 +1164,11 @@ form.ks-horizontal {
         }
     }
 }
+@media(max-width:540px){
+    .el-dialog{
+        width: 80% !important;
+    }
+}
 
 // date picker
 .el-date-range-picker {

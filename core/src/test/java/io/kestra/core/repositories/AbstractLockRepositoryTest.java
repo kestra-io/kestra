@@ -74,7 +74,7 @@ public abstract class AbstractLockRepositoryTest {
 
         // In Elasticsearch, as we search then delete we need to wait for the refresh period
         // This would not be an issue in real-case scenario as when we delete by owner the service would be down for a certain amount of time
-        Thread.sleep(500);
+        Thread.sleep(1000);
 
         List<Lock> deleted = lockRepository.deleteByOwner("me");
         assertThat(deleted).hasSize(1);

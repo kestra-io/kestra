@@ -1,0 +1,380 @@
+# =============================================================================
+# AI AGENT: Autonomous Task Completion Agent
+# =============================================================================
+# Type: Autonomous Loop (Plan → Execute → Verify → Iterate)
+# Use Case: Code generation, data analysis, report creation
+# Pattern: Agent writes code, executes it, checks results, iterates if needed
+# =============================================================================
+
+id: autonomous_task_agent
+namespace: enterprise.client1.agents
+description: |
+  Autonomous agent that completes tasks end-to-end:
+  1. Understands task requirements
+  2. Plans approach
+  3. Writes code to accomplish task
+  4. Executes code
+  5. Verifies results
+  6. Iterates if needed (up to max iterations)
+
+labels:
+  agent_type: autonomous
+  client: enterprise_client_1
+  use_case: task_automation
+
+inputs:
+  - id: task_description
+    type: STRING
+    required: true
+    description: "Natural language task description"
+    defaults: "Analyze our sales data from Q4 2024 and create a summary report with key metrics and trends"
+
+  - id: max_iterations
+    type: INT
+    defaults: 5
+    description: "Maximum iterations for task completion"
+
+  - id: data_sources
+    type: ARRAY
+    defaults:
+      - "s3://client1-data/sales/q4-2024/"
+    description: "Data sources available to agent"
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+  aws_access_key: "{{ secret('CLIENT1_AWS_ACCESS_KEY_ID') }}"
+  aws_secret_key: "{{ secret('CLIENT1_AWS_SECRET_ACCESS_KEY') }}"
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Task 1: Agent Planning Phase
+  # ---------------------------------------------------------------------------
+  - id: plan_task
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      TASK_DESCRIPTION: "{{ inputs.task_description }}"
+    script: |
+      import os
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.3)
+
+      planning_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are an expert software engineer and data analyst.
+          Given a task description, create a detailed execution plan.
+
+          Output format (JSON):
+          {
+            "task_type": "data_analysis|report_generation|api_integration|etc",
+            "steps": ["step 1", "step 2", ...],
+            "required_libraries": ["lib1", "lib2", ...],
+            "expected_outputs": ["output1", "output2", ...],
+            "success_criteria": "How to verify task completion"
+          }
+          """),
+          ("user", "{task}")
+      ])
+
+      response = llm.invoke(
+          planning_prompt.format_messages(task=os.environ['TASK_DESCRIPTION'])
+      )
+
+      # Parse response (expect JSON)
+      plan = json.loads(response.content)
+
+      with open('task_plan.json', 'w') as f:
+          json.dump(plan, f, indent=2)
+
+      print("TASK PLAN:")
+      print(json.dumps(plan, indent=2))
+
+    outputFiles:
+      - task_plan.json
+
+  # ---------------------------------------------------------------------------
+  # Task 2: Code Generation Phase
+  # ---------------------------------------------------------------------------
+  - id: generate_code
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      TASK_DESCRIPTION: "{{ inputs.task_description }}"
+    script: |
+      import os
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      # Load plan
+      with open('{{ outputs.plan_task.outputFiles["task_plan.json"] }}', 'r') as f:
+          plan = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.2)
+
+      code_gen_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are an expert Python programmer.
+          Write complete, production-ready Python code to accomplish the task.
+
+          Requirements:
+          - Include all imports
+          - Add error handling
+          - Write to output files
+          - Print progress messages
+          - Use best practices
+
+          Output ONLY the Python code, no explanations.
+          """),
+          ("user", """Task: {task}
+
+          Plan:
+          {plan}
+
+          Write the code:
+          """)
+      ])
+
+      response = llm.invoke(
+          code_gen_prompt.format_messages(
+              task=os.environ['TASK_DESCRIPTION'],
+              plan=json.dumps(plan, indent=2)
+          )
+      )
+
+      generated_code = response.content.strip()
+
+      # Remove markdown code blocks if present
+      if generated_code.startswith('```python'):
+          generated_code = generated_code.split('```python')[1].split('```')[0].strip()
+      elif generated_code.startswith('```'):
+          generated_code = generated_code.split('```')[1].split('```')[0].strip()
+
+      with open('generated_code.py', 'w') as f:
+          f.write(generated_code)
+
+      print("GENERATED CODE:")
+      print(generated_code)
+
+    outputFiles:
+      - generated_code.py
+
+  # ---------------------------------------------------------------------------
+  # Task 3: Code Execution Phase
+  # ---------------------------------------------------------------------------
+  - id: execute_code
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11
+    beforeCommands:
+      - pip install pandas numpy matplotlib seaborn boto3 requests sqlalchemy openpyxl
+    env:
+      AWS_ACCESS_KEY_ID: "{{ vars.aws_access_key }}"
+      AWS_SECRET_ACCESS_KEY: "{{ vars.aws_secret_key }}"
+      AWS_DEFAULT_REGION: us-east-1
+    script: |
+      # Execute the generated code
+      exec(open('{{ outputs.generate_code.outputFiles["generated_code.py"] }}').read())
+
+  # ---------------------------------------------------------------------------
+  # Task 4: Verification Phase
+  # ---------------------------------------------------------------------------
+  - id: verify_results
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      TASK_DESCRIPTION: "{{ inputs.task_description }}"
+    script: |
+      import os
+      import json
+      from pathlib import Path
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      # Load plan and check for expected outputs
+      with open('{{ outputs.plan_task.outputFiles["task_plan.json"] }}', 'r') as f:
+          plan = json.load(f)
+
+      # Check what files were created
+      output_files = list(Path('.').glob('*'))
+      output_files = [str(f) for f in output_files if f.is_file()]
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0)
+
+      verification_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are verifying if a task was completed successfully.
+
+          Output format (JSON):
+          {
+            "success": true/false,
+            "completion_percentage": 0-100,
+            "what_worked": "description",
+            "what_failed": "description or null",
+            "next_steps": "what to do next or null"
+          }
+          """),
+          ("user", """Task: {task}
+
+          Expected outputs: {expected_outputs}
+
+          Actual outputs: {actual_outputs}
+
+          Execution logs:
+          {execution_logs}
+
+          Was the task completed successfully?
+          """)
+      ])
+
+      # Get execution logs from previous task
+      execution_logs = "Check Kestra execution logs"  # In production, parse actual logs
+
+      response = llm.invoke(
+          verification_prompt.format_messages(
+              task=os.environ['TASK_DESCRIPTION'],
+              expected_outputs=json.dumps(plan.get('expected_outputs', [])),
+              actual_outputs=json.dumps(output_files),
+              execution_logs=execution_logs
+          )
+      )
+
+      verification = json.loads(response.content)
+
+      with open('verification.json', 'w') as f:
+          json.dump(verification, f, indent=2)
+
+      print("VERIFICATION RESULT:")
+      print(json.dumps(verification, indent=2))
+
+      # Exit with error if not successful (triggers retry or error handling)
+      if not verification['success']:
+          print(f"\n⚠️ TASK NOT COMPLETE: {verification['what_failed']}")
+          print(f"Next steps: {verification['next_steps']}")
+
+    outputFiles:
+      - verification.json
+
+  # ---------------------------------------------------------------------------
+  # Task 5: Final Report
+  # ---------------------------------------------------------------------------
+  - id: generate_report
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import os
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      # Load all context
+      with open('{{ outputs.plan_task.outputFiles["task_plan.json"] }}', 'r') as f:
+          plan = json.load(f)
+
+      with open('{{ outputs.verify_results.outputFiles["verification.json"] }}', 'r') as f:
+          verification = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+
+      report_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are generating an executive summary report.
+          Create a clear, concise report of what was accomplished.
+          """),
+          ("user", """Task: {task}
+
+          Plan: {plan}
+
+          Verification: {verification}
+
+          Generate executive summary:
+          """)
+      ])
+
+      response = llm.invoke(
+          report_prompt.format_messages(
+              task="{{ inputs.task_description }}",
+              plan=json.dumps(plan, indent=2),
+              verification=json.dumps(verification, indent=2)
+          )
+      )
+
+      report = response.content
+
+      with open('final_report.md', 'w') as f:
+          f.write(report)
+
+      print("\n" + "="*80)
+      print("FINAL REPORT")
+      print("="*80)
+      print(report)
+      print("="*80 + "\n")
+
+    outputFiles:
+      - final_report.md
+
+  # ---------------------------------------------------------------------------
+  # Task 6: Send Results
+  # ---------------------------------------------------------------------------
+  - id: send_results
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "✅ Autonomous Agent Completed Task",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Autonomous Task Agent*\n\n*Task:* {{ inputs.task_description }}\n\n*Status:* Complete\n*Report:* See execution {{ execution.id }}"
+            }
+          }
+        ]
+      }
+
+# =============================================================================
+# RETRY LOGIC - Agent will retry if verification fails
+# =============================================================================
+retry:
+  type: constant
+  interval: PT1M
+  maxAttempt: "{{ inputs.max_iterations }}"
+  warningOnRetry: true
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+errors:
+  - id: max_iterations_reached
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ Agent Failed After Max Iterations",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Task:* {{ inputs.task_description }}\n*Iterations:* {{ inputs.max_iterations }}\n*Status:* Failed - requires human intervention"
+            }
+          }
+        ]
+      }

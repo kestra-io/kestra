@@ -1,0 +1,498 @@
+# =============================================================================
+# AI AGENT: Human-in-the-Loop Agent
+# =============================================================================
+# Type: AI agent with human approval gates
+# Use Case: High-stakes decisions requiring human oversight
+# Pattern: AI analyzes → Recommends → Human approves → AI executes
+# =============================================================================
+
+id: human_in_the_loop_agent
+namespace: enterprise.client1.agents
+description: |
+  AI agent that handles high-stakes tasks with human oversight:
+  1. AI analyzes the situation
+  2. AI generates recommendations
+  3. AI requests human approval
+  4. Human reviews and approves/rejects
+  5. AI executes approved actions
+  6. AI reports results
+
+  Use cases:
+  - Financial transactions over threshold
+  - Contract negotiations
+  - Strategic business decisions
+  - Sensitive data operations
+  - Legal/compliance reviews
+
+labels:
+  agent_type: human_in_the_loop
+  client: enterprise_client_1
+  use_case: high_stakes_decisions
+
+inputs:
+  - id: decision_type
+    type: SELECT
+    required: true
+    values:
+      - financial_transaction
+      - contract_approval
+      - data_deletion
+      - policy_change
+      - vendor_selection
+    description: "Type of decision requiring approval"
+
+  - id: context
+    type: STRING
+    required: true
+    description: "Context and details for the decision"
+
+  - id: urgency
+    type: SELECT
+    defaults: normal
+    values:
+      - low
+      - normal
+      - high
+      - critical
+    description: "Decision urgency level"
+
+  - id: approver_email
+    type: STRING
+    defaults: "cto@company.com"
+    description: "Email of person who must approve"
+
+  - id: approval_timeout_hours
+    type: INT
+    defaults: 24
+    description: "Hours to wait for approval before escalation"
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+  slack_webhook: "{{ secret('SLACK_WEBHOOK_URL') }}"
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Step 1: AI Analysis Phase
+  # ---------------------------------------------------------------------------
+  - id: analyze_situation
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      DECISION_TYPE: "{{ inputs.decision_type }}"
+      CONTEXT: "{{ inputs.context }}"
+      URGENCY: "{{ inputs.urgency }}"
+    script: |
+      import os
+      import json
+      from datetime import datetime
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      print("\n" + "="*80)
+      print("AI AGENT - ANALYZING SITUATION")
+      print("="*80)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.3)
+
+      analysis_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are an expert business analyst providing decision support.
+
+          Analyze the situation and provide:
+          1. Summary of the decision to be made
+          2. Key factors to consider
+          3. Risks and benefits
+          4. Estimated impact (financial, operational, strategic)
+          5. Recommended action with rationale
+          6. Alternative options
+          7. Critical questions that need answers
+
+          Output format (JSON):
+          {
+            "decision_summary": "...",
+            "key_factors": ["factor 1", "factor 2", ...],
+            "risks": ["risk 1", "risk 2", ...],
+            "benefits": ["benefit 1", "benefit 2", ...],
+            "estimated_impact": {
+              "financial": "...",
+              "operational": "...",
+              "strategic": "..."
+            },
+            "recommendation": "...",
+            "rationale": "...",
+            "alternatives": ["alt 1", "alt 2", ...],
+            "critical_questions": ["q1", "q2", ...],
+            "confidence_level": "low|medium|high"
+          }
+          """),
+          ("user", """Decision Type: {decision_type}
+          Urgency: {urgency}
+
+          Context:
+          {context}
+
+          Provide comprehensive analysis in JSON format.
+          """)
+      ])
+
+      response = llm.invoke(
+          analysis_prompt.format_messages(
+              decision_type=os.environ['DECISION_TYPE'],
+              urgency=os.environ['URGENCY'],
+              context=os.environ['CONTEXT']
+          )
+      )
+
+      analysis = json.loads(response.content)
+      analysis['analyzed_at'] = datetime.now().isoformat()
+      analysis['urgency'] = os.environ['URGENCY']
+
+      with open('ai_analysis.json', 'w') as f:
+          json.dump(analysis, f, indent=2)
+
+      print(f"\nANALYSIS COMPLETE")
+      print(f"Recommendation: {analysis['recommendation']}")
+      print(f"Confidence: {analysis['confidence_level']}")
+      print("="*80 + "\n")
+
+    outputFiles:
+      - ai_analysis.json
+
+  # ---------------------------------------------------------------------------
+  # Step 2: Request Human Approval (Slack + Email)
+  # ---------------------------------------------------------------------------
+  - id: request_approval_slack
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ vars.slack_webhook }}"
+    payload: |
+      {
+        "text": "⚠️ AI Agent Requesting Approval",
+        "blocks": [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": "🤖 AI Agent Approval Required"
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Decision Type:* {{ inputs.decision_type }}\n*Urgency:* {{ inputs.urgency }}\n*Requested By:* AI Agent\n*Approver:* {{ inputs.approver_email }}\n*Timeout:* {{ inputs.approval_timeout_hours }} hours"
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Context:*\n{{ inputs.context }}"
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*AI Recommendation:*\nSee detailed analysis in execution {{ execution.id }}"
+            }
+          },
+          {
+            "type": "actions",
+            "elements": [
+              {
+                "type": "button",
+                "text": {
+                  "type": "plain_text",
+                  "text": "✅ Approve"
+                },
+                "style": "primary",
+                "url": "{{ secret('KESTRA_URL') }}/executions/{{ execution.id }}/approve",
+                "value": "approve"
+              },
+              {
+                "type": "button",
+                "text": {
+                  "type": "plain_text",
+                  "text": "❌ Reject"
+                },
+                "style": "danger",
+                "url": "{{ secret('KESTRA_URL') }}/executions/{{ execution.id }}/reject",
+                "value": "reject"
+              },
+              {
+                "type": "button",
+                "text": {
+                  "type": "plain_text",
+                  "text": "💬 Request More Info"
+                },
+                "url": "{{ secret('KESTRA_URL') }}/executions/{{ execution.id }}/comment",
+                "value": "comment"
+              }
+            ]
+          }
+        ]
+      }
+
+  # ---------------------------------------------------------------------------
+  # Step 3: Wait for Human Approval (Pause Task)
+  # ---------------------------------------------------------------------------
+  - id: wait_for_approval
+    type: io.kestra.plugin.core.flow.Pause
+    timeout: PT{{ inputs.approval_timeout_hours }}H
+    onResume:
+      approval_status: "{{ trigger.approval_status }}"
+      approver_name: "{{ trigger.approver_name }}"
+      approver_comments: "{{ trigger.approver_comments }}"
+      approved_at: "{{ trigger.approved_at }}"
+
+  # ---------------------------------------------------------------------------
+  # Step 4: Process Approval Decision
+  # ---------------------------------------------------------------------------
+  - id: process_approval
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    script: |
+      import json
+      from datetime import datetime
+
+      # Get approval status from pause task
+      approval_status = "{{ outputs.wait_for_approval.onResume.approval_status }}"
+
+      approval_decision = {
+          "status": approval_status,
+          "approver": "{{ outputs.wait_for_approval.onResume.approver_name }}",
+          "comments": "{{ outputs.wait_for_approval.onResume.approver_comments }}",
+          "decided_at": datetime.now().isoformat(),
+          "execution_id": "{{ execution.id }}"
+      }
+
+      with open('approval_decision.json', 'w') as f:
+          json.dump(approval_decision, f, indent=2)
+
+      print(f"\nAPPROVAL STATUS: {approval_status}")
+
+      if approval_status != "approved":
+          print(f"❌ NOT APPROVED - Terminating execution")
+          raise Exception(f"Approval {approval_status}")
+
+      print(f"✅ APPROVED - Proceeding with execution")
+
+    outputFiles:
+      - approval_decision.json
+
+  # ---------------------------------------------------------------------------
+  # Step 5: Execute Approved Action (Conditional)
+  # ---------------------------------------------------------------------------
+  - id: execute_approved_action
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai boto3 requests
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      DECISION_TYPE: "{{ inputs.decision_type }}"
+    script: |
+      import os
+      import json
+      from datetime import datetime
+
+      print("\n" + "="*80)
+      print("EXECUTING APPROVED ACTION")
+      print("="*80)
+
+      # Load AI analysis and approval
+      with open('{{ outputs.analyze_situation.outputFiles["ai_analysis.json"] }}', 'r') as f:
+          analysis = json.load(f)
+
+      with open('{{ outputs.process_approval.outputFiles["approval_decision.json"] }}', 'r') as f:
+          approval = json.load(f)
+
+      # Execute action based on decision type
+      decision_type = os.environ['DECISION_TYPE']
+
+      execution_result = {
+          "decision_type": decision_type,
+          "executed_at": datetime.now().isoformat(),
+          "executed_by": "AI Agent (Human Approved)",
+          "approver": approval['approver'],
+          "status": "completed"
+      }
+
+      # Simulate different execution types
+      if decision_type == "financial_transaction":
+          execution_result['transaction'] = {
+              "amount": "$50,000",
+              "from_account": "Operating Account",
+              "to_account": "Vendor XYZ",
+              "transaction_id": "TXN-2024-12345",
+              "status": "processed"
+          }
+      elif decision_type == "contract_approval":
+          execution_result['contract'] = {
+              "contract_id": "CNT-2024-456",
+              "vendor": "Acme Software Inc",
+              "value": "$250,000",
+              "term": "12 months",
+              "status": "signed",
+              "effective_date": datetime.now().isoformat()
+          }
+      elif decision_type == "data_deletion":
+          execution_result['deletion'] = {
+              "records_deleted": 15000,
+              "data_type": "Customer records > 7 years old",
+              "compliance": "GDPR compliant",
+              "backup_created": True,
+              "backup_location": "s3://backups/gdpr/2024-12/"
+          }
+
+      with open('execution_result.json', 'w') as f:
+          json.dump(execution_result, f, indent=2)
+
+      print(f"\nACTION EXECUTED SUCCESSFULLY")
+      print(json.dumps(execution_result, indent=2))
+      print("="*80 + "\n")
+
+    outputFiles:
+      - execution_result.json
+
+  # ---------------------------------------------------------------------------
+  # Step 6: Generate Final Report
+  # ---------------------------------------------------------------------------
+  - id: generate_report
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import os
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      # Load all context
+      with open('{{ outputs.analyze_situation.outputFiles["ai_analysis.json"] }}', 'r') as f:
+          analysis = json.load(f)
+
+      with open('{{ outputs.process_approval.outputFiles["approval_decision.json"] }}', 'r') as f:
+          approval = json.load(f)
+
+      with open('{{ outputs.execute_approved_action.outputFiles["execution_result.json"] }}', 'r') as f:
+          execution = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.5)
+
+      report_prompt = ChatPromptTemplate.from_messages([
+          ("system", """Generate an executive summary report of the AI-assisted decision.
+
+          Include:
+          1. Decision overview
+          2. AI analysis summary
+          3. Human approval details
+          4. Execution results
+          5. Audit trail
+          6. Next steps/follow-up required
+
+          Format: Professional markdown report suitable for executives.
+          """),
+          ("user", """AI Analysis:
+          {analysis}
+
+          Human Approval:
+          {approval}
+
+          Execution Results:
+          {execution}
+
+          Generate comprehensive report.
+          """)
+      ])
+
+      response = llm.invoke(
+          report_prompt.format_messages(
+              analysis=json.dumps(analysis, indent=2),
+              approval=json.dumps(approval, indent=2),
+              execution=json.dumps(execution, indent=2)
+          )
+      )
+
+      report = response.content
+
+      with open('final_report.md', 'w') as f:
+          f.write(report)
+
+      print("\n" + "="*80)
+      print("FINAL REPORT")
+      print("="*80)
+      print(report)
+      print("="*80 + "\n")
+
+    outputFiles:
+      - final_report.md
+
+  # ---------------------------------------------------------------------------
+  # Step 7: Notify Completion
+  # ---------------------------------------------------------------------------
+  - id: notify_completion
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ vars.slack_webhook }}"
+    payload: |
+      {
+        "text": "✅ Human-in-the-Loop Agent Completed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*AI Agent with Human Approval*\n\n*Decision:* {{ inputs.decision_type }}\n*Status:* ✅ Approved & Executed\n*Approver:* {{ outputs.wait_for_approval.onResume.approver_name }}\n*Execution ID:* {{ execution.id }}\n\n*Report:* See execution logs for full details"
+            }
+          }
+        ]
+      }
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+errors:
+  # Handle approval timeout
+  - id: approval_timeout
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ vars.slack_webhook }}"
+    payload: |
+      {
+        "text": "⏰ Approval Timeout",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Approval Request Timed Out*\n\n*Decision:* {{ inputs.decision_type }}\n*Waited:* {{ inputs.approval_timeout_hours }} hours\n*Action:* Escalating to management"
+            }
+          }
+        ]
+      }
+
+  # Handle rejection
+  - id: approval_rejected
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ vars.slack_webhook }}"
+    payload: |
+      {
+        "text": "❌ Approval Rejected",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Decision Rejected by Human*\n\n*Decision:* {{ inputs.decision_type }}\n*Rejected By:* {{ outputs.wait_for_approval.onResume.approver_name }}\n*Comments:* {{ outputs.wait_for_approval.onResume.approver_comments }}"
+            }
+          }
+        ]
+      }

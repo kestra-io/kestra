@@ -1,0 +1,406 @@
+# =============================================================================
+# AI AGENT: ReAct Customer Support Agent
+# =============================================================================
+# Type: ReAct (Reasoning + Acting)
+# Use Case: Enterprise customer support with tool access
+# Pattern: LangChain agent with multiple tools
+# =============================================================================
+
+id: react_customer_support_agent
+namespace: enterprise.client1.agents
+description: |
+  Autonomous customer support agent using ReAct pattern
+  - Answers questions using knowledge base
+  - Creates tickets in Jira
+  - Looks up customer data in Salesforce
+  - Escalates complex issues to humans
+
+labels:
+  agent_type: react
+  client: enterprise_client_1
+  use_case: customer_support
+
+inputs:
+  - id: customer_query
+    type: STRING
+    required: true
+    description: "Customer question or issue"
+
+  - id: customer_id
+    type: STRING
+    required: true
+    description: "Customer identifier"
+
+  - id: max_iterations
+    type: INT
+    defaults: 10
+    description: "Maximum reasoning loops"
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+  jira_api_key: "{{ secret('CLIENT1_JIRA_API_KEY') }}"
+  salesforce_token: "{{ secret('CLIENT1_SALESFORCE_TOKEN') }}"
+  pinecone_api_key: "{{ secret('CLIENT1_PINECONE_API_KEY') }}"
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Task 1: Initialize Agent with Tools
+  # ---------------------------------------------------------------------------
+  - id: run_react_agent
+    type: io.kestra.plugin.scripts.python.Script
+    warningOnStdErr: false
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai langchain-community pinecone-client jira salesforce-api requests
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      JIRA_API_KEY: "{{ vars.jira_api_key }}"
+      SALESFORCE_TOKEN: "{{ vars.salesforce_token }}"
+      PINECONE_API_KEY: "{{ vars.pinecone_api_key }}"
+      CUSTOMER_QUERY: "{{ inputs.customer_query }}"
+      CUSTOMER_ID: "{{ inputs.customer_id }}"
+      MAX_ITERATIONS: "{{ inputs.max_iterations }}"
+    script: |
+      import os
+      import json
+      from datetime import datetime
+      from langchain.agents import AgentExecutor, create_react_agent
+      from langchain_openai import ChatOpenAI
+      from langchain.tools import Tool
+      from langchain.prompts import PromptTemplate
+      from langchain_community.vectorstores import Pinecone as PineconeVectorStore
+      from langchain_openai import OpenAIEmbeddings
+      from pinecone import Pinecone
+      import requests
+
+      # =======================================================================
+      # TOOL DEFINITIONS - Each tool is an action the agent can take
+      # =======================================================================
+
+      # Tool 1: Search Knowledge Base (RAG)
+      def search_knowledge_base(query: str) -> str:
+          """Search company knowledge base for relevant information"""
+          try:
+              pc = Pinecone(api_key=os.environ['PINECONE_API_KEY'])
+              embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+
+              index = pc.Index("client1-kb")
+              query_embedding = embeddings.embed_query(query)
+
+              results = index.query(
+                  vector=query_embedding,
+                  top_k=5,
+                  include_metadata=True
+              )
+
+              if not results.matches:
+                  return "No relevant knowledge base articles found."
+
+              context = "\n\n".join([
+                  f"Article: {match.metadata.get('source', 'Unknown')}\n{match.metadata.get('text', '')}"
+                  for match in results.matches
+              ])
+
+              return f"Found {len(results.matches)} relevant articles:\n\n{context}"
+          except Exception as e:
+              return f"Error searching knowledge base: {str(e)}"
+
+      # Tool 2: Get Customer Information
+      def get_customer_info(customer_id: str) -> str:
+          """Retrieve customer details from Salesforce"""
+          try:
+              # Simplified - in production use proper Salesforce SDK
+              headers = {
+                  "Authorization": f"Bearer {os.environ['SALESFORCE_TOKEN']}",
+                  "Content-Type": "application/json"
+              }
+
+              # Mock response - replace with actual API call
+              customer_data = {
+                  "customer_id": customer_id,
+                  "name": "Acme Corporation",
+                  "tier": "Enterprise",
+                  "contract_start": "2023-01-15",
+                  "support_level": "Premium 24/7",
+                  "account_manager": "Sarah Johnson",
+                  "open_tickets": 2,
+                  "satisfaction_score": 4.5
+              }
+
+              return json.dumps(customer_data, indent=2)
+          except Exception as e:
+              return f"Error retrieving customer info: {str(e)}"
+
+      # Tool 3: Create Support Ticket
+      def create_support_ticket(title: str, description: str, priority: str = "medium") -> str:
+          """Create a Jira ticket for complex issues"""
+          try:
+              # Simplified - in production use proper Jira SDK
+              ticket_data = {
+                  "title": title,
+                  "description": description,
+                  "priority": priority,
+                  "customer_id": os.environ['CUSTOMER_ID'],
+                  "created_at": datetime.now().isoformat(),
+                  "created_by": "AI Agent",
+                  "status": "Open"
+              }
+
+              # Mock ticket ID - replace with actual Jira API call
+              ticket_id = f"SUPPORT-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+
+              return f"✅ Created ticket {ticket_id}:\n{json.dumps(ticket_data, indent=2)}"
+          except Exception as e:
+              return f"Error creating ticket: {str(e)}"
+
+      # Tool 4: Escalate to Human
+      def escalate_to_human(reason: str, context: str) -> str:
+          """Escalate complex issues to human support agent"""
+          escalation = {
+              "escalated_at": datetime.now().isoformat(),
+              "reason": reason,
+              "context": context,
+              "customer_id": os.environ['CUSTOMER_ID'],
+              "assigned_to": "support-queue",
+              "priority": "high"
+          }
+
+          # In production: Send to Slack, email, or ticketing system
+          return f"⚠️ ESCALATED TO HUMAN:\n{json.dumps(escalation, indent=2)}"
+
+      # =======================================================================
+      # CREATE LANGCHAIN TOOLS
+      # =======================================================================
+
+      tools = [
+          Tool(
+              name="SearchKnowledgeBase",
+              func=search_knowledge_base,
+              description="Search the company knowledge base for information about products, policies, troubleshooting guides, and FAQs. Use this when you need factual information to answer customer questions."
+          ),
+          Tool(
+              name="GetCustomerInfo",
+              func=get_customer_info,
+              description="Retrieve customer account details including tier, contract info, support level, and history. Use this to personalize responses and check customer entitlements."
+          ),
+          Tool(
+              name="CreateSupportTicket",
+              func=create_support_ticket,
+              description="Create a support ticket for issues that require investigation or cannot be resolved immediately. Input should be: 'title|description|priority' where priority is low/medium/high."
+          ),
+          Tool(
+              name="EscalateToHuman",
+              func=escalate_to_human,
+              description="Escalate to a human support agent when the issue is too complex, involves sensitive data, or requires judgment beyond AI capabilities. Input should be: 'reason|context'."
+          )
+      ]
+
+      # =======================================================================
+      # CREATE ReAct AGENT
+      # =======================================================================
+
+      # ReAct prompt template
+      react_prompt = PromptTemplate.from_template("""
+      You are an expert customer support agent for an enterprise software company.
+
+      Answer the following customer question using the tools available to you.
+      Use the following format:
+
+      Question: the customer question you must answer
+      Thought: you should always think about what to do
+      Action: the action to take, should be one of [{tool_names}]
+      Action Input: the input to the action
+      Observation: the result of the action
+      ... (this Thought/Action/Action Input/Observation can repeat N times)
+      Thought: I now know the final answer
+      Final Answer: the final answer to the customer question
+
+      Guidelines:
+      - Always check customer info first to personalize the response
+      - Search the knowledge base before creating tickets
+      - Be professional, empathetic, and concise
+      - Escalate only when truly necessary
+      - If you can't find the answer, create a ticket
+
+      Question: {input}
+
+      {agent_scratchpad}
+      """)
+
+      # Initialize LLM
+      llm = ChatOpenAI(
+          model="gpt-4",
+          temperature=0.2,
+          api_key=os.environ['OPENAI_API_KEY']
+      )
+
+      # Create ReAct agent
+      agent = create_react_agent(
+          llm=llm,
+          tools=tools,
+          prompt=react_prompt
+      )
+
+      # Create agent executor
+      agent_executor = AgentExecutor(
+          agent=agent,
+          tools=tools,
+          verbose=True,
+          max_iterations=int(os.environ['MAX_ITERATIONS']),
+          handle_parsing_errors=True,
+          return_intermediate_steps=True
+      )
+
+      # =======================================================================
+      # RUN AGENT
+      # =======================================================================
+
+      print(f"\n{'='*80}")
+      print(f"CUSTOMER SUPPORT AGENT - STARTING")
+      print(f"{'='*80}")
+      print(f"Customer ID: {os.environ['CUSTOMER_ID']}")
+      print(f"Query: {os.environ['CUSTOMER_QUERY']}")
+      print(f"{'='*80}\n")
+
+      result = agent_executor.invoke({
+          "input": os.environ['CUSTOMER_QUERY']
+      })
+
+      # =======================================================================
+      # SAVE RESULTS
+      # =======================================================================
+
+      output = {
+          "customer_id": os.environ['CUSTOMER_ID'],
+          "query": os.environ['CUSTOMER_QUERY'],
+          "final_answer": result['output'],
+          "intermediate_steps": [
+              {
+                  "action": step[0].tool,
+                  "action_input": step[0].tool_input,
+                  "observation": step[1]
+              }
+              for step in result.get('intermediate_steps', [])
+          ],
+          "total_steps": len(result.get('intermediate_steps', [])),
+          "timestamp": datetime.now().isoformat()
+      }
+
+      with open('agent_output.json', 'w') as f:
+          json.dump(output, f, indent=2)
+
+      print(f"\n{'='*80}")
+      print(f"AGENT COMPLETED")
+      print(f"{'='*80}")
+      print(f"Steps taken: {output['total_steps']}")
+      print(f"\nFinal Answer:\n{output['final_answer']}")
+      print(f"{'='*80}\n")
+
+    outputFiles:
+      - agent_output.json
+
+  # ---------------------------------------------------------------------------
+  # Task 2: Parse Agent Output
+  # ---------------------------------------------------------------------------
+  - id: parse_agent_response
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    script: |
+      import json
+
+      with open('{{ outputs.run_react_agent.outputFiles["agent_output.json"] }}', 'r') as f:
+          result = json.load(f)
+
+      print(f"Customer: {result['customer_id']}")
+      print(f"Query: {result['query']}")
+      print(f"Answer: {result['final_answer']}")
+      print(f"Steps: {result['total_steps']}")
+
+  # ---------------------------------------------------------------------------
+  # Task 3: Store Agent Interaction in Database
+  # ---------------------------------------------------------------------------
+  - id: store_interaction
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://postgres:5432/{{ secret('POSTGRES_DB') }}
+    username: "{{ secret('POSTGRES_USER') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    sql: |
+      INSERT INTO agent_interactions (
+        customer_id,
+        agent_type,
+        query,
+        response,
+        steps_taken,
+        execution_id,
+        created_at
+      ) VALUES (
+        '{{ inputs.customer_id }}',
+        'react_customer_support',
+        '{{ inputs.customer_query }}',
+        '{{ outputs.run_react_agent.vars.final_answer }}',
+        {{ outputs.run_react_agent.vars.total_steps }},
+        '{{ execution.id }}',
+        NOW()
+      )
+
+  # ---------------------------------------------------------------------------
+  # Task 4: Send Response to Customer (via email/Slack/API)
+  # ---------------------------------------------------------------------------
+  - id: send_response
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "✅ AI Agent Response",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Customer Support Agent*\n\n*Customer:* {{ inputs.customer_id }}\n*Query:* {{ inputs.customer_query }}\n\n*Response:*\n{{ outputs.run_react_agent.vars.final_answer }}\n\n*Steps:* {{ outputs.run_react_agent.vars.total_steps }}"
+            }
+          }
+        ]
+      }
+
+# =============================================================================
+# TRIGGERS - Make this agent reactive
+# =============================================================================
+triggers:
+  # Trigger 1: Webhook (customer submits query via API)
+  - id: webhook_trigger
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: "customer_support_webhook_{{ secret('WEBHOOK_SECRET') }}"
+
+  # Trigger 2: Email (customer sends email)
+  - id: email_trigger
+    type: io.kestra.plugin.notifications.mail.MailTrigger
+    host: "{{ secret('EMAIL_HOST') }}"
+    port: "993"
+    username: "{{ secret('EMAIL_USERNAME') }}"
+    password: "{{ secret('EMAIL_PASSWORD') }}"
+    from: support@company.com
+    interval: PT1M
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+errors:
+  - id: error_notification
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ AI Agent Failed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Customer Support Agent Failed*\n\n*Customer:* {{ inputs.customer_id }}\n*Error:* {{ task.errorMessage }}"
+            }
+          }
+        ]
+      }

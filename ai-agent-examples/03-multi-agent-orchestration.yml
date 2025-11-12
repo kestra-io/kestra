@@ -1,0 +1,458 @@
+# =============================================================================
+# AI AGENT: Multi-Agent Orchestration
+# =============================================================================
+# Type: Multiple specialized agents working together
+# Use Case: Complex workflows requiring multiple AI capabilities
+# Pattern: Research Agent → Writing Agent → Review Agent → Publishing Agent
+# =============================================================================
+
+id: multi_agent_content_pipeline
+namespace: enterprise.client1.agents
+description: |
+  Multi-agent system for enterprise content creation:
+  - Research Agent: Gathers information and sources
+  - Writing Agent: Creates content based on research
+  - Review Agent: Checks quality, accuracy, compliance
+  - Publishing Agent: Formats and publishes approved content
+
+labels:
+  agent_type: multi_agent
+  client: enterprise_client_1
+  use_case: content_creation
+
+inputs:
+  - id: content_topic
+    type: STRING
+    required: true
+    description: "Topic for content creation"
+    defaults: "Impact of AI on enterprise software development in 2025"
+
+  - id: content_type
+    type: SELECT
+    defaults: blog_post
+    values:
+      - blog_post
+      - white_paper
+      - case_study
+      - technical_doc
+    description: "Type of content to create"
+
+  - id: target_audience
+    type: STRING
+    defaults: "CTOs and engineering leaders"
+    description: "Target audience"
+
+  - id: minimum_quality_score
+    type: INT
+    defaults: 8
+    description: "Minimum quality score (1-10) for publishing"
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+  anthropic_api_key: "{{ secret('CLIENT1_ANTHROPIC_API_KEY') }}"
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # AGENT 1: Research Agent
+  # ---------------------------------------------------------------------------
+  - id: research_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai langchain-community duckduckgo-search requests beautifulsoup4
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      CONTENT_TOPIC: "{{ inputs.content_topic }}"
+      TARGET_AUDIENCE: "{{ inputs.target_audience }}"
+    script: |
+      import os
+      import json
+      from datetime import datetime
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+      from langchain.tools import Tool
+      from langchain_community.tools import DuckDuckGoSearchResults
+      from langchain.agents import AgentExecutor, create_openai_functions_agent
+
+      print("\n" + "="*80)
+      print("RESEARCH AGENT - STARTING")
+      print("="*80)
+
+      # Initialize LLM
+      llm = ChatOpenAI(model="gpt-4", temperature=0.3)
+
+      # Research tools
+      search = DuckDuckGoSearchResults()
+
+      tools = [
+          Tool(
+              name="WebSearch",
+              func=search.run,
+              description="Search the web for current information, statistics, trends, and expert opinions"
+          )
+      ]
+
+      # Research agent prompt
+      prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are an expert research agent specializing in enterprise technology.
+
+          Your job is to gather comprehensive, accurate information about the given topic.
+
+          Research requirements:
+          1. Find 5-10 key facts, statistics, or trends
+          2. Identify 3-5 credible sources
+          3. Note any controversies or different perspectives
+          4. Summarize expert opinions
+          5. Identify gaps in current knowledge
+
+          Output format (JSON):
+          {
+            "topic": "...",
+            "key_findings": ["finding 1", "finding 2", ...],
+            "statistics": ["stat 1", "stat 2", ...],
+            "sources": ["source 1", "source 2", ...],
+            "expert_quotes": ["quote 1", "quote 2", ...],
+            "research_summary": "...",
+            "recommended_angles": ["angle 1", "angle 2", ...]
+          }
+          """),
+          ("user", """Topic: {topic}
+          Target Audience: {audience}
+
+          Conduct comprehensive research and provide findings in JSON format.
+          """),
+          ("placeholder", "{agent_scratchpad}")
+      ])
+
+      # Create agent
+      agent = create_openai_functions_agent(llm, tools, prompt)
+      agent_executor = AgentExecutor(
+          agent=agent,
+          tools=tools,
+          verbose=True,
+          max_iterations=5,
+          handle_parsing_errors=True
+      )
+
+      # Run research
+      result = agent_executor.invoke({
+          "topic": os.environ['CONTENT_TOPIC'],
+          "audience": os.environ['TARGET_AUDIENCE']
+      })
+
+      # Parse output
+      try:
+          research_data = json.loads(result['output'])
+      except:
+          # Fallback if LLM doesn't return proper JSON
+          research_data = {
+              "topic": os.environ['CONTENT_TOPIC'],
+              "research_summary": result['output'],
+              "key_findings": [],
+              "sources": [],
+              "timestamp": datetime.now().isoformat()
+          }
+
+      research_data['timestamp'] = datetime.now().isoformat()
+
+      with open('research_findings.json', 'w') as f:
+          json.dump(research_data, f, indent=2)
+
+      print(f"\nRESEARCH COMPLETE")
+      print(f"Key findings: {len(research_data.get('key_findings', []))}")
+      print("="*80 + "\n")
+
+    outputFiles:
+      - research_findings.json
+
+  # ---------------------------------------------------------------------------
+  # AGENT 2: Writing Agent
+  # ---------------------------------------------------------------------------
+  - id: writing_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-anthropic
+    env:
+      ANTHROPIC_API_KEY: "{{ vars.anthropic_api_key }}"
+      CONTENT_TYPE: "{{ inputs.content_type }}"
+      TARGET_AUDIENCE: "{{ inputs.target_audience }}"
+    script: |
+      import os
+      import json
+      from langchain_anthropic import ChatAnthropic
+      from langchain.prompts import ChatPromptTemplate
+
+      print("\n" + "="*80)
+      print("WRITING AGENT - STARTING")
+      print("="*80)
+
+      # Load research
+      with open('{{ outputs.research_agent.outputFiles["research_findings.json"] }}', 'r') as f:
+          research = json.load(f)
+
+      # Initialize Claude (Anthropic's LLM)
+      llm = ChatAnthropic(model="claude-3-5-sonnet-20241022", temperature=0.7)
+
+      # Writing prompt
+      prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are an expert technical writer specializing in enterprise content.
+
+          Content writing guidelines:
+          1. Start with a compelling hook
+          2. Use clear, concise language
+          3. Include specific examples and data
+          4. Structure with clear headings
+          5. End with actionable insights
+          6. Cite sources when using statistics
+          7. Tailor tone to target audience
+
+          Content type specifications:
+          - blog_post: 1200-1500 words, conversational but professional
+          - white_paper: 3000-5000 words, formal, heavily cited
+          - case_study: 1500-2000 words, story-driven, metrics-focused
+          - technical_doc: 2000-3000 words, precise, step-by-step
+
+          Output format: Markdown with proper headings, lists, and formatting.
+          """),
+          ("user", """Content Type: {content_type}
+          Target Audience: {audience}
+
+          Research Findings:
+          {research}
+
+          Write high-quality {content_type} content based on this research.
+          """)
+      ])
+
+      # Generate content
+      response = llm.invoke(
+          prompt.format_messages(
+              content_type=os.environ['CONTENT_TYPE'],
+              audience=os.environ['TARGET_AUDIENCE'],
+              research=json.dumps(research, indent=2)
+          )
+      )
+
+      content = response.content
+
+      # Save draft
+      with open('content_draft.md', 'w') as f:
+          f.write(content)
+
+      print(f"\nCONTENT WRITTEN")
+      print(f"Word count: ~{len(content.split())}")
+      print("="*80 + "\n")
+
+    outputFiles:
+      - content_draft.md
+
+  # ---------------------------------------------------------------------------
+  # AGENT 3: Review Agent
+  # ---------------------------------------------------------------------------
+  - id: review_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      MINIMUM_QUALITY_SCORE: "{{ inputs.minimum_quality_score }}"
+    script: |
+      import os
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      print("\n" + "="*80)
+      print("REVIEW AGENT - STARTING")
+      print("="*80)
+
+      # Load content
+      with open('{{ outputs.writing_agent.outputFiles["content_draft.md"] }}', 'r') as f:
+          content = f.read()
+
+      # Load research for fact-checking
+      with open('{{ outputs.research_agent.outputFiles["research_findings.json"] }}', 'r') as f:
+          research = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.2)
+
+      # Review prompt
+      prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are a senior editor reviewing content for publication.
+
+          Review criteria (score 1-10 for each):
+          1. Accuracy: Facts and statistics correct
+          2. Clarity: Easy to understand, well-structured
+          3. Relevance: Addresses target audience needs
+          4. Completeness: Covers topic comprehensively
+          5. Tone: Appropriate for audience
+          6. Grammar: Correct grammar and spelling
+          7. Engagement: Compelling and interesting
+          8. Actionability: Provides clear next steps
+          9. Citations: Proper source attribution
+          10. Compliance: Follows company guidelines
+
+          Output format (JSON):
+          {
+            "overall_score": 1-10,
+            "category_scores": {
+              "accuracy": 1-10,
+              "clarity": 1-10,
+              ...
+            },
+            "strengths": ["strength 1", "strength 2", ...],
+            "weaknesses": ["weakness 1", "weakness 2", ...],
+            "required_changes": ["change 1", "change 2", ...],
+            "suggested_improvements": ["suggestion 1", "suggestion 2", ...],
+            "approval_status": "approved|needs_revision|rejected",
+            "editor_notes": "..."
+          }
+          """),
+          ("user", """Review this content:
+
+          CONTENT:
+          {content}
+
+          ORIGINAL RESEARCH:
+          {research}
+
+          Provide detailed review in JSON format.
+          """)
+      ])
+
+      response = llm.invoke(
+          prompt.format_messages(
+              content=content,
+              research=json.dumps(research, indent=2)
+          )
+      )
+
+      review = json.loads(response.content)
+
+      with open('review_results.json', 'w') as f:
+          json.dump(review, f, indent=2)
+
+      print(f"\nREVIEW COMPLETE")
+      print(f"Overall Score: {review['overall_score']}/10")
+      print(f"Status: {review['approval_status']}")
+      print("="*80 + "\n")
+
+      # Fail if below minimum quality
+      if review['overall_score'] < int(os.environ['MINIMUM_QUALITY_SCORE']):
+          print(f"❌ QUALITY BELOW THRESHOLD")
+          print(f"Required changes: {review['required_changes']}")
+          raise Exception(f"Content quality score {review['overall_score']} below minimum {os.environ['MINIMUM_QUALITY_SCORE']}")
+
+    outputFiles:
+      - review_results.json
+
+  # ---------------------------------------------------------------------------
+  # AGENT 4: Publishing Agent
+  # ---------------------------------------------------------------------------
+  - id: publishing_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install markdown beautifulsoup4 boto3
+    env:
+      AWS_ACCESS_KEY_ID: "{{ vars.aws_access_key }}"
+      AWS_SECRET_ACCESS_KEY: "{{ vars.aws_secret_key }}"
+    script: |
+      import os
+      import json
+      import markdown
+      from datetime import datetime
+      from pathlib import Path
+
+      print("\n" + "="*80)
+      print("PUBLISHING AGENT - STARTING")
+      print("="*80)
+
+      # Load content and review
+      with open('{{ outputs.writing_agent.outputFiles["content_draft.md"] }}', 'r') as f:
+          content_md = f.read()
+
+      with open('{{ outputs.review_agent.outputFiles["review_results.json"] }}', 'r') as f:
+          review = json.load(f)
+
+      # Convert to HTML
+      content_html = markdown.markdown(content_md, extensions=['extra', 'codehilite'])
+
+      # Create publication package
+      publication = {
+          "title": content_md.split('\n')[0].replace('#', '').strip(),
+          "content_markdown": content_md,
+          "content_html": content_html,
+          "quality_score": review['overall_score'],
+          "published_at": datetime.now().isoformat(),
+          "content_type": "{{ inputs.content_type }}",
+          "target_audience": "{{ inputs.target_audience }}",
+          "word_count": len(content_md.split()),
+          "review_summary": review.get('editor_notes', ''),
+          "status": "published"
+      }
+
+      # Save publication package
+      with open('published_content.json', 'w') as f:
+          json.dump(publication, f, indent=2)
+
+      with open('published_content.html', 'w') as f:
+          f.write(content_html)
+
+      # In production: Upload to CMS, S3, or content platform
+      print(f"\nCONTENT PUBLISHED")
+      print(f"Title: {publication['title']}")
+      print(f"Word count: {publication['word_count']}")
+      print(f"Quality: {publication['quality_score']}/10")
+      print("="*80 + "\n")
+
+    outputFiles:
+      - published_content.json
+      - published_content.html
+
+  # ---------------------------------------------------------------------------
+  # Notification: Send to stakeholders
+  # ---------------------------------------------------------------------------
+  - id: notify_stakeholders
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "✅ Multi-Agent Content Pipeline Complete",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Multi-Agent Content Creation*\n\n*Topic:* {{ inputs.content_topic }}\n*Type:* {{ inputs.content_type }}\n*Quality Score:* Check execution\n*Status:* Published\n\n*Pipeline:*\n✅ Research Agent\n✅ Writing Agent\n✅ Review Agent\n✅ Publishing Agent"
+            }
+          }
+        ]
+      }
+
+# =============================================================================
+# ERROR HANDLING - Quality control
+# =============================================================================
+errors:
+  - id: quality_failed
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ Content Quality Below Threshold",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Content rejected by Review Agent*\n\n*Topic:* {{ inputs.content_topic }}\n*Required Score:* {{ inputs.minimum_quality_score }}/10\n*Actual Score:* See execution logs\n\n*Action Required:* Manual review needed"
+            }
+          }
+        ]
+      }

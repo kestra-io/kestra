@@ -5,6 +5,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.kestra.plugin.core.dashboard.data.IData;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -39,6 +40,7 @@ public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F
 
     @Setter
     @Valid
+    @Nullable
     private List<AbstractFilter<F>> where;
 
     private List<OrderBy> orderBy;

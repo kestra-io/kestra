@@ -186,4 +186,12 @@
             z-index: 0;
         }
     }
+
+    @media (max-width: 500px) {
+        :deep(.el-table__empty-text) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
 </style>

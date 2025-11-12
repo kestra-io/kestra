@@ -268,9 +268,9 @@
 
 <style scoped lang="scss">
     .basic-auth-login {
-        flex-shrink: 1;
-        width: 400px;
-        container-type: inline-size;
+        width: 100%;
+        max-width: 400px;
+        padding: 1rem;
 
         .logo {
             width: 250px;
@@ -311,20 +311,5 @@
                 }
             }
         }
-
-    @media (max-width: 640px) {
-        width: 100%;
-        padding: 1rem;
-
-        .logo {
-            width: 200px;
-            margin-bottom: 1.5rem;
-        }
-
-        .el-form {
-            max-width: 100%;
-            padding: 1.5rem;
-        }
     }
-}
 </style>

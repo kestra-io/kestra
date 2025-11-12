@@ -19,23 +19,30 @@ const hasFilterKey = (query: LocationQuery, prefix: string): boolean =>
 
 export function applyDefaultFilters(
     currentQuery: LocationQuery, 
-    options: DefaultFilterOptions & { 
+    {
+        configuration, 
+        route, 
+        namespace, 
+        includeTimeRange, 
+        includeScope, 
+        legacyQuery = false
+    }: DefaultFilterOptions & { 
         configuration?: any; 
         route?: any 
     } = {}): { query: LocationQuery; hasChanges: boolean } {
-        
-    const {configuration, route, namespace, includeTimeRange, includeScope, legacyQuery = false} = options;
+
     
     const hasTimeRange = configuration && route 
         ? configuration.keys?.some((k: any) => k.key === "timeRange") ?? false
         : includeTimeRange ?? false;
+
     const hasScope = configuration && route
         ? route?.name !== "logs/list" && (configuration.keys?.some((k: any) => k.key === "scope") ?? false)
         : includeScope ?? false;
         
     const query = {...currentQuery};
     let hasChanges = false;
-
+   
     if (namespace === undefined && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
         query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
         hasChanges = true;

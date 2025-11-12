@@ -34,8 +34,8 @@ public abstract class AbstractKeyedDispatchQueueTest {
                 countDownLatch.countDown();
             });
 
-        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(1));
-        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(2));
+        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(IdUtils.create(), 1));
+        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(IdUtils.create(), 2));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
@@ -65,7 +65,7 @@ public abstract class AbstractKeyedDispatchQueueTest {
             )));
 
         for (int i = 0; i < rand; i++) {
-            keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(i));
+            keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(IdUtils.create(), i));
         }
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -98,8 +98,8 @@ public abstract class AbstractKeyedDispatchQueueTest {
             }));
 
         for (int i = 0; i < 3; i++) {
-            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(1));
-            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(2));
+            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(IdUtils.create(), 1));
+            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(IdUtils.create(), 2));
         }
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -113,5 +113,5 @@ public abstract class AbstractKeyedDispatchQueueTest {
         }
     }
 
-    public record TestKeyedDispatch(Integer id) implements KeyedDispatchEvent {}
+    public record TestKeyedDispatch(String key, Integer id) implements KeyedDispatchEvent {}
 }

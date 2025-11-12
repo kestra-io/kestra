@@ -1,6 +1,7 @@
 package io.kestra.queue;
 
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
@@ -45,8 +46,8 @@ public abstract class AbstractDispatchQueueTest {
                 countDownLatch.countDown();
             });
 
-        dispatchQueue.emit(new TestDispatch(1));
-        dispatchQueue.emit(new TestDispatch(2));
+        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 1));
+        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 2));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
@@ -75,7 +76,7 @@ public abstract class AbstractDispatchQueueTest {
             )));
 
         for (int i = 0; i < rand; i++) {
-            dispatchQueue.emit(new TestDispatch(i));
+            dispatchQueue.emit(new TestDispatch(IdUtils.create(), i));
         }
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -91,7 +92,7 @@ public abstract class AbstractDispatchQueueTest {
     @Test
     void errorProcessing() throws QueueException, InterruptedException {
         // @TODO: failed on rabbitmq, the published message seems to be not durable
-        dispatchQueue.emit(List.of(new TestDispatch(1), new TestDispatch(2), new TestDispatch(3)));
+        dispatchQueue.emit(List.of(new TestDispatch(IdUtils.create(), 1), new TestDispatch(IdUtils.create(), 2), new TestDispatch(IdUtils.create(), 3)));
 
         CountDownLatch countDownLatch = new CountDownLatch(4);
         Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
@@ -139,7 +140,7 @@ public abstract class AbstractDispatchQueueTest {
             });
 
         // first round
-        dispatchQueue.emit(new TestDispatch(1));
+        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 1));
 
         boolean await1 = countDownLatchFirst.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.pause();
@@ -149,8 +150,8 @@ public abstract class AbstractDispatchQueueTest {
         Instant resumeTime = Instant.now();
         subscriber.resume();
 
-        dispatchQueue.emit(new TestDispatch(2));
-        dispatchQueue.emit(new TestDispatch(3));
+        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 2));
+        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 3));
 
         boolean await2 = countDownLatchSecond.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.pause();
@@ -160,8 +161,8 @@ public abstract class AbstractDispatchQueueTest {
         Instant resumeTime2 = Instant.now();
         subscriber.resume();
 
-        dispatchQueue.emit(new TestDispatch(4));
-        dispatchQueue.emit(new TestDispatch(5));
+        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 4));
+        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 5));
 
         boolean await3 = countDownLatchOthers.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
@@ -173,6 +174,6 @@ public abstract class AbstractDispatchQueueTest {
         assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime2)).count()).isEqualTo(2);
     }
 
-    public record TestDispatch(Integer id) implements DispatchEvent {
+    public record TestDispatch(String key, Integer id) implements DispatchEvent {
     }
 }

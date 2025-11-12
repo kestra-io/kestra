@@ -120,7 +120,7 @@
         "playwright": "^1.55.0",
         "prettier": "^3.6.2",
         "rimraf": "^6.1.0",
-        "rolldown-vite": "^7.2.2",
+        "rolldown-vite": "^7.2.4",
         "rollup-plugin-copy": "^3.5.0",
         "sass": "^1.93.3",
         "storybook": "^9.1.16",

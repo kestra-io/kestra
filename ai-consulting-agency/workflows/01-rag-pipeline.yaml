@@ -1,0 +1,304 @@
+id: rag_document_processing
+namespace: enterprise.client1.rag
+description: |
+  Enterprise RAG Pipeline - Process documents, generate embeddings, and store in vector database
+  Use Case: Knowledge base search, customer support automation, document Q&A
+
+labels:
+  client: enterprise_client_1
+  department: customer_support
+  cost_center: cs_001
+
+inputs:
+  - id: document_source
+    type: URI
+    defaults: s3://client-documents/incoming/
+  - id: embedding_model
+    type: SELECT
+    defaults: text-embedding-3-large
+    values:
+      - text-embedding-3-small
+      - text-embedding-3-large
+      - text-embedding-ada-002
+  - id: chunk_size
+    type: INT
+    defaults: 1000
+  - id: chunk_overlap
+    type: INT
+    defaults: 200
+
+variables:
+  openai_api_key: "{{ secret('OPENAI_API_KEY') }}"
+  pinecone_api_key: "{{ secret('PINECONE_API_KEY') }}"
+  client_namespace: "client1_kb"
+
+tasks:
+  # Task 1: Download documents from S3
+  - id: download_documents
+    type: io.kestra.plugin.aws.s3.Downloads
+    accessKeyId: "{{ secret('AWS_ACCESS_KEY_ID') }}"
+    secretKeyId: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
+    region: us-east-1
+    from: "{{ inputs.document_source }}"
+    action: MOVE
+
+  # Task 2: Extract text from various document formats
+  - id: extract_text
+    type: io.kestra.plugin.scripts.python.Script
+    warningOnStdErr: false
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install PyPDF2 python-docx python-pptx pandas openpyxl pillow pytesseract
+    script: |
+      import os
+      import json
+      from pathlib import Path
+      import PyPDF2
+      from docx import Document
+
+      def extract_pdf(file_path):
+          with open(file_path, 'rb') as file:
+              reader = PyPDF2.PdfReader(file)
+              return ' '.join([page.extract_text() for page in reader.pages])
+
+      def extract_docx(file_path):
+          doc = Document(file_path)
+          return ' '.join([para.text for para in doc.paragraphs])
+
+      def extract_txt(file_path):
+          with open(file_path, 'r', encoding='utf-8') as file:
+              return file.read()
+
+      # Process all downloaded files
+      input_dir = '{{ outputs.download_documents.uris }}'.split(',')[0].rsplit('/', 1)[0]
+      documents = []
+
+      for file_path in Path(input_dir).rglob('*'):
+          if file_path.is_file():
+              ext = file_path.suffix.lower()
+              try:
+                  if ext == '.pdf':
+                      text = extract_pdf(str(file_path))
+                  elif ext == '.docx':
+                      text = extract_docx(str(file_path))
+                  elif ext == '.txt':
+                      text = extract_txt(str(file_path))
+                  else:
+                      continue
+
+                  documents.append({
+                      'filename': file_path.name,
+                      'text': text,
+                      'file_type': ext
+                  })
+              except Exception as e:
+                  print(f"Error processing {file_path}: {str(e)}")
+
+      # Save extracted documents
+      with open('extracted_documents.json', 'w') as f:
+          json.dump(documents, f)
+
+      print(f"Extracted text from {len(documents)} documents")
+    outputFiles:
+      - extracted_documents.json
+
+  # Task 3: Chunk documents for embedding
+  - id: chunk_documents
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain tiktoken
+    script: |
+      import json
+      from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+      # Load extracted documents
+      with open('{{ outputs.extract_text.outputFiles["extracted_documents.json"] }}', 'r') as f:
+          documents = json.load(f)
+
+      # Initialize text splitter
+      text_splitter = RecursiveCharacterTextSplitter(
+          chunk_size={{ inputs.chunk_size }},
+          chunk_overlap={{ inputs.chunk_overlap }},
+          length_function=len,
+      )
+
+      chunks = []
+      for doc in documents:
+          doc_chunks = text_splitter.split_text(doc['text'])
+          for i, chunk in enumerate(doc_chunks):
+              chunks.append({
+                  'chunk_id': f"{doc['filename']}_chunk_{i}",
+                  'text': chunk,
+                  'source': doc['filename'],
+                  'chunk_index': i,
+                  'total_chunks': len(doc_chunks)
+              })
+
+      # Save chunks
+      with open('document_chunks.json', 'w') as f:
+          json.dump(chunks, f)
+
+      print(f"Created {len(chunks)} chunks from {len(documents)} documents")
+    outputFiles:
+      - document_chunks.json
+
+  # Task 4: Generate embeddings using OpenAI
+  - id: generate_embeddings
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      import os
+      from openai import OpenAI
+
+      client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+
+      # Load chunks
+      with open('{{ outputs.chunk_documents.outputFiles["document_chunks.json"] }}', 'r') as f:
+          chunks = json.load(f)
+
+      # Generate embeddings in batches
+      batch_size = 100
+      embeddings_data = []
+
+      for i in range(0, len(chunks), batch_size):
+          batch = chunks[i:i + batch_size]
+          texts = [chunk['text'] for chunk in batch]
+
+          response = client.embeddings.create(
+              input=texts,
+              model="{{ inputs.embedding_model }}"
+          )
+
+          for j, embedding in enumerate(response.data):
+              chunk_data = batch[j].copy()
+              chunk_data['embedding'] = embedding.embedding
+              embeddings_data.append(chunk_data)
+
+          print(f"Processed batch {i//batch_size + 1}/{(len(chunks)-1)//batch_size + 1}")
+
+      # Save embeddings
+      with open('embeddings.json', 'w') as f:
+          json.dump(embeddings_data, f)
+
+      print(f"Generated embeddings for {len(embeddings_data)} chunks")
+    outputFiles:
+      - embeddings.json
+
+  # Task 5: Store in Pinecone vector database
+  - id: store_in_vectordb
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pinecone-client
+    env:
+      PINECONE_API_KEY: "{{ vars.pinecone_api_key }}"
+    script: |
+      import json
+      import os
+      from pinecone import Pinecone, ServerlessSpec
+
+      # Initialize Pinecone
+      pc = Pinecone(api_key=os.environ['PINECONE_API_KEY'])
+
+      index_name = "{{ vars.client_namespace }}"
+
+      # Create index if it doesn't exist
+      if index_name not in pc.list_indexes().names():
+          pc.create_index(
+              name=index_name,
+              dimension=3072 if "large" in "{{ inputs.embedding_model }}" else 1536,
+              metric='cosine',
+              spec=ServerlessSpec(cloud='aws', region='us-east-1')
+          )
+
+      index = pc.Index(index_name)
+
+      # Load embeddings
+      with open('{{ outputs.generate_embeddings.outputFiles["embeddings.json"] }}', 'r') as f:
+          embeddings_data = json.load(f)
+
+      # Prepare vectors for upsert
+      vectors = []
+      for data in embeddings_data:
+          vectors.append({
+              'id': data['chunk_id'],
+              'values': data['embedding'],
+              'metadata': {
+                  'source': data['source'],
+                  'text': data['text'][:1000],  # Limit metadata size
+                  'chunk_index': data['chunk_index']
+              }
+          })
+
+      # Upsert in batches
+      batch_size = 100
+      for i in range(0, len(vectors), batch_size):
+          batch = vectors[i:i + batch_size]
+          index.upsert(vectors=batch)
+          print(f"Upserted batch {i//batch_size + 1}/{(len(vectors)-1)//batch_size + 1}")
+
+      print(f"Successfully stored {len(vectors)} vectors in Pinecone")
+
+      # Get index stats
+      stats = index.describe_index_stats()
+      print(f"Index stats: {stats}")
+
+  # Task 6: Send completion notification
+  - id: send_notification
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "✅ RAG Pipeline Completed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*RAG Document Processing Complete*\n\n*Client:* Enterprise Client 1\n*Documents Processed:* Check execution logs\n*Status:* Success\n*Execution ID:* {{ execution.id }}"
+            }
+          }
+        ]
+      }
+
+# Trigger on file arrival
+triggers:
+  - id: on_document_upload
+    type: io.kestra.plugin.aws.s3.Trigger
+    accessKeyId: "{{ secret('AWS_ACCESS_KEY_ID') }}"
+    secretKeyId: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
+    region: us-east-1
+    bucket: client-documents
+    prefix: incoming/
+    action: MOVE
+    moveDirectory: processed/
+    interval: PT5M
+
+# Error handling
+errors:
+  - id: error_notification
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ RAG Pipeline Failed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*RAG Document Processing Failed*\n\n*Client:* Enterprise Client 1\n*Error:* {{ task.id }} failed\n*Execution ID:* {{ execution.id }}\n*Error Message:* {{ task.errorMessage }}"
+            }
+          }
+        ]
+      }

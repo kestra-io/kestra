@@ -1,0 +1,443 @@
+id: ml_model_training_pipeline
+namespace: enterprise.client2.ml
+description: |
+  Enterprise ML Model Training Pipeline - Automated model training, evaluation, and deployment
+  Use Case: Predictive analytics, fraud detection, recommendation systems
+
+labels:
+  client: enterprise_client_2
+  department: data_science
+  cost_center: ds_002
+  gpu_required: "true"
+
+inputs:
+  - id: training_data_path
+    type: URI
+    defaults: s3://client-ml-data/training/latest.csv
+  - id: model_type
+    type: SELECT
+    defaults: xgboost
+    values:
+      - xgboost
+      - random_forest
+      - neural_network
+      - lightgbm
+  - id: test_size
+    type: FLOAT
+    defaults: 0.2
+  - id: target_column
+    type: STRING
+    defaults: target
+  - id: deploy_threshold
+    type: FLOAT
+    defaults: 0.85
+    description: Minimum accuracy required for auto-deployment
+
+variables:
+  mlflow_tracking_uri: "http://mlflow-server:5000"
+  model_registry_name: "client2_production_models"
+
+tasks:
+  # Task 1: Data Validation & Preprocessing
+  - id: validate_data
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pandas scikit-learn great-expectations boto3
+    env:
+      AWS_ACCESS_KEY_ID: "{{ secret('AWS_ACCESS_KEY_ID') }}"
+      AWS_SECRET_ACCESS_KEY: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
+    script: |
+      import pandas as pd
+      import json
+      from datetime import datetime
+      import great_expectations as ge
+
+      # Load data from S3
+      data = pd.read_csv("{{ inputs.training_data_path }}")
+
+      # Data validation checks
+      validation_results = {
+          'total_rows': len(data),
+          'total_columns': len(data.columns),
+          'missing_values': data.isnull().sum().to_dict(),
+          'duplicates': int(data.duplicated().sum()),
+          'data_types': data.dtypes.astype(str).to_dict(),
+          'timestamp': datetime.now().isoformat()
+      }
+
+      # Check for target column
+      if "{{ inputs.target_column }}" not in data.columns:
+          raise ValueError(f"Target column '{{ inputs.target_column }}' not found in data")
+
+      # Basic statistics
+      validation_results['statistics'] = data.describe().to_dict()
+
+      # Save validation report
+      with open('validation_report.json', 'w') as f:
+          json.dump(validation_results, f, indent=2)
+
+      print(f"Data validation complete. Rows: {len(data)}, Columns: {len(data.columns)}")
+
+      # Save cleaned data
+      data.to_csv('cleaned_data.csv', index=False)
+    outputFiles:
+      - validation_report.json
+      - cleaned_data.csv
+
+  # Task 2: Feature Engineering
+  - id: feature_engineering
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pandas scikit-learn numpy
+    script: |
+      import pandas as pd
+      import numpy as np
+      from sklearn.preprocessing import StandardScaler, LabelEncoder
+      import json
+      import pickle
+
+      # Load cleaned data
+      data = pd.read_csv('{{ outputs.validate_data.outputFiles["cleaned_data.csv"] }}')
+
+      # Separate features and target
+      target_col = "{{ inputs.target_column }}"
+      X = data.drop(columns=[target_col])
+      y = data[target_col]
+
+      # Handle categorical variables
+      categorical_cols = X.select_dtypes(include=['object']).columns
+      label_encoders = {}
+
+      for col in categorical_cols:
+          le = LabelEncoder()
+          X[col] = le.fit_transform(X[col].astype(str))
+          label_encoders[col] = le
+
+      # Scale numerical features
+      numerical_cols = X.select_dtypes(include=['int64', 'float64']).columns
+      scaler = StandardScaler()
+      X[numerical_cols] = scaler.fit_transform(X[numerical_cols])
+
+      # Save processed data
+      X.to_csv('X_processed.csv', index=False)
+      y.to_csv('y_processed.csv', index=False)
+
+      # Save preprocessing artifacts
+      with open('scaler.pkl', 'wb') as f:
+          pickle.dump(scaler, f)
+      with open('label_encoders.pkl', 'wb') as f:
+          pickle.dump(label_encoders, f)
+
+      feature_info = {
+          'numerical_features': list(numerical_cols),
+          'categorical_features': list(categorical_cols),
+          'total_features': len(X.columns)
+      }
+
+      with open('feature_info.json', 'w') as f:
+          json.dump(feature_info, f, indent=2)
+
+      print(f"Feature engineering complete. Total features: {len(X.columns)}")
+    outputFiles:
+      - X_processed.csv
+      - y_processed.csv
+      - scaler.pkl
+      - label_encoders.pkl
+      - feature_info.json
+
+  # Task 3: Train Model with MLflow Tracking
+  - id: train_model
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    runner: DOCKER
+    containerImage: nvidia/cuda:12.1.0-runtime-ubuntu22.04  # GPU support
+    beforeCommands:
+      - apt-get update && apt-get install -y python3 python3-pip
+      - pip3 install pandas scikit-learn xgboost lightgbm mlflow boto3
+    env:
+      MLFLOW_TRACKING_URI: "{{ vars.mlflow_tracking_uri }}"
+    script: |
+      import pandas as pd
+      import numpy as np
+      import json
+      import pickle
+      import mlflow
+      import mlflow.sklearn
+      from sklearn.model_selection import train_test_split
+      from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
+      import xgboost as xgb
+      from sklearn.ensemble import RandomForestClassifier
+      import lightgbm as lgb
+
+      # Load processed data
+      X = pd.read_csv('{{ outputs.feature_engineering.outputFiles["X_processed.csv"] }}')
+      y = pd.read_csv('{{ outputs.feature_engineering.outputFiles["y_processed.csv"] }}').values.ravel()
+
+      # Split data
+      X_train, X_test, y_train, y_test = train_test_split(
+          X, y, test_size={{ inputs.test_size }}, random_state=42
+      )
+
+      # Start MLflow run
+      mlflow.set_tracking_uri("{{ vars.mlflow_tracking_uri }}")
+      mlflow.set_experiment("client2_model_training")
+
+      with mlflow.start_run(run_name="training_{{ execution.id }}"):
+          # Log parameters
+          mlflow.log_param("model_type", "{{ inputs.model_type }}")
+          mlflow.log_param("test_size", {{ inputs.test_size }})
+          mlflow.log_param("training_samples", len(X_train))
+          mlflow.log_param("test_samples", len(X_test))
+
+          # Train model based on type
+          model_type = "{{ inputs.model_type }}"
+
+          if model_type == "xgboost":
+              model = xgb.XGBClassifier(
+                  n_estimators=100,
+                  max_depth=6,
+                  learning_rate=0.1,
+                  random_state=42
+              )
+          elif model_type == "random_forest":
+              model = RandomForestClassifier(
+                  n_estimators=100,
+                  max_depth=10,
+                  random_state=42
+              )
+          elif model_type == "lightgbm":
+              model = lgb.LGBMClassifier(
+                  n_estimators=100,
+                  max_depth=6,
+                  learning_rate=0.1,
+                  random_state=42
+              )
+          else:
+              raise ValueError(f"Unknown model type: {model_type}")
+
+          # Train
+          print("Training model...")
+          model.fit(X_train, y_train)
+
+          # Predictions
+          y_pred = model.predict(X_test)
+          y_pred_proba = model.predict_proba(X_test)[:, 1]
+
+          # Calculate metrics
+          accuracy = accuracy_score(y_test, y_pred)
+          precision = precision_score(y_test, y_pred, average='weighted')
+          recall = recall_score(y_test, y_pred, average='weighted')
+          f1 = f1_score(y_test, y_pred, average='weighted')
+
+          try:
+              auc = roc_auc_score(y_test, y_pred_proba)
+              mlflow.log_metric("auc", auc)
+          except:
+              auc = None
+
+          # Log metrics
+          mlflow.log_metric("accuracy", accuracy)
+          mlflow.log_metric("precision", precision)
+          mlflow.log_metric("recall", recall)
+          mlflow.log_metric("f1_score", f1)
+
+          # Log model
+          mlflow.sklearn.log_model(model, "model")
+
+          # Save model locally
+          with open('model.pkl', 'wb') as f:
+              pickle.dump(model, f)
+
+          # Save metrics
+          metrics = {
+              'accuracy': float(accuracy),
+              'precision': float(precision),
+              'recall': float(recall),
+              'f1_score': float(f1),
+              'auc': float(auc) if auc else None,
+              'meets_threshold': accuracy >= {{ inputs.deploy_threshold }}
+          }
+
+          with open('metrics.json', 'w') as f:
+              json.dump(metrics, f, indent=2)
+
+          print(f"Model training complete. Accuracy: {accuracy:.4f}")
+          print(f"Meets deployment threshold: {metrics['meets_threshold']}")
+
+          mlflow.end_run()
+    outputFiles:
+      - model.pkl
+      - metrics.json
+
+  # Task 4: Model Evaluation & Validation
+  - id: evaluate_model
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pandas scikit-learn matplotlib seaborn
+    script: |
+      import pandas as pd
+      import json
+      import pickle
+      from sklearn.model_selection import cross_val_score
+      from sklearn.metrics import classification_report, confusion_matrix
+      import matplotlib.pyplot as plt
+      import seaborn as sns
+
+      # Load model and data
+      with open('{{ outputs.train_model.outputFiles["model.pkl"] }}', 'rb') as f:
+          model = pickle.load(f)
+
+      X = pd.read_csv('{{ outputs.feature_engineering.outputFiles["X_processed.csv"] }}')
+      y = pd.read_csv('{{ outputs.feature_engineering.outputFiles["y_processed.csv"] }}').values.ravel()
+
+      # Cross-validation
+      cv_scores = cross_val_score(model, X, y, cv=5, scoring='accuracy')
+
+      # Generate classification report
+      from sklearn.model_selection import train_test_split
+      X_train, X_test, y_train, y_test = train_test_split(
+          X, y, test_size={{ inputs.test_size }}, random_state=42
+      )
+      y_pred = model.predict(X_test)
+
+      report = classification_report(y_test, y_pred, output_dict=True)
+      cm = confusion_matrix(y_test, y_pred)
+
+      # Plot confusion matrix
+      plt.figure(figsize=(8, 6))
+      sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+      plt.title('Confusion Matrix')
+      plt.ylabel('True Label')
+      plt.xlabel('Predicted Label')
+      plt.savefig('confusion_matrix.png')
+
+      # Save evaluation results
+      evaluation = {
+          'cross_validation_scores': cv_scores.tolist(),
+          'cv_mean': float(cv_scores.mean()),
+          'cv_std': float(cv_scores.std()),
+          'classification_report': report
+      }
+
+      with open('evaluation_report.json', 'w') as f:
+          json.dump(evaluation, f, indent=2)
+
+      print(f"Cross-validation score: {cv_scores.mean():.4f} (+/- {cv_scores.std():.4f})")
+    outputFiles:
+      - evaluation_report.json
+      - confusion_matrix.png
+
+  # Task 5: Conditional Deployment
+  - id: check_deployment_threshold
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.train_model.outputFiles['metrics.json'].accuracy >= inputs.deploy_threshold }}"
+    then:
+      - id: deploy_model
+        type: io.kestra.plugin.scripts.python.Script
+        docker:
+          image: python:3.11-slim
+        beforeCommands:
+          - pip install mlflow boto3
+        env:
+          MLFLOW_TRACKING_URI: "{{ vars.mlflow_tracking_uri }}"
+          AWS_ACCESS_KEY_ID: "{{ secret('AWS_ACCESS_KEY_ID') }}"
+          AWS_SECRET_ACCESS_KEY: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
+        script: |
+          import mlflow
+          import boto3
+          import pickle
+          from datetime import datetime
+
+          # Register model in MLflow
+          mlflow.set_tracking_uri("{{ vars.mlflow_tracking_uri }}")
+
+          # Load model
+          with open('{{ outputs.train_model.outputFiles["model.pkl"] }}', 'rb') as f:
+              model = pickle.load(f)
+
+          # Register to production
+          model_name = "{{ vars.model_registry_name }}"
+          mlflow.sklearn.log_model(
+              model,
+              "model",
+              registered_model_name=model_name
+          )
+
+          # Upload to S3 for serving
+          s3 = boto3.client('s3')
+          s3.upload_file(
+              '{{ outputs.train_model.outputFiles["model.pkl"] }}',
+              'client-ml-models',
+              f'production/{model_name}/model_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pkl'
+          )
+
+          print(f"Model deployed successfully to production")
+
+      - id: deployment_notification
+        type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+        url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+        payload: |
+          {
+            "text": "✅ Model Deployed to Production",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*ML Model Deployed*\n\n*Client:* Enterprise Client 2\n*Model Type:* {{ inputs.model_type }}\n*Accuracy:* {{ outputs.train_model.outputFiles['metrics.json'].accuracy }}\n*Execution ID:* {{ execution.id }}"
+                }
+              }
+            ]
+          }
+    else:
+      - id: low_accuracy_notification
+        type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+        url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+        payload: |
+          {
+            "text": "⚠️ Model Below Deployment Threshold",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*ML Model Training Complete - Manual Review Required*\n\n*Client:* Enterprise Client 2\n*Model Type:* {{ inputs.model_type }}\n*Accuracy:* {{ outputs.train_model.outputFiles['metrics.json'].accuracy }}\n*Threshold:* {{ inputs.deploy_threshold }}\n*Status:* Pending manual approval"
+                }
+              }
+            ]
+          }
+
+# Schedule weekly retraining
+triggers:
+  - id: weekly_retrain
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 2 * * 0"  # Every Sunday at 2 AM
+    inputs:
+      training_data_path: s3://client-ml-data/training/latest.csv
+      model_type: xgboost
+
+# Error handling
+errors:
+  - id: training_failed
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ ML Training Pipeline Failed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*ML Training Failed*\n\n*Client:* Enterprise Client 2\n*Task:* {{ task.id }}\n*Error:* {{ task.errorMessage }}\n*Execution ID:* {{ execution.id }}"
+            }
+          }
+        ]
+      }

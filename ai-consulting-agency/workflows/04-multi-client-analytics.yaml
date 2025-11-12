@@ -1,0 +1,497 @@
+id: multi_client_analytics_aggregation
+namespace: platform.analytics
+description: |
+  Platform-wide Analytics Aggregation - Collect and aggregate metrics across all clients
+  Use Case: Platform monitoring, billing calculation, SLA tracking, usage reporting
+
+labels:
+  platform_service: analytics
+  priority: high
+
+inputs:
+  - id: report_period
+    type: SELECT
+    defaults: daily
+    values:
+      - hourly
+      - daily
+      - weekly
+      - monthly
+  - id: include_clients
+    type: ARRAY
+    defaults:
+      - enterprise_client_1
+      - enterprise_client_2
+      - enterprise_client_3
+
+variables:
+  database_uri: "{{ secret('POSTGRES_URI') }}"
+
+tasks:
+  # Task 1: Collect workflow execution metrics for each client
+  - id: collect_client_metrics
+    type: io.kestra.plugin.core.flow.ForEach
+    values: "{{ inputs.include_clients }}"
+    tasks:
+      - id: fetch_client_executions
+        type: io.kestra.plugin.scripts.python.Script
+        docker:
+          image: python:3.11-slim
+        beforeCommands:
+          - pip install requests psycopg2-binary pandas
+        env:
+          KESTRA_API_URL: "http://localhost:8080/api/v1"
+          CLIENT_NAME: "{{ taskrun.value }}"
+          DATABASE_URI: "{{ vars.database_uri }}"
+        script: |
+          import requests
+          import json
+          import psycopg2
+          from datetime import datetime, timedelta
+          import os
+
+          client = os.environ['CLIENT_NAME']
+
+          # Calculate time range based on period
+          period = "{{ inputs.report_period }}"
+          end_time = datetime.now()
+
+          if period == 'hourly':
+              start_time = end_time - timedelta(hours=1)
+          elif period == 'daily':
+              start_time = end_time - timedelta(days=1)
+          elif period == 'weekly':
+              start_time = end_time - timedelta(weeks=1)
+          else:
+              start_time = end_time - timedelta(days=30)
+
+          # Query Kestra API for executions
+          api_url = os.environ['KESTRA_API_URL']
+
+          # Get executions for this client's namespace
+          params = {
+              'namespace': f'enterprise.{client}',
+              'startDate': start_time.isoformat(),
+              'endDate': end_time.isoformat()
+          }
+
+          # Note: This would use actual Kestra API in production
+          # For now, simulate with database query
+
+          conn = psycopg2.connect(os.environ['DATABASE_URI'])
+          cur = conn.cursor()
+
+          query = """
+              SELECT
+                  namespace,
+                  COUNT(*) as total_executions,
+                  SUM(CASE WHEN state = 'SUCCESS' THEN 1 ELSE 0 END) as successful,
+                  SUM(CASE WHEN state = 'FAILED' THEN 1 ELSE 0 END) as failed,
+                  AVG(EXTRACT(EPOCH FROM (end_date - start_date))) as avg_duration_seconds,
+                  SUM(EXTRACT(EPOCH FROM (end_date - start_date))) as total_runtime_seconds
+              FROM executions
+              WHERE namespace LIKE %s
+                AND start_date >= %s
+                AND start_date <= %s
+              GROUP BY namespace
+          """
+
+          cur.execute(query, (f'enterprise.{client}%', start_time, end_time))
+          results = cur.fetchall()
+
+          metrics = {
+              'client': client,
+              'period': period,
+              'start_time': start_time.isoformat(),
+              'end_time': end_time.isoformat(),
+              'total_executions': sum(r[1] for r in results),
+              'successful_executions': sum(r[2] for r in results),
+              'failed_executions': sum(r[3] for r in results),
+              'avg_duration_seconds': sum(r[4] for r in results if r[4]) / len(results) if results else 0,
+              'total_runtime_seconds': sum(r[5] for r in results if r[5]),
+              'success_rate': (sum(r[2] for r in results) / sum(r[1] for r in results) * 100) if sum(r[1] for r in results) > 0 else 0
+          }
+
+          cur.close()
+          conn.close()
+
+          # Save metrics
+          filename = f'metrics_{client}.json'
+          with open(filename, 'w') as f:
+              json.dump(metrics, f, indent=2)
+
+          print(f"Collected metrics for {client}: {metrics['total_executions']} executions")
+        outputFiles:
+          - "metrics_{{ taskrun.value }}.json"
+
+  # Task 2: Calculate resource usage and costs
+  - id: calculate_costs
+    type: io.kestra.plugin.core.flow.ForEach
+    values: "{{ inputs.include_clients }}"
+    tasks:
+      - id: compute_client_costs
+        type: io.kestra.plugin.scripts.python.Script
+        docker:
+          image: python:3.11-slim
+        beforeCommands:
+          - pip install boto3
+        env:
+          CLIENT_NAME: "{{ taskrun.value }}"
+          AWS_ACCESS_KEY_ID: "{{ secret('AWS_ACCESS_KEY_ID') }}"
+          AWS_SECRET_ACCESS_KEY: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
+        script: |
+          import json
+          import os
+          from datetime import datetime, timedelta
+
+          client = os.environ['CLIENT_NAME']
+
+          # Load execution metrics
+          metrics_file = f'metrics_{client}.json'
+          with open(metrics_file, 'r') as f:
+              metrics = json.load(f)
+
+          # Cost calculation (example rates)
+          COST_PER_EXECUTION = 0.01  # $0.01 per execution
+          COST_PER_CPU_HOUR = 0.05   # $0.05 per CPU hour
+          COST_PER_GB_STORAGE = 0.023  # S3 pricing per GB per month
+
+          # Calculate compute costs
+          runtime_hours = metrics['total_runtime_seconds'] / 3600
+          compute_cost = runtime_hours * COST_PER_CPU_HOUR
+
+          # Calculate execution costs
+          execution_cost = metrics['total_executions'] * COST_PER_EXECUTION
+
+          # TODO: Query S3 for actual storage usage
+          # For now, estimate based on executions
+          estimated_storage_gb = metrics['total_executions'] * 0.1  # 100MB per execution
+          storage_cost = estimated_storage_gb * COST_PER_GB_STORAGE
+
+          total_cost = compute_cost + execution_cost + storage_cost
+
+          cost_breakdown = {
+              'client': client,
+              'period': metrics['period'],
+              'compute_cost': round(compute_cost, 2),
+              'execution_cost': round(execution_cost, 2),
+              'storage_cost': round(storage_cost, 2),
+              'total_cost': round(total_cost, 2),
+              'runtime_hours': round(runtime_hours, 2),
+              'storage_gb': round(estimated_storage_gb, 2)
+          }
+
+          filename = f'costs_{client}.json'
+          with open(filename, 'w') as f:
+              json.dump(cost_breakdown, f, indent=2)
+
+          print(f"Calculated costs for {client}: ${total_cost:.2f}")
+        outputFiles:
+          - "costs_{{ taskrun.value }}.json"
+
+  # Task 3: Check SLA compliance
+  - id: check_sla_compliance
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pandas
+    script: |
+      import json
+      import glob
+      from datetime import datetime
+
+      # Load all client metrics
+      metrics_files = glob.glob('metrics_*.json')
+      all_metrics = []
+
+      for file in metrics_files:
+          with open(file, 'r') as f:
+              metrics = json.load(f)
+              all_metrics.append(metrics)
+
+      # SLA thresholds
+      SLA_SUCCESS_RATE = 99.0  # 99% success rate
+      SLA_AVG_DURATION = 300    # 5 minutes max average duration
+
+      sla_violations = []
+
+      for metrics in all_metrics:
+          client = metrics['client']
+          violations = []
+
+          # Check success rate
+          if metrics['success_rate'] < SLA_SUCCESS_RATE:
+              violations.append({
+                  'type': 'success_rate',
+                  'threshold': SLA_SUCCESS_RATE,
+                  'actual': metrics['success_rate'],
+                  'severity': 'high'
+              })
+
+          # Check average duration
+          if metrics['avg_duration_seconds'] > SLA_AVG_DURATION:
+              violations.append({
+                  'type': 'avg_duration',
+                  'threshold': SLA_AVG_DURATION,
+                  'actual': metrics['avg_duration_seconds'],
+                  'severity': 'medium'
+              })
+
+          if violations:
+              sla_violations.append({
+                  'client': client,
+                  'violations': violations,
+                  'timestamp': datetime.now().isoformat()
+              })
+
+      # Save SLA report
+      sla_report = {
+          'period': '{{ inputs.report_period }}',
+          'total_clients': len(all_metrics),
+          'compliant_clients': len(all_metrics) - len(sla_violations),
+          'violations': sla_violations
+      }
+
+      with open('sla_report.json', 'w') as f:
+          json.dump(sla_report, f, indent=2)
+
+      print(f"SLA Check: {len(sla_violations)} violations found")
+    outputFiles:
+      - sla_report.json
+
+  # Task 4: Aggregate all reports
+  - id: aggregate_reports
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pandas openpyxl matplotlib seaborn
+    script: |
+      import json
+      import glob
+      import pandas as pd
+      import matplotlib.pyplot as plt
+      import seaborn as sns
+      from datetime import datetime
+
+      # Load all metrics and costs
+      metrics_files = glob.glob('metrics_*.json')
+      costs_files = glob.glob('costs_*.json')
+
+      all_data = []
+
+      for metrics_file in metrics_files:
+          client = metrics_file.replace('metrics_', '').replace('.json', '')
+
+          with open(metrics_file, 'r') as f:
+              metrics = json.load(f)
+
+          cost_file = f'costs_{client}.json'
+          with open(cost_file, 'r') as f:
+              costs = json.load(f)
+
+          combined = {**metrics, **costs}
+          all_data.append(combined)
+
+      # Create DataFrame
+      df = pd.DataFrame(all_data)
+
+      # Export to Excel with multiple sheets
+      with pd.ExcelWriter('platform_analytics.xlsx', engine='openpyxl') as writer:
+          df.to_excel(writer, sheet_name='Overview', index=False)
+
+          # Execution summary
+          execution_summary = df[['client', 'total_executions', 'successful_executions', 'failed_executions', 'success_rate']]
+          execution_summary.to_excel(writer, sheet_name='Executions', index=False)
+
+          # Cost summary
+          cost_summary = df[['client', 'compute_cost', 'execution_cost', 'storage_cost', 'total_cost']]
+          cost_summary.to_excel(writer, sheet_name='Costs', index=False)
+
+      # Create visualization
+      fig, axes = plt.subplots(2, 2, figsize=(15, 10))
+
+      # Total executions by client
+      df.plot(x='client', y='total_executions', kind='bar', ax=axes[0, 0], color='skyblue')
+      axes[0, 0].set_title('Total Executions by Client')
+      axes[0, 0].set_ylabel('Executions')
+
+      # Success rate by client
+      df.plot(x='client', y='success_rate', kind='bar', ax=axes[0, 1], color='green')
+      axes[0, 1].set_title('Success Rate by Client (%)')
+      axes[0, 1].set_ylabel('Success Rate')
+      axes[0, 1].axhline(y=99, color='r', linestyle='--', label='SLA Threshold')
+
+      # Total costs by client
+      df.plot(x='client', y='total_cost', kind='bar', ax=axes[1, 0], color='orange')
+      axes[1, 0].set_title('Total Costs by Client ($)')
+      axes[1, 0].set_ylabel('Cost ($)')
+
+      # Runtime distribution
+      df.plot(x='client', y='runtime_hours', kind='bar', ax=axes[1, 1], color='purple')
+      axes[1, 1].set_title('Runtime Hours by Client')
+      axes[1, 1].set_ylabel('Hours')
+
+      plt.tight_layout()
+      plt.savefig('analytics_dashboard.png', dpi=300, bbox_inches='tight')
+
+      # Generate summary statistics
+      summary = {
+          'report_date': datetime.now().isoformat(),
+          'period': '{{ inputs.report_period }}',
+          'total_clients': len(df),
+          'total_executions': int(df['total_executions'].sum()),
+          'total_successful': int(df['successful_executions'].sum()),
+          'total_failed': int(df['failed_executions'].sum()),
+          'platform_success_rate': float(df['success_rate'].mean()),
+          'total_revenue': float(df['total_cost'].sum()),
+          'avg_cost_per_client': float(df['total_cost'].mean()),
+          'total_runtime_hours': float(df['runtime_hours'].sum())
+      }
+
+      with open('platform_summary.json', 'w') as f:
+          json.dump(summary, f, indent=2)
+
+      print(f"Platform Summary: {summary['total_executions']} executions, ${summary['total_revenue']:.2f} revenue")
+    outputFiles:
+      - platform_analytics.xlsx
+      - analytics_dashboard.png
+      - platform_summary.json
+
+  # Task 5: Upload reports to S3
+  - id: upload_reports
+    type: io.kestra.plugin.aws.s3.Uploads
+    accessKeyId: "{{ secret('AWS_ACCESS_KEY_ID') }}"
+    secretKeyId: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
+    region: us-east-1
+    bucket: platform-analytics
+    prefix: "reports/{{ execution.startDate | date('yyyy/MM/dd') }}/"
+    from:
+      - "{{ outputs.aggregate_reports.outputFiles['platform_analytics.xlsx'] }}"
+      - "{{ outputs.aggregate_reports.outputFiles['analytics_dashboard.png'] }}"
+      - "{{ outputs.aggregate_reports.outputFiles['platform_summary.json'] }}"
+      - "{{ outputs.check_sla_compliance.outputFiles['sla_report.json'] }}"
+
+  # Task 6: Send executive summary
+  - id: send_executive_summary
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install requests
+    env:
+      SLACK_WEBHOOK: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    script: |
+      import json
+      import requests
+      import os
+
+      # Load summary
+      with open('{{ outputs.aggregate_reports.outputFiles["platform_summary.json"] }}', 'r') as f:
+          summary = json.load(f)
+
+      with open('{{ outputs.check_sla_compliance.outputFiles["sla_report.json"] }}', 'r') as f:
+          sla = json.load(f)
+
+      # Format message
+      message = {
+          "text": "📊 Platform Analytics Report",
+          "blocks": [
+              {
+                  "type": "header",
+                  "text": {
+                      "type": "plain_text",
+                      "text": f"Platform Analytics - {summary['period'].upper()}"
+                  }
+              },
+              {
+                  "type": "section",
+                  "fields": [
+                      {"type": "mrkdwn", "text": f"*Total Clients:*\n{summary['total_clients']}"},
+                      {"type": "mrkdwn", "text": f"*Total Executions:*\n{summary['total_executions']:,}"},
+                      {"type": "mrkdwn", "text": f"*Success Rate:*\n{summary['platform_success_rate']:.2f}%"},
+                      {"type": "mrkdwn", "text": f"*Total Revenue:*\n${summary['total_revenue']:,.2f}"}
+                  ]
+              },
+              {
+                  "type": "section",
+                  "text": {
+                      "type": "mrkdwn",
+                      "text": f"*SLA Compliance:*\n{sla['compliant_clients']}/{sla['total_clients']} clients compliant\n{len(sla['violations'])} violations detected"
+                  }
+              },
+              {
+                  "type": "section",
+                  "text": {
+                      "type": "mrkdwn",
+                      "text": f"*Reports:* s3://platform-analytics/reports/..."
+                  }
+              }
+          ]
+      }
+
+      response = requests.post(os.environ['SLACK_WEBHOOK'], json=message)
+      print(f"Summary sent. Status: {response.status_code}")
+
+  # Task 7: Alert on SLA violations
+  - id: alert_sla_violations
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ outputs.check_sla_compliance.outputFiles['sla_report.json'].violations | length > 0 }}"
+    then:
+      - id: send_sla_alerts
+        type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+        url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+        payload: |
+          {
+            "text": "⚠️ SLA Violations Detected",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*SLA Violations Detected*\n\nPlease review the SLA report for details.\n\n*Period:* {{ inputs.report_period }}\n*Violations:* See full report in S3"
+                }
+              }
+            ]
+          }
+
+triggers:
+  # Daily aggregation at 1 AM
+  - id: daily_aggregation
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 1 * * *"
+    inputs:
+      report_period: daily
+
+  # Weekly aggregation on Mondays
+  - id: weekly_aggregation
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 2 * * 1"
+    inputs:
+      report_period: weekly
+
+  # Monthly aggregation on 1st of month
+  - id: monthly_aggregation
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 3 1 * *"
+    inputs:
+      report_period: monthly
+
+errors:
+  - id: aggregation_failed
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ Platform Analytics Aggregation Failed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Analytics Aggregation Failed*\n\n*Task:* {{ task.id }}\n*Error:* {{ task.errorMessage }}"
+            }
+          }
+        ]
+      }

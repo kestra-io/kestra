@@ -1,0 +1,376 @@
+id: llm_batch_processing
+namespace: enterprise.client3.content
+description: |
+  Enterprise LLM Batch Processing - Process large volumes of text with AI
+  Use Case: Content generation, summarization, translation, sentiment analysis
+
+labels:
+  client: enterprise_client_3
+  department: marketing
+  cost_center: mkt_003
+
+inputs:
+  - id: input_source
+    type: URI
+    defaults: s3://client-content/inbox/
+  - id: operation_type
+    type: SELECT
+    defaults: summarize
+    values:
+      - summarize
+      - translate
+      - sentiment_analysis
+      - content_generation
+      - classification
+  - id: target_language
+    type: STRING
+    defaults: en
+  - id: llm_provider
+    type: SELECT
+    defaults: anthropic
+    values:
+      - anthropic
+      - openai
+      - azure_openai
+  - id: batch_size
+    type: INT
+    defaults: 50
+    description: Number of items to process per batch
+
+variables:
+  anthropic_api_key: "{{ secret('ANTHROPIC_API_KEY') }}"
+  openai_api_key: "{{ secret('OPENAI_API_KEY') }}"
+
+tasks:
+  # Task 1: Load and prepare data
+  - id: load_data
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pandas boto3 openpyxl
+    env:
+      AWS_ACCESS_KEY_ID: "{{ secret('AWS_ACCESS_KEY_ID') }}"
+      AWS_SECRET_ACCESS_KEY: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
+    script: |
+      import pandas as pd
+      import boto3
+      import json
+      from pathlib import Path
+      import os
+
+      s3 = boto3.client('s3')
+
+      # Parse S3 path
+      s3_path = "{{ inputs.input_source }}"
+      bucket = s3_path.replace('s3://', '').split('/')[0]
+      prefix = '/'.join(s3_path.replace('s3://', '').split('/')[1:])
+
+      # List files
+      response = s3.list_objects_v2(Bucket=bucket, Prefix=prefix)
+      files = [obj['Key'] for obj in response.get('Contents', []) if not obj['Key'].endswith('/')]
+
+      all_data = []
+
+      for file_key in files:
+          local_file = Path(file_key).name
+          s3.download_file(bucket, file_key, local_file)
+
+          # Load based on file type
+          if local_file.endswith('.csv'):
+              df = pd.read_csv(local_file)
+          elif local_file.endswith('.xlsx'):
+              df = pd.read_excel(local_file)
+          elif local_file.endswith('.json'):
+              df = pd.read_json(local_file)
+          else:
+              continue
+
+          # Assume first text column is the content
+          text_col = df.select_dtypes(include=['object']).columns[0]
+          for idx, row in df.iterrows():
+              all_data.append({
+                  'id': f"{local_file}_{idx}",
+                  'text': str(row[text_col]),
+                  'source_file': local_file
+              })
+
+      # Save prepared data
+      with open('input_data.json', 'w') as f:
+          json.dump(all_data, f)
+
+      print(f"Loaded {len(all_data)} items from {len(files)} files")
+    outputFiles:
+      - input_data.json
+
+  # Task 2: Process with LLM in batches
+  - id: process_with_llm
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install anthropic openai tenacity
+    env:
+      ANTHROPIC_API_KEY: "{{ vars.anthropic_api_key }}"
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      import os
+      from anthropic import Anthropic
+      from openai import OpenAI
+      from tenacity import retry, stop_after_attempt, wait_exponential
+      import time
+
+      # Load data
+      with open('{{ outputs.load_data.outputFiles["input_data.json"] }}', 'r') as f:
+          data = json.load(f)
+
+      operation = "{{ inputs.operation_type }}"
+      provider = "{{ inputs.llm_provider }}"
+      batch_size = {{ inputs.batch_size }}
+
+      # Define prompts for different operations
+      prompts = {
+          'summarize': "Summarize the following text concisely in 2-3 sentences:\n\n{text}",
+          'translate': "Translate the following text to {{ inputs.target_language }}:\n\n{text}",
+          'sentiment_analysis': "Analyze the sentiment of the following text. Respond with only: positive, negative, or neutral.\n\n{text}",
+          'classification': "Classify the following text into one of these categories: product, service, complaint, inquiry, feedback.\n\n{text}",
+          'content_generation': "Generate a professional response based on:\n\n{text}"
+      }
+
+      prompt_template = prompts.get(operation, "{text}")
+
+      # Initialize client
+      if provider == 'anthropic':
+          client = Anthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
+          model = "claude-3-5-sonnet-20241022"
+      else:
+          client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+          model = "gpt-4-turbo-preview"
+
+      @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
+      def process_item(item):
+          text = item['text']
+          prompt = prompt_template.format(text=text)
+
+          if provider == 'anthropic':
+              response = client.messages.create(
+                  model=model,
+                  max_tokens=1024,
+                  messages=[{"role": "user", "content": prompt}]
+              )
+              result = response.content[0].text
+          else:
+              response = client.chat.completions.create(
+                  model=model,
+                  messages=[{"role": "user", "content": prompt}],
+                  max_tokens=1024
+              )
+              result = response.choices[0].message.content
+
+          return result
+
+      # Process in batches
+      results = []
+      total = len(data)
+
+      for i in range(0, total, batch_size):
+          batch = data[i:i + batch_size]
+          batch_results = []
+
+          for item in batch:
+              try:
+                  result = process_item(item)
+                  batch_results.append({
+                      'id': item['id'],
+                      'original_text': item['text'][:200],  # Truncate for storage
+                      'processed_text': result,
+                      'source_file': item['source_file'],
+                      'operation': operation,
+                      'status': 'success'
+                  })
+              except Exception as e:
+                  batch_results.append({
+                      'id': item['id'],
+                      'original_text': item['text'][:200],
+                      'processed_text': None,
+                      'error': str(e),
+                      'status': 'failed'
+                  })
+
+              # Rate limiting
+              time.sleep(0.5)
+
+          results.extend(batch_results)
+          print(f"Processed batch {i//batch_size + 1}/{(total-1)//batch_size + 1}")
+
+      # Save results
+      with open('processed_results.json', 'w') as f:
+          json.dump(results, f, indent=2)
+
+      # Calculate stats
+      success_count = sum(1 for r in results if r['status'] == 'success')
+      failed_count = len(results) - success_count
+
+      stats = {
+          'total_processed': len(results),
+          'successful': success_count,
+          'failed': failed_count,
+          'operation': operation,
+          'provider': provider
+      }
+
+      with open('processing_stats.json', 'w') as f:
+          json.dump(stats, f, indent=2)
+
+      print(f"Processing complete. Success: {success_count}, Failed: {failed_count}")
+    outputFiles:
+      - processed_results.json
+      - processing_stats.json
+
+  # Task 3: Format and export results
+  - id: export_results
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pandas openpyxl
+    script: |
+      import pandas as pd
+      import json
+
+      # Load results
+      with open('{{ outputs.process_with_llm.outputFiles["processed_results.json"] }}', 'r') as f:
+          results = json.load(f)
+
+      # Create DataFrame
+      df = pd.DataFrame(results)
+
+      # Export to multiple formats
+      df.to_csv('results.csv', index=False)
+      df.to_excel('results.xlsx', index=False)
+      df.to_json('results_export.json', orient='records', indent=2)
+
+      # Create summary report
+      successful = df[df['status'] == 'success']
+      failed = df[df['status'] == 'failed']
+
+      summary = {
+          'total_items': len(df),
+          'successful': len(successful),
+          'failed': len(failed),
+          'success_rate': f"{(len(successful) / len(df)) * 100:.2f}%",
+          'by_source_file': df['source_file'].value_counts().to_dict()
+      }
+
+      with open('summary_report.json', 'w') as f:
+          json.dump(summary, f, indent=2)
+
+      print(f"Exported {len(df)} results")
+    outputFiles:
+      - results.csv
+      - results.xlsx
+      - results_export.json
+      - summary_report.json
+
+  # Task 4: Upload results to S3
+  - id: upload_results
+    type: io.kestra.plugin.aws.s3.Upload
+    accessKeyId: "{{ secret('AWS_ACCESS_KEY_ID') }}"
+    secretKeyId: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
+    region: us-east-1
+    bucket: client-content
+    key: "processed/{{ execution.startDate | date('yyyy/MM/dd') }}/results_{{ execution.id }}.xlsx"
+    from: "{{ outputs.export_results.outputFiles['results.xlsx'] }}"
+
+  # Task 5: Generate and send report
+  - id: send_completion_report
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install requests
+    env:
+      SLACK_WEBHOOK: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    script: |
+      import json
+      import requests
+      import os
+
+      # Load stats
+      with open('{{ outputs.process_with_llm.outputFiles["processing_stats.json"] }}', 'r') as f:
+          stats = json.load(f)
+
+      with open('{{ outputs.export_results.outputFiles["summary_report.json"] }}', 'r') as f:
+          summary = json.load(f)
+
+      # Send to Slack
+      message = {
+          "text": "✅ LLM Batch Processing Complete",
+          "blocks": [
+              {
+                  "type": "section",
+                  "text": {
+                      "type": "mrkdwn",
+                      "text": f"*LLM Batch Processing Complete*\n\n"
+                              f"*Client:* Enterprise Client 3\n"
+                              f"*Operation:* {{ inputs.operation_type }}\n"
+                              f"*Provider:* {{ inputs.llm_provider }}\n"
+                              f"*Total Items:* {stats['total_processed']}\n"
+                              f"*Successful:* {stats['successful']}\n"
+                              f"*Failed:* {stats['failed']}\n"
+                              f"*Success Rate:* {summary['success_rate']}\n"
+                              f"*Results:* s3://client-content/processed/..."
+                  }
+              }
+          ]
+      }
+
+      response = requests.post(os.environ['SLACK_WEBHOOK'], json=message)
+      print(f"Notification sent. Status: {response.status_code}")
+
+# Triggers
+triggers:
+  # Daily processing at 3 AM
+  - id: daily_processing
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 3 * * *"
+    inputs:
+      input_source: s3://client-content/inbox/
+      operation_type: summarize
+
+  # Trigger on new file upload
+  - id: on_file_upload
+    type: io.kestra.plugin.aws.s3.Trigger
+    accessKeyId: "{{ secret('AWS_ACCESS_KEY_ID') }}"
+    secretKeyId: "{{ secret('AWS_SECRET_ACCESS_KEY') }}"
+    region: us-east-1
+    bucket: client-content
+    prefix: inbox/
+    interval: PT10M
+
+# Parallel processing for multiple operations
+taskDefaults:
+  - type: io.kestra.plugin.scripts.python.Script
+    retry:
+      maxAttempt: 3
+      type: exponential
+      interval: PT5S
+
+errors:
+  - id: processing_failed
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ LLM Batch Processing Failed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*LLM Processing Failed*\n\n*Client:* Enterprise Client 3\n*Task:* {{ task.id }}\n*Error:* {{ task.errorMessage }}"
+            }
+          }
+        ]
+      }

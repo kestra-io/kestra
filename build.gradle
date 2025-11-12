@@ -34,7 +34,7 @@ plugins {
     id 'net.researchgate.release' version '3.1.0'
     id "com.gorylenko.gradle-git-properties" version "2.5.3"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.34.0"
+    id "com.vanniktech.maven.publish" version "0.35.0"
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.1.9" apply false

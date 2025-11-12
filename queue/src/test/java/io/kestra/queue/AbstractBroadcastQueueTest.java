@@ -1,6 +1,7 @@
 package io.kestra.queue;
 
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
@@ -33,9 +34,9 @@ public abstract class AbstractBroadcastQueueTest {
                 countDownLatch.countDown();
             });
 
-        broadcastQueue.emit(new TestBroadcast(1));
-        broadcastQueue.emit(new TestBroadcast(2));
-        broadcastQueue.emit(new TestBroadcast(3));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 1));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 2));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 3));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
@@ -62,9 +63,9 @@ public abstract class AbstractBroadcastQueueTest {
                 })
             )));
 
-        broadcastQueue.emit(new TestBroadcast(1));
-        broadcastQueue.emit(new TestBroadcast(2));
-        broadcastQueue.emit(new TestBroadcast(3));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 1));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 2));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 3));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscribers.forEach(QueueSubscriber::close);
@@ -97,7 +98,7 @@ public abstract class AbstractBroadcastQueueTest {
             });
 
         // first round
-        broadcastQueue.emit(new TestBroadcast(1));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 1));
 
         boolean await1 = countDownLatchFirst.await(DEFAULT_TIMEOUT_SECONDS + 10, TimeUnit.SECONDS);
         subscriber.pause();
@@ -107,8 +108,8 @@ public abstract class AbstractBroadcastQueueTest {
         Instant resumeTime = Instant.now();
         subscriber.resume();
 
-        broadcastQueue.emit(new TestBroadcast(2));
-        broadcastQueue.emit(new TestBroadcast(3));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 2));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 3));
 
         boolean await2 = countDownLatchSecond.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.pause();
@@ -118,8 +119,8 @@ public abstract class AbstractBroadcastQueueTest {
         Instant resumeTime2 = Instant.now();
         subscriber.resume();
 
-        broadcastQueue.emit(new TestBroadcast(4));
-        broadcastQueue.emit(new TestBroadcast(5));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 4));
+        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 5));
 
         boolean await3 = countDownLatchOthers.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
@@ -131,5 +132,5 @@ public abstract class AbstractBroadcastQueueTest {
         assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime2)).count()).isEqualTo(2);
     }
 
-    public record TestBroadcast(Integer id) implements BroadcastEvent {}
+    public record TestBroadcast(String key, Integer id) implements BroadcastEvent {}
 }

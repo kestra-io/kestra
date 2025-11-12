@@ -40,6 +40,8 @@ updates:
       time: "08:00"
     open-pull-requests-limit: 50
     labels: ["dependency-upgrade", "area/frontend"]
+    commit-message:
+      prefix: "[npm] "
     groups:
       build:
         applies-to: version-updates

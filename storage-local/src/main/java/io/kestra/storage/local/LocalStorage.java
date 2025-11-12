@@ -36,6 +36,7 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 @NoArgsConstructor
 public class LocalStorage implements StorageInterface {
     private static final Logger log = LoggerFactory.getLogger(LocalStorage.class);
+    private static final int MAX_OBJECT_NAME_LENGTH = 255;
 
     @PluginProperty
     @NotNull
@@ -170,14 +171,16 @@ public class LocalStorage implements StorageInterface {
 
     @Override
     public URI put(String tenantId, @Nullable String namespace, URI uri, StorageObject storageObject) throws IOException {
-        File file = getLocalPath(tenantId, uri).toFile();
-        return putFile(uri, storageObject, file);
+        URI limited = limit(uri, MAX_OBJECT_NAME_LENGTH);
+        File file = getLocalPath(tenantId, limited).toFile();
+        return putFile(limited, storageObject, file);
     }
 
     @Override
     public URI putInstanceResource(@Nullable String namespace, URI uri, StorageObject storageObject) throws IOException {
-        File file = getInstancePath(uri).toFile();
-        return putFile(uri, storageObject, file);
+        URI limited = limit(uri, MAX_OBJECT_NAME_LENGTH);
+        File file = getInstancePath(limited).toFile();
+        return putFile(limited, storageObject, file);
     }
 
     private static URI putFile(URI uri, StorageObject storageObject, File file) throws IOException {

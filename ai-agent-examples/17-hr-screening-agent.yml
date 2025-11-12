@@ -1,0 +1,22 @@
+id: hr_screening_agent
+namespace: enterprise.client1.agents.business
+description: Resume analysis and candidate ranking for recruiting
+labels: {agent_type: hr_screening, department: hr}
+inputs:
+  - id: resume_url
+    type: STRING
+  - id: job_description
+    type: STRING
+tasks:
+  - id: analyze_resume
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      analysis = {"match_score": 85, "strengths": ["Python", "ML"], "concerns": ["No Java"], "recommendation": "interview"}
+      with open('candidate_analysis.json', 'w') as f: json.dump(analysis, f)
+    outputFiles: [candidate_analysis.json]

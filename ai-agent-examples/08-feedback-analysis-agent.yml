@@ -1,0 +1,502 @@
+# =============================================================================
+# AI AGENT: Feedback Analysis Agent
+# =============================================================================
+# Type: Batch processing agent with sentiment analysis
+# Use Case: Analyze customer feedback, categorize, route, extract insights
+# Pattern: Collect → Analyze → Categorize → Route → Report
+# =============================================================================
+
+id: feedback_analysis_agent
+namespace: enterprise.client1.agents.feedback
+description: |
+  Intelligent feedback analysis agent that:
+  - Collects feedback from multiple sources (surveys, support tickets, reviews)
+  - Performs sentiment analysis (positive/negative/neutral)
+  - Categorizes feedback by topic (product, support, pricing, feature request)
+  - Extracts actionable insights
+  - Routes urgent issues to appropriate teams
+  - Generates trend reports
+
+labels:
+  agent_type: feedback_analysis
+  department: product
+  use_case: customer_feedback
+
+inputs:
+  - id: feedback_source
+    type: SELECT
+    defaults: survey
+    values:
+      - survey
+      - support_ticket
+      - app_review
+      - social_media
+      - email
+      - nps
+    description: "Source of feedback"
+
+  - id: time_range_days
+    type: INT
+    defaults: 7
+    description: "Analyze feedback from last N days"
+
+  - id: generate_report
+    type: BOOLEAN
+    defaults: true
+    description: "Generate summary report"
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+  zendesk_token: "{{ secret('CLIENT1_ZENDESK_TOKEN') }}"
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Task 1: Collect Feedback from Sources
+  # ---------------------------------------------------------------------------
+  - id: collect_feedback
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install requests pandas
+    env:
+      FEEDBACK_SOURCE: "{{ inputs.feedback_source }}"
+      TIME_RANGE_DAYS: "{{ inputs.time_range_days }}"
+      ZENDESK_TOKEN: "{{ vars.zendesk_token }}"
+    script: |
+      import json
+      import os
+      from datetime import datetime, timedelta
+      import pandas as pd
+
+      # In production: Fetch from actual APIs
+      # Simulated feedback collection
+
+      feedback_items = []
+
+      # Sample feedback (in production: fetch from Zendesk, Intercom, etc.)
+      if os.environ['FEEDBACK_SOURCE'] == 'survey':
+          feedback_items = [
+              {
+                  "id": "fb_001",
+                  "customer_id": "cust_123",
+                  "text": "Love the new dashboard! Much easier to navigate. Would be great to have dark mode though.",
+                  "source": "survey",
+                  "rating": 5,
+                  "created_at": datetime.now().isoformat()
+              },
+              {
+                  "id": "fb_002",
+                  "customer_id": "cust_456",
+                  "text": "The support team is slow to respond. Had to wait 3 days for a simple question.",
+                  "source": "survey",
+                  "rating": 2,
+                  "created_at": datetime.now().isoformat()
+              },
+              {
+                  "id": "fb_003",
+                  "customer_id": "cust_789",
+                  "text": "Pricing is too high for small teams. Need a cheaper tier.",
+                  "source": "survey",
+                  "rating": 3,
+                  "created_at": datetime.now().isoformat()
+              },
+              {
+                  "id": "fb_004",
+                  "customer_id": "cust_012",
+                  "text": "Excellent product! Saved us 10 hours per week. API documentation could be better.",
+                  "source": "survey",
+                  "rating": 5,
+                  "created_at": datetime.now().isoformat()
+              },
+              {
+                  "id": "fb_005",
+                  "customer_id": "cust_345",
+                  "text": "App keeps crashing on mobile. Very frustrating. Please fix ASAP!",
+                  "source": "survey",
+                  "rating": 1,
+                  "created_at": datetime.now().isoformat()
+              }
+          ]
+
+      with open('feedback_raw.json', 'w') as f:
+          json.dump(feedback_items, f, indent=2)
+
+      print(f"Collected {len(feedback_items)} feedback items from {os.environ['FEEDBACK_SOURCE']}")
+
+    outputFiles:
+      - feedback_raw.json
+
+  # ---------------------------------------------------------------------------
+  # Task 2: Sentiment Analysis (Batch)
+  # ---------------------------------------------------------------------------
+  - id: analyze_sentiment
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      with open('{{ outputs.collect_feedback.outputFiles["feedback_raw.json"] }}', 'r') as f:
+          feedback_items = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+
+      sentiment_prompt = ChatPromptTemplate.from_messages([
+          ("system", """Analyze sentiment and categorize feedback.
+
+          For each feedback item, provide:
+          1. Sentiment: positive/negative/neutral
+          2. Sentiment score: -1.0 to 1.0
+          3. Categories: product/support/pricing/feature_request/bug/ux
+          4. Priority: low/medium/high/urgent
+          5. Key topics: list of keywords
+
+          Output JSON array matching input order.
+          """),
+          ("user", """Feedback items:
+          {feedback_json}
+
+          Analyze sentiment and categorize:
+          """)
+      ])
+
+      # Batch process (in production: use proper batching)
+      response = llm.invoke(
+          sentiment_prompt.format_messages(
+              feedback_json=json.dumps([
+                  {"id": item["id"], "text": item["text"], "rating": item.get("rating")}
+                  for item in feedback_items
+              ], indent=2)
+          )
+      )
+
+      analysis_results = json.loads(response.content)
+
+      # Merge with original feedback
+      for i, item in enumerate(feedback_items):
+          if i < len(analysis_results):
+              item.update(analysis_results[i])
+
+      with open('feedback_analyzed.json', 'w') as f:
+          json.dump(feedback_items, f, indent=2)
+
+      # Calculate statistics
+      sentiments = [item.get('sentiment', 'neutral') for item in feedback_items]
+      stats = {
+          "total": len(feedback_items),
+          "positive": sentiments.count('positive'),
+          "negative": sentiments.count('negative'),
+          "neutral": sentiments.count('neutral')
+      }
+
+      print(f"Analyzed {stats['total']} items: {stats['positive']} pos, {stats['negative']} neg, {stats['neutral']} neutral")
+
+    outputFiles:
+      - feedback_analyzed.json
+
+  # ---------------------------------------------------------------------------
+  # Task 3: Extract Key Insights
+  # ---------------------------------------------------------------------------
+  - id: extract_insights
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from collections import Counter
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      with open('{{ outputs.analyze_sentiment.outputFiles["feedback_analyzed.json"] }}', 'r') as f:
+          feedback_items = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.3)
+
+      insights_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are a product insights analyst.
+
+          Analyze this customer feedback and extract:
+          1. Top 3 themes/patterns
+          2. Most requested features (top 3)
+          3. Critical issues (urgent bugs/problems)
+          4. Positive highlights (what customers love)
+          5. Actionable recommendations (3-5)
+
+          Output JSON:
+          {{
+            "top_themes": [
+              {{"theme": "...", "frequency": 5, "sentiment": "negative"}}
+            ],
+            "feature_requests": ["...", "...", "..."],
+            "critical_issues": ["...", "..."],
+            "positive_highlights": ["...", "..."],
+            "recommendations": [
+              {{"action": "...", "priority": "high", "impact": "..."}}
+            ]
+          }}
+          """),
+          ("user", """Analyzed Feedback ({count} items):
+          {feedback_json}
+
+          Extract insights:
+          """)
+      ])
+
+      response = llm.invoke(
+          insights_prompt.format_messages(
+              count=len(feedback_items),
+              feedback_json=json.dumps(feedback_items, indent=2)
+          )
+      )
+
+      insights = json.loads(response.content)
+
+      # Add statistics
+      insights['statistics'] = {
+          "total_feedback": len(feedback_items),
+          "sentiment_breakdown": {
+              "positive": len([f for f in feedback_items if f.get('sentiment') == 'positive']),
+              "negative": len([f for f in feedback_items if f.get('sentiment') == 'negative']),
+              "neutral": len([f for f in feedback_items if f.get('sentiment') == 'neutral'])
+          },
+          "priority_breakdown": {
+              "urgent": len([f for f in feedback_items if f.get('priority') == 'urgent']),
+              "high": len([f for f in feedback_items if f.get('priority') == 'high']),
+              "medium": len([f for f in feedback_items if f.get('priority') == 'medium']),
+              "low": len([f for f in feedback_items if f.get('priority') == 'low'])
+          }
+      }
+
+      with open('insights.json', 'w') as f:
+          json.dump(insights, f, indent=2)
+
+      print(f"Insights extracted: {len(insights['top_themes'])} themes, {len(insights['feature_requests'])} requests")
+
+    outputFiles:
+      - insights.json
+
+  # ---------------------------------------------------------------------------
+  # Task 4: Route Urgent Issues
+  # ---------------------------------------------------------------------------
+  - id: route_urgent_issues
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    script: |
+      import json
+
+      with open('{{ outputs.analyze_sentiment.outputFiles["feedback_analyzed.json"] }}', 'r') as f:
+          feedback_items = json.load(f)
+
+      # Filter urgent items
+      urgent_items = [f for f in feedback_items if f.get('priority') == 'urgent']
+
+      routing = {
+          "urgent_count": len(urgent_items),
+          "routes": []
+      }
+
+      for item in urgent_items:
+          # Route based on category
+          categories = item.get('categories', [])
+
+          if 'bug' in categories:
+              team = "engineering"
+              action = "Create bug ticket"
+          elif 'support' in categories:
+              team = "support"
+              action = "Escalate to support manager"
+          elif 'product' in categories:
+              team = "product"
+              action = "Schedule urgent review"
+          else:
+              team = "customer_success"
+              action = "Contact customer immediately"
+
+          routing['routes'].append({
+              "feedback_id": item['id'],
+              "customer_id": item['customer_id'],
+              "team": team,
+              "action": action,
+              "text": item['text'][:100] + "..."
+          })
+
+      with open('routing.json', 'w') as f:
+          json.dump(routing, f, indent=2)
+
+      print(f"Routed {len(urgent_items)} urgent issues")
+
+    outputFiles:
+      - routing.json
+
+  # ---------------------------------------------------------------------------
+  # Task 5: Generate Report
+  # ---------------------------------------------------------------------------
+  - id: generate_report
+    type: io.kestra.plugin.scripts.python.Script
+    condition: "{{ inputs.generate_report == true }}"
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from datetime import datetime
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      with open('{{ outputs.extract_insights.outputFiles["insights.json"] }}', 'r') as f:
+          insights = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.5)
+
+      report_prompt = ChatPromptTemplate.from_messages([
+          ("system", """Generate an executive summary report of customer feedback.
+
+          Format: Professional markdown
+          Include:
+          - Executive summary (2-3 sentences)
+          - Key metrics
+          - Top themes
+          - Recommendations
+          - Next steps
+
+          Be concise but insightful.
+          """),
+          ("user", """Feedback Analysis Insights:
+          {insights_json}
+
+          Time period: Last {{ inputs.time_range_days }} days
+          Source: {{ inputs.feedback_source }}
+
+          Generate executive report:
+          """)
+      ])
+
+      response = llm.invoke(
+          report_prompt.format_messages(
+              insights_json=json.dumps(insights, indent=2)
+          )
+      )
+
+      report = f"""# Customer Feedback Analysis Report
+
+**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Period:** Last {{ inputs.time_range_days }} days
+**Source:** {{ inputs.feedback_source }}
+
+---
+
+{response.content}
+
+---
+
+**Report ID:** {{ execution.id }}
+"""
+
+      with open('feedback_report.md', 'w') as f:
+          f.write(report)
+
+      print("Executive report generated")
+
+    outputFiles:
+      - feedback_report.md
+
+  # ---------------------------------------------------------------------------
+  # Task 6: Store Results
+  # ---------------------------------------------------------------------------
+  - id: store_results
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://postgres:5432/{{ secret('POSTGRES_DB') }}
+    username: "{{ secret('POSTGRES_USER') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    sql: |
+      INSERT INTO feedback_analysis_results (
+        source,
+        time_range_days,
+        total_feedback,
+        positive_count,
+        negative_count,
+        neutral_count,
+        urgent_count,
+        insights_json,
+        execution_id,
+        created_at
+      ) VALUES (
+        '{{ inputs.feedback_source }}',
+        {{ inputs.time_range_days }},
+        {{ outputs.extract_insights.vars.total_feedback }},
+        {{ outputs.extract_insights.vars.positive_count }},
+        {{ outputs.extract_insights.vars.negative_count }},
+        {{ outputs.extract_insights.vars.neutral_count }},
+        {{ outputs.route_urgent_issues.vars.urgent_count }},
+        '{{ outputs.extract_insights.outputFiles["insights.json"] }}',
+        '{{ execution.id }}',
+        NOW()
+      );
+
+  # ---------------------------------------------------------------------------
+  # Task 7: Notify Teams
+  # ---------------------------------------------------------------------------
+  - id: notify_teams
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "📊 Feedback Analysis Complete",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Customer Feedback Analysis*\n\n*Period:* Last {{ inputs.time_range_days }} days\n*Source:* {{ inputs.feedback_source }}\n*Total:* {{ outputs.extract_insights.vars.total_feedback }} items\n\n*Sentiment:*\n✅ Positive: {{ outputs.extract_insights.vars.positive_count }}\n⚠️ Negative: {{ outputs.extract_insights.vars.negative_count }}\n➖ Neutral: {{ outputs.extract_insights.vars.neutral_count }}\n\n🚨 *Urgent Issues:* {{ outputs.route_urgent_issues.vars.urgent_count }}"
+            }
+          }
+        ]
+      }
+
+# =============================================================================
+# TRIGGERS - Regular feedback analysis
+# =============================================================================
+triggers:
+  - id: weekly_analysis
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 * * MON"  # Every Monday at 9am
+
+  - id: daily_analysis
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 8 * * *"  # Daily at 8am
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+errors:
+  - id: error_notification
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ Feedback Analysis Failed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Error:* {{ task.errorMessage }}"
+            }
+          }
+        ]
+      }

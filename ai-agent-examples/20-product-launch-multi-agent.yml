@@ -1,0 +1,41 @@
+id: product_launch_multi_agent
+namespace: enterprise.client1.agents.multiagent
+description: Multi-agent system for product launches - Planning → Marketing → Engineering → QA
+labels: {agent_type: multi_agent, use_case: product_launch}
+tasks:
+  - id: planning_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      plan = {"timeline": "6 weeks", "milestones": ["Design", "Build", "Test", "Launch"]}
+      with open('launch_plan.json', 'w') as f: json.dump(plan, f)
+    outputFiles: [launch_plan.json]
+  - id: marketing_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      marketing = {"campaign": "Product X Launch", "channels": ["email", "social", "pr"]}
+      with open('marketing_plan.json', 'w') as f: json.dump(marketing, f)
+    outputFiles: [marketing_plan.json]
+  - id: qa_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      qa = {"tests_passed": 95, "blockers": 0, "ready_to_launch": True}
+      with open('qa_results.json', 'w') as f: json.dump(qa, f)
+    outputFiles: [qa_results.json]

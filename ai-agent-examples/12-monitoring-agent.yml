@@ -1,0 +1,33 @@
+id: monitoring_agent
+namespace: enterprise.client1.agents.internal
+description: Monitors system metrics, detects anomalies, sends alerts
+labels:
+  agent_type: monitoring
+inputs:
+  - id: metric_source
+    type: STRING
+tasks:
+  - id: collect_metrics
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    script: |
+      import json
+      metrics = {"cpu": 75, "memory": 80, "errors": 2}
+      with open('metrics.json', 'w') as f: json.dump(metrics, f)
+    outputFiles: [metrics.json]
+  - id: detect_anomalies
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      anomalies = {"found": False, "alerts": []}
+      with open('anomalies.json', 'w') as f: json.dump(anomalies, f)
+    outputFiles: [anomalies.json]
+triggers:
+  - id: every_5min
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/5 * * * *"

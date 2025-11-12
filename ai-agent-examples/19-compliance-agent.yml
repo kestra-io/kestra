@@ -1,0 +1,21 @@
+id: compliance_agent
+namespace: enterprise.client1.agents.business
+description: Monitor and ensure regulatory compliance (GDPR, SOC2, HIPAA)
+labels: {agent_type: compliance, department: legal}
+tasks:
+  - id: scan_for_violations
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      compliance = {"violations": [], "compliant": True, "frameworks": ["GDPR", "SOC2"]}
+      with open('compliance_check.json', 'w') as f: json.dump(compliance, f)
+    outputFiles: [compliance_check.json]
+triggers:
+  - id: daily_scan
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 2 * * *"

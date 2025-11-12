@@ -1,0 +1,29 @@
+id: contract_review_agent
+namespace: enterprise.client1.agents.business
+description: AI-powered contract review for legal compliance and risk assessment
+labels: {agent_type: contract_review, department: legal}
+inputs:
+  - id: contract_url
+    type: STRING
+tasks:
+  - id: extract_contract_text
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install PyPDF2"]
+    script: |
+      import json
+      text = "Sample contract text..."
+      with open('contract_text.txt', 'w') as f: f.write(text)
+    outputFiles: [contract_text.txt]
+  - id: analyze_contract
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      review = {"risk_score": 3, "issues": ["Missing liability clause"], "recommendations": ["Add indemnification"]}
+      with open('contract_review.json', 'w') as f: json.dump(review, f)
+    outputFiles: [contract_review.json]

@@ -1,0 +1,433 @@
+# =============================================================================
+# AI AGENT: Automated Report Generation Agent
+# =============================================================================
+# Type: Data analysis and reporting agent
+# Use Case: Generate executive reports, dashboards, insights
+# Pattern: Query data → Analyze → Visualize → Generate report → Distribute
+# =============================================================================
+
+id: report_generation_agent
+namespace: enterprise.client1.agents.internal
+description: |
+  Automated report generation agent that:
+  - Queries data from multiple sources (databases, APIs, files)
+  - Performs statistical analysis
+  - Generates visualizations
+  - Creates narrative insights with LLM
+  - Produces formatted reports (PDF, HTML, Markdown)
+  - Distributes to stakeholders
+  - Schedules recurring reports
+
+labels:
+  agent_type: report_generation
+  department: analytics
+  use_case: business_intelligence
+
+inputs:
+  - id: report_type
+    type: SELECT
+    required: true
+    values:
+      - weekly_executive
+      - monthly_sales
+      - quarterly_performance
+      - daily_operations
+      - customer_health
+    description: "Type of report to generate"
+
+  - id: recipients
+    type: ARRAY
+    defaults: ["executives@company.com"]
+    description: "Report recipients"
+
+  - id: include_recommendations
+    type: BOOLEAN
+    defaults: true
+    description: "Include AI-generated recommendations"
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Task 1: Query Data from Sources
+  # ---------------------------------------------------------------------------
+  - id: query_data
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pandas sqlalchemy psycopg2-binary requests
+    env:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: "{{ secret('POSTGRES_DB') }}"
+      POSTGRES_USER: "{{ secret('POSTGRES_USER') }}"
+      POSTGRES_PASSWORD: "{{ secret('POSTGRES_PASSWORD') }}"
+      REPORT_TYPE: "{{ inputs.report_type }}"
+    script: |
+      import json
+      import pandas as pd
+      from sqlalchemy import create_engine
+      from datetime import datetime, timedelta
+      import os
+
+      # Database connection
+      engine = create_engine(
+          f"postgresql://{os.environ['POSTGRES_USER']}:{os.environ['POSTGRES_PASSWORD']}@{os.environ['POSTGRES_HOST']}:{os.environ['POSTGRES_PORT']}/{os.environ['POSTGRES_DB']}"
+      )
+
+      report_type = os.environ['REPORT_TYPE']
+
+      # Query based on report type
+      if report_type == 'weekly_executive':
+          # Agent executions
+          df_executions = pd.read_sql("""
+              SELECT
+                  DATE(created_at) as date,
+                  COUNT(*) as total_executions,
+                  AVG(execution_time_ms) as avg_latency_ms,
+                  AVG(quality_score) as avg_quality,
+                  SUM(cost_usd) as total_cost
+              FROM agent_audit_trail
+              WHERE created_at >= NOW() - INTERVAL '7 days'
+              GROUP BY DATE(created_at)
+              ORDER BY date
+          """, engine)
+
+          # Customer usage
+          df_customers = pd.read_sql("""
+              SELECT
+                  customer_id,
+                  SUM(agent_executions) as executions,
+                  SUM(total_cost_usd) as cost,
+                  AVG(avg_quality_score) as quality
+              FROM customer_usage
+              WHERE date >= CURRENT_DATE - 7
+              GROUP BY customer_id
+              ORDER BY cost DESC
+              LIMIT 10
+          """, engine)
+
+          data = {
+              "executions": df_executions.to_dict('records'),
+              "top_customers": df_customers.to_dict('records'),
+              "period": "last_7_days"
+          }
+
+      elif report_type == 'monthly_sales':
+          # Simulated sales data
+          data = {
+              "total_revenue": 125000,
+              "new_customers": 15,
+              "churn": 2,
+              "avg_deal_size": 8333,
+              "period": "last_30_days"
+          }
+
+      else:
+          data = {"message": "Report type not configured"}
+
+      with open('report_data.json', 'w') as f:
+          json.dump(data, f, indent=2)
+
+      print(f"Data queried for {report_type}")
+
+    outputFiles:
+      - report_data.json
+
+  # ---------------------------------------------------------------------------
+  # Task 2: Perform Statistical Analysis
+  # ---------------------------------------------------------------------------
+  - id: analyze_data
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pandas numpy scipy
+    script: |
+      import json
+      import pandas as pd
+      import numpy as np
+
+      with open('{{ outputs.query_data.outputFiles["report_data.json"] }}', 'r') as f:
+          data = json.load(f)
+
+      analysis = {
+          "summary_statistics": {},
+          "trends": {},
+          "anomalies": [],
+          "key_metrics": {}
+      }
+
+      if 'executions' in data:
+          df = pd.DataFrame(data['executions'])
+
+          # Calculate statistics
+          analysis['summary_statistics'] = {
+              "total_executions": int(df['total_executions'].sum()),
+              "avg_daily_executions": float(df['total_executions'].mean()),
+              "avg_latency_ms": float(df['avg_latency_ms'].mean()),
+              "avg_quality": float(df['avg_quality'].mean()),
+              "total_cost": float(df['total_cost'].sum())
+          }
+
+          # Calculate trends (simple linear regression)
+          if len(df) > 1:
+              x = np.arange(len(df))
+              y = df['total_executions'].values
+              slope = np.polyfit(x, y, 1)[0]
+
+              analysis['trends'] = {
+                  "execution_trend": "increasing" if slope > 0 else "decreasing",
+                  "trend_slope": float(slope)
+              }
+
+          # Detect anomalies (simple: values > 2 std devs)
+          mean = df['total_executions'].mean()
+          std = df['total_executions'].std()
+          anomalies = df[df['total_executions'] > mean + 2*std]
+
+          if not anomalies.empty:
+              analysis['anomalies'] = anomalies.to_dict('records')
+
+      with open('analysis.json', 'w') as f:
+          json.dump(analysis, f, indent=2)
+
+      print("Statistical analysis complete")
+
+    outputFiles:
+      - analysis.json
+
+  # ---------------------------------------------------------------------------
+  # Task 3: Generate Visualizations
+  # ---------------------------------------------------------------------------
+  - id: create_visualizations
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install matplotlib pandas
+    script: |
+      import json
+      import matplotlib.pyplot as plt
+      import pandas as pd
+
+      with open('{{ outputs.query_data.outputFiles["report_data.json"] }}', 'r') as f:
+          data = json.load(f)
+
+      if 'executions' in data:
+          df = pd.DataFrame(data['executions'])
+
+          # Create line chart
+          fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+          # Executions over time
+          ax1.plot(df['date'], df['total_executions'], marker='o')
+          ax1.set_title('Daily Executions')
+          ax1.set_xlabel('Date')
+          ax1.set_ylabel('Executions')
+          ax1.tick_params(axis='x', rotation=45)
+
+          # Quality score over time
+          ax2.plot(df['date'], df['avg_quality'], marker='o', color='green')
+          ax2.set_title('Average Quality Score')
+          ax2.set_xlabel('Date')
+          ax2.set_ylabel('Quality (0-10)')
+          ax2.tick_params(axis='x', rotation=45)
+
+          plt.tight_layout()
+          plt.savefig('metrics_chart.png', dpi=150, bbox_inches='tight')
+
+          print("Visualizations created")
+
+    outputFiles:
+      - metrics_chart.png
+
+  # ---------------------------------------------------------------------------
+  # Task 4: Generate Narrative Insights with LLM
+  # ---------------------------------------------------------------------------
+  - id: generate_insights
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      with open('{{ outputs.analyze_data.outputFiles["analysis.json"] }}', 'r') as f:
+          analysis = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.5)
+
+      insights_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are a business intelligence analyst writing executive insights.
+
+          Analyze the data and provide:
+          1. Executive Summary (2-3 sentences)
+          2. Key Findings (3-5 bullet points)
+          3. Notable Trends
+          4. Areas of Concern (if any)
+          5. Recommendations (3-5 action items)
+
+          Be concise, data-driven, and actionable.
+          Format: Professional markdown
+          """),
+          ("user", """Report Type: {{ inputs.report_type }}
+
+          Data Analysis:
+          {analysis_json}
+
+          Generate insights:
+          """)
+      ])
+
+      response = llm.invoke(
+          insights_prompt.format_messages(
+              analysis_json=json.dumps(analysis, indent=2)
+          )
+      )
+
+      insights = {
+          "narrative": response.content,
+          "generated_at": "{{ execution.startDate }}"
+      }
+
+      with open('insights.md', 'w') as f:
+          f.write(response.content)
+
+      print("Narrative insights generated")
+
+    outputFiles:
+      - insights.md
+
+  # ---------------------------------------------------------------------------
+  # Task 5: Compile Final Report
+  # ---------------------------------------------------------------------------
+  - id: compile_report
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install markdown2
+    script: |
+      import json
+      from datetime import datetime
+
+      # Load components
+      with open('{{ outputs.query_data.outputFiles["report_data.json"] }}', 'r') as f:
+          data = json.load(f)
+
+      with open('{{ outputs.analyze_data.outputFiles["analysis.json"] }}', 'r') as f:
+          analysis = json.load(f)
+
+      with open('{{ outputs.generate_insights.outputFiles["insights.md"] }}', 'r') as f:
+          insights = f.read()
+
+      # Compile report
+      report = f"""# {{ inputs.report_type | title }} Report
+
+**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Report ID:** {{ execution.id }}
+**Period:** {data.get('period', 'N/A')}
+
+---
+
+## Executive Summary
+
+{insights}
+
+---
+
+## Key Metrics
+
+"""
+
+      if 'summary_statistics' in analysis:
+          stats = analysis['summary_statistics']
+          report += f"""
+- **Total Executions:** {stats.get('total_executions', 0):,}
+- **Average Daily Executions:** {stats.get('avg_daily_executions', 0):.1f}
+- **Average Latency:** {stats.get('avg_latency_ms', 0):.0f}ms
+- **Average Quality Score:** {stats.get('avg_quality', 0):.2f}/10
+- **Total Cost:** ${stats.get('total_cost', 0):,.2f}
+"""
+
+      if 'trends' in analysis:
+          report += f"\n## Trends\n\n"
+          report += f"- Execution trend: **{analysis['trends'].get('execution_trend', 'stable')}**\n"
+
+      if analysis.get('anomalies'):
+          report += f"\n## Anomalies Detected\n\n{len(analysis['anomalies'])} anomalous data points detected.\n"
+
+      report += f"\n\n---\n\n*This report was automatically generated by AI Agent (Execution ID: {{ execution.id }})*\n"
+
+      with open('final_report.md', 'w') as f:
+          f.write(report)
+
+      print("Final report compiled")
+
+    outputFiles:
+      - final_report.md
+
+  # ---------------------------------------------------------------------------
+  # Task 6: Distribute Report
+  # ---------------------------------------------------------------------------
+  - id: send_report
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "📊 New Report Available",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*{{ inputs.report_type | title }} Report Generated*\n\n*Period:* {{ outputs.query_data.vars.period }}\n*Generated:* {{ execution.startDate }}\n\n*Key Metrics:*\nTotal Executions: {{ outputs.analyze_data.vars.total_executions }}\nAvg Quality: {{ outputs.analyze_data.vars.avg_quality }}\nTotal Cost: ${{ outputs.analyze_data.vars.total_cost }}\n\n*Report ID:* {{ execution.id }}"
+            }
+          }
+        ]
+      }
+
+# =============================================================================
+# TRIGGERS - Scheduled reports
+# =============================================================================
+triggers:
+  - id: weekly_executive_report
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 8 * * MON"  # Every Monday at 8am
+    inputs:
+      report_type: weekly_executive
+
+  - id: monthly_sales_report
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 9 1 * *"  # 1st of month at 9am
+    inputs:
+      report_type: monthly_sales
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+errors:
+  - id: error_notification
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ Report Generation Failed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Report Type:* {{ inputs.report_type }}\n*Error:* {{ task.errorMessage }}"
+            }
+          }
+        ]
+      }

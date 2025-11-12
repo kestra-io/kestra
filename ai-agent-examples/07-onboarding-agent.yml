@@ -1,0 +1,589 @@
+# =============================================================================
+# AI AGENT: Customer Onboarding Agent
+# =============================================================================
+# Type: Multi-step workflow agent with progress tracking
+# Use Case: Guide new customers through product setup
+# Pattern: Assess → Plan → Execute → Verify → Support
+# =============================================================================
+
+id: customer_onboarding_agent
+namespace: enterprise.client1.agents.onboarding
+description: |
+  Intelligent customer onboarding agent that:
+  - Assesses customer's technical level and goals
+  - Creates personalized onboarding plan
+  - Guides through setup steps
+  - Verifies completion of each milestone
+  - Provides contextual help and documentation
+  - Escalates blockers to success team
+  - Tracks time-to-value metrics
+
+labels:
+  agent_type: onboarding
+  department: customer_success
+  use_case: customer_onboarding
+
+inputs:
+  - id: customer_id
+    type: STRING
+    required: true
+    description: "Customer identifier"
+
+  - id: product_tier
+    type: SELECT
+    required: true
+    values:
+      - starter
+      - professional
+      - enterprise
+    description: "Product tier purchased"
+
+  - id: use_case
+    type: STRING
+    defaults: "general"
+    description: "Primary use case"
+
+  - id: technical_level
+    type: SELECT
+    defaults: intermediate
+    values:
+      - beginner
+      - intermediate
+      - advanced
+    description: "Customer's technical proficiency"
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+  intercom_token: "{{ secret('CLIENT1_INTERCOM_TOKEN') }}"
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Task 1: Assess Customer Profile
+  # ---------------------------------------------------------------------------
+  - id: assess_customer
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      CUSTOMER_ID: "{{ inputs.customer_id }}"
+      PRODUCT_TIER: "{{ inputs.product_tier }}"
+      USE_CASE: "{{ inputs.use_case }}"
+      TECHNICAL_LEVEL: "{{ inputs.technical_level }}"
+    script: |
+      import json
+      import os
+      from datetime import datetime
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.3)
+
+      assessment_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are a customer success expert creating personalized onboarding plans.
+
+          Based on the customer profile, create:
+          1. Recommended onboarding path (beginner/standard/advanced)
+          2. Key milestones (3-7 steps)
+          3. Estimated completion time
+          4. Potential challenges to watch for
+          5. Success criteria
+
+          Output JSON:
+          {{
+            "onboarding_path": "beginner|standard|advanced",
+            "milestones": [
+              {{
+                "step": 1,
+                "title": "...",
+                "description": "...",
+                "estimated_time_minutes": 15,
+                "difficulty": "easy|medium|hard",
+                "documentation_links": ["url1", "url2"]
+              }}
+            ],
+            "estimated_total_time_hours": 2.5,
+            "potential_challenges": ["challenge1", "challenge2"],
+            "success_criteria": ["criteria1", "criteria2"]
+          }}
+          """),
+          ("user", """Customer Profile:
+          - Product Tier: {product_tier}
+          - Use Case: {use_case}
+          - Technical Level: {technical_level}
+
+          Create personalized onboarding plan:
+          """)
+      ])
+
+      response = llm.invoke(
+          assessment_prompt.format_messages(
+              product_tier=os.environ['PRODUCT_TIER'],
+              use_case=os.environ['USE_CASE'],
+              technical_level=os.environ['TECHNICAL_LEVEL']
+          )
+      )
+
+      onboarding_plan = json.loads(response.content)
+      onboarding_plan['customer_id'] = os.environ['CUSTOMER_ID']
+      onboarding_plan['created_at'] = datetime.now().isoformat()
+      onboarding_plan['status'] = 'in_progress'
+
+      with open('onboarding_plan.json', 'w') as f:
+          json.dump(onboarding_plan, f, indent=2)
+
+      print(f"Onboarding Path: {onboarding_plan['onboarding_path']}")
+      print(f"Milestones: {len(onboarding_plan['milestones'])}")
+      print(f"Est. Time: {onboarding_plan['estimated_total_time_hours']} hours")
+
+    outputFiles:
+      - onboarding_plan.json
+
+  # ---------------------------------------------------------------------------
+  # Task 2: Send Welcome Message with Plan
+  # ---------------------------------------------------------------------------
+  - id: send_welcome_message
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      with open('{{ outputs.assess_customer.outputFiles["onboarding_plan.json"] }}', 'r') as f:
+          plan = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+
+      welcome_prompt = ChatPromptTemplate.from_messages([
+          ("system", """Write a warm, personalized welcome message for a new customer.
+
+          Include:
+          - Welcome and congratulations
+          - Brief overview of their onboarding journey
+          - What they'll accomplish
+          - Encouragement
+          - Clear next step
+
+          Tone: Friendly, encouraging, professional
+          Length: 150-250 words
+          """),
+          ("user", """Customer onboarded to: {product_tier} tier
+          Use case: {use_case}
+          Onboarding path: {onboarding_path}
+          Milestones: {milestone_count}
+          Estimated time: {estimated_hours} hours
+
+          Write welcome message:
+          """)
+      ])
+
+      response = llm.invoke(
+          welcome_prompt.format_messages(
+              product_tier="{{ inputs.product_tier }}",
+              use_case="{{ inputs.use_case }}",
+              onboarding_path=plan['onboarding_path'],
+              milestone_count=len(plan['milestones']),
+              estimated_hours=plan['estimated_total_time_hours']
+          )
+      )
+
+      welcome_message = {
+          "subject": "Welcome to [Product]! Let's get you started 🚀",
+          "body": response.content,
+          "customer_id": "{{ inputs.customer_id }}"
+      }
+
+      with open('welcome_message.json', 'w') as f:
+          json.dump(welcome_message, f, indent=2)
+
+      print("Welcome message generated")
+
+    outputFiles:
+      - welcome_message.json
+
+  # ---------------------------------------------------------------------------
+  # Task 3: Create Onboarding Checklist
+  # ---------------------------------------------------------------------------
+  - id: create_checklist
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://postgres:5432/{{ secret('POSTGRES_DB') }}
+    username: "{{ secret('POSTGRES_USER') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    sql: |
+      -- Create onboarding session
+      INSERT INTO onboarding_sessions (
+        customer_id,
+        product_tier,
+        onboarding_path,
+        status,
+        started_at,
+        estimated_completion_hours,
+        execution_id
+      ) VALUES (
+        '{{ inputs.customer_id }}',
+        '{{ inputs.product_tier }}',
+        '{{ outputs.assess_customer.vars.onboarding_path }}',
+        'in_progress',
+        NOW(),
+        {{ outputs.assess_customer.vars.estimated_total_time_hours }},
+        '{{ execution.id }}'
+      ) RETURNING id;
+
+  # ---------------------------------------------------------------------------
+  # Task 4: Guide Through First Milestone
+  # ---------------------------------------------------------------------------
+  - id: guide_first_milestone
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      with open('{{ outputs.assess_customer.outputFiles["onboarding_plan.json"] }}', 'r') as f:
+          plan = json.load(f)
+
+      first_milestone = plan['milestones'][0]
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.5)
+
+      guidance_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are a helpful onboarding guide.
+
+          Provide clear, step-by-step instructions for completing this milestone.
+
+          Format:
+          - Clear objective
+          - Prerequisites (if any)
+          - Step-by-step instructions
+          - Expected outcome
+          - How to verify completion
+          - Next steps
+
+          Be concise but thorough. Use simple language.
+          """),
+          ("user", """Milestone: {title}
+          Description: {description}
+          Difficulty: {difficulty}
+          Estimated time: {time} minutes
+
+          Technical level: {{ inputs.technical_level }}
+
+          Provide step-by-step guidance:
+          """)
+      ])
+
+      response = llm.invoke(
+          guidance_prompt.format_messages(
+              title=first_milestone['title'],
+              description=first_milestone['description'],
+              difficulty=first_milestone['difficulty'],
+              time=first_milestone['estimated_time_minutes']
+          )
+      )
+
+      guidance = {
+          "milestone_id": 1,
+          "title": first_milestone['title'],
+          "instructions": response.content,
+          "estimated_time": first_milestone['estimated_time_minutes'],
+          "documentation_links": first_milestone.get('documentation_links', [])
+      }
+
+      with open('first_milestone_guidance.json', 'w') as f:
+          json.dump(guidance, f, indent=2)
+
+      print(f"Guidance for: {first_milestone['title']}")
+
+    outputFiles:
+      - first_milestone_guidance.json
+
+  # ---------------------------------------------------------------------------
+  # Task 5: Monitor Progress & Provide Help
+  # ---------------------------------------------------------------------------
+  - id: monitor_progress
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from datetime import datetime, timedelta
+
+      # In production: Check actual customer progress from product analytics
+
+      # Simulated progress check
+      progress = {
+          "customer_id": "{{ inputs.customer_id }}",
+          "milestones_completed": 0,
+          "total_milestones": 0,  # Will be set from plan
+          "current_milestone": 1,
+          "time_spent_minutes": 0,
+          "stuck_on_step": None,
+          "help_requests": 0,
+          "last_activity": datetime.now().isoformat()
+      }
+
+      # Load plan to get total milestones
+      with open('{{ outputs.assess_customer.outputFiles["onboarding_plan.json"] }}', 'r') as f:
+          plan = json.load(f)
+          progress['total_milestones'] = len(plan['milestones'])
+
+      # Check if customer needs help
+      needs_help = False
+      help_message = None
+
+      # In production: Check if customer has been stuck for >30 minutes
+      # if time_spent_on_current_step > 30:
+      #     needs_help = True
+
+      progress['needs_help'] = needs_help
+      progress['help_message'] = help_message
+
+      with open('progress_check.json', 'w') as f:
+          json.dump(progress, f, indent=2)
+
+      print(f"Progress: {progress['milestones_completed']}/{progress['total_milestones']}")
+
+    outputFiles:
+      - progress_check.json
+
+  # ---------------------------------------------------------------------------
+  # Task 6: Proactive Help (if stuck)
+  # ---------------------------------------------------------------------------
+  - id: provide_proactive_help
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      with open('{{ outputs.monitor_progress.outputFiles["progress_check.json"] }}', 'r') as f:
+          progress = json.load(f)
+
+      with open('{{ outputs.assess_customer.outputFiles["onboarding_plan.json"] }}', 'r') as f:
+          plan = json.load(f)
+
+      current_milestone = plan['milestones'][progress['current_milestone'] - 1]
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.6)
+
+      help_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are a proactive customer success assistant.
+
+          The customer seems stuck on a milestone. Provide:
+          1. Encouragement
+          2. Common issues for this step
+          3. Troubleshooting tips
+          4. Alternative approaches
+          5. Offer to connect with support
+
+          Be empathetic and helpful.
+          """),
+          ("user", """Customer stuck on: {milestone_title}
+          Time spent: {time_spent} minutes
+          Expected time: {expected_time} minutes
+
+          Technical level: {{ inputs.technical_level }}
+
+          Provide helpful guidance:
+          """)
+      ])
+
+      response = llm.invoke(
+          help_prompt.format_messages(
+              milestone_title=current_milestone['title'],
+              time_spent=progress['time_spent_minutes'],
+              expected_time=current_milestone['estimated_time_minutes']
+          )
+      )
+
+      help_message = {
+          "type": "proactive_help",
+          "milestone": current_milestone['title'],
+          "message": response.content,
+          "escalate_to_human": progress['time_spent_minutes'] > 60  # >1 hour
+      }
+
+      with open('proactive_help.json', 'w') as f:
+          json.dump(help_message, f, indent=2)
+
+      print(f"Proactive help provided: {current_milestone['title']}")
+
+    outputFiles:
+      - proactive_help.json
+
+  # ---------------------------------------------------------------------------
+  # Task 7: Celebration & Next Steps
+  # ---------------------------------------------------------------------------
+  - id: celebrate_milestone
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      with open('{{ outputs.assess_customer.outputFiles["onboarding_plan.json"] }}', 'r') as f:
+          plan = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.8)
+
+      celebration_prompt = ChatPromptTemplate.from_messages([
+          ("system", """Write an encouraging celebration message.
+
+          Include:
+          - Congratulations on completing milestone
+          - What they've accomplished
+          - What's next
+          - Motivation to continue
+
+          Tone: Celebratory, encouraging
+          Length: 75-150 words
+          """),
+          ("user", """Milestone completed: {milestone_title}
+
+          Progress: {completed}/{total} milestones
+          Next milestone: {next_title}
+
+          Write celebration message:
+          """)
+      ])
+
+      first_milestone = plan['milestones'][0]
+      next_milestone = plan['milestones'][1] if len(plan['milestones']) > 1 else None
+
+      response = llm.invoke(
+          celebration_prompt.format_messages(
+              milestone_title=first_milestone['title'],
+              completed=1,
+              total=len(plan['milestones']),
+              next_title=next_milestone['title'] if next_milestone else 'Complete'
+          )
+      )
+
+      celebration = {
+          "type": "milestone_celebration",
+          "milestone_completed": first_milestone['title'],
+          "message": response.content,
+          "progress_percent": int((1 / len(plan['milestones'])) * 100)
+      }
+
+      with open('celebration.json', 'w') as f:
+          json.dump(celebration, f, indent=2)
+
+      print(f"Celebration message generated")
+
+    outputFiles:
+      - celebration.json
+
+  # ---------------------------------------------------------------------------
+  # Task 8: Track Metrics
+  # ---------------------------------------------------------------------------
+  - id: track_metrics
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://postgres:5432/{{ secret('POSTGRES_DB') }}
+    username: "{{ secret('POSTGRES_USER') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    sql: |
+      INSERT INTO onboarding_metrics (
+        customer_id,
+        milestone_completed,
+        time_to_first_milestone_hours,
+        help_requests,
+        stuck_count,
+        execution_id,
+        created_at
+      ) VALUES (
+        '{{ inputs.customer_id }}',
+        1,
+        0.5,  -- In production: actual time from start
+        0,
+        0,
+        '{{ execution.id }}',
+        NOW()
+      );
+
+  # ---------------------------------------------------------------------------
+  # Task 9: Notify Success Team
+  # ---------------------------------------------------------------------------
+  - id: notify_success_team
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "🎯 Customer Onboarding Started",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*New Customer Onboarding*\n\n*Customer:* {{ inputs.customer_id }}\n*Tier:* {{ inputs.product_tier }}\n*Path:* {{ outputs.assess_customer.vars.onboarding_path }}\n*Milestones:* {{ outputs.assess_customer.vars.milestone_count }}\n*Est. Time:* {{ outputs.assess_customer.vars.estimated_total_time_hours }} hours"
+            }
+          }
+        ]
+      }
+
+# =============================================================================
+# TRIGGERS - Start onboarding for new customers
+# =============================================================================
+triggers:
+  - id: new_customer_trigger
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: "onboarding_start_{{ secret('WEBHOOK_SECRET') }}"
+
+# =============================================================================
+# SUB-FLOWS - Continue onboarding journey
+# =============================================================================
+# This is milestone 1 - subsequent milestones would be triggered by:
+# - Customer completing previous step
+# - Schedule-based check-ins
+# - Progress monitoring
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+errors:
+  - id: escalate_to_human
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "⚠️ Onboarding Issue",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Onboarding Error*\n\n*Customer:* {{ inputs.customer_id }}\n*Error:* {{ task.errorMessage }}\n\n*Action Required:* Manual intervention needed"
+            }
+          }
+        ]
+      }

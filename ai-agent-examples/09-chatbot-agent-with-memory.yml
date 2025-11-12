@@ -1,0 +1,474 @@
+# =============================================================================
+# AI AGENT: Conversational Chatbot with Memory
+# =============================================================================
+# Type: Stateful conversational agent
+# Use Case: Customer chat support with conversation memory
+# Pattern: Load context → Process message → Generate response → Store memory
+# =============================================================================
+
+id: conversational_chatbot_agent
+namespace: enterprise.client1.agents.chat
+description: |
+  Intelligent chatbot agent with conversation memory:
+  - Maintains conversation history per customer
+  - Remembers customer preferences and context
+  - Accesses knowledge base for accurate answers
+  - Escalates to human when needed
+  - Tracks customer satisfaction
+  - Learns from interactions
+
+labels:
+  agent_type: chatbot
+  department: support
+  use_case: conversational_ai
+
+inputs:
+  - id: customer_id
+    type: STRING
+    required: true
+    description: "Customer identifier"
+
+  - id: session_id
+    type: STRING
+    required: true
+    description: "Conversation session ID"
+
+  - id: message
+    type: STRING
+    required: true
+    description: "Customer's message"
+
+  - id: channel
+    type: SELECT
+    defaults: web_chat
+    values:
+      - web_chat
+      - slack
+      - whatsapp
+      - sms
+      - email
+    description: "Communication channel"
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+  pinecone_api_key: "{{ secret('CLIENT1_PINECONE_API_KEY') }}"
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Task 1: Load Conversation Memory
+  # ---------------------------------------------------------------------------
+  - id: load_conversation_memory
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install psycopg2-binary
+    env:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_DB: "{{ secret('POSTGRES_DB') }}"
+      POSTGRES_USER: "{{ secret('POSTGRES_USER') }}"
+      POSTGRES_PASSWORD: "{{ secret('POSTGRES_PASSWORD') }}"
+      SESSION_ID: "{{ inputs.session_id }}"
+      CUSTOMER_ID: "{{ inputs.customer_id }}"
+    script: |
+      import json
+      import psycopg2
+      import os
+
+      # Connect to PostgreSQL
+      conn = psycopg2.connect(
+          host=os.environ['POSTGRES_HOST'],
+          port=os.environ['POSTGRES_PORT'],
+          database=os.environ['POSTGRES_DB'],
+          user=os.environ['POSTGRES_USER'],
+          password=os.environ['POSTGRES_PASSWORD']
+      )
+      cursor = conn.cursor()
+
+      # Load conversation history
+      cursor.execute("""
+          SELECT role, content, created_at
+          FROM chat_messages
+          WHERE session_id = %s
+          ORDER BY created_at ASC
+          LIMIT 20
+      """, (os.environ['SESSION_ID'],))
+
+      messages = []
+      for row in cursor.fetchall():
+          messages.append({
+              "role": row[0],
+              "content": row[1],
+              "timestamp": str(row[2])
+          })
+
+      # Load customer context
+      cursor.execute("""
+          SELECT preferences, metadata
+          FROM customer_profiles
+          WHERE customer_id = %s
+      """, (os.environ['CUSTOMER_ID'],))
+
+      customer_context = {}
+      row = cursor.fetchone()
+      if row:
+          customer_context = {
+              "preferences": row[0] if row[0] else {},
+              "metadata": row[1] if row[1] else {}
+          }
+
+      memory = {
+          "session_id": os.environ['SESSION_ID'],
+          "customer_id": os.environ['CUSTOMER_ID'],
+          "conversation_history": messages,
+          "customer_context": customer_context,
+          "message_count": len(messages)
+      }
+
+      cursor.close()
+      conn.close()
+
+      with open('conversation_memory.json', 'w') as f:
+          json.dump(memory, f, indent=2)
+
+      print(f"Loaded {len(messages)} messages from session {os.environ['SESSION_ID']}")
+
+    outputFiles:
+      - conversation_memory.json
+
+  # ---------------------------------------------------------------------------
+  # Task 2: Search Knowledge Base
+  # ---------------------------------------------------------------------------
+  - id: search_knowledge_base
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install pinecone-client langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      PINECONE_API_KEY: "{{ vars.pinecone_api_key }}"
+      USER_MESSAGE: "{{ inputs.message }}"
+    script: |
+      import json
+      import os
+      from pinecone import Pinecone
+      from langchain_openai import OpenAIEmbeddings
+
+      # Initialize
+      pc = Pinecone(api_key=os.environ['PINECONE_API_KEY'])
+      embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+
+      # Search knowledge base
+      index = pc.Index("client1-kb")
+      query_embedding = embeddings.embed_query(os.environ['USER_MESSAGE'])
+
+      results = index.query(
+          vector=query_embedding,
+          top_k=3,
+          include_metadata=True
+      )
+
+      kb_context = []
+      if results.matches:
+          for match in results.matches:
+              kb_context.append({
+                  "text": match.metadata.get('text', ''),
+                  "source": match.metadata.get('source', ''),
+                  "score": match.score
+              })
+
+      with open('kb_context.json', 'w') as f:
+          json.dump(kb_context, f, indent=2)
+
+      print(f"Found {len(kb_context)} relevant knowledge base articles")
+
+    outputFiles:
+      - kb_context.json
+
+  # ---------------------------------------------------------------------------
+  # Task 3: Determine Intent & Escalation Need
+  # ---------------------------------------------------------------------------
+  - id: analyze_intent
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      USER_MESSAGE: "{{ inputs.message }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      # Load conversation memory
+      with open('{{ outputs.load_conversation_memory.outputFiles["conversation_memory.json"] }}', 'r') as f:
+          memory = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
+
+      intent_prompt = ChatPromptTemplate.from_messages([
+          ("system", """Analyze the user's message and determine:
+          1. Intent: question/complaint/feature_request/technical_issue/billing/general
+          2. Sentiment: positive/negative/neutral
+          3. Urgency: low/medium/high/critical
+          4. Requires_human: true/false (escalate if complex, angry, or requesting human)
+          5. Confidence: 0.0-1.0
+
+          Output JSON only.
+          """),
+          ("user", """Message: {message}
+
+          Recent conversation:
+          {conversation}
+
+          Analyze:
+          """)
+      ])
+
+      recent_messages = memory['conversation_history'][-5:] if memory['conversation_history'] else []
+      conversation_context = "\n".join([f"{msg['role']}: {msg['content']}" for msg in recent_messages])
+
+      response = llm.invoke(
+          intent_prompt.format_messages(
+              message=os.environ['USER_MESSAGE'],
+              conversation=conversation_context
+          )
+      )
+
+      intent_analysis = json.loads(response.content)
+
+      with open('intent_analysis.json', 'w') as f:
+          json.dump(intent_analysis, f, indent=2)
+
+      print(f"Intent: {intent_analysis.get('intent')}, Escalate: {intent_analysis.get('requires_human')}")
+
+    outputFiles:
+      - intent_analysis.json
+
+  # ---------------------------------------------------------------------------
+  # Task 4: Generate Response
+  # ---------------------------------------------------------------------------
+  - id: generate_response
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+      USER_MESSAGE: "{{ inputs.message }}"
+      CUSTOMER_ID: "{{ inputs.customer_id }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      # Load context
+      with open('{{ outputs.load_conversation_memory.outputFiles["conversation_memory.json"] }}', 'r') as f:
+          memory = json.load(f)
+
+      with open('{{ outputs.search_knowledge_base.outputFiles["kb_context.json"] }}', 'r') as f:
+          kb_context = json.load(f)
+
+      with open('{{ outputs.analyze_intent.outputFiles["intent_analysis.json"] }}', 'r') as f:
+          intent = json.load(f)
+
+      # Check if escalation needed
+      if intent.get('requires_human', False):
+          response_text = """I understand this is important to you. Let me connect you with a member of our support team who can better assist you.
+
+A support specialist will be with you shortly. Is there anything else I can help you with in the meantime?"""
+
+          bot_response = {
+              "type": "escalation",
+              "message": response_text,
+              "escalated": True,
+              "escalation_reason": intent.get('intent')
+          }
+      else:
+          # Generate AI response
+          llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+
+          chat_prompt = ChatPromptTemplate.from_messages([
+              ("system", """You are a helpful, friendly customer support chatbot.
+
+              Guidelines:
+              - Be conversational and empathetic
+              - Use the knowledge base context when relevant
+              - Remember previous conversation
+              - Be concise (2-3 sentences usually)
+              - If unsure, offer to escalate
+              - Use customer's name if known
+
+              Knowledge Base Context:
+              {kb_context}
+
+              Conversation History:
+              {conversation_history}
+              """),
+              ("user", "{message}")
+          ])
+
+          kb_text = "\n\n".join([
+              f"Source: {item['source']}\n{item['text']}"
+              for item in kb_context
+          ]) if kb_context else "No relevant articles found."
+
+          conversation_text = "\n".join([
+              f"{msg['role']}: {msg['content']}"
+              for msg in memory['conversation_history'][-10:]
+          ]) if memory['conversation_history'] else "New conversation"
+
+          response = llm.invoke(
+              chat_prompt.format_messages(
+                  message=os.environ['USER_MESSAGE'],
+                  kb_context=kb_text,
+                  conversation_history=conversation_text
+              )
+          )
+
+          bot_response = {
+              "type": "bot_response",
+              "message": response.content,
+              "escalated": False,
+              "used_kb": len(kb_context) > 0,
+              "kb_sources": [item['source'] for item in kb_context]
+          }
+
+      with open('bot_response.json', 'w') as f:
+          json.dump(bot_response, f, indent=2)
+
+      print(f"Response generated: {bot_response['type']}")
+
+    outputFiles:
+      - bot_response.json
+
+  # ---------------------------------------------------------------------------
+  # Task 5: Store Conversation
+  # ---------------------------------------------------------------------------
+  - id: store_conversation
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://postgres:5432/{{ secret('POSTGRES_DB') }}
+    username: "{{ secret('POSTGRES_USER') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    sql: |
+      -- Store user message
+      INSERT INTO chat_messages (
+        session_id,
+        customer_id,
+        role,
+        content,
+        channel,
+        created_at
+      ) VALUES (
+        '{{ inputs.session_id }}',
+        '{{ inputs.customer_id }}',
+        'user',
+        '{{ inputs.message }}',
+        '{{ inputs.channel }}',
+        NOW()
+      );
+
+      -- Store bot response
+      INSERT INTO chat_messages (
+        session_id,
+        customer_id,
+        role,
+        content,
+        channel,
+        metadata,
+        created_at
+      ) VALUES (
+        '{{ inputs.session_id }}',
+        '{{ inputs.customer_id }}',
+        'assistant',
+        '{{ outputs.generate_response.vars.message }}',
+        '{{ inputs.channel }}',
+        '{{ outputs.generate_response.outputFiles["bot_response.json"] }}',
+        NOW()
+      );
+
+  # ---------------------------------------------------------------------------
+  # Task 6: Escalate if Needed
+  # ---------------------------------------------------------------------------
+  - id: escalate_to_human
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    condition: "{{ outputs.generate_response.vars.escalated == true }}"
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "🚨 Chat Escalation",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Chat Escalation Required*\n\n*Customer:* {{ inputs.customer_id }}\n*Session:* {{ inputs.session_id }}\n*Channel:* {{ inputs.channel }}\n*Reason:* {{ outputs.analyze_intent.vars.intent }}\n\n*Last Message:*\n{{ inputs.message }}"
+            }
+          }
+        ]
+      }
+
+  # ---------------------------------------------------------------------------
+  # Task 7: Track Metrics
+  # ---------------------------------------------------------------------------
+  - id: track_metrics
+    type: io.kestra.plugin.jdbc.postgresql.Query
+    url: jdbc:postgresql://postgres:5432/{{ secret('POSTGRES_DB') }}
+    username: "{{ secret('POSTGRES_USER') }}"
+    password: "{{ secret('POSTGRES_PASSWORD') }}"
+    sql: |
+      INSERT INTO chatbot_metrics (
+        session_id,
+        customer_id,
+        intent,
+        sentiment,
+        escalated,
+        kb_used,
+        response_time_ms,
+        execution_id,
+        created_at
+      ) VALUES (
+        '{{ inputs.session_id }}',
+        '{{ inputs.customer_id }}',
+        '{{ outputs.analyze_intent.vars.intent }}',
+        '{{ outputs.analyze_intent.vars.sentiment }}',
+        {{ outputs.generate_response.vars.escalated }},
+        {{ outputs.generate_response.vars.used_kb }},
+        1000,  -- In production: actual response time
+        '{{ execution.id }}',
+        NOW()
+      );
+
+# =============================================================================
+# TRIGGERS - Real-time chat webhook
+# =============================================================================
+triggers:
+  - id: chat_webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: "chatbot_{{ secret('WEBHOOK_SECRET') }}"
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+errors:
+  - id: error_fallback
+    type: io.kestra.plugin.scripts.python.Script
+    script: |
+      import json
+
+      error_response = {
+          "type": "error",
+          "message": "I'm experiencing technical difficulties. Let me connect you with a support specialist who can help you right away.",
+          "escalated": True,
+          "error": "{{ task.errorMessage }}"
+      }
+
+      with open('error_response.json', 'w') as f:
+          json.dump(error_response, f, indent=2)
+
+      print("Error fallback response generated")

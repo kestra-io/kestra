@@ -1,0 +1,25 @@
+id: data_pipeline_agent
+namespace: enterprise.client1.agents.internal
+description: ETL pipeline with data quality checks
+labels:
+  agent_type: data_pipeline
+tasks:
+  - id: extract_data
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install pandas"]
+    script: |
+      import pandas as pd
+      df = pd.DataFrame({"id": [1,2,3], "value": [10,20,30]})
+      df.to_csv('extracted.csv', index=False)
+    outputFiles: [extracted.csv]
+  - id: transform_data
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install pandas"]
+    script: |
+      import pandas as pd
+      df = pd.read_csv('{{ outputs.extract_data.outputFiles["extracted.csv"] }}')
+      df['value_squared'] = df['value'] ** 2
+      df.to_csv('transformed.csv', index=False)
+    outputFiles: [transformed.csv]

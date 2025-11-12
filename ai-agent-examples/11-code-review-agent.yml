@@ -1,0 +1,81 @@
+# =============================================================================
+# AI AGENT: Code Review Agent
+# =============================================================================
+id: code_review_agent
+namespace: enterprise.client1.agents.internal
+description: |
+  Automated code review agent that analyzes pull requests,
+  identifies issues, suggests improvements, and ensures code quality standards.
+
+labels:
+  agent_type: code_review
+  department: engineering
+
+inputs:
+  - id: pr_number
+    type: INT
+    required: true
+  - id: repository
+    type: STRING
+    required: true
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+  github_token: "{{ secret('CLIENT1_GITHUB_TOKEN') }}"
+
+tasks:
+  - id: fetch_pr_diff
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install requests
+    env:
+      GITHUB_TOKEN: "{{ vars.github_token }}"
+    script: |
+      import requests
+      import json
+      
+      # Fetch PR diff from GitHub API
+      headers = {"Authorization": f"token {os.environ['GITHUB_TOKEN']}"}
+      url = f"https://api.github.com/repos/{{ inputs.repository }}/pulls/{{ inputs.pr_number }}"
+      
+      pr_data = {"files": ["sample.py"], "diff": "mock diff"}
+      
+      with open('pr_data.json', 'w') as f:
+          json.dump(pr_data, f)
+    outputFiles:
+      - pr_data.json
+
+  - id: review_code
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      
+      llm = ChatOpenAI(model="gpt-4")
+      
+      review = {
+        "issues": ["Security: SQL injection risk", "Style: Missing docstrings"],
+        "suggestions": ["Add input validation", "Improve error handling"],
+        "score": 7.5
+      }
+      
+      with open('review.json', 'w') as f:
+          json.dump(review, f)
+    outputFiles:
+      - review.json
+
+  - id: post_review
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "🔍 Code Review Complete - PR #{{ inputs.pr_number }}"
+      }

@@ -1,0 +1,38 @@
+id: strategic_analysis_multi_agent
+namespace: enterprise.client1.agents.multiagent
+description: Multi-agent strategic analysis - Data Gathering → Analysis → Recommendation → Execution
+labels: {agent_type: multi_agent, use_case: strategy}
+tasks:
+  - id: data_gathering_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install pandas"]
+    script: |
+      import pandas as pd, json
+      data = {"market_size": 50000000, "competitors": 5, "growth_rate": 0.15}
+      with open('market_data.json', 'w') as f: json.dump(data, f)
+    outputFiles: [market_data.json]
+  - id: analysis_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      analysis = {"opportunity_score": 8.5, "threats": ["Competition"], "strengths": ["Tech"]}
+      with open('strategic_analysis.json', 'w') as f: json.dump(analysis, f)
+    outputFiles: [strategic_analysis.json]
+  - id: recommendation_agent
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      recommendations = {"strategy": "Expand to enterprise", "priorities": ["Hire sales", "Build features"]}
+      with open('recommendations.json', 'w') as f: json.dump(recommendations, f)
+    outputFiles: [recommendations.json]

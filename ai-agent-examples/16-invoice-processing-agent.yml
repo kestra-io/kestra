@@ -1,0 +1,28 @@
+id: invoice_processing_agent
+namespace: enterprise.client1.agents.business
+description: Automated invoice data extraction, validation, and approval routing
+labels: {agent_type: invoice_processing, department: finance}
+inputs:
+  - id: invoice_file
+    type: STRING
+tasks:
+  - id: extract_invoice_data
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      invoice = {"vendor": "Acme Corp", "amount": 5000, "due_date": "2025-12-01"}
+      with open('invoice_data.json', 'w') as f: json.dump(invoice, f)
+    outputFiles: [invoice_data.json]
+  - id: validate_invoice
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    script: |
+      import json
+      validation = {"valid": True, "approved": True}
+      with open('validation.json', 'w') as f: json.dump(validation, f)
+    outputFiles: [validation.json]

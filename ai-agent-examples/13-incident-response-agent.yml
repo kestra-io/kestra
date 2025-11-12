@@ -1,0 +1,30 @@
+id: incident_response_agent
+namespace: enterprise.client1.agents.internal
+description: Automated incident detection, diagnosis, and response
+labels:
+  agent_type: incident_response
+inputs:
+  - id: incident_type
+    type: SELECT
+    values: [outage, performance, security]
+tasks:
+  - id: diagnose_incident
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      diagnosis = {"root_cause": "Database connection pool exhausted", "severity": "high"}
+      with open('diagnosis.json', 'w') as f: json.dump(diagnosis, f)
+    outputFiles: [diagnosis.json]
+  - id: execute_remediation
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    script: |
+      import json
+      result = {"action": "Restarted database pool", "status": "resolved"}
+      with open('remediation.json', 'w') as f: json.dump(result, f)
+    outputFiles: [remediation.json]

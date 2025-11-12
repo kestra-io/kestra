@@ -1,0 +1,493 @@
+# =============================================================================
+# AI AGENT: Sales Qualification Agent
+# =============================================================================
+# Type: ReAct agent with CRM integration
+# Use Case: Qualify leads, score prospects, schedule follow-ups
+# Pattern: Analyze lead → Score → Route → Schedule
+# =============================================================================
+
+id: sales_qualification_agent
+namespace: enterprise.client1.agents.sales
+description: |
+  Intelligent sales qualification agent that:
+  - Analyzes incoming leads from multiple sources
+  - Scores leads using BANT framework (Budget, Authority, Need, Timeline)
+  - Enriches lead data from external sources
+  - Routes qualified leads to appropriate sales reps
+  - Schedules follow-up tasks automatically
+  - Personalizes outreach messages
+
+labels:
+  agent_type: sales_qualification
+  department: sales
+  use_case: lead_qualification
+
+inputs:
+  - id: lead_source
+    type: SELECT
+    defaults: web_form
+    values:
+      - web_form
+      - linkedin
+      - email_inquiry
+      - demo_request
+      - referral
+    description: "Lead source"
+
+  - id: lead_data
+    type: JSON
+    required: true
+    description: "Lead information (name, email, company, etc.)"
+
+  - id: auto_schedule_meeting
+    type: BOOLEAN
+    defaults: true
+    description: "Automatically schedule meeting for qualified leads"
+
+variables:
+  openai_api_key: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+  salesforce_token: "{{ secret('CLIENT1_SALESFORCE_TOKEN') }}"
+  clearbit_api_key: "{{ secret('CLIENT1_CLEARBIT_API_KEY') }}"
+  calendly_api_key: "{{ secret('CLIENT1_CALENDLY_API_KEY') }}"
+
+tasks:
+  # ---------------------------------------------------------------------------
+  # Task 1: Enrich Lead Data
+  # ---------------------------------------------------------------------------
+  - id: enrich_lead_data
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install requests clearbit
+    env:
+      CLEARBIT_API_KEY: "{{ vars.clearbit_api_key }}"
+      LEAD_DATA: "{{ inputs.lead_data }}"
+    script: |
+      import json
+      import requests
+      import os
+
+      lead = json.loads(os.environ['LEAD_DATA'])
+
+      # Enrich with Clearbit
+      enrichment_url = f"https://person-stream.clearbit.com/v2/combined/find?email={lead['email']}"
+      headers = {"Authorization": f"Bearer {os.environ['CLEARBIT_API_KEY']}"}
+
+      try:
+          response = requests.get(enrichment_url, headers=headers)
+          if response.status_code == 200:
+              enriched = response.json()
+
+              lead['enriched_data'] = {
+                  'company_name': enriched.get('company', {}).get('name'),
+                  'company_size': enriched.get('company', {}).get('metrics', {}).get('employees'),
+                  'company_revenue': enriched.get('company', {}).get('metrics', {}).get('estimatedAnnualRevenue'),
+                  'industry': enriched.get('company', {}).get('category', {}).get('industry'),
+                  'title': enriched.get('person', {}).get('employment', {}).get('title'),
+                  'seniority': enriched.get('person', {}).get('employment', {}).get('seniority'),
+                  'location': enriched.get('person', {}).get('location')
+              }
+      except:
+          # Fallback if enrichment fails
+          lead['enriched_data'] = {
+              'company_name': lead.get('company', 'Unknown'),
+              'company_size': None,
+              'title': lead.get('title', 'Unknown')
+          }
+
+      with open('enriched_lead.json', 'w') as f:
+          json.dump(lead, f, indent=2)
+
+      print(f"Enriched lead: {lead['email']}")
+      print(f"Company: {lead['enriched_data']['company_name']}")
+
+    outputFiles:
+      - enriched_lead.json
+
+  # ---------------------------------------------------------------------------
+  # Task 2: Qualify Lead with AI (BANT Framework)
+  # ---------------------------------------------------------------------------
+  - id: qualify_lead
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      import os
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      # Load enriched lead
+      with open('{{ outputs.enrich_lead_data.outputFiles["enriched_lead.json"] }}', 'r') as f:
+          lead = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.3)
+
+      qualification_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are an expert sales qualification specialist.
+
+          Qualify this lead using the BANT framework:
+          - Budget: Can they afford our solution? (estimate based on company size/revenue)
+          - Authority: Is this person a decision-maker?
+          - Need: Do they have a clear need for our product?
+          - Timeline: When are they likely to buy?
+
+          Also assign:
+          - Lead Score: 0-100 (higher = better quality)
+          - Priority: hot/warm/cold
+          - Recommended Action: call/email/nurture/disqualify
+
+          Output JSON:
+          {{
+            "bant_score": {{
+              "budget": 0-100,
+              "authority": 0-100,
+              "need": 0-100,
+              "timeline": 0-100
+            }},
+            "overall_score": 0-100,
+            "priority": "hot|warm|cold",
+            "recommended_action": "call|email|nurture|disqualify",
+            "reasoning": "explanation",
+            "suggested_approach": "personalized outreach strategy",
+            "estimated_deal_size": "$X,XXX",
+            "estimated_close_timeline": "X weeks/months"
+          }}
+          """),
+          ("user", """Lead Information:
+          Name: {name}
+          Email: {email}
+          Company: {company}
+          Title: {title}
+          Seniority: {seniority}
+          Company Size: {company_size} employees
+          Industry: {industry}
+          Lead Source: {source}
+          Message: {message}
+
+          Qualify this lead:
+          """)
+      ])
+
+      enriched = lead.get('enriched_data', {})
+
+      response = llm.invoke(
+          qualification_prompt.format_messages(
+              name=lead.get('name', 'Unknown'),
+              email=lead.get('email', ''),
+              company=enriched.get('company_name', 'Unknown'),
+              title=enriched.get('title', 'Unknown'),
+              seniority=enriched.get('seniority', 'Unknown'),
+              company_size=enriched.get('company_size', 'Unknown'),
+              industry=enriched.get('industry', 'Unknown'),
+              source="{{ inputs.lead_source }}",
+              message=lead.get('message', 'No message provided')
+          )
+      )
+
+      qualification = json.loads(response.content)
+
+      with open('qualification_result.json', 'w') as f:
+          json.dump(qualification, f, indent=2)
+
+      print(f"Lead Score: {qualification['overall_score']}/100")
+      print(f"Priority: {qualification['priority']}")
+      print(f"Action: {qualification['recommended_action']}")
+
+    outputFiles:
+      - qualification_result.json
+
+  # ---------------------------------------------------------------------------
+  # Task 3: Create/Update Salesforce Lead
+  # ---------------------------------------------------------------------------
+  - id: update_salesforce
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install simple-salesforce
+    env:
+      SALESFORCE_TOKEN: "{{ vars.salesforce_token }}"
+    script: |
+      import json
+      from datetime import datetime
+
+      # Load data
+      with open('{{ outputs.enrich_lead_data.outputFiles["enriched_lead.json"] }}', 'r') as f:
+          lead = json.load(f)
+
+      with open('{{ outputs.qualify_lead.outputFiles["qualification_result.json"] }}', 'r') as f:
+          qualification = json.load(f)
+
+      # In production: Use simple-salesforce library
+      # from simple_salesforce import Salesforce
+      # sf = Salesforce(session_id=os.environ['SALESFORCE_TOKEN'], ...)
+
+      salesforce_lead = {
+          "FirstName": lead.get('name', '').split()[0] if lead.get('name') else '',
+          "LastName": ' '.join(lead.get('name', '').split()[1:]) if lead.get('name') else 'Unknown',
+          "Email": lead.get('email'),
+          "Company": lead.get('enriched_data', {}).get('company_name'),
+          "Title": lead.get('enriched_data', {}).get('title'),
+          "LeadSource": "{{ inputs.lead_source }}",
+          "Lead_Score__c": qualification['overall_score'],
+          "Priority__c": qualification['priority'],
+          "BANT_Budget__c": qualification['bant_score']['budget'],
+          "BANT_Authority__c": qualification['bant_score']['authority'],
+          "BANT_Need__c": qualification['bant_score']['need'],
+          "BANT_Timeline__c": qualification['bant_score']['timeline'],
+          "Recommended_Action__c": qualification['recommended_action'],
+          "AI_Reasoning__c": qualification['reasoning'],
+          "Estimated_Deal_Size__c": qualification.get('estimated_deal_size'),
+          "Status": "New",
+          "Qualified_Date__c": datetime.now().isoformat()
+      }
+
+      # sf.Lead.create(salesforce_lead)
+
+      with open('salesforce_lead.json', 'w') as f:
+          json.dump(salesforce_lead, f, indent=2)
+
+      print(f"Salesforce lead created/updated: {salesforce_lead['Email']}")
+
+    outputFiles:
+      - salesforce_lead.json
+
+  # ---------------------------------------------------------------------------
+  # Task 4: Route to Sales Rep
+  # ---------------------------------------------------------------------------
+  - id: assign_sales_rep
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    script: |
+      import json
+
+      with open('{{ outputs.qualify_lead.outputFiles["qualification_result.json"] }}', 'r') as f:
+          qualification = json.load(f)
+
+      with open('{{ outputs.enrich_lead_data.outputFiles["enriched_lead.json"] }}', 'r') as f:
+          lead = json.load(f)
+
+      # Route based on priority and deal size
+      priority = qualification['priority']
+      estimated_deal = qualification.get('estimated_deal_size', '$0')
+      deal_value = int(estimated_deal.replace('$', '').replace(',', '').split('.')[0]) if '$' in estimated_deal else 0
+
+      # Routing logic
+      if priority == 'hot' and deal_value > 50000:
+          assigned_rep = "senior_ae@company.com"
+          rep_name = "Sarah Johnson (Senior AE)"
+      elif priority == 'hot':
+          assigned_rep = "ae_team@company.com"
+          rep_name = "Account Executive Team"
+      elif priority == 'warm':
+          assigned_rep = "sdr_team@company.com"
+          rep_name = "SDR Team"
+      else:
+          assigned_rep = "marketing@company.com"
+          rep_name = "Marketing (Nurture)"
+
+      assignment = {
+          "assigned_to": assigned_rep,
+          "rep_name": rep_name,
+          "priority": priority,
+          "estimated_deal_size": estimated_deal,
+          "routing_reason": f"Priority: {priority}, Deal size: {estimated_deal}"
+      }
+
+      with open('assignment.json', 'w') as f:
+          json.dump(assignment, f, indent=2)
+
+      print(f"Assigned to: {rep_name} ({assigned_rep})")
+
+    outputFiles:
+      - assignment.json
+
+  # ---------------------------------------------------------------------------
+  # Task 5: Generate Personalized Outreach
+  # ---------------------------------------------------------------------------
+  - id: generate_outreach
+    type: io.kestra.plugin.scripts.python.Script
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install langchain langchain-openai
+    env:
+      OPENAI_API_KEY: "{{ vars.openai_api_key }}"
+    script: |
+      import json
+      from langchain_openai import ChatOpenAI
+      from langchain.prompts import ChatPromptTemplate
+
+      # Load context
+      with open('{{ outputs.enrich_lead_data.outputFiles["enriched_lead.json"] }}', 'r') as f:
+          lead = json.load(f)
+
+      with open('{{ outputs.qualify_lead.outputFiles["qualification_result.json"] }}', 'r') as f:
+          qualification = json.load(f)
+
+      llm = ChatOpenAI(model="gpt-4", temperature=0.7)
+
+      outreach_prompt = ChatPromptTemplate.from_messages([
+          ("system", """You are a top-performing sales professional.
+
+          Write a personalized outreach email that:
+          - Addresses the prospect by name
+          - References their specific role and company
+          - Demonstrates understanding of their likely challenges
+          - Offers clear value proposition
+          - Includes soft call-to-action
+          - Professional but warm tone
+          - 150-200 words max
+
+          Do NOT be pushy or salesy.
+          """),
+          ("user", """Lead: {name}, {title} at {company}
+          Industry: {industry}
+          Lead Source: {source}
+          Their message: {message}
+
+          AI Suggested Approach: {suggested_approach}
+
+          Write personalized outreach email:
+          """)
+      ])
+
+      enriched = lead.get('enriched_data', {})
+
+      response = llm.invoke(
+          outreach_prompt.format_messages(
+              name=lead.get('name', 'there'),
+              title=enriched.get('title', 'team member'),
+              company=enriched.get('company_name', 'your company'),
+              industry=enriched.get('industry', 'your industry'),
+              source="{{ inputs.lead_source }}",
+              message=lead.get('message', 'inquiry'),
+              suggested_approach=qualification.get('suggested_approach', 'personalized approach')
+          )
+      )
+
+      outreach_email = {
+          "subject": f"Re: Your inquiry from {enriched.get('company_name', 'your company')}",
+          "body": response.content,
+          "to": lead.get('email'),
+          "priority": qualification['priority']
+      }
+
+      with open('outreach_email.json', 'w') as f:
+          json.dump(outreach_email, f, indent=2)
+
+      print("Personalized outreach generated")
+
+    outputFiles:
+      - outreach_email.json
+
+  # ---------------------------------------------------------------------------
+  # Task 6: Schedule Meeting (for qualified leads)
+  # ---------------------------------------------------------------------------
+  - id: schedule_meeting
+    type: io.kestra.plugin.scripts.python.Script
+    condition: "{{ inputs.auto_schedule_meeting == true }}"
+    docker:
+      image: python:3.11-slim
+    beforeCommands:
+      - pip install requests
+    env:
+      CALENDLY_API_KEY: "{{ vars.calendly_api_key }}"
+    script: |
+      import json
+
+      with open('{{ outputs.qualify_lead.outputFiles["qualification_result.json"] }}', 'r') as f:
+          qualification = json.load(f)
+
+      # Only schedule for hot/warm leads
+      if qualification['priority'] in ['hot', 'warm']:
+          # In production: Use Calendly API
+          # Generate meeting link
+          meeting_link = f"https://calendly.com/sales-team/discovery-call"
+
+          meeting_info = {
+              "meeting_scheduled": True,
+              "meeting_link": meeting_link,
+              "meeting_type": "Discovery Call - 30min",
+              "priority": qualification['priority']
+          }
+      else:
+          meeting_info = {
+              "meeting_scheduled": False,
+              "reason": "Lead not qualified for immediate meeting"
+          }
+
+      with open('meeting_info.json', 'w') as f:
+          json.dump(meeting_info, f, indent=2)
+
+      print(f"Meeting scheduled: {meeting_info['meeting_scheduled']}")
+
+    outputFiles:
+      - meeting_info.json
+
+  # ---------------------------------------------------------------------------
+  # Task 7: Notify Sales Team
+  # ---------------------------------------------------------------------------
+  - id: notify_sales_team
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "🎯 New Qualified Lead",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*New Lead Qualified*\n\n*Name:* {{ outputs.enrich_lead_data.vars.name }}\n*Company:* {{ outputs.enrich_lead_data.vars.company }}\n*Score:* {{ outputs.qualify_lead.vars.overall_score }}/100\n*Priority:* {{ outputs.qualify_lead.vars.priority }}\n*Action:* {{ outputs.qualify_lead.vars.recommended_action }}\n*Assigned:* {{ outputs.assign_sales_rep.vars.rep_name }}"
+            }
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*BANT Scores:*\nBudget: {{ outputs.qualify_lead.vars.bant_budget }}\nAuthority: {{ outputs.qualify_lead.vars.bant_authority }}\nNeed: {{ outputs.qualify_lead.vars.bant_need }}\nTimeline: {{ outputs.qualify_lead.vars.bant_timeline }}"
+            }
+          }
+        ]
+      }
+
+# =============================================================================
+# TRIGGERS - Auto-qualify leads from multiple sources
+# =============================================================================
+triggers:
+  - id: webhook_trigger
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: "sales_lead_{{ secret('WEBHOOK_SECRET') }}"
+
+  - id: salesforce_trigger
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "*/15 * * * *"  # Check for new leads every 15 min
+
+# =============================================================================
+# ERROR HANDLING
+# =============================================================================
+errors:
+  - id: error_notification
+    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+    url: "{{ secret('SLACK_WEBHOOK_URL') }}"
+    payload: |
+      {
+        "text": "❌ Sales Qualification Failed",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Error:* {{ task.errorMessage }}"
+            }
+          }
+        ]
+      }

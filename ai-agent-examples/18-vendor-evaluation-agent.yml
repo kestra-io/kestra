@@ -1,0 +1,20 @@
+id: vendor_evaluation_agent
+namespace: enterprise.client1.agents.business
+description: Compare vendor proposals and recommend best option
+labels: {agent_type: vendor_evaluation, department: procurement}
+inputs:
+  - id: proposals
+    type: ARRAY
+tasks:
+  - id: evaluate_vendors
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      evaluation = {"winner": "Vendor A", "scores": {"A": 92, "B": 85}, "rationale": "Best value"}
+      with open('evaluation.json', 'w') as f: json.dump(evaluation, f)
+    outputFiles: [evaluation.json]

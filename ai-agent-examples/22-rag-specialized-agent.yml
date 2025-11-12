@@ -1,0 +1,46 @@
+id: rag_specialized_agent
+namespace: enterprise.client1.agents.specialized
+description: RAG agent with multi-source knowledge (documents, web, databases)
+labels: {agent_type: rag, use_case: knowledge_retrieval}
+inputs:
+  - id: query
+    type: STRING
+    required: true
+tasks:
+  - id: search_vector_db
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install pinecone-client langchain-openai"]
+    env:
+      OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"
+      PINECONE_API_KEY: "{{ secret('CLIENT1_PINECONE_API_KEY') }}"
+    script: |
+      from langchain_openai import OpenAIEmbeddings
+      from pinecone import Pinecone
+      import json
+      pc = Pinecone(api_key=os.environ['PINECONE_API_KEY'])
+      embeddings = OpenAIEmbeddings()
+      results = [{"text": "Sample doc 1", "score": 0.95}]
+      with open('vector_results.json', 'w') as f: json.dump(results, f)
+    outputFiles: [vector_results.json]
+  - id: search_web
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install duckduckgo-search"]
+    script: |
+      import json
+      web_results = [{"title": "Article 1", "snippet": "Relevant info"}]
+      with open('web_results.json', 'w') as f: json.dump(web_results, f)
+    outputFiles: [web_results.json]
+  - id: generate_answer
+    type: io.kestra.plugin.scripts.python.Script
+    docker: {image: "python:3.11-slim"}
+    beforeCommands: ["pip install langchain langchain-openai"]
+    env: {OPENAI_API_KEY: "{{ secret('CLIENT1_OPENAI_API_KEY') }}"}
+    script: |
+      from langchain_openai import ChatOpenAI
+      import json
+      llm = ChatOpenAI(model="gpt-4")
+      answer = {"response": "Based on documents and web...", "sources": ["doc1", "web1"]}
+      with open('final_answer.json', 'w') as f: json.dump(answer, f)
+    outputFiles: [final_answer.json]

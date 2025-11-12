@@ -1,7 +1,6 @@
 import {computed, nextTick, onMounted, ref} from "vue";
 import {useRoute, useRouter} from "vue-router";
 import {defaultNamespace} from "./useNamespaces";
-import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
@@ -95,13 +94,8 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
      * Only triggers when restoreUrl is enabled and saved state exists.
      */
     onMounted(() => {
-       
-        if (restoreUrl 
-            && localStorageValue.value 
-            // only redirect if we are on the default route or if the query is empty
-            && (!route.query 
-                || Object.keys(route.query).length === 0 
-                || !applyDefaultFilters(route.query, {includeScope:true, route}).hasChanges)) {
+        if (restoreUrl && localStorageValue.value 
+            && route.query && Object.keys(route.query).length === 0) {
             loadInit.value = false;
             goToRestoreUrl();
         }

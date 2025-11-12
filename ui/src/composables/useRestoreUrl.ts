@@ -92,9 +92,14 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
     /**
      * Automatically restores saved URL state from sessionStorage on mount.
      * Only triggers when restoreUrl is enabled and saved state exists.
+     * Skips restoration if there are intentional navigation params (like 'from').
+     * This allows filter restoration while preventing override of explicit redirects.
      */
     onMounted(() => {
-        if (restoreUrl && localStorageValue.value) {
+        // Skip restoration if there's a 'from' param indicating intentional navigation
+        const hasNavigationParam = route.query.from !== undefined;
+        
+        if (restoreUrl && localStorageValue.value && !hasNavigationParam) {
             loadInit.value = false;
             goToRestoreUrl();
         }

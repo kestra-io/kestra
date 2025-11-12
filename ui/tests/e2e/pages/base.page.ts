@@ -6,10 +6,7 @@ export class BasePage {
     constructor(public readonly page: Page) { }
 
     async login() {
-        await this.page.goto("/ui");
-        
-        await this.page.evaluate(() => window.sessionStorage.clear());
-        
+        await this.page.goto("/ui?from=/ui/dashboards/default");
         await this.page.getByRole("textbox", {name: "Email"}).fill(shared.username);
         await this.page.getByRole("textbox", {name: "Password"}).fill(shared.password);
         await this.page.getByRole("button", {name: "Login"}).click();

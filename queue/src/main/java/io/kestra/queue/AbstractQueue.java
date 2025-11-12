@@ -7,8 +7,10 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
+import jakarta.annotation.Nullable;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
@@ -22,8 +24,22 @@ public abstract class AbstractQueue<T extends GenericEvent> {
         this.executorService = executorService;
     }
 
+    protected String queueNameSeparator() {
+        return "__";
+    }
+
     protected String queueName() {
         return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, this.cls.getSimpleName());
+    }
+
+    protected String queueName(@Nullable String key) {
+        if (key == null) {
+            return this.queueName();
+        }
+
+        return this.queueName() +
+            this.queueNameSeparator() +
+            CaseFormat.LOWER_HYPHEN.to(CaseFormat.LOWER_UNDERSCORE, key);
     }
 
     public void execute(Runnable runnable) {

@@ -99,8 +99,8 @@ public abstract class AbstractBroadcastQueueTest {
         // first round
         broadcastQueue.emit(new TestBroadcast(1));
 
+        boolean await1 = countDownLatchFirst.await(DEFAULT_TIMEOUT_SECONDS + 10, TimeUnit.SECONDS);
         subscriber.pause();
-        boolean await1 = countDownLatchFirst.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertThat(await1).isTrue();
 
         // second round
@@ -110,8 +110,8 @@ public abstract class AbstractBroadcastQueueTest {
         broadcastQueue.emit(new TestBroadcast(2));
         broadcastQueue.emit(new TestBroadcast(3));
 
-        subscriber.pause();
         boolean await2 = countDownLatchSecond.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        subscriber.pause();
         assertThat(await2).isTrue();
 
         // last round

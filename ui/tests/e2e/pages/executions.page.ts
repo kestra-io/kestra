@@ -38,6 +38,10 @@ export class ExecutionsPage extends BasePage {
         await this.removeQueryParam(this.page, `filters[labels][EQUALS][${key}]`);
     }
 
+    async expectCountOfExecutionsToBe(expectedCount: number) {
+        return expect(this.page.getByRole("row")).toHaveCount(expectedCount + 1);
+    }
+
     async getCountOfDisplayedExecutions() {
         await this.page.waitForTimeout(20); // wait for data load to start
         await this.page.waitForLoadState("networkidle"); // wait for data load to finish

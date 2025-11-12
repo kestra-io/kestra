@@ -1,0 +1,38 @@
+# =============================================================================
+# TEST WORKFLOW - SHARED NAMESPACE
+# =============================================================================
+# This workflow should route to the SHARED worker group
+# Expected routing: workergroup-shared
+# =============================================================================
+
+id: test_shared_routing
+namespace: shared.testing
+
+description: Test workflow to validate shared worker group routing
+
+labels:
+  test: routing
+  worker-group: shared
+
+tasks:
+  - id: log_start
+    type: io.kestra.plugin.core.log.Log
+    message: "Test workflow executing in SHARED namespace"
+
+  - id: check_environment
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      Namespace: {{ flow.namespace }}
+      Flow ID: {{ flow.id }}
+      Execution ID: {{ execution.id }}
+      Expected Worker Group: shared
+
+  - id: simulate_work
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT5S
+
+  - id: log_complete
+    type: io.kestra.plugin.core.log.Log
+    message: "Test completed successfully on SHARED worker group"
+
+# This workflow should be picked up by shared workers

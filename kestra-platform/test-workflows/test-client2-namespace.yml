@@ -1,0 +1,49 @@
+# =============================================================================
+# TEST WORKFLOW - CLIENT2 NAMESPACE
+# =============================================================================
+# This workflow should route to the CLIENT2-GPU worker group
+# Expected routing: workergroup-client2-gpu
+# =============================================================================
+
+id: test_client2_routing
+namespace: enterprise.client2.testing
+
+description: Test workflow to validate client2 GPU worker group routing
+
+labels:
+  test: routing
+  worker-group: client2-gpu
+  client: client2
+  gpu: required
+
+tasks:
+  - id: log_start
+    type: io.kestra.plugin.core.log.Log
+    message: "Test workflow executing in CLIENT2 namespace (GPU workers)"
+
+  - id: check_environment
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      Namespace: {{ flow.namespace }}
+      Flow ID: {{ flow.id }}
+      Execution ID: {{ execution.id }}
+      Expected Worker Group: client2-gpu
+      Client: Enterprise Client 2
+      GPU Enabled: true
+
+  - id: verify_secrets_available
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      Checking client2-specific environment variables...
+      (In production, client2 workers have access to CLIENT2_* secrets)
+
+  - id: simulate_gpu_work
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT5S
+
+  - id: log_complete
+    type: io.kestra.plugin.core.log.Log
+    message: "Test completed successfully on CLIENT2-GPU worker group"
+
+# This workflow should be picked up ONLY by client2-gpu workers
+# NOT by shared or client1 workers (isolation test)

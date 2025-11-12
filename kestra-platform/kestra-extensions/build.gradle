@@ -1,0 +1,120 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'io.kestra.platform'
+version = '1.0.0'
+sourceCompatibility = '21'
+targetCompatibility = '21'
+
+repositories {
+    mavenCentral()
+    maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+dependencies {
+    // Kestra core dependencies
+    implementation "io.kestra:core:0.17.0"
+    implementation "io.kestra:repository-postgres:0.17.0"
+    implementation "io.kestra:runner-kafka:0.17.0"
+    implementation "io.kestra:storage-local:0.17.0"
+
+    // Micronaut (Kestra uses Micronaut framework)
+    implementation platform("io.micronaut.platform:micronaut-platform:4.2.0")
+    implementation "io.micronaut:micronaut-inject"
+    implementation "io.micronaut:micronaut-runtime"
+    implementation "io.micronaut:micronaut-validation"
+    implementation "io.micronaut.sql:micronaut-jdbc-hikari"
+
+    // PostgreSQL driver
+    implementation "org.postgresql:postgresql:42.7.1"
+
+    // Kafka client
+    implementation "org.apache.kafka:kafka-clients:3.6.1"
+
+    // Lombok for reducing boilerplate
+    compileOnly "org.projectlombok:lombok:1.18.30"
+    annotationProcessor "org.projectlombok:lombok:1.18.30"
+
+    // Micronaut annotation processors
+    annotationProcessor platform("io.micronaut.platform:micronaut-platform:4.2.0")
+    annotationProcessor "io.micronaut:micronaut-inject-java"
+    annotationProcessor "io.micronaut:micronaut-validation"
+
+    // Logging
+    implementation "org.slf4j:slf4j-api:2.0.9"
+    implementation "ch.qos.logback:logback-classic:1.4.14"
+
+    // Utilities
+    implementation "com.google.guava:guava:32.1.3-jre"
+    implementation "org.apache.commons:commons-lang3:3.14.0"
+
+    // Metrics
+    implementation "io.micrometer:micrometer-core:1.12.0"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.12.0"
+
+    // Jackson for JSON
+    implementation "com.fasterxml.jackson.core:jackson-databind:2.16.0"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.16.0"
+
+    // Testing
+    testImplementation platform('org.junit:junit-bom:5.10.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation "org.mockito:mockito-core:5.8.0"
+    testImplementation "org.mockito:mockito-junit-jupiter:5.8.0"
+    testImplementation "org.assertj:assertj-core:3.24.2"
+    testImplementation "io.micronaut.test:micronaut-test-junit5:4.1.0"
+    testImplementation "com.h2database:h2:2.2.224"
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs.addAll([
+        '-parameters',
+        '-Xlint:unchecked',
+        '-Xlint:deprecation'
+    ])
+}
+
+shadowJar {
+    archiveBaseName.set('kestra-platform-extensions')
+    archiveClassifier.set('')
+    mergeServiceFiles()
+
+    // Exclude duplicate files
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            artifactId = 'kestra-platform-extensions'
+        }
+    }
+}

@@ -1,0 +1,55 @@
+# =============================================================================
+# KESTRA PLATFORM EXTENSIONS - CONFIGURATION
+# =============================================================================
+# All values use environment variables - NO hardcoded secrets
+# =============================================================================
+
+micronaut:
+  application:
+    name: kestra-platform
+
+# Platform-specific configuration
+kestra:
+  platform:
+    worker-groups:
+      # Enable/disable worker group routing
+      enabled: ${KESTRA_WORKER_GROUPS_ENABLED:true}
+
+      # Cache refresh interval (milliseconds)
+      cache-refresh-interval-ms: ${KESTRA_WORKER_GROUPS_CACHE_REFRESH_MS:60000}
+
+      # Router class (for potential custom implementations)
+      router-class: io.kestra.platform.WorkerGroupRouter
+
+# Database datasource configuration
+# Uses environment variables from .env file
+datasources:
+  default:
+    url: jdbc:postgresql://${POSTGRES_HOST:postgres}:${POSTGRES_PORT:5432}/${POSTGRES_DB:kestra}
+    username: ${POSTGRES_USER:kestra}
+    password: ${POSTGRES_PASSWORD}
+    driverClassName: org.postgresql.Driver
+
+    # Connection pool settings
+    maximum-pool-size: ${POSTGRES_MAX_CONNECTIONS:50}
+    minimum-idle: ${POSTGRES_MIN_IDLE:10}
+
+    # Connection validation
+    connection-test-query: SELECT 1
+    validation-timeout: 5000
+
+# Logging configuration
+logger:
+  levels:
+    io.kestra.platform: ${KESTRA_LOG_LEVEL:INFO}
+    io.kestra.core: INFO
+    io.micronaut: WARN
+
+# Metrics and monitoring
+micronaut:
+  metrics:
+    enabled: ${PROMETHEUS_ENABLED:false}
+    export:
+      prometheus:
+        enabled: ${PROMETHEUS_ENABLED:false}
+        step: PT1M

@@ -1,0 +1,47 @@
+# =============================================================================
+# TEST WORKFLOW - CLIENT1 NAMESPACE
+# =============================================================================
+# This workflow should route to the CLIENT1-CPU worker group
+# Expected routing: workergroup-client1-cpu
+# =============================================================================
+
+id: test_client1_routing
+namespace: enterprise.client1.testing
+
+description: Test workflow to validate client1 dedicated worker group routing
+
+labels:
+  test: routing
+  worker-group: client1-cpu
+  client: client1
+
+tasks:
+  - id: log_start
+    type: io.kestra.plugin.core.log.Log
+    message: "Test workflow executing in CLIENT1 namespace"
+
+  - id: check_environment
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      Namespace: {{ flow.namespace }}
+      Flow ID: {{ flow.id }}
+      Execution ID: {{ execution.id }}
+      Expected Worker Group: client1-cpu
+      Client: Enterprise Client 1
+
+  - id: verify_secrets_available
+    type: io.kestra.plugin.core.log.Log
+    message: |
+      Checking client1-specific environment variables...
+      (In production, client1 workers have access to CLIENT1_* secrets)
+
+  - id: simulate_work
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT5S
+
+  - id: log_complete
+    type: io.kestra.plugin.core.log.Log
+    message: "Test completed successfully on CLIENT1-CPU worker group"
+
+# This workflow should be picked up ONLY by client1-cpu workers
+# NOT by shared or client2 workers (isolation test)

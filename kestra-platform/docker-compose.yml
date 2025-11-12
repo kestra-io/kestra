@@ -1,0 +1,418 @@
+version: '3.8'
+
+# =============================================================================
+# KESTRA PLATFORM - DOCKER COMPOSE
+# =============================================================================
+# Complete multi-worker-group deployment
+# NO hardcoded values - all configuration via .env file
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL - Metadata Database
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: kestra-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d/migrations
+      - ./database/seeds:/docker-entrypoint-initdb.d/seeds
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # Zookeeper - Required by Kafka
+  # ---------------------------------------------------------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: kestra-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+      ZOOKEEPER_TICK_TIME: ${ZOOKEEPER_TICK_TIME}
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    ports:
+      - "${ZOOKEEPER_CLIENT_PORT:-2181}:2181"
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # Kafka - Message Queue for Worker Groups
+  # ---------------------------------------------------------------------------
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kestra-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:${ZOOKEEPER_CLIENT_PORT}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_AUTO_CREATE_TOPICS}
+      KAFKA_NUM_PARTITIONS: ${KAFKA_NUM_PARTITIONS}
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    ports:
+      - "${KAFKA_BOOTSTRAP_SERVERS:-9092}:9092"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # Redis - Caching & Rate Limiting
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: kestra-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # Kestra - Main Orchestrator with Custom Extensions
+  # ---------------------------------------------------------------------------
+  kestra:
+    build:
+      context: ./kestra-extensions
+      dockerfile: Dockerfile
+    container_name: kestra-server
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Kafka configuration
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+      # Redis configuration
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # Kestra configuration (via YAML embedded in env var)
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+            username: ${POSTGRES_USER}
+            password: ${POSTGRES_PASSWORD}
+            driverClassName: org.postgresql.Driver
+            maximum-pool-size: ${POSTGRES_MAX_CONNECTIONS:-50}
+
+        kestra:
+          queue:
+            type: kafka
+            kafka:
+              client:
+                properties:
+                  bootstrap.servers: kafka:9092
+
+          repository:
+            type: postgres
+
+          storage:
+            type: ${KESTRA_STORAGE_TYPE}
+            local:
+              base-path: ${KESTRA_STORAGE_LOCAL_BASE_PATH}
+
+          url: ${KESTRA_URL}
+
+          server:
+            port: ${KESTRA_SERVER_PORT}
+
+          # Platform worker group configuration
+          platform:
+            worker-groups:
+              enabled: ${KESTRA_WORKER_GROUPS_ENABLED}
+              cache-refresh-interval-ms: 60000
+
+      # Logging
+      KESTRA_LOG_LEVEL: ${KESTRA_LOG_LEVEL:-INFO}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+    volumes:
+      - kestra_data:${KESTRA_STORAGE_LOCAL_BASE_PATH}
+      - kestra_config:/app/confs
+    ports:
+      - "${KESTRA_SERVER_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # Worker Group: SHARED (General Workloads)
+  # ---------------------------------------------------------------------------
+  worker-shared:
+    build:
+      context: ./workers/shared
+      dockerfile: Dockerfile
+    depends_on:
+      kestra:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Kafka configuration
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+      # Worker configuration
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+            username: ${POSTGRES_USER}
+            password: ${POSTGRES_PASSWORD}
+
+        kestra:
+          queue:
+            type: kafka
+            kafka:
+              client:
+                properties:
+                  bootstrap.servers: kafka:9092
+              consumer:
+                topics:
+                  - workergroup-shared
+
+          storage:
+            type: ${KESTRA_STORAGE_TYPE}
+            local:
+              base-path: ${KESTRA_STORAGE_LOCAL_BASE_PATH}
+
+          platform:
+            worker-group:
+              name: shared
+              namespace-filter: ${WORKER_SHARED_NAMESPACE_FILTER}
+
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+    deploy:
+      replicas: ${WORKER_SHARED_REPLICAS:-2}
+      resources:
+        limits:
+          cpus: '${WORKER_SHARED_CPU_LIMIT:-2}'
+          memory: ${WORKER_SHARED_MEMORY_LIMIT:-4G}
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # Worker Group: CLIENT1 (Dedicated CPU)
+  # ---------------------------------------------------------------------------
+  worker-client1:
+    build:
+      context: ./workers/client1
+      dockerfile: Dockerfile
+    depends_on:
+      kestra:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Kafka configuration
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+      # Worker configuration
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+            username: ${POSTGRES_USER}
+            password: ${POSTGRES_PASSWORD}
+
+        kestra:
+          queue:
+            type: kafka
+            kafka:
+              client:
+                properties:
+                  bootstrap.servers: kafka:9092
+              consumer:
+                topics:
+                  - workergroup-client1-cpu
+
+          storage:
+            type: ${KESTRA_STORAGE_TYPE}
+            local:
+              base-path: ${KESTRA_STORAGE_LOCAL_BASE_PATH}
+
+          platform:
+            worker-group:
+              name: client1-cpu
+              namespace-filter: ${WORKER_CLIENT1_NAMESPACE_FILTER}
+
+      # Client 1 isolated secrets (ONLY accessible to client1 workers)
+      CLIENT1_AWS_ACCESS_KEY_ID: ${CLIENT1_AWS_ACCESS_KEY_ID}
+      CLIENT1_AWS_SECRET_ACCESS_KEY: ${CLIENT1_AWS_SECRET_ACCESS_KEY}
+      CLIENT1_AWS_REGION: ${CLIENT1_AWS_REGION}
+      CLIENT1_OPENAI_API_KEY: ${CLIENT1_OPENAI_API_KEY}
+      CLIENT1_S3_BUCKET: ${CLIENT1_S3_BUCKET}
+
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+    deploy:
+      replicas: ${WORKER_CLIENT1_REPLICAS:-2}
+      resources:
+        limits:
+          cpus: '${WORKER_CLIENT1_CPU_LIMIT:-2}'
+          memory: ${WORKER_CLIENT1_MEMORY_LIMIT:-4G}
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+  # ---------------------------------------------------------------------------
+  # Worker Group: CLIENT2 (GPU-Enabled)
+  # ---------------------------------------------------------------------------
+  worker-client2-gpu:
+    build:
+      context: ./workers/client2-gpu
+      dockerfile: Dockerfile
+    depends_on:
+      kestra:
+        condition: service_healthy
+    environment:
+      # Database configuration
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Kafka configuration
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+      # Worker configuration
+      KESTRA_CONFIGURATION: |
+        datasources:
+          postgres:
+            url: jdbc:postgresql://postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+            username: ${POSTGRES_USER}
+            password: ${POSTGRES_PASSWORD}
+
+        kestra:
+          queue:
+            type: kafka
+            kafka:
+              client:
+                properties:
+                  bootstrap.servers: kafka:9092
+              consumer:
+                topics:
+                  - workergroup-client2-gpu
+
+          storage:
+            type: ${KESTRA_STORAGE_TYPE}
+            local:
+              base-path: ${KESTRA_STORAGE_LOCAL_BASE_PATH}
+
+          platform:
+            worker-group:
+              name: client2-gpu
+              namespace-filter: ${WORKER_CLIENT2_NAMESPACE_FILTER}
+
+      # Client 2 isolated secrets (ONLY accessible to client2 workers)
+      CLIENT2_ANTHROPIC_API_KEY: ${CLIENT2_ANTHROPIC_API_KEY}
+      CLIENT2_PINECONE_API_KEY: ${CLIENT2_PINECONE_API_KEY}
+      CLIENT2_PINECONE_ENVIRONMENT: ${CLIENT2_PINECONE_ENVIRONMENT}
+      CLIENT2_GCP_PROJECT_ID: ${CLIENT2_GCP_PROJECT_ID}
+      CLIENT2_GCS_BUCKET: ${CLIENT2_GCS_BUCKET}
+
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+    deploy:
+      replicas: ${WORKER_CLIENT2_REPLICAS:-1}
+      resources:
+        limits:
+          cpus: '${WORKER_CLIENT2_CPU_LIMIT:-4}'
+          memory: ${WORKER_CLIENT2_MEMORY_LIMIT:-16G}
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+    networks:
+      - kestra-network
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+  zookeeper_data:
+    driver: local
+  zookeeper_logs:
+    driver: local
+  kafka_data:
+    driver: local
+  redis_data:
+    driver: local
+  kestra_data:
+    driver: local
+  kestra_config:
+    driver: local
+
+# =============================================================================
+# NETWORKS
+# =============================================================================
+networks:
+  kestra-network:
+    driver: bridge

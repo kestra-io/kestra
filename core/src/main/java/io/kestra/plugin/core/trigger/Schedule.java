@@ -401,36 +401,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             try {
                 boolean conditionResults = this.validateScheduleCondition(conditionContext);
                 if (!conditionResults) {
-                    Map<String, Object> skipVariables;
-                    if(this.timezone != null) {
-                        skipVariables = scheduleDates.toMap(ZoneId.of(this.timezone));
-                    } else {
-                        skipVariables = scheduleDates.toMap();
-                    }
-
-                    ConditionContext skipContext = conditionContext;
-                    if (!skipContext.getVariables().containsKey("trigger")) {
-                        skipContext = skipContext.withVariables(
-                            ImmutableMap.<String, Object>builder()
-                                .putAll(skipContext.getVariables())
-                                .put("trigger", skipVariables)
-                                .build()
-                        );
-                    }
-
-                    Execution skipExecution = TriggerService.generateScheduledExecution(
-                        this,
-                        conditionContext,
-                        triggerContext,
-                        generateLabels(runContext, conditionContext, backfill),
-                        generateInputs(runContext, backfill),
-                        skipVariables,
-                        Optional.empty()
-                    );
-
-                    skipExecution = skipExecution.withState(State.Type.CREATED);
-
-                    return Optional.of(skipExecution);
+                    return Optional.empty();
                 }
             } catch(InternalException ie) {
                 // validate schedule condition can fail to render variables
@@ -566,14 +537,10 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             .date(output.getDate());
 
         Optional<ZonedDateTime> nextWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), true);
-        if (nextWithCondition.isPresent()) {
-            outputBuilder.next(nextWithCondition.get());
-        }
+        nextWithCondition.ifPresent(outputBuilder::next);
 
         Optional<ZonedDateTime> previousWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), false);
-        if (previousWithCondition.isPresent()) {
-            outputBuilder.previous(previousWithCondition.get());
-        }
+        previousWithCondition.ifPresent(outputBuilder::previous);
 
         return outputBuilder.build();
     }

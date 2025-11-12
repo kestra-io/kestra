@@ -430,7 +430,6 @@
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
-    import {useApplyDefaultFilter} from "../filter/composables/useDefaultFilter";
 
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
@@ -1030,12 +1029,6 @@
         const totalCount = executionsStore.total;
         emit("state-count", {runningCount, totalCount});
     };
-
-    useApplyDefaultFilter({
-        namespace: props.namespace,
-        includeTimeRange: true,
-        includeScope: true
-    });
 
     watch(isOpenLabelsModal, (opening) => {
         if (opening) {

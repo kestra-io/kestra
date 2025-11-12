@@ -372,16 +372,14 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         searchQuery.value = "";
         router.push({query: defaultQuery});
     };
+    
+    watch(searchQuery, () => {
+        updateRoute();
+    });
 
     return {
         appliedFilters: computed(() => appliedFilters.value),
-        searchQuery: computed({
-            get: () => searchQuery.value,
-            set: value => {
-                searchQuery.value = value;
-                updateRoute();
-            }
-        }),
+        searchQuery,
         addFilter,
         removeFilter,
         updateFilter,

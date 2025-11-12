@@ -7,24 +7,6 @@ import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
-import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
-
-export function applyBeforeEnterFilter(options) {
-    return (to, _from, next) => {
-        const {query, hasChanges} = applyDefaultFilters(to.query, options);
-        
-        if (hasChanges) {
-            next({
-                name: to.name,
-                params: to.params,
-                query,
-            });
-            return;
-        }
-        
-        next();
-    };
-}
 
 export default [
     //Initial
@@ -48,7 +30,6 @@ export default [
                 });
                 return;
             }
-            applyBeforeEnterFilter({includeTimeRange: true, includeScope: false})(to, from, next);
         },
     },
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
@@ -59,7 +40,6 @@ export default [
         name: "flows/list",
         path: "/:tenant?/flows",
         component: () => import("../components/flows/Flows.vue"),
-        beforeEnter: applyBeforeEnterFilter({includeTimeRange: false, includeScope: true}),
     },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
     {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
@@ -70,7 +50,6 @@ export default [
         name: "executions/list",
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
-        beforeEnter: applyBeforeEnterFilter({includeTimeRange: true, includeScope: true}),
     },
     {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
 
@@ -98,7 +77,6 @@ export default [
         name: "logs/list",
         path: "/:tenant?/logs",
         component: () => import("../components/logs/LogsWrapper.vue"),
-        beforeEnter: applyBeforeEnterFilter({includeTimeRange: true, includeScope: false}),
     },
 
     //Namespaces

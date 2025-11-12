@@ -21,7 +21,7 @@ test.describe("Executions' view Bulk Actions", () => {
             await executionsPage.setFilterByLabel("foo", "bar");
 
             await executionsPage.expectCountOfExecutionsToBe(25)
-            expect(await executionsPage.getTotalExecutionsCount()).toEqual(26);
+            await executionsPage.expectTotalExecutionsCountToBe(26);
         });
 
         await test.step("Set label to 'foo:baz' using Select All on filtered 'foo:bar' executions", async () => {
@@ -35,10 +35,8 @@ test.describe("Executions' view Bulk Actions", () => {
         });
 
         await test.step("Switch filter to label 'a:b' which should not be affected by the label change", async () => {
-            await executionsPage.removeFilterByLabelKey("foo");
+            await executionsPage.removeFilterByLabelKey("foo"); 
             await executionsPage.setFilterByLabel("a", "b");
-
-            await page.waitForTimeout(500); // wait for data load
 
             await executionsPage.expectCountOfExecutionsToBe(1)
         });

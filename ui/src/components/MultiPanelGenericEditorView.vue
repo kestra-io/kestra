@@ -21,18 +21,19 @@
     import {computed, useSlots} from "vue";
     import MultiPanelEditorTabs from "./MultiPanelEditorTabs.vue";
     import MultiPanelTabs from "./MultiPanelTabs.vue";
-    import {DeserializableEditorElement, Panel} from "../utils/multiPanelTypes";
+    import {EditorElement, Panel} from "../utils/multiPanelTypes";
     import {useStoredPanels} from "../composables/useStoredPanels";
 
     const props = withDefaults(defineProps<{
-        editorElements: DeserializableEditorElement[];
+        editorElements: EditorElement[];
         defaultActiveTabs: string[];
-        saveKey: string;
+        saveKey?: string;
         bottomVisible?: boolean;
         preSerializePanels?: (panels: Panel[]) => any;
     }>(), {
         bottomVisible: false,
-        preSerializePanels: undefined
+        preSerializePanels: undefined,
+        saveKey: undefined,
     });
 
     const slots = useSlots();
@@ -41,7 +42,7 @@
 
     function focusTab(tabValue: string){
         for(const panel of panels.value){
-            const t = panel.tabs.find(e => e.value === tabValue);
+            const t = panel.tabs.find(e => e.uid === tabValue);
             if(t) panel.activeTab = t;
         }
     }
@@ -62,7 +63,12 @@
         }
     };
 
-    const panels = useStoredPanels(props.saveKey, props.editorElements, props.defaultActiveTabs, props.preSerializePanels);
+    const {panels, saveState} = useStoredPanels(
+        props.saveKey, 
+        props.editorElements, 
+        props.defaultActiveTabs, 
+        props.preSerializePanels,
+    );
 
     const emit = defineEmits<{
         (e: "set-tab-value", tabValue: string): void | false;
@@ -91,13 +97,13 @@
 
 
 
-    const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)));
+    const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.uid)));
 
     function onRemoveTab(tabValue: string) {
-        const panel = panels.value.find(p => p.tabs.some(t => t.value === tabValue))
+        const panel = panels.value.find(p => p.tabs.some(t => t.uid === tabValue))
         if (panel) {
-            panel.tabs = panel.tabs.filter(t => t.value !== tabValue)
-            if (panel.activeTab.value === tabValue) {
+            panel.tabs = panel.tabs.filter(t => t.uid !== tabValue)
+            if (panel.activeTab.uid === tabValue) {
                 panel.activeTab = panel.tabs[0]
             }
         }
@@ -109,6 +115,7 @@
         openTabs,
         focusTab,
         setTabValue,
+        saveState,
     });
 </script>
 

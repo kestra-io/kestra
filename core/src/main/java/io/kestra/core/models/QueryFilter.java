@@ -100,13 +100,19 @@ public record QueryFilter(
         LABELS("labels") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
         FLOW_ID("flowId") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX);
+            }
+        },
+        UPDATED("updated") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
         },
         START_DATE("startDate") {
@@ -248,6 +254,25 @@ public record QueryFilter(
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID,
                     Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID
+                );
+            }
+        },
+        SECRET_METADATA {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE
+                );
+            }
+        },
+        KV_METADATA {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE,
+                    Field.UPDATED
                 );
             }
         };

@@ -1,5 +1,8 @@
 name: Feature request
-description: Create a new feature request
+description: Suggest a new feature or improvement to enhance the project
+
+labels: ["enhancement", "area/backend", "area/frontend"]
+
 body:
   - type: textarea
     attributes:
@@ -7,7 +10,3 @@ body:
       placeholder: Tell us more about your feature request. Don't forget to give us a star! ⭐
     validations:
       required: true
-labels:
-  - enhancement
-  - area/backend
-  - area/frontend

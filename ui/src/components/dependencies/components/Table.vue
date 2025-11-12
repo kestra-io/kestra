@@ -60,7 +60,7 @@
     import type cytoscape from "cytoscape";
 
     import Link from "./Link.vue";
-    import Status from "../../Status.vue";
+    import {Status} from "@kestra-io/ui-libs";
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 

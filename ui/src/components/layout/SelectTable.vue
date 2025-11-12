@@ -7,7 +7,8 @@
         <el-table
             ref="table"
             v-bind="$attrs"
-            :data="data"
+            :data
+            :rowKey
             :emptyText="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
             @selection-change="selectionChanged"
             v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
@@ -15,7 +16,7 @@
             :infiniteScrollDelay="0"
             :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
         >
-            <el-table-column type="selection" v-if="selectable && showSelection" />
+            <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
             <slot name="default" />
         </el-table>
     </div>
@@ -91,11 +92,12 @@
             setSelection(selection) {
                 this.$refs.table.clearSelection();
                 if (Array.isArray(selection)) {
+                    const isFunction = typeof this.rowKey === "function";
                     selection.forEach(sel => {
-                        const row = this.data.find(r => r.id === sel.id);
-                        if (row) {
-                            this.$refs.table.toggleRowSelection(row, true);
-                        }
+                        const row = this.data.find(r => isFunction 
+                            ? this.rowKey(r) === this.rowKey(sel) 
+                            : r[this.rowKey] === sel[this.rowKey]);
+                        if (row) this.$refs.table.toggleRowSelection(row, true);
                     });
                 }
                 this.selectionChanged(selection);
@@ -138,7 +140,8 @@
             expandable: {type: Boolean, default: false},
             data: {type: Array, default: () => []},
             noDataText: {type: String, default: undefined},
-            infiniteScrollLoad: {type: Function, default: undefined}
+            infiniteScrollLoad: {type: Function, default: undefined},
+            rowKey: {type: [String, Function], default: "id"}
         },
         emits: [
             "selection-change"
@@ -181,6 +184,14 @@
 
         & ~ .el-table {
             z-index: 0;
+        }
+    }
+
+    @media (max-width: 500px) {
+        :deep(.el-table__empty-text) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     }
 </style>

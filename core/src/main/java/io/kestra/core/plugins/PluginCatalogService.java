@@ -1,9 +1,13 @@
 package io.kestra.core.plugins;
 
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Version;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpMethod;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
+import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +19,12 @@ import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Services for retrieving available plugin artifacts for Kestra.
@@ -39,6 +46,8 @@ public class PluginCatalogService {
 
     private final boolean icons;
     private final boolean oss;
+    
+    private final Version currentStableVersion;
 
     /**
      * Creates a new {@link PluginCatalogService} instance.
@@ -53,10 +62,54 @@ public class PluginCatalogService {
         this.httpClient = httpClient;
         this.icons = icons;
         this.oss = communityOnly;
-
+        
+        Version version = Version.of(KestraContext.getContext().getVersion());
+        this.currentStableVersion = new Version(version.majorVersion(), version.minorVersion(), version.patchVersion(), null);
+        
         // Immediately trigger an async load of plugin artifacts.
         this.isLoaded.set(true);
         this.plugins = CompletableFuture.supplyAsync(this::load);
+    }
+    
+    /**
+     * Resolves the version for the given artifacts.
+     *
+     * @param artifacts The list of artifacts to resolve.
+     * @return The list of results.
+     */
+    public List<PluginResolutionResult> resolveVersions(List<PluginArtifact> artifacts) {
+        if (ListUtils.isEmpty(artifacts)) {
+            return List.of();
+        }
+        
+        final Map<String, ApiPluginArtifact> pluginsByGroupAndArtifactId = getAllCompatiblePlugins().stream()
+            .collect(Collectors.toMap(it -> it.groupId() + ":" + it.artifactId(), Function.identity()));
+        
+        return artifacts.stream().map(it -> {
+            // Get all compatible versions for current artifact
+            List<String> versions = Optional
+                .ofNullable(pluginsByGroupAndArtifactId.get(it.groupId() + ":" + it.artifactId()))
+                .map(ApiPluginArtifact::versions)
+                .orElse(List.of());
+            
+            // Try to resolve the version
+            String resolvedVersion = null;
+            if (!versions.isEmpty()) {
+                if (it.version().equalsIgnoreCase("LATEST")) {
+                    resolvedVersion = versions.getFirst();
+                } else {
+                    resolvedVersion = versions.contains(it.version()) ? it.version() : null;
+                }
+            }
+
+            // Build the PluginResolutionResult
+            return new PluginResolutionResult(
+                it,
+                resolvedVersion,
+                versions,
+                resolvedVersion != null
+            );
+        }).toList();
     }
 
     public synchronized List<PluginManifest> get() {
@@ -140,7 +193,27 @@ public class PluginCatalogService {
             isLoaded.set(false);
         }
     }
+    
+    private List<ApiPluginArtifact> getAllCompatiblePlugins() {
 
+        MutableHttpRequest<Object> request = HttpRequest.create(
+            HttpMethod.GET, 
+            "/v1/plugins/artifacts/core-compatibility/" + currentStableVersion
+        );
+        if (oss) {
+            request.getParameters().add("license", "OPENSOURCE");
+        }
+        try {
+            return httpClient
+                .toBlocking()
+                .exchange(request, Argument.listOf(ApiPluginArtifact.class))
+                .body();
+        } catch (Exception e) {
+            log.debug("Failed to retrieve available plugins from Kestra API. Cause: ", e);
+            return List.of();
+        }
+    }
+    
     public record PluginManifest(
         String title,
         String icon,
@@ -153,4 +226,11 @@ public class PluginCatalogService {
             return groupId + ":" + artifactId + ":LATEST";
         }
     }
+    
+    public record ApiPluginArtifact(
+        String groupId,
+        String artifactId,
+        String license,
+        List<String> versions
+    ) {}
 }

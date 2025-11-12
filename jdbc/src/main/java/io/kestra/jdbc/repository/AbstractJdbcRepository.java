@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -49,7 +50,9 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition defaultFilter(Boolean allowDeleted) {
-        return allowDeleted ? DSL.trueCondition() : field("deleted", Boolean.class).eq(false);
+        return allowDeleted ?
+            field("deleted", Boolean.class).in(true, false) :
+            field("deleted", Boolean.class).eq(false);
     }
 
     protected Condition defaultFilter(String tenantId) {
@@ -58,7 +61,11 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
         var tenant = buildTenantCondition(tenantId);
-        return allowDeleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
+
+        // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
+        return allowDeleted ?
+            tenant.and(field("deleted", Boolean.class).in(true, false)) :
+            tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     protected Condition defaultFilterWithNoACL(String tenantId) {
@@ -67,7 +74,11 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition defaultFilterWithNoACL(String tenantId, boolean deleted) {
         var tenant = buildTenantCondition(tenantId);
-        return deleted ? tenant : tenant.and(field("deleted", Boolean.class).eq(false));
+
+        // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
+        return deleted ?
+            tenant.and(field("deleted", Boolean.class).in(true, false)) :
+            tenant.and(field("deleted", Boolean.class).eq(false));
     }
 
     protected Condition buildTenantCondition(String tenantId) {
@@ -288,7 +299,7 @@ public abstract class AbstractJdbcRepository {
         }
 
         // Special handling for START_DATE and END_DATE
-        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {
+        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED) {
             if(dateColumn == null){
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
@@ -303,10 +314,12 @@ public abstract class AbstractJdbcRepository {
         }
 
         if (field.equals(QueryFilter.Field.LABELS)) {
-            if (value instanceof Map<?, ?> map){
-                return findLabelCondition(map, operation);
+            if (value instanceof Map<?, ?> map ){
+                return findLabelCondition(Either.left(map), operation);
+            } else if(value instanceof String string ) {
+                return findLabelCondition(Either.right(string), operation);
             } else {
-                throw new InvalidQueryFiltersException("Label field value must but instance of Map");
+                throw new InvalidQueryFiltersException("Label field value must be instance of Map or String");
             }
         }
         if (field == QueryFilter.Field.KIND) {
@@ -339,7 +352,7 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: ");
     }
 
-    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
+    protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 

@@ -3,10 +3,13 @@ package io.kestra.core.models.executions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -53,6 +56,7 @@ public class TaskRun implements TenantInterface {
     @With
     @JsonInclude(JsonInclude.Include.ALWAYS)
     @Nullable
+    @Schema(implementation = Object.class)
     Variables outputs;
 
     @NotNull
@@ -193,17 +197,17 @@ public class TaskRun implements TenantInterface {
             taskRunBuilder.attempts = new ArrayList<>();
 
             taskRunBuilder.attempts.add(TaskRunAttempt.builder()
-                .state(new State(this.state, State.Type.KILLED))
+                .state(new State(this.state, State.Type.RESUBMITTED))
                 .build()
             );
         } else {
             ArrayList<TaskRunAttempt> taskRunAttempts = new ArrayList<>(taskRunBuilder.attempts);
             TaskRunAttempt lastAttempt = taskRunAttempts.get(taskRunBuilder.attempts.size() - 1);
             if (!lastAttempt.getState().isTerminated()) {
-                taskRunAttempts.set(taskRunBuilder.attempts.size() - 1, lastAttempt.withState(State.Type.KILLED));
+                taskRunAttempts.set(taskRunBuilder.attempts.size() - 1, lastAttempt.withState(State.Type.RESUBMITTED));
             } else {
                 taskRunAttempts.add(TaskRunAttempt.builder()
-                    .state(new State().withState(State.Type.KILLED))
+                    .state(new State().withState(State.Type.RESUBMITTED))
                     .build()
                 );
             }

@@ -72,9 +72,7 @@
 
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
 
-    import Status from "../../components/Status.vue";
-
-    import {State} from "@kestra-io/ui-libs";
+    import {State, Status} from "@kestra-io/ui-libs";
     import * as ExecutionUtils from "../../utils/executionUtils";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -84,7 +82,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
 
-    const props = defineProps<{
+    const props = withDefaults(defineProps<{
         component: string;
         execution: {
             id: string;
@@ -95,7 +93,10 @@
             };
         };
         tooltipPosition: string;
-    }>();
+    }>(), {
+        component: "el-button",
+        tooltipPosition: "bottom"
+    });
 
     const emit = defineEmits<{
         follow: [];

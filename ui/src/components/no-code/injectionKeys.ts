@@ -1,5 +1,5 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
-import {TopologyClickParams} from "./utils/types"
+import {NoCodeElement, TopologyClickParams} from "./utils/types"
 import {Panel} from "../../utils/multiPanelTypes"
 
 export const BLOCK_SCHEMA_PATH_INJECTION_KEY = Symbol("block-schema-path-injection-key") as InjectionKey<ComputedRef<string>>
@@ -91,3 +91,5 @@ export const FULL_SCHEMA_INJECTION_KEY = Symbol("full-schema-injection-key") as 
 export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injection-key") as InjectionKey<ComputedRef<Record<string, any>>>
 
 export const DATA_TYPES_MAP_INJECTION_KEY = Symbol("data-types-injection-key") as InjectionKey<ComputedRef<Record<string, string[] | undefined>>>
+
+export const ON_TASK_EDITOR_CLICK_INJECTION_KEY = Symbol("on-task-editor-click-injection-key") as InjectionKey<(elt?: Partial<NoCodeElement>) => void>;

@@ -28,7 +28,7 @@
                             <img :src="sourceImg" :alt="$t('demos.secrets.title')" class="img-wrapper">
                         </div>
                         <div>
-                            <div class="video-container">
+                            <div v-if="isOnline" class="video-container">
                                 <iframe
                                     src="https://www.youtube.com/embed/u0yuOYG-qMI"
                                 />
@@ -77,6 +77,9 @@
 </template>
 
 <script setup lang="ts">
+    import {useNetwork} from "@vueuse/core"
+    const {isOnline} = useNetwork()
+
     import SecretsTable from "./SecretsTable.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Navbar from "../layout/TopNavBar.vue";
@@ -124,6 +127,7 @@
                 height: 300px;
                 overflow: visible;
                 direction: rtl;
+                flex-shrink: 0;
             }
         }
 
@@ -136,8 +140,9 @@
         }
 
         .video-container {
-            width: 640px;
-            height: 360px;
+            width: 100%;
+            max-width: 640px;
+            aspect-ratio: 16 / 9;
             margin-bottom: 1rem;
             border-radius: 8px;
             border: 1px solid var(--ks-border-primary);
@@ -147,6 +152,69 @@
                 width: 100%;
                 height: 100%;
                 border: 0;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            padding: 0 4rem;
+
+            .header-block {
+                .img-wrapper {
+                    width: 250px;
+                    height: 214px;
+                }
+            }
+        }
+
+        @media (max-width: 992px) {
+            padding: 0 2rem;
+
+            .header-block {
+                .d-flex.flex-row {
+                    flex-direction: column !important;
+                    align-items: center;
+                    text-align: center;
+
+                    .d-flex.flex-column {
+                        align-items: center !important;
+                    }
+                }
+
+                .img-wrapper {
+                    width: 200px;
+                    height: 171px;
+                    direction: ltr;
+                }
+            }
+        }
+
+        @media (max-width: 768px) {
+            padding: 0 1.5rem;
+
+            .header-block {
+
+                p {
+                    font-size: 0.8125rem;
+                }
+            }
+
+            .video-container {
+                max-width: 100%;
+            }
+        }
+
+        @media (max-width: 576px) {
+            padding: 0 1rem;
+
+            .header-block {
+
+                h5 {
+                    font-size: 1.125rem;
+                }
+
+                p {
+                    font-size: 0.75rem;
+                }
             }
         }
     }

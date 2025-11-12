@@ -1,7 +1,7 @@
 <template>
     <div class="wrapper">
         <el-checkbox-button
-            v-if="['duration', 'date-time'].includes(schema.format)"
+            v-if="['duration', 'date-time'].includes(schema?.format ?? '')"
             v-model="pebble"
             :label="$t('no_code.toggle_pebble')"
             :title="$t('no_code.toggle_pebble')"
@@ -11,7 +11,7 @@
         </el-checkbox-button>
 
         <el-date-picker
-            v-if="!pebble && schema.format === 'date-time'"
+            v-if="!pebble && schema?.format === 'date-time'"
             :modelValue="modelValue"
             type="date"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
@@ -31,7 +31,7 @@
             </template>
         </el-input-number>
         <el-time-picker
-            v-if="!pebble && schema.format === 'duration'"
+            v-if="!pebble && schema?.format === 'duration'"
             :modelValue="timeDurationValue"
             type="time"
             :defaultValue="defaultDuration"
@@ -46,13 +46,13 @@
             class="w-100 disabled-field"
         />
         <Editor
-            v-else-if="pebble || !schema.format"
+            v-else-if="pebble || !schema?.format"
             :modelValue="editorValue"
             :navbar="false"
             :fullHeight="false"
             :shouldFocus="false"
             schemaType="flow"
-            lang="plaintext-pebble"
+            :lang="`${editorLanguage}-pebble`"
             input
             @update:model-value="onInput"
             :largeSuggestions="false"
@@ -62,15 +62,17 @@
 <script lang="ts" setup>
     import {ref, computed, onMounted} from "vue";
     import $moment from "moment";
+    import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue";
     import Editor from "../../../../components/inputs/Editor.vue";
     import InputText from "../inputs/InputText.vue";
-    import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue";
+    import {Schema} from "./getTaskComponent";
 
     const props = defineProps<{
         disabled?: boolean;
         modelValue?: string;
-        schema: { format: string, default?: string };
+        schema?: Schema;
         root?: string;
+        task?: any;
     }>();
 
     const emit = defineEmits<{
@@ -79,6 +81,61 @@
 
 
     const pebble = ref(false);
+
+    // Function to detect programming language from task type
+    function detectLanguageFromTaskType(): string {
+        if (!props.task?.type) {
+            return "plaintext";
+        }
+
+        const taskType = props.task.type;
+
+        // Check for script tasks and extract language
+        if (taskType.includes("io.kestra.plugin.scripts.")) {
+            if (taskType.includes(".python.")) {
+                return "python";
+            } else if (taskType.includes(".node.")) {
+                return "javascript";
+            } else if (taskType.includes(".shell.")) {
+                return "shell";
+            } else if (taskType.includes(".powershell.")) {
+                return "powershell";
+            } else if (taskType.includes(".r.")) {
+                return "r";
+            } else if (taskType.includes(".julia.")) {
+                return "julia";
+            } else if (taskType.includes(".ruby.")) {
+                return "ruby";
+            } else if (taskType.includes(".go.")) {
+                return "go";
+            } else if (taskType.includes(".deno.")) {
+                return "typescript";
+            } else if (taskType.includes(".lua.")) {
+                return "lua";
+            } else if (taskType.includes(".bun.")) {
+                return "javascript";
+            } else if (taskType.includes(".php.")) {
+                return "php";
+            } else if (taskType.includes(".perl.")) {
+                return "perl";
+            } else if (taskType.includes(".groovy.")) {
+                return "groovy";
+            }
+        }
+
+        return "plaintext";
+    }
+
+    // Computed property for editor language
+    const editorLanguage = computed(() => {
+        // Only apply syntax highlighting for script and commands fields
+        if (props.root === "script" || props.root === "commands" ||
+            props.root?.endsWith(".script") || props.root?.endsWith(".commands")) {
+            return detectLanguageFromTaskType();
+        }
+
+        return "plaintext";
+    });
 
     const values = computed(() => {
         if (props.modelValue === undefined) {
@@ -89,18 +146,21 @@
     })
 
     onMounted(() => {
-        if (!["duration", "date-time"].includes(props.schema.format) || !props.modelValue) {
+        const schema = props.schema;
+        if (!schema) return;
+
+        if (!["duration", "date-time"].includes(schema.format ?? "") || !props.modelValue) {
             pebble.value = false;
-        } else if (props.schema.format === "duration" && values.value) {
+        } else if (schema.format === "duration" && values.value) {
             pebble.value = !$moment.duration(props.modelValue).isValid();
-        } else if (props.schema.format === "date-time" && values.value) {
+        } else if (schema.format === "date-time" && values.value) {
             pebble.value = isNaN(Date.parse(props.modelValue as string));
         }
     });
 
     // FIXME: hardcoded condition only show days input for timeWindow durations
     const showDurationDays = computed(() => {
-        return props.schema.format === "duration" && props.root?.startsWith("timeWindow")
+        return props.schema?.format === "duration" && props.root?.startsWith("timeWindow")
     });
 
     const daysDurationValue = computed<number | undefined>(() => {

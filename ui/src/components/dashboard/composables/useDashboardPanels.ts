@@ -11,21 +11,7 @@ import PreviewDashboardWrapper from "../components/PreviewDashboardWrapper.vue";
 
 import intro from "../../../assets/docs/dashboard_home.md?raw";
 import DashboardNoCodeEditor from "../components/DashboardNoCodeEditor.vue";
-import {Tab} from "../../../utils/multiPanelTypes";
-
-interface EditorElement {
-    button: {
-        icon: any,
-        label: string
-    },
-    value: string,
-    component: any,
-    deserialize?: (value: string) => Tab | undefined
-}
-
-interface DeserializableEditorElement extends EditorElement {
-    deserialize: (value: string) => Tab | undefined
-}
+import {EditorElement} from "../../../utils/multiPanelTypes";
 
 export const DEFAULT_ACTIVE_TABS = ["code", "doc"];
 
@@ -36,7 +22,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
             icon: markRaw(CodeTagsIcon),
             label: "Code"
         },
-        value: "code",
+        uid: "code",
         component: markRaw(DashboardCodeEditor),
     },
     {
@@ -44,7 +30,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
             icon: markRaw(DotsSquareIcon),
             label: "No Code"
         },
-        value: "nocode",
+        uid: "nocode",
         component: markRaw(DashboardNoCodeEditor),
     },
     {
@@ -52,7 +38,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
             icon: markRaw(FileDocumentIcon),
             label: "Documentation"
         },
-        value: "doc",
+        uid: "doc",
         component: () => h(PluginDocumentationWrapper, {overrideIntro: intro, absolute: true}),
     },
     {
@@ -60,7 +46,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
             icon: markRaw(ChartBarIcon),
             label: "Charts"
         },
-        value: "charts",
+        uid: "charts",
         component: markRaw(ChartViewWrapper),
     },
     {
@@ -68,13 +54,13 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
             icon: markRaw(ViewDashboardIcon),
             label: "Preview"
         },
-        value: "preview",
+        uid: "preview",
         component: markRaw(PreviewDashboardWrapper),
     }
-].map((e): DeserializableEditorElement => ({
+].map((e): EditorElement => ({
     // add a default deserializer
     deserialize: (value: string) => {
-        if(e.value === value){
+        if(e.uid === value){
             return e;
         }
         return undefined;

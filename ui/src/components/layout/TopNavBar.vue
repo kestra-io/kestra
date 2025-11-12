@@ -21,13 +21,13 @@
                         <slot name="title">
                             {{ title }}
                             <el-tooltip v-if="description" :content="description">
-                                <Information class="ms-2" />
+                                <Information class="ms-2 icon" />
                             </el-tooltip>
                             <Badge v-if="beta" label="Beta" />
                         </slot>
                         <el-button
-                            class="star-button"
-                            :class="{'star-active': bookmarked}"
+                            class="icon"
+                            :class="{'active': bookmarked}"
                             :icon="bookmarked ? StarIcon : StarOutlineIcon"
                             circle
                             @click="onStarClick"
@@ -144,6 +144,8 @@
 </script>
 
 <style scoped lang="scss">
+    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
+
     nav {
         top: 0;
         position: sticky;
@@ -159,19 +161,39 @@
             overflow: hidden;
         }
 
+        .top-title {
+            position: relative;
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(to left, var(--ks-background-card), transparent);
+            pointer-events: none;
+            }
+        }
+
         h1 {
             line-height: 1.6;
             display: flex !important;
             align-items: center;
         }
 
-        .star-button {
-            margin-left: 1rem;
+        .icon {
             border: none;
-        }
+            color: var(--ks-content-tertiary);
 
-        .star-active {
-            color: #9470FF;
+            &:deep(svg) {
+                fill: currentColor;
+                stroke: currentColor;
+            }
+
+            &.active {
+                color: $base-purple-300;
+            }
         }
 
         :deep(.el-breadcrumb__item) {
@@ -205,7 +227,14 @@
                 align-items: center;
             }
         }
+
+        @media (max-width: 992px) {
+            padding: 0.75rem 1.5rem;
+        }
+
         @media (max-width: 768px) {
+            padding: 0.4rem 0.75rem;
+
             .mycontainer {
                 display: grid;
                 grid-template-columns: repeat(3, minmax(0, auto));
@@ -220,6 +249,8 @@
             }
         }
         @media (max-width: 664px) {
+            padding: 0.3rem 0.5rem;
+            
             .mycontainer {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, auto));

@@ -32,12 +32,13 @@ ui/node_modules
 ui/.env.local
 ui/.env.*.local
 webserver/src/main/resources/ui
-yarn.lock
+webserver/src/main/resources/views
 ui/coverage
 ui/stats.html
 ui/.frontend-gradle-plugin
-ui/utils/CHANGELOG.md
 ui/test-report.junit.xml
+*storybook.log
+storybook-static
 
 ### Docker
 /.env
@@ -57,6 +58,4 @@ core/src/main/resources/gradle.properties
 # Allure Reports
 **/allure-results/*
 
-*storybook.log
-storybook-static
 /jmh-benchmarks/src/main/resources/gradle.properties

@@ -134,15 +134,15 @@
         "vue-tsc": "^3.1.3"
     },
     "optionalDependencies": {
-        "@esbuild/darwin-arm64": "^0.25.12",
-        "@esbuild/darwin-x64": "^0.25.12",
-        "@esbuild/linux-x64": "^0.25.12",
-        "@rollup/rollup-darwin-arm64": "^4.52.5",
-        "@rollup/rollup-darwin-x64": "^4.52.5",
-        "@rollup/rollup-linux-x64-gnu": "^4.52.5",
-        "@swc/core-darwin-arm64": "^1.15.0",
-        "@swc/core-darwin-x64": "^1.15.0",
-        "@swc/core-linux-x64-gnu": "^1.15.0"
+        "@esbuild/darwin-arm64": "^0.27.0",
+        "@esbuild/darwin-x64": "^0.27.0",
+        "@esbuild/linux-x64": "^0.27.0",
+        "@rollup/rollup-darwin-arm64": "^4.53.2",
+        "@rollup/rollup-darwin-x64": "^4.53.2",
+        "@rollup/rollup-linux-x64-gnu": "^4.53.2",
+        "@swc/core-darwin-arm64": "^1.15.1",
+        "@swc/core-darwin-x64": "^1.15.1",
+        "@swc/core-linux-x64-gnu": "^1.15.1"
     },
     "overrides": {
         "bootstrap": {

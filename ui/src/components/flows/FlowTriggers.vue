@@ -491,7 +491,7 @@
             backfill: cleanBackfill.value
         })
             .then((newTrigger: any) => {
-                (window as any).$toast().saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -512,7 +512,7 @@
     const pauseBackfill = (trigger: any) => {
         triggerStore.pauseBackfill(trigger)
             .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -525,7 +525,7 @@
     const unpauseBackfill = (trigger: any) => {
         triggerStore.unpauseBackfill(trigger)
             .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -538,7 +538,7 @@
     const deleteBackfill = (trigger: any) => {
         triggerStore.deleteBackfill(trigger)
             .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -551,7 +551,7 @@
     const setDisabled = (trigger: any, value: boolean) => {
         triggerStore.update({...trigger, disabled: !value})
             .then((newTrigger: any) => {
-                toast.saved(newTrigger.id);
+                toast.saved(newTrigger.triggerId);
                 triggers.value = triggers.value.map((t: any) => {
                     if (t.id === newTrigger.id) {
                         return newTrigger
@@ -567,7 +567,7 @@
             flowId: trigger.flowId,
             triggerId: trigger.triggerId
         }).then((newTrigger: any) => {
-            toast.saved(newTrigger.id);
+            toast.saved(newTrigger.triggerId);
             triggers.value = triggers.value.map((t: any) => {
                 if (t.id === newTrigger.id) {
                     return newTrigger
@@ -583,7 +583,7 @@
             flowId: trigger.flowId,
             triggerId: trigger.triggerId
         }).then((newTrigger: any) => {
-            toast.saved(newTrigger.id);
+            toast.saved(newTrigger.triggerId);
             triggers.value = triggers.value.map((t: any) => {
                 if (t.id === newTrigger.id) {
                     return newTrigger

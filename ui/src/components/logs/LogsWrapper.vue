@@ -2,7 +2,7 @@
     <TopNavBar v-if="!embed" :title="routeInfo.title" />
     <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
-            <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="internalPageSize" :page="internalPageNumber" :embed="embed">
+            <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="pageSize" :page="pageNumber" :embed="embed">
                 <template #navbar v-if="!embed || showFilters">
                     <KSFilter
                         :configuration="logFilter"
@@ -15,12 +15,12 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections ref="dashboardRef" :charts :dashboard="{id: 'default', charts: []}" showDefault class="mb-4" />
+                    <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault />
                 </template>
 
                 <template #table>
                     <div v-loading="isLoading">
-                        <div v-if="logsStore.logs !== undefined && logsStore.logs?.length > 0" class="logs-wrapper">
+                        <div v-if="logsStore.logs !== undefined && logsStore.logs.length > 0" class="logs-wrapper">
                             <LogLine
                                 v-for="(log, i) in logsStore.logs"
                                 :key="`${log.taskRunId}-${i}`"
@@ -42,11 +42,6 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch} from "vue";
-    import {useRoute} from "vue-router";
-    import {useI18n} from "vue-i18n";
-    import _merge from "lodash/merge";
-    import moment from "moment";
     import {useLogFilter} from "../filter/configurations";
     import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";
@@ -54,151 +49,193 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
     import NoData from "../layout/NoData.vue";
+    
+    const logFilter = useLogFilter();
+</script>
+
+<script lang="ts">
+    import {mapStores} from "pinia";
+    import RouteContext from "../../mixins/routeContext";
+    import RestoreUrl from "../../mixins/restoreUrl";
+    import DataTableActions from "../../mixins/dataTableActions";
+    import _merge from "lodash/merge";
     import {storageKeys} from "../../utils/constants";
     import {decodeSearchParams} from "../filter/utils/helpers";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
     import {useLogsStore} from "../../stores/logs";
-    import {useDataTableActions} from "../../composables/useDataTableActions";
-    import useRouteContext from "../../composables/useRouteContext";
+    import {defaultNamespace} from "../../composables/useNamespaces";
+    import {defineComponent} from "vue";
 
-    const props = withDefaults(defineProps<{
-        logLevel?: string;
-        embed?: boolean;
-        showFilters?: boolean;
-        filters?: Record<string, any>;
-        reloadLogs?: number;
-    }>(), {
-        embed: false,
-        showFilters: false,
-        filters: undefined,
-        logLevel: undefined,
-        reloadLogs: undefined
-    });
+    export default defineComponent({
+        mixins: [RouteContext, RestoreUrl, DataTableActions],
+        props: {
+            logLevel: {
+                type: String,
+                default: undefined
+            },
+            embed: {
+                type: Boolean,
+                default: false
+            },
+            showFilters: {
+                type: Boolean,
+                default: false
+            },
+            filters: {
+                type: Object,
+                default: null
+            },
+            reloadLogs: {
+                type: Number,
+                default: undefined
+            }
+        },
+        data() {
+            return {
+                isDefaultNamespaceAllow: true,
+                task: undefined,
+                isLoading: false,
+                lastRefreshDate: new Date(),
+                canAutoRefresh: false,
+                showChart: localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false",
+            };
+        },
+        computed: {
+            storageKeys() {
+                return storageKeys
+            },
+            ...mapStores(useLogsStore),
+            routeInfo() {
+                return {
+                    title: this.$t("logs"),
+                };
+            },
+            isFlowEdit() {
+                return this.$route.name === "flows/update"
+            },
+            isNamespaceEdit() {
+                return this.$route.name === "namespaces/update"
+            },
+            selectedLogLevel() {
+                const decodedParams = decodeSearchParams(this.$route.query);
+                const levelFilters = decodedParams.filter(item => item?.field === "level");
+                const decoded = levelFilters.length > 0 ? levelFilters[0]?.value : "INFO";
+                return this.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
+            },
+            endDate() {
+                if (this.$route.query.endDate) {
+                    return this.$route.query.endDate;
+                }
+                return undefined;
+            },
+            startDate() {
+                // we mention the last refresh date here to trick
+                // VueJs fine grained reactivity system and invalidate
+                // computed property startDate
+                if (this.$route.query.startDate && this.lastRefreshDate) {
+                    return this.$route.query.startDate;
+                }
+                if (this.$route.query.timeRange) {
+                    return this.$moment().subtract(this.$moment.duration(this.$route.query.timeRange).as("milliseconds")).toISOString(true);
+                }
 
-    const route = useRoute();
-    const {t} = useI18n();
-    const logsStore = useLogsStore();
-    const logFilter = useLogFilter();
+                // the default is PT30D
+                return this.$moment().subtract(7, "days").toISOString(true);
+            },
+            namespace() {
+                return this.$route.params.namespace ?? this.$route.params.id;
+            },
+            flowId() {
+                return this.$route.params.id;
+            },
+            charts() {
+                return [
+                    {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
+                ];
+            }
+        },
+        beforeRouteEnter(to: any, _: any, next: (route?: any) => void) {
+            const query = {...to.query};
+            let queryHasChanged = false;
 
-    const routeInfo = computed(() => ({
-        title: t("logs"),
-    }));
-    useRouteContext(routeInfo, props.embed);
+            const queryKeys = Object.keys(query);
+            if (defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][PREFIX]"] = defaultNamespace();
+                queryHasChanged = true;
+            }
 
-    const isLoading = ref(false);
-    const lastRefreshDate = ref(new Date());
-    const showChart = ref(localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false");
-    const dashboardRef = ref();
+            if (queryHasChanged) {
+                next({
+                    ...to,
+                    query,
+                    replace: true
+                });
+            } else {
+                next();
+            }
+        },
+        methods: {
+            showStatChart() {
+                return this.showChart;
+            },
+            onShowChartChange(value: boolean) {
+                this.showChart = value;
+                localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value.toString());
+                if (this.showStatChart()) {
+                    this.load();
+                }
+            },
+            refresh() {
+                this.lastRefreshDate = new Date();
+                if (this.$refs.dashboard) {
+                    this.$refs.dashboard.refreshCharts();
+                }
+                this.load();
+            },
+            loadQuery(base: any) {
+                let queryFilter = this.filters ?? this.queryWithFilter();
 
-    const isFlowEdit = computed(() => route.name === "flows/update");
-    const isNamespaceEdit = computed(() => route.name === "namespaces/update");
-    const selectedLogLevel = computed(() => {
-        const decodedParams = decodeSearchParams(route.query);
-        const levelFilters = decodedParams.filter(item => item?.field === "level");
-        const decoded = levelFilters.length > 0 ? levelFilters[0]?.value : "INFO";
-        return props.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
-    });
-    const endDate = computed(() => {
-        if (route.query.endDate) {
-            return route.query.endDate;
-        }
-        return undefined;
-    });
-    const startDate = computed(() => {
-        // we mention the last refresh date here to trick
-        // VueJs fine grained reactivity system and invalidate
-        // computed property startDate
-        if (route.query.startDate && lastRefreshDate.value) {
-            return route.query.startDate;
-        }
-        if (route.query.timeRange) {
-            return moment().subtract(moment.duration(route.query.timeRange as string).as("milliseconds")).toISOString(true);
-        }
+                if (this.isFlowEdit) {
+                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
+                    queryFilter["filters[flowId][EQUALS]"] = this.flowId;
+                } else if (this.isNamespaceEdit) {
+                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
+                }
 
-        // the default is PT30D
-        return moment().subtract(7, "days").toISOString(true);
-    });
-    const flowId = computed(() => route.params.id);
-    const namespace = computed(() => route.params.namespace ?? route.params.id);
-    const charts = computed(() => [
-        {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
-    ]);
+                if (!queryFilter["startDate"] || !queryFilter["endDate"]) {
+                    queryFilter["startDate"] = this.startDate;
+                    queryFilter["endDate"] = this.endDate;
+                }
 
-    const loadQuery = (base: any) => {
-        let queryFilter = props.filters ?? queryWithFilter();
+                delete queryFilter["level"];
 
-        if (isFlowEdit.value) {
-            queryFilter["filters[namespace][EQUALS]"] = namespace.value;
-            queryFilter["filters[flowId][EQUALS]"] = flowId.value;
-        } else if (isNamespaceEdit.value) {
-            queryFilter["filters[namespace][EQUALS]"] = namespace.value;
-        }
+                return _merge(base, queryFilter)
+            },
+            load() {
+                this.isLoading = true
 
-        if (!queryFilter["startDate"] || !queryFilter["endDate"]) {
-            queryFilter["startDate"] = startDate.value;
-            queryFilter["endDate"] = endDate.value;
-        }
+                const data = {
+                    page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
+                    size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
+                    ...this.filters
+                };
+                this.logsStore.findLogs(this.loadQuery({
+                    ...data,
+                    minLevel: this.filters ? null : this.selectedLogLevel,
+                    sort: "timestamp:desc"
+                }))
+                    .finally(() => {
+                        this.isLoading = false
+                        this.saveRestoreUrl();
+                    });
 
-        delete queryFilter["level"];
-
-        return _merge(base, queryFilter);
-    };
-
-    const loadData = (callback?: () => void) => {
-        isLoading.value = true;
-
-        const data = {
-            page: props.filters ? internalPageNumber.value : route.query.page || internalPageNumber.value,
-            size: props.filters ? internalPageSize.value : route.query.size || internalPageSize.value,
-            ...props.filters
-        };
-
-        logsStore.findLogs(loadQuery({
-            ...data,
-            minLevel: props.filters ? null : selectedLogLevel.value,
-            sort: "timestamp:desc"
-        }))
-            .finally(() => {
-                isLoading.value = false;
-                if (callback) callback();
-            });
-    };
-
-    const {onPageChanged, queryWithFilter, internalPageNumber, internalPageSize} = useDataTableActions({
-        loadData
-    });
-
-    const showStatChart = () => showChart.value;
-
-    const onShowChartChange = (value: boolean) => {
-        showChart.value = value;
-        localStorage.setItem(storageKeys.SHOW_LOGS_CHART, value.toString());
-        if (showStatChart()) {
-            loadData();
-        }
-    };
-
-    const refresh = () => {
-        lastRefreshDate.value = new Date();
-        if (dashboardRef.value) {
-            dashboardRef.value.refreshCharts();
-        }
-        loadData();
-    };
-
-    watch(() => route.query, () => {
-        loadData();
-    }, {deep: true});
-
-    watch(() => props.reloadLogs, (newValue) => {
-        if (newValue) refresh();
-    });
-
-    onMounted(() => {
-        // Load data on mount if not embedded
-        if (!props.embed) {
-            loadData();
+            },
+        },
+        watch: {
+            reloadLogs(newValue) {
+                if(newValue) this.refresh();
+            },
         }
     });
 </script>

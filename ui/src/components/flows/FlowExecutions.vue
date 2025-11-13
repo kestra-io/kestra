@@ -3,6 +3,7 @@
         :namespace="flowStore.flow?.namespace"
         :flowId="flowStore.flow?.id"
         :topbar="false"
+        :restoreUrl="false"
         filter
     />
 </template>

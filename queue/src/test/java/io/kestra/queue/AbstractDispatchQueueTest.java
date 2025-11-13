@@ -2,6 +2,7 @@ package io.kestra.queue;
 
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
@@ -174,6 +175,7 @@ public abstract class AbstractDispatchQueueTest {
         assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime2)).count()).isEqualTo(2);
     }
 
+    @Introspected
     public record TestDispatch(String key, Integer id) implements DispatchEvent {
     }
 }

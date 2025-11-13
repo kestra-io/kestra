@@ -2,6 +2,7 @@ package io.kestra.queue;
 
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -113,5 +114,6 @@ public abstract class AbstractKeyedDispatchQueueTest {
         }
     }
 
+    @Introspected
     public record TestKeyedDispatch(String key, Integer id) implements KeyedDispatchEvent {}
 }

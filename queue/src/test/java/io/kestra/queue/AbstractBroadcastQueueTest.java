@@ -2,6 +2,7 @@ package io.kestra.queue;
 
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,8 @@ import java.util.stream.IntStream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
+
+
 
 public abstract class AbstractBroadcastQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 10;
@@ -132,5 +135,6 @@ public abstract class AbstractBroadcastQueueTest {
         assertThat(list.stream().filter(i -> i.getLeft().isAfter(resumeTime2)).count()).isEqualTo(2);
     }
 
+    @Introspected
     public record TestBroadcast(String key, Integer id) implements BroadcastEvent {}
 }

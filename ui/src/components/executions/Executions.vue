@@ -144,10 +144,7 @@
 
                             <el-form>
                                 <ElFormItem :label="$t('execution labels')">
-                                    <LabelInput
-                                        :key="executionLabels.map((l) => l.key).join('-')"
-                                        v-model:labels="executionLabels"
-                                    />
+                                    <LabelInput v-model:labels="executionLabels" />
                                 </ElFormItem>
                             </el-form>
                         </el-dialog>

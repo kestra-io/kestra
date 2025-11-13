@@ -28,16 +28,11 @@
 </template>
 
 <script setup lang="ts">
-    import {
-        onUpdated,
-        ref,
-        computed, h
-    } from "vue";
+    import {onUpdated, ref, computed, h, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
-
+    import {useMediaQuery} from "@vueuse/core";
     import {SidebarMenu} from "vue-sidebar-menu";
-
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
     import Environment from "./Environment.vue";
@@ -124,6 +119,14 @@
     });
 
     const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
+
+    const isSmallScreen = useMediaQuery("(max-width: 768px)")
+
+    watch(() => $route.name, (newRoute, oldRoute) => {
+        if (newRoute !== oldRoute && isSmallScreen.value && !collapsed.value) {
+            onToggleCollapse(true)
+        }
+    })
 </script>
 
 <style scoped lang="scss">

@@ -259,6 +259,27 @@ class ReadFileFunctionTest {
         assertThat(variableRenderer.render("{{ read(nsfile) }}", variables)).isEqualTo("Hello World");
     }
 
+    @Test
+    void shouldReadChildFileEvenIfTrigger() throws IOException, IllegalVariableEvaluationException {
+        String namespace = "my.namespace";
+        String flowId = "flow";
+        String executionId = IdUtils.create();
+        URI internalStorageURI = URI.create("/" + namespace.replace(".", "/") + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
+        URI internalStorageFile = storageInterface.put(MAIN_TENANT, namespace, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
+
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "flow",
+                "namespace", "notme",
+                "tenantId", MAIN_TENANT),
+            "execution", Map.of("id", "notme"),
+            "trigger", Map.of("namespace", "notme", "flowId", "parent", "executionId", "parent")
+        );
+
+        String render = variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables);
+        assertThat(render).isEqualTo("Hello from a task output");
+    }
+
     private URI createFile() throws IOException {
         File tempFile = File.createTempFile("file", ".txt");
         Files.write(tempFile.toPath(), "Hello World".getBytes());

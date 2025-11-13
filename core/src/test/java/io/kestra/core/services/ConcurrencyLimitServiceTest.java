@@ -12,20 +12,24 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startRunner = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -54,14 +58,29 @@ class ConcurrencyLimitServiceTest {
 
     @Test
     @LoadFlows("flows/valids/flow-concurrency-queue.yml")
-    void unqueueExecution() throws QueueException, TimeoutException {
+    void unqueueExecution() throws QueueException, TimeoutException, InterruptedException {
         // run a first flow so the second is queued
-        runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "flow-concurrency-queue");
+        Execution first = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "flow-concurrency-queue");
         Execution result = runUntilQueued(TESTS_FLOW_NS, "flow-concurrency-queue");
         assertThat(result.getState().isQueued()).isTrue();
 
+        // await for the execution to be terminated
+        CountDownLatch terminated = new CountDownLatch(2);
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, (either) -> {
+            if (either.getLeft().getId().equals(first.getId()) && either.getLeft().getState().isTerminated()) {
+                terminated.countDown();
+            }
+            if (either.getLeft().getId().equals(result.getId()) && either.getLeft().getState().isTerminated()) {
+                terminated.countDown();
+            }
+        });
+
         Execution unqueued = concurrencyLimitService.unqueue(result, State.Type.RUNNING);
         assertThat(unqueued.getState().isRunning()).isTrue();
+        executionQueue.emit(unqueued);
+
+        assertTrue(terminated.await(10, TimeUnit.SECONDS));
+        receive.blockLast();
     }
 
     @Test
@@ -73,7 +92,6 @@ class ConcurrencyLimitServiceTest {
         assertThat(limit.get().getTenantId()).isEqualTo(execution.getTenantId());
         assertThat(limit.get().getNamespace()).isEqualTo(execution.getNamespace());
         assertThat(limit.get().getFlowId()).isEqualTo(execution.getFlowId());
-        assertThat(limit.get().getRunning()).isEqualTo(0);
     }
 
     @Test

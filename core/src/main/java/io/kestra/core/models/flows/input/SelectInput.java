@@ -8,6 +8,7 @@ import io.kestra.core.validations.Regex;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
     @Schema(
         title = "List of values."
     )
+    @Size(min = 2)
     List<@Regex String> values;
 
     @Schema(

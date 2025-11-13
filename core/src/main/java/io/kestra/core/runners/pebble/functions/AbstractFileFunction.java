@@ -151,10 +151,7 @@ abstract class AbstractFileFunction implements Function {
             // if there is a trigger of type execution, we also allow accessing a file from the parent execution
             Map<String, String> trigger = (Map<String, String>) context.getVariable(TRIGGER);
 
-            if (!isFileUriValid(trigger.get(NAMESPACE), trigger.get("flowId"), trigger.get("executionId"), path)) {
-                throw new IllegalArgumentException("Unable to read the file '" + path + "' as it didn't belong to the parent execution");
-            }
-            return true;
+            return isFileUriValid(trigger.get(NAMESPACE), trigger.get("flowId"), trigger.get("executionId"), path);
         }
         return false;
     }

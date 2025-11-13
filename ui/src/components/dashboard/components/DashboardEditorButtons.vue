@@ -1,6 +1,11 @@
 <template>
     <div class="button-top">
-        <ValidationError class="mx-3" tooltipPlacement="bottom-start" :errors="errors" />
+        <ValidationError 
+            class="mx-3"
+            tooltipPlacement="bottom-start"
+            :errors="dashboardStore.errors"
+            :warnings="dashboardStore.warnings"
+        />
 
         <el-button
             :icon="ContentSave"
@@ -17,6 +22,7 @@
     import {useI18n} from "vue-i18n";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import ValidationError from "../../flows/ValidationError.vue";
+    import {useDashboardStore} from "../../../stores/dashboard";
 
     const {t} = useI18n();
 
@@ -24,15 +30,11 @@
         (e: "save"): void;
     }>();
 
-    const props = defineProps<{
-        warnings?: string[];
-        errors?: string[];
-        disabled?: boolean;
-    }>();
+    const dashboardStore = useDashboardStore();
 
     const saveButtonType = computed(() => {
-        if (props.errors) return "danger";
-        return props.warnings ? "warning" : "primary";
+        if (dashboardStore.errors) return "danger";
+        return dashboardStore.warnings ? "warning" : "primary";
     });
 </script>
 <style lang="scss" scoped>

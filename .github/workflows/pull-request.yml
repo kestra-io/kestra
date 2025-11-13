@@ -8,6 +8,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # When an OSS ci start, we trigger an EE one
+  trigger-ee:
+    runs-on: ubuntu-latest
+    steps:
+    # PR pre-check: skip if PR from a fork OR EE already has a branch with same name
+    - name: Check EE repo for branch with same name
+      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
+      id: check-ee-branch
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        script: |
+          const pr = context.payload.pull_request;
+          if (!pr) {
+            core.setOutput('exists', 'false');
+            return;
+          }
+          const branch = pr.head.ref;
+          const [owner, repo] = 'kestra-io/kestra-ee'.split('/');
+          try {
+            await github.rest.repos.getBranch({ owner, repo, branch });
+            core.setOutput('exists', 'true');
+          } catch (e) {
+            if (e.status === 404) {
+              core.setOutput('exists', 'false');
+            } else {
+              core.setFailed(e.message);
+            }
+          }
+
+      # Targeting pull request (only if not from a fork and EE has no branch with same name)
+    - name: Trigger EE Workflow (pull request, with payload)
+      uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f
+      if: ${{ github.event_name == 'pull_request'
+        && github.event.pull_request.number != ''
+        && github.event.pull_request.head.repo.fork == false
+        && steps.check-ee-branch.outputs.exists == 'false' }}
+      with:
+        token: ${{ secrets.GH_PERSONAL_TOKEN }}
+        repository: kestra-io/kestra-ee
+        event-type: "oss-updated"
+        client-payload: >-
+          {"pr_number":${{ github.event.pull_request.number }},"pr_repo":"${{ github.repository }}"}
+
   file-changes:
     if: ${{ github.event.pull_request.draft == false }}
     name: File changes detection

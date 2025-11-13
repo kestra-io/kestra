@@ -6,46 +6,50 @@ import {useNamespacesStore} from "override/stores/namespaces";
 import {useAuthStore} from "override/stores/auth";
 import {useValues} from "../composables/useValues";
 import {useI18n} from "vue-i18n";
+import {useRoute} from "vue-router";
 
 export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
     const {t} = useI18n();
+    const route = useRoute();
 
     return {
         title: t("filter.titles.trigger_filters"),
         searchPlaceholder: t("filter.search_placeholders.search_triggers"),
         keys: [
-            {
-                key: "namespace",
-                label: t("filter.namespace.label"),
-                description: t("filter.namespace.description"),
-                comparators: [
-                    Comparators.IN,
-                    Comparators.NOT_IN,
-                    Comparators.CONTAINS,
-                    Comparators.PREFIX,
-                ],
-                valueType: "multi-select",
-                valueProvider: async () => {
-                    const user = useAuthStore().user;
-                    if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
-                        const namespacesStore = useNamespacesStore();
-                        const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
-                        return [...new Set(namespaces
-                            .flatMap(namespace => {
-                                return namespace.split(".").reduce((current: string[], part: string) => {
-                                    const previousCombination = current?.[current.length - 1];
-                                    return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
-                                }, []);
-                            }))].map(namespace => ({
-                                label: namespace,
-                                value: namespace
-                            }));
-                    }
-                    return [];
+            ...(route.name !== "namespaces/update" ? [
+                {
+                    key: "namespace",
+                    label: t("filter.namespace.label"),
+                    description: t("filter.namespace.description"),
+                    comparators: [
+                        Comparators.IN,
+                        Comparators.NOT_IN,
+                        Comparators.CONTAINS,
+                        Comparators.PREFIX,
+                    ],
+                    valueType: "multi-select" as const,
+                    valueProvider: async () => {
+                        const user = useAuthStore().user;
+                        if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
+                            const namespacesStore = useNamespacesStore();
+                            const namespaces = (await namespacesStore.loadAutocomplete()) as string[];
+                            return [...new Set(namespaces
+                                .flatMap(namespace => {
+                                    return namespace.split(".").reduce((current: string[], part: string) => {
+                                        const previousCombination = current?.[current.length - 1];
+                                        return [...current, `${(previousCombination ? previousCombination + "." : "")}${part}`];
+                                    }, []);
+                                }))].map(namespace => ({
+                                    label: namespace,
+                                    value: namespace
+                                }));
+                        }
+                        return [];
+                    },
+                    searchable: true
                 },
-                searchable: true
-            },
-            {
+            ] : []) as any,
+            ...(route.name !== "flows/update" ? [{
                 key: "flowId",
                 label: t("filter.flowId.label"),
                 description: t("filter.flowId.description"),
@@ -57,7 +61,7 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => computed
                     Comparators.ENDS_WITH,
                 ],
                 valueType: "text",
-            },
+            }] : []) as any,
             {
                 key: "timeRange",
                 label: t("filter.timeRange_trigger.label"),

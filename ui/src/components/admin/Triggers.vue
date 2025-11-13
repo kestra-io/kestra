@@ -77,7 +77,7 @@
                                 <el-button @click="deleteBackfills()">
                                     {{ $t("delete backfills") }}
                                 </el-button>
-                                <el-button @click="deleteTriggers()" type="danger">
+                                <el-button @click="deleteTriggers()">
                                     {{ $t("delete triggers") }}
                                 </el-button>
                             </BulkSelect>
@@ -373,6 +373,7 @@
     import SelectTable from "../layout/SelectTable.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import useRouteContext from "../../composables/useRouteContext";
 
@@ -473,6 +474,8 @@
             .filter(Boolean) as ColumnConfig[]
     );
 
+    const {saveRestoreUrl} = useRestoreUrl();
+
     const loadData = (callback?: () => void) => {
         const query = loadQuery({
             size: parseInt(String(route.query?.size ?? "25")),
@@ -498,7 +501,8 @@
 
     const {ready, onSort, onPageChanged, queryWithFilter, load} = useDataTableActions({
         dataTableRef: dataTable,
-        loadData
+        loadData,
+        saveRestoreUrl
     });
 
     const {
@@ -664,7 +668,7 @@
         );
     };
 
-    const genericConfirmAction = (toastKey: string, queryAction: string, byIdAction: string, success: string, data?: any, extraWarning = null) => {
+    const genericConfirmAction = (toastKey: string, queryAction: string, byIdAction: string, success: string, data?: any, extraWarning?: string) => {
         let message = t(toastKey, {"count": queryBulkAction.value ? total.value : selection.value?.length}) + ". " + t("bulk action async warning");
 
         if (extraWarning) {

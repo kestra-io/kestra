@@ -6,13 +6,28 @@
         <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
-        <el-dialog id="execute-flow-dialog" v-model="isOpen" destroyOnClose :showClose="!coreStore.guidedProperties.tourStarted" :beforeClose="(done) => beforeClose(done)" :appendToBody="true">
+        <el-dialog
+            id="execute-flow-dialog"
+            v-model="isOpen"
+            destroyOnClose
+            :showClose="!coreStore.guidedProperties.tourStarted"
+            :beforeClose="(done) => beforeClose(done)"
+            :appendToBody="true"
+            :width="dialogWidth"
+        >
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
             <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
         </el-dialog>
-        <el-dialog v-if="isSelectFlowOpen" v-model="isSelectFlowOpen" destroyOnClose :beforeClose="() => reset()" :appendToBody="true">
+        <el-dialog
+            v-if="isSelectFlowOpen"
+            v-model="isSelectFlowOpen"
+            destroyOnClose
+            :beforeClose="() => reset()"
+            :appendToBody="true"
+            :width="dialogWidth"
+        >
             <el-form
                 labelPosition="top"
             >
@@ -60,6 +75,7 @@
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
+    import {useMediaQuery} from "@vueuse/core";
     import {pageFromRoute} from "../../utils/eventsRouter";
     import FlowWarningDialog from "./FlowWarningDialog.vue";
     import {mapStores} from "pinia";
@@ -101,6 +117,7 @@
                 isSelectFlowOpen: false,
                 localFlow: undefined,
                 localNamespace: undefined,
+                isLargeScreen: useMediaQuery("(min-width: 768px)"),
                 icon: {
                     LightningBolt: shallowRef(LightningBolt),
                     Play: shallowRef(Play)
@@ -172,6 +189,9 @@
         },
         computed: {
             ...mapStores(useApiStore, useCoreStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
+            dialogWidth() {
+                return this.isLargeScreen ? "50%" : "90%";
+            },
             computedFlowId() {
                 return this.flowId || this.localFlow?.id;
             },

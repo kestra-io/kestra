@@ -253,9 +253,13 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                       type: orchestration
                     preconditions:
                       id: flow_a
-                      flows:
-                        - namespace: company.team
-                          flowId: flow_a"""
+                        id: flow_a
+                        where:
+                            - id: label_filter
+                              filters:
+                                - field: EXPRESSION
+                                  type: IS_TRUE
+                                  value: "{{ labels.type == 'orchestration' }}"""
         )
 
     },

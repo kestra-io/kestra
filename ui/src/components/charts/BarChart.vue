@@ -242,7 +242,7 @@
                     },
                 },
                 y: {
-                    display: props.scales,
+                    display: props.scales && !props.small,
                     title: {
                         display: !props.small,
                         text: t("executions"),
@@ -264,7 +264,7 @@
                     grid: {
                         display: false,
                     },
-                    display: props.duration,
+                    display: props.duration && !props.small,
                     position: "right",
                     ticks: {
                         maxTicksLimit: props.small ? 5 : 8,

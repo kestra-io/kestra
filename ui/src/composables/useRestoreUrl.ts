@@ -47,11 +47,6 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         }
     };
 
-    /**
-     * Merges saved URL query parameters from sessionStorage with current route.
-     * Only adds missing parameters to avoid overwriting user changes.
-     * Updates route only when changes are made.
-     */
     const goToRestoreUrl = () => {
         if (!restoreUrl) {
             return;
@@ -89,12 +84,9 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         }
     };
 
-    /**
-     * Automatically restores saved URL state from sessionStorage on mount.
-     * Only triggers when restoreUrl is enabled and saved state exists.
-     */
+    // Automatically call goToRestoreUrl on mount if needed (equivalent to created() hook)
     onMounted(() => {
-        if (restoreUrl && localStorageValue.value) {
+        if (Object.keys(route.query).length === 0 && restoreUrl) {
             loadInit.value = false;
             goToRestoreUrl();
         }

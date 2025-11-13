@@ -89,14 +89,11 @@
     import permission from "../../../models/permission";
     import action from "../../../models/action";
 
-    import useRestoreUrl from "../../../composables/useRestoreUrl";
-
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";
     
     const namespacesFilter = useNamespacesFilter();
-    const {saveRestoreUrl} = useRestoreUrl({restoreUrl: true});
 
     interface Node {
         id: string;
@@ -130,12 +127,8 @@
 
     onMounted(() => loadData());
     watch(
-        () => route.query.q,
-        () => {
-            loadData();
-            saveRestoreUrl();
-        },
-        {immediate: true}
+        () => route.query,
+        () => loadData(),
     );
 
     const miscStore = useMiscStore();

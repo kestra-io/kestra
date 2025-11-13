@@ -42,7 +42,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         const PARAMS = {params: options.params, ...VALIDATE};
 
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}${edition === "OSS" ? "?ee=false" : ""}`;
-        const CUSTOM = `${apiUrl()}/blueprints/${options.type}${options.kind}`;
+        const CUSTOM = `${apiUrl()}/blueprints/${options.type}`;
 
         const response = await axios.get(options.type === "community" ? COMMUNITY : CUSTOM, PARAMS);
 
@@ -52,7 +52,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
     const getBlueprint = async (options: Options) => {
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}`;
-        const CUSTOM = `${apiUrl()}/blueprints/${options.type}${options.kind}/${options.id}`;
+        const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}`;
 
         const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM);
 
@@ -66,7 +66,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
     const getBlueprintSource = async (options: Options) => {
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/source`;
-        const CUSTOM = `${apiUrl()}/blueprints/${options.type}${options.kind}/${options.id}/source`;
+        const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}/source`;
 
         const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM);
 
@@ -76,7 +76,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
 
     const getBlueprintGraph = async (options: Options) => {
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/${options.id}/versions/${version}/graph`;
-        const CUSTOM = `${apiUrl()}/blueprints/${options.type}${options.kind}/${options.id}/graph`;
+        const CUSTOM = `${apiUrl()}/blueprints/${options.type}/${options.id}/graph`;
 
         const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM);
 
@@ -88,7 +88,7 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         const PARAMS = {params: options.params, ...VALIDATE};
 
         const COMMUNITY = `${API_URL}/blueprints/kinds/${options.kind}/versions/${version}/tags`;
-        const CUSTOM = `${apiUrl()}/blueprints/${options.type}${options.kind}/tags`;
+        const CUSTOM = `${apiUrl()}/blueprints/${options.type}/tags`;
 
         const response = await axios.get(options.type == "community" ? COMMUNITY : CUSTOM, PARAMS);
 

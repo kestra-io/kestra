@@ -128,7 +128,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         // Handle all workers which are not in a RUNNING state.
         handleAllWorkersForUncleanShutdown(now);
         
-        // Update all services one of the TERMINATED states to NOT_RUNNING.
+        // Update all services in one of the TERMINATED states to NOT_RUNNING.
         handleAllServicesForTerminatedStates(now);
         
         // Update all services in NOT_RUNNING to EMPTY (a.k.a soft delete).
@@ -297,7 +297,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
             .findAllInstancesInStates(Set.of(DISCONNECTED, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED))
             .stream()
             .filter(instance -> !instance.is(ServiceType.WORKER)) // WORKERS are handle above.
-            .filter(instance -> instance.isTerminationGracePeriodElapsed(now))
+            .filter(instance -> instance.isTerminationGracePeriodElapsed(now) || instance.state().equals(TERMINATED_GRACEFULLY))
             .peek(instance -> maybeLogNonRespondingAfterTerminationGracePeriod(instance, now))
             .forEach(instance -> safelyUpdate(instance, NOT_RUNNING, DEFAULT_REASON_FOR_NOT_RUNNING));
     }

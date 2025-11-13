@@ -40,7 +40,7 @@ public class WebServerCommand extends AbstractServerCommand {
     @Option(names = {"--no-indexer"}, description = "Flag to disable starting an embedded indexer.")
     private boolean indexerDisabled = false;
 
-    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "a list of indexer record keys, separated by a coma; for troubleshooting purpose only")
+    @CommandLine.Option(names = {"--skip-indexer-records"}, split=",", description = "a list of indexer record keys, separated by a coma; for troubleshooting only")
     private List<String> skipIndexerRecords = Collections.emptyList();
 
     @Override

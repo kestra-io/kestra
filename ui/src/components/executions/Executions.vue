@@ -70,7 +70,7 @@
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
                     :no-data-text="$t('no_results.executions')"
-                    :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+                    :rowKey="(row: any) => row.id"
                 >
                     <template #select-actions>
                         <BulkSelect
@@ -144,10 +144,7 @@
 
                             <el-form>
                                 <ElFormItem :label="$t('execution labels')">
-                                    <LabelInput
-                                        :key="executionLabels.map((l) => l.key).join('-')"
-                                        v-model:labels="executionLabels"
-                                    />
+                                    <LabelInput v-model:labels="executionLabels" />
                                 </ElFormItem>
                             </el-form>
                         </el-dialog>

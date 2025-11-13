@@ -1,4 +1,8 @@
 <template>
+    <Dashboards
+        v-if="tab === 'overview' && ALLOWED_CREATION_ROUTES.includes(String(route.name))"
+        @dashboard="onSelectDashboard"
+    />
     <Action
         v-if="deleted"
         type="default"
@@ -34,11 +38,19 @@
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
     // @ts-expect-error does not have types
     import TriggerFlow from "../../../components/flows/TriggerFlow.vue";
+    import Dashboards from "../../../components/dashboard/components/selector/Selector.vue";
+    import {ALLOWED_CREATION_ROUTES} from "../../../components/dashboard/composables/useDashboards";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
     import {useAuthStore} from "override/stores/auth";
 
     const {t} = useI18n();
+
+    const onSelectDashboard = (value: any) => {
+        router.replace({
+            params: {...route.params, dashboard: value}
+        });
+    };
 
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();

@@ -5,7 +5,6 @@
         </div>
 
         <el-scrollbar
-            ref="scrollbarRef"
             :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
             @end-reached="onEndReached"
         >
@@ -53,7 +52,6 @@
                 return this.infiniteScrollDisabled === false;
             },
         },
-        directives: {},
         methods: {
             async onEndReached(direction) {
                 if (direction !== "bottom") return;

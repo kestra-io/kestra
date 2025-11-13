@@ -220,10 +220,10 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 for (const item of array) {
                     const folderPath = `${basePath}${item.fileName}`;
                     if (folderPath === parentPath && isDirectory(item)) {
-                        item.children = sorted([...item.children, NEW]);
+                        item.children = sorted([...(item.children ?? []), NEW]);
                         return true;
                     }
-                    if (isDirectory(item) && pushItemToFolder(`${folderPath}/`, item.children, pathParts.slice(1))) {
+                    if (isDirectory(item) && pushItemToFolder(`${folderPath}/`, item.children ?? [], pathParts.slice(1))) {
                         return true;
                     }
                 }
@@ -249,6 +249,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     function getPath(uid: string ) {
         // first, use the node unique id to find it in all the subtrees of the fileTree
         const findPath = (array: TreeNode[], currentPath = ""): string | undefined => {
+            if (!Array.isArray(array)) return undefined;
             for (const item of array) {
                 const newPath = currentPath ? `${currentPath}/${item.fileName}` : item.fileName;
                 if (item.id === uid) {

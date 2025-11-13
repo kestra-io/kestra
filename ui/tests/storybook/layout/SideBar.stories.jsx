@@ -25,7 +25,7 @@ export default {
         },
           {
             path: "/dashboard",
-            name: "dahsboard",
+            name: "dashboard",
             component: {template: "<div>dashboard</div>"}
           },{
             path: "/dashboard/:menu",

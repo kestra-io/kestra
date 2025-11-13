@@ -272,6 +272,7 @@
     import DataTable from "../layout/DataTable.vue";
     import _merge from "lodash/merge";
     import {type DataTableRef, useDataTableActions} from "../../composables/useDataTableActions.ts";
+
     const dataTable = useTemplateRef<DataTableRef>("dataTable");
 
     const loadData = async (callback?: () => void) => {

@@ -23,6 +23,8 @@ const textYamlHeader = {
     }
 }
 
+const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
+
 interface Trigger {
     id: string;
     type: string;
@@ -404,10 +406,13 @@ export const useFlowStore = defineStore("flow", () => {
     }
     function saveFlow(options: { flow: string }) {
         const flowData = YAML_UTILS.parse(options.flow)
-        return axios.put(`${apiUrl()}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
+        return axios.put(`${apiUrl()}/flows/${flowData.namespace}/${flowData.id}`, options.flow, {
+            ...textYamlHeader,
+            ...VALIDATE
+        })
             .then(response => {
                 if (response.status >= 300) {
-                    return Promise.reject(new Error("Server error on flow save"))
+                    return Promise.reject(response)
                 } else {
                     flow.value = response.data;
 
@@ -430,7 +435,13 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     function createFlow(options: { flow: string }) {
-        return axios.post(`${apiUrl()}/flows`, options.flow, textYamlHeader).then(response => {
+        return axios.post(`${apiUrl()}/flows`, options.flow, {
+            ...textYamlHeader,
+            ...VALIDATE
+        }).then(response => {
+            if (response.status >= 300) {
+                return Promise.reject(response)
+            }
 
             const creationPanels = localStorage.getItem(`el-fl-creation-${creationId.value}`) ?? YAML_UTILS.stringify([]);
             localStorage.setItem(`el-fl-${flow.value!.namespace}-${flow.value!.id}`, creationPanels);

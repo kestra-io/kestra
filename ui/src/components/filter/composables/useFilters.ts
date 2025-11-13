@@ -17,7 +17,6 @@ import {
     KV_COMPARATORS
 } from "../utils/filterTypes";
 import {usePreAppliedFilters} from "./usePreAppliedFilters";
-import {applyDefaultFilters} from "./useDefaultFilter";
 
 export function useFilters(configuration: FilterConfiguration, showSearchInput = true, legacyQuery = false) {
     const router = useRouter();
@@ -29,7 +28,8 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
     const {
         markAsPreApplied,
         hasPreApplied,
-        getPreApplied
+        getPreApplied,
+        getAllPreApplied
     } = usePreAppliedFilters();
 
     const appendQueryParam = (query: Record<string, any>, key: string, value: string) => {
@@ -367,10 +367,13 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         updateRoute();
     };
 
+    /**
+     * Resets all filters to their pre-applied state and clears the search query
+     */
     const resetToPreApplied = () => {
-        const defaultQuery = applyDefaultFilters({}, {configuration, route, legacyQuery}).query;
+        appliedFilters.value = getAllPreApplied();
         searchQuery.value = "";
-        router.push({query: defaultQuery});
+        updateRoute();
     };
 
     return {

@@ -1,6 +1,7 @@
 <template>
     <div class="w-100 p-4">
         <Sections
+            :key="dashboardStore.sourceCode"
             :dashboard="{id: 'default', charts: []}"
             :charts="charts.map(chart => chart.data).filter(chart => chart !== null)"
             showDefault
@@ -9,11 +10,12 @@
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, ref} from "vue";
+    import {ref, watch} from "vue";
     import Sections from "../sections/Sections.vue";
     import {Chart} from "../composables/useDashboards";
     import {useDashboardStore} from "../../../stores/dashboard";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import throttle from "lodash/throttle";
 
     interface Result {
         error: string[] | null;
@@ -23,20 +25,26 @@
 
     const charts = ref<Result[]>([])
 
-    onMounted(async () => {
-        validateAndLoadAllCharts();
-    });
-
     const dashboardStore = useDashboardStore();
 
-    function validateAndLoadAllCharts() {
-        charts.value = [];
+    const validateAndLoadAllChartsThrottled = throttle(validateAndLoadAllCharts, 500);
+
+    async function validateAndLoadAllCharts() {
         const allCharts = YAML_UTILS.getAllCharts(dashboardStore.sourceCode) ?? [];
-        allCharts.forEach(async (chart: any) => {
-            const loadedChart = await loadChart(chart);
-            charts.value.push(loadedChart);
-        });
+        charts.value = await Promise.all(allCharts.map(async (chart: any) => {
+            return loadChart(chart);
+        }));
     }
+
+    watch(
+        () => dashboardStore.sourceCode,
+        () => {
+            validateAndLoadAllChartsThrottled();
+        }
+        , {immediate: true}
+    );
+
+    
 
     async function loadChart(chart: any) {
         const yamlChart = YAML_UTILS.stringify(chart);

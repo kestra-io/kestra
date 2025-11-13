@@ -19,6 +19,7 @@
             :creating="isCreating"
             :path="path"
             :diffOverviewBar="false"
+            :scrollKey="editorScrollKey"
             @update:model-value="editorUpdate"
             @cursor="updatePluginDocumentation"
             @save="flow ? saveFlowYaml(): saveFileContent()"
@@ -224,6 +225,19 @@
     const namespacesStore = useNamespacesStore();
     const miscStore = useMiscStore();
 
+    const editorScrollKey = computed(() => {
+        if (props.flow) {
+            const ns = flowStore.flow?.namespace ?? "";
+            const id = flowStore.flow?.id ?? "";
+            return `flow:${ns}/${id}:code`;
+        }
+        const ns = namespace.value;
+        if (ns && props.path) {
+            return `file:${ns}:${props.path}`;
+        }
+        return undefined;
+    });
+
     function loadPluginsHash() {
         miscStore.loadConfigs().then(config => {
             hash.value = config.pluginsHash;
@@ -260,6 +274,10 @@
             });
         }, 1000);
     }
+
+    onBeforeUnmount(() => {
+        clearTimeout(timeout.value);
+    });
 
 
     function updatePluginDocumentation(event: any) {

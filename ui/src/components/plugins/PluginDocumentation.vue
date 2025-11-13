@@ -31,13 +31,18 @@
                     noUrlChange
                 >
                     <template #markdown="{content}">
-                        <EnhancedMarkdown font-size-var="font-size-base" :source="content" :showSearch="false" />
+                        <!-- Plugin schema content: search disabled -->
+                        <Markdown 
+                            font-size-var="font-size-base"
+                            :source="content"
+                        />
                     </template>
                 </SchemaToHtml>
             </Suspense>
         </template>
-        <EnhancedMarkdown
-            v-else
+
+        <Markdown
+            v-else-if="introContent"
             :source="introContent"
             :class="{'position-absolute': absolute}"
             :showSearch="true"
@@ -49,7 +54,7 @@
 <script setup lang="ts">
 
     import {computed} from "vue";
-    import EnhancedMarkdown from "../layout/EnhancedMarkdown.vue";
+    import Markdown from "../layout/Markdown.vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {useMiscStore} from "override/stores/misc";

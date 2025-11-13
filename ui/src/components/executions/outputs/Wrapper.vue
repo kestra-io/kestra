@@ -225,14 +225,15 @@
                     const debugOutput = JSON.stringify(parsedResult, null, 2);
                     debugExpression.value = debugOutput;
 
-                    selected.value.push(debugOutput);
-
+                    if (response.status === 200 && debugOutput !== null && debugOutput !== undefined) {
+                        selected.value.push(debugOutput);
+                    }
                     isJSON.value = true;
                 } catch {
                     debugExpression.value = response.data.result;
 
                     // Parsing failed, therefore, copy raw result
-                    if (response.status === 200 && response.data.result)
+                    if (response.status === 200 && response.data.result !== null && response.data.result !== undefined)
                         selected.value.push(response.data.result);
                 }
 
@@ -531,8 +532,9 @@
 }
 .content-container {
     height: calc(100vh - 0px);
-    overflow-y: auto !important;
+    overflow-y: scroll;
     overflow-x: hidden;
+    scrollbar-gutter: stable;
     word-wrap: break-word;
     word-break: break-word;
     position: relative;
@@ -541,19 +543,16 @@
 
 :deep(.el-collapse) {
     .el-collapse-item__wrap {
-        overflow-y: auto !important;
         max-height: none !important;
     }
 
     .el-collapse-item__content {
-        overflow-y: auto !important;
         word-wrap: break-word;
         word-break: break-word;
     }
 }
 
 :deep(.var-value) {
-    overflow-y: auto !important;
     word-wrap: break-word;
     word-break: break-word;
 }

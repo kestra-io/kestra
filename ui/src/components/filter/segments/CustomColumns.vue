@@ -5,7 +5,7 @@
                 <h6>{{ t("filter.customize columns") }}</h6>
                 <small>{{ t("filter.drag to reorder columns") }}</small>
             </div>
-            <el-button type="text" :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
+            <el-button link :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
         </div>
 
         <div class="list">

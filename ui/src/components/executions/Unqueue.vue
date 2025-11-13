@@ -49,8 +49,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {State} from "@kestra-io/ui-libs"
-    import Status from "../../components/Status.vue";
+    import {State, Status} from "@kestra-io/ui-libs"
     import {useAuthStore} from "override/stores/auth"
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";

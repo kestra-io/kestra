@@ -25,7 +25,7 @@
         </div>
 
         <el-button
-            type="text"
+            link
             size="default"
             :icon="isVisible(column) ? EyeOutline : EyeOffOutline"
             :class="isVisible(column) ? 'selected' : 'unselected'"

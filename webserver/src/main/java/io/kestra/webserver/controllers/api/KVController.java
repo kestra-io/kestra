@@ -122,7 +122,7 @@ public class KVController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "/namespaces/{namespace}/kv/{key}", consumes = {MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @Put(uri = "/namespaces/{namespace}/kv/{key}", consumes = {MediaType.TEXT_PLAIN})
     @Operation(tags = {"KV"}, summary = "Puts a key-value pair in store")
     public void setKeyValue(
         HttpHeaders httpHeaders,

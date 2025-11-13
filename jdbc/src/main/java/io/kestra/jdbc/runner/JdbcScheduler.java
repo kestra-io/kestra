@@ -4,6 +4,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.ScheduleContextInterface;
+import io.kestra.core.runners.Scheduler;
 import io.kestra.core.runners.SchedulerTriggerStateInterface;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.FlowService;
@@ -56,6 +57,9 @@ public class JdbcScheduler extends AbstractScheduler {
                     .forEach(abstractTrigger -> triggerRepository.delete(Trigger.of(flow, abstractTrigger)));
             }
         });
+
+        // No-op consumption of the trigger queue, so the events are purged from the queue
+        this.triggerQueue.receive(Scheduler.class, trigger -> { });
     }
 
     @Override

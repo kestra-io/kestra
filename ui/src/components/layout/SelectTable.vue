@@ -4,27 +4,26 @@
             <slot name="select-actions" />
         </div>
 
-        <el-table
-            ref="table"
-            v-bind="$attrs"
-            :data
-            :rowKey
-            :emptyText="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
-            @selection-change="selectionChanged"
-            v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
-            :infiniteScrollDisabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
-            :infiniteScrollDelay="0"
+        <el-scrollbar
             :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
+            @end-reached="onEndReached"
         >
-            <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
-            <slot name="default" />
-        </el-table>
+            <el-table
+                ref="table"
+                v-bind="$attrs"
+                :data
+                :rowKey
+                :emptyText="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
+                @selection-change="selectionChanged"
+            >
+                <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
+                <slot name="default" />
+            </el-table>
+        </el-scrollbar>
     </div>
 </template>
 
 <script>
-    import elTableInfiniteScroll from "el-table-infinite-scroll";
-
     export default {
         data() {
             return {
@@ -53,10 +52,13 @@
                 return this.infiniteScrollDisabled === false;
             },
         },
-        directives: {
-            elTableInfiniteScroll
-        },
         methods: {
+            async onEndReached(direction) {
+                if (direction !== "bottom") return;
+                if (this.infiniteScrollDisabled || !this.infiniteScrollLoad) return;
+                await this.infiniteScrollLoadWithDisableHandling();
+                this.tableHeight = await this.computeTableHeight();
+            },
             async resetInfiniteScroll() {
                 this.infiniteScrollDisabled = false;
                 this.tableHeight = await this.computeTableHeight();

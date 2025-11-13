@@ -6,7 +6,7 @@ export const useNamespacesFilter = (): ComputedRef<FilterConfiguration> => compu
     const {t} = useI18n();
 
     return {
-        title: t("filter.titles.namespaces_filters"),
+        title: t("filter.titles.namespace_filters"),
         searchPlaceholder: t("filter.search_placeholders.search_namespaces"),
         keys: [],
     };

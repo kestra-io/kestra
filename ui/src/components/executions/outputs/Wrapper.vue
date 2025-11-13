@@ -532,8 +532,9 @@
 }
 .content-container {
     height: calc(100vh - 0px);
-    overflow-y: auto !important;
+    overflow-y: scroll;
     overflow-x: hidden;
+    scrollbar-gutter: stable;
     word-wrap: break-word;
     word-break: break-word;
     position: relative;
@@ -542,19 +543,16 @@
 
 :deep(.el-collapse) {
     .el-collapse-item__wrap {
-        overflow-y: auto !important;
         max-height: none !important;
     }
 
     .el-collapse-item__content {
-        overflow-y: auto !important;
         word-wrap: break-word;
         word-break: break-word;
     }
 }
 
 :deep(.var-value) {
-    overflow-y: auto !important;
     word-wrap: break-word;
     word-break: break-word;
 }

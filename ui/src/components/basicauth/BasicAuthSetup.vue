@@ -1,6 +1,6 @@
 <template>
-    <div class="setup-container">
-        <div class="setup-sidebar">
+    <el-row class="setup-container" :gutter="30" justify="center" align="middle">
+        <el-col :xs="24" :md="8" class="setup-sidebar">
             <div class="logo-container">
                 <Logo style="width: 14rem;" />
             </div>
@@ -18,194 +18,196 @@
                 />
                 <el-step :icon="LightningBolt" :title="t('setup.steps.complete')" class="primary-icon" />
             </el-steps>
-        </div>
-        <div class="setup-main">
-            <div class="setup-card-header">
-                <div class="card-header">
-                    <el-text size="large" class="header-title" v-if="activeStep === 0">
-                        {{ t('setup.titles.user') }}
-                    </el-text>
-                    <el-text size="large" class="header-title" v-else-if="activeStep === 1">
-                        Welcome {{ userFormData.firstName }}
-                    </el-text>
-                    <el-text size="large" class="header-title" v-else-if="activeStep === 2">
-                        {{ t('setup.titles.survey') }}
-                    </el-text>
-                    <el-text class="d-block mt-4">
-                        {{ subtitles[activeStep] }}
-                    </el-text>
-                    <el-button v-if="activeStep === 2" class="skip-button" @click="handleSurveySkip()">
-                        {{ t('setup.survey.skip') }}
-                    </el-button>
-                </div>
-            </div>
-
-            <div class="setup-card-body">
-                <div v-if="activeStep === 0">
-                    <el-form ref="userForm" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
-                        <el-form-item :label="t('setup.form.email')" prop="username">
-                            <el-input v-model="userFormData.username" :placeholder="t('setup.form.email')" type="email">
-                                <template #suffix v-if="getFieldError('username')">
-                                    <el-tooltip placement="top" :content="getFieldError('username')">
-                                        <InformationOutline class="validation-icon error" />
-                                    </el-tooltip>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item :label="t('setup.form.firstName')" prop="firstName">
-                            <el-input v-model="userFormData.firstName" :placeholder="t('setup.form.firstName')">
-                                <template #suffix v-if="getFieldError('firstName')">
-                                    <el-tooltip placement="top" :content="getFieldError('firstName')">
-                                        <InformationOutline class="validation-icon error" />
-                                    </el-tooltip>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item :label="t('setup.form.lastName')" prop="lastName">
-                            <el-input v-model="userFormData.lastName" :placeholder="t('setup.form.lastName')">
-                                <template #suffix v-if="getFieldError('lastName')">
-                                    <el-tooltip placement="top" :content="getFieldError('lastName')">
-                                        <InformationOutline class="validation-icon error" />
-                                    </el-tooltip>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <el-form-item :label="t('setup.form.password')" prop="password" class="mb-2">
-                            <el-input
-                                type="password"
-                                showPassword
-                                v-model="userFormData.password"
-                                :placeholder="t('setup.form.password')"
-                            >
-                                <template #suffix v-if="getFieldError('password')">
-                                    <el-tooltip placement="top" :content="getFieldError('password')">
-                                        <InformationOutline class="validation-icon error" />
-                                    </el-tooltip>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                        <div class="password-requirements mb-4">
-                            <el-text>
-                                8+ chars, 1 upper, 1 number
-                            </el-text>
-                        </div>
-                    </el-form>
-                    <div class="d-flex gap-1">
-                        <el-button type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
-                            {{ t("setup.confirm.confirm") }}
+        </el-col>
+        <el-col :xs="24" :md="16" class="setup-main">
+            <el-card class="setup-card">
+                <template #header v-if="activeStep !== 3">
+                    <div class="card-header">
+                        <el-text size="large" class="header-title" v-if="activeStep === 0">
+                            {{ t('setup.titles.user') }}
+                        </el-text>
+                        <el-text size="large" class="header-title" v-else-if="activeStep === 1">
+                            Welcome {{ userFormData.firstName }}
+                        </el-text>
+                        <el-text size="large" class="header-title" v-else-if="activeStep === 2">
+                            {{ t('setup.titles.survey') }}
+                        </el-text>
+                        <el-text class="d-block mt-4">
+                            {{ subtitles[activeStep] }}
+                        </el-text>
+                        <el-button v-if="activeStep === 2" class="skip-button" @click="handleSurveySkip()">
+                            {{ t('setup.survey.skip') }}
                         </el-button>
                     </div>
-                </div>
+                </template>
 
-                <div class="d-flex flex-column gap-4" v-else-if="activeStep === 1">
-                    <el-card v-if="isLoading">
-                        <el-text>Loading configuration...</el-text>
-                    </el-card>
-                    <el-card v-else-if="setupConfigurationLines.length > 0">
-                        <el-row
-                            v-for="config in setupConfigurationLines"
-                            :key="config.name"
-                            class="lh-lg mt-1 mb-1 align-items-center gap-2"
-                        >
-                            <component :is="config.icon" />
-                            <el-text size="small">
-                                {{ t("setup.config." + config.name) }}
-                            </el-text>
-                            <el-divider class="m-auto" />
-                            <Check class="text-success" v-if="config.value === true" />
-                            <Close class="text-danger" v-else-if="config.value === false" />
-                            <el-text v-else size="small">
-                                {{ config.value === "NOT SETUP" ? config.value : config.value.toString().capitalize() }}
-                            </el-text>
-                        </el-row>
-                    </el-card>
-                    <el-card v-else>
-                        <el-text>No configuration data available</el-text>
-                    </el-card>
-                    <el-text class="align-self-start">
-                        {{ t("setup.confirm.config_title") }}
-                    </el-text>
-                    <div class="d-flex align-self-start">
-                        <el-button @click="previousStep()">
-                            {{ t("setup.confirm.not_valid") }}
-                        </el-button>
-                        <el-button type="primary" @click="initBasicAuth()">
-                            {{ t("setup.confirm.valid") }}
-                        </el-button>
-                    </div>
-                </div>
-
-                <div v-else-if="activeStep === 2">
-                    <el-form ref="surveyForm" labelPosition="top" :model="surveyData" :showMessage="false">
-                        <el-form-item :label="t('setup.survey.company_size')">
-                            <el-radio-group v-model="surveyData.companySize" class="survey-radio-group">
-                                <el-radio
-                                    v-for="option in companySizeOptions"
-                                    :key="option.value"
-                                    :value="option.value"
+                <div class="setup-card-body">
+                    <div v-if="activeStep === 0">
+                        <el-form ref="userForm" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
+                            <el-form-item :label="t('setup.form.email')" prop="username">
+                                <el-input v-model="userFormData.username" :placeholder="t('setup.form.email')" type="email">
+                                    <template #suffix v-if="getFieldError('username')">
+                                        <el-tooltip placement="top" :content="getFieldError('username')">
+                                            <InformationOutline class="validation-icon error" />
+                                        </el-tooltip>
+                                    </template>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item :label="t('setup.form.firstName')" prop="firstName">
+                                <el-input v-model="userFormData.firstName" :placeholder="t('setup.form.firstName')">
+                                    <template #suffix v-if="getFieldError('firstName')">
+                                        <el-tooltip placement="top" :content="getFieldError('firstName')">
+                                            <InformationOutline class="validation-icon error" />
+                                        </el-tooltip>
+                                    </template>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item :label="t('setup.form.lastName')" prop="lastName">
+                                <el-input v-model="userFormData.lastName" :placeholder="t('setup.form.lastName')">
+                                    <template #suffix v-if="getFieldError('lastName')">
+                                        <el-tooltip placement="top" :content="getFieldError('lastName')">
+                                            <InformationOutline class="validation-icon error" />
+                                        </el-tooltip>
+                                    </template>
+                                </el-input>
+                            </el-form-item>
+                            <el-form-item :label="t('setup.form.password')" prop="password" class="mb-2">
+                                <el-input
+                                    type="password"
+                                    showPassword
+                                    v-model="userFormData.password"
+                                    :placeholder="t('setup.form.password')"
                                 >
-                                    {{ option.label }}
-                                </el-radio>
-                            </el-radio-group>
-                        </el-form-item>
+                                    <template #suffix v-if="getFieldError('password')">
+                                        <el-tooltip placement="top" :content="getFieldError('password')">
+                                            <InformationOutline class="validation-icon error" />
+                                        </el-tooltip>
+                                    </template>
+                                </el-input>
+                            </el-form-item>
+                            <div class="password-requirements mb-4">
+                                <el-text>
+                                    8+ chars, 1 upper, 1 number
+                                </el-text>
+                            </div>
+                        </el-form>
+                        <div class="d-flex gap-1">
+                            <el-button type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
+                                {{ t("setup.confirm.confirm") }}
+                            </el-button>
+                        </div>
+                    </div>
 
-                        <el-divider class="my-4" />
+                    <div class="d-flex flex-column gap-4" v-else-if="activeStep === 1">
+                        <el-card v-if="isLoading">
+                            <el-text>Loading configuration...</el-text>
+                        </el-card>
+                        <el-card v-else-if="setupConfigurationLines.length > 0">
+                            <el-row
+                                v-for="config in setupConfigurationLines"
+                                :key="config.name"
+                                class="lh-lg mt-1 mb-1 align-items-center gap-2"
+                            >
+                                <component :is="config.icon" />
+                                <el-text size="small">
+                                    {{ t("setup.config." + config.name) }}
+                                </el-text>
+                                <el-divider class="m-auto" />
+                                <Check class="text-success" v-if="config.value === true" />
+                                <Close class="text-danger" v-else-if="config.value === false" />
+                                <el-text v-else size="small">
+                                    {{ config.value === "NOT SETUP" ? config.value : config.value.toString().capitalize() }}
+                                </el-text>
+                            </el-row>
+                        </el-card>
+                        <el-card v-else>
+                            <el-text>No configuration data available</el-text>
+                        </el-card>
+                        <el-text class="align-self-start">
+                            {{ t("setup.confirm.config_title") }}
+                        </el-text>
+                        <div class="d-flex align-self-start">
+                            <el-button @click="previousStep()">
+                                {{ t("setup.confirm.not_valid") }}
+                            </el-button>
+                            <el-button type="primary" @click="initBasicAuth()">
+                                {{ t("setup.confirm.valid") }}
+                            </el-button>
+                        </div>
+                    </div>
 
-                        <el-form-item :label="t('setup.survey.use_case')">
-                            <div class="use-case-checkboxes">
-                                <el-checkbox-group v-model="surveyData.useCases">
-                                    <el-checkbox
-                                        v-for="option in useCaseOptions"
+                    <div v-else-if="activeStep === 2">
+                        <el-form ref="surveyForm" labelPosition="top" :model="surveyData" :showMessage="false">
+                            <el-form-item :label="t('setup.survey.company_size')">
+                                <el-radio-group v-model="surveyData.companySize" class="survey-radio-group">
+                                    <el-radio
+                                        v-for="option in companySizeOptions"
                                         :key="option.value"
                                         :value="option.value"
-                                        class="survey-checkbox"
                                     >
                                         {{ option.label }}
-                                    </el-checkbox>
-                                </el-checkbox-group>
-                            </div>
-                        </el-form-item>
+                                    </el-radio>
+                                </el-radio-group>
+                            </el-form-item>
 
-                        <el-divider class="my-4" />
+                            <el-divider class="my-4" />
 
-                        <el-form-item>
-                            <el-checkbox v-model="surveyData.newsletter" class="newsletter-checkbox">
-                                <span v-html="t('setup.survey.newsletter')" />
-                            </el-checkbox>
-                        </el-form-item>
-                    </el-form>
+                            <el-form-item :label="t('setup.survey.use_case')">
+                                <div class="use-case-checkboxes">
+                                    <el-checkbox-group v-model="surveyData.useCases">
+                                        <el-checkbox
+                                            v-for="option in useCaseOptions"
+                                            :key="option.value"
+                                            :value="option.value"
+                                            class="survey-checkbox"
+                                        >
+                                            {{ option.label }}
+                                        </el-checkbox>
+                                    </el-checkbox-group>
+                                </div>
+                            </el-form-item>
 
-                    <div class="d-flex">
-                        <el-button type="primary" @click="handleSurveyContinue()">
-                            {{ t("setup.survey.continue") }}
+                            <el-divider class="my-4" />
+
+                            <el-form-item>
+                                <el-checkbox v-model="surveyData.newsletter" class="newsletter-checkbox">
+                                    <span v-html="t('setup.survey.newsletter')" />
+                                </el-checkbox>
+                            </el-form-item>
+                        </el-form>
+
+                        <div class="d-flex">
+                            <el-button type="primary" @click="handleSurveyContinue()">
+                                {{ t("setup.survey.continue") }}
+                            </el-button>
+                        </div>
+                    </div>
+
+                    <div v-else-if="activeStep === 3" class="success-step">
+                        <img :src="success" alt="success" class="success-img">
+                        <div class="success-content">
+                            <h1 class="success-title">
+                                {{ t('setup.success.title') }}
+                            </h1>
+                            <p class="success-subtitle">
+                                {{ t('setup.success.subtitle') }}
+                            </p>
+                        </div>
+                        <el-button @click="completeSetup()" type="primary" class="success-button">
+                            {{ t('setup.steps.complete') }}
                         </el-button>
                     </div>
                 </div>
-
-                <div v-else-if="activeStep === 3" class="success-step">
-                    <img :src="success" alt="success" class="success-img">
-                    <div class="success-content">
-                        <h1 class="success-title">
-                            {{ t('setup.success.title') }}
-                        </h1>
-                        <p class="success-subtitle">
-                            {{ t('setup.success.subtitle') }}
-                        </p>
-                    </div>
-                    <el-button @click="completeSetup()" type="primary" class="success-button">
-                        {{ t('setup.steps.complete') }}
-                    </el-button>
-                </div>
-            </div>
-        </div>
-    </div>
+            </el-card>
+        </el-col>
+    </el-row>
 </template>
 
 <script setup lang="ts">
+    import MailChecker from "mailchecker"
     import {ref, computed, onUnmounted, type Ref} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import MailChecker from "mailchecker"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {initPostHogForSetup, trackSetupEvent} from "../../composables/usePosthog"
@@ -250,14 +252,14 @@
         label: string
     }
 
-    const miscStore = useMiscStore()
-    const router = useRouter()
     const {t} = useI18n()
+    const router = useRouter()
+    const miscStore = useMiscStore()
     const {storeSurveySkipData} = useSurveySkip()
 
     const activeStep = ref(0)
-    const usageData = ref<any>(null)
     const isLoading = ref(true)
+    const usageData = ref<any>(null)
     const userForm: Ref<any> = ref(null)
     const surveyForm: Ref<any> = ref(null)
 
@@ -504,340 +506,4 @@
     }
 </script>
 
-<style scoped lang="scss">
-$mobile-breakpoint: 992px;
-
-.setup-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    width: 100%;
-    max-width: 911px;
-    gap: 32px;
-    margin: 0 auto;
-    padding: 20px;
-    align-items: start;
-
-    @media (min-width: $mobile-breakpoint) {
-        grid-template-columns: 219px 564px;
-        width: 911px;
-        height: 587px;
-        gap: 128px;
-        padding: 0;
-        align-items: center;
-    }
-}
-
-.setup-sidebar {
-    width: 100%;
-    border-radius: 11.23px;
-    gap: 32px;
-    padding: 24px;
-    box-shadow: 0 4.21px 28.08px var(--Shadows);
-    display: flex;
-    flex-direction: column;
-
-    @media (min-width: $mobile-breakpoint) {
-        width: 219px;
-        height: 432px;
-        padding: 0;
-    }
-
-    .logo-container {
-        padding-bottom: 24px;
-
-        @media (min-width: $mobile-breakpoint) {
-            padding-bottom: 32px;
-        }
-    }
-}
-
-.setup-main {
-    width: 100%;
-    border-radius: 8px;
-    gap: 2rem;
-    padding: 24px;
-    background: var(--ks-background-card);
-    border: 1px solid var(--ks-border-primary);
-    box-shadow: 0 2px 4px var(--ks-card-shadow);
-    display: flex;
-    flex-direction: column;
-
-    @media (min-width: $mobile-breakpoint) {
-        padding: 2rem;
-    }
-}
-
-.setup-card {
-    min-width: 100%;
-
-    &-body {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-
-    @media (min-width: $mobile-breakpoint) {
-        min-width: 800px;
-    }
-}
-
-.el-step {
-    :deep(.el-step__head) {
-        &, & > .el-step__icon {
-            width: 43px !important;
-        }
-
-        & > .el-step__icon {
-            height: 43px !important;
-        }
-
-        .el-step__line {
-            left: 21px;
-        }
-    }
-
-    :deep(.el-step__title) {
-        padding: 0;
-        vertical-align: middle;
-        line-height: 43px;
-        color: var(--ks-content-inactive);
-
-        &.is-process {
-            color: var(--ks-content-primary);
-            font-weight: 400;
-            font-size: 16px;
-        }
-    }
-}
-
-.card-header {
-    position: relative;
-}
-
-.skip-button {
-    position: absolute;
-    top: 0;
-    right: 0;
-    color: var(--ks-content-primary);
-    font-size: 14px;
-    font-weight: 400;
-
-    &:hover {
-        color: var(--ks-content-secondary);
-    }
-}
-
-.header-title {
-    color: var(--ks-content-primary);
-    font-weight: 600;
-    font-size: 24px;
-    line-height: 36px;
-}
-
-.password-requirements {
-    margin-top: -8px;
-
-    .el-text {
-        color: var(--ks-content-tertiary);
-        font-size: 14px;
-    }
-}
-
-.survey-radio-group {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1rem;
-
-    :deep(.el-radio) {
-        margin: 0 !important;
-
-        .el-radio__label {
-            font-size: 14px;
-            color: var(--ks-content-primary);
-        }
-
-        .el-radio__inner {
-            width: 24px;
-            height: 24px;
-            border: 2px solid var(--ks-border-primary);
-            background: transparent;
-
-            &::after {
-                width: 12px;
-                height: 12px;
-                background-color: var(--ks-button-background-primary);
-            }
-        }
-
-        &.is-checked .el-radio__inner {
-            border-color: var(--ks-button-background-primary);
-            background: transparent;
-        }
-    }
-}
-
-.use-case-checkboxes {
-    margin-top: 10px;
-
-    :deep(.el-checkbox-group) {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px 40px;
-    }
-
-    .survey-checkbox {
-        display: flex;
-        align-items: center;
-        border: none;
-        background-color: transparent;
-        cursor: pointer;
-        margin: 0;
-    }
-}
-
-.newsletter-checkbox {
-    margin-top: 16px;
-    display: flex;
-    align-items: center;
-
-    :deep(.el-checkbox__label) {
-        padding-left: 8px;
-    }
-}
-
-.survey-checkbox, .newsletter-checkbox {
-    :deep(.el-checkbox__input) {
-        margin-right: 8px;
-        align-self: center;
-
-        .el-checkbox__inner {
-            border: 2px solid #918BA9;
-            background-color: transparent;
-            width: 18px;
-            height: 18px;
-            position: relative;
-
-            &::after {
-                content: "";
-                position: absolute;
-                border: 2px solid white;
-                border-top: none;
-                border-left: none;
-                width: 4px;
-                height: 8px;
-                transform: rotate(45deg);
-                opacity: 0;
-                top: 1px;
-                left: 4px;
-            }
-        }
-
-        &.is-checked .el-checkbox__inner {
-            border-color: #8405FF;
-            background-color: #8405FF;
-
-            &::after {
-                opacity: 1;
-            }
-        }
-    }
-
-    :deep(.el-checkbox__label) {
-        font-size: 14px;
-        padding-left: 0;
-        line-height: 1.4;
-        align-self: center;
-        color: var(--ks-content-primary);
-    }
-}
-
-.success-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-
-    .success-img {
-        width: 65%;
-        margin-top: -8rem;
-    }
-
-    .success-content {
-        margin-top: -8rem;
-        position: relative;
-        padding: 2rem;
-    }
-
-    .success-title {
-        font-weight: 600;
-        font-size: 24px;
-        line-height: 36px;
-        color: var(--ks-content-primary);
-        margin: 0;
-    }
-
-    .success-subtitle {
-        font-weight: 600;
-        font-size: 18.4px;
-        line-height: 28px;
-        color: var(--ks-content-primary);
-        margin: 0;
-    }
-
-    .success-button {
-        margin-top: 16px;
-    }
-}
-
-:deep(.el-button:not(.skip-button)) {
-    margin-top: 1rem;
-}
-
-:deep(.el-card__body) {
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--spacer) / 2);
-}
-
-:deep(.el-form-item.is-error .el-input__wrapper) {
-    box-shadow: 0 0 0 1px var(--ks-border-error) inset;
-}
-
-:deep(.el-form-item.is-error .el-input__suffix-inner) {
-    color: var(--ks-content-alert);
-}
-
-:deep(.el-form-item__error) {
-    color: var(--ks-content-alert) !important;
-}
-
-:deep(.el-input__inner) {
-    font-size: 14px;
-
-    &::placeholder {
-        color: var(--ks-content-tertiary) !important;
-    }
-}
-
-.el-row {
-    .el-divider {
-        flex: 1;
-    }
-
-    .el-col .el-card:deep(.el-card__header) {
-        border-bottom: 0;
-    }
-}
-
-html.dark .el-col .el-card * {
-    color: var(--ks-content-primary);
-}
-
-.primary-icon {
-    :deep(.el-step__icon-inner) {
-        color: var(--ks-content-primary);
-    }
-}
-</style>
+<style src="./setup.scss" scoped lang="scss" />

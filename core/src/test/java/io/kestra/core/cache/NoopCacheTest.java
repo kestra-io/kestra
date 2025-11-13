@@ -14,7 +14,7 @@ class NoopCacheTest {
     private Cache<String, String> cache = new NoopCache<>();
 
     @Test
-    void getIfPresentChangeToBeClosedUpdated() {
+    void getIfPresentChangeToBe() {
         cache.put("key", "value");
 
         assertThat(cache.getIfPresent("key")).isNull();

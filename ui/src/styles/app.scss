@@ -237,7 +237,7 @@ body{
 }
 
 @media (max-width: 768px) {
-    main > section.container {
+    main > section.container:has(.empty-template) {
         padding: 0 0;
     }
 }

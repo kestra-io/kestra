@@ -806,7 +806,7 @@ public class DefaultExecutor implements Executor {
 
         MultipleConditionEvent multipleConditionEvent = either.getLeft();
 
-        flowTriggerService.computeExecutionsFromFlowTriggers(multipleConditionEvent.execution(), List.of(multipleConditionEvent.flow()), Optional.of(multipleConditionStorage))
+        flowTriggerService.computeExecutionsFromFlowTriggerPreconditions(multipleConditionEvent.execution(), multipleConditionEvent.flow(), multipleConditionStorage)
             .forEach(exec -> {
                 try {
                     executionQueue.emit(exec);

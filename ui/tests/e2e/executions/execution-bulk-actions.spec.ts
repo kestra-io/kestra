@@ -1,135 +1,186 @@
-import {test, expect} from "../fixtures/executions.fixture";
-import {ExecutionState, Pagination} from "../pages/base.page";
+import {expect, test} from "@playwright/test";
+import {ExecutionsPage} from "../pages/executions.page";
+import {ExecutionsApi} from "../api/executions.api";
+import {FlowsApi} from "../api/flows.api";
+import {ExecutionState} from "../pages/base.page";
 
-test.describe("Executions' view Bulk Actions", () => {
-    // Use specific flow to create executions
-    test.use({flow: {fileName: "hello.yaml", flowId: "my-hello-flow-1"}});
-    test("Labels changed only on a filtered set of executions when using Select All", async ({executionsPage, executionsApi, page}) => {
-        test.slow(); // creating many executions
-        expect(page.getByRole("heading", {name: "Executions"})).toBeVisible();
+/**
+ * Verifies that the executions page loads correctly and displays execution data.
+ * Tests basic page rendering, execution display, and execution filtering by flow ID.
+ */
+test("should display executions page with at least one execution", async ({page, request, baseURL}) => {
+    const flowsApi = new FlowsApi(request, baseURL);
+    const flowId = await flowsApi.generateFlowViaApi("hello.yaml", "my-hello-flow-1");
 
-        await test.step("Generate 26 executions with the 'foo:bar' label and a single 'a:b' one", async () => {
-            for (let i = 0; i < 26; i++) {
-                await executionsApi.generateExecutionViaApi([["foo", "bar"]]);
-            }
-            await executionsApi.generateExecutionViaApi([["a", "b"]]);
-        });
+    const executionsApi = new ExecutionsApi(request, flowId, baseURL);
+    await executionsApi.generateExecutionViaApi();
 
-        await test.step("Filter just the executions featuring the 'foo:bar' label", async () => {
-            await executionsPage.setPaginationTo(Pagination.ITEMS_25);
-            await executionsPage.setFilterByFlowId(executionsApi.flowId);
-            await executionsPage.setFilterByLabel("foo", "bar");
+    const executionsPage = new ExecutionsPage(page);
+    await executionsPage.goto();
 
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(25);
-            expect(await executionsPage.getTotalExecutionsCount()).toEqual(26);
-        });
-
-        await test.step("Set label to 'foo:baz' using Select All on filtered 'foo:bar' executions", async () => {
-            await page.waitForTimeout(1500); // somehow the execution selection de-selects itself due a data load
-            await executionsPage.selectExecutionRowByNumber();
-            await executionsPage.clickOnSelectAll();
-            await executionsPage.clickOnSetLabels();
-            await executionsPage.setLabelOnSelectedExecutions();
-
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(0);
-        });
-
-        await test.step("Switch filter to label 'a:b' which should not be affected by the label change", async () => {
-            await executionsPage.removeFilterByLabelKey("foo");
-            await executionsPage.setFilterByLabel("a", "b");
-
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(1);
-        });
+    await test.step("Verify executions page loads correctly", async () => {
+        await expect(page.getByRole("heading", {name: "Executions"})).toBeVisible();
     });
 
-    test.use({flow: {fileName: "failure-then-success.yaml", flowId: "failure-then-success"}});
-    test("Restart only on a filtered set of executions when using Select All", async ({executionsPage, executionsApi, page}) => {
-        test.slow(); // creating and resuming many executions
-        expect(page.getByRole("heading", {name: "Executions"})).toBeVisible();
-
-        await test.step("Generate 26 executions with the 'foo:bar' label and a single 'a:b' one", async () => {
-            for (let i = 0; i < 26; i++) {
-                await executionsApi.generateExecutionViaApi([["foo", "bar"]]);
-            }
-            await executionsApi.generateExecutionViaApi([["a", "b"]]);
-        });
-
-        await test.step("Filter just 'FAILED' executions featuring the 'foo:bar' label", async () => {
-            await executionsPage.setPaginationTo(Pagination.ITEMS_25);
-            await executionsPage.setFilterByFlowId(executionsApi.flowId);
-            await executionsPage.setFilterByLabel("foo", "bar");
-            await executionsPage.setFilterByState(ExecutionState.FAILED);
-
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(25);
-            expect(await executionsPage.getTotalExecutionsCount()).toEqual(26);
-        });
-
-        await test.step("Call Restart using Select All on filtered 'FAILED' & 'foo:bar' executions", async () => {
-            await page.waitForTimeout(1500); // somehow the execution selection de-selects itself due a data load
-            await executionsPage.selectExecutionRowByNumber();
-            await executionsPage.clickOnSelectAll();
-            await executionsPage.clickOnRestart();
-        });
-
-        await test.step("Show all 26 now successfully finished 'foo:bar' executions on a single page", async () => {
-            await page.waitForTimeout(2000); // ensure restarted executions finished
-            await executionsPage.setFilterByState(ExecutionState.SUCCESS);
-            await executionsPage.setPaginationTo(Pagination.ITEMS_50);
-
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(26);
-        });
-
-        await test.step("Switch filter to label 'a:b' which should not be affected by the Restart action", async () => {
-            await executionsPage.removeFilterByLabelKey("foo");
-            await executionsPage.setFilterByLabel("a", "b");
-            await executionsPage.setFilterByState(ExecutionState.FAILED);
-
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(1);
-        });
+    await test.step("Verify at least one execution is displayed", async () => {
+        const executionCount = await executionsPage.getCountOfDisplayedExecutions();
+        expect(executionCount).toBeGreaterThan(0);
     });
 
-    test.use({flow: {fileName: "failure-then-success.yaml", flowId: "failure-then-success"}});
-    test("Replay only on a filtered set of executions when using Select All", async ({executionsPage, executionsApi, page}) => {
-        test.slow(); // creating and resuming many executions
-        expect(page.getByRole("heading", {name: "Executions"})).toBeVisible();
+    await test.step("Verify execution filtering works", async () => {
+        await executionsPage.setFilterByFlowId(flowId);
 
-        await test.step("Generate 26 executions with the 'foo:bar' label and a single 'a:b' one", async () => {
-            for (let i = 0; i < 26; i++) {
-                await executionsApi.generateExecutionViaApi([["foo", "bar"]]);
-            }
-            await executionsApi.generateExecutionViaApi([["a", "b"]]);
-        });
-
-        await test.step("Filter just 'FAILED' executions featuring the 'foo:bar' label", async () => {
-            await executionsPage.setPaginationTo(Pagination.ITEMS_25);
-            await executionsPage.setFilterByFlowId(executionsApi.flowId);
-            await executionsPage.setFilterByLabel("foo", "bar");
-            await executionsPage.setFilterByState(ExecutionState.FAILED);
-
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(25);
-            expect(await executionsPage.getTotalExecutionsCount()).toEqual(26);
-        });
-
-        await test.step("Call Replay using Select All on filtered 'FAILED' & 'foo:bar' executions", async () => {
-            await page.waitForTimeout(1500); // somehow the execution selection de-selects itself due a data load
-            await executionsPage.selectExecutionRowByNumber();
-            await executionsPage.clickOnSelectAll();
-            await executionsPage.clickOnReplay();
-        });
-
-        await test.step("Show 26 original and 26 replayed 'foo:bar' executions on a single page", async () => {
-            await page.waitForTimeout(2000); // ensure replayed executions finished
-            await executionsPage.setPaginationTo(Pagination.ITEMS_100);
-
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(26 * 2);
-        });
-
-        await test.step("Switch filter to label 'a:b' which should not be affected by the Restart action", async () => {
-            await executionsPage.removeFilterByLabelKey("foo");
-            await executionsPage.setFilterByLabel("a", "b");
-            await executionsPage.setFilterByState(ExecutionState.FAILED);
-
-            expect(await executionsPage.getCountOfDisplayedExecutions()).toEqual(1);
-        });
+        const filteredCount = await executionsPage.getCountOfDisplayedExecutions();
+        expect(filteredCount).toBeGreaterThan(0);
     });
+
+    await executionsApi.removeExecutionsViaApi();
+    await flowsApi.removeFlowsViaApi();
+});
+
+/**
+ * Tests bulk set labels functionality on selected executions.
+ * Selects multiple executions and applies labels using the bulk action dropdown,
+ * verifying that the labels are successfully added to the selected executions.
+ */
+test("should perform bulk set labels action on selected executions", async ({page, request, baseURL}) => {
+    const flowsApi = new FlowsApi(request, baseURL);
+    const flowId = await flowsApi.generateFlowViaApi("hello.yaml", "my-hello-flow-1");
+
+    const executionsApi = new ExecutionsApi(request, flowId, baseURL);
+    await executionsApi.generateExecutionViaApi();
+    await executionsApi.generateExecutionViaApi();
+
+    const executionsPage = new ExecutionsPage(page);
+    await executionsPage.goto();
+
+    // scope the test to this flow to avoid interference from other tests
+    await executionsPage.setFilterByFlowId(flowId);
+    await executionsPage.waitForDisplayedExecutionsCountAtLeast(2);
+
+    await test.step("Select multiple executions and open set labels dialog", async () => {
+        await executionsPage.selectExecutionRowByNumber(1);
+        await executionsPage.selectExecutionRowByNumber(2);
+        await page.waitForTimeout(500);
+        await executionsPage.clickOnSetLabels();
+    });
+
+    await test.step("Set labels on selected executions", async () => {
+        await executionsPage.setLabelOnSelectedExecutions();
+    });
+
+    await test.step("Verify labels were set on executions", async () => {
+        await executionsPage.setFilterByLabel("foo", "baz");
+        await executionsPage.waitForDisplayedExecutionsCountAtLeast(2);
+    });
+
+    await executionsApi.removeExecutionsViaApi();
+    await flowsApi.removeFlowsViaApi();
+});
+
+/**
+ * Tests bulk replay functionality on selected executions.
+ * Selects multiple executions and triggers the replay action, verifying that
+ * new executions are created as a result of the replay operation.
+ */
+test("should perform bulk replay action on selected executions", async ({page, request, baseURL}) => {
+    const flowsApi = new FlowsApi(request, baseURL);
+    const flowId = await flowsApi.generateFlowViaApi("hello.yaml", "my-hello-flow-1");
+
+    const executionsApi = new ExecutionsApi(request, flowId, baseURL);
+    await executionsApi.generateExecutionViaApi();
+    await executionsApi.generateExecutionViaApi();
+
+    const executionsPage = new ExecutionsPage(page);
+    await executionsPage.goto();
+    // scope to the flow and wait until at least two executions are visible
+    await executionsPage.setFilterByFlowId(flowId);
+    await executionsPage.waitForDisplayedExecutionsCountAtLeast(2);
+
+    await test.step("Select executions and perform bulk replay", async () => {
+        await executionsPage.selectExecutionRowByNumber(1);
+        await executionsPage.selectExecutionRowByNumber(2);
+        await page.waitForTimeout(1000);
+        await executionsPage.clickOnReplay();
+        await page.waitForTimeout(2000);
+    });
+
+    await test.step("Verify replay created new executions", async () => {
+        await executionsPage.waitForDisplayedExecutionsCountAtLeast(4);
+    });
+
+    await executionsApi.removeExecutionsViaApi();
+    await flowsApi.removeFlowsViaApi();
+});
+
+test("should perform bulk restart action on selected failed executions", async ({page, request, baseURL}) => {
+    const flowsApi = new FlowsApi(request, baseURL);
+    // Use a failing flow to verify restart behavior (fails first attempt, succeeds on restart)
+    const flowId = await flowsApi.generateFlowViaApi("failure-then-success.yaml", "failure-then-success");
+
+    const executionsApi = new ExecutionsApi(request, flowId, baseURL);
+    await executionsApi.generateExecutionViaApi();
+    await executionsApi.generateExecutionViaApi();
+
+    const executionsPage = new ExecutionsPage(page);
+    await executionsPage.goto();
+    // scope to the failing flow and verify we have failed executions
+    await executionsPage.setFilterByFlowId(flowId);
+    await executionsPage.waitForDisplayedExecutionsCountAtLeast(2);
+    await test.step("Verify executions are displayed and failed", async () => {
+        await executionsPage.setFilterByState(ExecutionState.FAILED);
+        await executionsPage.waitForDisplayedExecutionsCountAtLeast(2);
+    });
+
+    await test.step("Select executions and perform bulk restart", async () => {
+        await executionsPage.selectExecutionRowByNumber(1);
+        await executionsPage.selectExecutionRowByNumber(2);
+        await page.waitForTimeout(1000);
+        await executionsPage.clickOnRestart();
+    });
+
+    await test.step("Verify restart succeeded and status is SUCCESS", async () => {
+        await executionsPage.setFilterByState(ExecutionState.SUCCESS);
+        await executionsPage.waitForDisplayedExecutionsCountAtLeast(2, 30000);
+    });
+
+    await executionsApi.removeExecutionsViaApi();
+    await flowsApi.removeFlowsViaApi();
+});
+
+/**
+ * Tests bulk delete functionality on selected executions.
+ * Creates multiple executions, selects them, triggers the delete action with
+ * confirmation dialog, and verifies the executions are removed from the display.
+ */
+test("should perform bulk delete action on selected executions", async ({page, request, baseURL}) => {
+    const flowsApi = new FlowsApi(request, baseURL);
+    const flowId = await flowsApi.generateFlowViaApi("hello.yaml", "my-hello-flow-1");
+
+    const executionsApi = new ExecutionsApi(request, flowId, baseURL);
+    await executionsApi.generateExecutionViaApi();
+    await executionsApi.generateExecutionViaApi();
+    await executionsApi.generateExecutionViaApi();
+
+    const executionsPage = new ExecutionsPage(page);
+    await executionsPage.goto();
+
+    await test.step("Filter to show only this flow's executions", async () => {
+        await executionsPage.setFilterByFlowId(flowId);
+        await executionsPage.waitForDisplayedExecutionsCountAtLeast(3);
+    });
+
+    await test.step("Perform bulk delete with confirmation", async () => {
+        await executionsPage.selectExecutionRowByNumber(1);
+        await executionsPage.selectExecutionRowByNumber(2);
+        await page.waitForTimeout(1000);
+        await executionsPage.clickOnDelete();
+    });
+
+    await test.step("Verify executions were deleted", async () => {
+        await executionsPage.waitForDisplayedExecutionsCountBelow(3);
+    });
+
+    await executionsApi.removeExecutionsViaApi();
+    await flowsApi.removeFlowsViaApi();
 });

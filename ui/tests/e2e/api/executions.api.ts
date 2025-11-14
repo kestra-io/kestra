@@ -18,7 +18,7 @@ export class ExecutionsApi extends BaseApi {
             params.append("labels", `${tuple[0]}:${tuple[1]}`);
         });
 
-        const response = this.request.post(`${this.apiUrl}/executions/${shared.namespace}/${this.flowId}`, {
+        const response = await this.request.post(`${this.apiUrl}/executions/${shared.namespace}/${this.flowId}`, {
             headers: {
                 "Accept": "application/json",
                 "Authorization": ExecutionsApi.AUTH
@@ -27,13 +27,13 @@ export class ExecutionsApi extends BaseApi {
             multipart: formData
         });
 
-        const status = (await response).status();
+        const status = response.status();
 
         if (status !== 200) {
-            throw new Error(`Execution creation failed with HTTP ${status}: ${await (await response).text()}`);
+            throw new Error(`Execution creation failed with HTTP ${status}: ${await response.text()}`);
         }
 
-        const responseJson = await (await response).json();
+        const responseJson = await response.json();
 
         this.executionIds.push(responseJson["id"]);
     }
@@ -52,7 +52,7 @@ export class ExecutionsApi extends BaseApi {
                 params
             })).status();
 
-            if (status !== 204) {
+            if (status !== 204 && status !== 404) {
                 throw new Error(`Deletion of execution ${executionId} failed with HTTP ${status}`);
             }
         };

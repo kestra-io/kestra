@@ -37,8 +37,8 @@
 
     interface Props {
         title: string;
-        content: string;
-        link: string;
+        content?: string;
+        link?: string;
         category: string;
         [key: string]: any;
 

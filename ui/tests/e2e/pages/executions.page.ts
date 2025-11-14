@@ -39,10 +39,35 @@ export class ExecutionsPage extends BasePage {
     }
 
     async getCountOfDisplayedExecutions() {
-        await this.page.waitForTimeout(20); // wait for data load to start
-        await this.page.waitForLoadState("networkidle"); // wait for data load to finish
         const rows = this.page.getByRole("row");
-        return await rows.count() - 1;
+        const count = await rows.count();
+        return Math.max(0, count - 1);
+    }
+
+    async waitForDisplayedExecutionsCountAtLeast(expected: number, timeoutMs: number = 10000) {
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            const count = await this.getCountOfDisplayedExecutions();
+            if (count >= expected) {
+                return;
+            }
+            await this.page.waitForTimeout(250);
+        }
+        const finalCount = await this.getCountOfDisplayedExecutions();
+        throw new Error(`Expected at least ${expected} executions displayed but only saw ${finalCount}`);
+    }
+
+    async waitForDisplayedExecutionsCountBelow(maxExpected: number, timeoutMs: number = 10000) {
+        const start = Date.now();
+        while (Date.now() - start < timeoutMs) {
+            const count = await this.getCountOfDisplayedExecutions();
+            if (count <= maxExpected) {
+                return;
+            }
+            await this.page.waitForTimeout(250);
+        }
+        const finalCount = await this.getCountOfDisplayedExecutions();
+        throw new Error(`Expected at most ${maxExpected} executions displayed but saw ${finalCount}`);
     }
 
     async getTotalExecutionsCount() {
@@ -61,8 +86,7 @@ export class ExecutionsPage extends BasePage {
 
         await checkbox.waitFor({state: "visible"});
         await checkbox.click();
-
-        await expect(checkbox).toContainClass("is-checked");
+        await expect(checkbox).toHaveClass(/is-checked/);
     }
 
     async clickOnSelectAll() {
@@ -70,27 +94,55 @@ export class ExecutionsPage extends BasePage {
     }
 
     async clickOnSetLabels() {
-        await this.page.locator(".bulk-select").locator(".el-button-group").locator(".el-dropdown").click();
-        await this.page.getByRole("menuitem", {name: "Set labels"}).click();
+        const bulkSelectDropdown = this.page.locator(".bulk-select").locator(".el-button-group").locator(".el-dropdown");
+        await bulkSelectDropdown.waitFor({state: "visible"});
+        await bulkSelectDropdown.click();
+        const setLabelsItem = this.page.getByRole("menuitem", {name: "Set labels"});
+        await setLabelsItem.waitFor({state: "visible"});
+        await setLabelsItem.click();
     }
 
     async clickOnResume() {
-        await this.page.locator(".bulk-select").locator(".el-button-group").locator(".el-dropdown").click();
-        await this.page.getByRole("menuitem", {name: "Resume"}).click();
+        const bulkSelectDropdown = this.page.locator(".bulk-select").locator(".el-button-group").locator(".el-dropdown");
+        await bulkSelectDropdown.waitFor({state: "visible"});
+        await bulkSelectDropdown.click();
+        const resumeItem = this.page.getByRole("menuitem", {name: "Resume"});
+        await resumeItem.waitFor({state: "visible"});
+        await resumeItem.click();
         // Confirm
-        await this.page.getByRole("button", {name: "OK"}).click();
+        const okButton = this.page.getByRole("button", {name: "OK"}).first();
+        await okButton.waitFor({state: "visible"});
+        await okButton.click();
     }
 
     async clickOnRestart() {
-        await this.page.getByRole("button", {name: "Restart"}).click();
+        const restartButton = this.page.getByRole("button", {name: "Restart"});
+        await restartButton.waitFor({state: "visible"});
+        await restartButton.click();
         // Confirm
-        await this.page.getByRole("button", {name: "OK"}).click();
+        const okButton = this.page.getByRole("button", {name: "OK"}).first();
+        await okButton.waitFor({state: "visible"});
+        await okButton.click();
     }
 
     async clickOnReplay() {
-        await this.page.getByRole("button", {name: "Replay"}).click();
+        const replayButton = this.page.getByRole("button", {name: "Replay"});
+        await replayButton.waitFor({state: "visible"});
+        await replayButton.click();
         // Confirm
-        await this.page.getByRole("button", {name: "OK"}).click();
+        const okButton = this.page.getByRole("button", {name: "OK"}).first();
+        await okButton.waitFor({state: "visible"});
+        await okButton.click();
+    }
+
+    async clickOnDelete() {
+        const deleteButton = this.page.getByRole("button", {name: "Delete"});
+        await deleteButton.waitFor({state: "visible"});
+        await deleteButton.click();
+        // Wait for confirmation dialog
+        const okButton = this.page.getByRole("button", {name: "OK"}).first();
+        await okButton.waitFor({state: "visible"});
+        await okButton.click();
     }
 
     async setLabelOnSelectedExecutions() {

@@ -50,7 +50,7 @@ jobs:
         repository: kestra-io/kestra-ee
         event-type: "oss-updated"
         client-payload: >-
-          {"pr_number":${{ github.event.pull_request.number }},"pr_repo":"${{ github.repository }}"}
+          {"commit_sha":"${{ github.sha }}","pr_repo":"${{ github.repository }}"}
 
   file-changes:
     if: ${{ github.event.pull_request.draft == false }}

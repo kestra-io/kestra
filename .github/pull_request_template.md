@@ -1,38 +1,27 @@
-<!-- Thanks for submitting a Pull Request to Kestra. To help us review your contribution, please follow the guidelines below:
-
-- Make sure that your commits follow the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) specification e.g. `feat(ui): add a new navigation menu item` or `fix(core): fix a bug in the core model` or `docs: update the README.md`. This will help us automatically generate the changelog.
-- The title should briefly summarize the proposed changes.
-- Provide a short overview of the change and the value it adds.
-- Share a flow example to help the reviewer understand and QA the change.
-- Use "closes" to automatically close an issue. For example, `closes #1234` will close issue #1234. -->
-
-### What changes are being made and why?
-
-<!-- Please include a brief summary of the changes included in this PR e.g. closes #1234. -->
+All PRs submitted by external contributors that do not follow this template (including proper description, related issue, and checklist sections) **may be automatically closed**.  
 
 ---
 
-### How the changes have been QAed?
+### ✨ Description
+What does this PR change?  
+_Example: Replaces legacy scroll directive with the new API._
 
-<!-- Include example code that shows how this PR has been QAed. The code should present a complete yet easily reproducible flow.
+### 🔗 Related Issue
+Which issue does this PR resolve? Use [GitHub Keywords](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/using-keywords-in-issues-and-pull-requests#linking-a-pull-request-to-an-issue) to automatically link the pull request to the issue.  
+_Example: Closes https://github.com/kestra-io/kestra/issues/12345._
 
-```yaml
-# Your example flow code here
-```
+### 🎨 Frontend Checklist
+_If this PR does not include any frontend changes, delete this entire section._
 
-Note that this is not a replacement for unit tests but rather a way to demonstrate how the changes work in a real-life scenario, as the end-user would experience them.
+- [ ] Code builds without errors (`npm run build`)
+- [ ] All existing E2E tests pass (`npm run test:e2e`)
+- [ ] Screenshots or video recordings attached showing the `UI` changes
 
-Remove this section if this change applies to all flows or to the documentation only. -->
+### 🛠️ Backend Checklist
+_If this PR does not include any backend changes, delete this entire section._
 
----
+- [ ] Code compiles successfully and passes all checks
+- [ ] All unit and integration tests pass
 
-### Setup Instructions
-
-<!--If there are any setup requirements like API keys or trial accounts, kindly include brief bullet-points-description outlining the setup process below.
-
-- [External System Documentation](URL)
-- Steps to set up the necessary resources
-
-If there are no setup requirements, you can remove this section.
-
-Thank you for your contribution. ❤️ Don't forget to give us a star! ⭐  -->
+### 📝 Additional Notes
+Add any extra context or details reviewers should be aware of.

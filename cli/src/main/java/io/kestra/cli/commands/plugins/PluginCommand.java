@@ -25,9 +25,7 @@ public class PluginCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "plugins", "--help");
-
-        return 0;
+        return App.cliRun(new String[]{"plugins", "--help"});
     }
 
     @Override

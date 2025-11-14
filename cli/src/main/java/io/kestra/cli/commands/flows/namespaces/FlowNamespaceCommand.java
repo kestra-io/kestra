@@ -22,8 +22,6 @@ public class FlowNamespaceCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "flow", "namespace",  "--help");
-
-        return 0;
+        return App.cliRun(new String[]{"flow", "namespace",  "--help"});
     }
 }

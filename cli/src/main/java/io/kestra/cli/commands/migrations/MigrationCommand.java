@@ -24,8 +24,6 @@ public class MigrationCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "migrate",  "--help");
-
-        return 0;
+        return App.cliRun(new String[]{"migrate",  "--help"});
     }
 }

@@ -1,5 +1,6 @@
 package io.kestra.cli;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.cli.commands.configs.sys.ConfigCommand;
 import io.kestra.cli.commands.flows.FlowCommand;
 import io.kestra.cli.commands.migrations.MigrationCommand;
@@ -8,6 +9,7 @@ import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.cli.commands.templates.TemplateCommand;
+import io.kestra.cli.services.EnvironmentProvider;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -20,11 +22,9 @@ import picocli.CommandLine;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 
 @CommandLine.Command(
     name = "kestra",
@@ -49,24 +49,50 @@ import java.util.concurrent.Callable;
 @Introspected
 public class App implements Callable<Integer> {
     public static void main(String[] args) {
-        execute(App.class, new String [] { Environment.CLI }, args);
+        System.exit(cliRun(args));
+    }
+
+    public static int cliRun(String[] args, String... extraEnvironments) {
+        return cliRun(App.class, args, extraEnvironments);
+    }
+
+    public static int cliRun(Class<?> cls, String[] args, String... extraEnvironments) {
+        ServiceLoader<EnvironmentProvider> environmentProviders = ServiceLoader.load(EnvironmentProvider.class);
+        String[] baseEnvironments = environmentProviders.findFirst().map(EnvironmentProvider::getCliEnvironments).orElseGet(() -> new String[0]);
+        return execute(
+            cls,
+            Stream.concat(
+                Arrays.stream(baseEnvironments),
+                Arrays.stream(extraEnvironments)
+            ).toArray(String[]::new),
+            args
+        );
     }
 
     @Override
     public Integer call() throws Exception {
-        return PicocliRunner.call(App.class, "--help");
+        return cliRun(new String[0]);
     }
 
-    protected static void execute(Class<?> cls, String[] environments, String... args) {
+    protected static int execute(Class<?> cls, String[] environments, String... args) {
         // Log Bridge
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
         // Init ApplicationContext
-        ApplicationContext applicationContext = App.applicationContext(cls, environments, args);
+        CommandLine commandLine = getCommandLine(cls, args);
+
+        ApplicationContext applicationContext = App.applicationContext(cls, commandLine, environments);
+
+        Class<?> targetCommand = commandLine.getCommandSpec().userObject().getClass();
+
+        if (!AbstractCommand.class.isAssignableFrom(targetCommand) && args.length == 0) {
+            // if no command provided, show help
+            args = new String[]{"--help"};
+        }
 
         // Call Picocli command
-        int exitCode = 0;
+        int exitCode;
         try {
              exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
         } catch (CommandLine.InitializationException e){
@@ -77,7 +103,23 @@ public class App implements Callable<Integer> {
         applicationContext.close();
 
         // exit code
-        System.exit(Objects.requireNonNullElse(exitCode, 0));
+        return Objects.requireNonNullElse(exitCode, 0);
+    }
+
+    private static CommandLine getCommandLine(Class<?> cls, String[] args) {
+        CommandLine cmd = new CommandLine(cls, CommandLine.defaultFactory());
+        continueOnParsingErrors(cmd);
+
+        CommandLine.ParseResult parseResult = cmd.parseArgs(args);
+        List<CommandLine> parsedCommands = parseResult.asCommandLineList();
+
+        return parsedCommands.getLast();
+    }
+
+    public static ApplicationContext applicationContext(Class<?> mainClass,
+                                                        String[] environments,
+                                                        String... args) {
+        return App.applicationContext(mainClass, getCommandLine(mainClass, args), environments);
     }
 
 
@@ -85,25 +127,17 @@ public class App implements Callable<Integer> {
      * Create an {@link ApplicationContext} with additional properties based on configuration files (--config) and
      * forced Properties from current command.
      *
-     * @param args args passed to java app
      * @return the application context created
      */
     protected static ApplicationContext applicationContext(Class<?> mainClass,
-                                                           String[] environments,
-                                                           String[] args) {
+                                                           CommandLine commandLine,
+                                                           String[] environments) {
 
         ApplicationContextBuilder builder = ApplicationContext
             .builder()
             .mainClass(mainClass)
             .environments(environments);
 
-        CommandLine cmd = new CommandLine(mainClass, CommandLine.defaultFactory());
-        continueOnParsingErrors(cmd);
-
-        CommandLine.ParseResult parseResult = cmd.parseArgs(args);
-        List<CommandLine> parsedCommands = parseResult.asCommandLineList();
-
-        CommandLine commandLine = parsedCommands.getLast();
         Class<?> cls = commandLine.getCommandSpec().userObject().getClass();
 
         if (AbstractCommand.class.isAssignableFrom(cls)) {

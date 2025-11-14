@@ -22,8 +22,6 @@ public class NamespaceFilesCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "namespace", "files",  "--help");
-
-        return 0;
+        return App.cliRun(new String[]{"namespace", "files",  "--help"});
     }
 }

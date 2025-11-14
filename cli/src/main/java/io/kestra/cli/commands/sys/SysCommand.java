@@ -25,8 +25,6 @@ public class SysCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "sys",  "--help");
-
-        return 0;
+        return App.cliRun(new String[]{"sys",  "--help"});
     }
 }

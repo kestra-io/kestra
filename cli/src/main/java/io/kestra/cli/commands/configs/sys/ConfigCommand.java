@@ -20,8 +20,6 @@ public class ConfigCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "configs",  "--help");
-
-        return 0;
+        return App.cliRun(new String[]{"configs",  "--help"});
     }
 }

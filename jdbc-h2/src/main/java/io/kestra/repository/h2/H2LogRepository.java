@@ -1,6 +1,7 @@
 package io.kestra.repository.h2;
 
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -19,8 +20,9 @@ import java.util.List;
 public class H2LogRepository extends AbstractJdbcLogRepository {
     @Inject
     public H2LogRepository(@Named("logs") H2Repository<LogEntry> repository,
+                           QueueService queueService,
                            JdbcFilterService filterService) {
-        super(repository, filterService);
+        super(repository, queueService, filterService);
     }
 
     @Override

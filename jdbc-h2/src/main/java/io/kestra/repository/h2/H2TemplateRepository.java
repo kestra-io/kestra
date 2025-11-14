@@ -2,6 +2,7 @@ package io.kestra.repository.h2;
 
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
+import io.kestra.core.queues.QueueService;
 import io.kestra.jdbc.repository.AbstractJdbcTemplateRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -17,8 +18,9 @@ import java.util.List;
 public class H2TemplateRepository extends AbstractJdbcTemplateRepository {
     @Inject
     public H2TemplateRepository(@Named("templates") H2Repository<Template> repository,
+                                QueueService queueService,
                                 ApplicationContext applicationContext) {
-        super(repository, applicationContext);
+        super(repository, queueService, applicationContext);
     }
 
     @Override

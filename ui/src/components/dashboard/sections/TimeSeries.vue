@@ -115,12 +115,12 @@
             scales: {
                 x: {
                     title: {
-                        display: hideAxisText.value ? false : true,
+                        display: props.short ? false : true,
                         text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
                     ...DEFAULTS,
-                    display: hideAxisText.value ? false : true,
+                    display: props.short ? false : true,
                 },
                 y: {
                     title: {
@@ -129,7 +129,7 @@
                     },
                     position: "left",
                     ...DEFAULTS,
-                    display: hideAxisText.value ? false : true,
+                    display: props.short ? false : true,
                     ticks: {
                         ...DEFAULTS.ticks,
                         callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
@@ -143,7 +143,7 @@
                         },
                         position: "right",
                         ...DEFAULTS,
-                        display: hideAxisText.value ? false : true,
+                        display: props.short ? false : true,
                         ticks: {
                             ...DEFAULTS.ticks,
                             callback: (value: any) => isDuration(aggregator.value[1]?.[1]?.field) ? KestraUtils.humanDuration(value) : value

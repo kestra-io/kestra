@@ -90,7 +90,7 @@
 
 <script setup lang="ts">
     // Core
-    import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
+    import {nextTick, onMounted, ref, inject, watch} from "vue";
 
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core";
@@ -118,6 +118,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
+    import { useToast } from "../../utils/toast";
 
     const router = useRouter();
 
@@ -165,7 +166,7 @@
 
     // Vue instance variables
     const coreStore = useCoreStore();
-    const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
+    const toast = useToast();
     const {t} = useI18n();
 
     const pluginsStore = usePluginsStore();

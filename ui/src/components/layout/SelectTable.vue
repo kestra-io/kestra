@@ -184,8 +184,10 @@
         border-bottom: 1px solid var(--ks-border-primary);
         overflow-x: auto;
 
-        & ~ .el-table {
-            z-index: 0;
+        & ~ .el-scrollbar {
+            :deep(.el-table) {
+                z-index: 0;
+            }
         }
     }
 

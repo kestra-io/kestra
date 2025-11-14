@@ -47,3 +47,31 @@ dependencies {
     testImplementation("io.micronaut.sql:micronaut-jooq")
 }
 
+tasks.register('updateOpenapiVersion') {
+    dependsOn processResources
+
+    doLast {
+        def openapiFilePath = "${buildDir}/classes/java/main/META-INF/swagger/kestra.yml"
+        def openapiFile = file(openapiFilePath)
+
+        if (openapiFile.exists()) {
+            def originalText = openapiFile.text
+            def updatedText = originalText.replace('version: 1.0.0', "version: ${project.version}")
+
+            if (updatedText != originalText) {
+                openapiFile.text = updatedText
+                println "Successfully updated 'version' in $openapiFilePath to ${project.version}"
+            } else {
+                println "Warning: Did not find 'version: 1.0.0' to replace in $openapiFilePath. Check OpenAPI generator output."
+            }
+        } else {
+            println "Error: OpenAPI file not found at $openapiFilePath. Skipping version update."
+        }
+    }
+
+
+}
+
+tasks.named('jar') {
+    dependsOn updateOpenapiVersion
+}

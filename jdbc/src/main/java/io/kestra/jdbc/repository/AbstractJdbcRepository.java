@@ -32,6 +32,7 @@ import java.time.OffsetDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
+import static org.jooq.impl.DSL.inline;
 
 import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
 
@@ -264,7 +265,7 @@ public abstract class AbstractJdbcRepository {
                 QueryFilter.Field field = filter.field();
                 QueryFilter.Op operation = filter.operation();
                 Object value = filter.value();
-                conditions.add(getConditionOnField(field, value, operation, dateColumn));
+                conditions.add(getConditionOnField(field, value, operation, resource, dateColumn));
             }
         }
         return conditions.stream()
@@ -279,6 +280,7 @@ public abstract class AbstractJdbcRepository {
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation,
+        Resource resource,
         @Nullable String dateColumn
     ) {
         if (field.equals(QueryFilter.Field.QUERY)) {
@@ -306,7 +308,10 @@ public abstract class AbstractJdbcRepository {
             OffsetDateTime dateTime = (value instanceof ZonedDateTime)
                 ? ((ZonedDateTime) value).toOffsetDateTime()
                 : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
-            return applyDateCondition(dateTime, operation, dateColumn);
+
+            if( resource == Resource.TRIGGER ) return applyDateCondition(dateTime, operation ,"value", dateColumn);
+
+            return applyDateCondition(dateTime, operation , dateColumn);
         }
 
         if (field == QueryFilter.Field.SCOPE) {
@@ -432,6 +437,30 @@ public abstract class AbstractJdbcRepository {
                 throw new InvalidQueryFiltersException("Unsupported operation for date condition: " + operation);
         };
     }
+    private Condition applyDateCondition(
+        OffsetDateTime dateTime,
+        QueryFilter.Op operation,
+        String jsonFieldName,
+        String jsonKey
+    ) {
+        Field<OffsetDateTime> dateField = org.jooq.impl.DSL.field(
+            "({0} ->> {1})::timestamptz",
+            OffsetDateTime.class,
+            field(jsonFieldName, JSONB.class),
+            inline(jsonKey)
+        );
+
+        return switch (operation) {
+            case LESS_THAN -> dateField.lessThan(dateTime);
+            case LESS_THAN_OR_EQUAL_TO -> dateField.lessOrEqual(dateTime);
+            case GREATER_THAN -> dateField.greaterThan(dateTime);
+            case GREATER_THAN_OR_EQUAL_TO -> dateField.greaterOrEqual(dateTime);
+            case EQUALS -> dateField.eq(dateTime);
+            case NOT_EQUALS -> dateField.ne(dateTime);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for date condition: " + operation);
+        };
+    }
+
 
     private Condition applyScopeCondition(Object value, QueryFilter.Op operation) {
         List<FlowScope> flowScopes = Enums.fromList(value, FlowScope.class);

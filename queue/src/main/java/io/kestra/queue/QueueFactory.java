@@ -18,7 +18,6 @@ import java.util.concurrent.ExecutorService;
 public class QueueFactory {
     public final static String QUEUE_EXECUTOR = "queueExecutor";
 
-
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static <T extends GenericEvent> List<Class<T>> listAllEvent(ClassLoader classLoader, Class<T> eventClass) {
         final SoftServiceLoader<BeanIntrospectionReference> definitions = SoftServiceLoader.load(

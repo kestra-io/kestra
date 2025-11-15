@@ -6,6 +6,14 @@ import jakarta.validation.constraints.NotNull;
 @ConfigurationProperties(value = "kestra.queue")
 public record QueueConfiguration(
     @NotNull
-    String type
+    String type,
+    MessageProtection messageProtection
 ) {
+    @ConfigurationProperties("message-protection")
+    public record MessageProtection(
+        boolean enabled,
+        Integer limit
+    ) {
+
+    }
 }

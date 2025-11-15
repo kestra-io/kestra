@@ -4,7 +4,6 @@ import io.kestra.core.queues.QueueException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -17,8 +16,8 @@ public abstract class AbstractSubscriber<T extends GenericEvent> extends Abstrac
 
     private final AtomicReference<State> state = new AtomicReference<>(State.STOPPED);
 
-    public AbstractSubscriber(Class<T> cls, ExecutorService executorService) {
-        super(cls, executorService);
+    public AbstractSubscriber(Class<T> cls, QueueUtils queueUtils) {
+        super(cls, queueUtils);
     }
 
     protected void waitIfPaused() throws QueueException {

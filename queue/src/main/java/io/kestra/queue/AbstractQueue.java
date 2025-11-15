@@ -1,27 +1,15 @@
 package io.kestra.queue;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
-import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.Either;
 import jakarta.annotation.Nullable;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.concurrent.ExecutorService;
-
 public abstract class AbstractQueue<T extends GenericEvent> {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson(false).copy();
     protected final Class<T> cls;
-    protected final ExecutorService executorService;
+    protected final QueueUtils queueUtils;
 
-    public AbstractQueue(Class<T> cls, ExecutorService executorService) {
+    public AbstractQueue(Class<T> cls, QueueUtils queueUtils) {
         this.cls = cls;
-        this.executorService = executorService;
+        this.queueUtils = queueUtils;
     }
 
     protected String queueNameSeparator() {
@@ -40,33 +28,5 @@ public abstract class AbstractQueue<T extends GenericEvent> {
         return this.queueName() +
             this.queueNameSeparator() +
             CaseFormat.LOWER_HYPHEN.to(CaseFormat.LOWER_UNDERSCORE, key);
-    }
-
-    public void execute(Runnable runnable) {
-        this.executorService.execute(runnable);
-    }
-
-    protected String serialize(T message) throws QueueException {
-        try {
-            return MAPPER.writeValueAsString(message);
-        } catch (JsonProcessingException e) {
-            throw new QueueException("Failed to produce '" + message.getClass() + "'", e);
-        }
-    }
-
-    protected Either<T, DeserializationException> deserialize(byte[] record) {
-        try {
-            return Either.left(MAPPER.readValue(record, cls));
-        } catch (IOException e) {
-            return Either.right(new DeserializationException(e, Arrays.toString(record)));
-        }
-    }
-
-    protected Either<T, DeserializationException> deserialize(String record) {
-        try {
-            return Either.left(MAPPER.readValue(record, cls));
-        } catch (IOException e) {
-            return Either.right(new DeserializationException(e, record));
-        }
     }
 }

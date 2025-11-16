@@ -145,6 +145,8 @@ public class MetricRegistry {
     public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION = "Total number of big messages";
     public static final String METRIC_QUEUE_PRODUCE_COUNT = "queue.produce.count";
     public static final String METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION = "Total number of produced messages";
+    public static final String METRIC_QUEUE_RECEIVE_COUNT = "queue.receive.count";
+    public static final String METRIC_QUEUE_RECEIVE_COUNT_DESCRIPTION = "Total number of received messages";
     public static final String METRIC_QUEUE_RECEIVE_DURATION = "queue.receive.duration";
     public static final String METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION = "Queue duration to receive and consume a batch of messages";
     public static final String METRIC_QUEUE_POLL_SIZE = "queue.poll.size";

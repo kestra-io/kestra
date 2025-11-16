@@ -59,6 +59,11 @@ public class QueueUtils {
             return serialize;
         } catch (JsonProcessingException e) {
             throw new QueueException("Failed to produce '" + message.getClass() + "'", e);
+        } finally {
+            String[] tags = {MetricRegistry.TAG_QUEUE_TYPE, cls.getSimpleName()};
+            metricRegistry
+                .counter(MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT, MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION, tags)
+                .increment();
         }
     }
 
@@ -67,6 +72,11 @@ public class QueueUtils {
             return Either.left(MAPPER.readValue(record, cls));
         } catch (IOException e) {
             return Either.right(new DeserializationException(e, Arrays.toString(record)));
+        } finally {
+            String[] tags = {MetricRegistry.TAG_QUEUE_TYPE, cls.getSimpleName()};
+            metricRegistry
+                .counter(MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT, MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT_DESCRIPTION, tags)
+                .increment();
         }
     }
 
@@ -75,6 +85,11 @@ public class QueueUtils {
             return Either.left(MAPPER.readValue(record, cls));
         } catch (IOException e) {
             return Either.right(new DeserializationException(e, record));
+        } finally {
+            String[] tags = {MetricRegistry.TAG_QUEUE_TYPE, cls.getSimpleName()};
+            metricRegistry
+                .counter(MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT, MetricRegistry.METRIC_QUEUE_RECEIVE_COUNT_DESCRIPTION, tags)
+                .increment();
         }
     }
 }

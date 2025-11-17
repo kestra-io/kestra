@@ -1,5 +1,7 @@
 All PRs submitted by external contributors that do not follow this template (including proper description, related issue, and checklist sections) **may be automatically closed**.
 
+As a general practice, if you plan to work on a specific issue, comment on the issue first and wait to be assigned before starting any actual work. This avoids duplicated work and ensures a smooth contribution process - otherwise, the PR **may be automatically closed**.
+
 ---
 
 ### ✨ Description

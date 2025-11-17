@@ -30,6 +30,7 @@ export default [
                 });
                 return;
             }
+            next()
         },
     },
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},

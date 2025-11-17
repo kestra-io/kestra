@@ -68,9 +68,13 @@ export function useDefaultFilter(
     const router = useRouter();
 
     onMounted(() => {
-        const {query} = applyDefaultFilters(route.query, {configuration, route, legacyQuery})
-        if(!route.query || Object.keys(route.query).length === 0) {
-            router.replace({query})
-        }
+        // wait for the restore url process to end
+        // it has priority over default filters
+        setTimeout(() => {
+            const {query} = applyDefaultFilters(route.query, {configuration, route, legacyQuery})
+            if(!route.query || Object.keys(route.query).length === 0) {
+                router.replace({...route, query})
+            }
+        }, 100);
     });
 }   

@@ -119,10 +119,13 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
      * Only triggers when restoreUrl is enabled and saved state exists.
      */
     onMounted(() => {
-        if (restoreUrl && localStorageValue.value 
-            && route.query && Object.keys(route.query).length === 0) {
-            loadInit.value = false;
-            goToRestoreUrl();
+        if (restoreUrl && localStorageValue.value){
+            setTimeout(() => {
+                if(route.query && Object.keys(route.query).length === 0) {
+                    loadInit.value = false;
+                    goToRestoreUrl();
+                }
+            }, 50)
         }
     });
 

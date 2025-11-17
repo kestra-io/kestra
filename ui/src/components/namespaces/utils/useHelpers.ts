@@ -13,7 +13,6 @@ export interface Tab {
     locked?: boolean;
     disabled?: boolean;
     maximized?: boolean;
-
     name: string;
     title: string;
     component: Component;
@@ -76,20 +75,19 @@ export function useHelpers() {
                 },
                 disabled: index === parts.value.length - 1,
             })),
-        ] ,
+        ],
     }));
 
     const tabs: Tab[] = [
         // If it's a system namespace, include the blueprints tab
-        ...(namespace.value === "system"
-            ? [
-                  {
-                      name: "blueprints",
-                      title: t("blueprints.title"),
-                      component: BlueprintsBrowser,
-                      props: {tab: "community", system: true},
-                  },
-              ]
+        ...(namespace.value === "system" ? [
+            {
+                name: "blueprints",
+                title: t("blueprints.title"),
+                component: BlueprintsBrowser,
+                props: {tab: "community", system: true},
+            },
+        ]
             : []),
         {
             name: "overview",
@@ -111,6 +109,7 @@ export function useHelpers() {
                 namespace: namespace.value,
                 topbar: false,
                 visibleCharts: true,
+                embed: false,
             },
         },
         {

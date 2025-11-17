@@ -2,7 +2,7 @@
     <el-button
         v-if="isFlowContext"
         @click="fixWithAi"
-        class="position-absolute slack-on-error el-button--small"
+        class="el-button--small"
         size="small"
     >
         <AiIcon class="me-1" />

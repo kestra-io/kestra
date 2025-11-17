@@ -102,17 +102,17 @@
                                         @click="movePanel(panelIndex, 'left')"
                                     >
                                         <span class="small-text">
-                                            {{ $t("multi_panel_editor.move_right") }}
+                                            {{ $t("multi_panel_editor.move_left") }}
                                         </span>
                                     </el-dropdown-item>
                                     <el-dropdown-item v-if="panel.tabs.length > 1" :icon="Close" @click="closeAllTabs(panelIndex)">
                                         <span class="small-text">
-                                            {{ $t("multi_panel_editor.move_right") }}
+                                            {{ $t("multi_panel_editor.close_all_tabs") }}
                                         </span>
                                     </el-dropdown-item>
                                     <el-dropdown-item :icon="Close" @click="closeAllPanels()">
                                         <span class="small-text">
-                                            {{ $t("multi_panel_editor.move_right") }}
+                                            {{ $t("multi_panel_editor.close_all_panels") }}
                                         </span>
                                     </el-dropdown-item>
                                     <el-dropdown-item
@@ -121,7 +121,7 @@
                                         @click="showKeyShortcuts()"
                                     >
                                         <span class="small-text">
-                                            {{ $t("multi_panel_editor.move_right") }}
+                                            {{ $t("editor_shortcuts.label") }}
                                         </span>
                                     </el-dropdown-item>
                                 </el-dropdown-menu>

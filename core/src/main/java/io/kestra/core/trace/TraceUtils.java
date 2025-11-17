@@ -10,10 +10,10 @@ import java.util.Map;
 public final class TraceUtils {
     public static final AttributeKey<String> ATTR_UID = AttributeKey.stringKey("kestra.uid");
 
-    private static final AttributeKey<String> ATTR_TENANT_ID = AttributeKey.stringKey("kestra.tenantId");
-    private static final AttributeKey<String> ATTR_NAMESPACE = AttributeKey.stringKey("kestra.namespace");
-    private static final AttributeKey<String> ATTR_FLOW_ID = AttributeKey.stringKey("kestra.flowId");
-    private static final AttributeKey<String> ATTR_EXECUTION_ID = AttributeKey.stringKey("kestra.executionId");
+    public static final AttributeKey<String> ATTR_TENANT_ID = AttributeKey.stringKey("kestra.tenantId");
+    public static final AttributeKey<String> ATTR_NAMESPACE = AttributeKey.stringKey("kestra.namespace");
+    public static final AttributeKey<String> ATTR_FLOW_ID = AttributeKey.stringKey("kestra.flowId");
+    public static final AttributeKey<String> ATTR_EXECUTION_ID = AttributeKey.stringKey("kestra.executionId");
 
     public static final AttributeKey<String> ATTR_SOURCE = AttributeKey.stringKey("kestra.source");
 

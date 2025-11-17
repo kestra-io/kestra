@@ -304,6 +304,7 @@
     const suggestWidgetResizeObserver = ref<MutationObserver>()
     const suggestWidgetObserver = ref<MutationObserver>()
     const suggestWidget = ref<HTMLElement>()
+    const resizeObserver = ref<ResizeObserver>()
 
     defineExpose({
         focus,
@@ -871,6 +872,20 @@
         setTimeout(() => monaco.editor.remeasureFonts(), 1)
         emit("editorDidMount", editorResolved.value);
 
+        /* Hhandle resizing. */
+        resizeObserver.value = new ResizeObserver(() => {
+            if (localEditor.value) {
+                localEditor.value.layout();
+            }
+            if (localDiffEditor.value) {
+                localDiffEditor.value.getModifiedEditor().layout();
+                localDiffEditor.value.getOriginalEditor().layout();
+            }
+        });
+        if (editorRef.value) {
+            resizeObserver.value.observe(editorRef.value);
+        }
+
         highlightLine();
     }
 
@@ -928,6 +943,8 @@
     function destroy() {
         disposeObservers();
         disposeCompletions.value?.();
+        resizeObserver.value?.disconnect();
+        resizeObserver.value = undefined;
         if (localDiffEditor.value !== undefined) {
             localDiffEditor.value?.dispose();
             localDiffEditor.value?.getModel()?.modified?.dispose();

@@ -1,4 +1,4 @@
-import {computed, h, ref} from "vue";
+import {computed, h, ref, watch} from "vue";
 import {ElMessageBox} from "element-plus";
 import permission from "../models/permission";
 import action from "../models/action";
@@ -114,6 +114,10 @@ export const useFlowStore = defineStore("flow", () => {
 
     const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value);
 
+    watch(haveChange, (newValue) => {
+        coreStore.unsavedChange = newValue;
+    });
+
     async function saveAll() {
         if ((!haveChange.value && !isCreating.value) || flowErrors.value?.length) {
             return;
@@ -186,8 +190,6 @@ export const useFlowStore = defineStore("flow", () => {
             }
         }
 
-        coreStore.unsavedChange = true;
-
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
         })
@@ -252,14 +254,12 @@ export const useFlowStore = defineStore("flow", () => {
             await createFlow({flow: flowSource ?? ""})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    coreStore.unsavedChange = false;
                     isCreating.value = false;
                 });
         } else {
             await saveFlow({flow: flowSource})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    coreStore.unsavedChange = false;
                 });
         }
 

@@ -154,8 +154,9 @@ class RunVariablesTest {
             .build(new RunContextLogger(), PropertyContext.create(renderer));
         assertThat(variables.size()).isEqualTo(4);
         Map<String, Object> kestra = (Map<String, Object>) variables.get("kestra");
+        Map<String, Object> environment = (Map<String, Object>) kestra.get("environment");
         assertThat(kestra).hasSize(2);
-        assertThat(kestra.get("environment.name")).isEqualTo("test");
+        assertThat(environment.get("name")).isEqualTo("test");
         assertThat(kestra.get("url")).isEqualTo("http://localhost:8080");
     }
 

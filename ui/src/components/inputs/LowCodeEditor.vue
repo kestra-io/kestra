@@ -89,7 +89,6 @@
 </template>
 
 <script setup lang="ts">
-    // Core
     import {nextTick, onMounted, ref, inject, watch} from "vue";
 
     import {useI18n} from "vue-i18n";
@@ -118,7 +117,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
-    import { useToast } from "../../utils/toast";
+    import {useToast} from "../../utils/toast";
 
     const router = useRouter();
 
@@ -130,7 +129,6 @@
     const executionsStore = useExecutionsStore();
     const playgroundStore = usePlaygroundStore();
 
-    // props
     const props = withDefaults(
         defineProps<{
             flowGraph: Record<string, any>;
@@ -164,14 +162,12 @@
         "swapped-task",
     ]);
 
-    // Vue instance variables
     const coreStore = useCoreStore();
     const toast = useToast();
     const {t} = useI18n();
 
     const pluginsStore = usePluginsStore();
 
-    // Components variables
     const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault);
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"));
     const vueFlow = ref<HTMLDivElement>();
@@ -186,7 +182,6 @@
     const isShowConditionOpen = ref(false);
     const selectedTask = ref();
 
-    // Init components
     onMounted(() => {
         // Regenerate graph on window resize
         observeWidth();
@@ -212,7 +207,6 @@
         },
     );
 
-    // Event listeners & Watchers
     const observeWidth = () => {
         if(vueFlow.value){
             const resizeObserver = new ResizeObserver(function () {
@@ -227,7 +221,6 @@
         }
     };
 
-    // Source edit functions
     const onDelete = (event: any) => {
         const flowParsed = YAML_UTILS.parse(props.source);
         toast.confirm(

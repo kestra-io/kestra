@@ -50,6 +50,6 @@ public class QueueFactory {
     @Singleton
     @Inject
     public ExecutorService executorsUtils(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration) {
-        return executorsUtils.cachedThreadPool("queue-" + queueConfiguration.type());
+        return executorsUtils.cachedThreadPool("queue-" + queueConfiguration.getType());
     }
 }

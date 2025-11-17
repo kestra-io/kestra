@@ -1,19 +1,24 @@
 package io.kestra.queue;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 
+@Getter
 @ConfigurationProperties(value = "kestra.queue")
-public record QueueConfiguration(
-    @NotNull
-    String type,
-    MessageProtection messageProtection
-) {
-    @ConfigurationProperties("message-protection")
-    public record MessageProtection(
-        boolean enabled,
-        Integer limit
-    ) {
+public class QueueConfiguration{
 
+    @NotNull
+    String type;
+
+    @Nullable
+    MessageProtection messageProtection;
+
+    @Getter
+    @ConfigurationProperties("message-protection")
+    public static class MessageProtection{
+        Boolean enabled = false;
+        Integer limit;
     }
 }

@@ -344,7 +344,7 @@
     import {useAuthStore} from "override/stores/auth";
     import {invisibleSpace} from "../../utils/filters";
     import {storageKeys} from "../../utils/constants";
-    import {useTriggerStore} from "../../stores/trigger";
+    import {TriggerDeleteOptions, useTriggerStore} from "../../stores/trigger";
     import {useExecutionsStore} from "../../stores/executions";
     import {useTriggerFilter} from "../filter/configurations";
     import {useDataTableActions} from "../../composables/useDataTableActions";
@@ -635,7 +635,7 @@
             });
     };
 
-    const confirmDeleteTrigger = (trigger) => {
+    const confirmDeleteTrigger = (trigger: TriggerDeleteOptions) => {
         toast.confirm(
             t("delete trigger confirmation", {id: trigger.id}),
             () => triggerStore.delete({

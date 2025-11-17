@@ -1,6 +1,6 @@
 import ErrorToastContainer from "../../../src/components/ErrorToastContainer.vue";
-import type { Meta, StoryObj } from "@storybook/vue3-vite";
-import { ref } from "vue";
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
+import {ref} from "vue";
 
 const meta: Meta<typeof ErrorToastContainer> = {
     title: "components/ErrorToastContainer",
@@ -39,9 +39,9 @@ export const ErrorWithItems: StoryObj<typeof ErrorToastContainer> = {
                 }
             };
             const items = [
-                { path: "tasks.processData.id", message: "Task ID must be unique" },
-                { path: "tasks.sendEmail.to", message: "Email address is required" },
-                { message: "Flow must contain at least one task" }
+                {path: "tasks.processData.id", message: "Task ID must be unique"},
+                {path: "tasks.sendEmail.to", message: "Email address is required"},
+                {message: "Flow must contain at least one task"}
             ];
 
             return () => (
@@ -86,8 +86,8 @@ export const FlowContextWithAIButton: StoryObj<typeof ErrorToastContainer> = {
                 }
             };
             const items = [
-                { path: "tasks.myTask.type", message: "Unknown task type: 'io.kestra.plugin.invalid.Task'" },
-                { path: "inputs.myInput.type", message: "Input type 'INVALID' is not supported" }
+                {path: "tasks.myTask.type", message: "Unknown task type: 'io.kestra.plugin.invalid.Task'"},
+                {path: "inputs.myInput.type", message: "Input type 'INVALID' is not supported"}
             ];
 
             const handleClose = () => {
@@ -177,14 +177,14 @@ export const MultipleValidationErrors: StoryObj<typeof ErrorToastContainer> = {
                 }
             };
             const items = [
-                { path: "id", message: "Flow ID cannot be empty" },
-                { path: "namespace", message: "Namespace must match pattern: ^[a-z0-9._-]+$" },
-                { path: "tasks[0].id", message: "Task ID 'my-task' contains invalid characters" },
-                { path: "tasks[0].type", message: "Task type is required" },
-                { path: "tasks[1].id", message: "Duplicate task ID: 'processData'" },
-                { path: "triggers[0].schedule", message: "Invalid cron expression: '0 0 32 * *'" },
-                { path: "inputs[0].type", message: "Input type 'CUSTOM' is not recognized" },
-                { path: "labels.env", message: "Label value exceeds maximum length of 100 characters" }
+                {path: "id", message: "Flow ID cannot be empty"},
+                {path: "namespace", message: "Namespace must match pattern: ^[a-z0-9._-]+$"},
+                {path: "tasks[0].id", message: "Task ID 'my-task' contains invalid characters"},
+                {path: "tasks[0].type", message: "Task type is required"},
+                {path: "tasks[1].id", message: "Duplicate task ID: 'processData'"},
+                {path: "triggers[0].schedule", message: "Invalid cron expression: '0 0 32 * *'"},
+                {path: "inputs[0].type", message: "Input type 'CUSTOM' is not recognized"},
+                {path: "labels.env", message: "Label value exceeds maximum length of 100 characters"}
             ];
 
             return () => (
@@ -210,23 +210,23 @@ export const Interactive: StoryObj<typeof ErrorToastContainer> = {
             const errorScenarios = [
                 {
                     name: "Simple Error",
-                    message: { message: "A simple error occurred", content: { message: "A simple error occurred" } },
+                    message: {message: "A simple error occurred", content: {message: "A simple error occurred"}},
                     items: []
                 },
                 {
                     name: "Validation Errors",
-                    message: { message: "Validation failed", content: { message: "Validation failed" } },
+                    message: {message: "Validation failed", content: {message: "Validation failed"}},
                     items: [
-                        { path: "tasks.myTask", message: "Task configuration is invalid" },
-                        { path: "inputs.myInput", message: "Input value is required" }
+                        {path: "tasks.myTask", message: "Task configuration is invalid"},
+                        {path: "inputs.myInput", message: "Input value is required"}
                     ]
                 },
                 {
                     name: "503 Error",
                     message: { 
                         message: "Service unavailable", 
-                        content: { message: "Service unavailable" },
-                        response: { status: 503 }
+                        content: {message: "Service unavailable"},
+                        response: {status: 503}
                     },
                     items: []
                 }

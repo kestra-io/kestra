@@ -174,23 +174,32 @@ section#charts {
             opacity: 1;
         }
     }
+
+    @for $i from 1 through 3 {
+        .dash-width-#{$i} {
+            grid-column: span #{$i};
+        }
+    }
     
-    .dash-width-3, .dash-width-6, .dash-width-9, .dash-width-12  {
-        grid-column: span 3;
+    @for $i from 4 through 12 {
+        .dash-width-#{$i} {
+            grid-column: span 3;
+        }
     }
 
     @container (min-width: #{$smallMobile}) {
-        .dash-width-6, .dash-width-9, .dash-width-12 {
-            grid-column: span 6;
+        @for $i from 4 through 12 {
+            .dash-width-#{$i} {
+                grid-column: span 6;
+            }
         }
     }
 
     @container (min-width: #{$tablet}) {
-        .dash-width-9 {
-            grid-column: span 9;
-        }
-        .dash-width-12 {
-            grid-column: span 12;
+        @for $i from 4 through 12 {
+            .dash-width-#{$i} {
+                grid-column: span #{$i};
+            }
         }
     }
 }

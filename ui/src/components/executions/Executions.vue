@@ -55,7 +55,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault class="mb-4" />
             </template>
 
             <template #table>

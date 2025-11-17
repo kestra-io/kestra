@@ -15,7 +15,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections ref="dashboardRef" :charts :dashboard="{id: 'default', charts: []}" showDefault class="mb-4" />
+                    <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault class="mb-4" />
                 </template>
 
                 <template #table>
@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch} from "vue";
+    import {ref, computed, onMounted, watch, useTemplateRef} from "vue";
     import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
@@ -89,7 +89,7 @@
     const isLoading = ref(false);
     const lastRefreshDate = ref(new Date());
     const showChart = ref(localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false");
-    const dashboardRef = ref();
+    const dashboardRef = useTemplateRef("dashboard");
 
     const isFlowEdit = computed(() => route.name === "flows/update");
     const isNamespaceEdit = computed(() => route.name === "namespaces/update");

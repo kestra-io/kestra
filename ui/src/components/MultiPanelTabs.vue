@@ -58,7 +58,7 @@
                                 <CloseIcon
                                     @click.stop="destroyTab(panelIndex, tab)"
                                     class="tab-icon close-icon"
-                                    :title="Close"
+                                    :title="$t('Close')"
                                 />
                             </button>
                             <div v-else class="potential-container">
@@ -94,7 +94,6 @@
                                     >
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_right") }}
-
                                         </span>
                                     </el-dropdown-item>
                                     <el-dropdown-item
@@ -104,19 +103,16 @@
                                     >
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_right") }}
-
                                         </span>
                                     </el-dropdown-item>
                                     <el-dropdown-item v-if="panel.tabs.length > 1" :icon="Close" @click="closeAllTabs(panelIndex)">
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_right") }}
-
                                         </span>
                                     </el-dropdown-item>
                                     <el-dropdown-item :icon="Close" @click="closeAllPanels()">
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_right") }}
-
                                         </span>
                                     </el-dropdown-item>
                                     <el-dropdown-item
@@ -126,7 +122,6 @@
                                     >
                                         <span class="small-text">
                                             {{ $t("multi_panel_editor.move_right") }}
-
                                         </span>
                                     </el-dropdown-item>
                                 </el-dropdown-menu>
@@ -184,7 +179,6 @@
 
 <script setup lang="ts">
     import {nextTick, ref, watch, provide, computed} from "vue";
-    // import {useI18n} from "vue-i18n";
 
     import {VISIBLE_PANELS_INJECTION_KEY} from "./no-code/injectionKeys";
     import {useKeyShortcuts} from "../utils/useKeyShortcuts";
@@ -203,7 +197,6 @@
     import {trackTabOpen, trackTabClose} from "../utils/tabTracking";
     import {Panel, Tab, TabLive} from "../utils/multiPanelTypes";
 
-    // const {t} = useI18n();
     const {showKeyShortcuts} = useKeyShortcuts();
 
     function throttle(callback: () => void, limit: number): () => void {

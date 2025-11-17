@@ -17,8 +17,8 @@ import {
     KV_COMPARATORS
 } from "../utils/filterTypes";
 import {usePreAppliedFilters} from "./usePreAppliedFilters";
-import {applyDefaultFilters, useDefaultFilter} from "./useDefaultFilter";
-import useRestoreUrl from "../../../composables/useRestoreUrl";
+import {applyDefaultFilters} from "./useDefaultFilter";
+
 
 export function useFilters(configuration: FilterConfiguration, showSearchInput = true, legacyQuery = false) {
     const router = useRouter();
@@ -367,10 +367,6 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         searchQuery.value = "";
         updateRoute();
     };
-
-    useRestoreUrl()
-
-    useDefaultFilter(configuration, legacyQuery)
 
     const resetToPreApplied = () => {
         const defaultQuery = applyDefaultFilters({}, {configuration, route, legacyQuery}).query;

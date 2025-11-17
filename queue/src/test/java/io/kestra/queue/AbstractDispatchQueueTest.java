@@ -34,7 +34,6 @@ public abstract class AbstractDispatchQueueTest {
         singleConsumer();
     }
 
-
     @Test
     void singleConsumer() throws QueueException, InterruptedException, IOException {
         CountDownLatch countDownLatch = new CountDownLatch(2);

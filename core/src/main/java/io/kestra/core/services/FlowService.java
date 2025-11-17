@@ -4,7 +4,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.tasks.GenericTask;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.validations.ModelValidator;
@@ -149,6 +151,8 @@ public class FlowService {
     public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) throws FlowProcessingException {
 
         final GenericFlow flow = GenericFlow.fromYaml(tenantId, source);
+        // normalizing subflow namespace, to take null namespace also
+        normalizeSubflowNamespace(flow);
 
         Optional<FlowWithSource> maybeExisting = repository().findByIdWithSource(
             flow.getTenantId(),
@@ -173,6 +177,22 @@ public class FlowService {
             return maybeExisting
                 .map(previous -> repository().update(flow, previous))
                 .orElseGet(() -> repository().create(flow));
+        }
+    }
+
+    public void normalizeSubflowNamespace(GenericFlow flow){
+        if(flow.getTasks() == null){
+            return;
+        }
+
+        String parentNameSpace = flow.getNamespace();
+
+        for(GenericTask t : flow.getTasks()){
+            if (t.getType().equals("io.kestra.plugin.core.flow.Subflow")){
+                if(t.getAdditionalProperties().get("namespace") == null){
+                    t.getAdditionalProperties().put("namespace", parentNameSpace);
+                }
+            }
         }
     }
 

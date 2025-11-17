@@ -11,7 +11,7 @@
         />
 
         <EditorButtons
-            :isCreating="isCreating"
+            :isCreating="flowStore.isCreating"
             :isReadOnly="isReadOnly"
             :canDelete="true"
             :isAllowedEdit="isAllowedEdit"
@@ -59,12 +59,12 @@
     const {t} = useI18n();
 
     const exportYaml = () => {
-        const src = flowStore.flowYaml
-        if(!src) {
-            return;
-        }
-        const blob = new Blob([src], {type: "text/yaml"});
-        localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
+        if(!flowStore.flow || !flowStore.flowYaml) return;
+
+        const {id, namespace} = flowStore.flow;
+        const blob = new Blob([flowStore.flowYaml], {type: "text/yaml"});
+
+        localUtils.downloadUrl(window.URL.createObjectURL(blob), `${namespace}.${id}.yaml`);
     };
 
     const flowStore = useFlowStore();
@@ -77,7 +77,6 @@
     // If playground is not defined, enable it by default
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
 
-    const isCreating = computed(() => flowStore.isCreating === true)
     const isReadOnly = computed(() => flowStore.isReadOnly)
     const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
     const flowHaveTasks = computed(() => flowStore.flowHaveTasks)
@@ -110,22 +109,31 @@
     const onSaveAll = inject(FILES_SAVE_ALL_INJECTION_KEY);
 
     async function save(){
-        const creating = isCreating.value
-        await flowStore.saveAll()
+        try {
+            // Save the isCreating before saving.
+            // saveAll can change its value.
+            const isCreating = flowStore.isCreating
+            await flowStore.saveAll()
 
-        if(creating){
-            await router.push({
-                name: "flows/update",
-                params: {
-                    id: flowStore.flow?.id,
-                    namespace: flowStore.flow?.namespace,
-                    tab: "edit",
-                    tenant: routeParams.value.tenant,
-                },
-            });
+            if(isCreating){
+                await router.push({
+                    name: "flows/update",
+                    params: {
+                        id: flowStore.flow?.id,
+                        namespace: flowStore.flow?.namespace,
+                        tab: "edit",
+                        tenant: routeParams.value.tenant,
+                    },
+                });
+            }
+
+            onSaveAll?.();
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000});
+                return;
+            }
         }
-
-        onSaveAll?.();
     }
 
     const deleteFlow = () => {

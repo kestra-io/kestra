@@ -262,6 +262,24 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/flow-trigger-multiple-preconditions-flow-a.yaml", "flows/valids/flow-trigger-multiple-preconditions-flow-listen.yaml"})
+    void flowTriggerMultiplePreconditions() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerMultiplePreconditions();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-multiple-conditions-flow-a.yaml", "flows/valids/flow-trigger-multiple-conditions-flow-listen.yaml"})
+    void flowTriggerMultipleConditions() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerMultipleConditions();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-mixed-conditions-flow-a.yaml", "flows/valids/flow-trigger-mixed-conditions-flow-listen.yaml"})
+    void flowTriggerMixedConditions() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerMixedConditions();
+    }
+
+    @Test
     @LoadFlows({"flows/valids/each-null.yaml"})
     void eachWithNull() throws Exception {
         EachSequentialTest.eachNullTest(runnerUtils, logsQueue);

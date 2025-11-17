@@ -23,6 +23,8 @@ const textYamlHeader = {
     }
 }
 
+const VALIDATE = {validateStatus: (status: number) => status === 200 || status === 401};
+
 interface Trigger {
     id: string;
     type: string;
@@ -54,7 +56,6 @@ interface FlowValidations {
 export interface Flow {
     id: string;
     namespace: string;
-    disabled?: boolean;
     source: string;
     revision?: number;
     deleted?: boolean;
@@ -96,6 +97,8 @@ export const useFlowStore = defineStore("flow", () => {
     const creationId = ref<string>();
 
     const axios = useAxios();
+
+    const coreStore = useCoreStore();
 
     const t = (key: string, values?: Record<string, any>) => {
         if (!globalI18n.value) {
@@ -166,7 +169,7 @@ export const useFlowStore = defineStore("flow", () => {
                 if (flowBeforeEdit &&
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
-                    const coreStore = useCoreStore();
+                    
                     coreStore.message = {
                         variant: "error",
                         title: t("readonly property"),
@@ -183,7 +186,6 @@ export const useFlowStore = defineStore("flow", () => {
             }
         }
 
-        const coreStore = useCoreStore();
         coreStore.unsavedChange = true;
 
         return validateFlow({
@@ -210,7 +212,6 @@ export const useFlowStore = defineStore("flow", () => {
         const flowSource = flowYaml.value ?? "";
 
         if (flowParsed.value === undefined) {
-            const coreStore = useCoreStore();
             coreStore.message = {
                 variant: "error",
                 title: t("invalid flow"),
@@ -251,7 +252,6 @@ export const useFlowStore = defineStore("flow", () => {
             await createFlow({flow: flowSource ?? ""})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    const coreStore = useCoreStore();
                     coreStore.unsavedChange = false;
                     isCreating.value = false;
                 });
@@ -259,7 +259,6 @@ export const useFlowStore = defineStore("flow", () => {
             await saveFlow({flow: flowSource})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    const coreStore = useCoreStore();
                     coreStore.unsavedChange = false;
                 });
         }
@@ -354,7 +353,6 @@ export const useFlowStore = defineStore("flow", () => {
             })
             .then((response: any) => {
                 if (response.data.exception) {
-                    const coreStore = useCoreStore();
                     coreStore.message = {
                         title: "Invalid source code",
                         message: response.data.exception,
@@ -401,10 +399,13 @@ export const useFlowStore = defineStore("flow", () => {
     }
     function saveFlow(options: { flow: string }) {
         const flowData = YAML_UTILS.parse(options.flow)
-        return axios.put(`${apiUrl()}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
+        return axios.put(`${apiUrl()}/flows/${flowData.namespace}/${flowData.id}`, options.flow, {
+            ...textYamlHeader,
+            ...VALIDATE
+        })
             .then(response => {
                 if (response.status >= 300) {
-                    return Promise.reject(new Error("Server error on flow save"))
+                    return Promise.reject(response)
                 } else {
                     flow.value = response.data;
 
@@ -427,7 +428,13 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     function createFlow(options: { flow: string }) {
-        return axios.post(`${apiUrl()}/flows`, options.flow, textYamlHeader).then(response => {
+        return axios.post(`${apiUrl()}/flows`, options.flow, {
+            ...textYamlHeader,
+            ...VALIDATE
+        }).then(response => {
+            if (response.status >= 300) {
+                return Promise.reject(response)
+            }
 
             const creationPanels = localStorage.getItem(`el-fl-creation-${creationId.value}`) ?? YAML_UTILS.stringify([]);
             localStorage.setItem(`el-fl-${flow.value!.namespace}-${flow.value!.id}`, creationPanels);
@@ -443,7 +450,7 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     function loadDependencies(options: { namespace: string, id: string, subtype: "FLOW" | "EXECUTION" }, onlyCount = false) {
-        return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/dependencies?expandAll=true`).then(response => {
+        return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/dependencies?expandAll=${onlyCount ? false : true}`).then(response => {
             return {
                 ...(!onlyCount ? {data: transformResponse(response.data, options.subtype)} : {}),
                 count: response.data.nodes ? new Set(response.data.nodes.map((r:{uid:string}) => r.uid)).size : 0
@@ -554,7 +561,6 @@ function deleteFlowAndDependencies() {
                 }
 
                 if ([404, 422].includes(error.response?.status) && config?.params?.subflows?.length > 0) {
-                    const coreStore = useCoreStore();
                     coreStore.message = {
                         title: "Couldn't expand subflow",
                         message: error.response.data.message,

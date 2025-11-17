@@ -36,8 +36,7 @@
     import {ref, computed} from "vue";
     import Executions from "../executions/Executions.vue";
     import Empty from "../layout/empty/Empty.vue";
-    import {State} from "@kestra-io/ui-libs";
-    import Status from "../Status.vue";
+    import {State, Status} from "@kestra-io/ui-libs";
     import {useFlowStore} from "../../stores/flow";
 
     defineOptions({inheritAttrs: false});

@@ -55,7 +55,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault class="mb-4" />
             </template>
 
             <template #table>
@@ -70,7 +70,7 @@
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
                     :no-data-text="$t('no_results.executions')"
-                    :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+                    :rowKey="(row: any) => row.id"
                 >
                     <template #select-actions>
                         <BulkSelect
@@ -144,10 +144,7 @@
 
                             <el-form>
                                 <ElFormItem :label="$t('execution labels')">
-                                    <LabelInput
-                                        :key="executionLabels.map((l) => l.key).join('-')"
-                                        v-model:labels="executionLabels"
-                                    />
+                                    <LabelInput v-model:labels="executionLabels" />
                                 </ElFormItem>
                             </el-form>
                         </el-dialog>
@@ -406,7 +403,7 @@
 
     import Id from "../Id.vue";
     import Kicon from "../Kicon.vue";
-    import Status from "../Status.vue";
+    import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import DataTable from "../layout/DataTable.vue";
@@ -420,7 +417,6 @@
     //@ts-expect-error no declaration file
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
 
-    import {State} from "@kestra-io/ui-libs";
     import {filterValidLabels} from "./utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
@@ -500,7 +496,7 @@
     const changeStatusDialogVisible = ref(false);
     const actionOptions = ref<Record<string, any>>({});
     const dblClickRouteName = ref("executions/update");
-    const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) === "true");
+    const showChart = ref(localStorage.getItem(storageKeys.SHOW_CHART) !== "false");
 
     const optionalColumns = ref([
         {

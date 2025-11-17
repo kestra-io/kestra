@@ -1,0 +1,26 @@
+id: duplicate-preconditions
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+
+triggers:
+  - id: on_completion
+    type: io.kestra.plugin.core.trigger.Flow
+    preconditions:
+      id: flows
+      flows:
+        - namespace: io.kestra.tests
+          flowId: flow_a
+          states: [SUCCESS]
+
+  - id: on_failure
+    type: io.kestra.plugin.core.trigger.Flow
+    preconditions:
+      id: flows
+      flows:
+        - namespace: io.kestra.tests
+          flowId: flow_a
+          states: [FAILED]

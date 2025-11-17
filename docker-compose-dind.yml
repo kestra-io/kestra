@@ -15,9 +15,9 @@ volumes:
 
 services:
   postgres:
-    image: postgres
+    image: postgres:18
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/18/docker
     environment:
       POSTGRES_DB: kestra
       POSTGRES_USER: kestra

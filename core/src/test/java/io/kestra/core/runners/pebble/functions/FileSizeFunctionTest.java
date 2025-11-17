@@ -113,33 +113,6 @@ public class FileSizeFunctionTest {
     }
 
     @Test
-    void shouldThrowIllegalArgumentException_givenTrigger_andParentExecution_andMissingNamespace() throws IOException {
-        String executionId = IdUtils.create();
-        URI internalStorageURI = getInternalStorageURI(executionId);
-        URI internalStorageFile = getInternalStorageFile(internalStorageURI);
-
-        Map<String, Object> variables = Map.of(
-            "flow", Map.of(
-                "id", "subflow",
-                "namespace", NAMESPACE,
-                "tenantId", MAIN_TENANT),
-            "execution", Map.of("id", IdUtils.create()),
-            "trigger", Map.of(
-                "flowId", FLOW,
-                "executionId", executionId,
-                "tenantId", MAIN_TENANT
-            )
-        );
-
-        Exception ex = assertThrows(
-            IllegalArgumentException.class,
-            () -> variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables)
-        );
-
-        assertTrue(ex.getMessage().startsWith("Unable to read the file"), "Exception message doesn't match expected one");
-    }
-
-    @Test
     void returnsCorrectSize_givenUri_andCurrentExecution() throws IOException, IllegalVariableEvaluationException {
         String executionId = IdUtils.create();
         URI internalStorageURI = getInternalStorageURI(executionId);

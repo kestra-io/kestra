@@ -661,24 +661,119 @@ inject(tenant);
     @Test
     protected void shouldFindByLabel() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-inject(tenant);
+        var exec1 = executionRepository.save(builder(tenant, State.Type.RUNNING, null)
+            .labels(List.of(
+                new Label("labelkey1", "labelvalue1")
+            ))
+            .build()
+        );
+        var exec2 = executionRepository.save(builder(tenant, State.Type.RUNNING, null)
+            .labels(List.of(
+                new Label("labelkey2", "labelvalue2")
+            ))
+            .build()
+        );
+        var exec3 = executionRepository.save(builder(tenant, State.Type.RUNNING, null)
+            .labels(List.of(
+                new Label("labelkey2", "labelvalue2"),
+                new Label("labelkey3", "labelvalue3")
+            ))
+            .build()
+        );
 
-        List<QueryFilter> filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.LABELS)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(Map.of("key", "value"))
-            .build());
-        List<Execution> executions = executionRepository.find(Pageable.from(1, 10),  tenant, filters);
-        assertThat(executions.size()).isEqualTo(1L);
+        assertThat(
+            executionRepository.find(Pageable.from(1, 10), tenant,
+                List.of(QueryFilter.builder()
+                    .field(QueryFilter.Field.LABELS)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(Map.of("labelkey1", "labelvalue1"))
+                    .build())
+            )
+        ).as("find execution EQUALS LABELS")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(exec1);
+
+        assertThat(
+            executionRepository.find(Pageable.from(1, 10), tenant,
+                List.of(QueryFilter.builder()
+                    .field(QueryFilter.Field.LABELS)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(Map.of("unexisting_label", "unexisting_value"))
+                    .build())
+            )
+        ).as("find no execution EQUALS non existing LABELS")
+            .isEmpty();
 
         // Filtering by two pairs of labels, since now its a and behavior, it should not return anything
-        filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.LABELS)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(Map.of("key", "value", "keyother", "valueother"))
-            .build());
-        executions = executionRepository.find(Pageable.from(1, 10),  tenant, filters);
-        assertThat(executions.size()).isEqualTo(0L);
+        assertThat(
+            executionRepository.find(Pageable.from(1, 10), tenant,
+                List.of(QueryFilter.builder()
+                    .field(QueryFilter.Field.LABELS)
+                    .operation(QueryFilter.Op.EQUALS)
+                    .value(Map.of("labelkey1", "labelvalue1", "keyother", "valueother"))
+                    .build()))
+        ).as("find no execution that EQUALS labelA AND labelB")
+            .isEmpty();
+
+        assertThat(
+            executionRepository.find(Pageable.from(1, 10), tenant,
+                List.of(QueryFilter.builder()
+                    .field(QueryFilter.Field.LABELS)
+                    .operation(Op.NOT_EQUALS)
+                    .value(Map.of("labelkey1", "labelvalue1"))
+                    .build())
+            )
+        ).as("find execution NOT_EQUALS LABELS")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(exec2, exec3);
+
+        assertThat(
+            executionRepository.find(Pageable.from(1, 10), tenant,
+                List.of(QueryFilter.builder()
+                    .field(QueryFilter.Field.LABELS)
+                    .operation(Op.IN)
+                    .value(Map.of("labelkey1", "labelvalue1", "labelkey3", "labelvalue3", "keyother", "valueother"))
+                    .build()))
+        )
+            .as("find two execution IN LABELS")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(exec1, exec3);
+
+        assertThat(
+            executionRepository.find(Pageable.from(1, 10), tenant,
+                List.of(QueryFilter.builder()
+                    .field(QueryFilter.Field.LABELS)
+                    .operation(Op.NOT_IN)
+                    .value(Map.of("labelkey2", "labelvalue2"))
+                    .build()))
+        )
+            .as("find one execution NOT IN LABELS")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(exec1);
+
+        assertThat(
+            executionRepository.find(Pageable.from(1, 10), tenant,
+                List.of(QueryFilter.builder()
+                    .field(QueryFilter.Field.LABELS)
+                    .operation(Op.CONTAINS)
+                    .value("alue2")
+                    .build()))
+        )
+            .as("find execution CONTAINS LABELS value")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(exec2, exec3);
+
+        assertThat(
+            executionRepository.find(Pageable.from(1, 10), tenant,
+                List.of(QueryFilter.builder()
+                    .field(QueryFilter.Field.LABELS)
+                    .operation(Op.CONTAINS)
+                    .value("ey1")
+                    .build()))
+        )
+            .as("find execution CONTAINS LABELS key")
+            .usingRecursiveFieldByFieldElementComparatorOnFields("id")
+            .containsOnly(exec1);
     }
 
     @Test

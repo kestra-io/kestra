@@ -135,8 +135,8 @@
     };
 
     const rules = computed(() => ({
-        username: [{required: true, validator: validateEmail, trigger: "change"}],
-        password: [{required: true, validator: validatePassword, trigger: "change"}]
+        username: [{required: true, validator: validateEmail, trigger: "blur"}],
+        password: [{required: true, validator: validatePassword, trigger: "blur"}]
     }))
 
     const getFieldError = (fieldName: string) => {
@@ -193,6 +193,10 @@
                         duration: 5000,
                         showClose: false
                     })
+                })
+            } else {
+                ElMessage.error({
+                    message: t("setup.validation.incorrect_creds")
                 })
             }
         } catch {
@@ -264,8 +268,9 @@
 
 <style scoped lang="scss">
     .basic-auth-login {
-        flex-shrink: 1;
-        width: 400px;
+        width: 100%;
+        max-width: 400px;
+        padding: 1rem;
 
         .logo {
             width: 250px;

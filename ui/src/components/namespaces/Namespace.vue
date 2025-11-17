@@ -16,6 +16,7 @@
     import {useNamespacesStore} from "override/stores/namespaces";
     import TopNavBar from "../layout/TopNavBar.vue";
     import Actions from "override/components/namespaces/Actions.vue";
+    import {useMiscStore} from "override/stores/misc";
     // @ts-expect-error no types in Tabs yet
     import Tabs from "../Tabs.vue";
 
@@ -30,6 +31,7 @@
 
     const namespace = computed(() => route.params?.id) as Ref<string>;
 
+    const miscStore = useMiscStore();
     const namespacesStore = useNamespacesStore();
 
     watch(namespace, (newID) => {
@@ -39,11 +41,12 @@
     });
 
     watch(() => route.params.tab, (newTab) => {
-        if (newTab === "overview") {
+        if (newTab === "overview" || newTab === "executions") {
             const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
             if (!Object.keys(route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                const newQuery = {...route.query, "filters[timeRange][EQUALS]": "PT168H"};
+                const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "P30D";
+                const newQuery = {...route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION};
                 router.replace({name: route.name, params: route.params, query: newQuery});
             }
         }

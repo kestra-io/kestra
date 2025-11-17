@@ -120,6 +120,11 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
      */
     onMounted(() => {
         if (restoreUrl && localStorageValue.value){
+            // FIXME: this is a hacky way to wait for the router to be ready.
+            // if we wanted to do it properly, we should use a router guard
+            // to do that we would have to pass the config through the router not with a prop
+            // composables are run when the component is created, way after routes have been resolved
+            // NOTE: once this is fixed, don't forget to add the fix to useDefaultFilter.ts
             setTimeout(() => {
                 if(route.query && Object.keys(route.query).length === 0) {
                     loadInit.value = false;

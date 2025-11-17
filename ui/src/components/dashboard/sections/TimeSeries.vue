@@ -25,6 +25,7 @@
 
 <script setup lang="ts">
     import {computed, ref, watch, PropType} from "vue";
+    import {useMediaQuery} from "@vueuse/core";
     import {useRoute, useRouter} from "vue-router";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
@@ -69,6 +70,8 @@
     const yBShown = computed(() => aggregator.value.length === 2);
 
     const theme = useTheme();
+    const isSmallScreen = useMediaQuery("(max-width: 610px)");
+    const hideAxisText = computed(() => props.short || isSmallScreen.value);
 
     const DEFAULTS = {
         display: true,
@@ -121,7 +124,7 @@
                 },
                 y: {
                     title: {
-                        display: props.short ? false : true,
+                        display: hideAxisText.value ? false : true,
                         text: aggregator.value[0]?.[1]?.displayName ?? aggregator.value[0]?.[0],
                     },
                     position: "left",
@@ -135,7 +138,7 @@
                 ...(yBShown.value && {
                     yB: {
                         title: {
-                            display: props.short ? false : true,
+                            display: hideAxisText.value ? false : true,
                             text: aggregator.value[1]?.[1]?.displayName ?? aggregator.value[1]?.[0],
                         },
                         position: "right",

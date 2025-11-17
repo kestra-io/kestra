@@ -334,11 +334,9 @@
     import TopNavBar from "../layout/TopNavBar.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    //@ts-expect-error No declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
-    import useRestoreUrl from "../../composables/useRestoreUrl";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import useRouteContext from "../../composables/useRouteContext";
 
@@ -437,8 +435,6 @@
             .filter(Boolean) as ColumnConfig[]
     );
 
-    const {saveRestoreUrl} = useRestoreUrl();
-
     const loadData = (callback?: () => void) => {
         const query = loadQuery({
             size: parseInt(String(route.query?.size ?? "25")),
@@ -464,8 +460,7 @@
 
     const {ready, onSort, onPageChanged, queryWithFilter, load} = useDataTableActions({
         dataTableRef: dataTable,
-        loadData,
-        saveRestoreUrl
+        loadData
     });
 
     const {

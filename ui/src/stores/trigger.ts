@@ -36,6 +36,13 @@ interface TriggerBulkOptions {
     [key: string]: any;
 }
 
+export interface TriggerDeleteOptions {
+    id?: string;
+    namespace: string;
+    flowId: string;
+    triggerId: string;
+}
+
 export const useTriggerStore = defineStore("trigger", {
     state: () => ({}),
 

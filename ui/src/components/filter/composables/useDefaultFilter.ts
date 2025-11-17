@@ -1,8 +1,8 @@
+import {onMounted} from "vue";
 import {LocationQuery, RouteLocation, useRoute, useRouter} from "vue-router";
 import {useMiscStore} from "override/stores/misc";
 import {defaultNamespace} from "../../../composables/useNamespaces";
 import {FilterConfiguration} from "../utils/filterTypes";
-import {onMounted} from "vue";
 
 interface DefaultFilterOptions {
     namespace?: string;
@@ -26,13 +26,12 @@ export function applyDefaultFilters(
         namespace, 
         includeTimeRange, 
         includeScope, 
-        legacyQuery = false
+        legacyQuery,
     }: DefaultFilterOptions & { 
         configuration?: FilterConfiguration; 
         route?: RouteLocation 
-    } = {}): { query: LocationQuery; hasChanges: boolean } {
+    } = {}): { query: LocationQuery } {
 
-    
     const hasTimeRange = configuration && route 
         ? configuration.keys?.some((k: any) => k.key === "timeRange") ?? false
         : includeTimeRange ?? false;
@@ -42,16 +41,13 @@ export function applyDefaultFilters(
         : includeScope ?? false;
         
     const query = {...currentQuery};
-    let hasChanges = false;
    
     if (namespace === undefined && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
         query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
-        hasChanges = true;
     }
 
     if (hasScope && !hasFilterKey(query, SCOPE_FILTER_PREFIX)) {
         query[legacyQuery ? "scope" : `${SCOPE_FILTER_PREFIX}[EQUALS]`] = "USER";
-        hasChanges = true;
     }
 
     const TIME_FILTER_KEYS = /startDate|endDate|timeRange/;
@@ -59,10 +55,9 @@ export function applyDefaultFilters(
     if (hasTimeRange && !Object.keys(query).some(key => TIME_FILTER_KEYS.test(key))) {
         const defaultDuration = useMiscStore().configs?.chartDefaultDuration ?? "P30D";
         query[legacyQuery ? "timeRange" : `${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = defaultDuration;
-        hasChanges = true;
     }
 
-    return {query, hasChanges};
+    return {query};
 }
 
 export function useDefaultFilter(
@@ -73,9 +68,9 @@ export function useDefaultFilter(
     const router = useRouter();
 
     onMounted(() => {
-        const {hasChanges, query} = applyDefaultFilters(route.query, {configuration, route, legacyQuery})
-        if(hasChanges) {
-            router.replace({query});
+        const {query} = applyDefaultFilters(route.query, {configuration, route, legacyQuery})
+        if(!route.query || Object.keys(route.query).length === 0) {
+            router.replace({query})
         }
     });
 }   

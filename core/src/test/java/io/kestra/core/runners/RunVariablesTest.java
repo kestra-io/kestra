@@ -37,16 +37,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class RunVariablesTest {
-    
+
     @Inject
     VariableRenderer renderer;
-    
+
     @Inject
     StorageInterface storageInterface;
 
     @Inject
     KvMetadataRepositoryInterface kvMetadataRepository;
-    
+
     @MockBean(KVStoreService.class)
     KVStoreService testKVStoreService() {
         return new KVStoreService() {
@@ -61,7 +61,7 @@ class RunVariablesTest {
             }
         };
     }
-    
+
     @Test
     @SuppressWarnings("unchecked")
     void shouldGetEmptyVariables() {
@@ -155,7 +155,7 @@ class RunVariablesTest {
         assertThat(variables.size()).isEqualTo(4);
         Map<String, Object> kestra = (Map<String, Object>) variables.get("kestra");
         assertThat(kestra).hasSize(2);
-        assertThat(kestra.get("environment")).isEqualTo("test");
+        assertThat(kestra.get("environment.name")).isEqualTo("test");
         assertThat(kestra.get("url")).isEqualTo("http://localhost:8080");
     }
 
@@ -181,7 +181,7 @@ class RunVariablesTest {
             "a", true
         ), variables.get("inputs"));
     }
-    
+
     @Test
     void shouldBuildVariablesGivenFlowWithInputHavingDefaultPebbleExpression() {
         FlowInterface flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
@@ -192,12 +192,12 @@ class RunVariablesTest {
               type: STRING
               defaults: "{{ kv('???') }}"
             """);
-        
+
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withFlow(flow)
             .withExecution(Execution.builder().id(IdUtils.create()).build())
             .build(new RunContextLogger(), PropertyContext.create(renderer));
-        
+
         assertThat(variables.get("inputs")).isEqualTo(Map.of("input", "value"));
     }
 }

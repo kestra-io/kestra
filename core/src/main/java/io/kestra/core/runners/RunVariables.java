@@ -283,7 +283,7 @@ public final class RunVariables {
                 if (flow != null && flow.getInputs() != null) {
                     // Create a new PropertyContext with 'flow' variables which are required by some pebble expressions.
                     PropertyContextWithVariables context = new PropertyContextWithVariables(propertyContext, Map.of("flow", RunVariables.of(flow)));
-                    
+
                     // we add default inputs value from the flow if not already set, this will be useful for triggers
                     flow.getInputs().stream()
                         .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
@@ -352,9 +352,9 @@ public final class RunVariables {
 
             // Kestra configuration
             if (kestraConfiguration != null) {
-                Map<String, String> kestra = HashMap.newHashMap(2);
+                Map<String, Object> kestra = HashMap.newHashMap(2);
                 if (kestraConfiguration.environment() != null) {
-                    kestra.put("environment", kestraConfiguration.environment());
+                    kestra.put("environment", Map.of("name", kestraConfiguration.environment()));
                 }
                 if (kestraConfiguration.url() != null) {
                     kestra.put("url", kestraConfiguration.url());
@@ -393,17 +393,17 @@ public final class RunVariables {
     }
 
     private RunVariables(){}
-    
+
     private record PropertyContextWithVariables(
         PropertyContext delegate,
         Map<String, Object> variables
     ) implements PropertyContext {
-        
+
         @Override
         public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
             return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
         }
-        
+
         @Override
         public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
             return delegate.render(inline, variables.isEmpty() ? this.variables : variables);

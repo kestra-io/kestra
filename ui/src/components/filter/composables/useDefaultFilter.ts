@@ -1,6 +1,8 @@
-import {LocationQuery} from "vue-router";
+import {LocationQuery, RouteLocation, useRoute, useRouter} from "vue-router";
 import {useMiscStore} from "override/stores/misc";
 import {defaultNamespace} from "../../../composables/useNamespaces";
+import {FilterConfiguration} from "../utils/filterTypes";
+import {onMounted} from "vue";
 
 interface DefaultFilterOptions {
     namespace?: string;
@@ -26,8 +28,8 @@ export function applyDefaultFilters(
         includeScope, 
         legacyQuery = false
     }: DefaultFilterOptions & { 
-        configuration?: any; 
-        route?: any 
+        configuration?: FilterConfiguration; 
+        route?: RouteLocation 
     } = {}): { query: LocationQuery; hasChanges: boolean } {
 
     
@@ -62,3 +64,18 @@ export function applyDefaultFilters(
 
     return {query, hasChanges};
 }
+
+export function useDefaultFilter(
+    configuration?: FilterConfiguration, 
+    legacyQuery?: boolean,
+) {
+    const route = useRoute();
+    const router = useRouter();
+
+    onMounted(() => {
+        const {hasChanges, query} = applyDefaultFilters(route.query, {configuration, route, legacyQuery})
+        if(hasChanges) {
+            router.replace({query});
+        }
+    });
+}   

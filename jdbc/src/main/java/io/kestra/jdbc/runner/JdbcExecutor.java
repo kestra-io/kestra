@@ -424,7 +424,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
         MultipleConditionEvent multipleConditionEvent = either.getLeft();
 
-        flowTriggerService.computeExecutionsFromFlowTriggers(multipleConditionEvent.execution(), List.of(multipleConditionEvent.flow()), Optional.of(multipleConditionStorage))
+        flowTriggerService.computeExecutionsFromFlowTriggerPreconditions(multipleConditionEvent.execution(), multipleConditionEvent.flow(), multipleConditionStorage)
             .forEach(exec -> {
                 try {
                     executionQueue.emit(exec);
@@ -1233,7 +1233,7 @@ public class JdbcExecutor implements ExecutorInterface {
             .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().noneMatch(c -> c instanceof MultipleCondition) && f.getTrigger().getPreconditions() == null)
             .map(f -> f.getFlow())
             .distinct() // as computeExecutionsFromFlowTriggers is based on flow, we must map FlowWithFlowTrigger to a flow and distinct to avoid multiple execution for the same flow
-            .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggers(execution, List.of(f), Optional.empty()).stream())
+            .flatMap(f -> flowTriggerService.computeExecutionsFromFlowTriggerConditions(execution, f).stream())
             .forEach(throwConsumer(exec -> executionQueue.emit(exec)));
 
         // send multiple conditions to the multiple condition queue for later processing

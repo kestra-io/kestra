@@ -1,10 +1,9 @@
+import {RouteLocation, Router} from "vue-router";
 import {useCoreStore} from "../stores/core";
-import {useFlowStore} from "../stores/flow";
 
-export default (app, router) => {
+export default (app: any, router: Router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
     const coreStore = useCoreStore();
-    const flowStore = useFlowStore();
 
     window.addEventListener("beforeunload", (e) => {
         if (coreStore.unsavedChange) {
@@ -13,14 +12,14 @@ export default (app, router) => {
         }
     });
 
-    const routeEqualsExceptHash = (route1, route2) => {
-        const deleteTenantIfEmpty = route => {
+    const routeEqualsExceptHash = (route1: RouteLocation, route2: RouteLocation) => {
+        const deleteTenantIfEmpty = (route: RouteLocation) => {
             if (route.params.tenant === "") {
                 delete route.params.tenant;
             }
         }
 
-        const filteredRouteForEquals = route => ({
+        const filteredRouteForEquals = (route: RouteLocation) => ({
             path: route.path,
             query: route.query,
             params: route.params
@@ -32,14 +31,15 @@ export default (app, router) => {
         return JSON.stringify(filteredRouteForEquals(route1)) === JSON.stringify(filteredRouteForEquals(route2))
     }
 
-    router.beforeEach(async (to, from) => {
+    router.beforeEach(async (to, from, next) => {
         if (coreStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
             if (confirm(confirmationMessage)) {
-                flowStore.flow = flowStore.lastSavedFlow;
                 coreStore.unsavedChange = false;
+                next()
             } else {
                 return false;
             }
         }
+        next();
     });
 }

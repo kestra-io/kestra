@@ -43,16 +43,20 @@ public class QueueUtils {
     public <T extends GenericEvent> String serialize(Class<T> cls, T message) throws QueueException {
         try {
             String serialize = MAPPER.writeValueAsString(message);
+
+            if (log.isTraceEnabled()) {
+                log.trace("[{}] produced message: {}", cls.getSimpleName(), serialize);
+            }
+
             int byteLength = serialize.getBytes(StandardCharsets.UTF_8).length;
 
-            if (queueConfiguration.messageProtection() != null && queueConfiguration.messageProtection().enabled() && byteLength >= queueConfiguration.messageProtection().limit()) {
+            if (queueConfiguration.getMessageProtection() != null && queueConfiguration.getMessageProtection().getEnabled() && byteLength >= queueConfiguration.getMessageProtection().getLimit()) {
                 metricRegistry
                     .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, cls.getSimpleName()).increment();
 
-
                 // we let terminated execution messages to go through anyway
                 if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
-                    throw new MessageTooBigException("Message of size " + byteLength + " has exceeded the configured limit of " + queueConfiguration.messageProtection().limit());
+                    throw new MessageTooBigException("Message of size " + byteLength + " has exceeded the configured limit of " + queueConfiguration.getMessageProtection().getLimit());
                 }
             }
 
@@ -68,6 +72,10 @@ public class QueueUtils {
     }
 
     public <T extends GenericEvent> Either<T, DeserializationException> deserialize(Class<T> cls, byte[] record) {
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] received message: {}", cls.getSimpleName(), new String(record));
+        }
+
         try {
             return Either.left(MAPPER.readValue(record, cls));
         } catch (IOException e) {
@@ -81,6 +89,10 @@ public class QueueUtils {
     }
 
     public <T extends GenericEvent> Either<T, DeserializationException> deserialize(Class<T> cls, String record) {
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] received message: {}", cls.getSimpleName(), record);
+        }
+
         try {
             return Either.left(MAPPER.readValue(record, cls));
         } catch (IOException e) {

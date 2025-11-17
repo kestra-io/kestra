@@ -17,6 +17,7 @@ include 'jdbc-mysql'
 include 'jdbc-postgres'
 
 include 'queue'
+include 'queue-jdbc'
 
 include 'webserver'
 include 'executor'

@@ -7,6 +7,8 @@ dependencies {
     implementation project(":jdbc")
     implementation project(":executor")
     implementation project(":scheduler")
+    implementation project(":queue")
+    implementation project(":queue-jdbc")
 
     implementation("io.micronaut.sql:micronaut-jooq")
     runtimeOnly("com.mysql:mysql-connector-j")
@@ -19,5 +21,6 @@ dependencies {
     testImplementation project(':storage-local')
     testImplementation project(':indexer')
     testImplementation project(':tests')
+    testImplementation project(':queue').sourceSets.test.output
     testImplementation("io.micronaut.validation:micronaut-validation") // MysqlServiceLivenessCoordinatorTest fail to init without that
 }

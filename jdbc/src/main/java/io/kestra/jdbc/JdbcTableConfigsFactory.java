@@ -32,6 +32,12 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
+    @Named("queue")
+    public InstantiableJdbcTableConfig queue() {
+        return new InstantiableJdbcTableConfig("queue", JdbcQueueItem.class, "queue");
+    }
+
+    @Bean
     @Named("flows")
     public InstantiableJdbcTableConfig flows() {
         return new InstantiableJdbcTableConfig("flows", Flow.class, "flows");

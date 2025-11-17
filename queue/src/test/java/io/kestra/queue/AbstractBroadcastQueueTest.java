@@ -17,8 +17,6 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
-
-
 public abstract class AbstractBroadcastQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 10;
 

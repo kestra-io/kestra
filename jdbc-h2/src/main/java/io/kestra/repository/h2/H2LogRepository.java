@@ -30,20 +30,7 @@ public class H2LogRepository extends AbstractJdbcLogRepository {
 
     @Override
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
-        switch (groupType) {
-            case MONTH:
-                return DSL.field("FORMATDATETIME(\"" + dateField + "\", 'yyyy-MM')", Date.class);
-            case WEEK:
-                return DSL.field("FORMATDATETIME(\"" + dateField + "\", 'YYYY-ww')", Date.class);
-            case DAY:
-                return DSL.field("FORMATDATETIME(\"" + dateField + "\", 'yyyy-MM-dd')", Date.class);
-            case HOUR:
-                return DSL.field("FORMATDATETIME(\"" + dateField + "\", 'yyyy-MM-dd HH:00:00')", Date.class);
-            case MINUTE:
-                return DSL.field("FORMATDATETIME(\"" + dateField + "\", 'yyyy-MM-dd HH:mm:00')", Date.class);
-            default:
-                throw new IllegalArgumentException("Unsupported GroupType: " + groupType);
-        }
+        return H2RepositoryUtils.formatDateField(dateField, groupType);
     }
 }
 

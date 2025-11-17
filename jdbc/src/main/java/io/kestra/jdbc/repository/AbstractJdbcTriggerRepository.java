@@ -31,6 +31,8 @@ import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -147,11 +149,15 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
         JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
 
+        // next_execution_date in the table is stored in UTC
+        // convert 'now' to UTC LocalDateTime to avoid any timezone/offset interpretation by the database.
+        LocalDateTime nowUtc = now.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        
         return jdbcSchedulerContext.getContext()
             .select(field("value"))
             .from(this.jdbcRepository.getTable())
             .where(
-                (field("next_execution_date").lessThan(now.toOffsetDateTime())
+                (field("next_execution_date").lessThan(nowUtc)
                     // we check for null for backwards compatibility
                     .or(field("next_execution_date").isNull()))
                     .and(field("execution_id").isNull())
@@ -164,12 +170,17 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
     }
 
     public List<Trigger> findByNextExecutionDateReadyButLockedTriggers(ZonedDateTime now) {
+        
+        // next_execution_date in the table is stored in UTC
+        // convert 'now' to UTC LocalDateTime to avoid any timezone/offset interpretation by the database.
+        LocalDateTime nowUtc = now.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
+        
         return this.jdbcRepository.getDslContextWrapper()
             .transactionResult(configuration -> DSL.using(configuration)
                 .select(field("value"))
                 .from(this.jdbcRepository.getTable())
                 .where(
-                    (field("next_execution_date").lessThan(now.toOffsetDateTime())
+                    (field("next_execution_date").lessThan(nowUtc)
                         // we check for null for backwards compatibility
                         .or(field("next_execution_date").isNull()))
                         .and(field("execution_id").isNotNull())

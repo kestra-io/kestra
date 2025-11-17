@@ -58,7 +58,7 @@
                                 <CloseIcon
                                     @click.stop="destroyTab(panelIndex, tab)"
                                     class="tab-icon close-icon"
-                                    :title="$t('Close')"
+                                    :title="$t('close')"
                                 />
                             </button>
                             <div v-else class="potential-container">

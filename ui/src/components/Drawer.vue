@@ -14,7 +14,7 @@
                 <slot name="header" />
             </span>
             <el-button link class="full-screen">
-                <Fullscreen :title="t('toggle fullscreen')" @click="toggleFullScreen" />
+                <Fullscreen :title="$t('toggle fullscreen')" @click="toggleFullScreen" />
             </el-button>
         </template>
 
@@ -30,10 +30,7 @@
 
 <script setup lang="ts">
     import {ref} from "vue";
-    import {useI18n} from "vue-i18n";
     import Fullscreen from "vue-material-design-icons/Fullscreen.vue"
-
-    const {t} = useI18n();
 
     const props = defineProps({
         title: {

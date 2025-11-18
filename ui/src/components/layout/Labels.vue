@@ -53,10 +53,11 @@
         if (isChecked(label)) {
             const replacementQuery = {...route.query};
             delete replacementQuery[getKey(label.key)];
+            replacementQuery.page = "1";
             router.replace({query: replacementQuery});
         } else {
             router.replace({
-                query: {...route.query, [getKey(label.key)]: label.value},
+                query: {...route.query, [getKey(label.key)]: label.value, page: "1"},
             });
         }
     };

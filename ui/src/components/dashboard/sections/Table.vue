@@ -87,7 +87,10 @@
         case "NAMESPACE":
             return {field: row[key]};
         case "STATE":
-            return {size: "small", status: row[key]};
+            return {
+                size: "small", 
+                status: row[key].toString(),
+            };
         case "DURATION":
             return {field: row[key]};
         default:

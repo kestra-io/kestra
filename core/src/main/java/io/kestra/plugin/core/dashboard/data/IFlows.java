@@ -33,6 +33,6 @@ public interface IFlows extends IData<IFlows.Fields> {
         ID,
         NAMESPACE,
         REVISION,
-        LAST_EXECUTION_STATUS
+        LAST_EXECUTION_STATE
     }
 }

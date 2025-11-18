@@ -124,7 +124,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         Flows.Fields.ID, "key",
         Flows.Fields.NAMESPACE, "namespace",
         Flows.Fields.REVISION, "revision",
-        Flows.Fields.LAST_EXECUTION_STATUS, "last_execution_state"
+        Flows.Fields.LAST_EXECUTION_STATE, "last_execution_state"
     );
 
     @Override
@@ -583,7 +583,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .where(this.defaultFilter(tenantId))
             .asTable("flows_filtered");
 
-        Table<?> flowIds = baseQuery.asTable("flow_ids");
         Table<?> rankedExecutions = context
             .select(
                 DSL.field(DSL.quotedName("flow_id")),
@@ -599,7 +598,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .from(DSL.table("executions"))
             .where(DSL.field(DSL.quotedName("tenant_id")).eq(tenantId)
                 .and(DSL.field(DSL.quotedName("flow_id")).in(
-                    DSL.select(DSL.field(DSL.quotedName("id"))).from(flowIds)
+                    DSL.select(DSL.field(DSL.quotedName("id"))).from(baseQuery)
+                ))
+                .and(DSL.field(DSL.quotedName("namespace")).in(
+                    DSL.select(DSL.field(DSL.quotedName("namespace"))).from(baseQuery)
                 ))
             )
             .asTable("ranked_executions");

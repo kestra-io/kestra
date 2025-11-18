@@ -1081,13 +1081,19 @@
     "no-executions-view": {
       "title": "Start automating with Kestra",
       "sub_title": "Click on the Execute button to start your first workflow execution.",
+      "namespace_sub_title": "Execute one or more flows from this namespace to populate this dashboard.",
       "guidance_desc": "Need guidance to execute your flow?",
+      "namespace_guidance_desc": "Need guidance to manage your Namespace?",
       "guidance_sub_desc": "Follow the documentation for all the info you need."
     },
     "execution_guide": {
       "get_started": {
         "title": "Get Started",
         "text": "Follow the Quickstart Guide to install Kestra and start building your first workflows."
+      },
+      "namespaces": {
+        "title": "About Namespaces",
+        "text": "Namespaces are logical groupings of flows and their components."
       },
       "workflow_components": {
         "title": "Workflow Components",

@@ -560,6 +560,10 @@
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。",
         "title": "はじめに ⚡"
       },
+      "namespaces": {
+        "text": "namespaceは、flowとそのコンポーネントの論理的なグループ化です。",
+        "title": "名前空間について"
+      },
       "videos_tutorials": {
         "text": "ビデオチュートリアルで始めましょう。",
         "title": "ビデオチュートリアル"
@@ -1178,6 +1182,8 @@
     "no-executions-view": {
       "guidance_desc": "フローを実行するためのガイダンスが必要ですか？",
       "guidance_sub_desc": "ドキュメントを参照して、必要なすべての情報を確認してください。",
+      "namespace_guidance_desc": "Namespaceを管理するためのガイダンスが必要ですか？",
+      "namespace_sub_title": "このダッシュボードを埋めるために、このnamespaceから1つ以上のflowを実行します。",
       "sub_title": "「Execute」ボタンをクリックして、最初のworkflowのexecutionを開始してください。",
       "title": "自動化を開始"
     },

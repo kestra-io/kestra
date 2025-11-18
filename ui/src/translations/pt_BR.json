@@ -560,6 +560,10 @@
         "text": "Siga o Guia de Início Rápido para instalar o Kestra e começar a criar seus primeiros workflows.",
         "title": "Começar ⚡"
       },
+      "namespaces": {
+        "text": "Namespaces são agrupamentos lógicos de flows e seus componentes.",
+        "title": "Sobre Namespaces"
+      },
       "videos_tutorials": {
         "text": "Comece com nossos tutoriais em vídeo.",
         "title": "Tutoriais em Vídeo"
@@ -1178,6 +1182,8 @@
     "no-executions-view": {
       "guidance_desc": "Precisa de orientação para executar o seu flow?",
       "guidance_sub_desc": "Siga a documentação para todas as informações que você precisa.",
+      "namespace_guidance_desc": "Precisa de orientação para gerenciar seu Namespace?",
+      "namespace_sub_title": "Execute um ou mais flows deste namespace para preencher este dashboard.",
       "sub_title": "Clique no botão Executar para iniciar a execução do seu primeiro fluxo de trabalho.",
       "title": "Comece a automatizar com"
     },

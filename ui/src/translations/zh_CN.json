@@ -560,6 +560,10 @@
         "text": "请按照快速入门指南安装Kestra并开始构建您的第一个工作流。",
         "title": "开始使用 ⚡"
       },
+      "namespaces": {
+        "text": "namespace 是 flow 及其组件的逻辑分组。",
+        "title": "关于Namespaces"
+      },
       "videos_tutorials": {
         "text": "开始观看我们的视频教程。",
         "title": "视频教程"
@@ -1178,6 +1182,8 @@
     "no-executions-view": {
       "guidance_desc": "需要指导来执行您的flow吗？",
       "guidance_sub_desc": "请查阅文档以获取您所需的所有信息。",
+      "namespace_guidance_desc": "需要指导来管理您的Namespace吗？",
+      "namespace_sub_title": "从此namespace执行一个或多个flow以填充此仪表板。",
       "sub_title": "单击Execute按钮以开始您的第一个工作流执行。",
       "title": "开始自动化使用"
     },

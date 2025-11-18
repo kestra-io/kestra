@@ -183,10 +183,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).eq(execution.getId()))
+                    .where(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
     }
@@ -199,12 +196,19 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
+                    .where(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
                     .execute();
             });
+    }
+
+    @Override
+    protected Condition defaultFilter(String tenantId) {
+        return buildTenantCondition(tenantId);
+    }
+
+    @Override
+    protected Condition defaultFilter() {
+        return DSL.trueCondition();
     }
 
     private List<String> queryDistinct(String tenantId, Condition condition, String field) {

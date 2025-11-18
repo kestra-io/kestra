@@ -7,8 +7,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import io.kestra.core.models.SoftDeletion;
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -35,7 +35,7 @@ import jakarta.validation.constraints.Pattern;
 @Introspected
 @ToString
 @EqualsAndHashCode
-public class Template implements SoftDeletion<Template>, TenantInterface, HasUID {
+public class Template implements SoftDeletable<Template>, TenantInterface, HasUID {
     private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
         .setAnnotationIntrospector(new JacksonAnnotationIntrospector() {
             @Override

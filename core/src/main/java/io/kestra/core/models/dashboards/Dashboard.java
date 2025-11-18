@@ -1,7 +1,7 @@
 package io.kestra.core.models.dashboards;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.kestra.core.models.SoftDeletion;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.utils.IdUtils;
@@ -26,7 +26,7 @@ import java.util.Objects;
 @NoArgsConstructor
 @Introspected
 @ToString
-public class Dashboard implements HasUID, SoftDeletion<Dashboard> {
+public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     private String tenantId;

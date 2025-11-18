@@ -11,7 +11,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.SoftDeletion;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
@@ -54,7 +54,7 @@ import java.util.zip.CRC32;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class Execution implements SoftDeletion<Execution>, TenantInterface, HasUID {
+public class Execution implements SoftDeletable<Execution>, TenantInterface, HasUID {
 
     @With
     @Hidden

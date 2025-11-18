@@ -11,7 +11,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.SoftDeletion;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
@@ -53,7 +53,7 @@ import java.util.zip.CRC32;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class Execution implements DeletedInterface, TenantInterface {
+public class Execution implements SoftDeletion<Execution>, TenantInterface {
 
     @With
     @Hidden
@@ -1128,7 +1128,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .toList();
     }
 
-
+    @Override
     public Execution toDeleted() {
         return this.toBuilder()
             .deleted(true)

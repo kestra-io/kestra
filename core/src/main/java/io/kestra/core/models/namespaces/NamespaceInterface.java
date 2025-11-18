@@ -1,9 +1,8 @@
 package io.kestra.core.models.namespaces;
 
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasUID;
 
-public interface NamespaceInterface extends DeletedInterface, HasUID {
+public interface NamespaceInterface extends HasUID {
     String getId();
 
 

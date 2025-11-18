@@ -18,24 +18,29 @@ export class ExecutionsPage extends BasePage {
 
     async setFilterByFlowId(flowId: string) {
         const param = "filters[flowId][EQUALS]";
-        await this.removeQueryParam(this.page, param);
-        await this.addQueryParam(this.page, param, flowId);
+        await this.modifyQueryParam(this.page, {[param]: flowId});
     }
 
     async setFilterByLabel(key: string, value: string) {
         const param = `filters[labels][EQUALS][${key}]`;
-        await this.removeQueryParam(this.page, param);
-        await this.addQueryParam(this.page, param, value);
+        await this.modifyQueryParam(this.page, {[param]: value});
     }
 
     async setFilterByState(state: ExecutionState) {
         const param = "filters[state][EQUALS]";
-        await this.removeQueryParam(this.page, param);
-        await this.addQueryParam(this.page, param, state);
+        await this.modifyQueryParam(this.page, {[param]: state});
     }
 
     async removeFilterByLabelKey(key: string) {
         await this.removeQueryParam(this.page, `filters[labels][EQUALS][${key}]`);
+    }
+
+    async expectCountOfExecutionsToBe(expectedCount: number) {
+        return expect(this.page.getByRole("row")).toHaveCount(expectedCount + 1);
+    }
+
+    async expectTotalExecutionsCountToBe(expectedCount: number) {
+        return expect(this.page.getByText(/Total:/).first()).toHaveText(`Total: ${expectedCount}`);
     }
 
     async getCountOfDisplayedExecutions() {

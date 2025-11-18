@@ -222,6 +222,44 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                   - type: io.kestra.plugin.core.condition.ExecutionNamespace
                     namespace: company.payroll
                     prefix: false"""
+        ),
+        @Example(
+            full = true,
+            title = """
+                5) Chain two different flows (`flow_a` and `flow_b`) and trigger the second only after the first completes successfully with matching labels. Note that this example is two separate flows.""",
+            code = """
+                id: flow_a
+                namespace: company.team
+                labels:
+                  type: orchestration
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World!
+                ---
+                id: flow_b
+                namespace: company.team
+
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World!
+
+                triggers:
+                  - id: on_completion
+                    type: io.kestra.plugin.core.trigger.Flow
+                    states: [SUCCESS]
+                    labels:
+                      type: orchestration
+                    preconditions:
+                      id: flow_a
+                        id: flow_a
+                        where:
+                            - id: label_filter
+                              filters:
+                                - field: EXPRESSION
+                                  type: IS_TRUE
+                                  value: "{{ labels.type == 'orchestration' }}"""
         )
 
     },

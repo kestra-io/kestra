@@ -1,26 +1,73 @@
 import {computed, nextTick, onMounted, ref} from "vue";
-import {useRoute, useRouter} from "vue-router";
-import {defaultNamespace} from "./useNamespaces";
+import {RouteLocation, useRoute, useRouter} from "vue-router";
 
 interface UseRestoreUrlOptions {
     restoreUrl?: boolean;
     isDefaultNamespaceAllow?: boolean;
 }
 
+function getLocalStorageName(route: RouteLocation): string {
+    const tenant = route.params.tenant;
+    return `${route.name?.toString().replace("/", "_")}${route.params.tab ? "_" + route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`;
+}
+
+function getRestoredUrlValue(route: RouteLocation) {
+    const localStorageName = getLocalStorageName(route);
+    const localStorageValue = window.sessionStorage.getItem(localStorageName);
+    if (localStorageValue) {
+        return JSON.parse(localStorageValue);
+    } else {
+        return null;
+    }
+}
+
+export function getRestoredQuery(route: RouteLocation) {
+    const localStorageValue = getRestoredUrlValue(route);
+    if(localStorageValue === null){
+        return {
+            query: route.query,
+            change: false,
+            localStorageValue,
+        };
+    };
+    const query = {...route.query};
+    const local = localStorageValue === null ? {} : {...localStorageValue};
+
+    let change = false;
+
+    for (const key in local) {
+        if (!query[key] && local[key]) {
+            // empty array break the application
+            if (local[key] instanceof Array && local[key].length === 0) {
+                continue;
+            }
+
+            if(local[key] === query[key]){
+                continue;
+            }
+
+            query[key] = local[key];
+            change = true;
+        }
+    }
+
+    return {
+        query,
+        change, 
+        localStorageValue,
+    };
+}
+
 export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
     const {
         restoreUrl = true,
-        isDefaultNamespaceAllow = false
     } = options;
 
     const route = useRoute();
-    const router = useRouter();
+
     const loadInit = ref(true);
 
-    const localStorageName = computed(() => {
-        const tenant = route.params.tenant;
-        return `${route.name?.toString().replace("/", "_")}${route.params.tab ? "_" + route.params.tab : ""}${tenant ? "_" + tenant : ""}_restore_url`;
-    });
+    const localStorageName = computed(() => getLocalStorageName(route));
 
     const localStorageValue = computed(() => {
         if (window.sessionStorage.getItem(localStorageName.value)) {
@@ -47,48 +94,46 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
         }
     };
 
+    const router = useRouter();
+
+    /**
+     * Merges saved URL query parameters from sessionStorage with current route.
+     * Only adds missing parameters to avoid overwriting user changes.
+     * Updates route only when changes are made.
+     */
     const goToRestoreUrl = () => {
-        if (!restoreUrl) {
-            return;
-        }
-
-        const localExist = localStorageValue.value !== null;
-        const query = {...route.query};
-        const local = localStorageValue.value === null ? {} : {...localStorageValue.value};
-
-        let change = false;
-
-        if (!localExist && isDefaultNamespaceAllow && defaultNamespace()) {
-            local["namespace"] = defaultNamespace();
-        }
-
-        for (const key in local) {
-            if (!query[key] && local[key]) {
-                // empty array break the application
-                if (local[key] instanceof Array && local[key].length === 0) {
-                    continue;
-                }
-
-                query[key] = local[key];
-                change = true;
-            }
-        }
+        const {query, change} = getRestoredQuery(route);
 
         if (change) {
             // wait for the router to be ready
             nextTick(() => {
-                router.replace({query: query});
+                router.replace({query});
             });
         } else {
             loadInit.value = true;
         }
     };
 
-    // Automatically call goToRestoreUrl on mount if needed (equivalent to created() hook)
+    /**
+     * Automatically restores saved URL state from sessionStorage on mount.
+     * Only triggers when restoreUrl is enabled and saved state exists.
+     */
     onMounted(() => {
-        if (Object.keys(route.query).length === 0 && restoreUrl) {
-            loadInit.value = false;
-            goToRestoreUrl();
+        if (restoreUrl && localStorageValue.value){
+            // FIXME: this is a hacky way to wait for the router to be ready.
+            // if we wanted to do it properly, we should use a router guard.
+            // To do that we would have to pass the config through the route 
+            // meta property instead of in a prop.
+            // When composables are run the component is already created, 
+            // way after routes have been resolved. All components are resolved 
+            // and rendered twice with this method.
+            // NOTE: once this is fixed, don't forget to add the fix to useDefaultFilter.ts
+            setTimeout(() => {
+                if(route.query && Object.keys(route.query).length === 0) {
+                    loadInit.value = false;
+                    goToRestoreUrl();
+                }
+            }, 50)
         }
     });
 

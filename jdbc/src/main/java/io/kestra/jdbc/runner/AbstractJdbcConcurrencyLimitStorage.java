@@ -24,10 +24,10 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
     }
 
     /**
-     * Fetch the concurrency limit counter then process the count using the consumer function.
-     * It locked the raw and is wrapped in a transaction so the consumer should use the provided dslContext for any database access.
+     * Fetch the concurrency limit counter, then process the count using the consumer function.
+     * It locked the raw and is wrapped in a transaction, so the consumer should use the provided dslContext for any database access.
      * <p>
-     * Note that to avoid a race when no concurrency limit counter exists, it first always try to insert a 0 counter.
+     * Note that to avoid a race when no concurrency limit counter exists, it first always tries to insert a 0 counter.
      */
     public ExecutionRunning countThenProcess(FlowInterface flow, BiFunction<DSLContext, ConcurrencyLimit, Pair<ExecutionRunning, ConcurrencyLimit>> consumer) {
         return this.jdbcRepository
@@ -106,8 +106,7 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
             .and(field("namespace").eq(flow.getNamespace()))
             .and(field("flow_id").eq(flow.getId()));
 
-        return Optional.ofNullable(select.forUpdate().fetchOne())
-            .map(record -> this.jdbcRepository.map(record));
+        return this.jdbcRepository.fetchOne(select.forUpdate());
     }
 
     private void save(DSLContext dslContext, ConcurrencyLimit concurrencyLimit) {

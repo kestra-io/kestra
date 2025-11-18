@@ -85,15 +85,24 @@ public class TimeBetween extends Condition implements ScheduleCondition {
 
         OffsetTime beforeRendered = runContext.render(before).as(OffsetTime.class, variables).orElse(null);
         OffsetTime afterRendered = runContext.render(after).as(OffsetTime.class, variables).orElse(null);
-
+        
         if (beforeRendered != null && afterRendered != null) {
-            return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);
+            // Case 1: Normal range (e.g., 16:00 -> 20:00)
+            if (afterRendered.isBefore(beforeRendered)) {
+                return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);
+            // Case 2: Cross-midnight range (e.g., 22:00 -> 02:00)
+            } else {
+                return currentDate.isAfter(afterRendered) || currentDate.isBefore(beforeRendered);
+            }
+            
         } else if (beforeRendered != null) {
             return currentDate.isBefore(beforeRendered);
+            
         } else if (afterRendered != null) {
             return currentDate.isAfter(afterRendered);
+            
         } else {
-            throw new IllegalConditionEvaluation("Invalid condition with no before nor after");
+            throw new IllegalConditionEvaluation("Invalid condition: no 'before' or 'after' value defined");
         }
     }
 }

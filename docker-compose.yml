@@ -40,7 +40,7 @@ services:
             password: k3str4
         kestra:
           # server:
-          #   basicAuth:
+          #   basic-auth:
           #     username: admin@kestra.io # it must be a valid email address
           #     password: Admin1234 # it must be at least 8 characters long with uppercase letter and a number
           repository:
@@ -48,11 +48,11 @@ services:
           storage:
             type: local
             local:
-              basePath: "/app/storage"
+              base-path: "/app/storage"
           queue:
             type: postgres
           tasks:
-            tmpDir:
+            tmp-dir:
               path: /tmp/kestra-wd/tmp
           url: http://localhost:8080/
     ports:

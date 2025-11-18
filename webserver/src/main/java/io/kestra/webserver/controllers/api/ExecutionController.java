@@ -568,7 +568,7 @@ public class ExecutionController {
         if (maybeWebhook.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
         }
-        
+
         final Webhook webhook = maybeWebhook.get();
         Optional<Execution> execution = webhook.evaluate(request, flow);
 
@@ -580,13 +580,13 @@ public class ExecutionController {
         if (flow.getLabels() != null) {
             result = result.withLabels(LabelService.labelsExcludingSystem(flow));
         }
-        
+
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
         var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
         if (!conditionService.isValid(flow, webhook, conditionContext)) {
             return Mono.just(HttpResponse.noContent());
         }
-        
+
         // inject trigger inputs
         if (webhook.getInputs() != null) {
             RunContext runContext = runContextFactory.of(flow, result);
@@ -1449,7 +1449,13 @@ public class ExecutionController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/resume", consumes = MediaType.MULTIPART_FORM_DATA)
-    @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")
+    @Operation(tags = {"Executions"}, summary = "Resume a paused execution.",
+        extensions = @Extension(
+            name = "x-sdk-customization",
+            properties = {
+                @ExtensionProperty(name = "x-multipart", value = "true")
+            }
+        ))
     @ApiResponse(responseCode = "204", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the executions is not paused")
     @SingleResult

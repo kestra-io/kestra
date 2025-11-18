@@ -2,14 +2,12 @@ package io.kestra.core.models.triggers.multipleflows;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.HasUID;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.utils.IdUtils;
 import lombok.Builder;
 import lombok.Value;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 

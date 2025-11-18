@@ -1,9 +1,9 @@
 import {ref} from "vue";
 
-const isDialogVisible = ref(false);
-let resolveCallback = null;
-
 export function useUnsavedChangesDialog() {
+    const isDialogVisible = ref(false);
+    let resolveCallback: ((value: boolean) => void) | null = null;
+    
     const showDialog = () => {
         return new Promise((resolve) => {
             isDialogVisible.value = true;

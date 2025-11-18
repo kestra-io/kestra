@@ -1,9 +1,9 @@
 package io.kestra.core.utils;
 
+import io.kestra.core.models.flows.FlowInterface;
 import io.micronaut.context.annotation.Value;
 import org.apache.commons.lang3.StringUtils;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
 
 import java.net.URI;
 import io.micronaut.core.annotation.Nullable;
@@ -44,7 +44,7 @@ public class UriProvider {
             execution.getFlowId());
     }
 
-    public URI flowUrl(Flow flow) {
+    public URI flowUrl(FlowInterface flow) {
         return this.build("/ui/" +
             (flow.getTenantId() != null ? flow.getTenantId() + "/" : "") +
             "flows/" +

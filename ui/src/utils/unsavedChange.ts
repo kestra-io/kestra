@@ -1,11 +1,10 @@
+import {RouteLocation, Router} from "vue-router";
 import {useCoreStore} from "../stores/core";
-import {useFlowStore} from "../stores/flow";
 import {useUnsavedChangesDialog} from "../composables/useUnsavedChangesDialog";
 
-export default (app, router) => {
+export default (app: any, router: Router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
     const coreStore = useCoreStore();
-    const flowStore = useFlowStore();
     const {showDialog} = useUnsavedChangesDialog();
 
     window.addEventListener("beforeunload", (e) => {
@@ -15,14 +14,14 @@ export default (app, router) => {
         }
     });
 
-    const routeEqualsExceptHash = (route1, route2) => {
-        const deleteTenantIfEmpty = route => {
+    const routeEqualsExceptHash = (route1: RouteLocation, route2: RouteLocation) => {
+        const deleteTenantIfEmpty = (route: RouteLocation) => {
             if (route.params.tenant === "") {
                 delete route.params.tenant;
             }
         }
 
-        const filteredRouteForEquals = route => ({
+        const filteredRouteForEquals = (route: RouteLocation) => ({
             path: route.path,
             query: route.query,
             params: route.params
@@ -34,15 +33,17 @@ export default (app, router) => {
         return JSON.stringify(filteredRouteForEquals(route1)) === JSON.stringify(filteredRouteForEquals(route2))
     }
 
-    router.beforeEach(async (to, from) => {
+    router.beforeEach(async (to, from, next) => {
         if (coreStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
             const shouldLeave = await showDialog();
             if (shouldLeave) {
-                flowStore.flow = flowStore.lastSavedFlow;
                 coreStore.unsavedChange = false;
+                next()
+                return;
             } else {
                 return false;
             }
         }
+        next();
     });
 }

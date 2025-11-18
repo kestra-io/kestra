@@ -183,6 +183,8 @@
                                 <el-table-column
                                     v-else-if="colProp === 'state.current' && user.hasAny(permission.EXECUTION)"
                                     prop="state.current"
+                                    sortable="custom"
+                                    :sortOrders="['ascending', 'descending']"
                                     :label="t('last execution status')"
                                 >
                                     <template #default="scope">
@@ -404,16 +406,26 @@
     }
 
     const {
-        queryWithFilter, 
-        onPageChanged, 
-        onRowDoubleClick, 
-        onSort,
+        queryWithFilter,
+        onPageChanged,
+        onRowDoubleClick,
+        onSort: onSortBase,
         ready
     } = useDataTableActions({
         dblClickRouteName: "flows/update",
         dataTableRef,
         loadData
     });
+
+    const onSort = (sortItem: any) => {
+        const sortKeyMapper = (key: string) => {
+            const keyMap: Record<string, string> = {
+                "state.current": "last_execution_state"
+            };
+            return keyMap[key] || key;
+        };
+        onSortBase(sortItem, sortKeyMapper);
+    };
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
         return {

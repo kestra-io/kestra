@@ -2,7 +2,6 @@ package io.kestra.cli.commands.sys;
 
 import io.kestra.cli.commands.sys.database.DatabaseCommand;
 import io.kestra.cli.commands.sys.statestore.StateStoreCommand;
-import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
@@ -25,6 +24,6 @@ public class SysCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        return App.cliRun(new String[]{"sys",  "--help"});
+        return App.runCli(new String[]{"sys",  "--help"});
     }
 }

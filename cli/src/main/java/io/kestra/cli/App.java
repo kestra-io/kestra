@@ -1,6 +1,5 @@
 package io.kestra.cli;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.kestra.cli.commands.configs.sys.ConfigCommand;
 import io.kestra.cli.commands.flows.FlowCommand;
 import io.kestra.cli.commands.migrations.MigrationCommand;
@@ -11,10 +10,8 @@ import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.cli.commands.templates.TemplateCommand;
 import io.kestra.cli.services.EnvironmentProvider;
 import io.micronaut.configuration.picocli.MicronautFactory;
-import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.ApplicationContextBuilder;
-import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.Introspected;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import picocli.CommandLine;
@@ -49,14 +46,14 @@ import java.util.stream.Stream;
 @Introspected
 public class App implements Callable<Integer> {
     public static void main(String[] args) {
-        System.exit(cliRun(args));
+        System.exit(runCli(args));
     }
 
-    public static int cliRun(String[] args, String... extraEnvironments) {
-        return cliRun(App.class, args, extraEnvironments);
+    public static int runCli(String[] args, String... extraEnvironments) {
+        return runCli(App.class, args, extraEnvironments);
     }
 
-    public static int cliRun(Class<?> cls, String[] args, String... extraEnvironments) {
+    public static int runCli(Class<?> cls, String[] args, String... extraEnvironments) {
         ServiceLoader<EnvironmentProvider> environmentProviders = ServiceLoader.load(EnvironmentProvider.class);
         String[] baseEnvironments = environmentProviders.findFirst().map(EnvironmentProvider::getCliEnvironments).orElseGet(() -> new String[0]);
         return execute(
@@ -71,7 +68,7 @@ public class App implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        return cliRun(new String[0]);
+        return runCli(new String[0]);
     }
 
     protected static int execute(Class<?> cls, String[] environments, String... args) {
@@ -103,7 +100,7 @@ public class App implements Callable<Integer> {
         applicationContext.close();
 
         // exit code
-        return Objects.requireNonNullElse(exitCode, 0);
+        return exitCode;
     }
 
     private static CommandLine getCommandLine(Class<?> cls, String[] args) {

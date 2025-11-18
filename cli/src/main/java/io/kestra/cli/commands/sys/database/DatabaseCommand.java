@@ -2,7 +2,6 @@ package io.kestra.cli.commands.sys.database;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
-import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.SneakyThrows;
 import picocli.CommandLine;
 
@@ -20,6 +19,6 @@ public class DatabaseCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        return App.cliRun(new String[]{"sys", "database", "--help"});
+        return App.runCli(new String[]{"sys", "database", "--help"});
     }
 }

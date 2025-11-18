@@ -20,13 +20,13 @@ class AppTest {
         System.setOut(new PrintStream(out));
 
         // No arg will print help
-        assertThat(App.cliRun(new String[0])).isZero();
+        assertThat(App.runCli(new String[0])).isZero();
         assertThat(out.toString()).contains("kestra");
 
         out.reset();
 
         // Explicit help command
-        assertThat(App.cliRun(new String[]{"--help"})).isZero();
+        assertThat(App.runCli(new String[]{"--help"})).isZero();
         assertThat(out.toString()).contains("kestra");
     }
 
@@ -42,7 +42,7 @@ class AppTest {
             assertTrue(ctx.getProperty("kestra.server-type", ServerType.class).isEmpty());
         }
 
-        assertThat(App.cliRun(args)).isZero();
+        assertThat(App.runCli(args)).isZero();
 
         assertThat(out.toString()).startsWith("Usage: kestra server " + serverType);
     }
@@ -54,7 +54,7 @@ class AppTest {
 
         final String[] argsWithMissingParams = new String[]{"flow", "namespace", "update"};
 
-        assertThat(App.cliRun(argsWithMissingParams)).isEqualTo(2);
+        assertThat(App.runCli(argsWithMissingParams)).isEqualTo(2);
 
         assertThat(out.toString()).startsWith("Missing required parameters: ");
         assertThat(out.toString()).contains("Usage: kestra flow namespace update ");

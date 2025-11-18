@@ -32,6 +32,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -146,12 +147,12 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
         JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
-
+        
         return jdbcSchedulerContext.getContext()
             .select(field("value"))
             .from(this.jdbcRepository.getTable())
             .where(
-                (field("next_execution_date").lessThan(now.toOffsetDateTime())
+                (field("next_execution_date").lessThan(toNextExecutionTime(now))
                     // we check for null for backwards compatibility
                     .or(field("next_execution_date").isNull()))
                     .and(field("execution_id").isNull())
@@ -162,14 +163,15 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             .fetch()
             .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
     }
-
+    
     public List<Trigger> findByNextExecutionDateReadyButLockedTriggers(ZonedDateTime now) {
+        
         return this.jdbcRepository.getDslContextWrapper()
             .transactionResult(configuration -> DSL.using(configuration)
                 .select(field("value"))
                 .from(this.jdbcRepository.getTable())
                 .where(
-                    (field("next_execution_date").lessThan(now.toOffsetDateTime())
+                    (field("next_execution_date").lessThan(toNextExecutionTime(now))
                         // we check for null for backwards compatibility
                         .or(field("next_execution_date").isNull()))
                         .and(field("execution_id").isNotNull())
@@ -177,6 +179,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 .orderBy(field("next_execution_date").asc())
                 .fetch()
                 .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class))));
+    }
+    
+    protected Temporal toNextExecutionTime(ZonedDateTime now) {
+        return now.toOffsetDateTime();
     }
 
     public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface) {

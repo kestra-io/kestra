@@ -12,19 +12,16 @@
             @click="emit('save')"
             :type="saveButtonType"
         >
-            {{ t("save") }}
+            {{ $t("save") }}
         </el-button>
     </div>
 </template>
 
 <script lang="ts" setup>
     import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import ValidationError from "../../flows/ValidationError.vue";
     import {useDashboardStore} from "../../../stores/dashboard";
-
-    const {t} = useI18n();
 
     const emit = defineEmits<{
         (e: "save"): void;

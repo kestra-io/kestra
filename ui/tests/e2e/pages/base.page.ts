@@ -35,6 +35,24 @@ export class BasePage {
         // Navigate to the new URL
         await page.goto(url.toString());
     }
+
+    async modifyQueryParam(page: Page, values: {[key: string]: string|undefined}) {
+        // Get the current URL
+        const url = new URL(page.url());
+
+        // Change query params
+        for (const key in values) {
+            const value = values[key];
+            if (value === undefined) {
+                url.searchParams.delete(key);
+            } else {
+                url.searchParams.set(key, value);
+            }
+        }
+
+        // Navigate to the new URL
+        await page.goto(url.toString());
+    }
 }
 
 export enum ExecutionState {

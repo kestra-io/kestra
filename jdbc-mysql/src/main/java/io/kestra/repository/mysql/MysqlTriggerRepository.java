@@ -1,8 +1,10 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.runners.ScheduleContextInterface;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
+import io.kestra.jdbc.runner.JdbcSchedulerContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -11,6 +13,10 @@ import org.jooq.Condition;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.List;
 
@@ -30,19 +36,13 @@ public class MysqlTriggerRepository extends AbstractJdbcTriggerRepository {
 
     @Override
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
-        switch (groupType) {
-            case MONTH:
-                return DSL.field("DATE_FORMAT({0}, '%Y-%m')", Date.class, DSL.field(dateField));
-            case WEEK:
-                return DSL.field("DATE_FORMAT({0}, '%x-%v')", Date.class, DSL.field(dateField));
-            case DAY:
-                return DSL.field("DATE({0})", Date.class, DSL.field(dateField));
-            case HOUR:
-                return DSL.field("DATE_FORMAT({0}, '%Y-%m-%d %H:00:00')", Date.class, DSL.field(dateField));
-            case MINUTE:
-                return DSL.field("DATE_FORMAT({0}, '%Y-%m-%d %H:%i:00')", Date.class, DSL.field(dateField));
-            default:
-                throw new IllegalArgumentException("Unsupported GroupType: " + groupType);
-        }
+        return MysqlRepositoryUtils.formatDateField(dateField, groupType);
+    }
+
+    @Override
+    protected Temporal toNextExecutionTime(ZonedDateTime now) {
+        // next_execution_date in the table is stored in UTC
+        // convert 'now' to UTC LocalDateTime to avoid any timezone/offset interpretation by the database.
+        return now.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
     }
 }

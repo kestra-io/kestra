@@ -1,7 +1,7 @@
 package io.kestra.core.test;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.kestra.core.models.SoftDeletion;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
@@ -25,7 +25,7 @@ import java.util.List;
 @ToString
 @EqualsAndHashCode
 @TestSuiteValidation
-public class TestSuite implements HasUID, TenantInterface, SoftDeletion<TestSuite>, HasSource {
+public class TestSuite implements HasUID, TenantInterface, SoftDeletable<TestSuite>, HasSource {
 
     @NotNull
     @NotBlank

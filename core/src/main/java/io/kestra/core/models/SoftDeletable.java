@@ -5,7 +5,7 @@ package io.kestra.core.models;
  * Soft deletion is based on a <code>deleted</code> field that is set to <code>true</code> when the entity is deleted.
  * Physical deletion either never occurs or occurs in a dedicated purge mechanism.
  */
-public interface SoftDeletion<T> {
+public interface SoftDeletable<T> {
     /**
      * Whether en entity is deleted or not.
      */

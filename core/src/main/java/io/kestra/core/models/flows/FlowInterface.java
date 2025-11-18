@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.kestra.core.models.SoftDeletion;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * The base interface for FLow.
  */
 @JsonDeserialize(as = GenericFlow.class)
-public interface FlowInterface extends FlowId, SoftDeletion<FlowInterface>, TenantInterface, HasUID, HasSource {
+public interface FlowInterface extends FlowId, SoftDeletable<FlowInterface>, TenantInterface, HasUID, HasSource {
 
     Pattern YAML_REVISION_MATCHER = Pattern.compile("(?m)^revision: \\d+\n?");
 

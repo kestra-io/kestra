@@ -257,10 +257,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).eq(execution.getId()))
+                    .where(field("execution_id", String.class).eq(execution.getId()))
                     .execute();
             });
     }
@@ -273,10 +270,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 DSLContext context = DSL.using(configuration);
 
                 return context.delete(this.jdbcRepository.getTable())
-                    // The deleted field is not used, so ti will always be false.
-                    // We add it here to be sure to use the correct index.
-                    .where(field("deleted", Boolean.class).eq(false))
-                    .and(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
+                    .where(field("execution_id", String.class).in(executions.stream().map(Execution::getId).toList()))
                     .execute();
             });
     }
@@ -495,6 +489,16 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 // Fetch and paginate if provided
                 return fetchSeekStep(selectSeekStep, pageable);
             });
+    }
+
+    @Override
+    protected Condition defaultFilter(String tenantId) {
+        return buildTenantCondition(tenantId);
+    }
+
+    @Override
+    protected Condition defaultFilter() {
+        return DSL.trueCondition();
     }
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);

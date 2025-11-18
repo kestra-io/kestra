@@ -1,6 +1,6 @@
 package io.kestra.core.test;
 
-import io.kestra.core.models.SoftDeletion;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.test.flow.UnitTestResult;
@@ -24,7 +24,7 @@ public record TestSuiteRunEntity(
     String flowId,
     TestState state,
     List<UnitTestResult> results
-) implements SoftDeletion<TestSuiteRunEntity>, TenantInterface, HasUID {
+) implements SoftDeletable<TestSuiteRunEntity>, TenantInterface, HasUID {
 
     public static TestSuiteRunEntity create(String tenantId, TestSuiteUid testSuiteUid, TestSuiteRunResult testSuiteRunResult) {
         return new TestSuiteRunEntity(

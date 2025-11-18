@@ -101,9 +101,7 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         Map<String, Object> vars = conditionContext.getVariables();
-        String render = conditionContext.getRunContext().render(date).as(String.class, vars).orElseThrow();
-        
-        ZonedDateTime currentDate = (render != null) ? DateUtils.parseZonedDateTime(render) : ZonedDateTime.now();
+        ZonedDateTime currentDate = conditionContext.getRunContext().render(date).as(String.class, vars).map(it -> DateUtils.parseZonedDateTime(it)).orElseThrow();
 
         ZonedDateTime afterRendered = conditionContext.getRunContext().render(this.after).as(ZonedDateTime.class, vars).orElse(null);
         ZonedDateTime beforeRendered = conditionContext.getRunContext().render(this.before).as(ZonedDateTime.class, vars).orElse(null);

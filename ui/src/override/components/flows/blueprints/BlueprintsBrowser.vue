@@ -107,7 +107,6 @@
     import {useDocStore} from "../../../../stores/doc";
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {useDataTableActions} from "../../../../composables/useDataTableActions";
-    import useRestoreUrl from "../../../../composables/useRestoreUrl";
     import {useBlueprintFilter} from "../../../../components/filter/configurations";
     
     const blueprintFilter = useBlueprintFilter();
@@ -127,8 +126,6 @@
     });
 
     const {onPageChanged, onDataLoaded, load, ready, internalPageNumber, internalPageSize} = useDataTableActions({loadData});
-
-    useRestoreUrl();
 
     const emit = defineEmits(["goToDetail", "loaded"]);
 
@@ -273,15 +270,13 @@
         docStore.docId = `blueprints.${props.blueprintType}`;
     });
 
-    watch(route,
-          (newValue, oldValue) => {
-              if (oldValue.name === newValue.name) {
-                  selectedTags.value = initSelectedTags();
-                  searchText.value = route.query.q || "";
-                  load(onDataLoaded);
-              }
-          }
-    );
+    watch(route, (newRoute, oldRoute) => {
+        if (newRoute.name === oldRoute.name) {
+            selectedTags.value = initSelectedTags();
+            searchText.value = newRoute.query.q || "";
+            load(onDataLoaded);
+        }
+    });
 
     watch(searchText, () => {
         load(onDataLoaded);

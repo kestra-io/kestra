@@ -39,7 +39,7 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
      * @param tenantId the tenant of the triggers
      * @return The count.
      */
-    int count(@Nullable String tenantId);
+    long countAll(@Nullable String tenantId);
 
     /**
      * Find all triggers that match the query, return a flux of triggers

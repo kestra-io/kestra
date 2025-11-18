@@ -1,178 +1,124 @@
 <template>
-    <div class="position-relative">
+    <div ref="container" class="position-relative">
         <div v-if="hasSelection && data.length" class="bulk-select-header">
             <slot name="select-actions" />
         </div>
 
-        <el-scrollbar
-            :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
-            @end-reached="onEndReached"
+        <el-table
+            ref="table"
+            v-bind="$attrs"
+            :data
+            :rowKey
+            :emptyText="data.length === 0 ? noDataText : ''"
+            @selection-change="selectionChanged"
         >
-            <el-table
-                ref="table"
-                v-bind="$attrs"
-                :data
-                :rowKey
-                :emptyText="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
-                @selection-change="selectionChanged"
-            >
-                <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
-                <slot name="default" />
-            </el-table>
-        </el-scrollbar>
+            <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
+            <slot name="default" />
+        </el-table>
     </div>
 </template>
 
-<script>
-    export default {
-        data() {
-            return {
-                hasSelection: false,
-                infiniteScrollDisabled: false,
-                tableHeight: this.infiniteScrollLoad === undefined ? "auto" : "100%"
-            }
-        },
-        expose: ["resetInfiniteScroll", "setSelection", "waitTableRender", "toggleRowExpansion"],
-        computed: {
-            scrollWrapper() {
-                if (this.data) {
-                    return this.$refs.table?.$el?.querySelector(".el-scrollbar__wrap");
-                }
+<script setup lang="ts">
+    import {ref, onMounted, onUnmounted, onUpdated, watch, withDefaults} from "vue";
 
-                return undefined;
-            },
-            tableView() {
-                if (this.data) {
-                    return this.scrollWrapper?.querySelector(".el-scrollbar__view");
-                }
+    const props = withDefaults(defineProps<{
+        showSelection?: boolean;
+        selectable?: boolean;
+        expandable?: boolean;
+        data?: any[];
+        noDataText?: string;
+        rowKey?: string | ((row: any) => string | number);
+    }>(), {
+        showSelection: true,
+        selectable: true,
+        expandable: false,
+        data: () => [],
+        noDataText: undefined,
+        rowKey: "id"
+    });
 
-                return undefined;
-            },
-            stillHaveDataToFetch() {
-                return this.infiniteScrollDisabled === false;
-            },
-        },
-        methods: {
-            async onEndReached(direction) {
-                if (direction !== "bottom") return;
-                if (this.infiniteScrollDisabled || !this.infiniteScrollLoad) return;
-                await this.infiniteScrollLoadWithDisableHandling();
-                this.tableHeight = await this.computeTableHeight();
-            },
-            async resetInfiniteScroll() {
-                this.infiniteScrollDisabled = false;
-                this.tableHeight = await this.computeTableHeight();
-            },
-            async toggleRowExpansion(row, expand){
-                this.$refs.table.toggleRowExpansion(row, expand)
-                // this.$refs.table.clearSelection()
-            },
-            async waitTableRender() {
-                if (this.tableView === undefined) {
-                    return Promise.resolve();
-                }
+    const emit = defineEmits<{
+        "selection-change": [selection: any[]];
+    }>();
 
-                if (this.tableView.querySelectorAll(".el-table__body > tbody > *")?.length === this.data?.length) {
-                    return Promise.resolve();
-                }
+    const table = ref<any>(null);
+    const hasSelection = ref(false);
+    const container = ref<HTMLElement>(null);
 
-                return new Promise(resolve => {
-                    const observer = new MutationObserver(([{target}]) => {
-                        if (target.childElementCount === this.data?.length) {
-                            observer.disconnect();
-                            resolve();
-                        }
-                    });
+    const toggleRowExpansion = (row: any, expand?: boolean) => {
+        table.value?.toggleRowExpansion(row, expand);
+    };
 
-                    observer.observe(this.tableView.querySelector(".el-table__body > tbody"), {childList: true});
-                });
-            },
-            selectionChanged(selection) {
-                this.hasSelection = selection.length > 0;
-                this.$emit("selection-change", selection);
-            },
-            setSelection(selection) {
-                this.$refs.table.clearSelection();
-                if (Array.isArray(selection)) {
-                    const isFunction = typeof this.rowKey === "function";
-                    selection.forEach(sel => {
-                        const row = this.data.find(r => isFunction 
-                            ? this.rowKey(r) === this.rowKey(sel) 
-                            : r[this.rowKey] === sel[this.rowKey]);
-                        if (row) this.$refs.table.toggleRowSelection(row, true);
-                    });
-                }
-                this.selectionChanged(selection);
-            },
-            computeHeaderSize() {
-                const tableElement = this.$refs.table?.$el;
+    const selectionChanged = (selection: any[]) => {
+        hasSelection.value = selection.length > 0;
+        emit("selection-change", selection);
+    };
 
-                if(!tableElement) return;
+    const clearSelection = () => {
+        table.value?.clearSelection();
+        hasSelection.value = false;
+    };
 
-                this.$el.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`);
-                this.$el.style.setProperty("--table-header-height", `${tableElement.querySelector("thead").clientHeight}px`);
-            },
-            async computeTableHeight()  {
-                await this.waitTableRender();
+    const setSelection = (selection: any[]) => {
+        table.value?.clearSelection();
+        if (Array.isArray(selection)) {
+            const isFunction = typeof props.rowKey === "function";
+            selection.forEach(sel => {
+                const row = props.data.find(r => isFunction
+                    ? props.rowKey(r) === props.rowKey(sel)
+                    : r[props.rowKey] === sel[props.rowKey]);
+                if (row) table.value?.toggleRowSelection(row, true);
+            });
+        }
+        selectionChanged(selection);
+    };
 
-                if (this.infiniteScrollLoad === undefined || this.scrollWrapper === undefined) {
-                    return "auto";
-                }
+    const computeHeaderSize = () => {
+        const tableElement = table.value?.$el;
+        if (!tableElement || !container.value) return;
+        container.value.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`);
+        container.value.style.setProperty("--table-header-height", `${tableElement.querySelector("thead").clientHeight}px`);
+    };
 
-                if (!this.stillHaveDataToFetch && this.data.length === 0) {
-                    return "calc(var(--table-header-height) + 60px)";
-                }
+    onMounted(() => {
+        window.addEventListener("resize", computeHeaderSize);
+    });
 
-                return this.stillHaveDataToFetch || this.tableView === undefined ? "100%" : `min(${this.tableView.scrollHeight}px, 100%)`;
-            },
-            async infiniteScrollLoadWithDisableHandling() {
-                let load = await this.infiniteScrollLoad?.();
-                while (load !== undefined && load.length === 0) {
-                    load = await this.infiniteScrollLoad?.();
-                }
+    onUnmounted(() => {
+        window.removeEventListener("resize", computeHeaderSize);
+    });
 
-                this.infiniteScrollDisabled = load === undefined;
+    onUpdated(() => {
+        computeHeaderSize();
+    });
 
-                return load;
-            }
-        },
-        props: {
-            showSelection: {type: Boolean, default: true},
-            selectable: {type: Boolean, default: true},
-            expandable: {type: Boolean, default: false},
-            data: {type: Array, default: () => []},
-            noDataText: {type: String, default: undefined},
-            infiniteScrollLoad: {type: Function, default: undefined},
-            rowKey: {type: [String, Function], default: "id"}
-        },
-        emits: [
-            "selection-change"
-        ],
-        async mounted() {
-            window.addEventListener("resize", this.computeHeaderSize);
-        },
-        unmounted() {
-            window.removeEventListener("resize", this.computeHeaderSize);
-        },
-        updated() {
-            this.computeHeaderSize();
-        },
-        watch: {
-            data: {
-                async handler() {
-                    this.tableHeight = await this.computeTableHeight();
-                },
-                immediate: true
-            },
-            async stillHaveDataToFetch(newVal, oldVal) {
-                if (oldVal !== newVal) {
-                    this.tableHeight = await this.computeTableHeight();
-                }
+    watch(() => props.data, () => {
+        if (props.data.length === 0) {
+            hasSelection.value = false;
+            table.value?.clearSelection();
+        } else {
+            const currentSelection = table.value?.getSelectionRows() ?? [];
+            const validSelection = currentSelection.filter((sel: any) => {
+                const isFunction = typeof props.rowKey === "function";
+                return props.data.some(r => isFunction
+                    ? props.rowKey(r) === props.rowKey(sel)
+                    : r[props.rowKey] === sel[props.rowKey]);
+            });
+            if (validSelection.length !== currentSelection.length) {
+                table.value?.clearSelection();
+                hasSelection.value = false;
+            } else if (table.value) {
+                selectionChanged(currentSelection);
             }
         }
-    }
-</script>
+    }, {immediate: true});
 
+    defineExpose({
+        setSelection,
+        clearSelection,
+        toggleRowExpansion
+    });
+</script>
 <style scoped lang="scss">
     .bulk-select-header {
         z-index: 1;
@@ -184,10 +130,8 @@
         border-bottom: 1px solid var(--ks-border-primary);
         overflow-x: auto;
 
-        & ~ .el-scrollbar {
-            :deep(.el-table) {
-                z-index: 0;
-            }
+        & ~ .el-table {
+            z-index: 0;
         }
     }
 

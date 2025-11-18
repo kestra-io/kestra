@@ -17,4 +17,12 @@
             background-position: top center;
         }
     }
+    @media (max-width: 768px) {
+        .empty-template{
+            padding: 2rem;
+        }
+        .container-sm, .container {
+            max-width: 768px;
+        }
+    }
 </style>

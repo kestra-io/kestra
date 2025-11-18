@@ -32,6 +32,7 @@ public interface IFlows extends IData<IFlows.Fields> {
     enum Fields {
         ID,
         NAMESPACE,
-        REVISION
+        REVISION,
+        LAST_EXECUTION_STATUS
     }
 }

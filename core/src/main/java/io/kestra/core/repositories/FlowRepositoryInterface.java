@@ -11,6 +11,7 @@ import jakarta.validation.ConstraintViolationException;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fields> {
 
@@ -165,4 +166,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
     FlowWithSource delete(FlowInterface flow);
 
     Boolean existAnyNoAcl(String tenantId);
+
+    default Function<String, String> sortMapping() throws IllegalArgumentException {
+        return Function.identity();
+    }
+
 }

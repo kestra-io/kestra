@@ -123,7 +123,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private final Map<Flows.Fields, String> fieldsMapping = Map.of(
         Flows.Fields.ID, "key",
         Flows.Fields.NAMESPACE, "namespace",
-        Flows.Fields.REVISION, "revision"
+        Flows.Fields.REVISION, "revision",
+        Flows.Fields.LAST_EXECUTION_STATUS, "last_execution_state"
     );
 
     @Override
@@ -565,12 +566,27 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         fields.add(field("value"));
         fields.add(field("tenant_id"));
         fields.add(field("namespace"));
+        fields.add(field("id"));
 
         if (field != null) {
             fields.addAll(field);
         }
 
-        return (SelectConditionStep<R>) context
+        Table<?> rankedExecutions = context
+            .select(
+                DSL.field(DSL.quotedName("flow_id")),
+                DSL.field(DSL.quotedName("state_current")),
+                DSL.rowNumber()
+                    .over()
+                    .partitionBy(DSL.field(DSL.quotedName("flow_id")))
+                    .orderBy(DSL.coalesce(DSL.field(DSL.quotedName("end_date")), DSL.field(DSL.quotedName("start_date"))).desc())
+                    .as("rn")
+            )
+            .from(DSL.table("executions"))
+            .where(DSL.field(DSL.quotedName("tenant_id")).eq(tenantId))
+            .asTable("ranked_executions");
+
+        var baseQuery = context
             .select(fields)
             .from(fromLastRevision(false))
             .join(jdbcRepository.getTable().as("ft"))
@@ -578,7 +594,19 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 DSL.field(DSL.quotedName("ft", "key")).eq(DSL.field(DSL.field(DSL.quotedName("rev", "key"))))
                     .and(DSL.field(DSL.quotedName("ft", "revision")).eq(DSL.field(DSL.quotedName("rev", "revision"))))
             )
-            .where(this.defaultFilter(tenantId));
+            .where(this.defaultFilter(tenantId))
+            .asTable("flows_filtered");
+
+        return (SelectConditionStep<R>) context
+            .select(baseQuery.asterisk())
+            .select(DSL.field(DSL.quotedName("last_exec", "state_current")).as("last_execution_state"))
+            .from(baseQuery)
+            .leftJoin(rankedExecutions.as("last_exec"))
+            .on(
+                DSL.field(DSL.quotedName("last_exec", "flow_id")).eq(DSL.field(DSL.quotedName("flows_filtered", "id")))
+                    .and(DSL.field(DSL.quotedName("last_exec", "rn")).eq(1))
+            )
+            .where(DSL.trueCondition());
     }
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);

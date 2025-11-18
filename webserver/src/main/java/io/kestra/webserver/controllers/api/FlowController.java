@@ -234,7 +234,7 @@ public class FlowController {
         filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
 
         return PagedResults.of(flowRepository.find(
-            PageableUtils.from(page, size, sort),
+            PageableUtils.from(page, size, sort, flowRepository.sortMapping()),
             tenantService.resolveTenant(),
             filters
         ));

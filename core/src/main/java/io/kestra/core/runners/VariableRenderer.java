@@ -1,7 +1,12 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.runners.pebble.*;
+import io.kestra.core.runners.pebble.JsonWriter;
+import io.kestra.core.runners.pebble.OutputWriter;
+import io.kestra.core.runners.pebble.PebbleEngineFactory;
+import io.kestra.core.runners.pebble.TypedObjectWriter;
+import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
@@ -30,16 +35,16 @@ public class VariableRenderer {
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
         this(applicationContext.getBean(PebbleEngineFactory.class), variableConfiguration);
     }
-    
+
     public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
         this.pebbleEngine = pebbleEngineFactory.create();
     }
-    
+
     public void setPebbleEngine(final PebbleEngine pebbleEngine) {
         this.pebbleEngine = pebbleEngine;
     }
-    
+
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
         if (initialExtension instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(
@@ -176,10 +181,16 @@ public class VariableRenderer {
             String key = this.render(r.getKey(), variables);
             Object value = renderObject(r.getValue(), variables, recursive).orElse(r.getValue());
 
-            map.putIfAbsent(
-                key,
-                value
-            );
+            // If value is a Map or Collection, convert to JSON string
+            if (value instanceof Map || value instanceof Collection<?>) {
+                try {
+                    value = JacksonMapper.ofJson().writeValueAsString(value);
+                } catch (JsonProcessingException e) {
+                    throw new IllegalVariableEvaluationException("Failed to serialize value to JSON", e);
+                }
+            }
+
+            map.putIfAbsent(key, value);
         }
 
         return map;

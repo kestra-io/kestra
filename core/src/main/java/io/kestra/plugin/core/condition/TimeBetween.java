@@ -79,7 +79,8 @@ public class TimeBetween extends Condition implements ScheduleCondition {
         RunContext runContext = conditionContext.getRunContext();
         Map<String, Object> variables = conditionContext.getVariables();
 
-        String dateRendered = runContext.render(date).as(String.class, variables).orElseThrow();
+        // cache must be skipped for date rendering as the value can change for each test
+        String dateRendered = runContext.render(date).skipCache().as(String.class, variables).orElseThrow();
         OffsetTime currentDate = DateUtils.parseZonedDateTime(dateRendered).toOffsetDateTime().toOffsetTime();
 
         OffsetTime beforeRendered = runContext.render(before).as(OffsetTime.class, variables).orElse(null);

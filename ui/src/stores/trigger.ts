@@ -36,7 +36,8 @@ interface TriggerBulkOptions {
     [key: string]: any;
 }
 
-interface TriggerDeleteOptions {
+export interface TriggerDeleteOptions {
+    id?: string;
     namespace: string;
     flowId: string;
     triggerId: string;

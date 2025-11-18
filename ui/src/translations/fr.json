@@ -560,6 +560,10 @@
         "text": "Suivez le Guide de démarrage rapide pour installer Kestra et commencer à créer vos premiers workflows.",
         "title": "Commencer ⚡"
       },
+      "namespaces": {
+        "text": "Les namespaces sont des regroupements logiques de flows et de leurs composants.",
+        "title": "À propos des namespaces"
+      },
       "videos_tutorials": {
         "text": "Commencez avec nos tutoriels vidéo.",
         "title": "Tutoriels Vidéo"
@@ -1178,6 +1182,8 @@
     "no-executions-view": {
       "guidance_desc": "Besoin d'aide pour exécuter votre flow ?",
       "guidance_sub_desc": "Suivez la documentation pour toutes les informations dont vous avez besoin.",
+      "namespace_guidance_desc": "Besoin de conseils pour gérer votre Namespace ?",
+      "namespace_sub_title": "Exécutez un ou plusieurs flows de ce namespace pour remplir ce tableau de bord.",
       "sub_title": "Cliquez sur le bouton Exécuter pour démarrer l'exécution de votre premier workflow.",
       "title": "Commencez à automatiser avec"
     },

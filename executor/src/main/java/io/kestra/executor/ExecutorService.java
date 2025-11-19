@@ -395,7 +395,7 @@ public class ExecutorService {
     }
 
     private ExecutorContext onEnd(ExecutorContext executor) {
-        final Flow flow = executor.getFlow();
+        final FlowWithSource flow = executor.getFlow();
 
         Execution newExecution = executor.getExecution()
             .withState(executor.getExecution().guessFinalState(flow));
@@ -1118,7 +1118,7 @@ public class ExecutorService {
         }
     }
 
-    public void addWorkerTaskResult(ExecutorContext executor, Supplier<Flow> flow, WorkerTaskResult workerTaskResult) throws InternalException {
+    public void addWorkerTaskResult(ExecutorContext executor, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
         // dynamic tasks
         Execution newExecution = this.addDynamicTaskRun(
             executor.getExecution(),

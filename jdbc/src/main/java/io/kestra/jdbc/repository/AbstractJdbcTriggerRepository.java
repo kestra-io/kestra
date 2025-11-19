@@ -112,14 +112,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     @Override
-    public Trigger save(Trigger trigger) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
-        this.jdbcRepository.persist(trigger, fields);
-
-        return trigger;
-    }
-
-    @Override
     public Trigger save(TransactionContext txContext, Trigger trigger) {
         return save(txContext.unwrap(JdbcTransactionContext.class).getDslContext(), trigger);
     }

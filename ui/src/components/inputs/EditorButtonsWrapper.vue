@@ -109,24 +109,31 @@
     const onSaveAll = inject(FILES_SAVE_ALL_INJECTION_KEY);
 
     async function save(){
-        // Save the isCreating before saving.
-        // saveAll can change its value.
-        const isCreating = flowStore.isCreating
-        await flowStore.saveAll()
+        try {
+            // Save the isCreating before saving.
+            // saveAll can change its value.
+            const isCreating = flowStore.isCreating
+            await flowStore.saveAll()
 
-        if(isCreating){
-            await router.push({
-                name: "flows/update",
-                params: {
-                    id: flowStore.flow?.id,
-                    namespace: flowStore.flow?.namespace,
-                    tab: "edit",
-                    tenant: routeParams.value.tenant,
-                },
-            });
+            if(isCreating){
+                await router.push({
+                    name: "flows/update",
+                    params: {
+                        id: flowStore.flow?.id,
+                        namespace: flowStore.flow?.namespace,
+                        tab: "edit",
+                        tenant: routeParams.value.tenant,
+                    },
+                });
+            }
+
+            onSaveAll?.();
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000});
+                return;
+            }
         }
-
-        onSaveAll?.();
     }
 
     const deleteFlow = () => {

@@ -5,8 +5,8 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
@@ -73,7 +73,7 @@ public final class RunVariables {
     }
 
     /**
-     * Creates an immutable map representation of the given {@link Flow}.
+     * Creates an immutable map representation of the given {@link FlowInterface}.
      *
      * @param flow The flow from which to create variables.
      * @return a new immutable {@link Map}.
@@ -326,7 +326,7 @@ public final class RunVariables {
                 }
 
                 if (flow == null) {
-                    Flow flowFromExecution = Flow.builder()
+                    FlowInterface flowFromExecution = GenericFlow.builder()
                         .id(execution.getFlowId())
                         .tenantId(execution.getTenantId())
                         .revision(execution.getFlowRevision())

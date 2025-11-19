@@ -560,6 +560,10 @@
         "text": "Siga o Guia de Início Rápido para instalar o Kestra e começar a criar seus primeiros workflows.",
         "title": "Começar ⚡"
       },
+      "namespaces": {
+        "text": "Namespaces são agrupamentos lógicos de flows e seus componentes.",
+        "title": "Sobre Namespaces"
+      },
       "videos_tutorials": {
         "text": "Comece com nossos tutoriais em vídeo.",
         "title": "Tutoriais em Vídeo"
@@ -1047,6 +1051,7 @@
     "last trigger date tooltip": "Quando o trigger foi executado pela última vez. Pode estar no passado ao executar um backfill.",
     "launch execution": "Executar",
     "learn_more": "Saiba mais",
+    "leave page": "Sair da Página",
     "light_background": "Esta é a opção preferida ao trabalhar com um fundo claro.",
     "light_version": "Versão clara",
     "line-by-line": "linha por linha",
@@ -1178,6 +1183,8 @@
     "no-executions-view": {
       "guidance_desc": "Precisa de orientação para executar o seu flow?",
       "guidance_sub_desc": "Siga a documentação para todas as informações que você precisa.",
+      "namespace_guidance_desc": "Precisa de orientação para gerenciar seu Namespace?",
+      "namespace_sub_title": "Execute um ou mais flows deste namespace para preencher este dashboard.",
       "sub_title": "Clique no botão Executar para iniciar a execução do seu primeiro fluxo de trabalho.",
       "title": "Comece a automatizar com"
     },
@@ -1786,6 +1793,8 @@
     "unqueue title": "Desenfileirar execução <code>{id}</code>.<br/>Observe que isso não obedecerá ao limite de concorrência do flow, portanto, mais execuções podem estar em execução do que o limite permitido.",
     "unqueue title multiple": "Tem certeza de que deseja Desenfileirar <code>{count}</code> execuções?<br/><br/>Observe que isso não obedecerá ao limite de concorrência do flow, portanto, mais execuções podem estar em execução do que o limite permitido.",
     "unsaved changed ?": "Você tem alterações não salvas, deseja sair desta página?",
+    "unsaved changes": "Alterações Não Salvas",
+    "unsaved changes warning": "Você tem alterações não salvas. Se você sair desta página, suas alterações serão perdidas.",
     "up trend": "Aumentando",
     "update": "Atualizar",
     "update aborted": "atualização abortada",

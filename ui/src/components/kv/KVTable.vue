@@ -261,6 +261,7 @@
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
     import {useKvFilter} from "../filter/configurations";
+    import moment from "moment-timezone";
 
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
@@ -272,7 +273,6 @@
     import DataTable from "../layout/DataTable.vue";
     import _merge from "lodash/merge";
     import {type DataTableRef, useDataTableActions} from "../../composables/useDataTableActions.ts";
-
     const dataTable = useTemplateRef<DataTableRef>("dataTable");
 
     const loadData = async (callback?: () => void) => {
@@ -497,6 +497,11 @@
             kv.value.value = JSON.stringify(value);
         } else if (type === "BOOLEAN") {
             kv.value.value = value;
+        } else if (type === "DATETIME") {
+            // Follow Timezone from Settings to display KV of type DATETIME (issue #9428)
+            // Convert the datetime value to the user's timezone for proper display in the date picker
+            const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess();
+            kv.value.value = moment(value).tz(userTimezone).toDate();
         } else {
             kv.value.value = value.toString();
         }

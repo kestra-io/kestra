@@ -192,7 +192,7 @@ public abstract class AbstractTriggerRepositoryTest {
             .build()
         );
         // When
-        int count = triggerRepository.count(tenant);
+        long count = triggerRepository.countAll(tenant);
         // Then
         assertThat(count).isEqualTo(1);
     }

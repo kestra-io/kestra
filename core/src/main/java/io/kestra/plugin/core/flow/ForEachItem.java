@@ -10,7 +10,6 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
@@ -466,7 +465,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         public List<SubflowExecution<?>> createSubflowExecutions(
             RunContext runContext,
             FlowMetaStoreInterface flowExecutorInterface,
-            Flow currentFlow,
+            FlowInterface currentFlow,
             Execution currentExecution,
             TaskRun currentTaskRun
         ) throws InternalException {

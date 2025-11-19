@@ -38,6 +38,7 @@
         "cronstrue": "^3.9.0",
         "cytoscape": "^3.33.0",
         "dagre": "^0.8.5",
+        "dotenv": "^17.2.3",
         "el-table-infinite-scroll": "^3.0.7",
         "element-plus": "2.11.7",
         "humanize-duration": "^3.33.1",

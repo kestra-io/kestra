@@ -3,6 +3,6 @@
  */
 export const shared = {
     namespace: "company.team",
-    username: "user@kestra.io",
-    password: "DemoDemo1"
+    username: process.env.E2E_USERNAME ?? "user@kestra.io",
+    password: process.env.E2E_PASSWORD ?? "DemoDemo1"
 };

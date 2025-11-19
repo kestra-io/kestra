@@ -38,8 +38,7 @@
         "cronstrue": "^3.9.0",
         "cytoscape": "^3.33.0",
         "dagre": "^0.8.5",
-        "el-table-infinite-scroll": "^3.0.7",
-        "element-plus": "2.11.7",
+        "element-plus": "2.11.8",
         "humanize-duration": "^3.33.1",
         "js-yaml": "^4.1.1",
         "lodash": "^4.17.21",
@@ -147,9 +146,6 @@
     "overrides": {
         "bootstrap": {
             "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
-        },
-        "el-table-infinite-scroll": {
-            "vue": "^3.5.21"
         },
         "storybook": "$storybook",
         "vite": "npm:rolldown-vite@latest"

@@ -52,7 +52,7 @@
     </div>
 </template>
 
-<script>
+<script lang="ts">
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
@@ -190,23 +190,39 @@
     }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+    @import "@kestra-io/ui-libs/src/scss/variables";
+
     .plugins-list {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        
+        .search {
+            flex-shrink: 0;
+            background-color: var(--ks-background-panel);
+            padding-bottom: 0.5rem;
+        }
+        
+        .el-collapse {
+            flex: 1;
+        }
+        
         &.enhance-readability {
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
         }
 
         .el-collapse-item__header {
-            font-size: 0.875rem;
+            font-size: 0.75rem;
         }
 
         ul {
             list-style: none;
             padding-inline-start: 0;
             margin-bottom: 0;
-            font-size: var(--font-size-xs);
-            margin-left: .5rem;
+            font-size: 0.6875rem;
+            margin-left: .25rem;
         }
 
         h6,
@@ -217,26 +233,26 @@
 
         .toc-h3 {
             .icon {
-                width: var(--font-size-sm);
-                height: var(--font-size-sm);
+                width: 0.875rem;
+                height: 0.875rem;
                 display: inline-block;
                 position: relative;
             }
 
             h6 {
-                font-size: 1.1em;
+                font-size: 0.75rem;
             }
 
             .toc-h4 {
-                margin-left: .5rem;
+                margin-left: .25rem;
 
                 h6 {
-                    font-size: var(--font-size-sm);
-                    margin-bottom: .5rem;
+                    font-size: 0.6875rem;
+                    margin-bottom: .25rem;
                 }
 
                 li {
-                    margin-bottom: .5rem;
+                    margin-bottom: .25rem;
                 }
             }
         }
@@ -244,5 +260,93 @@
 
     .selected {
         color: var(--ks-content-link);
+    }
+    
+    @media (max-width: 767px) {
+        .plugins-list {
+            .search {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+            
+            .el-collapse {
+                overflow-y: auto;
+            }
+        }
+    }
+
+    @include media-breakpoint-up(md) {
+        .plugins-list {
+            .el-collapse-item__header {
+                font-size: 0.8125rem;
+            }
+
+            ul {
+                font-size: 0.75rem;
+                margin-left: .375rem;
+            }
+
+            .toc-h3 {
+                .icon {
+                    width: 1rem;
+                    height: 1rem;
+                }
+
+                h6 {
+                    font-size: 0.875rem;
+                }
+
+                .toc-h4 {
+                    margin-left: .375rem;
+
+                    h6 {
+                        font-size: 0.75rem;
+                        margin-bottom: .375rem;
+                    }
+
+                    li {
+                        margin-bottom: .375rem;
+                    }
+                }
+            }
+        }
+    }
+
+    @include media-breakpoint-up(lg) {
+        .plugins-list {
+            .el-collapse-item__header {
+                font-size: 0.875rem;
+            }
+
+            ul {
+                font-size: var(--font-size-xs);
+                margin-left: .5rem;
+            }
+
+            .toc-h3 {
+                .icon {
+                    width: var(--font-size-sm);
+                    height: var(--font-size-sm);
+                }
+
+                h6 {
+                    font-size: 1.1em;
+                }
+
+                .toc-h4 {
+                    margin-left: .5rem;
+
+                    h6 {
+                        font-size: var(--font-size-sm);
+                        margin-bottom: .5rem;
+                    }
+
+                    li {
+                        margin-bottom: .5rem;
+                    }
+                }
+            }
+        }
     }
 </style>

@@ -4,54 +4,55 @@
         <PluginHome v-if="filteredPlugins" :plugins="filteredPlugins" />
     </template>
     <DocsLayout v-else>
+        <template #secondary-header>
+            <div class="plugin-secondary-header">
+                <div class="d-flex align-items-center gap-3">
+                    <TaskIcon
+                        class="plugin-icon"
+                        :cls="pluginType"
+                        onlyIcon
+                        :icons="pluginsStore.icons"
+                    />
+                    <h4 class="mb-0 plugin-name">
+                        {{ pluginName }}
+                    </h4>
+                    <el-button
+                        v-if="releaseNotesUrl"
+                        size="small"
+                        class="release-notes-btn"
+                        :icon="GitHub"
+                        @click="openReleaseNotes"
+                    >
+                        {{ $t('plugins.release') }}
+                    </el-button>
+                </div>
+                <div class="versions" v-if="(pluginsStore.versions?.length ?? 0) > 0">
+                    <el-select
+                        v-model="version"
+                        placeholder="Version"
+                        size="small"
+                        :disabled="(pluginsStore.versions?.length ?? 0) === 1"
+                        @change="selectVersion(version)"
+                    >
+                        <template #label="{value}">
+                            <span>Version: </span>
+                            <span style="font-weight: bold">{{ value }}</span>
+                        </template>
+                        <el-option
+                            v-for="item in pluginsStore.versions"
+                            :key="item"
+                            :label="item"
+                            :value="item"
+                        />
+                    </el-select>
+                </div>
+            </div>
+        </template>
         <template #menu>
             <Toc @router-change="onRouterChange" v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins.filter(p => !p.subGroup)" />
         </template>
         <template #content>
             <div class="plugin-doc">
-                <div class="d-flex align-items-center justify-content-between gap-3">
-                    <div class="d-flex gap-3 mb-3 align-items-center">
-                        <TaskIcon
-                            class="plugin-icon"
-                            :cls="pluginType"
-                            onlyIcon
-                            :icons="pluginsStore.icons"
-                        />
-                        <h4 class="mb-0">
-                            {{ pluginName }}
-                        </h4>
-                        <el-button
-                            v-if="releaseNotesUrl"
-                            size="small"
-                            class="release-notes-btn"
-                            :icon="GitHub"
-                            @click="openReleaseNotes"
-                        >
-                            {{ $t('plugins.release') }}
-                        </el-button>
-                    </div>
-
-                    <div class="mb-3 versions" v-if="(pluginsStore.versions?.length ?? 0) > 0">
-                        <el-select
-                            v-model="version"
-                            placeholder="Version"
-                            size="small"
-                            :disabled="(pluginsStore.versions?.length ?? 0) === 1"
-                            @change="selectVersion(version)"
-                        >
-                            <template #label="{value}">
-                                <span>Version: </span>
-                                <span style="font-weight: bold">{{ value }}</span>
-                            </template>
-                            <el-option
-                                v-for="item in pluginsStore.versions"
-                                :key="item"
-                                :label="item"
-                                :value="item"
-                            />
-                        </el-select>
-                    </div>
-                </div>
                 <Suspense v-loading="isLoading">
                     <SchemaToHtml
                         class="plugin-schema"
@@ -219,13 +220,89 @@
 <style scoped lang="scss">
     @import "../../styles/components/plugin-doc";
 
+    .plugin-secondary-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 1.5rem;
+        background-color: var(--ks-background-panel);
+        flex: 1;
+        min-height: 64px;
+        
+        .plugin-icon {
+            width: 35px;
+            height: 35px;
+            margin-left: 30px;
+        }
+        
+        .plugin-name {
+            font-size: 1.5rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .release-notes-btn {
+            background-color: var(--ks-background-info);
+            color: var(--ks-content-info);
+            border: 1px solid var(--ks-border-info);
+            font-family: 'Courier New', Courier, monospace;
+            white-space: nowrap;
+            
+            :deep(.material-design-icon) {
+                position: absolute;
+                bottom: 0;
+            }
+        }
+    }
+
     .versions {
-        min-width: 200px;
+        min-width: 150px;
     }
 
     :deep(.main-container) {
         background: var(--ks-background-panel);
         margin: 0;
+        padding: 0;
+    }
+    
+    .plugin-doc {
         padding: 1rem;
+        background-color: var(--ks-background-panel);
+    }
+    
+    @media (max-width: 767px) {
+        .plugin-secondary-header {
+            flex-wrap: wrap;
+            padding: 0.5rem;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--ks-border-primary);
+            
+            .plugin-icon {
+                width: 36px;
+                height: 36px;
+                margin-left: -10px;
+            }
+            
+            .plugin-name {
+                font-size: 1rem;
+            }
+            
+            .release-notes-btn {
+                padding: 6px 12px;
+                font-size: 0.875rem;
+                min-width: auto;
+            }
+            
+            .versions {
+                width: 100%;
+                min-width: auto;
+            }
+        }
+        
+        .plugin-doc {
+            padding: 0.75rem;
+        }
     }
 </style>

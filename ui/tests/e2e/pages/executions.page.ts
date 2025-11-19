@@ -11,7 +11,7 @@ export class ExecutionsPage extends BasePage {
 
     async goto() {
         await this.login();
-        await this.page.goto("/ui/main/executions");
+        await this.page.goto("/main/executions");
 
         await expect(this.page.getByRole("heading", {name: "Executions"})).toBeVisible();
     }

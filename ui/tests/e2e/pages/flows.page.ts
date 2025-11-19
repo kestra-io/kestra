@@ -10,7 +10,7 @@ export class FlowsPage extends BasePage {
 
     async goto() {
         await this.login();
-        await this.page.goto("/ui/main/flows");
+        await this.page.goto("/main/flows");
 
         await expect(this.page.getByRole("heading", {name: "Flows"})).toBeVisible();
     }

@@ -46,7 +46,7 @@ const config: PlaywrightTestConfig = {
     /* Shared settings for all the projects below. */
     use: {
         /* Base URL to use in actions like `await page.goto("/")`. */
-        baseURL: process.env.E2E_BASE_URL ?? "http://localhost:9011/ui/",
+        baseURL: process.env.E2E_BASE_URL ?? "http://localhost:9011",
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: "retain-on-failure",

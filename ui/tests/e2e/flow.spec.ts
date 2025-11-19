@@ -22,7 +22,7 @@ test.describe("Flow Page", () => {
     test.beforeEach(async ({page}) => {
         testUUID = uuidv4().replace(/-/g, "_");
 
-        await page.goto("/");
+        await page.goto("/ui");
 
         await test.step("login in", async () => {
             await page.getByRole("textbox", {name: "Email"}).fill(shared.username);
@@ -32,7 +32,7 @@ test.describe("Flow Page", () => {
     });
 
     test("should create and execute the example Flow", async ({page}) => {
-        await page.goto("/flows");
+        await page.goto("/ui/flows");
 
         await test.step("create the example Flow", async () => {
             await page.waitForURL("**/flows?filters*");
@@ -63,7 +63,7 @@ test.describe("Flow Page", () => {
         const flowId = `flowId_${testUUID}`.slice(0, 19);
         const flowYaml = helloFlowYaml.replace(helloFlowId, flowId);
 
-        await page.goto("/flows");
+        await page.goto("/ui/flows");
 
         await test.step("create a the flow by pasting the YAML", async () => {
             await page.locator("#side-menu .sidebar-toggle").click();

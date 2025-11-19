@@ -12,7 +12,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
@@ -32,7 +31,6 @@ import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.Temporal;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -42,7 +40,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     private static final Field<Object> NEXT_EXECUTION_DATE_FIELD = field("next_execution_date");
     private static final Field<Boolean> LOCKED_FIELD = field("locked", Boolean.class);
     private static final Field<Integer> VNODE_FIELD = field("vnode", Integer.class);
-    
+
     private final JdbcFilterService filterService;
 
     @Getter
@@ -114,40 +112,13 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     @Override
-    public int count(@Nullable String tenantId) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> DSL
-                .using(configuration)
-                .selectCount()
-                .from(this.jdbcRepository.getTable())
-                .where(this.defaultFilter(tenantId))
-                .fetchOne(0, int.class));
-    }
-    
-    @Override
-    public Trigger save(Trigger trigger) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
-        this.jdbcRepository.persist(trigger, fields);
-        
-        return trigger;
-    }
-    
-    @Override
     public Trigger save(TransactionContext txContext, Trigger trigger) {
         return save(txContext.unwrap(JdbcTransactionContext.class).getDslContext(), trigger);
     }
-    
+
     @Override
     public <TX extends TransactionContext> boolean supports(Class<TX> clazz) {
         return JdbcTransactionContext.class.isAssignableFrom(clazz);
-    }
-    
-    private Trigger save(DSLContext dslContext, Trigger trigger) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(trigger);
-        this.jdbcRepository.persist(trigger, dslContext, fields);
-        
-        return trigger;
     }
 
     @Override
@@ -201,7 +172,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
                 return updatedTrigger;
             });
     }
-    
+
     @Override
     public ArrayListTotal<Trigger> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
         var condition = filter(filters, "next_execution_date", Resource.TRIGGER);
@@ -234,16 +205,16 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         var condition = filter(filters, "next_execution_date", Resource.TRIGGER);
         return findAsync(tenantId, condition);
     }
-    
+
     protected Condition fullTextCondition(String query) {
         return query == null ? DSL.trueCondition() : jdbcRepository.fullTextCondition(List.of("fulltext"), query);
     }
-    
+
     @Override
     protected Condition findQueryCondition(String query) {
         return fullTextCondition(query);
     }
-    
+
     @Override
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
         return buildTenantCondition(tenantId);
@@ -321,7 +292,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
                 return fetchSeekStep(selectSeekStep, pageable);
             });
     }
-    
+
     @Override
     public Double fetchValue(String tenantId, DataFilterKPI<ITriggers.Fields, ? extends ColumnDescriptor<ITriggers.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
@@ -358,7 +329,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             }
         });
     }
-    
+
     /**
      * {@inheritDoc}
      **/
@@ -377,7 +348,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             )
             .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
     }
-    
+
     @Override
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
 }

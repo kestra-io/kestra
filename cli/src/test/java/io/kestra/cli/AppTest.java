@@ -1,14 +1,11 @@
 package io.kestra.cli;
 
 import io.kestra.core.models.ServerType;
-import io.micronaut.configuration.picocli.MicronautFactory;
-import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import picocli.CommandLine;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -22,11 +19,15 @@ class AppTest {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         System.setOut(new PrintStream(out));
 
-        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
-            PicocliRunner.call(App.class, ctx, "--help");
+        // No arg will print help
+        assertThat(App.runCli(new String[0])).isZero();
+        assertThat(out.toString()).contains("kestra");
 
-            assertThat(out.toString()).contains("kestra");
-        }
+        out.reset();
+
+        // Explicit help command
+        assertThat(App.runCli(new String[]{"--help"})).isZero();
+        assertThat(out.toString()).contains("kestra");
     }
 
     @ParameterizedTest
@@ -38,11 +39,12 @@ class AppTest {
         final String[] args = new String[]{"server", serverType, "--help"};
 
         try (ApplicationContext ctx = App.applicationContext(App.class, new String [] { Environment.CLI }, args)) {
-            new CommandLine(App.class, new MicronautFactory(ctx)).execute(args);
-
             assertTrue(ctx.getProperty("kestra.server-type", ServerType.class).isEmpty());
-            assertThat(out.toString()).startsWith("Usage: kestra server " + serverType);
         }
+
+        assertThat(App.runCli(args)).isZero();
+
+        assertThat(out.toString()).startsWith("Usage: kestra server " + serverType);
     }
 
     @Test
@@ -52,12 +54,10 @@ class AppTest {
 
         final String[] argsWithMissingParams = new String[]{"flow", "namespace", "update"};
 
-        try (ApplicationContext ctx = App.applicationContext(App.class, new String [] { Environment.CLI }, argsWithMissingParams)) {
-            new CommandLine(App.class, new MicronautFactory(ctx)).execute(argsWithMissingParams);
+        assertThat(App.runCli(argsWithMissingParams)).isEqualTo(2);
 
-            assertThat(out.toString()).startsWith("Missing required parameters: ");
-            assertThat(out.toString()).contains("Usage: kestra flow namespace update ");
-            assertThat(out.toString()).doesNotContain("MissingParameterException: ");
-        }
+        assertThat(out.toString()).startsWith("Missing required parameters: ");
+        assertThat(out.toString()).contains("Usage: kestra flow namespace update ");
+        assertThat(out.toString()).doesNotContain("MissingParameterException: ");
     }
 }

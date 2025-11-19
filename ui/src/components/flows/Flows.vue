@@ -1,7 +1,7 @@
 <template>
     <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
-            <ul>
+            <ul class="header-actions-list">
                 <li>
                     <el-button :icon="Upload" @click="file?.click()">
                         {{ t("import") }}
@@ -656,5 +656,17 @@
 
 :deep(.flows-table) .el-scrollbar__thumb {
     background-color: var(--ks-border-active) !important;
+}
+.header-actions-list {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0.5rem;
+
+    @media (max-width: 570px) {
+        flex-direction: column;
+        align-items: flex-end;
+    }
 }
 </style>

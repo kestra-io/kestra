@@ -1,6 +1,7 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcMetricRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -18,8 +19,9 @@ import java.util.Date;
 public class MysqlMetricRepository extends AbstractJdbcMetricRepository {
     @Inject
     public MysqlMetricRepository(@Named("metrics") MysqlRepository<MetricEntry> repository,
+                                 QueueService queueService,
                                  JdbcFilterService filterService) {
-        super(repository, filterService);
+        super(repository, queueService, filterService);
     }
 
     @Override

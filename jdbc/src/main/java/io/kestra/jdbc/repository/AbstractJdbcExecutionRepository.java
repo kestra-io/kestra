@@ -667,7 +667,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                     .and(NORMAL_KIND_CONDITION)
                     .and(
                         DSL.or(
-                            ListUtils.emptyOnNull(flows).isEmpty() ? DSL.trueCondition()
+                            ListUtils.emptyOnNull(flows).isEmpty() ? DSL.noCondition()
                                 : DSL.or(
                                     flows.stream()
                                         .map(

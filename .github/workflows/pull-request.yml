@@ -40,7 +40,7 @@ jobs:
 
       # Targeting pull request (only if not from a fork and EE has no branch with same name)
     - name: Trigger EE Workflow (pull request, with payload)
-      uses: peter-evans/repository-dispatch@5fc4efd1a4797ddb68ffd0714a238564e4cc0e6f
+      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
       if: ${{ github.event_name == 'pull_request'
         && github.event.pull_request.number != ''
         && github.event.pull_request.head.repo.fork == false

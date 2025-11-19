@@ -62,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onBeforeMount} from "vue";
+    import {ref, computed, onBeforeMount, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
     import DottedLayout from "../layout/DottedLayout.vue";
@@ -71,6 +71,7 @@
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
     import {usePluginsStore} from "../../stores/plugins";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
 
     const route = useRoute();
     const router = useRouter();
@@ -85,13 +86,23 @@
         embed: false
     });
 
+    const {saveRestoreUrl} = useRestoreUrl();
+
     const icons = ref<Record<string, any>>({});
     const searchText = ref("");
 
     const handleSearch = (query: string) => {
         searchText.value = query;
+        const newQuery: Record<string, any> = {...route.query};
+        if (query !== undefined && query !== null && String(query).trim() !== "") {
+            newQuery.q = query;
+        } else {
+            // remove an empty `q=` in the URL on plugins/view
+            delete newQuery.q;
+        }
+
         router.push({
-            query: {...route.query, q: query || undefined}
+            query: newQuery
         });
     };
 
@@ -176,6 +187,11 @@
     onBeforeMount(() => {
         loadPluginIcons();
         searchText.value = String(route.query?.q ?? "");
+    });
+
+    watch(() => route.query.q, (newQ) => {
+        searchText.value = String(newQ ?? "");
+        saveRestoreUrl();
     });
 </script>
 

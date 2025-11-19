@@ -174,7 +174,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     @Override
     public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
                                                              FlowMetaStoreInterface flowExecutorInterface,
-                                                             io.kestra.core.models.flows.Flow currentFlow,
+                                                             FlowInterface currentFlow,
                                                              Execution currentExecution,
                                                              TaskRun currentTaskRun) throws InternalException {
         Map<String, Object> inputs = new HashMap<>();

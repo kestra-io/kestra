@@ -74,7 +74,7 @@ public class Trigger extends TriggerContext implements HasUID {
         );
     }
 
-    public static String uid(Flow flow, AbstractTrigger abstractTrigger) {
+    public static String uid(FlowInterface flow, AbstractTrigger abstractTrigger) {
         return IdUtils.fromParts(
             flow.getTenantId(),
             flow.getNamespace(),

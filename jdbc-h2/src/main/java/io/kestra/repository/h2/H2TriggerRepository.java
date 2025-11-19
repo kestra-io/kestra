@@ -1,6 +1,7 @@
 package io.kestra.repository.h2;
 
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -17,8 +18,9 @@ import java.util.Date;
 public class H2TriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject
     public H2TriggerRepository(@Named("triggers") H2Repository<Trigger> repository,
+                               QueueService queueService,
                                JdbcFilterService filterService) {
-        super(repository, filterService);
+        super(repository, queueService, filterService);
     }
 
     @Override

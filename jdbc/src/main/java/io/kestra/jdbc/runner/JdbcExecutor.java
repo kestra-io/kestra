@@ -1345,6 +1345,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
         slaMonitorStorage.processExpired(Instant.now(), slaMonitor -> {
             Executor result = executionRepository.lock(slaMonitor.getExecutionId(), pair -> {
+                // TODO flow with source is not needed here. Maybe the best would be to not add the flow inside the executor to trace all usage
                 FlowWithSource flow = findFlow(pair.getLeft());
                 Executor executor = new Executor(pair.getLeft(), null).withFlow(flow);
                 Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();

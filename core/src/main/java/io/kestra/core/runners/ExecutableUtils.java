@@ -26,7 +26,6 @@ import org.apache.commons.lang3.stream.Streams;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.trace.Tracer.throwCallable;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -67,7 +66,7 @@ public final class ExecutableUtils {
         RunContext runContext,
         FlowMetaStoreInterface flowExecutorInterface,
         Execution currentExecution,
-        Flow currentFlow,
+        FlowInterface currentFlow,
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,

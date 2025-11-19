@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted, onUnmounted, onUpdated, watch, withDefaults} from "vue";
+    import {ref, onMounted, onUnmounted, onUpdated, watch} from "vue";
 
     const props = withDefaults(defineProps<{
         showSelection?: boolean;

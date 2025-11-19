@@ -21,6 +21,7 @@ kestra:
   server:
     liveness:
       enabled: false
+    termination-grace-period: 5s
 micronaut:
   http:
     services:

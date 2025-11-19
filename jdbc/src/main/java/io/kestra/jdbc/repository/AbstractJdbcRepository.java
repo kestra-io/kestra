@@ -503,8 +503,8 @@ public abstract class AbstractJdbcRepository {
             return DSL.noCondition();
         }
         return switch (operation) {
-            case EQUALS -> field("value",JSONB.class).contains(JSONB.valueOf("{\"disabled\": " + isDisabled + "}"));
-            case NOT_EQUALS -> field("value",JSONB.class).contains(JSONB.valueOf("{\"disabled\": " + !isDisabled + "}"));
+            case EQUALS -> field("disabled").eq(isDisabled);
+            case NOT_EQUALS -> field("disabled").ne(isDisabled);
             default -> throw new InvalidQueryFiltersException("Unsupported operation for Trigger State: " + operation);
         };
     }

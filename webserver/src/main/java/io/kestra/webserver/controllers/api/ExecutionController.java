@@ -1353,6 +1353,10 @@ public class ExecutionController {
 
         var execution = maybeExecution.get();
 
+        return killExecution(execution, isOnKillCascade);
+    }
+
+    protected MutableHttpResponse<Object> killExecution(Execution execution, Boolean isOnKillCascade) throws QueueException {
         // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
         if (execution.getState().isTerminated() && !isOnKillCascade) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
@@ -1362,7 +1366,7 @@ public class ExecutionController {
         killQueue.emit(ExecutionKilledExecution
             .builder()
             .state(ExecutionKilled.State.REQUESTED)
-            .executionId(executionId)
+            .executionId(execution.getId())
             .isOnKillCascade(isOnKillCascade)
             .tenantId(tenantService.resolveTenant())
             .build()
@@ -1395,6 +1399,14 @@ public class ExecutionController {
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
                     "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (!validateExecutionACL(execution.get())) {
+                invalids.add(ManualConstraintViolation.of(
+                    "user don't have the authorisation to kill this execution",
                     executionId,
                     String.class,
                     "execution",
@@ -1545,6 +1557,14 @@ public class ExecutionController {
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
                     "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (!validateExecutionACL(execution.get())) {
+                invalids.add(ManualConstraintViolation.of(
+                    "user don't have the authorisation to resume this execution",
                     executionId,
                     String.class,
                     "execution",
@@ -2299,6 +2319,14 @@ public class ExecutionController {
                     "execution",
                     executionId
                 ));
+            } else if (!validateExecutionACL(execution.get())) {
+                invalids.add(ManualConstraintViolation.of(
+                    "user don't have the authorisation to force run this execution",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
             } else {
                 executions.add(execution.get());
             }
@@ -2587,6 +2615,15 @@ public class ExecutionController {
                 )).toList()
             );
         }
+    }
+
+    /**
+     * For override purpose.
+     * @param execution
+     * @return true if the user has the authorization, false else.
+     */
+    protected boolean validateExecutionACL(Execution execution) {
+        return true;
     }
 
 }

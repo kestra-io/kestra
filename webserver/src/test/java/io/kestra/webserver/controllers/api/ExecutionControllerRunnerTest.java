@@ -970,7 +970,7 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows({"flows/valids/pause-test.yaml"})
     @SuppressWarnings("unchecked")
-    void resumeExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {
+    void resumeExecutionPaused() throws TimeoutException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
@@ -988,7 +988,7 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows({"flows/valids/resume-validate.yaml"})
     @SuppressWarnings("unchecked")
-    void resumeValidateExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {
+    void resumeValidateExecutionPaused() throws TimeoutException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "resume-validate");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
@@ -1011,7 +1011,7 @@ class ExecutionControllerRunnerTest {
     @SuppressWarnings("unchecked")
     @Test
     @LoadFlows({"flows/valids/pause_on_resume.yaml"})
-    void resumeExecutionPausedWithInputs() throws TimeoutException, InterruptedException, QueueException {
+    void resumeExecutionPausedWithInputs() throws TimeoutException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(TENANT_ID, TESTS_FLOW_NS, "pause_on_resume");
         assertThat(pausedExecution.getState().isPaused()).isTrue();

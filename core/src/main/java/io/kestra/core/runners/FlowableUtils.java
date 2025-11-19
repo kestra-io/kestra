@@ -143,6 +143,13 @@ public class FlowableUtils {
             return Collections.emptyList();
         }
 
+        // have submitted, leave
+        Optional<TaskRun> lastSubmitted = execution.findLastSubmitted(taskRuns);
+        if (lastSubmitted.isPresent()) {
+            return Collections.emptyList();
+        }
+
+
         // last success, find next
         Optional<TaskRun> lastTerminated = execution.findLastTerminated(taskRuns);
         if (lastTerminated.isPresent()) {
@@ -150,8 +157,6 @@ public class FlowableUtils {
 
             if (currentTasks.size() > lastIndex + 1) {
                 return Collections.singletonList(currentTasks.get(lastIndex + 1).toNextTaskRunIncrementIteration(execution, parentTaskRun.getIteration()));
-            } else {
-                return Collections.singletonList(currentTasks.getFirst().toNextTaskRunIncrementIteration(execution, parentTaskRun.getIteration()));
             }
         }
 

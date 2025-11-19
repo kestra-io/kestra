@@ -2,19 +2,13 @@ package io.kestra.executor;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
-import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.flows.sla.Violation;
-import io.kestra.core.models.tasks.ExecutableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -27,23 +21,16 @@ import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
-import io.kestra.core.trace.Tracer;
-import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.*;
-import io.kestra.plugin.core.flow.ForEachItem;
-import io.kestra.plugin.core.flow.WorkingDirectory;
+import io.kestra.executor.handler.*;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.event.Level;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -83,9 +70,6 @@ public class DefaultExecutor implements Executor {
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
-    @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
     private QueueInterface<ExecutionKilled> killQueue;
     @Inject
@@ -104,11 +88,7 @@ public class DefaultExecutor implements Executor {
     @Inject
     private SkipExecutionService skipExecutionService;
     @Inject
-    private PluginDefaultService pluginDefaultService;
-    @Inject
     private ExecutorService executorService;
-    @Inject
-    private WorkerGroupService workerGroupService;
     @Inject
     private ExecutionService executionService;
     @Inject
@@ -128,8 +108,6 @@ public class DefaultExecutor implements Executor {
     @Inject
     private ExecutionQueuedStateStore executionQueuedStateStore;
     @Inject
-    private MultipleConditionStorageInterface multipleConditionStorage;
-    @Inject
     private ExecutionDelayStateStore executionDelayStateStore;
     @Inject
     private SLAMonitorStateStore  slaMonitorStateStore;
@@ -144,6 +122,21 @@ public class DefaultExecutor implements Executor {
 
     @Inject
     private FlowListenersInterface flowListeners;
+
+    @Inject
+    private ExecutionMessageHandler executionMessageHandler;
+    @Inject
+    private ExecutionEventMessageHandler executionEventMessageHandler;
+    @Inject
+    private WorkerTaskResultMessageHandler workerTaskResultMessageHandler;
+    @Inject
+    private ExecutionKilledExecutionMessageHandler executionKilledExecutionMessageHandler;
+    @Inject
+    private SubflowExecutionResultMessageHandler subflowExecutionResultMessageHandler;
+    @Inject
+    private SubflowExecutionEndMessageHandler subflowExecutionEndMessageHandler;
+    @Inject
+    private MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
 
     @Value("${kestra.executor.clean.execution-queue:true}")
     private boolean cleanExecutionQueue;
@@ -162,16 +155,13 @@ public class DefaultExecutor implements Executor {
 
     private List<FlowWithSource> allFlows;
 
-    private final Tracer tracer;
     private final java.util.concurrent.ExecutorService workerTaskResultExecutorService;
     private final java.util.concurrent.ExecutorService executionExecutorService;
     private final int numberOfThreads;
 
 
     @Inject
-    public DefaultExecutor(TracerFactory tracerFactory, ExecutorsUtils executorsUtils, @Value("${kestra.executor.thread-count:0}") int threadCount) {
-        this.tracer = tracerFactory.getTracer(DefaultExecutor.class, "EXECUTOR");
-
+    public DefaultExecutor(ExecutorsUtils executorsUtils, @Value("${kestra.executor.thread-count:0}") int threadCount) {
         // By default, we start available processors count threads with a minimum of 4 by executor service
         // for the worker task result queue and the execution queue.
         // Other queues would not benefit from more consumers.
@@ -322,22 +312,8 @@ public class DefaultExecutor implements Executor {
             return;
         }
 
-        try {
-            executionEventQueue.emit(new ExecutionEvent(message, ExecutionEventType.CREATED));
-        } catch (QueueException e) {
-            // If we cannot send the execution event, we fail the execution
-            executionStateStore.lock(message.getId(), execution -> {
-                try {
-                    Execution failed = execution.failedExecutionFromExecutor(e).getExecution().withState(State.Type.FAILED);
-                    ExecutionEvent event = new ExecutionEvent(failed, ExecutionEventType.TERMINATED);
-                    this.executionEventQueue.emit(event);
-                    return new ExecutorContext(failed);
-                } catch (QueueException ex) {
-                    log.error("Unable to emit the execution {}", execution.getId(), ex);
-                }
-                return null;
-            });
-        }
+        Optional<ExecutorContext> maybeExecutor = executionMessageHandler.handle(message);
+        maybeExecutor.ifPresent(this::toExecution);
     }
 
     private void executionEventQueue(Either<ExecutionEvent, DeserializationException> either) {
@@ -352,190 +328,8 @@ public class DefaultExecutor implements Executor {
             return;
         }
 
-        ExecutorContext result = executionStateStore.lock(message.executionId(), execution -> tracer.inCurrentContext(
-            execution,
-            FlowId.uidWithoutRevision(execution),
-            () -> {
-                try {
-                    final FlowWithSource flow = findFlow(execution);
-                    ExecutorContext executor = new ExecutorContext(execution, flow);
-
-                    // schedule it for later if needed
-                    if (execution.getState().getCurrent() == State.Type.CREATED && execution.getScheduleDate() != null && execution.getScheduleDate().isAfter(Instant.now())) {
-                        ExecutionDelay executionDelay = ExecutionDelay.builder()
-                            .executionId(executor.getExecution().getId())
-                            .date(execution.getScheduleDate())
-                            .state(State.Type.RUNNING)
-                            .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
-                            .build();
-                        executionDelayStateStore.save(executionDelay);
-                        return executor;
-                    }
-
-                    // create an SLA monitor if needed
-                    if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted()) && !ListUtils.isEmpty(flow.getSla())) {
-                        List<SLAMonitor> monitors = flow.getSla().stream()
-                            .filter(ExecutionMonitoringSLA.class::isInstance)
-                            .map(ExecutionMonitoringSLA.class::cast)
-                            .map(sla -> SLAMonitor.builder()
-                                .executionId(execution.getId())
-                                .slaId(((SLA) sla).getId())
-                                .deadline(execution.getState().getStartDate().plus(sla.getDuration()))
-                                .build()
-                            )
-                            .toList();
-                        monitors.forEach(monitor -> slaMonitorStateStore.save(monitor));
-                    }
-
-                    // handle concurrency limit, we need to use a different queue to be sure that execution running
-                    // are processed sequentially so inside a queue with no parallelism
-                    if ((execution.getState().getCurrent() == State.Type.CREATED || execution.getState().failedThenRestarted()) && flow.getConcurrency() != null) {
-                        ExecutionRunning executionRunning = ExecutionRunning.builder()
-                            .tenantId(executor.getFlow().getTenantId())
-                            .namespace(executor.getFlow().getNamespace())
-                            .flowId(executor.getFlow().getId())
-                            .execution(executor.getExecution())
-                            .concurrencyState(ExecutionRunning.ConcurrencyState.CREATED)
-                            .build();
-
-                        ExecutionRunning processed = concurrencyLimitStateStore.countThenProcess(flow, (txContext, concurrencyLimit) -> {
-                            ExecutionRunning computed = executorService.processExecutionRunning(flow, concurrencyLimit.getRunning(), executionRunning.withExecution(execution)); // be sure that the execution running contains the latest value of the execution
-                            if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING && !computed.getExecution().getState().isTerminated()) {
-                                return Pair.of(computed, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1));
-                            } else if (computed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                                executionQueuedStateStore.save(txContext, ExecutionQueued.fromExecutionRunning(computed));
-                            }
-                            return Pair.of(computed, concurrencyLimit);
-                        });
-
-                        // if the execution is queued or terminated due to concurrency limit, we stop here
-                        if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
-                            return executor.withExecution(processed.getExecution(), "handleConcurrencyLimit");
-                        }
-                    }
-
-                    // handle execution changed SLA
-                    executor = executorService.handleExecutionChangedSLA(executor);
-
-                    // process the execution
-                    if (log.isDebugEnabled()) {
-                        executorService.log(log, true, executor);
-                    }
-                    executor = executorService.process(executor);
-
-                    if (!executor.getNexts().isEmpty()) {
-                        executor.withExecution(
-                            executorService.onNexts(executor.getExecution(), executor.getNexts()),
-                            "onNexts"
-                        );
-                    }
-
-                    // worker task
-                    if (!executor.getWorkerTasks().isEmpty()) {
-                        List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
-                        executor
-                            .getWorkerTasks()
-                            .forEach(throwConsumer(workerTask -> {
-                                try {
-                                    if (!TruthUtils.isTruthy(workerTask.getRunContext().render(workerTask.getTask().getRunIf()))) {
-                                        workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)));
-                                    } else {
-                                        if (workerTask.getTask().isSendToWorkerTask()) {
-                                            Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(flow, workerTask);
-                                            String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> workerTask.getRunContext().render(workerGroup.getKey())))
-                                                .orElse(null);
-                                            if (workerTask.getTask() instanceof WorkingDirectory) {
-                                                // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
-                                                workerJobQueue.emit(workerGroupKey, workerTask);
-                                            } else {
-                                                TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
-                                                workerJobQueue.emit(workerGroupKey, workerTask.withTaskRun(taskRun));
-                                                workerTaskResults.add(new WorkerTaskResult(taskRun));
-                                            }
-                                        }
-                                        /// flowable attempt state transition to running
-                                        if (workerTask.getTask().isFlowable()) {
-                                            List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
-                                                .map(ArrayList::new)
-                                                .orElseGet(ArrayList::new);
-
-
-                                            attempts.add(
-                                                TaskRunAttempt.builder()
-                                                    .state(new State().withState(State.Type.RUNNING))
-                                                    .build()
-                                            );
-
-                                            TaskRun updatedTaskRun = workerTask.getTaskRun()
-                                                .withAttempts(attempts)
-                                                .withState(State.Type.RUNNING);
-
-                                            workerTaskResults.add(new WorkerTaskResult(updatedTaskRun));
-                                        }
-                                    }
-                                } catch (Exception e) {
-                                    workerTaskResults.add(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.FAILED)));
-                                    workerTask.getRunContext().logger().error("Failed to evaluate the runIf condition for task {}. Cause: {}", workerTask.getTask().getId(), e.getMessage(), e);
-                                }
-                            }));
-
-                        try {
-                            executorService.addWorkerTaskResults(executor, workerTaskResults);
-                        } catch (InternalException e) {
-                            log.error("Unable to add a worker task result to the execution", e);
-                        }
-                    }
-
-                    // subflow execution results
-                    if (!executor.getSubflowExecutionResults().isEmpty()) {
-                        executor.getSubflowExecutionResults()
-                            .forEach(throwConsumer(subflowExecutionResult -> subflowExecutionResultQueue.emit(subflowExecutionResult)));
-                    }
-
-                    // schedulerDelay
-                    if (!executor.getExecutionDelays().isEmpty()) {
-                        executor.getExecutionDelays()
-                            .forEach(executionDelay -> executionDelayStateStore.save(executionDelay));
-                    }
-
-                    // subflow executions
-                    if (!executor.getSubflowExecutions().isEmpty()) {
-                        executor.getSubflowExecutions().forEach(throwConsumer(subflowExecution -> {
-                            Execution subExecution = subflowExecution.getExecution();
-                            String msg = String.format("Created new execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]]", subExecution.getId(), subExecution.getFlowId(), subExecution.getNamespace());
-
-                            log.info(msg);
-
-                            logQueue.emit(LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
-                                .level(Level.INFO)
-                                .message(msg)
-                                .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())
-                                .thread(Thread.currentThread().getName())
-                                .build()
-                            );
-
-                            executionQueue.emit(subflowExecution.getExecution());
-                        }));
-                    }
-
-                    return executor;
-                } catch (QueueException e) {
-                    try {
-                        Execution failedExecution = fail(execution, e);
-                        this.executionQueue.emit(failedExecution);
-                    } catch (QueueException ex) {
-                        log.error("Unable to emit the execution {}", execution.getId(), ex);
-                    }
-                    Span.current().recordException(e).setStatus(StatusCode.ERROR);
-
-                    return null;
-                }
-            }
-        ));
-
-        if (result != null) {
-            this.toExecution(result);
-        }
+        Optional<ExecutorContext> maybeExecutor = executionEventMessageHandler.handle(message);
+        maybeExecutor.ifPresent(this::toExecution);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -550,30 +344,8 @@ public class DefaultExecutor implements Executor {
             return;
         }
 
-        if (log.isDebugEnabled()) {
-            executorService.log(log, true, message);
-        }
-
-        ExecutorContext executor = executionStateStore.lock(message.getTaskRun().getExecutionId(), execution -> {
-            ExecutorContext current = new ExecutorContext(execution);
-
-            if (execution.hasTaskRunJoinable(message.getTaskRun())) {
-                try {
-                    // process worker task result
-                    executorService.addWorkerTaskResult(current, () -> findFlow(execution), message);
-                    // join worker result
-                    return current;
-                } catch (InternalException e) {
-                    return handleFailedExecutionFromExecutor(current, e);
-                }
-            }
-
-            return null;
-        });
-
-        if (executor != null) {
-            this.toExecution(executor);
-        }
+        Optional<ExecutorContext> maybeExecutor = workerTaskResultMessageHandler.handle(message);
+        maybeExecutor.ifPresent(this::toExecution);
     }
 
     private void killQueue(Either<ExecutionKilled, DeserializationException> either) {
@@ -599,54 +371,12 @@ public class DefaultExecutor implements Executor {
             return;
         }
 
-        metricRegistry
-            .counter(MetricRegistry.METRIC_EXECUTOR_KILLED_COUNT, MetricRegistry.METRIC_EXECUTOR_KILLED_COUNT_DESCRIPTION, metricRegistry.tags(killedExecution))
-            .increment();
+        Optional<ExecutorContext> maybeExecutor = executionKilledExecutionMessageHandler.handle(killedExecution);
 
-        if (log.isDebugEnabled()) {
-            executorService.log(log, true, killedExecution);
-        }
-
-        // Immediately fire the event in EXECUTED state to notify the Workers to kill
-        // any remaining tasks for that executing regardless of if the execution exist or not.
-        // Note, that this event will be a noop if all tasks for that execution are already killed or completed.
-        try {
-            killQueue.emit(ExecutionKilledExecution
-                .builder()
-                .executionId(killedExecution.getExecutionId())
-                .isOnKillCascade(false)
-                .state(ExecutionKilled.State.EXECUTED)
-                .tenantId(killedExecution.getTenantId())
-                .build()
-            );
-        } catch (QueueException e) {
-            log.error("Unable to kill the execution {}", killedExecution.getExecutionId(), e);
-        }
-
-        ExecutorContext executor = killingOrAfterKillState(killedExecution.getExecutionId(), Optional.ofNullable(killedExecution.getExecutionState()));
-
-        // Check whether kill event should be propagated to downstream executions.
-        // By default, always propagate the ExecutionKill to sub-flows (for backward compatibility).
-        Boolean isOnKillCascade = Optional.ofNullable(killedExecution.getIsOnKillCascade()).orElse(true);
-        if (isOnKillCascade) {
-            executionService
-                .killSubflowExecutions(event.getTenantId(), killedExecution.getExecutionId())
-                .doOnNext(executionKilled -> {
-                    try {
-                        killQueue.emit(executionKilled);
-                    } catch (QueueException e) {
-                        log.error("Unable to kill the execution {}", executionKilled.getExecutionId(), e);
-                    }
-                })
-                .blockLast();
-        }
-
-        if (executor != null) {
-            // Transmit the new execution state. Note that the execution
-            // will eventually transition to KILLED state before sub-flow executions are actually killed.
-            // This behavior is acceptable due to the fire-and-forget nature of the killing event.
-            this.toExecution(executor, true);
-        }
+        // Transmit the new execution state. Note that the execution
+        // will eventually transition to KILLED state before sub-flow executions are actually killed.
+        // This behavior is acceptable due to the fire-and-forget nature of the killing event.
+        maybeExecutor.ifPresent(executor -> this.toExecution(executor, true));
     }
 
     private void subflowExecutionResultQueue(Either<SubflowExecutionResult, DeserializationException> either) {
@@ -665,80 +395,8 @@ public class DefaultExecutor implements Executor {
             return;
         }
 
-        if (log.isDebugEnabled()) {
-            executorService.log(log, true, message);
-        }
-
-        ExecutorContext executor = executionStateStore.lock(message.getParentTaskRun().getExecutionId(), execution -> {
-            ExecutorContext current = new ExecutorContext(execution);
-
-            if (execution.hasTaskRunJoinable(message.getParentTaskRun())) { // TODO if we remove this check, we can avoid adding 'iteration' on the 'isSame()' method
-                try {
-                    FlowWithSource flow = findFlow(execution);
-                    Task task = flow.findTaskByTaskId(message.getParentTaskRun().getTaskId());
-                    TaskRun taskRun;
-
-                    // iterative tasks
-                    if (task instanceof ForEachItem.ForEachItemExecutable forEachItem) {
-                        // For iterative tasks, we need to get the taskRun from the execution,
-                        // move it to the state of the child flow, and merge the outputs.
-                        // This is important to avoid races such as RUNNING that arrives after the first SUCCESS/FAILED.
-                        RunContext runContext = runContextFactory.of(flow, task, current.getExecution(), message.getParentTaskRun());
-                        taskRun = execution.findTaskRunByTaskRunId(message.getParentTaskRun().getId());
-                        if (taskRun.getState().getCurrent() != message.getState()) {
-                            taskRun = taskRun.withState(message.getState());
-                        }
-                        Map<String, Object> outputs = MapUtils.deepMerge(taskRun.getOutputs(), message.getParentTaskRun().getOutputs());
-                        Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
-                        taskRun = taskRun.withOutputs(variables);
-                        taskRun = ExecutableUtils.manageIterations(
-                            runContext.storage(),
-                            taskRun,
-                            current.getExecution(),
-                            forEachItem.getTransmitFailed(),
-                            forEachItem.isAllowFailure(),
-                            forEachItem.isAllowWarning()
-                        );
-                    } else {
-                        taskRun = message.getParentTaskRun();
-                    }
-
-                    Execution newExecution = current.getExecution().withTaskRun(taskRun);
-
-                    // If the worker task result is killed, we must check if it has a parents to also kill them if not already done.
-                    // Running flowable tasks that have child tasks running in the worker will be killed thanks to that.
-                    if (taskRun.getState().getCurrent() == State.Type.KILLED && taskRun.getParentTaskRunId() != null) {
-                        newExecution = executionService.killParentTaskruns(taskRun, newExecution);
-                    }
-
-                    current = current.withExecution(newExecution, "joinSubflowExecutionResult");
-
-                    // send metrics on parent taskRun terminated
-                    if (taskRun.getState().isTerminated()) {
-                        metricRegistry
-                            .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
-                            .increment();
-
-                        metricRegistry
-                            .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
-                            .record(taskRun.getState().getDuration());
-
-                        log.trace("TaskRun terminated: {}", taskRun);
-                    }
-
-                    // join worker result
-                    return current;
-                } catch (InternalException e) {
-                    return handleFailedExecutionFromExecutor(current, e);
-                }
-            }
-
-            return null;
-        });
-
-        if (executor != null) {
-            this.toExecution(executor);
-        }
+        Optional<ExecutorContext> maybeExecutor = subflowExecutionResultMessageHandler.handle(message);
+        maybeExecutor.ifPresent(this::toExecution);
     }
 
     private void subflowExecutionEndQueue(Either<SubflowExecutionEnd, DeserializationException> either) {
@@ -757,44 +415,7 @@ public class DefaultExecutor implements Executor {
             return;
         }
 
-        if (log.isDebugEnabled()) {
-            executorService.log(log, true, message);
-        }
-
-        executionStateStore.lock(message.getParentExecutionId(), execution -> {
-            if (execution == null) {
-                throw new IllegalStateException("Execution state don't exist for " + message.getParentExecutionId() + ", receive " + message);
-            }
-
-            FlowWithSource flow = findFlow(execution);
-            try {
-                ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.getTaskId());
-                if (!executableTask.waitForExecution()) {
-                    return null;
-                }
-
-                TaskRun taskRun = execution.findTaskRunByTaskRunId(message.getTaskRunId()).withState(message.getState()).withOutputs(message.getOutputs());
-                FlowInterface childFlow = flowMetaStore.findByExecution(message.getChildExecution()).orElseThrow();
-                RunContext runContext = runContextFactory.of(
-                    childFlow,
-                    (Task) executableTask,
-                    message.getChildExecution(),
-                    taskRun
-                );
-
-                SubflowExecutionResult subflowExecutionResult = ExecutableUtils.subflowExecutionResultFromChildExecution(runContext, childFlow, message.getChildExecution(), executableTask, taskRun);
-                if (subflowExecutionResult != null) {
-                    try {
-                        this.subflowExecutionResultQueue.emit(subflowExecutionResult);
-                    } catch (QueueException ex) {
-                        log.error("Unable to emit the subflow execution result", ex);
-                    }
-                }
-            } catch (InternalException e) {
-                log.error("Unable to process the subflow execution end", e);
-            }
-            return null;
-        });
+        subflowExecutionEndMessageHandler.handle(message);
     }
 
     private void multipleConditionEventQueue(Either<MultipleConditionEvent, DeserializationException> either) {
@@ -805,14 +426,7 @@ public class DefaultExecutor implements Executor {
 
         MultipleConditionEvent multipleConditionEvent = either.getLeft();
 
-        flowTriggerService.computeExecutionsFromFlowTriggerPreconditions(multipleConditionEvent.execution(), multipleConditionEvent.flow(), multipleConditionStorage)
-            .forEach(exec -> {
-                try {
-                    executionQueue.emit(exec);
-                } catch (QueueException e) {
-                    log.error("Unable to emit the execution {}", exec.getId(), e);
-                }
-            });
+        multipleConditionEventMessageHandler.handle(multipleConditionEvent);
     }
 
     private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
@@ -842,7 +456,7 @@ public class DefaultExecutor implements Executor {
         }
 
         executionDelayStateStore.processExpired(Instant.now(), executionDelay -> {
-            ExecutorContext result = executionStateStore.lock(executionDelay.getExecutionId(), execution -> {
+            Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(executionDelay.getExecutionId(), execution -> {
                 ExecutorContext executor = new ExecutorContext(execution);
 
                 metricRegistry
@@ -871,7 +485,7 @@ public class DefaultExecutor implements Executor {
                     }
                     // Handle failed task retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
-                        FlowWithSource flow = findFlow(execution);
+                        FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow();
                         Execution newAttempt = executionService.retryTask(
                             execution,
                             flow,
@@ -890,15 +504,13 @@ public class DefaultExecutor implements Executor {
                         executor = executor.withExecution(newExecution, "continueLoop");
                     }
                 } catch (Exception e) {
-                    executor = handleFailedExecutionFromExecutor(executor, e);
+                    executor = executorService.handleFailedExecutionFromExecutor(executor, e);
                 }
 
                 return executor;
             });
 
-            if (result != null) {
-                this.toExecution(result);
-            }
+            maybeExecutor.ifPresent(this::toExecution);
         });
     }
 
@@ -908,8 +520,8 @@ public class DefaultExecutor implements Executor {
         }
 
         slaMonitorStateStore.processExpired(Instant.now(), slaMonitor -> {
-            ExecutorContext result = executionStateStore.lock(slaMonitor.getExecutionId(), execution -> {
-                FlowWithSource flow = findFlow(execution);
+            Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(slaMonitor.getExecutionId(), execution -> {
+                FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow();
                 Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
                 if (sla.isEmpty()) {
                     // this can happen in case the flow has been updated and the SLA removed
@@ -940,15 +552,13 @@ public class DefaultExecutor implements Executor {
                             .increment();
                     }
                 } catch (Exception e) {
-                    executor = handleFailedExecutionFromExecutor(executor, e);
+                    executor = executorService.handleFailedExecutionFromExecutor(executor, e);
                 }
 
                 return executor;
             });
 
-            if (result != null) {
-                this.toExecution(result);
-            }
+            maybeExecutor.ifPresent(this::toExecution);
         });
     }
 
@@ -972,31 +582,6 @@ public class DefaultExecutor implements Executor {
         this.setState(ServiceState.RUNNING);
     }
 
-    private Execution fail(Execution message, Exception e) {
-        var failedExecution = message.failedExecutionFromExecutor(e);
-        try {
-            logQueue.emitAsync(failedExecution.getLogs());
-        } catch (QueueException ex) {
-            // fail silently
-        }
-        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() :  failedExecution.getExecution().withState(State.Type.FAILED);
-    }
-
-    private ExecutorContext killingOrAfterKillState(final String executionId, Optional<State.Type> afterKillState) {
-        return executionStateStore.lock(executionId, execution -> {
-            FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
-
-            // remove it from the queued store if it was queued so it would not be restarted
-            if (execution.getState().isQueued()) {
-                executionQueuedStateStore.remove(execution);
-            }
-
-            Execution killing = executionService.kill(execution, flow, afterKillState);
-            return new ExecutorContext(execution)
-                .withExecution(killing, "joinKillingExecution");
-        });
-    }
-
     private void toExecution(ExecutorContext executor) {
         toExecution(executor, false);
     }
@@ -1006,7 +591,7 @@ public class DefaultExecutor implements Executor {
             boolean shouldSend = false;
 
             if (executor.getException() != null) {
-                executor = handleFailedExecutionFromExecutor(executor, executor.getException());
+                executor = executorService.handleFailedExecutionFromExecutor(executor, executor.getException());
                 shouldSend = true;
             } else if (executor.isExecutionUpdated()) {
                 shouldSend = true;
@@ -1037,7 +622,8 @@ public class DefaultExecutor implements Executor {
             // the terminated state can come from the execution queue, in this case we always have a flow in the executor
             // or from a worker task in an afterExecution block, in this case we need to load the flow
             if (executor.getFlow() == null && executor.getExecution().getState().isTerminated()) {
-                executor = executor.withFlow(findFlow(executor.getExecution()));
+                FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(executor.getExecution()).orElseThrow();
+                executor = executor.withFlow(flow);
             }
             boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
 
@@ -1165,23 +751,6 @@ public class DefaultExecutor implements Executor {
             .map(f -> new MultipleConditionEvent(f.getFlow(), execution))
             .distinct() // we can have multiple MultipleConditionEvent if a flow contains multiple triggers as it would lead to multiple FlowWithFlowTrigger
             .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
-    }
-
-    private FlowWithSource findFlow(Execution execution) {
-        FlowInterface flow = flowMetaStore.findByExecution(execution).orElseThrow();
-        return  pluginDefaultService.injectDefaults(flow, execution);
-    }
-
-    private ExecutorContext handleFailedExecutionFromExecutor(ExecutorContext executor, Exception e) {
-        Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
-
-        try {
-            logQueue.emitAsync(failedExecutionWithLog.getLogs());
-        } catch (QueueException ex) {
-            // fail silently
-        }
-
-        return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
     }
 
     @Override

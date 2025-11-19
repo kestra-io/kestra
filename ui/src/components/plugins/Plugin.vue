@@ -19,7 +19,7 @@
                     <el-button
                         v-if="releaseNotesUrl"
                         size="small"
-                        class="release-notes-btn"
+                        class="release-notes-btn d-none d-md-inline-flex"
                         :icon="GitHub"
                         @click="openReleaseNotes"
                     >
@@ -45,6 +45,16 @@
                             :value="item"
                         />
                     </el-select>
+                    <div class="release-notes-mobile d-inline-flex d-md-none" v-if="releaseNotesUrl">
+                        <el-button
+                            size="small"
+                            class="release-notes-btn"
+                            :icon="GitHub"
+                            @click="openReleaseNotes"
+                        >
+                            {{ $t('plugins.release') }}
+                        </el-button>
+                    </div>
                 </div>
             </div>
         </template>
@@ -225,7 +235,8 @@
         align-items: center;
         justify-content: space-between;
         gap: 1rem;
-        padding: 1rem 1.5rem;
+        padding: 2rem;
+        padding-bottom: 0;
         background-color: var(--ks-background-panel);
         flex: 1;
         min-height: 64px;
@@ -233,7 +244,7 @@
         .plugin-icon {
             width: 35px;
             height: 35px;
-            margin-left: 30px;
+            flex-shrink: 0;
         }
         
         .plugin-name {
@@ -241,6 +252,8 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            flex: 1;
+            min-width: 0;
         }
         
         .release-notes-btn {
@@ -249,6 +262,7 @@
             border: 1px solid var(--ks-border-info);
             font-family: 'Courier New', Courier, monospace;
             white-space: nowrap;
+            flex-shrink: 0;
             
             :deep(.material-design-icon) {
                 position: absolute;
@@ -258,7 +272,7 @@
     }
 
     .versions {
-        min-width: 150px;
+        min-width: 180px;
     }
 
     :deep(.main-container) {
@@ -268,36 +282,55 @@
     }
     
     .plugin-doc {
-        padding: 1rem;
         background-color: var(--ks-background-panel);
     }
     
-    @media (max-width: 767px) {
+    @media (max-width: 991px) {
         .plugin-secondary-header {
             flex-wrap: wrap;
-            padding: 0.5rem;
+            padding: 0.5rem 0.75rem;
             gap: 0.5rem;
-            border-bottom: 1px solid var(--ks-border-primary);
             
             .plugin-icon {
-                width: 36px;
-                height: 36px;
-                margin-left: -10px;
+                width: 32px;
+                height: 32px;
+                margin-right: 0.5rem;
             }
             
             .plugin-name {
-                font-size: 1rem;
+                font-size: 1.25rem;
+                flex: 1;
+                min-width: 0;
             }
             
             .release-notes-btn {
                 padding: 6px 12px;
-                font-size: 0.875rem;
+                font-size: 0.75rem;
                 min-width: auto;
             }
             
             .versions {
                 width: 100%;
-                min-width: auto;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.5rem;
+            }
+
+            .versions :deep(.el-select) {
+                width: 100%;
+            }
+
+            .versions .release-notes-mobile {
+                width: 100%;
+                display: flex;
+                justify-content: flex-start;
+                margin-top: 0;
+            }
+
+            .versions .release-notes-mobile .release-notes-btn {
+                width: 100%;
+                justify-content: center;
             }
         }
         

@@ -108,9 +108,11 @@
         background-color: var(--ks-background-panel);
         display: flex;
         align-items: center;
-        gap: 1rem;
         min-height: 64px;
         flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
         
         .mobile-menu-toggle {
             display: none;
@@ -122,6 +124,7 @@
         background-color: var(--ks-background-panel);
         position: relative;
         min-height: 0;
+        overflow-y: auto;
     }
 
     .content {
@@ -304,19 +307,13 @@
         display: none;
     }
 
-    @media (max-width: 767px) {
+    @media (max-width: 991px) {
         .docs-layout-container {
             height: 100vh;
         }
         
-        .main-content-wrapper {
-            overflow: hidden;
-        }
-        
         .secondary-header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            border-bottom: 1px solid var(--ks-border-primary);
             
             .mobile-menu-toggle {
                 display: flex;
@@ -430,7 +427,7 @@
         }
     }
 
-    @media (min-width: 576px) and (max-width: 767px) {
+    @media (min-width: 576px) and (max-width: 991px) {
         .sidebar {
             width: 90vw;
             max-width: 450px;
@@ -452,17 +449,29 @@
         }
 
         .sidebar {
-            display: flex !important;
             position: sticky;
             left: auto;
+            top: 0;
+            height: auto;
             width: auto;
             box-shadow: none;
+            padding: 2rem;
+            
+            &.mobile-open {
+                left: auto;
+            }
+        }
+
+        .main-content-wrapper {
+            overflow-y: auto;
+        }
+
+        .secondary-header {
+            border-bottom: none;
         }
 
         .content {
-            margin: 0;
             padding: 1rem;
-            background-color: var(--ks-background-panel);
 
             h1 {
                 margin-bottom: 0.75rem;
@@ -471,45 +480,12 @@
     }
 
     @include media-breakpoint-up(lg) {
-        .mobile-menu-toggle {
-            display: none;
-        }
-        
-        .mobile-close-toggle {
-            display: none;
-        }
-
-        .mobile-backdrop {
-            display: none;
-        }
-
-        .sidebar {
-            display: flex !important;
-            position: sticky;
-            left: auto;
-            width: auto;
-            box-shadow: none;
-        }
-
         .content {
-            margin: 0;
-            padding: 1.25rem;
-            background-color: var(--ks-background-panel);
+            padding: 2rem;
+            padding-top: 1rem;
 
             h1 {
                 margin-bottom: 1rem;
-            }
-        }
-    }
-
-    @include media-breakpoint-up(xl) {
-        .content {
-            margin: 0;
-            padding: 1.5rem;
-            background-color: var(--ks-background-panel);
-
-            h1 {
-                margin-bottom: $spacer;
             }
         }
     }

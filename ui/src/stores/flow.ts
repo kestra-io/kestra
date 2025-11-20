@@ -16,6 +16,7 @@ import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
+import {ZERO_WIDTH_CHAR_MESSAGE, hasZeroWidthCharInIdentifiers} from "../utils/identifierValidation";
 
 const textYamlHeader = {
     headers: {
@@ -161,6 +162,13 @@ export const useFlowStore = defineStore("flow", () => {
     }) {
         const flowBeforeEdit = flow.value;
         const flowOnValidation = flowParsed.value;
+
+        if (hasZeroWidthCharInIdentifiers(flowOnValidation)) {
+            flowValidation.value = {
+                constraints: ZERO_WIDTH_CHAR_MESSAGE,
+            };
+            return flowValidation.value;
+        }
 
         if (!source.trim()?.length) {
             flowValidation.value = {

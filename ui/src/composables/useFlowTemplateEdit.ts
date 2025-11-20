@@ -11,6 +11,7 @@ import {useCoreStore} from "../stores/core"
 import {useTemplateStore} from "../stores/template"
 import {useAuthStore} from "override/stores/auth"
 import {useFlowStore} from "../stores/flow"
+import {ZERO_WIDTH_CHAR_MESSAGE, hasZeroWidthCharInIdentifiers} from "../utils/identifierValidation"
 
 type LinkType = {
     name: string
@@ -202,6 +203,10 @@ export function useFlowTemplateEdit(dataType: string, route: any, router: any, t
                 )
                 return
             }
+            if (hasZeroWidthCharInIdentifiers(parsedItem)) {
+                toast().warning(ZERO_WIDTH_CHAR_MESSAGE)
+                return
+            }
             if (isEdit.value) {
                 for (const key in readOnlyEditFields.value) {
                     if (parsedItem[key] !== readOnlyEditFields.value[key]) {
@@ -227,6 +232,10 @@ export function useFlowTemplateEdit(dataType: string, route: any, router: any, t
                     err.message,
                     t("invalid yaml")
                 )
+                return
+            }
+            if (hasZeroWidthCharInIdentifiers(parsedItem)) {
+                toast().warning(ZERO_WIDTH_CHAR_MESSAGE)
                 return
             }
             previousContent.value = YAML_UTILS.stringify(item.value)

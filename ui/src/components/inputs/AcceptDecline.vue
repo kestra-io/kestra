@@ -10,9 +10,9 @@
 </template>
 
 <script setup lang="ts">
-    import {getCurrentInstance} from "vue";
+    import {useI18n} from "vue-i18n";
 
-    const t = getCurrentInstance()!.appContext.config.globalProperties.$t;
+    const t = useI18n()!.appContext.config.globalProperties.$t;
     const emit = defineEmits<{
         accept: [];
         reject: [];

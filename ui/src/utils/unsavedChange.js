@@ -1,13 +1,11 @@
-import {useCoreStore} from "../stores/core";
-import {useFlowStore} from "../stores/flow";
+import {useUnsavedChangesStore} from "../stores/unsavedChanges";
 
 export default (app, router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
-    const coreStore = useCoreStore();
-    const flowStore = useFlowStore();
+    const unsavedChangesStore = useUnsavedChangesStore();
 
     window.addEventListener("beforeunload", (e) => {
-        if (coreStore.unsavedChange) {
+        if (unsavedChangesStore.unsavedChange) {
             (e || window.event).returnValue = confirmationMessage; //Gecko + IE
             return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
         }
@@ -32,13 +30,16 @@ export default (app, router) => {
         return JSON.stringify(filteredRouteForEquals(route1)) === JSON.stringify(filteredRouteForEquals(route2))
     }
 
-    router.beforeEach(async (to, from) => {
-        if (coreStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
-            if (confirm(confirmationMessage)) {
-                flowStore.flow = flowStore.lastSavedFlow;
-                coreStore.unsavedChange = false;
+    router.beforeEach(async (to, from, next) => {
+        if (unsavedChangesStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
+            const shouldLeave = await unsavedChangesStore.showDialog();
+            if (shouldLeave) {
+                unsavedChangesStore.unsavedChange = false;
+                next()
+                return;
             } else {
-                return false;
+                next(false);
+                return;
             }
         }
     });

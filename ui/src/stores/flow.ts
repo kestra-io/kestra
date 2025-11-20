@@ -6,6 +6,7 @@ import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
+import {useUnsavedChangesStore} from "./unsavedChanges";
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {makeToast} from "../utils/toast";
@@ -60,7 +61,6 @@ export interface Flow {
     source: string;
     revision?: number;
     deleted?: boolean;
-    disabled?: boolean;
     labels?: Record<string, string | boolean>;
     triggers?: Trigger[];
     inputs?: Input[];
@@ -98,6 +98,8 @@ export const useFlowStore = defineStore("flow", () => {
     const creationId = ref<string>();
 
     const axios = useAxios();
+
+    const unsavedChangesStore = useUnsavedChangesStore();
 
     const t = (key: string, values?: Record<string, any>) => {
         if (!globalI18n.value) {
@@ -185,9 +187,6 @@ export const useFlowStore = defineStore("flow", () => {
             }
         }
 
-        const coreStore = useCoreStore();
-        coreStore.unsavedChange = true;
-
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
         })
@@ -253,16 +252,14 @@ export const useFlowStore = defineStore("flow", () => {
             await createFlow({flow: flowSource ?? ""})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    const coreStore = useCoreStore();
-                    coreStore.unsavedChange = false;
+                    unsavedChangesStore.unsavedChange = false;
                     isCreating.value = false;
                 });
         } else {
             await saveFlow({flow: flowSource})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    const coreStore = useCoreStore();
-                    coreStore.unsavedChange = false;
+                    unsavedChangesStore.unsavedChange = false;
                 });
         }
 

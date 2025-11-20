@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.trigger;
 
+import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.property.Property;
@@ -15,6 +16,7 @@ import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.plugin.core.condition.TimeBetween;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -24,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.OffsetTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -503,5 +506,66 @@ class ScheduleTest {
 
     private ZonedDateTime dateFromVars(String date, ZonedDateTime expexted) {
         return ZonedDateTime.parse(date).withZoneSameInstant(expexted.getZone());
+    }
+    
+    @Test
+    void shouldGetNextExecutionDateWithConditionMatchingFutureDate() throws InternalException {
+        
+        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
+        OffsetTime before = now.minusHours(1).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
+        OffsetTime after = now.minusHours(4).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
+        
+        Schedule trigger = Schedule.builder()
+            .id("schedule").type(Schedule.class.getName())
+            .cron("0 * * * *") // every hour
+            .withSeconds(false)
+            .timezone("Europe/Paris")
+            .conditions(List.of(TimeBetween.builder()
+                .type(TimeBetween.class.getName())
+                .before(Property.ofValue(before))
+                .after(Property.ofValue(after))
+                .build()
+            ))
+            .build();
+        
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
+        
+        ConditionContext conditionContext = ConditionContext.builder()
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
+            .build();
+        
+        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
+        assertThat(result).isNotEmpty();
+    }
+    
+    @Test
+    void shouldGetNextExecutionDateWithConditionMatchingCurrentDate() throws InternalException {
+        
+        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
+
+        OffsetTime before = now.plusHours(2).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
+        OffsetTime after = now.minusHours(2).toOffsetDateTime().toOffsetTime().withMinute(0).withSecond(0).withNano(0);
+        
+        Schedule trigger = Schedule.builder()
+            .id("schedule").type(Schedule.class.getName())
+            .cron("*/30 * * * * *")
+            .withSeconds(true)
+            .timezone("Europe/Paris")
+            .conditions(List.of(TimeBetween.builder()
+                .type(TimeBetween.class.getName())
+                .before(Property.ofValue(before))
+                .after(Property.ofValue(after))
+                .build()
+            ))
+            .build();
+        
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
+        
+        ConditionContext conditionContext = ConditionContext.builder()
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
+            .build();
+        
+        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
+        assertThat(result).isNotEmpty();
     }
 }

@@ -4,6 +4,7 @@ import com.cronutils.model.Cron;
 import com.cronutils.model.definition.CronDefinitionBuilder;
 import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -505,7 +506,8 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         ));
     }
 
-    private synchronized ExecutionTime executionTime() {
+    @VisibleForTesting
+    synchronized ExecutionTime executionTime() {
         if (this.executionTime == null) {
             Cron parsed = parseCron();
             this.executionTime = ExecutionTime.forCron(parsed);
@@ -543,11 +545,13 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         return outputBuilder.build();
     }
 
-    private Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime toTestDate, boolean next) throws InternalException {
-        while (
-            (next && toTestDate.getYear() < ZonedDateTime.now().getYear() + 10) ||
-                (!next && toTestDate.getYear() > ZonedDateTime.now().getYear() - 10)
-        ) {
+    @VisibleForTesting
+    Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime toTestDate, boolean next) throws InternalException {
+        int upperYearBound = ZonedDateTime.now().getYear() + 10;
+        int lowerYearBound = ZonedDateTime.now().getYear() - 10;
+        
+        while ((next && toTestDate.getYear() < upperYearBound) || (!next && toTestDate.getYear() > lowerYearBound)) {
+            
             Optional<ZonedDateTime> currentDate = next ?
                 executionTime.nextExecution(toTestDate) :
                 executionTime.lastExecution(toTestDate);

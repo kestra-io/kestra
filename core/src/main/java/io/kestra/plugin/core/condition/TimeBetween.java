@@ -79,20 +79,30 @@ public class TimeBetween extends Condition implements ScheduleCondition {
         RunContext runContext = conditionContext.getRunContext();
         Map<String, Object> variables = conditionContext.getVariables();
 
-        String dateRendered = runContext.render(date).as(String.class, variables).orElseThrow();
+        // cache must be skipped for date rendering as the value can change for each test
+        String dateRendered = runContext.render(date).skipCache().as(String.class, variables).orElseThrow();
         OffsetTime currentDate = DateUtils.parseZonedDateTime(dateRendered).toOffsetDateTime().toOffsetTime();
 
         OffsetTime beforeRendered = runContext.render(before).as(OffsetTime.class, variables).orElse(null);
         OffsetTime afterRendered = runContext.render(after).as(OffsetTime.class, variables).orElse(null);
-
+        
         if (beforeRendered != null && afterRendered != null) {
-            return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);
+            // Case 1: Normal range (e.g., 16:00 -> 20:00)
+            if (afterRendered.isBefore(beforeRendered)) {
+                return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);
+            // Case 2: Cross-midnight range (e.g., 22:00 -> 02:00)
+            } else {
+                return currentDate.isAfter(afterRendered) || currentDate.isBefore(beforeRendered);
+            }
+            
         } else if (beforeRendered != null) {
             return currentDate.isBefore(beforeRendered);
+            
         } else if (afterRendered != null) {
             return currentDate.isAfter(afterRendered);
+            
         } else {
-            throw new IllegalConditionEvaluation("Invalid condition with no before nor after");
+            throw new IllegalConditionEvaluation("Invalid condition: no 'before' or 'after' value defined");
         }
     }
 }

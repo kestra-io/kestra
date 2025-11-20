@@ -16,11 +16,11 @@
     </div>
 </template>
 
-<script>
-    import {computed, defineComponent, ref, getCurrentInstance} from "vue";
+<script setup lang="ts">
+    import {computed, ref} from "vue";
     import {Bar} from "vue-chartjs";
+    import moment from "moment";
     import {useMiscStore} from "override/stores/misc";
-    import Utils from "../../utils/utils";
     import {
         defaultConfig,
         tooltip,
@@ -28,102 +28,88 @@
     } from "../dashboard/composables/charts";
     import * as Logs from "../../utils/logs";
 
-    export default defineComponent({
-        components: {Bar},
-        props: {
-            data: {
-                type: Array,
-                required: true
-            },
-            namespace: {
-                type: String,
-                required: false,
-                default: undefined
-            },
-            flowId: {
-                type: String,
-                required: false,
-                default: undefined
-            },
-        },
-        setup(props) {
-            const moment = getCurrentInstance().appContext.config.globalProperties.$moment;
-            const chartRef = ref();
-            const tooltipContent = ref("");
-            const dataReady = computed(() => props.data.length > 0)
+    interface LogData {
+        timestamp: string;
+        groupBy: string;
+        counts: Record<string, number>;
+    }
 
-            const miscStore = useMiscStore();
+    const props = withDefaults(defineProps<{
+        data: LogData[];
+        namespace?: string;
+        flowId?: string;
+    }>(), {
+        namespace: undefined,
+        flowId: undefined
+    });
 
-            const options = computed(() => defaultConfig({
-                plugins: {
-                    tooltip: {
-                        external: function (context) {
-                            let content = tooltip(context.tooltip);
-                            tooltipContent.value = content;
-                        },
-                        callbacks: {
-                            label: function (context) {
-                                if (context.formattedValue !== "0") {
-                                    return context.dataset.label + ": " + context.formattedValue
-                                }
-                            }
-                        },
-                        filter: (e) => {
-                            return e.raw > 0;
-                        },
-                    },
+    const chartRef = ref();
+    const tooltipContent = ref("");
+    const miscStore = useMiscStore();
+    
+    const dataReady = computed(() => props.data?.length > 0);
+
+    const options = computed(() => defaultConfig({
+        plugins: {
+            tooltip: {
+                external: function (context: any) {
+                    let content = tooltip(context.tooltip);
+                    tooltipContent.value = content ?? "";
                 },
-                scales: {
-                    x: {
-                        stacked: true,
-                    },
-                    y: {
-                        display: false,
-                        position: "left",
-                        stacked: true,
-                    },
-                    yB: {
-                        display: false,
-                        position: "right",
+                callbacks: {
+                    label: function (context: any) {
+                        if (context.formattedValue !== "0") {
+                            return context.dataset.label + ": " + context.formattedValue
+                        }
                     }
                 },
-            }, miscStore.theme));
-
-            const chartData = computed(() => {
-                let datasets = props.data
-                    .reduce(function (accumulator, value) {
-                        Object.keys(value.counts).forEach(function (state) {
-                            if (accumulator[state] === undefined) {
-                                accumulator[state] = {
-                                    label: state,
-                                    backgroundColor: Logs.chartColorFromLevel(state),
-                                    borderRadius: 4,
-                                    yAxisID: "y",
-                                    data: []
-                                };
-                            }
-
-                            accumulator[state].data.push(value.counts[state]);
-                        });
-
-                        return accumulator;
-                    }, Object.create(null))
-
-                datasets = Logs.sort(datasets);
-
-                return {
-                    labels: props.data.map(r => moment(r.timestamp).format(getFormat(r.groupBy))),
-                    datasets: Object.values(datasets)
-                }
-            })
-
-            return {chartData, tooltipContent, chartRef, options, dataReady};
+                filter: (e: any) => {
+                    return e.raw > 0;
+                },
+            },
         },
-        data() {
-            return {
-                uuid: Utils.uid(),
-            };
+        scales: {
+            x: {
+                stacked: true,
+            },
+            y: {
+                display: false,
+                position: "left",
+                stacked: true,
+            },
+            yB: {
+                display: false,
+                position: "right",
+            }
         },
+    }, miscStore.theme) as any);
+
+    const chartData = computed(() => {
+        let datasets = props.data
+            .reduce(function (accumulator: Record<string, any>, value: LogData) {
+                Object.keys(value.counts).forEach(function (state: string) {
+                    if (accumulator[state] === undefined) {
+                        accumulator[state] = {
+                            label: state,
+                            backgroundColor: Logs.chartColorFromLevel(state),
+                            borderRadius: 4,
+                            yAxisID: "y",
+                            data: []
+                        };
+                    }
+
+                    accumulator[state].data.push(value.counts[state]);
+                });
+
+                return accumulator;
+            }, Object.create(null))
+
+        datasets = Logs.sort(datasets);
+
+        return {
+            labels: props.data.map((r: LogData) => moment(r.timestamp).format(getFormat(r.groupBy))),
+            datasets: Object.values(datasets)
+        }
     });
 </script>
 

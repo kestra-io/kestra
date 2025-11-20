@@ -20,10 +20,8 @@ interface Message {
 }
 
 export const useCoreStore = defineStore("core", () => {
-
     const message = ref<Message>()
     const error = ref<any>()
-    const unsavedChange = ref(false)
     const guidedProperties = ref<GuidedProperties>({
         tourStarted: false,
         manuallyContinue: false,
@@ -43,7 +41,6 @@ export const useCoreStore = defineStore("core", () => {
     return {
         message,
         error,
-        unsavedChange,
         guidedProperties,
         monacoYamlConfigured,
         tutorialFlows,

@@ -483,6 +483,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
     public Publisher<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -496,6 +497,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
     public Publisher<HttpResponse<?>> triggerExecutionByGetWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -509,6 +511,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
     public Publisher<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -1353,6 +1356,10 @@ public class ExecutionController {
 
         var execution = maybeExecution.get();
 
+        return killExecution(execution, isOnKillCascade);
+    }
+
+    protected MutableHttpResponse<Object> killExecution(Execution execution, Boolean isOnKillCascade) throws QueueException {
         // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
         if (execution.getState().isTerminated() && !isOnKillCascade) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
@@ -1362,7 +1369,7 @@ public class ExecutionController {
         killQueue.emit(ExecutionKilledExecution
             .builder()
             .state(ExecutionKilled.State.REQUESTED)
-            .executionId(executionId)
+            .executionId(execution.getId())
             .isOnKillCascade(isOnKillCascade)
             .tenantId(tenantService.resolveTenant())
             .build()
@@ -1395,6 +1402,14 @@ public class ExecutionController {
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
                     "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (!validateExecutionACL(execution.get())) {
+                invalids.add(ManualConstraintViolation.of(
+                    "user don't have the authorisation to kill this execution",
                     executionId,
                     String.class,
                     "execution",
@@ -1545,6 +1560,14 @@ public class ExecutionController {
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
                     "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (!validateExecutionACL(execution.get())) {
+                invalids.add(ManualConstraintViolation.of(
+                    "user don't have the authorisation to resume this execution",
                     executionId,
                     String.class,
                     "execution",
@@ -2299,6 +2322,14 @@ public class ExecutionController {
                     "execution",
                     executionId
                 ));
+            } else if (!validateExecutionACL(execution.get())) {
+                invalids.add(ManualConstraintViolation.of(
+                    "user don't have the authorisation to force run this execution",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
             } else {
                 executions.add(execution.get());
             }
@@ -2587,6 +2618,15 @@ public class ExecutionController {
                 )).toList()
             );
         }
+    }
+
+    /**
+     * For override purpose.
+     * @param execution
+     * @return true if the user has the authorization, false else.
+     */
+    protected boolean validateExecutionACL(Execution execution) {
+        return true;
     }
 
 }

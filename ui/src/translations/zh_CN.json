@@ -560,6 +560,10 @@
         "text": "请按照快速入门指南安装Kestra并开始构建您的第一个工作流。",
         "title": "开始使用 ⚡"
       },
+      "namespaces": {
+        "text": "namespace 是 flow 及其组件的逻辑分组。",
+        "title": "关于Namespaces"
+      },
       "videos_tutorials": {
         "text": "开始观看我们的视频教程。",
         "title": "视频教程"
@@ -1047,6 +1051,7 @@
     "last trigger date tooltip": "触发器上次执行的时间。在运行backfill时可能是过去的时间。",
     "launch execution": "执行",
     "learn_more": "了解更多",
+    "leave page": "离开页面",
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
     "line-by-line": "逐行",
@@ -1178,6 +1183,8 @@
     "no-executions-view": {
       "guidance_desc": "需要指导来执行您的flow吗？",
       "guidance_sub_desc": "请查阅文档以获取您所需的所有信息。",
+      "namespace_guidance_desc": "需要指导来管理您的Namespace吗？",
+      "namespace_sub_title": "从此namespace执行一个或多个flow以填充此仪表板。",
       "sub_title": "单击Execute按钮以开始您的第一个工作流执行。",
       "title": "开始自动化使用"
     },
@@ -1786,6 +1793,8 @@
     "unqueue title": "取消执行 <code>{id}</code>。<br/>请注意，它将不遵循 flow 并发限制，因此可能会有超过允许限制的执行正在运行。",
     "unqueue title multiple": "您确定要取消排队 <code>{count}</code> 个执行吗？<br/><br/>请注意，这将不遵循flow的并发限制，因此可能会有超过允许限制的执行正在运行。",
     "unsaved changed ?": "你有未保存的更改，是否要离开此页面？",
+    "unsaved changes": "未保存的更改",
+    "unsaved changes warning": "您有未保存的更改。如果您离开此页面，您的更改将会丢失。",
     "up trend": "增加",
     "update": "更新",
     "update aborted": "更新中止",

@@ -8,11 +8,11 @@ import {useValues} from "../composables/useValues";
 import {useI18n} from "vue-i18n";
 import {useRoute} from "vue-router";
 
-export const useFlowFilter = (): ComputedRef<FilterConfiguration> => computed(() => {
+export const useFlowFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n();
     const route = useRoute();
 
-    return {
+    return computed(() => ({
         title: t("filter.titles.flow_filters"),
         searchPlaceholder: t("filter.search_placeholders.search_flows"),
         keys: [
@@ -69,5 +69,5 @@ export const useFlowFilter = (): ComputedRef<FilterConfiguration> => computed(()
                 valueType: "text",
             },
         ]
-    };
-});
+    }));
+};

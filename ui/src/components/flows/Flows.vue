@@ -274,7 +274,6 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
     import DataTable from "../layout/DataTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    //@ts-expect-error no declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";

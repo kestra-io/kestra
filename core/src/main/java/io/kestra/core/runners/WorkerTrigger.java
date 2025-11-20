@@ -3,7 +3,7 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.TriggerContext;
 import lombok.Builder;
 import lombok.Data;
 
@@ -22,7 +22,7 @@ public class WorkerTrigger extends WorkerJob {
     private AbstractTrigger trigger;
 
     @NotNull
-    private Trigger triggerContext;
+    private TriggerContext triggerContext;
 
     @NotNull
     private ConditionContext conditionContext;

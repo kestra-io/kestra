@@ -61,7 +61,7 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
         List<TriggerState> triggers = this.triggerStateStore.findTriggersEligibleForScheduling(now, assignments, false);
         
         return triggers.stream()
-            .filter(triggerState -> !triggerState.getDisabled())
+            .filter(triggerState -> !triggerState.isDisabled())
             .map(triggerState -> {
                 Optional<FlowWithSource> maybeFlowTrigger = flowMetaStore.find(FlowId.of(
                     triggerState.getTenantId(),
@@ -109,13 +109,15 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                         return null;
                     }
                 }
+                ZonedDateTime contextualDate = Optional.ofNullable(triggerState.getNextEvaluationDate())
+                    .map(instant -> instant.atZone(clock.getZone()))
+                    .orElseGet(() ->  now.truncatedTo(ChronoUnit.SECONDS));
                 return new TriggerEvaluationContext(
                     flow,
                     trigger,
                     triggerState,
                     conditionContext.withVariables(
-                        Map.of("trigger", Map.of("date", triggerState.getNextEvaluationDate() != null ?
-                            triggerState.getNextEvaluationDate() : now.truncatedTo(ChronoUnit.SECONDS)))
+                        Map.of("trigger", Map.of("date", contextualDate))
                     )
                 );
             })

@@ -9,7 +9,7 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.plugin.core.flow.Dag;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -24,11 +24,11 @@ public class GraphUtils {
         return GraphUtils.flowGraph(flow, execution, null);
     }
 
-    public static FlowGraph flowGraph(Flow flow, Execution execution, List<Trigger> triggers) throws IllegalVariableEvaluationException {
+    public static FlowGraph flowGraph(Flow flow, Execution execution, List<TriggerState> triggers) throws IllegalVariableEvaluationException {
         return FlowGraph.of(GraphUtils.of(flow, execution, triggers));
     }
 
-    public static GraphCluster of(GraphCluster graph, Flow flow, Execution execution, List<Trigger> triggers) throws IllegalVariableEvaluationException {
+    public static GraphCluster of(GraphCluster graph, Flow flow, Execution execution, List<TriggerState> triggers) throws IllegalVariableEvaluationException {
         if (graph == null) {
             graph = new GraphCluster();
         }
@@ -55,19 +55,19 @@ public class GraphUtils {
         return GraphUtils.of(flow, execution, null);
     }
 
-    public static GraphCluster of(Flow flow, Execution execution, List<Trigger> triggers) throws IllegalVariableEvaluationException {
+    public static GraphCluster of(Flow flow, Execution execution, List<TriggerState> triggers) throws IllegalVariableEvaluationException {
         return GraphUtils.of(new GraphCluster(), flow, execution, triggers);
     }
 
-    public static GraphCluster triggers(GraphCluster graph, List<AbstractTrigger> triggersDeclarations, List<Trigger> triggers) throws IllegalVariableEvaluationException {
+    public static GraphCluster triggers(GraphCluster graph, List<AbstractTrigger> triggersDeclarations, List<TriggerState> triggers) throws IllegalVariableEvaluationException {
         GraphCluster triggerCluster = new GraphCluster("Triggers");
 
         graph.addNode(triggerCluster);
 
-        Map<String, Trigger> triggersById = Optional.ofNullable(triggers)
+        Map<String, TriggerState> triggersById = Optional.ofNullable(triggers)
             .map(Collection::stream)
             .map(s -> s.collect(Collectors.toMap(
-                Trigger::getTriggerId,
+                TriggerState::getTriggerId,
                 Function.identity(),
                 (a, b) -> a.getNamespace().length() <= b.getNamespace().length() ? a : b
             )))

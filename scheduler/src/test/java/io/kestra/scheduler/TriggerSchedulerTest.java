@@ -104,7 +104,7 @@ class TriggerSchedulerTest {
         // THEN
         TriggerState state = triggerStateStore.find(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
-        assertThat(state.getLocked()).isFalse();
+        assertThat(state.isLocked()).isFalse();
         assertThat(state.getEvaluatedAt()).isNull();
     }
     
@@ -124,9 +124,9 @@ class TriggerSchedulerTest {
         TriggerState state = triggerStateStore.find(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
         
-        assertThat(state.getLocked()).isTrue();
-        assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now());
-        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(15));
+        assertThat(state.isLocked()).isTrue();
+        assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now().toInstant());
+        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(15).toInstant());
         
         // Check that an execution was created
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
@@ -159,9 +159,9 @@ class TriggerSchedulerTest {
         TriggerState state = triggerStateStore.find(Fixtures.triggerId("polling")).orElse(null);
         assertThat(state).isNotNull();
         
-        assertThat(state.getLocked()).isTrue();
-        assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now());
-        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(30));
+        assertThat(state.isLocked()).isTrue();
+        assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now().toInstant());
+        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(30).toInstant());
     }
     
     @Test
@@ -185,9 +185,9 @@ class TriggerSchedulerTest {
         TriggerState state = triggerStateStore.find(Fixtures.triggerId("polling")).orElse(null);
         assertThat(state).isNotNull();
         
-        assertThat(state.getLocked()).isFalse();
-        assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now());
-        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now());
+        assertThat(state.isLocked()).isFalse();
+        assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now().toInstant());
+        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().toInstant());
     }
     
     @Test
@@ -209,9 +209,9 @@ class TriggerSchedulerTest {
         TriggerState state = triggerStateStore.find(Fixtures.triggerId("realtime")).orElse(null);
         assertThat(state).isNotNull();
         
-        assertThat(state.getLocked()).isTrue();
-        assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now());
-        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now());
+        assertThat(state.isLocked()).isTrue();
+        assertThat(state.getEvaluatedAt()).isEqualTo(SchedulerClock.now().toInstant());
+        assertThat(state.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().toInstant());
     }
     
     @Test
@@ -335,9 +335,9 @@ class TriggerSchedulerTest {
             
             // [1-4 Calls] onSchedule 
             if (i < 4) {
-                assertThat(currentTriggerState.getLocked()).isTrue();
+                assertThat(currentTriggerState.isLocked()).isTrue();
                 assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
-                assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(ZonedDateTime.ofInstant(initialSchedulerClock.instant().plus(Duration.ofMinutes(15L * (i + 1))), initialSchedulerClock.getZone()));
+                assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(initialSchedulerClock.instant().plus(Duration.ofMinutes(15L * (i + 1))));
                 
                 // Check an execution was created
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);
@@ -356,7 +356,7 @@ class TriggerSchedulerTest {
             // [5 Call] onSchedule 
             else 
             {
-                assertThat(currentTriggerState.getLocked()).isFalse();
+                assertThat(currentTriggerState.isLocked()).isFalse();
                 
                 // Check no execution was created
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
@@ -396,8 +396,8 @@ class TriggerSchedulerTest {
             
             // [1st Call] onSchedule 
             if (i == 0) {
-                assertThat(currentTriggerState.getLocked()).isTrue();
-                assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(expectedNextEvaluationNDate.minusMinutes(15));
+                assertThat(currentTriggerState.isLocked()).isTrue();
+                assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(expectedNextEvaluationNDate.minusMinutes(15).toInstant());
                 assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
                 assertThat(expectedNextEvaluationNDate);
                 
@@ -418,8 +418,8 @@ class TriggerSchedulerTest {
             // [2nd Call] onSchedule 
             else 
             {
-                assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(expectedNextEvaluationNDate);
-                assertThat(currentTriggerState.getLocked()).isFalse();
+                assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(expectedNextEvaluationNDate.toInstant());
+                assertThat(currentTriggerState.isLocked()).isFalse();
                 
                 // Assert NO execution
                 assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
@@ -460,8 +460,8 @@ class TriggerSchedulerTest {
         assertThat(currentTriggerState).isNotNull();
         
         assertThat(currentTriggerState.getEvaluatedAt()).isEqualTo(initialState.getEvaluatedAt());
-        assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(expectedNextEvaluationNDate);
-        assertThat(currentTriggerState.getLocked()).isFalse();
+        assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(expectedNextEvaluationNDate.toInstant());
+        assertThat(currentTriggerState.isLocked()).isFalse();
         
         // Assert NO execution
         assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(0);
@@ -490,7 +490,7 @@ class TriggerSchedulerTest {
         TriggerState state = triggerStateStore.find(Fixtures.triggerId()).orElse(null);
         assertThat(state).isNotNull();
         
-        assertThat(state.getLocked()).isFalse();
+        assertThat(state.isLocked()).isFalse();
         assertThat(state.getUpdatedAt()).isEqualTo(initialState.getUpdatedAt());
         
         // Check NO execution was created
@@ -511,7 +511,7 @@ class TriggerSchedulerTest {
         
         TriggerState triggerState = triggerStateStore.find(Fixtures.triggerId()).orElse(null);
         assertThat(triggerState).isNotNull();
-        assertThat(triggerState.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(15));
+        assertThat(triggerState.getNextEvaluationDate()).isEqualTo(SchedulerClock.now().plusMinutes(15).toInstant());
         
         // endregion [GIVEN]
         
@@ -532,9 +532,9 @@ class TriggerSchedulerTest {
             // Assertions on TriggerState
             TriggerState currentTriggerState = triggerStateStore.find(Fixtures.triggerId()).orElse(null);
             assertThat(currentTriggerState).isNotNull();
-            assertThat(currentTriggerState.getLocked()).isTrue();
+            assertThat(currentTriggerState.isLocked()).isTrue();
             assertThat(currentTriggerState.getUpdatedAt()).isEqualTo(SchedulerClock.now().toInstant());
-            assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(backfillStart.plus(Duration.ofMinutes(15L * (i + 1))));
+            assertThat(currentTriggerState.getNextEvaluationDate()).isEqualTo(backfillStart.plus(Duration.ofMinutes(15L * (i + 1))).toInstant());
             
             // Check an execution was created
             assertThat(triggerExecutionPublisher.executions().size()).isEqualTo(1);

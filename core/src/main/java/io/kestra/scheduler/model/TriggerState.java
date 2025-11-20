@@ -1,5 +1,6 @@
 package io.kestra.scheduler.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.State;
@@ -7,7 +8,9 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.scheduler.SchedulerClock;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -15,6 +18,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Immutable class representing the state of a trigger.
@@ -22,19 +26,28 @@ import java.util.List;
 @Getter
 @EqualsAndHashCode
 @AllArgsConstructor
+@Builder
 public final class TriggerState implements TriggerId {
     private final String tenantId;
     private final String namespace;
     private final String flowId;
     private final String triggerId;
     private final Instant updatedAt;
-    private final ZonedDateTime evaluatedAt;
-    private final ZonedDateTime nextEvaluationDate;
+    private final Instant evaluatedAt;
+    private final Instant nextEvaluationDate;
     private final Backfill backfill;
     private final List<State.Type> stopAfter;
-    private final Boolean disabled;
-    private final Integer vnode;
-    private final Boolean locked;
+    private final boolean disabled;
+    private final int vnode;
+    private final boolean locked;
+    private final String workerId;
+    
+    @JsonProperty
+    public Long getNextEvaluationEpoch() {
+        return Optional.ofNullable(nextEvaluationDate)
+            .map(Instant::toEpochMilli)
+            .orElse(null);
+    }
     
     public TriggerContext context() {
         return TriggerContext.builder()
@@ -42,10 +55,10 @@ public final class TriggerState implements TriggerId {
             .namespace(namespace)
             .flowId(flowId)
             .triggerId(triggerId)
-            .date(evaluatedAt)
+            .date(toZonedDateTime(evaluatedAt))
+            .nextExecutionDate(toZonedDateTime(nextEvaluationDate))
             .stopAfter(stopAfter)
             .disabled(disabled)
-            .nextExecutionDate(nextEvaluationDate)
             .build();
     }
     
@@ -76,25 +89,19 @@ public final class TriggerState implements TriggerId {
             stopAfter,
             disabled,
             vnode,
-            false
+            false,
+            null
         );
     }
     
+    /**
+     * Updates this trigger state based on the trigger.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
     public TriggerState update(Clock clock, AbstractTrigger trigger) {
-        return new TriggerState(
-            tenantId,
-            namespace,
-            flowId,
-            triggerId,
-            clock.instant(),
-            evaluatedAt,
-            nextEvaluationDate,
-            backfill,
-            trigger.getStopAfter(),
-            trigger.isDisabled(),
-            vnode,
-            locked
-        );
+        return update(clock).stopAfter(trigger.getStopAfter()).disabled(trigger.isDisabled()).build();
     }
     
     /**
@@ -104,20 +111,17 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public TriggerState vNode(final Clock clock, final int vnode) {
-        return new TriggerState(
-            tenantId,
-            namespace,
-            flowId,
-            triggerId,
-            clock.instant(),
-            evaluatedAt,
-            nextEvaluationDate,
-            backfill,
-            stopAfter,
-            disabled,
-            vnode,
-            locked
-        );
+        return update(clock).vnode(vnode).build();
+    }
+
+    /**
+     * Updates this trigger state with the given {@literal evaluatedAt}.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState evaluatedAt(final Clock clock, final ZonedDateTime evaluatedAt) {
+        return evaluatedAt(clock, evaluatedAt.toInstant());
     }
     
     /**
@@ -126,55 +130,49 @@ public final class TriggerState implements TriggerId {
      * @param clock the scheduler clock.
      * @return a new {@link TriggerState}
      */
-    public TriggerState evaluatedAt(final Clock clock, final ZonedDateTime evaluatedAt) {
-        return new TriggerState(
-            tenantId,
-            namespace,
-            flowId,
-            triggerId,
-            clock.instant(),
-            evaluatedAt,
-            nextEvaluationDate,
-            backfill,
-            stopAfter,
-            disabled,
-            vnode,
-            locked
-        );
+    public TriggerState evaluatedAt(final Clock clock, final Instant evaluatedAt) {
+        return update(clock).evaluatedAt(evaluatedAt).build();
     }
     
+    /**
+     * Disabled this trigger state.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
     public TriggerState disabled(final Clock clock, boolean disabled) {
-        return new TriggerState(
-            tenantId,
-            namespace,
-            flowId,
-            triggerId,
-            clock.instant(),
-            evaluatedAt,
-            nextEvaluationDate,
-            backfill,
-            stopAfter,
-            disabled,
-            vnode,
-            locked
-        );
+        return update(clock).disabled(disabled).build();
     }
     
+    /**
+     * Attaches a worker-id to this trigger state.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState workerId(final Clock clock, String workerId) {
+        return update(clock).workerId(workerId).build();
+    }
+    
+    /**
+     * Locks this trigger state.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
     public TriggerState locked(final Clock clock, boolean locked) {
-        return new TriggerState(
-            tenantId,
-            namespace,
-            flowId,
-            triggerId,
-            clock.instant(),
-            evaluatedAt,
-            nextEvaluationDate,
-            backfill,
-            stopAfter,
-            disabled,
-            vnode,
-            locked
-        );
+        return update(clock).locked(locked).build();
+    }
+
+    /**
+     * Updates this trigger state for the given  {@code nextEvaluationDate}.
+     *
+     * @param clock              the scheduler clock.
+     * @param nextEvaluationDate the next evaluation date.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState updateForNextEvaluationDate(final Clock clock, final ZonedDateTime nextEvaluationDate) {
+        return updateForNextEvaluationDate(clock, nextEvaluationDate.toInstant());
     }
     
     /**
@@ -184,21 +182,11 @@ public final class TriggerState implements TriggerId {
      * @param nextEvaluationDate the next evaluation date.
      * @return a new {@link TriggerState}
      */
-    public TriggerState updateForNextEvaluationDate(final Clock clock, final ZonedDateTime nextEvaluationDate) {
-        return new TriggerState(
-            tenantId,
-            namespace,
-            flowId,
-            triggerId,
-            clock.instant(),
-            evaluatedAt,
-            nextEvaluationDate,
-            getBackFillForNextEvaluationDate(nextEvaluationDate),
-            stopAfter,
-            disabled,
-            vnode,
-            locked
-        );
+    public TriggerState updateForNextEvaluationDate(final Clock clock, final Instant nextEvaluationDate) {
+        return update(clock)
+            .nextEvaluationDate(nextEvaluationDate)
+            .backfill(getBackFillForNextEvaluationDate(nextEvaluationDate))
+            .build();
     }
     
     /**
@@ -214,23 +202,10 @@ public final class TriggerState implements TriggerId {
                 .toBuilder()
                 .end(backfill.getEnd() != null ? backfill.getEnd() : ZonedDateTime.now(clock))
                 .currentDate(backfill.getStart())
-                .previousNextExecutionDate(nextEvaluationDate)
+                .previousNextExecutionDate(toZonedDateTime(nextEvaluationDate))
                 .build();
         }
-        return new TriggerState(
-            tenantId,
-            namespace,
-            flowId,
-            triggerId,
-            clock.instant(),
-            evaluatedAt,
-            nextEvaluationDate,
-            backfill,
-            stopAfter,
-            disabled,
-            vnode,
-            locked
-        );
+        return update(clock).backfill(backfill).build();
     }
     
     /**
@@ -253,49 +228,71 @@ public final class TriggerState implements TriggerId {
      */
     public TriggerState updateForExecutionState(final Clock clock, final State.Type state) {
         // switch disabled automatically if the executionEndState is one of the stopAfter states
-        Boolean disabled = getStopAfter() != null ? getStopAfter().contains(state) : getDisabled();
+        boolean disabled = getStopAfter() != null ? getStopAfter().contains(state) : isDisabled();
         
-        return new TriggerState(
-            tenantId,
-            namespace,
-            flowId,
-            triggerId,
-            clock.instant(),
-            evaluatedAt,
-            nextEvaluationDate,
-            backfill,
-            stopAfter,
-            disabled,
-            vnode,
-            locked
-        );
+        return update(clock).disabled(disabled).build();
     }
     
-    private Backfill getBackFillForNextEvaluationDate(final ZonedDateTime nextEvaluationDate) {
+    /**
+     * Resets this trigger state.
+     *
+     * @param clock the scheduler clock.
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState reset(Clock clock) {
+        return update(clock)
+            .nextEvaluationDate(null)
+            .locked(false)
+            .workerId(null)
+            .build();
+    }
+    
+    /**
+     * Sets the tenant of this trigger state.
+     *
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState tenantId(String tenantId) {
+        return update(null)
+            .tenantId(tenantId)
+            .build();
+    }
+    
+    private Backfill getBackFillForNextEvaluationDate(final Instant nextEvaluationDate) {
+        final ZonedDateTime localNextEvaluationDate = toZonedDateTime(nextEvaluationDate);
         if (backfill != null && !backfill.getPaused()) {
-            if (nextEvaluationDate.isAfter(backfill.getEnd())) {
+            if (localNextEvaluationDate.isAfter(backfill.getEnd())) {
                 return null;
             } else {
-                return backfill.toBuilder().currentDate(nextEvaluationDate).build();
+                return backfill.toBuilder().currentDate(localNextEvaluationDate).build();
             }
         }
         return backfill;
     }
+
+
+    private static ZonedDateTime toZonedDateTime(Instant instant) {
+        return Optional.ofNullable(instant).map(it -> it.atZone(SchedulerClock.getClock().getZone())).orElse(null);
+    }
     
-    public TriggerState reset(Clock clock) {
-        return new TriggerState(
-            tenantId,
-            namespace,
-            flowId,
-            triggerId,
-            clock.instant(),
-            evaluatedAt,
-            null,
-            backfill,
-            stopAfter,
-            disabled,
-            vnode,
-            false
-        );
+    private TriggerStateBuilder update(final Clock clock) {
+        return TriggerState.builder()
+            .tenantId(tenantId)
+            .namespace(namespace)
+            .flowId(flowId)
+            .triggerId(triggerId)
+            .updatedAt(clock != null ? clock.instant() : updatedAt)
+            .evaluatedAt(evaluatedAt)
+            .nextEvaluationDate(nextEvaluationDate)
+            .backfill(backfill)
+            .stopAfter(stopAfter)
+            .locked(locked)
+            .workerId(workerId)
+            .vnode(vnode)
+            .disabled(disabled);
+    }
+
+    // Lombok hack to properly generate Javadoc
+    public static class TriggerStateBuilder {
     }
 }

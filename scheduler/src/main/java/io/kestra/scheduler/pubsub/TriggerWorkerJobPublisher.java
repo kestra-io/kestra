@@ -5,7 +5,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
@@ -14,7 +14,6 @@ import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.services.LogService;
 import io.kestra.core.services.WorkerGroupService;
-import io.kestra.scheduler.model.TriggerState;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -57,19 +56,7 @@ public class TriggerWorkerJobPublisher {
         WorkerTrigger workerTrigger = WorkerTrigger
             .builder()
             .trigger(trigger)
-            .triggerContext(
-                // TODO - could be probably replace by the TriggerContext
-                Trigger.builder()
-                    .tenantId(triggerState.getTenantId())
-                    .namespace(triggerState.getNamespace())
-                    .flowId(triggerState.getFlowId())
-                    .triggerId(triggerState.getTriggerId())
-                    .date(triggerState.getEvaluatedAt())
-                    .backfill(triggerState.getBackfill())
-                    .stopAfter(triggerState.getStopAfter())
-                    .disabled(triggerState.getDisabled())
-                    .build()
-            )
+            .triggerContext(triggerState.context())
             .conditionContext(conditionContext)
             .build();
         try {

@@ -8,7 +8,7 @@ import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -45,12 +45,12 @@ class ScheduleOnDatesTest {
             .interval(null)
             .dates(Property.ofValue(List.of(before, after, later)))
             .build();
-        var triggerContext = TriggerContext.builder().date(now).build();
-        var trigger = Trigger.of(triggerContext, now);
+        
+        TriggerContext triggerContext = TriggerContext.builder().date(now).build();
         var conditionContext =conditionContext(scheduleOnDates);
 
         // when
-        ZonedDateTime nextDate = scheduleOnDates.nextEvaluationDate(conditionContext, Optional.of(trigger));
+        ZonedDateTime nextDate = scheduleOnDates.nextEvaluationDate(conditionContext, Optional.of(triggerContext));
 
         // then
         assertThat(nextDate).isEqualTo(after);

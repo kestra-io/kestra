@@ -11,7 +11,10 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.WorkerGroup;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.scheduler.TriggerEventQueue;
+import io.kestra.scheduler.events.TriggerReceived;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
@@ -21,6 +24,7 @@ import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.flow.Sleep;
+import io.kestra.scheduler.vnodes.VNodes;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
@@ -36,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -66,14 +71,13 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     private QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.TRIGGER_NAMED)
-    private QueueInterface<Trigger> triggerQueue;
-
-    @Inject
     private DefaultServiceLivenessCoordinator jdbcServiceLivenessHandler;
 
     @Inject
     private SkipExecutionService skipExecutionService;
+
+    @Inject
+    private TriggerEventQueue triggerEventQueue;
 
     @BeforeAll
     void init() {
@@ -209,17 +213,18 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, workerTriggerResult -> countDownLatch.countDown());
 
         // we wait that the worker receive the trigger
-        CountDownLatch triggerCountDownLatch = new CountDownLatch(1);
-        Flux<Trigger> receiveTrigger = TestsUtils.receive(triggerQueue, either -> {
-            if (either.getLeft().getWorkerId().equals(worker.getId())) {
-                triggerCountDownLatch.countDown();
-            }
-        });
-        workerJobQueue.emit(workerTrigger);
-        assertTrue(triggerCountDownLatch.await(10, TimeUnit.SECONDS));
-        receiveTrigger.blockLast();
-        worker.close();
+        CountDownLatch receivedLatch = new CountDownLatch(1);
+        triggerEventQueue.subscribe(Set.of(VNodes.computeVNodeFromTrigger(workerTrigger.getTriggerContext(), 16)),
+            (vNode, events) -> events.forEach(event -> {
+                if (event instanceof TriggerReceived) {
+                    receivedLatch.countDown();
+                }
+            }));
 
+        workerJobQueue.emit(workerTrigger);
+        assertTrue(receivedLatch.await(10, TimeUnit.SECONDS));
+
+        worker.close();
         Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, null);
         newWorker.run();
         assertThat(countDownLatch.await(30, TimeUnit.SECONDS)).isTrue();
@@ -240,15 +245,16 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, workerTriggerResult -> countDownLatch.countDown());
 
         // we wait that the worker receives the trigger
-        CountDownLatch triggerCountDownLatch = new CountDownLatch(1);
-        Flux<Trigger> receiveTrigger = TestsUtils.receive(triggerQueue, either -> {
-            if (either.getLeft().getWorkerId().equals(worker.getId())) {
-                triggerCountDownLatch.countDown();
+        CountDownLatch receivedLatch = new CountDownLatch(1);
+        triggerEventQueue.subscribe(Set.of(VNodes.computeVNodeFromTrigger(workerTrigger.getTriggerContext(), 16)), 
+            (vNode, events) -> events.forEach(event -> {
+            if (event instanceof TriggerReceived) {
+                receivedLatch.countDown();
             }
-        });
+        }));
+        
         workerJobQueue.emit("workerGroupKey", workerTrigger);
-        assertTrue(triggerCountDownLatch.await(10, TimeUnit.SECONDS));
-        receiveTrigger.blockLast();
+        assertTrue(receivedLatch.await(10, TimeUnit.SECONDS));
         worker.close();
 
         Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
@@ -304,11 +310,11 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             .workerGroup(workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null)
             .build();
 
-        Map.Entry<ConditionContext, Trigger> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);
+        Map.Entry<ConditionContext, TriggerState> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);
 
         return WorkerTrigger.builder()
             .trigger(trigger)
-            .triggerContext(mockedTrigger.getValue())
+            .triggerContext(mockedTrigger.getValue().context())
             .conditionContext(mockedTrigger.getKey())
             .build();
     }

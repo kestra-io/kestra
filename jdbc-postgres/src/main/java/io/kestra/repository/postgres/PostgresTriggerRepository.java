@@ -1,15 +1,14 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
+import io.kestra.scheduler.model.TriggerState;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jooq.Field;
-import org.jooq.impl.DSL;
 
 import java.util.Date;
 
@@ -17,7 +16,7 @@ import java.util.Date;
 @PostgresRepositoryEnabled
 public class PostgresTriggerRepository extends AbstractJdbcTriggerRepository {
     @Inject
-    public PostgresTriggerRepository(@Named("triggers") PostgresRepository<Trigger> repository,
+    public PostgresTriggerRepository(@Named("triggers") PostgresRepository<TriggerState> repository,
                                      QueueService queueService,
                                      JdbcFilterService filterService) {
         super(repository, queueService, filterService);

@@ -15,13 +15,11 @@ import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Schedulable;
-import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.scheduler.vnodes.VNodes;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
@@ -36,6 +34,7 @@ import io.kestra.scheduler.pubsub.TriggerExecutionPublisher;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.scheduler.stores.TriggerStateStore;
+import io.kestra.scheduler.vnodes.VNodes;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import jakarta.inject.Inject;
@@ -141,8 +140,12 @@ public class TriggerScheduler {
     public void onStart(final Clock clock, final Instant scheduledTime, final Set<Integer> vNodesAssignments) {
         log.info("Starting trigger scheduling for {} vNodes", vNodesAssignments);
         
-        Map<String, TriggerState> triggers = triggerStateStore.findAllForVNodes(vNodesAssignments)
-            .stream().collect(Collectors.toMap(TriggerId::uid, Function.identity()));
+        Map<String, TriggerState> triggers = triggerStateStore.findAllForVNodes(vNodesAssignments).stream()
+            .collect(Collectors.toMap(TriggerId::uid, Function.identity(), (existing, replacement) -> {
+                // duplicate keys could only happen in unit-tests
+                log.warn("Detected duplicate keys for triggers: {}", TriggerId.of(replacement));
+                return existing;
+            }));
         
         flowMetaStore.findAllForVNodes(vNodesAssignments)
             .stream()
@@ -161,7 +164,7 @@ public class TriggerScheduler {
                 int vNode = VNodes.computeVNodeFromFlow(flow, schedulerConfiguration.vnodes());
                     
                 // Check whether a state already exist for this trigger
-                TriggerState triggerState = triggers.get(Trigger.uid(flow, trigger));
+                TriggerState triggerState = triggers.get(TriggerId.of(flow, trigger).uid());
 
                 if (triggerState == null) {
                     RunContext runContext = runContextFactory.of(flow, trigger);
@@ -169,7 +172,7 @@ public class TriggerScheduler {
                     try {
 
                         // Create a TriggerState
-                        TriggerState newTriggerState = TriggerState.of(flow, trigger, vNode);
+                        TriggerState newTriggerState = io.kestra.scheduler.model.TriggerState.of(flow, trigger, vNode);
                         
                         // new worker triggers will be evaluated immediately except schedule that will be evaluated at the next cron schedule
                         if (trigger instanceof WorkerTriggerInterface) {
@@ -194,37 +197,28 @@ public class TriggerScheduler {
                     RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedulableTrigger.getRecoverMissedSchedules()).orElseGet(() -> schedulableTrigger.defaultRecoverMissedSchedules(runContext));
                     try {
                         TriggerState currentTriggerState = triggerState;
-                        boolean saved = false;
                         switch (recoverMissedSchedules) {
                             case LAST -> {
                                 ZonedDateTime previousDate = schedulableTrigger.previousEvaluationDate(conditionContext);
-                                if (previousDate.isAfter(currentTriggerState.getEvaluatedAt())) {
+                                if (previousDate.toInstant().isAfter(currentTriggerState.getEvaluatedAt())) {
                                     currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, previousDate);
-                                    triggerStateStore.save(currentTriggerState.vNode(clock, vNode));
-                                    saved = true;
+                                    triggerStateStore.save(currentTriggerState);
                                 }
                             }
                             case NONE -> {
                                 ZonedDateTime nextEvaluationDate = schedulableTrigger.nextEvaluationDate();
-                                if (!Objects.equals(currentTriggerState.getNextEvaluationDate(), nextEvaluationDate)) {
+                                if (!Objects.equals(currentTriggerState.getNextEvaluationDate(), nextEvaluationDate.toInstant())) {
                                     currentTriggerState = currentTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
-                                    triggerStateStore.save(currentTriggerState.vNode(clock, vNode));
-                                    saved = true;
+                                    triggerStateStore.save(currentTriggerState);
                                 }
                             }
                             case ALL -> {
                                 // nothing to do
                             }
                         }
-                        
-                        if (!saved && triggerState.getVnode() == null) {
-                            triggerStateStore.save(triggerState.vNode(clock, vNode));
-                        }
                     } catch (Exception e) {
                         logError(clock, conditionContext, flow, trigger.getId(), e);
                     }
-                } else if (triggerState.getVnode() == null){
-                    triggerStateStore.save(triggerState.vNode(clock, vNode));
                 }
             });
     }

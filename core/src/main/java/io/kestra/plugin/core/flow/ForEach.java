@@ -40,7 +40,7 @@ import java.util.Optional;
 
         - A `concurrencyLimit` of `1` means full serialization — only one task group runs at a time, in order. \
 
-        - A `concurrencyLimit` greater than `1` allows up to that number of task groups to run in parallel, with the rest queued until capacity becomes available. \
+        - A `concurrencyLimit` greater than `1` allows up to that number of task groups to run in parallel. \
 
 
         Regardless of the `concurrencyLimit` property, the `tasks` will run one after the other — to run those in parallel, wrap them in a [Parallel](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.parallel) task as shown in the last example below (_see the flow `parallel_tasks_example`_). \
@@ -219,7 +219,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
 
         A `concurrencyLimit` of 1 means full serialization — only one task group runs at a time, in order.
 
-        A `concurrencyLimit` greater than 1 allows up to the specified number of task groups to run in parallel, with the remaining ones queued until capacity is free.
+        A `concurrencyLimit` greater than 1 allows up to the specified number of task groups to run in parallel.
         """
     )
     @PluginProperty

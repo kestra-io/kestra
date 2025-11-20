@@ -878,7 +878,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
-    public ExecutorContext lock(String executionId, Function<Execution, ExecutorContext> function) {
+    public Optional<ExecutorContext> lock(String executionId, Function<Execution, ExecutorContext> function) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -895,17 +895,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
                 // not ready for now, skip and wait for a first state
                 if (execution.isEmpty()) {
-                    return null;
+                    return Optional.empty();
                 }
 
                 ExecutorContext executor = function.apply(execution.get());
 
                 if (executor != null) {
                     this.jdbcRepository.persist(executor.getExecution(), context, null);
-                    return executor;
+                    return Optional.of(executor);
                 }
 
-                return null;
+                return Optional.empty();
             });
     }
 

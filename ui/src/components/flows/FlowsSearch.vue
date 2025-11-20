@@ -56,6 +56,7 @@
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
     import useRouteContext from "../../composables/useRouteContext";
     import {useDataTableActions} from "../../composables/useDataTableActions";
 
@@ -76,9 +77,11 @@
     }));
 
     useRouteContext(routeInfo);
+    const {saveRestoreUrl} = useRestoreUrl({restoreUrl: true, isDefaultNamespaceAllow: true});
 
     const {onPageChanged, onDataTableValue, queryWithFilter, ready} = useDataTableActions({
-        loadData
+        loadData,
+        saveRestoreUrl
     });
 
     const namespace = computed({

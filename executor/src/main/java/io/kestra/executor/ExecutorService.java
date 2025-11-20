@@ -60,9 +60,6 @@ public class ExecutorService {
     private MetricRegistry metricRegistry;
 
     @Inject
-    private ConditionService conditionService;
-
-    @Inject
     private FlowInputOutput flowInputOutput;
 
     @Inject
@@ -96,7 +93,7 @@ public class ExecutorService {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     private QueueInterface<LogEntry> logQueue;
 
-    protected FlowMetaStoreInterface flowExecutorInterface() {
+    private FlowMetaStoreInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
         if (this.flowExecutorInterface == null) {
             this.flowExecutorInterface = applicationContext.getBean(FlowMetaStoreInterface.class);
@@ -233,6 +230,18 @@ public class ExecutorService {
         }
 
         return newExecution;
+    }
+
+    public ExecutorContext handleFailedExecutionFromExecutor(ExecutorContext executor, Exception e) {
+        Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
+
+        try {
+            logQueue.emitAsync(failedExecutionWithLog.getLogs());
+        } catch (QueueException ex) {
+            // fail silently
+        }
+
+        return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
     }
 
     private Optional<WorkerTaskResult> childWorkerTaskResult(FlowWithSource flow, Execution execution, TaskRun parentTaskRun) throws InternalException {

@@ -26,6 +26,26 @@
             document.getElementsByTagName("html")[0].classList.add(localStorage.getItem("theme"));
         }
     </script>
+
+    <!-- Optional but recommended for faster connection -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Load Google Fonts non-blocking -->
+    <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;700;800&family=Source+Code+Pro:wght@400;700;800&display=swap"
+        media="print"
+        onload="this.media='all'"
+    >
+
+    <!-- Fallback for when JavaScript is disabled -->
+    <noscript>
+        <link
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;700;800&family=Source+Code+Pro:wght@400;700;800&display=swap"
+        >
+    </noscript>
 </head>
 <body>
     <noscript>

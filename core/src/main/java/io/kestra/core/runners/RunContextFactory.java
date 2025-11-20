@@ -6,7 +6,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.PropertyContext;
@@ -41,7 +40,7 @@ public class RunContextFactory {
 
     @Inject
     protected VariableRenderer variableRenderer;
-    
+
     @Inject
     protected SecureVariableRendererFactory secureVariableRendererFactory;
 
@@ -81,11 +80,11 @@ public class RunContextFactory {
     public RunContextInitializer initializer() {
         return applicationContext.getBean(RunContextInitializer.class);
     }
-    
+
     public RunContext of(FlowInterface flow, Execution execution) {
         return of(flow, execution, Function.identity());
     }
-    
+
     public RunContext of(FlowInterface flow, Execution execution, boolean decryptVariable) {
         return of(flow, execution, Function.identity(), decryptVariable);
     }
@@ -93,12 +92,12 @@ public class RunContextFactory {
     public RunContext of(FlowInterface flow, Execution execution, Function<RunVariables.Builder, RunVariables.Builder> runVariableModifier) {
         return of(flow, execution, runVariableModifier, true);
     }
-    
+
     public RunContext of(FlowInterface flow, Execution execution, Function<RunVariables.Builder, RunVariables.Builder> runVariableModifier, boolean decryptVariables) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(execution);
-        
+
         VariableRenderer variableRenderer = decryptVariables ? this.variableRenderer : secureVariableRendererFactory.createOrGet();
-        
+
         return newBuilder()
             // Logger
             .withLogger(runContextLogger)
@@ -150,8 +149,8 @@ public class RunContextFactory {
             .build();
     }
 
-    public RunContext of(Flow flow, AbstractTrigger trigger) {
-        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger, null);
+    public RunContext of(FlowInterface flow, AbstractTrigger trigger) {
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger);
         return newBuilder()
             // Logger
             .withLogger(runContextLogger)
@@ -170,7 +169,7 @@ public class RunContextFactory {
 
 
     @VisibleForTesting
-    public RunContext of(final Flow flow, final Map<String, Object> variables) {
+    public RunContext of(final FlowInterface flow, final Map<String, Object> variables) {
         RunContextLogger runContextLogger = new RunContextLogger();
         return newBuilder()
             .withLogger(runContextLogger)

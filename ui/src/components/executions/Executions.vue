@@ -55,7 +55,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault />
+                <Sections ref="dashboardComponent" :dashboard="{id: 'default', charts: []}" :charts showDefault class="mb-4" />
             </template>
 
             <template #table>
@@ -70,7 +70,7 @@
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
                     :no-data-text="$t('no_results.executions')"
-                    :rowKey="(row: any) => `${row.namespace}-${row.id}`"
+                    :rowKey="(row: any) => row.id"
                 >
                     <template #select-actions>
                         <BulkSelect
@@ -144,10 +144,7 @@
 
                             <el-form>
                                 <ElFormItem :label="$t('execution labels')">
-                                    <LabelInput
-                                        :key="executionLabels.map((l) => l.key).join('-')"
-                                        v-model:labels="executionLabels"
-                                    />
+                                    <LabelInput v-model:labels="executionLabels" />
                                 </ElFormItem>
                             </el-form>
                         </el-dialog>
@@ -384,7 +381,7 @@
     import _merge from "lodash/merge";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
-    import {ref, computed, onMounted, watch, h, useTemplateRef} from "vue";
+    import {ref, computed, watch, h, useTemplateRef} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
 
@@ -423,14 +420,12 @@
     import {filterValidLabels} from "./utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
-    import {defaultNamespace} from "../../composables/useNamespaces";
     import {humanizeDuration, invisibleSpace} from "../../utils/filters";
     import Utils from "../../utils/utils";
 
     import action from "../../models/action";
     import permission from "../../models/permission";
 
-    import useRestoreUrl from "../../composables/useRestoreUrl";
     import useRouteContext from "../../composables/useRouteContext";
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useDataTableActions} from "../../composables/useDataTableActions";
@@ -495,7 +490,6 @@
     const selectedStatus = ref(undefined);
     const lastRefreshDate = ref(new Date());
     const unqueueDialogVisible = ref(false);
-    const isDefaultNamespaceAllow = ref(true);
     const changeStatusDialogVisible = ref(false);
     const actionOptions = ref<Record<string, any>>({});
     const dblClickRouteName = ref("executions/update");
@@ -613,11 +607,6 @@
     const routeInfo = computed(() => ({title: t("executions")}));
     useRouteContext(routeInfo, props.embed);
 
-    const {saveRestoreUrl} = useRestoreUrl({
-        restoreUrl: true,
-        isDefaultNamespaceAllow: isDefaultNamespaceAllow.value
-    });
-
     const dataTableRef = ref(null);
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
 
@@ -633,8 +622,7 @@
         dblClickRouteName: dblClickRouteName.value,
         embed: props.embed,
         dataTableRef,
-        loadData: loadData,
-        saveRestoreUrl
+        loadData: loadData
     });
 
     const {
@@ -1041,31 +1029,6 @@
         const totalCount = executionsStore.total;
         emit("state-count", {runningCount, totalCount});
     };
-
-    onMounted(() => {
-        const query = {...route.query};
-        let queryHasChanged = false;
-
-        const queryKeys = Object.keys(query);
-        if (props.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-            query["filters[namespace][PREFIX]"] = defaultNamespace();
-            queryHasChanged = true;
-        }
-
-        if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
-            query["filters[scope][EQUALS]"] = "USER";
-            queryHasChanged = true;
-        }
-
-        if (queryHasChanged) {
-            router.replace({query});
-        }
-
-        if (route.name === "flows/update") {
-            optionalColumns.value = optionalColumns.value.
-                filter(col => col.prop !== "namespace" && col.prop !== "flowId");
-        }
-    });
 
     watch(isOpenLabelsModal, (opening) => {
         if (opening) {

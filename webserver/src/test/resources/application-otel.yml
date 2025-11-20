@@ -1,0 +1,11 @@
+micronaut:
+  otel:
+    enabled: true
+
+kestra:
+  traces:
+    root: DEFAULT
+
+otel:
+  traces:
+    exporter: none # none exporter as we mock the tracer directly in the test

@@ -98,6 +98,7 @@
     "bulk change state": "Czy na pewno chcesz zmienić stan <code>{executionCount}</code> wykonania/wykonań?",
     "bulk delete": "Czy na pewno chcesz usunąć <code>{executionCount}</code> wykonanie(a)?",
     "bulk delete backfills": "Usuń {count} backfill",
+    "bulk delete triggers": "Czy na pewno chcesz usunąć {count} triggerów?",
     "bulk disabled status": {
       "false": "Włącz {count} triggers",
       "true": "Wyłącz {count} triggers"
@@ -111,6 +112,7 @@
     "bulk resume": "Czy na pewno chcesz wznowić <code>{executionCount}</code> wykonanie(a)?",
     "bulk set labels": "Czy na pewno chcesz ustawić etykiety dla <code>{executionCount}</code> wykonanie(a)?",
     "bulk success delete backfills": "{count} backfills usunięte",
+    "bulk success delete triggers": "Pomyślnie usunięto {count} triggerów",
     "bulk success disabled status": {
       "false": "{count} trigger(s) włączone",
       "true": "{count} trigger(s) wyłączone"
@@ -293,6 +295,11 @@
     "delete logs": "Usuń logs",
     "delete ok": "jest usunięty",
     "delete task confirm": "Czy chcesz usunąć task <code>{taskId}</code>?",
+    "delete trigger": "Usuń trigger",
+    "delete trigger confirmation": "Czy na pewno chcesz usunąć trigger {id}? WARNING: usunięcie triggera może prowadzić do zduplikowanych wykonania, jeśli trigger jest nadal aktywny w flow.",
+    "delete trigger error": "Błąd podczas usuwania triggera {id}",
+    "delete trigger success": "Trigger {id} został pomyślnie usunięty",
+    "delete triggers": "Usuń triggery",
     "delete_all_logs": "Czy na pewno chcesz usunąć wszystkie logs?",
     "delete_log": "Czy na pewno chcesz usunąć log?",
     "deleted": "Pomyślnie usunięto",
@@ -552,6 +559,10 @@
       "get_started": {
         "text": "Postępuj zgodnie z Przewodnikiem Szybkiego Startu, aby zainstalować Kestra i rozpocząć tworzenie swoich pierwszych workflowów.",
         "title": "Zacznij ⚡"
+      },
+      "namespaces": {
+        "text": "Namespace to logiczne grupowanie flow i ich komponentów.",
+        "title": "O Namespace'ach"
       },
       "videos_tutorials": {
         "text": "Rozpocznij korzystanie z naszych samouczków wideo.",
@@ -1040,6 +1051,7 @@
     "last trigger date tooltip": "Kiedy trigger został ostatnio wykonany. Może być w przeszłości podczas uruchamiania backfill.",
     "launch execution": "Wykonaj",
     "learn_more": "Dowiedz się więcej",
+    "leave page": "Opuść stronę",
     "light_background": "To jest preferowana opcja podczas pracy z jasnym tłem.",
     "light_version": "Wersja jasna",
     "line-by-line": "linia po linii",
@@ -1171,6 +1183,8 @@
     "no-executions-view": {
       "guidance_desc": "Potrzebujesz wskazówek, jak wykonać swój flow?",
       "guidance_sub_desc": "Postępuj zgodnie z dokumentacją, aby uzyskać wszystkie potrzebne informacje.",
+      "namespace_guidance_desc": "Potrzebujesz wskazówek, jak zarządzać swoim Namespace?",
+      "namespace_sub_title": "Wykonaj jeden lub więcej flow z tego namespace, aby wypełnić ten dashboard.",
       "sub_title": "Kliknij przycisk Wykonaj, aby rozpocząć pierwsze wykonanie workflow.",
       "title": "Zacznij automatyzację z"
     },
@@ -1779,6 +1793,8 @@
     "unqueue title": "Usuń z kolejki wykonanie <code>{id}</code>.<br/>Zwróć uwagę, że nie będzie to przestrzegać limitu współbieżności flow, więc może być uruchomionych więcej wykonań niż dozwolony limit.",
     "unqueue title multiple": "Czy na pewno chcesz usunąć z kolejki <code>{count}</code> wykonania?<br/><br/>Zauważ, że nie będzie to przestrzegać limitu współbieżności flow, więc może być uruchomionych więcej wykonań niż dozwolony limit.",
     "unsaved changed ?": "Masz niezapisane zmiany, czy chcesz opuścić tę stronę?",
+    "unsaved changes": "Niezapisane zmiany",
+    "unsaved changes warning": "Masz niezapisane zmiany. Jeśli opuścisz tę stronę, twoje zmiany zostaną utracone.",
     "up trend": "Rosnący",
     "update": "Aktualizuj",
     "update aborted": "aktualizacja przerwana",

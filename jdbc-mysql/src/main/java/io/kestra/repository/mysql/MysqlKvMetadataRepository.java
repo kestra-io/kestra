@@ -1,6 +1,7 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.queues.QueueService;
 import io.kestra.jdbc.repository.AbstractJdbcKvMetadataRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -17,9 +18,10 @@ import java.util.List;
 public class MysqlKvMetadataRepository extends AbstractJdbcKvMetadataRepository {
     @Inject
     public MysqlKvMetadataRepository(
-        @Named("kvMetadata") MysqlRepository<PersistedKvMetadata> repository
+        @Named("kvMetadata") MysqlRepository<PersistedKvMetadata> repository,
+        QueueService queueService
     ) {
-        super(repository);
+        super(repository, queueService);
     }
 
     @Override

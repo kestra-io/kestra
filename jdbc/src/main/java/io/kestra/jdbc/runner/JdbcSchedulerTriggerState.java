@@ -1,7 +1,6 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
@@ -86,10 +85,12 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
         return this.triggerRepository.update(updated);
     }
 
-    public Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) {
+    @Override
+    public Trigger update(FlowWithSource flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) {
         return this.triggerRepository.update(flow, abstractTrigger, conditionContext);
     }
 
+    @Override
     public void delete(Trigger trigger) throws QueueException {
         this.triggerRepository.delete(trigger);
     }

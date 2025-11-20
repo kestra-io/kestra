@@ -235,3 +235,9 @@ body{
         opacity:.7;
     }
 }
+
+@media (max-width: 768px) {
+    main > section.container:has(.empty-template) {
+        padding: 0 0;
+    }
+}

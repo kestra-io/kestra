@@ -23,12 +23,12 @@ import java.util.Objects;
 
 @Singleton
 public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.UsageEvent> {
-    
+
     private final FlowRepositoryInterface flowRepository;
     private final ExecutionRepositoryInterface executionRepository;
     private final DashboardRepositoryInterface dashboardRepository;
     private final boolean enabled;
-    
+
     @Inject
     public FeatureUsageReport(FlowRepositoryInterface flowRepository,
                               ExecutionRepositoryInterface executionRepository,
@@ -37,26 +37,26 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
         this.flowRepository = flowRepository;
         this.executionRepository = executionRepository;
         this.dashboardRepository = dashboardRepository;
-        
+
         ServerType serverType = KestraContext.getContext().getServerType();
         this.enabled = ServerType.EXECUTOR.equals(serverType) || ServerType.STANDALONE.equals(serverType);
     }
-    
+
     @Override
     public UsageEvent report(final Instant now, TimeInterval interval) {
         return UsageEvent
             .builder()
             .flows(FlowUsage.of(flowRepository))
             .executions(ExecutionUsage.of(executionRepository, interval.from(), interval.to()))
-            .dashboards(new Count(dashboardRepository.count()))
+            .dashboards(new Count(dashboardRepository.countAllForAllTenants()))
             .build();
     }
-    
+
     @Override
     public boolean isEnabled() {
         return enabled;
     }
-    
+
     @Override
     public UsageEvent report(Instant now, TimeInterval interval, String tenant) {
         Objects.requireNonNull(tenant, "tenant is null");
@@ -67,7 +67,7 @@ public class FeatureUsageReport extends AbstractReportable<FeatureUsageReport.Us
             .executions(ExecutionUsage.of(tenant, executionRepository, interval.from(), interval.to()))
             .build();
     }
-    
+
     @SuperBuilder(toBuilder = true)
     @Getter
     @Jacksonized

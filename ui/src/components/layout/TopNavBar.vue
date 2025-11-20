@@ -243,6 +243,25 @@ nav {
         &.disabled {
             cursor: default;
             color: var(--ks-text-secondary, #999);
+        .top-title {
+            position: relative;
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 40px;
+            height: 100%;
+            background: linear-gradient(to left, var(--ks-background-card), transparent);
+            pointer-events: none;
+            }
+        }
+
+        h1 {
+            line-height: 1.6;
+            display: flex !important;
+            align-items: center;
         }
     }
 
@@ -332,6 +351,37 @@ nav {
             padding: 0.5rem 1rem;
             display: block;
             width: 100%;
+
+        @media (max-width: 992px) {
+            padding: 0.75rem 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            padding: 0.4rem 0.75rem;
+
+            .mycontainer {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, auto));
+                grid-template-rows: repeat(2, auto);
+                gap: 10px;
+                overflow: hidden;
+            }
+            .icons {
+                grid-row: 2;
+                grid-column: 2;
+                display: contents;
+            }
+        }
+        @media (max-width: 664px) {
+            padding: 0.3rem 0.5rem;
+            
+            .mycontainer {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, auto));
+                grid-template-rows: repeat(2, auto);
+                gap: 10px;
+                overflow: hidden;
+            }
         }
     }
 }

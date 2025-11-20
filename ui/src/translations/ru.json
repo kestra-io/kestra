@@ -98,6 +98,7 @@
     "bulk change state": "Вы уверены, что хотите изменить состояние выполнения <code>{executionCount}</code>?",
     "bulk delete": "Вы уверены, что хотите удалить <code>{executionCount}</code> выполнение(я)?",
     "bulk delete backfills": "Удалить {count} заполнение",
+    "bulk delete triggers": "Вы уверены, что хотите удалить {count} triggers?",
     "bulk disabled status": {
       "false": "Включить {count} triggers",
       "true": "Отключить {count} triggers"
@@ -111,6 +112,7 @@
     "bulk resume": "Вы уверены, что хотите возобновить <code>{executionCount}</code> выполнение(я)?",
     "bulk set labels": "Вы уверены, что хотите установить метки для <code>{executionCount}</code> выполнения(й)?",
     "bulk success delete backfills": "{count} backfills заполнения",
+    "bulk success delete triggers": "{count} триггеры были успешно удалены",
     "bulk success disabled status": {
       "false": "{count} trigger(s) включены",
       "true": "{count} trigger(s) отключены"
@@ -293,6 +295,11 @@
     "delete logs": "Удалить логи",
     "delete ok": "удалено",
     "delete task confirm": "Вы хотите удалить task <code>{taskId}</code>?",
+    "delete trigger": "Удалить trigger",
+    "delete trigger confirmation": "Вы уверены, что хотите удалить trigger {id}? WARNING: удаление trigger может привести к дублированию выполнений, если trigger все еще активен в flow.",
+    "delete trigger error": "Ошибка при удалении trigger {id}",
+    "delete trigger success": "Триггер {id} был успешно удален",
+    "delete triggers": "Удалить triggers",
     "delete_all_logs": "Вы уверены, что хотите удалить все логи?",
     "delete_log": "Вы уверены, что хотите удалить log?",
     "deleted": "Успешно удалено",
@@ -552,6 +559,10 @@
       "get_started": {
         "text": "Следуйте Руководству по быстрому старту, чтобы установить Kestra и начать создавать свои первые workflows.",
         "title": "Начать ⚡"
+      },
+      "namespaces": {
+        "text": "Пространства имен — это логические группы flow и их компонентов.",
+        "title": "О namespace"
       },
       "videos_tutorials": {
         "text": "Начните с наших видеоуроков.",
@@ -1040,6 +1051,7 @@
     "last trigger date tooltip": "Когда trigger выполнялся в последний раз. Может быть в прошлом при запуске backfill.",
     "launch execution": "Выполнить",
     "learn_more": "Узнать больше",
+    "leave page": "Покинуть страницу",
     "light_background": "Это предпочтительный вариант при работе со светлым фоном.",
     "light_version": "Легкая версия",
     "line-by-line": "построчно",
@@ -1171,6 +1183,8 @@
     "no-executions-view": {
       "guidance_desc": "Нужна помощь для выполнения вашего flow?",
       "guidance_sub_desc": "Следуйте документации для получения всей необходимой информации.",
+      "namespace_guidance_desc": "Нужна помощь в управлении вашим Namespace?",
+      "namespace_sub_title": "Выполните один или несколько flow из этого namespace, чтобы заполнить эту панель.",
       "sub_title": "Нажмите на кнопку Execute, чтобы начать выполнение вашего первого workflow.",
       "title": "Начните автоматизацию с"
     },
@@ -1779,6 +1793,8 @@
     "unqueue title": "Извлечь выполнение <code>{id}</code> из очереди.<br/>Обратите внимание, что это не будет учитывать ограничение на параллельность flow, поэтому может выполняться больше процессов, чем разрешено.",
     "unqueue title multiple": "Вы уверены, что хотите удалить из очереди <code>{count}</code> выполнений?<br/><br/>Обратите внимание, что это не будет учитывать ограничение на параллельность flow, поэтому может выполняться больше выполнений, чем разрешено.",
     "unsaved changed ?": "У вас есть несохраненные изменения, вы хотите покинуть эту страницу?",
+    "unsaved changes": "Несохраненные изменения",
+    "unsaved changes warning": "У вас есть несохраненные изменения. Если вы покинете эту страницу, ваши изменения будут потеряны.",
     "up trend": "Увеличивается",
     "update": "Обновить",
     "update aborted": "обновление прервано",

@@ -463,7 +463,7 @@
         for (const item of itemsArr) {
             const fullPath = `${parentPath}${item.fileName}`;
             result.push({path: fullPath, fileName: item.fileName, id: item.id});
-            if (isDirectory(item) && item.children.length > 0) {
+            if (isDirectory(item) && item.children?.length > 0) {
                 result.push(...flattenTree(item.children, `${fullPath}/`));
             }
         }

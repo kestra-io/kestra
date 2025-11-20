@@ -3,7 +3,6 @@ package io.kestra.core.models.conditions;
 import io.kestra.core.models.flows.FlowInterface;
 import lombok.*;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.runners.RunContext;
 

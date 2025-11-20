@@ -98,6 +98,7 @@
     "bulk change state": "Tem certeza de que deseja alterar o estado de <code>{executionCount}</code> execução(ões)?",
     "bulk delete": "Tem certeza de que deseja excluir <code>{executionCount}</code> execução(ões)?",
     "bulk delete backfills": "Excluir {count} backfill",
+    "bulk delete triggers": "Tem certeza de que deseja excluir {count} triggers?",
     "bulk disabled status": {
       "false": "Ativar {count} triggers",
       "true": "Desativar {count} triggers"
@@ -111,6 +112,7 @@
     "bulk resume": "Tem certeza de que deseja retomar <code>{executionCount}</code> execução(ões)?",
     "bulk set labels": "Tem certeza de que deseja definir labels para <code>{executionCount}</code> execução(ões)?",
     "bulk success delete backfills": "{count} backfills excluídos",
+    "bulk success delete triggers": "{count} triggers foram excluídos com sucesso",
     "bulk success disabled status": {
       "false": "{count} trigger(s) ativado(s)",
       "true": "{count} trigger(s) desativado(s)"
@@ -293,6 +295,11 @@
     "delete logs": "Excluir logs",
     "delete ok": "está deletado",
     "delete task confirm": "Deseja Excluir a task <code>{taskId}</code>?",
+    "delete trigger": "Excluir trigger",
+    "delete trigger confirmation": "Tem certeza de que deseja excluir o trigger {id}? WARNING: excluir um trigger pode levar a execuções duplicadas se o trigger ainda estiver ativo em um flow.",
+    "delete trigger error": "Erro ao excluir trigger {id}",
+    "delete trigger success": "O Trigger {id} foi excluído com sucesso",
+    "delete triggers": "Excluir triggers",
     "delete_all_logs": "Tem certeza de que deseja excluir todos os logs?",
     "delete_log": "Tem certeza de que deseja excluir o log?",
     "deleted": "Deletado com sucesso",
@@ -552,6 +559,10 @@
       "get_started": {
         "text": "Siga o Guia de Início Rápido para instalar o Kestra e começar a criar seus primeiros workflows.",
         "title": "Começar ⚡"
+      },
+      "namespaces": {
+        "text": "Namespaces são agrupamentos lógicos de flows e seus componentes.",
+        "title": "Sobre Namespaces"
       },
       "videos_tutorials": {
         "text": "Comece com nossos tutoriais em vídeo.",
@@ -1040,6 +1051,7 @@
     "last trigger date tooltip": "Quando o trigger foi executado pela última vez. Pode estar no passado ao executar um backfill.",
     "launch execution": "Executar",
     "learn_more": "Saiba mais",
+    "leave page": "Sair da Página",
     "light_background": "Esta é a opção preferida ao trabalhar com um fundo claro.",
     "light_version": "Versão clara",
     "line-by-line": "linha por linha",
@@ -1171,6 +1183,8 @@
     "no-executions-view": {
       "guidance_desc": "Precisa de orientação para executar o seu flow?",
       "guidance_sub_desc": "Siga a documentação para todas as informações que você precisa.",
+      "namespace_guidance_desc": "Precisa de orientação para gerenciar seu Namespace?",
+      "namespace_sub_title": "Execute um ou mais flows deste namespace para preencher este dashboard.",
       "sub_title": "Clique no botão Executar para iniciar a execução do seu primeiro fluxo de trabalho.",
       "title": "Comece a automatizar com"
     },
@@ -1779,6 +1793,8 @@
     "unqueue title": "Desenfileirar execução <code>{id}</code>.<br/>Observe que isso não obedecerá ao limite de concorrência do flow, portanto, mais execuções podem estar em execução do que o limite permitido.",
     "unqueue title multiple": "Tem certeza de que deseja Desenfileirar <code>{count}</code> execuções?<br/><br/>Observe que isso não obedecerá ao limite de concorrência do flow, portanto, mais execuções podem estar em execução do que o limite permitido.",
     "unsaved changed ?": "Você tem alterações não salvas, deseja sair desta página?",
+    "unsaved changes": "Alterações Não Salvas",
+    "unsaved changes warning": "Você tem alterações não salvas. Se você sair desta página, suas alterações serão perdidas.",
     "up trend": "Aumentando",
     "update": "Atualizar",
     "update aborted": "atualização abortada",

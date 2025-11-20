@@ -98,6 +98,7 @@
     "bulk change state": "您确定要更改<code>{executionCount}</code>次执行的状态吗？",
     "bulk delete": "确定要删除 <code>{executionCount}</code> 个执行吗？",
     "bulk delete backfills": "删除 {count} 回填",
+    "bulk delete triggers": "您确定要删除 {count} 个 triggers 吗？",
     "bulk disabled status": {
       "false": "启用 {count} 触发器",
       "true": "禁用 {count} 触发器"
@@ -111,6 +112,7 @@
     "bulk resume": "确定要恢复 <code>{executionCount}</code> 个执行吗？",
     "bulk set labels": "确定要为 <code>{executionCount}</code> 个执行设置标签吗？",
     "bulk success delete backfills": "{count} 回填已删除",
+    "bulk success delete triggers": "{count} 个 trigger 已成功删除",
     "bulk success disabled status": {
       "false": "{count} 个触发器已启用",
       "true": "{count} 个触发器已禁用"
@@ -293,6 +295,11 @@
     "delete logs": "删除日志",
     "delete ok": "已删除",
     "delete task confirm": "确定要删除任务 <code>{taskId}</code> 吗？",
+    "delete trigger": "删除 trigger",
+    "delete trigger confirmation": "您确定要删除trigger {id}吗？WARNING: 如果trigger仍在flow中激活，删除trigger可能会导致重复执行。",
+    "delete trigger error": "删除触发器 {id} 时出错",
+    "delete trigger success": "触发器 {id} 已成功删除",
+    "delete triggers": "删除 triggers",
     "delete_all_logs": "确定要删除所有日志吗？",
     "delete_log": "您确定要删除这个log吗？",
     "deleted": "删除成功",
@@ -552,6 +559,10 @@
       "get_started": {
         "text": "请按照快速入门指南安装Kestra并开始构建您的第一个工作流。",
         "title": "开始使用 ⚡"
+      },
+      "namespaces": {
+        "text": "namespace 是 flow 及其组件的逻辑分组。",
+        "title": "关于Namespaces"
       },
       "videos_tutorials": {
         "text": "开始观看我们的视频教程。",
@@ -1040,6 +1051,7 @@
     "last trigger date tooltip": "触发器上次执行的时间。在运行backfill时可能是过去的时间。",
     "launch execution": "执行",
     "learn_more": "了解更多",
+    "leave page": "离开页面",
     "light_background": "这是在使用浅色背景时的首选选项。",
     "light_version": "轻量版本",
     "line-by-line": "逐行",
@@ -1171,6 +1183,8 @@
     "no-executions-view": {
       "guidance_desc": "需要指导来执行您的flow吗？",
       "guidance_sub_desc": "请查阅文档以获取您所需的所有信息。",
+      "namespace_guidance_desc": "需要指导来管理您的Namespace吗？",
+      "namespace_sub_title": "从此namespace执行一个或多个flow以填充此仪表板。",
       "sub_title": "单击Execute按钮以开始您的第一个工作流执行。",
       "title": "开始自动化使用"
     },
@@ -1779,6 +1793,8 @@
     "unqueue title": "取消执行 <code>{id}</code>。<br/>请注意，它将不遵循 flow 并发限制，因此可能会有超过允许限制的执行正在运行。",
     "unqueue title multiple": "您确定要取消排队 <code>{count}</code> 个执行吗？<br/><br/>请注意，这将不遵循flow的并发限制，因此可能会有超过允许限制的执行正在运行。",
     "unsaved changed ?": "你有未保存的更改，是否要离开此页面？",
+    "unsaved changes": "未保存的更改",
+    "unsaved changes warning": "您有未保存的更改。如果您离开此页面，您的更改将会丢失。",
     "up trend": "增加",
     "update": "更新",
     "update aborted": "更新中止",

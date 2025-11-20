@@ -98,6 +98,7 @@
     "bulk change state": "以下の実行の状態を変更してもよろしいですか？<code>{executionCount}</code> 実行。",
     "bulk delete": "<code>{executionCount}</code>件の実行を削除してもよろしいですか？",
     "bulk delete backfills": "{count}個のbackfillを削除",
+    "bulk delete triggers": "{count} 個のtriggerを削除してもよろしいですか？",
     "bulk disabled status": {
       "false": "{count}個のtriggersを有効化",
       "true": "{count}個のtriggersを無効化"
@@ -111,6 +112,7 @@
     "bulk resume": "<code>{executionCount}</code>件の実行を再開してもよろしいですか？",
     "bulk set labels": "<code>{executionCount}</code>件の実行にラベルを設定してもよろしいですか？",
     "bulk success delete backfills": "{count}個のbackfillsが削除されました",
+    "bulk success delete triggers": "{count} 個のtriggerが正常に削除されました",
     "bulk success disabled status": {
       "false": "{count}個のtrigger(s)が有効化されました",
       "true": "{count}個のtrigger(s)が無効化されました"
@@ -293,6 +295,11 @@
     "delete logs": "Logsを削除",
     "delete ok": "削除されました",
     "delete task confirm": "task<code>{taskId}</code>を削除してもよろしいですか？",
+    "delete trigger": "トリガーを削除",
+    "delete trigger confirmation": "トリガー {id} を削除してもよろしいですか？WARNING: トリガーがまだflowでアクティブな場合、削除すると重複した実行が発生する可能性があります。",
+    "delete trigger error": "トリガー {id} の削除エラー",
+    "delete trigger success": "トリガー{id}が正常に削除されました",
+    "delete triggers": "トリガーを削除",
     "delete_all_logs": "すべてのLogsを削除してもよろしいですか？",
     "delete_log": "ログを削除してもよろしいですか？",
     "deleted": "正常に削除されました",
@@ -552,6 +559,10 @@
       "get_started": {
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。",
         "title": "はじめに ⚡"
+      },
+      "namespaces": {
+        "text": "namespaceは、flowとそのコンポーネントの論理的なグループ化です。",
+        "title": "名前空間について"
       },
       "videos_tutorials": {
         "text": "ビデオチュートリアルで始めましょう。",
@@ -1040,6 +1051,7 @@
     "last trigger date tooltip": "トリガーが最後に実行された時刻。バックフィルを実行している場合、過去の時刻になることがあります。",
     "launch execution": "実行",
     "learn_more": "詳細を確認",
+    "leave page": "ページを離れる",
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
     "line-by-line": "行ごと表示",
@@ -1171,6 +1183,8 @@
     "no-executions-view": {
       "guidance_desc": "フローを実行するためのガイダンスが必要ですか？",
       "guidance_sub_desc": "ドキュメントを参照して、必要なすべての情報を確認してください。",
+      "namespace_guidance_desc": "Namespaceを管理するためのガイダンスが必要ですか？",
+      "namespace_sub_title": "このダッシュボードを埋めるために、このnamespaceから1つ以上のflowを実行します。",
       "sub_title": "「Execute」ボタンをクリックして、最初のworkflowのexecutionを開始してください。",
       "title": "自動化を開始"
     },
@@ -1779,6 +1793,8 @@
     "unqueue title": "実行 <code>{id}</code> をキューから外します。<br/>ただし、flowの並行性制限には従わないため、許可された制限を超えて実行が行われる可能性があります。",
     "unqueue title multiple": "<code>{count}</code>件の実行をキューから外してもよろしいですか？<br/><br/>flowの並行性制限を守らないため、許可された制限を超えて実行される可能性があります。",
     "unsaved changed ?": "保存されていない変更があります。このページを離れますか？",
+    "unsaved changes": "未保存の変更",
+    "unsaved changes warning": "未保存の変更があります。このページを離れると、変更は失われます。",
     "up trend": "増加",
     "update": "更新",
     "update aborted": "更新が中止されました",

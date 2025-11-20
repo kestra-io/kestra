@@ -36,6 +36,13 @@ interface TriggerBulkOptions {
     [key: string]: any;
 }
 
+export interface TriggerDeleteOptions {
+    id?: string;
+    namespace: string;
+    flowId: string;
+    triggerId: string;
+}
+
 export const useTriggerStore = defineStore("trigger", {
     state: () => ({}),
 
@@ -132,6 +139,21 @@ export const useTriggerStore = defineStore("trigger", {
         async setDisabledByTriggers(options: TriggerBulkOptions) {
             const response = await this.$http.post(`${apiUrl()}/triggers/set-disabled/by-triggers`, options);
             return response.data;
-        }
+        },
+
+        async delete(options: TriggerDeleteOptions) {
+            const response = await this.$http.delete(`${apiUrl()}/triggers/${options.namespace}/${options.flowId}/${options.triggerId}`);
+            return response.data;
+        },
+
+        async deleteByQuery(options: TriggerBulkOptions) {
+            const response = await this.$http.delete(`${apiUrl()}/triggers/delete/by-query`, {params: options});
+            return response.data;
+        },
+
+        async deleteByTriggers(options: TriggerBulkOptions) {
+            const response = await this.$http.delete(`${apiUrl()}/triggers/delete/by-triggers`, {data: options});
+            return response.data;
+        },
     }
 });

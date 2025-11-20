@@ -156,6 +156,26 @@ class DownloadTest {
         assertThat(output.getUri().toString()).endsWith("filename.jpg");
     }
 
+
+    @Test
+    void fileNameShouldOverrideContentDisposition() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition"))
+            .saveAs(Property.ofValue("hardcoded-filename.jpg"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Download.Output output = task.run(runContext);
+
+        assertThat(output.getUri().toString()).endsWith("hardcoded-filename.jpg");
+    }
+
     @Test
     void contentDispositionWithPath() throws Exception {
         EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);

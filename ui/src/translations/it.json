@@ -98,6 +98,7 @@
     "bulk change state": "Sei sicuro di voler cambiare lo stato di <code>{executionCount}</code> esecuzione/i?",
     "bulk delete": "Sei sicuro di voler eliminare <code>{executionCount}</code> esecuzione/i?",
     "bulk delete backfills": "Elimina {count} backfill",
+    "bulk delete triggers": "Sei sicuro di voler eliminare {count} trigger?",
     "bulk disabled status": {
       "false": "Abilita {count} triggers",
       "true": "Disabilita {count} triggers"
@@ -111,6 +112,7 @@
     "bulk resume": "Sei sicuro di voler riprendere <code>{executionCount}</code> esecuzione/i?",
     "bulk set labels": "Sei sicuro di voler impostare etichette a <code>{executionCount}</code> esecuzione/i?",
     "bulk success delete backfills": "{count} backfills eliminati",
+    "bulk success delete triggers": "{count} trigger sono stati eliminati con successo",
     "bulk success disabled status": {
       "false": "{count} trigger(s) abilitati",
       "true": "{count} trigger(s) disabilitati"
@@ -293,6 +295,11 @@
     "delete logs": "Elimina logs",
     "delete ok": "è eliminato",
     "delete task confirm": "Vuoi eliminare il task <code>{taskId}</code>?",
+    "delete trigger": "Elimina trigger",
+    "delete trigger confirmation": "Sei sicuro di voler eliminare il trigger {id}? WARNING: eliminare un trigger potrebbe portare a esecuzioni duplicate se il trigger è ancora attivo in un flow.",
+    "delete trigger error": "Errore durante l'eliminazione del trigger {id}",
+    "delete trigger success": "Il trigger {id} è stato eliminato con successo",
+    "delete triggers": "Elimina trigger",
     "delete_all_logs": "Sei sicuro di voler eliminare tutti i logs?",
     "delete_log": "Sei sicuro di voler eliminare il log?",
     "deleted": "Eliminato con successo",
@@ -552,6 +559,10 @@
       "get_started": {
         "text": "Segui la Guida rapida per installare Kestra e iniziare a creare i tuoi primi workflow.",
         "title": "Inizia ⚡"
+      },
+      "namespaces": {
+        "text": "I namespace sono raggruppamenti logici di flow e dei loro componenti.",
+        "title": "Informazioni sui Namespace"
       },
       "videos_tutorials": {
         "text": "Inizia con i nostri video tutorial.",
@@ -1040,6 +1051,7 @@
     "last trigger date tooltip": "Quando il trigger è stato eseguito l'ultima volta. Potrebbe essere nel passato quando si esegue un backfill.",
     "launch execution": "Esegui",
     "learn_more": "Scopri di più",
+    "leave page": "Lascia Pagina",
     "light_background": "Questa è l'opzione preferita quando si lavora con uno sfondo chiaro.",
     "light_version": "Versione leggera",
     "line-by-line": "riga per riga",
@@ -1171,6 +1183,8 @@
     "no-executions-view": {
       "guidance_desc": "Hai bisogno di assistenza per eseguire il tuo flow?",
       "guidance_sub_desc": "Segui la documentazione per tutte le informazioni di cui hai bisogno.",
+      "namespace_guidance_desc": "Hai bisogno di assistenza per gestire il tuo Namespace?",
+      "namespace_sub_title": "Esegui uno o più flow da questo namespace per popolare questa dashboard.",
       "sub_title": "Fai clic sul pulsante Esegui per avviare l'esecuzione del tuo primo workflow.",
       "title": "Inizia ad automatizzare con"
     },
@@ -1779,6 +1793,8 @@
     "unqueue title": "Metti in coda l'esecuzione <code>{id}</code>.<br/>Nota che non rispetterà il limite di concorrenza del flow, quindi potrebbero esserci più esecuzioni in corso rispetto al limite consentito.",
     "unqueue title multiple": "Sei sicuro di voler rimuovere dalla coda <code>{count}</code> esecuzioni?<br/><br/>Nota che non rispetterà il limite di concurrency del flow, quindi potrebbero essere in esecuzione più esecuzioni del limite consentito.",
     "unsaved changed ?": "Hai modifiche non salvate, vuoi lasciare questa pagina?",
+    "unsaved changes": "Modifiche Non Salvate",
+    "unsaved changes warning": "Hai modifiche non salvate. Se lasci questa pagina, le modifiche andranno perse.",
     "up trend": "In aumento",
     "update": "Aggiorna",
     "update aborted": "aggiornamento annullato",

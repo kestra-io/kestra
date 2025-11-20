@@ -26,9 +26,9 @@ public class InMemoryTriggerStateStore implements TriggerStateStore {
         }
         
         return store.values().stream()
-            .filter(ts -> ts.getNextEvaluationDate() != null && !ts.getNextEvaluationDate().isAfter(now))
+            .filter(ts -> ts.getNextEvaluationDate() != null && !ts.getNextEvaluationDate().isAfter(now.toInstant()))
             .filter(ts -> vNodes.contains(ts.getVnode()))
-            .filter(ts -> ts.getLocked() == locked)
+            .filter(ts -> ts.isLocked() == locked)
             .collect(Collectors.toList());
     }
     

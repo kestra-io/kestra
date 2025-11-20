@@ -136,7 +136,7 @@ class TriggerEventHandlerTest {
         // THEN
         Optional<TriggerState> updated = triggerStateStore.find(triggerId);
         assertThat(updated).isPresent();
-        assertThat(updated.get().getDisabled()).isTrue();
+        assertThat(updated.get().isDisabled()).isTrue();
         assertThat(updated.get().getUpdatedAt()).isNotEqualTo(triggerState.getUpdatedAt());
     }
     
@@ -153,7 +153,7 @@ class TriggerEventHandlerTest {
         // THEN
         Optional<TriggerState> updated = triggerStateStore.find(triggerId);
         assertThat(updated).isPresent();
-        assertThat(updated.get().getLocked()).isFalse();
+        assertThat(updated.get().isLocked()).isFalse();
         assertThat(updated.get().getUpdatedAt()).isNotEqualTo(triggerState.getUpdatedAt());
     }
     
@@ -170,7 +170,7 @@ class TriggerEventHandlerTest {
         // THEN
         Optional<TriggerState> updated = triggerStateStore.find(triggerId);
         assertThat(updated).isPresent();
-        assertThat(updated.get().getDisabled()).isTrue();
+        assertThat(updated.get().isDisabled()).isTrue();
         assertThat(updated.get().getUpdatedAt()).isNotEqualTo(triggerState.getUpdatedAt());
     }
     

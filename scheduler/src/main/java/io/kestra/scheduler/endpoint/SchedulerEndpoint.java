@@ -12,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class SchedulerEndpoint {
                 context.flow().getNamespace(),
                 context.flow().getRevision(),
                 context.trigger(),
-                context.triggerState().getNextEvaluationDate()
+                context.triggerState().getNextEvaluationDate().atZone(ZoneId.systemDefault())
             ))
             .toList();
 

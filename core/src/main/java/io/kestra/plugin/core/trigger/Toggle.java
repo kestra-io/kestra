@@ -6,16 +6,13 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.TriggerRepositoryInterface;
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.scheduler.TriggerEventQueue;
+import io.kestra.scheduler.events.SetDisableTrigger;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -102,9 +99,9 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
     @SuppressWarnings("unchecked")
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        Map<String, String> flowVariables = (Map<String, String>) runContext.getVariables().get("flow");
-        String realNamespace = namespace == null ? flowVariables.get("namespace") : runContext.render(namespace);
-        String realFlowId = flowId == null ? flowVariables.get("id") : runContext.render(flowId);
+
+        String realNamespace = namespace == null ? runContext.flowInfo().namespace() : runContext.render(namespace);
+        String realFlowId = flowId == null ? runContext.flowInfo().id() : runContext.render(flowId);
         String realTrigger = runContext.render(trigger);
 
         // verify that the target flow exists, and the current execution is authorized to access it
@@ -116,27 +113,14 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
             realFlowId,
             Optional.empty(),
             runContext.flowInfo().tenantId(),
-            flowVariables.get("namespace"),
-            flowVariables.get("id")
+            runContext.flowInfo().namespace(),
+            runContext.flowInfo().id()
         )
-            .orElseThrow(() -> new IllegalArgumentException("Unable to find flow " + realNamespace + "." + realFlowId + ". Make sure the flow exists and the current execution is authorized to access it."));
-
-
-        // load the trigger from the database
-        TriggerContext triggerContext = TriggerContext.builder()
-            .tenantId(runContext.flowInfo().tenantId())
-            .namespace(realNamespace)
-            .flowId(realFlowId)
-            .triggerId(realTrigger)
-            .build();
-        TriggerRepositoryInterface triggerRepository = applicationContext.getBean(TriggerRepositoryInterface.class);
-        Trigger currentTrigger = triggerRepository.findLast(triggerContext).orElseThrow(() -> new IllegalArgumentException("Unable to find trigger " + realTrigger + " for the flow " + realNamespace + "." + realFlowId));
-        currentTrigger = currentTrigger.toBuilder().disabled(!enabled).build();
-
-        // update the trigger by emitting inside the queue
-        QueueInterface<Trigger> triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
-        triggerQueue.emit(currentTrigger);
-
+        .orElseThrow(() -> new IllegalArgumentException("Unable to find flow " + realNamespace + "." + realFlowId + ". Make sure the flow exists and the current execution is authorized to access it."));
+        
+        TriggerEventQueue queue = applicationContext.getBean(TriggerEventQueue.class);
+        queue.send(new SetDisableTrigger(TriggerId.of(runContext.flowInfo().tenantId(), realNamespace, realFlowId, realTrigger), !enabled));
+        
         return null;
     }
 }

@@ -8,7 +8,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.time.Clock;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -202,9 +203,7 @@ class FlowGraphTest {
     @Test
     void trigger() throws IllegalVariableEvaluationException, IOException, FlowProcessingException {
         FlowWithSource flow = this.parse("flows/valids/trigger-flow-listener.yaml");
-        triggerRepositoryInterface.save(
-            Trigger.of(flow, flow.getTriggers().getFirst()).toBuilder().disabled(true).build()
-        );
+        triggerRepositoryInterface.save(TriggerState.of(flow, flow.getTriggers().getFirst(), 0).disabled(Clock.systemDefaultZone(), true));
 
         FlowGraph flowGraph = graphService.flowGraph(flow, null);
 
@@ -212,7 +211,7 @@ class FlowGraphTest {
         assertThat(flowGraph.getEdges().size()).isEqualTo(5);
         assertThat(flowGraph.getClusters().size()).isEqualTo(1);
         AbstractGraph triggerGraph = flowGraph.getNodes().stream().filter(e -> e instanceof GraphTrigger).findFirst().orElseThrow();
-        assertThat(((GraphTrigger) triggerGraph).getTrigger().getDisabled()).isTrue();
+        assertThat(((GraphTrigger) triggerGraph).getTrigger().isDisabled()).isTrue();
     }
 
     @Test

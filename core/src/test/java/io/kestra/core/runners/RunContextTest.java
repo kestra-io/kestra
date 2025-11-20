@@ -21,7 +21,7 @@ import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -295,16 +295,16 @@ class RunContextTest {
             .format("john {{ secret('PASSWORD') }} doe")
             .build();
 
-        Map.Entry<ConditionContext, Trigger> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);
+        Map.Entry<ConditionContext, TriggerState> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);
 
         WorkerTrigger workerTrigger = WorkerTrigger.builder()
             .trigger(trigger)
-            .triggerContext(mockedTrigger.getValue())
+            .triggerContext(mockedTrigger.getValue().context())
             .conditionContext(mockedTrigger.getKey())
             .build();
 
         RunContext runContext = runContextInitializer.forWorker((DefaultRunContext) workerTrigger.getConditionContext().getRunContext(), workerTrigger);
-        trigger.evaluate(mockedTrigger.getKey().withRunContext(runContext), mockedTrigger.getValue());
+        trigger.evaluate(mockedTrigger.getKey().withRunContext(runContext), mockedTrigger.getValue().context());
 
         matchingLog = TestsUtils.awaitLogs(logs, 3);
         receive.blockLast();

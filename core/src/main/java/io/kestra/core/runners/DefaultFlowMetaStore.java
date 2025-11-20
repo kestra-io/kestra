@@ -1,9 +1,11 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowListenersInterface;
+import io.kestra.core.services.PluginDefaultService;
 import jakarta.inject.Singleton;
 import java.util.Objects;
 import lombok.Setter;
@@ -15,12 +17,14 @@ import java.util.Optional;
 @Singleton
 public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     private final FlowRepositoryInterface flowRepository;
+    private final PluginDefaultService pluginDefaultService;
 
     @Setter
     private List<FlowWithSource> allFlows;
 
-    public DefaultFlowMetaStore(FlowListenersInterface flowListeners, FlowRepositoryInterface flowRepository) {
+    public DefaultFlowMetaStore(FlowListenersInterface flowListeners, FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService) {
         this.flowRepository = flowRepository;
+        this.pluginDefaultService = pluginDefaultService;
         flowListeners.listen(flows -> allFlows = flows);
     }
 
@@ -52,5 +56,10 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     @Override
     public Boolean isReady() {
         return true;
+    }
+
+    @Override
+    public Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution) {
+        return findByExecution(execution).map(it -> pluginDefaultService.injectDefaults(it, execution));
     }
 }

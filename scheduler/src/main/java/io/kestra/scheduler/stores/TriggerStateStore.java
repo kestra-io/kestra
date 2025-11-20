@@ -1,8 +1,7 @@
 package io.kestra.scheduler.stores;
 
-import io.kestra.core.models.triggers.Trigger;
-import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.models.triggers.TriggerId;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -12,7 +11,7 @@ import java.util.Set;
 public interface TriggerStateStore {
     
     /**
-     * Finds all {@link Trigger} instances that are eligible to be scheduled as of the specified timestamp.
+     * Finds all {@link TriggerState} instances that are eligible to be scheduled as of the specified timestamp.
      *
      * @param now
      *        the current timestamp used to evaluate scheduling eligibility;

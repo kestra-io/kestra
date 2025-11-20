@@ -7,7 +7,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.hierarchies.*;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.RunContext;
@@ -60,7 +60,7 @@ public class GraphService {
     public GraphCluster of(GraphCluster baseGraph, FlowWithSource flow, List<String> expandedSubflows, Map<String, FlowWithSource> flowByUid, Execution execution) throws IllegalVariableEvaluationException, FlowProcessingException {
         String tenantId = flow.getTenantId();
         flow = pluginDefaultService.injectAllDefaults(flow, false);
-        List<Trigger> triggers = null;
+        List<TriggerState> triggers = null;
         if (flow.getTriggers() != null) {
             triggers = triggerRepository.find(Pageable.UNPAGED, null, tenantId, flow.getNamespace(), flow.getId(), null);
         }

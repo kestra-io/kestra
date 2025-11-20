@@ -5,7 +5,7 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.runners.*;
 
 public interface QueueFactoryInterface {
@@ -19,12 +19,10 @@ public interface QueueFactoryInterface {
     String METRIC_QUEUE = "workerTaskMetricQueue";
     String KILL_NAMED = "executionKilledQueue";
     String WORKERJOBRUNNING_NAMED = "workerJobRunningQueue";
-    String TRIGGER_NAMED = "triggerQueue";
     String SUBFLOWEXECUTIONRESULT_NAMED = "subflowExecutionResultQueue";
     String CLUSTER_EVENT_NAMED = "clusterEventQueue";
     String SUBFLOWEXECUTIONEND_NAMED = "subflowExecutionEndQueue";
     String MULTIPLE_CONDITION_EVENT_NAMED = "multipleConditionEventQueue";
-    String TRIGGER_EVENT_QUEUE_NAMED = "triggerEventQueue";
 
     QueueInterface<Execution> execution();
 
@@ -45,8 +43,6 @@ public interface QueueFactoryInterface {
     QueueInterface<ExecutionKilled> kill();
 
     QueueInterface<WorkerJobRunning> workerJobRunning();
-
-    QueueInterface<Trigger> trigger();
 
     QueueInterface<SubflowExecutionResult> subflowExecutionResult();
 

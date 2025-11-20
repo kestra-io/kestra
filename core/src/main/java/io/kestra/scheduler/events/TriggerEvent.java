@@ -29,6 +29,7 @@ import java.util.Map;
     @JsonSubTypes.Type(value = SetPauseBackfillTrigger.class, name = "SET_PAUSE_BACKFILL_TRIGGER"),
     @JsonSubTypes.Type(value = ResetTrigger.class, name = "RESET_TRIGGER"),
     @JsonSubTypes.Type(value = SetDisableTrigger.class, name = "SET_DISABLE_TRIGGER"),
+    @JsonSubTypes.Type(value = TriggerReceived.class, name = "TRIGGER_RECEIVED"),
     @JsonSubTypes.Type(value = TriggerEvent.Invalid.class, name = "INVALID"),
 })
 public interface TriggerEvent extends HasUID {

@@ -74,7 +74,7 @@ public interface TriggerId extends HasUID {
         
         @Override
         public String toString() {
-            return "[tenant=" + tenantId +", namespace= " + namespace + ", flow=" + flowId + ", trigger=" + triggerId + "]";
+            return "[tenant=" + tenantId +", namespace=" + namespace + ", flow=" + flowId + ", trigger=" + triggerId + "]";
         }
     }
 }

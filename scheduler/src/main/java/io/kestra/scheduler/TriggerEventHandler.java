@@ -21,6 +21,7 @@ import io.kestra.scheduler.events.TriggerCreated;
 import io.kestra.scheduler.events.TriggerDeleted;
 import io.kestra.scheduler.events.TriggerEvent;
 import io.kestra.scheduler.events.TriggerEvaluated;
+import io.kestra.scheduler.events.TriggerReceived;
 import io.kestra.scheduler.events.TriggerUpdated;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.model.TriggerState;
@@ -85,6 +86,7 @@ public class TriggerEventHandler {
             case TriggerUpdated evt -> onTriggerUpdated(clock, evt);
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
             case TriggerEvaluated evt -> onTriggerEvaluated(clock, evt);
+            case TriggerReceived evt -> onTriggerReceived(clock, evt);
             // Commands
             case CreateBackfillTrigger evt -> onCreateBackfill(clock, evt);
             case SetPauseBackfillTrigger evt -> onSetTriggerDisable(clock, evt);
@@ -197,6 +199,17 @@ public class TriggerEventHandler {
                 Execution execution = event.execution().withTenantId(state.getTenantId());
                 triggerExecutionPublisher.send(execution);
             }
+        });
+    }
+    
+    /**
+     * Handler method for {@link ResetTrigger}.
+     *
+     * @param event the event.
+     */
+    void onTriggerReceived(Clock clock, TriggerReceived event) {
+        findTriggerState(event).ifPresent(state -> {
+            triggerStateStore.save(state.workerId(clock, event.workerId()));
         });
     }
     

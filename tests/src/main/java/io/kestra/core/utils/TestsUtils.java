@@ -14,7 +14,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.DefaultRunContext;
@@ -198,24 +199,20 @@ abstract public class TestsUtils {
             .withState(State.Type.RUNNING);
     }
 
-    public static Map.Entry<ConditionContext, Trigger> mockTrigger(RunContextFactory runContextFactory, AbstractTrigger trigger) {
+    public static Map.Entry<ConditionContext, TriggerState> mockTrigger(RunContextFactory runContextFactory, AbstractTrigger trigger) {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
         Flow flow = TestsUtils.mockFlow(caller);
-
-        Trigger triggerContext = Trigger.builder()
-            .triggerId(trigger.getId())
-            .flowId(flow.getId())
-            .tenantId(flow.getTenantId())
-            .namespace(flow.getNamespace())
-            .date(ZonedDateTime.now())
-            .build();
-
+        
+        TriggerState state = TriggerState.of(flow, trigger, 0);
+        
+        DefaultRunContext runContext = runContextFactory.initializer()
+            .forScheduler((DefaultRunContext) runContextFactory.of(flow, trigger), state.context(), trigger);
         return new AbstractMap.SimpleEntry<>(
             ConditionContext.builder()
-                .runContext(runContextFactory.initializer().forScheduler((DefaultRunContext) runContextFactory.of(flow, trigger), triggerContext, trigger))
+                .runContext(runContext)
                 .flow(flow)
                 .build(),
-            triggerContext
+            state
         );
     }
 

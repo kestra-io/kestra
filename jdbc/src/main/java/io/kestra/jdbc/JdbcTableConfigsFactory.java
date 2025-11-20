@@ -10,7 +10,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.topologies.FlowTopology;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.ServiceInstance;
@@ -45,7 +45,7 @@ public class JdbcTableConfigsFactory {
     @Bean
     @Named("triggers")
     public InstantiableJdbcTableConfig triggers() {
-        return new InstantiableJdbcTableConfig("triggers", Trigger.class, "triggers");
+        return new InstantiableJdbcTableConfig("triggers", TriggerState.class, "triggers");
     }
 
     @Bean

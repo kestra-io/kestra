@@ -30,6 +30,9 @@ import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
+import io.kestra.scheduler.TriggerEventQueue;
+import io.kestra.scheduler.events.TriggerReceived;
+import io.kestra.scheduler.model.TriggerState;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
@@ -103,8 +106,7 @@ public class DefaultWorker implements Worker {
     private QueueInterface<MetricEntry> metricEntryQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.TRIGGER_NAMED)
-    private QueueInterface<Trigger> triggerQueue;
+    private TriggerEventQueue triggerEventQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -568,15 +570,8 @@ public class DefaultWorker implements Worker {
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
             .increment();
-
-        // update the trigger so that it contains the workerId
-        var trigger = workerTrigger.getTriggerContext();
-        trigger.setWorkerId(this.id);
-        try {
-            triggerQueue.emit(trigger);
-        } catch (QueueException e) {
-            handleTriggerError(workerTrigger, e);
-        }
+        
+        triggerEventQueue.send(new TriggerReceived(TriggerId.of(workerTrigger.getTriggerContext()), Instant.now(), getId()));
 
         this.metricRegistry
             .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, MetricRegistry.METRIC_WORKER_TRIGGER_DURATION_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))

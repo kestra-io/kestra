@@ -5,7 +5,7 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.triggers.Trigger;
+import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
@@ -16,7 +16,6 @@ import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.apache.commons.lang3.NotImplementedException;
 
 @Factory
 @MysqlQueueEnabled
@@ -103,15 +102,7 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     public QueueInterface<WorkerJobRunning> workerJobRunning() {
         return new MysqlQueue<>(WorkerJobRunning.class, applicationContext);
     }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.TRIGGER_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<Trigger> trigger() {
-        return new MysqlQueue<>(Trigger.class, applicationContext);
-    }
-
+    
     @Override
     @Singleton
     @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)

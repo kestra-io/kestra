@@ -53,6 +53,7 @@
                             refresh: {shown: true, callback: refresh}
                         }"
                         @update-properties="updateDisplayColumns"
+                        :defaultScope="!route.name?.toString().startsWith('namespaces/')"
                     />
                 </template>
 

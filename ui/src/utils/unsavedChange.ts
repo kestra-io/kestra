@@ -1,11 +1,9 @@
 import {RouteLocation, Router} from "vue-router";
 import {useCoreStore} from "../stores/core";
-import {useUnsavedChangesDialog} from "../composables/useUnsavedChangesDialog";
 
 export default (app: any, router: Router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
     const coreStore = useCoreStore();
-    const {showDialog} = useUnsavedChangesDialog();
 
     window.addEventListener("beforeunload", (e) => {
         if (coreStore.unsavedChange) {
@@ -35,11 +33,9 @@ export default (app: any, router: Router) => {
 
     router.beforeEach(async (to, from, next) => {
         if (coreStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
-            const shouldLeave = await showDialog();
-            if (shouldLeave) {
+            if (confirm(confirmationMessage)) {
                 coreStore.unsavedChange = false;
                 next()
-                return;
             } else {
                 return false;
             }

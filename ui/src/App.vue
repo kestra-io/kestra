@@ -6,7 +6,6 @@
             <router-view />
         </component>
         <VueTour v-if="shouldRenderApp && $route?.name && !isAnonymousRoute" />
-        <UnsavedChangesDialog />
     </el-config-provider>
 </template>
 
@@ -18,7 +17,6 @@
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
-    import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue";
     import "@kestra-io/ui-libs/style.css";
 
     import {useApiStore} from "./stores/api";
@@ -38,8 +36,7 @@
         components: {
             ErrorToast,
             VueTour,
-            DocIdDisplay,
-            UnsavedChangesDialog
+            DocIdDisplay
         },
         data() {
             return {

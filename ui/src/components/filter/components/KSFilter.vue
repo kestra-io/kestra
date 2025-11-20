@@ -31,8 +31,6 @@
     import MainFilter from "./MainFilter.vue";
     import RightFilter from "./RightFilter.vue";
     import FilterOptions from "./FilterOptions.vue";
-    import useRestoreUrl from "../../../composables/useRestoreUrl";
-    import {useDefaultFilter} from "../composables/useDefaultFilter";
 
     const props = withDefaults(defineProps<{
         configuration: FilterConfiguration;
@@ -47,6 +45,8 @@
         searchInputFullWidth?: boolean;
         legacyQuery?: boolean;
         readOnly?: boolean;
+        defaultScope?: boolean;
+        defaultTimeRange?: boolean;
     }>(), {
         buttons: () => ({}),
         tableOptions: () => ({}),
@@ -55,7 +55,9 @@
         showSearchInput: true,
         searchInputFullWidth: false,
         legacyQuery: false,
-        readOnly: false
+        readOnly: false,
+        defaultScope: undefined,
+        defaultTimeRange: undefined,
     });
 
     const emits = defineEmits<{
@@ -77,7 +79,9 @@
     } = useFilters(
         props.configuration,
         props.showSearchInput,
-        props.legacyQuery
+        props.legacyQuery,
+        props.defaultScope,
+        props.defaultTimeRange,
     );
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
@@ -168,13 +172,6 @@
     watch(appliedFilters, (newFilters) => {
         emits("filter", newFilters);
     }, {deep: true});
-
-    useRestoreUrl({restoreUrl: true});
-
-    useDefaultFilter(
-        props.configuration,
-        props.legacyQuery
-    );
     
 </script>
 

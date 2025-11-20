@@ -22,6 +22,8 @@
                             columns: optionalColumns,
                             storageKey: storageKey
                         }"
+                        :defaultScope="false"
+                        :defaultTimeRange="false"
                     />
                 </template>
                 <template #table>

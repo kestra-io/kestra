@@ -43,7 +43,7 @@
 
     const table = ref<any>(null);
     const hasSelection = ref(false);
-    const container = ref<HTMLElement>(null);
+    const container = ref<HTMLElement>();
 
     const toggleRowExpansion = (row: any, expand?: boolean) => {
         table.value?.toggleRowExpansion(row, expand);

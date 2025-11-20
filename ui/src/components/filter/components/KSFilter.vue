@@ -31,6 +31,7 @@
     import MainFilter from "./MainFilter.vue";
     import RightFilter from "./RightFilter.vue";
     import FilterOptions from "./FilterOptions.vue";
+    import useRestoreUrl from "../../../composables/useRestoreUrl";
     import {useDefaultFilter} from "../composables/useDefaultFilter";
 
     const props = withDefaults(defineProps<{
@@ -167,6 +168,8 @@
     watch(appliedFilters, (newFilters) => {
         emits("filter", newFilters);
     }, {deep: true});
+
+    useRestoreUrl({restoreUrl: true});
 
     useDefaultFilter(
         props.configuration,

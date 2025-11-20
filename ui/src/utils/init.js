@@ -70,8 +70,7 @@ export default async (app, routes, _stores, translations, additionalTranslations
 
     // router
     const router = createRouter({
-        // make e2e tests pass in dev mode
-        history: createWebHistory(import.meta.env.DEV ? "/ui" : window.KESTRA_UI_PATH),
+        history: createWebHistory(window.KESTRA_UI_PATH),
         routes
     });
 

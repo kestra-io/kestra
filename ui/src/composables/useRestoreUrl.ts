@@ -120,20 +120,10 @@ export default function useRestoreUrl(options: UseRestoreUrlOptions = {}) {
      */
     onMounted(() => {
         if (restoreUrl && localStorageValue.value){
-            // FIXME: this is a hacky way to wait for the router to be ready.
-            // if we wanted to do it properly, we should use a router guard.
-            // To do that we would have to pass the config through the route 
-            // meta property instead of in a prop.
-            // When composables are run the component is already created, 
-            // way after routes have been resolved. All components are resolved 
-            // and rendered twice with this method.
-            // NOTE: once this is fixed, don't forget to add the fix to useDefaultFilter.ts
-            setTimeout(() => {
-                if(route.query && Object.keys(route.query).length === 0) {
-                    loadInit.value = false;
-                    goToRestoreUrl();
-                }
-            }, 50)
+            if(!route.query || Object.keys(route.query).length === 0) {
+                loadInit.value = false;
+                goToRestoreUrl();
+            }
         }
     });
 

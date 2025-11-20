@@ -987,8 +987,8 @@
 
     .monaco-editor {
         :deep(.monaco-scrollable-element) {
-            :deep(> .scrollbar) {
-                :deep(.slider) {
+            > .scrollbar {
+                .slider {
                     width: 13px !important;
                     background: var(--ks-border-primary) !important;
                     border-radius: 8px !important;
@@ -996,7 +996,7 @@
                 }
             }
 
-            :deep(.monaco-list-row[aria-label="_DATE_PICKER_"]) {
+            .monaco-list-row[aria-label="_DATE_PICKER_"] {
                 padding-right: 0 !important;
             }
         }

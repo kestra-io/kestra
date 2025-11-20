@@ -1,4 +1,4 @@
-import {onMounted} from "vue";
+import {nextTick, onMounted} from "vue";
 import {LocationQuery, RouteLocation, useRoute, useRouter} from "vue-router";
 import {useMiscStore} from "override/stores/misc";
 import {defaultNamespace} from "../../../composables/useNamespaces";
@@ -19,7 +19,7 @@ const hasFilterKey = (query: LocationQuery, prefix: string): boolean =>
     Object.keys(query).some(key => key.startsWith(prefix));
 
 export function applyDefaultFilters(
-    currentQuery: LocationQuery, 
+    currentQuery?: LocationQuery, 
     {
         configuration, 
         route, 
@@ -30,7 +30,14 @@ export function applyDefaultFilters(
     }: DefaultFilterOptions & { 
         configuration?: FilterConfiguration; 
         route?: RouteLocation 
-    } = {}): { query: LocationQuery } {
+    } = {}): { query: LocationQuery, change: boolean } {
+
+    if(currentQuery && Object.keys(currentQuery).length > 0) {
+        return {
+            query: currentQuery,
+            change: false,
+        }
+    }
 
     const hasTimeRange = configuration && route 
         ? configuration.keys?.some((k: any) => k.key === "timeRange") ?? false
@@ -57,7 +64,7 @@ export function applyDefaultFilters(
         query[legacyQuery ? "timeRange" : `${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = defaultDuration;
     }
 
-    return {query};
+    return {query, change: true};
 }
 
 export function useDefaultFilter(
@@ -67,14 +74,15 @@ export function useDefaultFilter(
     const route = useRoute();
     const router = useRouter();
 
-    onMounted(() => {
-        // wait for the restore url process to end
-        // it has priority over default filters
-        setTimeout(() => {
-            const {query} = applyDefaultFilters(route.query, {configuration, route, legacyQuery})
-            if(!route.query || Object.keys(route.query).length === 0) {
-                router.replace({...route, query})
-            }
-        }, 100);
+    onMounted(async () => {
+        // wait for router to be ready
+        await nextTick()
+        // wait for the useRestoreUrl to apply its changes
+        await nextTick()
+        // finally add default filter if necessary
+        const {query, change} = applyDefaultFilters(route.query, {configuration, route, legacyQuery})
+        if(change) {
+            router.replace({...route, query})
+        }
     });
 }   

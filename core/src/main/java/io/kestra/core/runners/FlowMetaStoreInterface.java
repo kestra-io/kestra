@@ -49,4 +49,6 @@ public interface FlowMetaStoreInterface {
             Optional.of(execution.getFlowRevision())
         );
     }
+
+    Optional<FlowWithSource> findByExecutionThenInjectDefaults(Execution execution);
 }

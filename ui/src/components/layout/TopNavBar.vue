@@ -22,13 +22,13 @@
                                                 v-for="(hiddenItem, y) in item.hidden"
                                                 :key="y"
                                             >
-                                                <router-link
+                                                <RouterLink
                                                     v-if="!hiddenItem.disabled && hiddenItem.link"
                                                     :to="hiddenItem.link"
                                                     class="breadcrumb-link"
                                                 >
                                                     {{ hiddenItem.label }}
-                                                </router-link>
+                                                </RouterLink>
                                                 <span
                                                     v-else
                                                     class="breadcrumb-link"
@@ -40,13 +40,13 @@
                                         </el-dropdown-menu>
                                     </template>
                                 </el-dropdown>
-                                <router-link
+                                <RouterLink
                                     v-else-if="!item.disabled && item.link"
                                     :to="item.link"
                                     class="breadcrumb-link"
                                 >
                                     {{ item.label }}
-                                </router-link>
+                                </RouterLink>
                                 <span
                                     v-else
                                     class="breadcrumb-link"
@@ -104,102 +104,102 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { useI18n } from "vue-i18n";
-import { useRoute, RouterLink } from "vue-router";
-import GlobalSearch from "./GlobalSearch.vue";
-import Impersonating from "override/components/auth/Impersonating.vue";
-import TrashCan from "vue-material-design-icons/TrashCan.vue";
-import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
-import StarIcon from "vue-material-design-icons/Star.vue";
-import Information from "vue-material-design-icons/Information.vue";
-import Badge from "../global/Badge.vue";
-import { useLogsStore } from "../../stores/logs";
-import { useBookmarksStore } from "../../stores/bookmarks";
-import { useToast } from "../../utils/toast";
-import { useFlowStore } from "../../stores/flow";
-import { useLayoutStore } from "../../stores/layout";
-import SidebarToggleButton from "./SidebarToggleButton.vue";
+    import {computed} from "vue";
+    import {useI18n} from "vue-i18n";
+    import {useRoute, RouterLink} from "vue-router";
+    import GlobalSearch from "./GlobalSearch.vue";
+    import Impersonating from "override/components/auth/Impersonating.vue";
+    import TrashCan from "vue-material-design-icons/TrashCan.vue";
+    import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
+    import StarIcon from "vue-material-design-icons/Star.vue";
+    import Information from "vue-material-design-icons/Information.vue";
+    import Badge from "../global/Badge.vue";
+    import {useLogsStore} from "../../stores/logs";
+    import {useBookmarksStore} from "../../stores/bookmarks";
+    import {useToast} from "../../utils/toast";
+    import {useFlowStore} from "../../stores/flow";
+    import {useLayoutStore} from "../../stores/layout";
+    import SidebarToggleButton from "./SidebarToggleButton.vue";
 
-type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"];
+    type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"];
 
-const props = defineProps<{
-    title: string;
-    description?: string;
-    breadcrumb?: { label: string; link?: RouterLinkTo; disabled?: boolean; hidden?: any[] }[];
-    beta?: boolean;
-}>();
+    const props = defineProps<{
+        title: string;
+        description?: string;
+        breadcrumb?: { label: string; link?: RouterLinkTo; disabled?: boolean; hidden?: any[] }[];
+        beta?: boolean;
+    }>();
 
-const logsStore = useLogsStore();
-const bookmarksStore = useBookmarksStore();
-const flowStore = useFlowStore();
-const route = useRoute();
-const layoutStore = useLayoutStore();
+    const logsStore = useLogsStore();
+    const bookmarksStore = useBookmarksStore();
+    const flowStore = useFlowStore();
+    const route = useRoute();
+    const layoutStore = useLayoutStore();
 
-const visibleBreadcrumbs = computed(() => {
-    if (!props.breadcrumb || props.breadcrumb.length <= 3) {
-        return props.breadcrumb;
-    }
+    const visibleBreadcrumbs = computed(() => {
+        if (!props.breadcrumb || props.breadcrumb.length <= 3) {
+            return props.breadcrumb;
+        }
 
-    const hiddenItems = props.breadcrumb.slice(1, -1);
-    return [
-        props.breadcrumb[0],
-        {
-            label: "...",
-            hidden: hiddenItems,
-            disabled: true,
-        },
-        props.breadcrumb[props.breadcrumb.length - 1],
-    ];
-});
-
-const shouldDisplayDeleteButton = computed(() => {
-    return route.name === "flows/update" && route.params?.tab === "logs";
-});
-
-const currentFavURI = computed(() => {
-    if (route) {
-        return (
-            window.location.pathname +
-            window.location.search
-                .replace(/&?page=[^&]*/gi, "")
-                .replace(/\?&/, "?")
-        );
-    }
-    return "";
-});
-
-const bookmarked = computed(() => {
-    return bookmarksStore.pages.some((page) => page.path === currentFavURI.value);
-});
-
-const toast = useToast();
-const { t } = useI18n();
-
-const deleteLogs = () => {
-    if (!flowStore.flow) throw new Error("No flow selected");
-
-    toast.confirm(t("delete_all_logs"), async () => {
-        if (!flowStore.flow) return;
-        return logsStore.deleteLogs({
-            namespace: flowStore.flow?.namespace,
-            flowId: flowStore.flow?.id,
-        });
+        const hiddenItems = props.breadcrumb.slice(1, -1);
+        return [
+            props.breadcrumb[0],
+            {
+                label: "...",
+                hidden: hiddenItems,
+                disabled: true,
+            },
+            props.breadcrumb[props.breadcrumb.length - 1],
+        ];
     });
-};
 
-const onStarClick = () => {
-    if (bookmarked.value) {
-        bookmarksStore.remove({ path: currentFavURI.value });
-    } else {
-        bookmarksStore.add({
-            path: currentFavURI.value,
-            label: props.breadcrumb?.length
-                ? `${props.breadcrumb[props.breadcrumb.length - 1].label}: ${props.title}`
-                : props.title,
+    const shouldDisplayDeleteButton = computed(() => {
+        return route.name === "flows/update" && route.params?.tab === "logs";
+    });
+
+    const currentFavURI = computed(() => {
+        if (route) {
+            return (
+                window.location.pathname +
+                window.location.search
+                    .replace(/&?page=[^&]*/gi, "")
+                    .replace(/\?&/, "?")
+            );
+        }
+        return "";
+    });
+
+    const bookmarked = computed(() => {
+        return bookmarksStore.pages.some((page) => page.path === currentFavURI.value);
+    });
+
+    const toast = useToast();
+    const {t} = useI18n();
+
+    const deleteLogs = () => {
+        if (!flowStore.flow) throw new Error("No flow selected");
+
+        toast.confirm(t("delete_all_logs"), async () => {
+            if (!flowStore.flow) return;
+            return logsStore.deleteLogs({
+                namespace: flowStore.flow?.namespace,
+                flowId: flowStore.flow?.id,
+            });
         });
-    }
-};
+    };
+
+    const onStarClick = () => {
+        if (bookmarked.value) {
+            bookmarksStore.remove({path: currentFavURI.value});
+        } else {
+            bookmarksStore.add({
+                path: currentFavURI.value,
+                label: props.breadcrumb?.length
+                    ? `${props.breadcrumb[props.breadcrumb.length - 1].label}: ${props.title}`
+                    : props.title,
+            });
+        }
+    };
 </script>
 
 <style scoped lang="scss">
@@ -384,5 +384,5 @@ nav {
             }
         }
     }
-}
+}}}
 </style>

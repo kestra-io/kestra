@@ -11,8 +11,9 @@
                             refresh: {shown: true, callback: refresh},
                             columns: {shown: false}
                         }"
+                        :defaultScope="false"
                     />
-                </template>
+                </template>xx
 
                 <template v-if="showStatChart()" #top>
                     <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault class="mb-4" />

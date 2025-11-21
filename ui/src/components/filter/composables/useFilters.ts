@@ -17,10 +17,16 @@ import {
     KV_COMPARATORS
 } from "../utils/filterTypes";
 import {usePreAppliedFilters} from "./usePreAppliedFilters";
-import {applyDefaultFilters} from "./useDefaultFilter";
+import {useDefaultFilter} from "./useDefaultFilter";
 
 
-export function useFilters(configuration: FilterConfiguration, showSearchInput = true, legacyQuery = false) {
+export function useFilters(
+    configuration: FilterConfiguration, 
+    showSearchInput = true, 
+    legacyQuery = false, 
+    defaultScope?: boolean, 
+    defaultTimeRange?: boolean
+) {
     const router = useRouter();
     const route = useRoute();
 
@@ -368,10 +374,15 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         updateRoute();
     };
 
+    const {resetDefaultFilter} = useDefaultFilter({
+        legacyQuery,
+        includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
+        includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
+    });
+
     const resetToPreApplied = () => {
-        const defaultQuery = applyDefaultFilters({}, {configuration, route, legacyQuery}).query;
         searchQuery.value = "";
-        router.push({query: defaultQuery});
+        resetDefaultFilter();
     };
     
     watch(searchQuery, () => {

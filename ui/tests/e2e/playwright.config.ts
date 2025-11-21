@@ -1,5 +1,10 @@
+import dotenv from "dotenv"
+const __dirname = new URL(".", import.meta.url).pathname;
+dotenv.config({path: __dirname + "/.env"});
+
 import type {PlaywrightTestConfig} from "@playwright/test";
 import {devices} from "@playwright/test";
+
 
 /**
  * Read environment variables from file.
@@ -41,7 +46,7 @@ const config: PlaywrightTestConfig = {
     /* Shared settings for all the projects below. */
     use: {
         /* Base URL to use in actions like `await page.goto("/")`. */
-        baseURL: "http://localhost:9011",
+        baseURL: process.env.E2E_BASE_URL ?? "http://localhost:9011",
 
         /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
         trace: "retain-on-failure",

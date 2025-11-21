@@ -63,13 +63,14 @@
     import {computed, onMounted, onUnmounted, ref, watch} from "vue";
     import Close from "vue-material-design-icons/Close.vue";
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
-    import {useI18n} from "vue-i18n";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
     import Utils from "../../utils/utils";
     import {useMiscStore} from "override/stores/misc";
-
-    const {t} = useI18n();
+    
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+    
     const aiStore = useAiStore();
     const emit = defineEmits<{
         close: [];

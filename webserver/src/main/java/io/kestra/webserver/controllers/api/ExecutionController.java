@@ -1902,9 +1902,6 @@ public class ExecutionController {
     ) {
         String subscriberId = UUID.randomUUID().toString();
         return Flux.<Event<Execution>>create(emitter -> {
-                // Send initial event
-                emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
-
                 // Check if execution exists
                 try {
                     Execution execution = Await.until(
@@ -1912,6 +1909,9 @@ public class ExecutionController {
                         Duration.ofMillis(500),
                         Duration.ofSeconds(10)
                     );
+
+                    // Send initial event
+                    emitter.next(Event.of(execution).id("start"));
 
                     Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 

@@ -318,6 +318,21 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
+    void followExecutionWithInvalidId() {
+        // Test that following a non-existent execution returns a proper error without a fake start event
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> sseClient
+                .eventStream("/api/v1/main/executions/fake-execution-id/follow", Execution.class)
+                .collectList()
+                .block()
+        );
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+    }
+
+    @Test
     @LoadFlows({"flows/valids/each-sequential-nested.yaml"})
     void evalTaskRunExpression() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "each-sequential-nested");

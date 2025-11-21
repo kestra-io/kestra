@@ -728,6 +728,12 @@
           "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?"
         }
       },
+      "revisions": {
+          "history": "Revision history",
+          "restore": {
+              "success": "File revision restored successfully"
+          }
+      },
       "path": {
         "copy": "Copy path",
         "success": "Path copied to clipboard",

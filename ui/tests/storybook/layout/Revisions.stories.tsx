@@ -95,7 +95,7 @@ export const Default: Story = {
         let simplifiedOptions = getSimplifiedOptions(revisionSelectorsOptions);
 
         await expect(simplifiedOptions[0]).toEqual([{selected: false, content: "1"}, {selected: true, content: "3"}]);
-        await expect(simplifiedOptions[1]).toEqual([{selected: false, content: "1"}, {selected: true, content: "4"}]);
+        await expect(simplifiedOptions[1]).toEqual([{selected: false, content: "1"}, {selected: true, content: "4 (current)"}]);
 
         await expect(canvas.getByText(crudText(3))).not.toBeNull();
         await expect(canvas.getByText(crudText(4))).not.toBeNull();

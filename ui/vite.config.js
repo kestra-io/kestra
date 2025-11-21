@@ -1,6 +1,7 @@
 import path from "path";
 import {defineConfig} from "vite";
 import vue from "@vitejs/plugin-vue";
+import {federation} from "@module-federation/vite";
 
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
@@ -61,6 +62,23 @@ export default defineConfig({
         },
     },
     plugins: [
+        federation({
+            name: "host",
+            remotes: {
+                remote: { // for runtime processing
+                    type: "module", 
+                    name: "remote", // for build to work
+                    entry: "http://localhost:4174/remoteEntryRemote.js",
+                },
+            },
+            shared: {
+                vue: { 
+                    singleton: true, 
+                    eager: true,
+                    requiredVersion: "^3"
+                }
+            }
+        }),
         vue({
             template: {
                 compilerOptions: {

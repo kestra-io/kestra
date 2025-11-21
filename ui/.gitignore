@@ -4,3 +4,6 @@ tests/.env
 tests/data/
 tests/e2e/.env
 tests/e2e/data/application-secrets.yml
+
+# module federation build files
+.__mf__temp

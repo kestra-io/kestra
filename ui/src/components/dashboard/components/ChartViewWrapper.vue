@@ -1,5 +1,7 @@
 <template>
-    <div class="chart-view">
+    <div
+        class="chart-view"
+    >
         <div v-if="dashboardStore.selectedChart" class="w-100">
             <Sections
                 :dashboard="{id: 'default', charts: [dashboardStore.selectedChart]}"

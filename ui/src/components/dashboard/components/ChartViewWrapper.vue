@@ -1,7 +1,5 @@
 <template>
-    <div
-        class="chart-view"
-    >
+    <div class="chart-view">
         <div v-if="dashboardStore.selectedChart" class="w-100">
             <Sections
                 :dashboard="{id: 'default', charts: [dashboardStore.selectedChart]}"
@@ -16,7 +14,7 @@
             <el-empty :image="EmptyVisualDashboard" :imageSize="200">
                 <template #description>
                     <h5>
-                        {{ t("dashboards.chart_preview") }}
+                        {{ $t("dashboards.chart_preview") }}
                     </h5>
                 </template>
             </el-empty>
@@ -25,12 +23,9 @@
 </template>
 
 <script lang="ts" setup>
-    import {useI18n} from "vue-i18n";
     import Sections from "../sections/Sections.vue";
     import EmptyVisualDashboard from "../../../assets/empty_visuals/Visuals_empty_dashboard.svg";
     import {useDashboardStore} from "../../../stores/dashboard";
-
-    const {t} = useI18n();
 
     const dashboardStore = useDashboardStore();
 </script>

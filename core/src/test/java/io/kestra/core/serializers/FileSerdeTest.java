@@ -177,4 +177,33 @@ class FileSerdeTest {
     }
 
     private record SimpleEntry(long id, String value) {}
+
+
+    @Test
+    void writeAllBinary_checkFormatAndHash() throws IOException {
+        Path outputTempFilePath = createTempFile();
+
+        final List<SimpleEntry> inputValues = List.of(
+            new SimpleEntry(1, "value1"),
+            new SimpleEntry(2, "value2")
+        );
+
+        var result = FileSerde.writeAllBinary(Files.newOutputStream(outputTempFilePath), Flux.fromIterable(inputValues)).block();
+
+        assertThat(result).isNotNull();
+        assertThat(result.getKey()).isEqualTo(2L);
+        assertThat(result.getValue()).isNotNull();
+
+        byte[] fileBytes = Files.readAllBytes(outputTempFilePath);
+        assertThat(fileBytes.length).isGreaterThan(4);
+        assertThat(fileBytes[0]).isEqualTo((byte) 0xE0);
+        assertThat(fileBytes[1]).isEqualTo((byte) 0x01);
+        assertThat(fileBytes[2]).isEqualTo((byte) 0x00);
+        assertThat(fileBytes[3]).isEqualTo((byte) 0xEA);
+
+        List<SimpleEntry> readBack = FileSerde.readAll(Files.newInputStream(outputTempFilePath), SimpleEntry.class).collectList().block();
+        assertThat(readBack).hasSize(2);
+        assertThat(readBack.getFirst().value).isEqualTo("value1");
+    }
+
 }

@@ -149,7 +149,7 @@ class PropertyTest {
             DynamicPropertyExampleTask.Message.builder().key("key1").value("value1").build(),
             DynamicPropertyExampleTask.Message.builder().key("key2").value("value2").build()
         );
-        FileSerde.writeAll(Files.newBufferedWriter(messages), Flux.fromIterable(inputValues)).block();
+        FileSerde.writeAllBinary(Files.newOutputStream(messages), Flux.fromIterable(inputValues)).block();
         URI uri;
         try (var input = new FileInputStream(messages.toFile())) {
             uri = storage.put(MAIN_TENANT, null, URI.create("/messages.ion"), input);

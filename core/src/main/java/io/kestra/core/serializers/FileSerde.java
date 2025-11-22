@@ -2,18 +2,28 @@ package io.kestra.core.serializers;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
 import java.util.Objects;
+
+import com.fasterxml.jackson.dataformat.ion.IonFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
 
 import java.io.*;
 import java.util.function.Consumer;
+
+import com.amazon.ion.IonWriter;
+import com.amazon.ion.system.IonBinaryWriterBuilder;
+import com.amazon.ionhash.IonHashWriter;
+import com.amazon.ionhash.IonHashWriterBuilder;
+import com.amazon.ionhash.MessageDigestIonHasherProvider;
+import java.util.AbstractMap;
 
 public final class FileSerde {
     /**
@@ -157,8 +167,67 @@ public final class FileSerde {
     }
 
     /**
-     * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
+     * Reads values from an InputStream.
+     * Jackson auto-detects if the stream is Ion Text or Ion Binary.
      */
+    public static <T> Flux<T> readAll(InputStream input, Class<T> type) throws IOException {
+        return readAll(DEFAULT_OBJECT_MAPPER, input, type);
+    }
+
+    public static <T> Flux<T> readAll(InputStream input, TypeReference<T> type) throws IOException {
+        return readAll(DEFAULT_OBJECT_MAPPER, input, type);
+    }
+
+    public static <T> Flux<T> readAll(ObjectMapper objectMapper, InputStream input, Class<T> type) throws IOException {
+        return readAll(objectMapper, input, (Object) type);
+    }
+
+    public static <T> Flux<T> readAll(ObjectMapper objectMapper, InputStream input, TypeReference<T> type) throws IOException {
+        return readAll(objectMapper, input, (Object) type);
+    }
+
+    private static <T> Flux<T> readAll(ObjectMapper objectMapper, InputStream input, Object type) throws IOException {
+        return Flux.create(sink -> {
+            try {
+                MappingIterator<T> mappingIterator;
+                if (type instanceof Class) {
+                    mappingIterator = objectMapper.readerFor((Class<T>) type).readValues(input);
+                } else {
+                    mappingIterator = objectMapper.readerFor((TypeReference<T>) type).readValues(input);
+                }
+
+                mappingIterator.forEachRemaining(sink::next);
+                sink.complete();
+            } catch (IOException e) {
+                sink.error(e);
+            }
+        }, FluxSink.OverflowStrategy.BUFFER);
+    }
+
+    /**
+     * Reads a limited number of lines/objects from an InputStream.
+     * Used by file previews (IonFileRender).
+     */
+    public static boolean reader(InputStream input, int maxLines, Consumer<Object> consumer) throws IOException {
+        int nbLines = 0;
+
+        try (MappingIterator<Object> it = DEFAULT_OBJECT_MAPPER.readerFor(DEFAULT_TYPE_REFERENCE).readValues(input)) {
+            while (it.hasNext()) {
+                if (nbLines >= maxLines) {
+                    return true;
+                }
+                consumer.accept(it.next());
+                nbLines++;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * @deprecated Use {@link #writeAllBinary(OutputStream, Flux)} instead for better compression and hashing.
+     */
+    @Deprecated
     public static <T> Mono<Long> writeAll(Writer writer, Flux<T> values) throws IOException {
         return writeAll(DEFAULT_OBJECT_MAPPER, writer, values);
     }
@@ -178,6 +247,60 @@ public final class FileSerde {
             .doFinally(throwConsumer(ignored -> seqWriter.flush())) // we should have called close() but it generates an exception, so we flush
             .count();
     }
+
+    /**
+     * Writes a Flux of values to an OutputStream in Ion Binary format and returns the count and SHA-256 hash.
+     * * @param output The raw output stream (do not wrap in Writer)
+     * @param values The data to write
+     * @return A Mono containing a Map.Entry where Key = Count (Long) and Value = SHA-256 Hash (String)
+     */
+    public static <T> Mono<AbstractMap.SimpleEntry<Long, String>> writeAllBinary(OutputStream output, Flux<T> values) {
+        return Mono.create(sink -> {
+            try {
+                MessageDigestIonHasherProvider hasherProvider = new MessageDigestIonHasherProvider("SHA-256");
+
+                IonWriter binaryWriter = IonBinaryWriterBuilder.standard().build(output);
+
+                IonHashWriter hashWriter = IonHashWriterBuilder.standard()
+                    .withHasherProvider(hasherProvider)
+                    .withWriter(binaryWriter)
+                    .build();
+
+                IonFactory ionFactory = (IonFactory) DEFAULT_OBJECT_MAPPER.getFactory();
+                JsonGenerator generator = ionFactory.createGenerator(hashWriter);
+                generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+
+                values
+                    .filter(Objects::nonNull)
+                    .doOnNext(throwConsumer(item -> {
+                        DEFAULT_OBJECT_MAPPER.writeValue(generator, item);
+                    }))
+                    .count()
+                    .subscribe(
+                        count -> {
+                            try {
+                                hashWriter.finish();
+                                byte[] digest = hashWriter.digest();
+                                hashWriter.close();
+
+                                StringBuilder hexString = new StringBuilder();
+                                for (byte b : digest) {
+                                    hexString.append(String.format("%02x", b));
+                                }
+
+                                sink.success(new AbstractMap.SimpleEntry<>(count, hexString.toString()));
+                            } catch (IOException e) {
+                                sink.error(e);
+                            }
+                        },
+                        sink::error
+                    );
+            } catch (Exception e) {
+                sink.error(e);
+            }
+        });
+    }
+
 
     private static <T> MappingIterator<T> createMappingIterator(ObjectMapper objectMapper, Reader reader, TypeReference<T> type) throws IOException {
         try (var parser = objectMapper.createParser(reader)) {

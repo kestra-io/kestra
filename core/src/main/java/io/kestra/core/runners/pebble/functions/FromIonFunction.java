@@ -8,8 +8,10 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 import reactor.core.publisher.Flux;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -38,7 +40,10 @@ public class FromIonFunction implements Function {
             try {
                 String ion = (String) args.get("ion");;
 
-                Flux<Object> flux = FileSerde.readAll(new BufferedReader(new StringReader(ion)));
+                Flux<Object> flux = FileSerde.readAll(
+                    new ByteArrayInputStream(ion.getBytes(StandardCharsets.UTF_8)),
+                    Object.class
+                );
 
                 if (!allRows) {
                     flux = flux.take(1);

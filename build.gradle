@@ -150,6 +150,10 @@ allprojects {
             implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310'
             implementation group: 'com.fasterxml.uuid', name: 'java-uuid-generator'
 
+            // ion
+            implementation 'com.amazon.ion:ion-java:1.11.9'
+            implementation 'com.amazon.ion:ion-hash-java:1.0.0'
+
             // kestra
             implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'
             implementation (group: 'net.thisptr', name: 'jackson-jq') {

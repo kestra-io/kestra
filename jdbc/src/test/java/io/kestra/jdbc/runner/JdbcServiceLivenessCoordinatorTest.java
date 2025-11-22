@@ -115,6 +115,10 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
             if (either.getLeft().getTaskRun().getState().getCurrent() == Type.RUNNING) {
                 runningLatch.countDown();
             }
+
+            if (either.getLeft().getTaskRun().getState().getCurrent() == Type.FAILED) {
+                fail("Worker task result should not be in FAILED state as it should be resubmitted");
+            }
         });
 
         workerJobQueue.emit(workerTask(Duration.ofSeconds(5)));

@@ -10,6 +10,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
@@ -91,6 +92,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
+import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -191,13 +193,13 @@ public class ExecutionController {
     private Optional<OpenTelemetry> openTelemetry;
 
     @Inject
-    private ExecutionStreamingService executionStreamingService;
-
-    @Inject
     private LocalPathFactory localPathFactory;
 
     @Inject
     private SecureVariableRendererFactory secureVariableRendererFactory;
+    
+    @Inject
+    private LogService logService;
 
     @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
     private boolean enableLocalFilePreview;
@@ -483,6 +485,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
     public Publisher<HttpResponse<?>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -496,6 +499,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
     public Publisher<HttpResponse<?>> triggerExecutionByGetWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -509,6 +513,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = WebhookResponse.class))})
     @SingleResult
     public Publisher<HttpResponse<?>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -568,7 +573,7 @@ public class ExecutionController {
         if (maybeWebhook.isEmpty()) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "Webhook not found");
         }
-        
+
         final Webhook webhook = maybeWebhook.get();
         Optional<Execution> execution = webhook.evaluate(request, flow);
 
@@ -580,13 +585,13 @@ public class ExecutionController {
         if (flow.getLabels() != null) {
             result = result.withLabels(LabelService.labelsExcludingSystem(flow));
         }
-        
+
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
         var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
         if (!conditionService.isValid(flow, webhook, conditionContext)) {
             return Mono.just(HttpResponse.noContent());
         }
-        
+
         // inject trigger inputs
         if (webhook.getInputs() != null) {
             RunContext runContext = runContextFactory.of(flow, result);
@@ -688,7 +693,11 @@ public class ExecutionController {
         Execution execution = Execution.newExecution(flow, parsedLabels);
         return flowInputOutput
             .validateExecutionInputs(flow.getInputs(), flow, execution, inputs)
-            .map(values -> ApiValidateExecutionInputsResponse.of(id, namespace, values));
+            .map(values -> {
+                Map<String, Object> inputsAsMap = values.stream().collect(HashMap::new, (m,v)->m.put(v.input().getId(), v.value()), HashMap::putAll);
+                List<Check> checks = flowService.getFailedChecks(flow, inputsAsMap);
+                return ApiValidateExecutionInputsResponse.of(id, namespace, checks, values);
+            });
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -726,7 +735,24 @@ public class ExecutionController {
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(executionInputs -> {
-                Execution executionWithInputs = current.withInputs(executionInputs);
+                Check.Behavior behavior = Check.resolveBehavior(flowService.getFailedChecks(flow, executionInputs));
+                if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
+                    return Mono.error(new IllegalArgumentException(
+                        "Flow execution blocked: one or more condition checks evaluated to false."
+                    ));
+                }
+                
+                final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
+                    .map(exec -> {
+                        if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
+                            this.logService.logExecution(current, log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
+                            return exec.withState(State.Type.FAILED);
+                        } else {
+                            return exec;
+                        }
+                    })
+                    .get();
+                
                 try {
                     // inject the traceparent into the execution
                     openTelemetry
@@ -737,7 +763,7 @@ public class ExecutionController {
                     executionQueue.emit(executionWithInputs);
                     eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
 
-                    if (!wait) {
+                    if (!wait || executionWithInputs.getState().isFailed()) {
                         return Mono.just(ExecutionResponse.fromExecution(
                             executionWithInputs,
                             executionUrl(executionWithInputs)
@@ -1353,6 +1379,10 @@ public class ExecutionController {
 
         var execution = maybeExecution.get();
 
+        return killExecution(execution, isOnKillCascade);
+    }
+
+    protected MutableHttpResponse<Object> killExecution(Execution execution, Boolean isOnKillCascade) throws QueueException {
         // Always emit an EXECUTION_KILLED event when isOnKillCascade=true.
         if (execution.getState().isTerminated() && !isOnKillCascade) {
             throw new IllegalStateException("Execution is already finished, can't kill it");
@@ -1362,7 +1392,7 @@ public class ExecutionController {
         killQueue.emit(ExecutionKilledExecution
             .builder()
             .state(ExecutionKilled.State.REQUESTED)
-            .executionId(executionId)
+            .executionId(execution.getId())
             .isOnKillCascade(isOnKillCascade)
             .tenantId(tenantService.resolveTenant())
             .build()
@@ -1395,6 +1425,14 @@ public class ExecutionController {
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
                     "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (!validateExecutionACL(execution.get())) {
+                invalids.add(ManualConstraintViolation.of(
+                    "user don't have the authorisation to kill this execution",
                     executionId,
                     String.class,
                     "execution",
@@ -1442,14 +1480,20 @@ public class ExecutionController {
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
         return executionService.validateForResume(execution, flow, inputs)
-            .map(values -> ApiValidateExecutionInputsResponse.of(execution.getFlowId(), execution.getNamespace(), values))
+            .map(values -> ApiValidateExecutionInputsResponse.of(execution.getFlowId(), execution.getNamespace(), List.of(), values))
             // need to consume the inputs in case of error
             .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast());
     }
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{executionId}/resume", consumes = MediaType.MULTIPART_FORM_DATA)
-    @Operation(tags = {"Executions"}, summary = "Resume a paused execution.")
+    @Operation(tags = {"Executions"}, summary = "Resume a paused execution.",
+        extensions = @Extension(
+            name = "x-sdk-customization",
+            properties = {
+                @ExtensionProperty(name = "x-multipart", value = "true")
+            }
+        ))
     @ApiResponse(responseCode = "204", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the executions is not paused")
     @SingleResult
@@ -1539,6 +1583,14 @@ public class ExecutionController {
             } else if (execution.isEmpty()) {
                 invalids.add(ManualConstraintViolation.of(
                     "execution not found",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
+            } else if (!validateExecutionACL(execution.get())) {
+                invalids.add(ManualConstraintViolation.of(
+                    "user don't have the authorisation to resume this execution",
                     executionId,
                     String.class,
                     "execution",
@@ -2293,6 +2345,14 @@ public class ExecutionController {
                     "execution",
                     executionId
                 ));
+            } else if (!validateExecutionACL(execution.get())) {
+                invalids.add(ManualConstraintViolation.of(
+                    "user don't have the authorisation to force run this execution",
+                    executionId,
+                    String.class,
+                    "execution",
+                    executionId
+                ));
             } else {
                 executions.add(execution.get());
             }
@@ -2537,7 +2597,8 @@ public class ExecutionController {
         @Parameter(description = "The namespace")
         String namespace,
         @Parameter(description = "The flow's inputs")
-        List<ApiInputAndValue> inputs
+        List<ApiInputAndValue> inputs,
+        List<ApiCheckFailure> checks
     ) {
 
         @Introspected
@@ -2560,10 +2621,20 @@ public class ExecutionController {
             @Parameter(description = "The error message")
             String message
         ) {
-
+        }
+        
+        @Introspected
+        public record ApiCheckFailure(
+            @Parameter(description = "The message")
+            String message,
+            @Parameter(description = "The message style")
+            Check.Style style,
+            @Parameter(description = "The behavior")
+            Check.Behavior behavior
+        ) {
         }
 
-        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<InputAndValue> inputs) {
+        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<Check> checks, List<InputAndValue> inputs) {
             return new ApiValidateExecutionInputsResponse(
                 id,
                 namespace,
@@ -2578,9 +2649,19 @@ public class ExecutionController {
                             .map(cv -> new ApiInputError(cv.getMessage()))
                             .toList()
                     ).orElse(List.of())
-                )).toList()
+                )).toList(),
+                checks.stream().map(check -> new ApiCheckFailure(check.getMessage(), check.getStyle(), check.getBehavior())).toList()
             );
         }
+    }
+
+    /**
+     * For override purpose.
+     * @param execution
+     * @return true if the user has the authorization, false else.
+     */
+    protected boolean validateExecutionACL(Execution execution) {
+        return true;
     }
 
 }

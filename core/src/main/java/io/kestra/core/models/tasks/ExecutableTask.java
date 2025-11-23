@@ -24,7 +24,7 @@ public interface ExecutableTask<T extends Output>{
      */
     List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
                                                       FlowMetaStoreInterface flowExecutorInterface,
-                                                      Flow currentFlow, Execution currentExecution,
+                                                      FlowInterface currentFlow, Execution currentExecution,
                                                       TaskRun currentTaskRun) throws InternalException;
 
     /**

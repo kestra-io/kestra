@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.validations.WebhookValidation;
 import io.micronaut.http.HttpRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -156,8 +157,8 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
            """
     )
     private Boolean wait = false;
-    
-    
+
+
     @Schema(
         title = "The inputs to pass to the triggered flow"
     )
@@ -172,7 +173,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     )
     private Boolean returnOutputs = false;
 
-    public Optional<Execution> evaluate(HttpRequest<String> request, io.kestra.core.models.flows.Flow flow) {
+    public Optional<Execution> evaluate(HttpRequest<String> request, FlowInterface flow) {
         String body = request.getBody().orElse(null);
 
         Execution.ExecutionBuilder builder = Execution.builder()

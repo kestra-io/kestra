@@ -163,9 +163,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}")
     @Operation(tags = {"Flows"}, summary = "Get a flow")
-    @Schema(
-        implementation = FlowWithSource.class
-    )
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = FlowWithSource.class))})
     //FIXME we return Object instead of Flow as Micronaut, since 4, has an issue with subtypes serialization, see https://github.com/micronaut-projects/micronaut-core/issues/10294.
     public Object getFlow(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -875,7 +873,8 @@ public class FlowController {
     @ApiResponse(responseCode = "200", description = "On success")
     public HttpResponse<List<String>> importFlows(
         @Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file")
-        @Part CompletedFileUpload fileUpload
+        @Part CompletedFileUpload fileUpload,
+        @Parameter(description = "If should fail on invalid flows") @QueryValue(defaultValue = "false") Boolean failOnError
     ) throws IOException {
         String tenantId = tenantService.resolveTenant();
         final List<String> wrongFiles = new ArrayList<>();
@@ -891,6 +890,9 @@ public class FlowController {
             log.error("Unexpected error while importing flows", e);
             fileUpload.discard();
             return HttpResponse.badRequest();
+        }
+        if (failOnError && !wrongFiles.isEmpty()) {
+            throw new IllegalArgumentException("Following invalids flows were not imported: " + String.join(", ", wrongFiles));
         }
         return HttpResponse.ok(wrongFiles);
     }

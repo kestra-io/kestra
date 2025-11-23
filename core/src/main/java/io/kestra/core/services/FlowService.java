@@ -2,20 +2,26 @@ package io.kestra.core.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +33,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -53,6 +60,9 @@ public class FlowService {
 
     @Inject
     Optional<FlowTopologyRepositoryInterface> flowTopologyRepository;
+    
+    @Inject
+    Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
 
     /**
      * Validates and creates the given flow.
@@ -84,7 +94,51 @@ public class FlowService {
         return flowRepository
             .orElseThrow(() -> new IllegalStateException("Cannot perform operation on flow. Cause: No FlowRepository"));
     }
-
+    
+    /**
+     * Evaluates all checks defined in the given flow using the provided inputs.
+     * <p>
+     * Each check's {@link Check#getCondition()} is evaluated in the context of the flow.
+     * If a condition evaluates to {@code false} or fails to evaluate due to a
+     * variable error, the corresponding {@link Check} is added to the returned list.
+     * </p>
+     *
+     * @param flow   the flow containing the checks to evaluate
+     * @param inputs the input values used when evaluating the conditions
+     * @return a list of checks whose conditions evaluated to {@code false} or failed to evaluate
+     */
+    public List<Check> getFailedChecks(Flow flow, Map<String, Object> inputs) {
+        if (!ListUtils.isEmpty(flow.getChecks())) {
+            RunContext runContext = runContextFactory.get().of(flow, Map.of("inputs", inputs));
+            List<Check> falseConditions = new ArrayList<>();
+            for (Check check : flow.getChecks()) {
+                try {
+                    boolean result = Boolean.TRUE.equals(runContext.renderTyped(check.getCondition()));
+                    if (!result) {
+                        falseConditions.add(check);
+                    }
+                } catch (IllegalVariableEvaluationException e) {
+                    log.debug("[tenant: {}] [namespace: {}] [flow: {}] Failed to evaluate check condition. Cause.: {}",
+                        flow.getTenantId(),
+                        flow.getNamespace(),
+                        flow.getId(),
+                        e.getMessage(),
+                        e
+                    );
+                    falseConditions.add(Check
+                        .builder()
+                            .message("Failed to evaluate check condition. Cause: " + e.getMessage())
+                            .behavior(Check.Behavior.BLOCK_EXECUTION)
+                            .style(Check.Style.ERROR)
+                        .build()
+                    );
+                }
+            }
+            return falseConditions;
+        }
+        return List.of();
+    }
+    
     /**
      * Validates the given flow source.
      * <p>

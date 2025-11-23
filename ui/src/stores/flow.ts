@@ -1,4 +1,4 @@
-import {computed, h, ref} from "vue";
+import {computed, h, ref, watch} from "vue";
 import {ElMessageBox} from "element-plus";
 import permission from "../models/permission";
 import action from "../models/action";
@@ -6,6 +6,7 @@ import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
+import {useUnsavedChangesStore} from "./unsavedChanges";
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {makeToast} from "../utils/toast";
@@ -99,6 +100,7 @@ export const useFlowStore = defineStore("flow", () => {
     const axios = useAxios();
 
     const coreStore = useCoreStore();
+    const unsavedChangesStore = useUnsavedChangesStore();
 
     const t = (key: string, values?: Record<string, any>) => {
         if (!globalI18n.value) {
@@ -113,6 +115,10 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value);
+
+    watch(haveChange, (newValue) => {
+        unsavedChangesStore.unsavedChange = newValue;
+    });
 
     async function saveAll() {
         if ((!haveChange.value && !isCreating.value) || flowErrors.value?.length) {
@@ -186,8 +192,6 @@ export const useFlowStore = defineStore("flow", () => {
             }
         }
 
-        coreStore.unsavedChange = true;
-
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
         })
@@ -252,14 +256,12 @@ export const useFlowStore = defineStore("flow", () => {
             await createFlow({flow: flowSource ?? ""})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    coreStore.unsavedChange = false;
                     isCreating.value = false;
                 });
         } else {
             await saveFlow({flow: flowSource})
                 .then((response: Flow) => {
                     toast.saved(response.id);
-                    coreStore.unsavedChange = false;
                 });
         }
 

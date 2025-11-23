@@ -45,6 +45,8 @@
         searchInputFullWidth?: boolean;
         legacyQuery?: boolean;
         readOnly?: boolean;
+        defaultScope?: boolean;
+        defaultTimeRange?: boolean;
     }>(), {
         buttons: () => ({}),
         tableOptions: () => ({}),
@@ -53,7 +55,9 @@
         showSearchInput: true,
         searchInputFullWidth: false,
         legacyQuery: false,
-        readOnly: false
+        readOnly: false,
+        defaultScope: undefined,
+        defaultTimeRange: undefined,
     });
 
     const emits = defineEmits<{
@@ -75,7 +79,9 @@
     } = useFilters(
         props.configuration,
         props.showSearchInput,
-        props.legacyQuery
+        props.legacyQuery,
+        props.defaultScope,
+        props.defaultTimeRange,
     );
 
     const {savedFilters, saveFilter, updateSavedFilter, deleteSavedFilter} = useSavedFilters(
@@ -166,6 +172,7 @@
     watch(appliedFilters, (newFilters) => {
         emits("filter", newFilters);
     }, {deep: true});
+    
 </script>
 
 <style lang="scss" scoped>

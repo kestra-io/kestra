@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
@@ -20,8 +21,6 @@ import lombok.Getter;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -31,15 +30,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface {
+public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepository<MetricEntry> implements MetricRepositoryInterface {
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull();
-    protected io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository;
 
     public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository,
+                                        QueueService queueService,
                                         JdbcFilterService filterService) {
-        this.jdbcRepository = jdbcRepository;
+        super(jdbcRepository, queueService);
 
         this.filterService = filterService;
     }
@@ -71,52 +69,31 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionId(String tenantId, String executionId, Pageable pageable) {
-        return this.query(
+        return this.findPage(
+            pageable,
             tenantId,
             field("execution_id").eq(executionId)
-            , pageable
         );
     }
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskId(String tenantId, String executionId, String taskId, Pageable pageable) {
-        return this.query(
+        return this.findPage(
+            pageable,
             tenantId,
             field("execution_id").eq(executionId)
-                .and(field("task_id").eq(taskId)),
-            pageable
+                .and(field("task_id").eq(taskId))
         );
     }
 
     @Override
     public ArrayListTotal<MetricEntry> findByExecutionIdAndTaskRunId(String tenantId, String executionId, String taskRunId, Pageable pageable) {
-        return this.query(
+        return this.findPage(
+            pageable,
             tenantId,
             field("execution_id").eq(executionId)
-                .and(field("taskrun_id").eq(taskRunId)),
-            pageable
+                .and(field("taskrun_id").eq(taskRunId))
         );
-    }
-
-    @Override
-    public Flux<MetricEntry> findAllAsync(@io.micronaut.core.annotation.Nullable String tenantId) {
-        return Flux.create(emitter -> this.jdbcRepository
-            .getDslContextWrapper()
-            .transaction(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
-                    stream.map((Record record) -> jdbcRepository.map(record))
-                        .forEach(emitter::next);
-                } finally {
-                    emitter.complete();
-                }
-            }), FluxSink.OverflowStrategy.BUFFER);
     }
 
     @Override
@@ -199,23 +176,6 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     @Override
-    public MetricEntry save(MetricEntry metric) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(metric);
-        this.jdbcRepository.persist(metric, fields);
-
-        return metric;
-    }
-
-    @Override
-    public int saveBatch(List<MetricEntry> items) {
-        if (ListUtils.isEmpty(items)) {
-            return 0;
-        }
-
-        return this.jdbcRepository.persistBatch(items);
-    }
-
-    @Override
     public Integer purge(Execution execution) {
         return this.jdbcRepository
 
@@ -261,22 +221,6 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 select = select.and(condition);
 
                 return select.fetch().map(record -> record.get(field, String.class));
-            });
-    }
-
-    private ArrayListTotal<MetricEntry> query(String tenantId, Condition condition, Pageable pageable) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                select = select.and(condition);
-
-                return this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 
@@ -396,7 +340,6 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<Metrics.Fields> columnDescriptor = dataFilter.getColumns();
-            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {
                 field = filterService.buildAggregation(field, columnDescriptor.getAgg());

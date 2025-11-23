@@ -213,7 +213,7 @@ public class RunContextInitializer {
         runContext.init(applicationContext);
 
         final String triggerExecutionId = IdUtils.create();
-        final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger, null);
+        final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger);
 
         final Map<String, Object> variables = new HashMap<>(runContext.getVariables());
         variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);

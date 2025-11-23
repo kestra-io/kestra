@@ -102,8 +102,10 @@ import KPI from "../sections/KPI.vue";
 import Markdown from "../sections/Markdown.vue";
 import Pie from "../sections/Pie.vue";
 import Table from "../sections/Table.vue";
-import TimeSeries from "../sections/TimeSeries.vue";
 import {FilterObject} from "../../../utils/filters";
+
+const TimeSeries = ()=> import ( "../sections/TimeSeries.vue");
+
 
 export const TYPES: Record<string, any> = {
     "io.kestra.plugin.core.dashboard.chart.Bar": Bar,

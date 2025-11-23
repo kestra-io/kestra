@@ -17,8 +17,16 @@ import {
     KV_COMPARATORS
 } from "../utils/filterTypes";
 import {usePreAppliedFilters} from "./usePreAppliedFilters";
+import {useDefaultFilter} from "./useDefaultFilter";
 
-export function useFilters(configuration: FilterConfiguration, showSearchInput = true, legacyQuery = false) {
+
+export function useFilters(
+    configuration: FilterConfiguration, 
+    showSearchInput = true, 
+    legacyQuery = false, 
+    defaultScope?: boolean, 
+    defaultTimeRange?: boolean
+) {
     const router = useRouter();
     const route = useRoute();
 
@@ -28,8 +36,7 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
     const {
         markAsPreApplied,
         hasPreApplied,
-        getPreApplied,
-        getAllPreApplied
+        getPreApplied
     } = usePreAppliedFilters();
 
     const appendQueryParam = (query: Record<string, any>, key: string, value: string) => {
@@ -367,24 +374,24 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         updateRoute();
     };
 
-    /**
-     * Resets all filters to their pre-applied state and clears the search query
-     */
+    const {resetDefaultFilter} = useDefaultFilter({
+        legacyQuery,
+        includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
+        includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
+    });
+
     const resetToPreApplied = () => {
-        appliedFilters.value = getAllPreApplied();
         searchQuery.value = "";
-        updateRoute();
+        resetDefaultFilter();
     };
+    
+    watch(searchQuery, () => {
+        updateRoute();
+    });
 
     return {
         appliedFilters: computed(() => appliedFilters.value),
-        searchQuery: computed({
-            get: () => searchQuery.value,
-            set: value => {
-                searchQuery.value = value;
-                updateRoute();
-            }
-        }),
+        searchQuery,
         addFilter,
         removeFilter,
         updateFilter,

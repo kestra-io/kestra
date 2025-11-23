@@ -7,22 +7,7 @@ import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
-import {useMiscStore} from "override/stores/misc";
-
-function maybeAddTimeRangeFilter(to) {
-    const dateTimeKeys = ["startDate", "endDate", "timeRange"];
-
-    // Default to the configured duration if no time range is set
-    if (!Object.keys(to.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-        const miscStore = useMiscStore();
-        const defaultDuration = miscStore.configs?.chartDefaultDuration || "P30D"; // Fallback to 30 days
-        to.query["filters[timeRange][EQUALS]"] = defaultDuration;
-
-        return true;
-    }
-
-    return false;
-}
+import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
 export default [
     //Initial
@@ -34,35 +19,46 @@ export default [
         name: "home",
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
-        beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query: to.query,
-                });
-                return;
-            }
+        beforeEnter: (to, _from, next) => {
+            // This specific case is to avoid redirecting dashboards twice:
+            // - once here in beforeEnter
+            // - once in useDefaultFilter composable
 
+            // We analyzed other ways to fix this:
+            // - using nextTick in useDefaultFilter to delay the redirection
+            // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
+            // but both were more complex and fragile than this simple check.
+            const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
             if (!to.params.dashboard) {
                 next({
-                    name: "home",
+                    ...to,
                     params: {
                         ...to.params,
                         dashboard: "default",
                     },
-                    query: to.query,
+                    query,
                 });
-            } else {
-                next();
+                return;
             }
+            if(change) {
+                next({
+                    ...to, 
+                    query,
+                });
+                return;
+            }
+            next()
         },
     },
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
     {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("override/components/dashboard/Edit.vue")},
 
     //Flows
-    {name: "flows/list", path: "/:tenant?/flows", component: () => import("../components/flows/Flows.vue")},
+    {
+        name: "flows/list",
+        path: "/:tenant?/flows",
+        component: () => import("../components/flows/Flows.vue"),
+    },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
     {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
     {name: "flows/update", path: "/:tenant?/flows/edit/:namespace/:id/:tab?", component: () => import("../components/flows/FlowRoot.vue")},
@@ -72,18 +68,6 @@ export default [
         name: "executions/list",
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
-        beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query: to.query,
-                });
-                return;
-            }
-
-            next();
-        }
     },
     {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
 
@@ -111,18 +95,6 @@ export default [
         name: "logs/list",
         path: "/:tenant?/logs",
         component: () => import("../components/logs/LogsWrapper.vue"),
-        beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query: to.query,
-                });
-                return;
-            }
-
-            next();
-        }
     },
 
     //Namespaces

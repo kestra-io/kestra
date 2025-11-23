@@ -16,6 +16,8 @@
         @update-properties="updateDisplayColumns"
         legacyQuery
         readOnly
+        :defaultScope="false"
+        :defaultTimeRange="false"
     />
 
     <el-table

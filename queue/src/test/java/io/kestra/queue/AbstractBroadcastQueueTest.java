@@ -17,7 +17,7 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public abstract class AbstractBroadcastQueueTest {
+public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 10;
 
     @Inject
@@ -35,9 +35,10 @@ public abstract class AbstractBroadcastQueueTest {
                 countDownLatch.countDown();
             });
 
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 1));
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 2));
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 3));
+        String prefix = this.keyPrefix();
+        for (int i = 1; i <= 3; i++) {
+            broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), i));
+        }
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
@@ -45,6 +46,12 @@ public abstract class AbstractBroadcastQueueTest {
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         assertThat(list).contains(1, 2, 3);
+    }
+
+    @Test
+    void closingConsumer() throws QueueException, InterruptedException {
+        singleConsumer();
+        singleConsumer();
     }
 
     @Test
@@ -64,12 +71,14 @@ public abstract class AbstractBroadcastQueueTest {
                 })
             )));
 
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 1));
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 2));
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 3));
+        String prefix = this.keyPrefix();
+        broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 1));
+        broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 2));
+        broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 3));
 
-        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        subscribers.forEach(QueueSubscriber::close);
+        // rebalancing can take some time, we multiply timeout by 5
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS * 5, TimeUnit.SECONDS);
+        subscribers.parallelStream().forEach(QueueSubscriber::close);
 
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
@@ -98,8 +107,9 @@ public abstract class AbstractBroadcastQueueTest {
                 }
             });
 
+        String prefix = this.keyPrefix();
         // first round
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 1));
+        broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 1));
 
         boolean await1 = countDownLatchFirst.await(DEFAULT_TIMEOUT_SECONDS + 10, TimeUnit.SECONDS);
         subscriber.pause();
@@ -109,8 +119,8 @@ public abstract class AbstractBroadcastQueueTest {
         Instant resumeTime = Instant.now();
         subscriber.resume();
 
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 2));
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 3));
+        broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 2));
+        broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 3));
 
         boolean await2 = countDownLatchSecond.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.pause();
@@ -120,8 +130,8 @@ public abstract class AbstractBroadcastQueueTest {
         Instant resumeTime2 = Instant.now();
         subscriber.resume();
 
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 4));
-        broadcastQueue.emit(new TestBroadcast(IdUtils.create(), 5));
+        broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 4));
+        broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 5));
 
         boolean await3 = countDownLatchOthers.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();

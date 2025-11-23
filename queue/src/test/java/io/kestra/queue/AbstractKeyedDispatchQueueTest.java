@@ -15,7 +15,7 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public abstract class AbstractKeyedDispatchQueueTest {
+public abstract class AbstractKeyedDispatchQueueTest extends AbstractQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 10;
 
     @Inject
@@ -35,8 +35,9 @@ public abstract class AbstractKeyedDispatchQueueTest {
                 countDownLatch.countDown();
             });
 
-        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(IdUtils.create(), 1));
-        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(IdUtils.create(), 2));
+        String prefix = this.keyPrefix();
+        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(prefix + "_" + IdUtils.create(), 1));
+        keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(prefix + "_" + IdUtils.create(), 2));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
@@ -65,12 +66,14 @@ public abstract class AbstractKeyedDispatchQueueTest {
                 })
             )));
 
+        String prefix = this.keyPrefix();
         for (int i = 0; i < rand; i++) {
-            keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(IdUtils.create(), i));
+            keyDispatchQueue.emit(groupKey, new TestKeyedDispatch(prefix + "_" + IdUtils.create(), i));
         }
 
-        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        subscribers.forEach(QueueSubscriber::close);
+        // rebalancing can take some time, we multiply timeout by 5
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS * 5, TimeUnit.SECONDS);
+        subscribers.parallelStream().forEach(QueueSubscriber::close);
 
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
@@ -98,9 +101,10 @@ public abstract class AbstractKeyedDispatchQueueTest {
                     }));
             }));
 
+        String prefix = this.keyPrefix();
         for (int i = 0; i < 3; i++) {
-            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(IdUtils.create(), 1));
-            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(IdUtils.create(), 2));
+            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(prefix + "_" + IdUtils.create(), 1));
+            keyDispatchQueue.emit("group-" + i, new TestKeyedDispatch(prefix + "_" + IdUtils.create(), 2));
         }
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);

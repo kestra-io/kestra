@@ -22,17 +22,11 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public abstract class AbstractDispatchQueueTest {
+public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
     private static final int DEFAULT_TIMEOUT_SECONDS = 5;
 
     @Inject
     private DispatchQueueInterface<TestDispatch> dispatchQueue;
-
-    @Test
-    void closingConsumer() throws QueueException, InterruptedException, IOException {
-        singleConsumer();
-        singleConsumer();
-    }
 
     @Test
     void singleConsumer() throws QueueException, InterruptedException, IOException {
@@ -46,8 +40,9 @@ public abstract class AbstractDispatchQueueTest {
                 countDownLatch.countDown();
             });
 
-        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 1));
-        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 2));
+        String prefix = this.keyPrefix();
+        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 1));
+        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 2));
 
         boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();
@@ -55,6 +50,12 @@ public abstract class AbstractDispatchQueueTest {
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         assertThat(list).containsExactlyInAnyOrder(1, 2);
+    }
+
+    @Test
+    void closingConsumer() throws QueueException, InterruptedException, IOException {
+        singleConsumer();
+        singleConsumer();
     }
 
     @Test
@@ -75,12 +76,14 @@ public abstract class AbstractDispatchQueueTest {
                     })
             )));
 
+        String prefix = this.keyPrefix();
         for (int i = 0; i < rand; i++) {
-            dispatchQueue.emit(new TestDispatch(IdUtils.create(), i));
+            dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), i));
         }
 
-        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        subscribers.forEach(QueueSubscriber::close);
+        // rebalancing can take some time, we multiply timeout by 5
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS * 5, TimeUnit.SECONDS);
+        subscribers.parallelStream().forEach(QueueSubscriber::close);
 
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
@@ -92,9 +95,15 @@ public abstract class AbstractDispatchQueueTest {
     @Test
     void errorProcessing() throws QueueException, InterruptedException {
         // @TODO: failed on rabbitmq, the published message seems to be not durable
-        dispatchQueue.emit(List.of(new TestDispatch(IdUtils.create(), 1), new TestDispatch(IdUtils.create(), 2), new TestDispatch(IdUtils.create(), 3)));
+        String prefix = this.keyPrefix();
 
-        CountDownLatch countDownLatch = new CountDownLatch(4);
+        dispatchQueue.emit(IntStream.range(1, 15)
+            .boxed()
+            .map(i -> new TestDispatch(prefix + "_" + IdUtils.create(), i))
+            .toList()
+        );
+
+        CountDownLatch countDownLatch = new CountDownLatch(15);
         Collection<Integer> list = Collections.synchronizedCollection(new ArrayList<>());
 
         var crashed = new AtomicBoolean(false);
@@ -116,7 +125,7 @@ public abstract class AbstractDispatchQueueTest {
 
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
-        assertThat(list).containsExactlyInAnyOrder(1, 2, 3);
+        assertThat(list).containsExactlyInAnyOrder(IntStream.range(1, 15).boxed().toArray(Integer[]::new));
     }
 
     @Test
@@ -140,7 +149,8 @@ public abstract class AbstractDispatchQueueTest {
             });
 
         // first round
-        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 1));
+        String prefix = this.keyPrefix();
+        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 1));
 
         boolean await1 = countDownLatchFirst.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.pause();
@@ -150,8 +160,8 @@ public abstract class AbstractDispatchQueueTest {
         Instant resumeTime = Instant.now();
         subscriber.resume();
 
-        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 2));
-        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 3));
+        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 2));
+        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 3));
 
         boolean await2 = countDownLatchSecond.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.pause();
@@ -161,8 +171,8 @@ public abstract class AbstractDispatchQueueTest {
         Instant resumeTime2 = Instant.now();
         subscriber.resume();
 
-        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 4));
-        dispatchQueue.emit(new TestDispatch(IdUtils.create(), 5));
+        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 4));
+        dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), 5));
 
         boolean await3 = countDownLatchOthers.await(DEFAULT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         subscriber.close();

@@ -1,0 +1,67 @@
+<template>
+    <el-row v-for="(row, key) in props.rows" :key="key">
+        <el-col :span="12" class="label">
+            <component :is="row.icon" />
+            <el-text truncated>
+                {{ row.label }}
+            </el-text>
+        </el-col>
+
+        <el-col v-if="row.value" :span="12" class="value">
+            <el-text truncated>
+                {{ row.value }}
+            </el-text>
+        </el-col>
+    </el-row>
+</template>
+
+<script setup lang="ts">
+    import type {Component} from "vue";
+
+    const props = defineProps<{
+        rows: {
+            icon: Component;
+            label: string;
+            value?: string | number;
+        }[];
+    }>();
+</script>
+
+<style scoped lang="scss">
+@import "@kestra-io/ui-libs/src/scss/variables";
+
+.el-row:not(:last-child) {
+    margin-bottom: calc($spacer / 2);
+}
+
+.el-row {
+    & :deep(.el-text) {
+        font-size: $font-size-sm;
+    }
+
+    & :deep(.label) {
+        display: flex;
+        align-items: center;
+        font-family: $font-family-monospace;
+        text-transform: uppercase;
+
+        & span.material-design-icon {
+            margin-right: calc($spacer / 2);
+        }
+
+        & .el-text {
+            color: var(--ks-content-secondary);
+        }
+    }
+
+    & :deep(.value) {
+        display: flex;
+        align-items: center;
+
+        & .el-text {
+            width: 100%;
+            text-align: right;
+        }
+    }
+}
+</style>

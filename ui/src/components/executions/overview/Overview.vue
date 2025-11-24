@@ -193,12 +193,12 @@
         return [
             {component: Restart, on: {follow}},
             {component: Restart, props: {isReplay: true}, on: {follow}},
+            {component: Kill},
             execution.value.state.current !== "PAUSED"
                 ? {component: Pause}
                 : {component: Resume},
             {component: Unqueue},
             {component: ForceRun},
-            {component: Kill},
             {component: Api},
             {component: Delete},
         ];

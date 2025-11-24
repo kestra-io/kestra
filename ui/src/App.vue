@@ -26,7 +26,9 @@
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import UnsavedChangesDialog from "./components/UnsavedChangesDialog.vue";
+    import "./styles/vendor.scss"
     import "@kestra-io/ui-libs/style.css";
+    import "./styles/app.scss"
 
     const loaded = ref(false);
 

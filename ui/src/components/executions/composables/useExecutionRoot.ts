@@ -90,6 +90,7 @@ export function useExecutionRoot() {
                 name: "overview",
                 component: Overview,
                 title: t("overview"),
+                maximized: true
             },
             {
                 name: "gantt",

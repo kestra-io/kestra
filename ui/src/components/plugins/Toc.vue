@@ -190,8 +190,23 @@
     }
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+    @import "@kestra-io/ui-libs/src/scss/variables";
+
     .plugins-list {
+        display: flex;
+        flex-direction: column;
+        
+        .search {
+            flex-shrink: 0;
+            background-color: var(--ks-background-panel);
+            padding-bottom: 0.5rem;
+        }
+        
+        .el-collapse {
+            flex: 1;
+        }
+        
         &.enhance-readability {
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
@@ -245,4 +260,52 @@
     .selected {
         color: var(--ks-content-link);
     }
+    
+    @media (max-width: 991px) {
+        .plugins-list {
+            .search {
+                position: sticky;
+                top: 0;
+                z-index: 10;
+            }
+            
+            .el-collapse {
+                overflow-y: auto;
+            }
+
+            .el-collapse-item__header {
+                font-size: 0.75rem;
+            }
+
+            ul {
+                font-size: 0.6875rem;
+                margin-left: .25rem;
+            }
+
+            .toc-h3 {
+                .icon {
+                    width: 0.875rem;
+                    height: 0.875rem;
+                }
+
+                h6 {
+                    font-size: 0.75rem;
+                }
+
+                .toc-h4 {
+                    margin-left: .25rem;
+
+                    h6 {
+                        font-size: 0.6875rem;
+                        margin-bottom: .25rem;
+                    }
+
+                    li {
+                        margin-bottom: .25rem;
+                    }
+                }
+            }
+        }
+    }
+
 </style>

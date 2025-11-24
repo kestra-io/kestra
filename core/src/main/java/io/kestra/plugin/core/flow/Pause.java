@@ -185,7 +185,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     )
     @NotNull
     @Builder.Default
-    private Property<Behavior> behavior = Property.ofValue(Behavior.RESUME);
+    protected Property<Behavior> behavior = Property.ofValue(Behavior.RESUME);
 
     @Valid
     @Schema(

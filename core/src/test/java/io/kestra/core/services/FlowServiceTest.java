@@ -1,11 +1,14 @@
 package io.kestra.core.services;
 
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
@@ -17,11 +20,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @KestraTest
 class FlowServiceTest {
@@ -430,5 +436,107 @@ class FlowServiceTest {
         // Then
         assertThat(results).hasSize(1);
         assertThat(results.getFirst().getConstraints()).contains("Flow id is a reserved keyword: pause");
+    }
+    
+    @Test
+    void shouldReturnEmptyListGivenFlowWithNoChecks() {
+        // Given
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of());
+        
+        // When
+        List<Check> result = flowService.getFailedChecks(flow, Map.of());
+        
+        // Then
+        assertThat(result).isEmpty();
+    }
+    
+    @Test
+    void shouldReturnCheckWhenConditionEvaluatesFalse() {
+        // Given
+        Check failingCheck = Check.builder()
+            .condition("{{ false }}")
+            .message("fail")
+            .behavior(Check.Behavior.FAIL_EXECUTION)
+            .build();
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(failingCheck));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+        
+        // When
+        List<Check> result = flowService.getFailedChecks(flow, Map.of());
+        
+        // Then
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst()).isEqualTo(failingCheck);
+    }
+    
+    @Test
+    void shouldReturnEmptyListWhenConditionEvaluatesTrue() {
+        // Given
+        Check passingCheck = Check.builder()
+            .condition("{{ true }}")
+            .message("pass")
+            .behavior(Check.Behavior.FAIL_EXECUTION)
+            .build();
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(passingCheck));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+        
+        // When
+        List<Check> result = flowService.getFailedChecks(flow, Map.of());
+        
+        // Then
+        assertThat(result).isEmpty();
+    }
+    
+    @Test
+    void shouldReturnCheckWithErrorMessageWhenExceptionThrown() {
+        // Given
+        Check check = Check.builder()
+            .condition("{{ invalidFunction() }}")
+            .message("ignored")
+            .behavior(Check.Behavior.FAIL_EXECUTION)
+            .build();
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(check));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+        
+        // When
+        List<Check> result = flowService.getFailedChecks(flow, Map.of());
+        
+        // Then
+        assertThat(result).hasSize(1);
+        Check errorCheck = result.getFirst();
+        assertThat(errorCheck.getBehavior()).isEqualTo(Check.Behavior.BLOCK_EXECUTION);
+        assertThat(errorCheck.getStyle()).isEqualTo(Check.Style.ERROR);
+        assertThat(errorCheck.getMessage()).contains("Failed to evaluate check condition. Cause:");
+    }
+    
+    @Test
+    void shouldHandleMultipleChecksWithMixedResults() {
+        // Given
+        Check passCheck = Check.builder().condition("{{ true }}").message("pass").build();
+        Check failCheck = Check.builder().condition("{{ false }}").message("fail").build();
+        Check exceptionCheck = Check.builder().condition("{{ invalidFunction }}").message("exception").build();
+        
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(passCheck, failCheck, exceptionCheck));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+        
+        // When
+        List<Check> result = flowService.getFailedChecks(flow, Map.of());
+        
+        // Then
+        assertThat(result).hasSize(2);
+        assertThat(result).contains(failCheck);
+        assertThat(result)
+            .anyMatch(c -> c.getMessage().contains("Failed to evaluate check condition") &&
+                c.getBehavior() == Check.Behavior.BLOCK_EXECUTION &&
+                c.getStyle() == Check.Style.ERROR);
     }
 }

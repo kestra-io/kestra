@@ -35,7 +35,6 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @JsonDeserialize(using = Property.PropertyDeserializer.class)
 @JsonSerialize(using = Property.PropertySerializer.class)
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @Schema(
     oneOf = {
@@ -51,6 +50,7 @@ public class Property<T> {
         .copy()
         .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
 
+    private final boolean skipCache;
     private String expression;
     private T value;
 
@@ -60,13 +60,23 @@ public class Property<T> {
     @Deprecated
     // Note: when not used, this constructor would not be deleted but made private so it can only be used by ofExpression(String) and the deserializer
     public Property(String expression) {
-        this.expression = expression;
+        this(expression, false);
     }
 
+    private Property(String expression, boolean skipCache) {
+        this.expression = expression;
+        this.skipCache = skipCache;
+    }
+
+    /**
+     * @deprecated use {@link #ofValue(Object)} instead.
+     */
     @VisibleForTesting
+    @Deprecated
     public Property(Map<?, ?> map) {
         try {
             expression = MAPPER.writeValueAsString(map);
+            this.skipCache = false;
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e);
         }
@@ -79,9 +89,6 @@ public class Property<T> {
     /**
      * Returns a new {@link Property} with no cached rendered value,
      * so that the next render will evaluate its original Pebble expression.
-     * <p>
-     * The returned property will still cache its rendered result.
-     * To re-evaluate on a subsequent render, call {@code skipCache()} again.
      *
      * @return a new {@link Property} without a pre-rendered value
      */
@@ -133,6 +140,7 @@ public class Property<T> {
 
     /**
      * Build a new Property object with a Pebble expression.<br>
+     * This property object will not cache its rendered value.
      * <p>
      * Use {@link #ofValue(Object)} to build a property with a value instead.
      */
@@ -142,11 +150,11 @@ public class Property<T> {
             throw new IllegalArgumentException("'expression' must be a valid Pebble expression");
         }
 
-        return new Property<>(expression);
+        return new Property<>(expression, true);
     }
 
     /**
-     * Render a property then convert it to its target type.<br>
+     * Render a property, then convert it to its target type.<br>
      * <p>
      * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
      *
@@ -164,7 +172,7 @@ public class Property<T> {
      * @see io.kestra.core.runners.RunContextProperty#as(Class, Map)
      */
     public static <T> T as(Property<T> property, PropertyContext context, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (property.value == null) {
+        if (property.skipCache || property.value == null) {
             String rendered = context.render(property.expression, variables);
             property.value = MAPPER.convertValue(rendered, clazz);
         }
@@ -192,7 +200,7 @@ public class Property<T> {
      */
     @SuppressWarnings("unchecked")
     public static <T, I> T asList(Property<T> property, PropertyContext context, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (property.value == null) {
+        if (property.skipCache || property.value == null) {
             JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
             try {
                 String trimmedExpression = property.expression.trim();
@@ -244,7 +252,7 @@ public class Property<T> {
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        if (property.value == null) {
+        if (property.skipCache || property.value == null) {
             JavaType targetMapType = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);
 
             try {

@@ -3,7 +3,7 @@
         <template #header>
             <div class="d-flex justify-content-between">
                 <span class="d-inline-flex title align-items-center">
-                    <AiIcon /><span>{{ t("ai.flow.title") }}</span>
+                    <AiIcon /><span>{{ $t("ai.flow.title") }}</span>
                 </span>
                 <el-button 
                     class="border-0 ai-close-button" 
@@ -18,7 +18,7 @@
             ref="promptInput"
             v-if="configured"
             type="textarea"
-            :placeholder="t('ai.flow.prompt_placeholder')"
+            :placeholder="$t('ai.flow.prompt_placeholder')"
             v-model="prompt"
             @keydown.exact.ctrl.enter="$event.preventDefault(); prompt += '\n'"
             @keydown.exact.enter.prevent="submitPrompt"
@@ -26,15 +26,15 @@
         />
         <template v-else>
             <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
-            <el-text class="keep-whitespace" v-html="t('ai.flow.enable_instructions.header')" />
+            <el-text class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.header')" />
             <div class="mt-2" v-html="highlightedAiConfiguration" />
             <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
-            <el-text class="keep-whitespace" v-html="t('ai.flow.enable_instructions.footer')" />
+            <el-text class="keep-whitespace" v-html="$t('ai.flow.enable_instructions.footer')" />
         </template>
         <template #footer>
             <div class="d-flex justify-content-between">
                 <el-text class="text-tertiary" size="small">
-                    (⌘) Ctrl + Alt (⌥) + Shift + K {{ t("to toggle") }}
+                    (⌘) Ctrl + Alt (⌥) + Shift + K {{ $t("to toggle") }}
                 </el-text>
                 <div v-if="configured" class="d-flex flex-column align-items-end gap-3">
                     <el-text v-if="error !== undefined" type="danger" size="default" class="me-auto">
@@ -42,7 +42,7 @@
                     </el-text>
                     <div v-if="waitingForReply" class="d-flex loading-text">
                         <div v-loading="true" />
-                        <span>{{ t('ai.flow.generating') }}</span>
+                        <span>{{ $t('ai.flow.generating') }}</span>
                     </div>
                     <el-button
                         v-else
@@ -51,7 +51,7 @@
                         :disabled="prompt.length === 0"
                         @click="submitPrompt"
                     >
-                        {{ t('submit') }}
+                        {{ $t('submit') }}
                     </el-button>
                 </div>
             </div>
@@ -60,7 +60,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, onMounted, onUnmounted, ref, watch} from "vue";
+    import {computed, onMounted, onUnmounted, ref, watch} from "vue";
     import Close from "vue-material-design-icons/Close.vue";
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
@@ -68,7 +68,6 @@
     import Utils from "../../utils/utils";
     import {useMiscStore} from "override/stores/misc";
 
-    const t = getCurrentInstance()!.appContext.config.globalProperties.$t;
     const aiStore = useAiStore();
     const emit = defineEmits<{
         close: [];

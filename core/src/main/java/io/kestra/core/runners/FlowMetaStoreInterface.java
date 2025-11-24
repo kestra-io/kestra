@@ -21,11 +21,6 @@ public interface FlowMetaStoreInterface {
     Optional<FlowInterface> findById(String tenantId, String namespace, String id, Optional<Integer> revision);
 
     /**
-     * Whether the FlowExecutorInterface is ready to be used.
-     */
-    Boolean isReady();
-
-    /**
      * Find a flow.
      * This method will check if the namespace is allowed, so it can be used inside a task.
      */

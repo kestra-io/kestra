@@ -8,7 +8,6 @@ import io.kestra.core.server.AbstractService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.scheduler.vnodes.VNodesAssigner;
-import io.kestra.scheduler.pubsub.TriggerEventPublisher;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobResultSubscriber;
 import io.kestra.scheduler.stores.TriggerStateStore;
 import io.micronaut.context.annotation.Primary;
@@ -30,38 +29,38 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
- * Default {@link Scheduler} implementation. 
+ * Default {@link Scheduler} implementation.
  */
 @Slf4j
 @Singleton
 @Primary
 public class DefaultScheduler extends AbstractService implements Scheduler {
-    
+
     private static final String EXECUTOR_NAME = "scheduler-scheduling-loop";
-    
+
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final ExecutorsUtils executorsUtils;
     private final TriggerSchedulingLoopFactory schedulerEventLoopFactory;
-    
+
     private ExecutorService executorService;
     private List<TriggerSchedulingLoop> schedulingLoops;
     private final VNodesAssigner vNodesAssigner;
     private final Clock clock;
-    
+
     // Queues
     private final TriggerEventQueue triggerEventQueue;
-    
+
     // Stores
     private final TriggerStateStore triggerStateStore;
-    
+
     // Services
     private final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber;
-    
+
     // Consumers
     private final List<Disposable> consumerDisposables = new ArrayList<>();
-    
+
     private final Set<Integer> currentVNodesAssignment = new HashSet<>();
-    
+
     @Inject
     public DefaultScheduler(final TriggerSchedulingLoopFactory schedulerEventLoopFactory,
                             final VNodesAssigner vNodesAssigner,
@@ -69,11 +68,10 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                             final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
                             final TriggerEventQueue triggerEventQueue,
                             final TriggerStateStore triggerStateStore,
-                            final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber,
-                            final TriggerEventPublisher publisher) { // TODO
+                            final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber) {
         this(schedulerEventLoopFactory, vNodesAssigner, executorsUtils, eventPublisher, triggerEventQueue, triggerWorkerJobResultSubscriber, triggerStateStore, SchedulerClock.getClock());
     }
-    
+
     @VisibleForTesting
     public DefaultScheduler(final TriggerSchedulingLoopFactory schedulerEventLoopFactory,
                             final VNodesAssigner vNodesAssigner,
@@ -93,7 +91,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         this.clock = clock;
         this.setState(ServiceState.CREATED);
     }
-    
+
     /**
      * Gets the {@link Clock} attached to this scheduler.
      *
@@ -102,7 +100,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     public Clock clock() {
         return this.clock;
     }
-    
+
     /**
      * Gets the set of vNodes currently assigned to this scheduler.
      *
@@ -111,7 +109,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     public Set<Integer> currentVNodesAssignment() {
         return this.currentVNodesAssignment;
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -120,40 +118,40 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         if (!this.started.compareAndSet(false, true)) {
             throw new IllegalStateException("Scheduler already started");
         }
-        
+
         // Create the scheduling loops
         this.executorService = executorsUtils.maxCachedThreadPool(maxThreads, EXECUTOR_NAME);
-        
+
         this.schedulingLoops = new ArrayList<>(maxThreads);
-        
+
         // Subscribe to trigger vNodes assignment/revocation
         vNodesAssigner.subscribe(this.getId(), new VNodesAssigner.VNodeAssignmentListener() {
             @Override
             public void onVNodesRevoked() {
                 // Stop the WorkerTriggerResult/TriggerEvent Queues consumption
                 stopAllConsumers();
-                
+
                 // Stop all scheduling loops
                 stopAllSchedulingLoop();
-                
+
                 // Clear local assignment
                 currentVNodesAssignment.clear();
             }
-            
+
             @Override
             public void onVNodesAssigned(Set<Integer> vNodes) {
-                
+
                 final int numSchedulingLoop = Math.min(maxThreads, vNodes.size());
-                
+
                 // (Re)initialize trigger state store for assigned VNodes
                 triggerStateStore.init(vNodes);
-                
+
                 // (Re)create TriggerSchedulingLoop
                 for (int i = 0; i < numSchedulingLoop; i++) {
                     TriggerSchedulingLoop schedulingLoop = schedulerEventLoopFactory.create(i, clock);
                     schedulingLoops.add(schedulingLoop);
                 }
-                
+
                 // Assign scheduling-loops to VNodes
                 schedulingLoops.forEach(schedulingLoop -> {
                     // Compute vNodes assignments for the current event-loop
@@ -162,65 +160,65 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                         .collect(Collectors.toSet());
                     schedulingLoop.setAssignments(assignments);
                 });
-                
+
                 // (Re)start the Queues consumption
                 startTriggerEventConsumers(vNodes);
                 startTriggerResultConsumer();
-                
+
                 // (Re)submit all new scheduling loops
                 schedulingLoops.forEach(executorService::execute);
-                
+
                 currentVNodesAssignment.addAll(vNodes);
             }
         });
-        
+
         log.info("Scheduler started with {} thread(s)", maxThreads);
         setState(ServiceState.RUNNING);
     }
-    
+
     private void stopAllSchedulingLoop() {
         if (schedulingLoops.isEmpty()) {
             return; // quick path
         }
-        
+
         List<CompletableFuture<Void>> pausable = schedulingLoops.stream().map(schedulingLoop ->
             schedulingLoop.doOnEndLoop(() -> {
                 // Pause the scheduling loop
                 schedulingLoop.pause();
-                
+
                 // Ensure all the trigger events for this scheduling loop are processed
                 schedulingLoop.processTriggerEvents();
-                
+
                 // Revoke all vNodes assignment
                 schedulingLoop.setAssignments(Set.of());
             })).toList();
-        
+
         // Wait for all scheduling loop to be effectively paused
         CompletableFuture.allOf(pausable.toArray(new CompletableFuture[0])).join();
-        
+
         // Stop and remove all scheduling loop
         schedulingLoops.forEach(TriggerSchedulingLoop::stop);
         schedulingLoops.clear();
     }
-    
+
     private void stopAllConsumers() {
         consumerDisposables.forEach(Disposable::dispose);
     }
-    
+
     private void startTriggerResultConsumer() {
         consumerDisposables.add(triggerWorkerJobResultSubscriber.subscribe());
     }
-    
+
     private void startTriggerEventConsumers(final Set<Integer> vNodes) {
         Map<Integer, TriggerSchedulingLoop> schedulingLoopByVNode = getSchedulingLoopByVNode();
-        
+
         consumerDisposables.add(triggerEventQueue.subscribe(vNodes, (vNode, events) -> {
             // Get the scheduling-loop for the event vNode.
             TriggerSchedulingLoop schedulingLoop = schedulingLoopByVNode.get(vNode);
             if (schedulingLoop != null) {
                 // Push the events to the scheduling-loop
                 CompletableFuture<Void> future = schedulingLoop.addTriggerEvents(vNode, events);
-                
+
                 // Wait for the completion to guarantee that when this method returns all events are processed.
                 future.join();
             } else {
@@ -228,7 +226,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
             }
         }));
     }
-    
+
     /**
      * Convenience method to get all {@link TriggerSchedulingLoop} keyed by vNodes.
      *
@@ -242,7 +240,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
             )
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -251,15 +249,15 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         if (!this.started.compareAndSet(true, false)) {
             return ServiceState.TERMINATED_GRACEFULLY; // Already shut down or not started.
         }
-        
+
         // Stop all scheduling loops
         stopAllSchedulingLoop();
-        
+
         currentVNodesAssignment.clear();
-        
+
         // Initiate graceful shutdown
         this.executorService.shutdown();
-        
+
         // Wait for all TriggerSchedulingLoop to terminate
         boolean terminated;
         try {
@@ -274,13 +272,13 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
             terminated = false;
             log.warn("Interrupted while stopping scheduler. Forced shutdown initiated.");
         }
-        
+
         if (!terminated) {
             log.warn("Scheduler still has pending loops after shutdown. Forced termination completed.");
         }
         return terminated ? ServiceState.TERMINATED_GRACEFULLY : ServiceState.TERMINATED_FORCED;
     }
-    
+
     /** {@inheritDoc} **/
     @Override
     public boolean isActive() {

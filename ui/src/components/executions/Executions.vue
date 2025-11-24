@@ -768,7 +768,7 @@
     };
 
     const durationFrom = (item: any) => {
-        return (+new Date() - new Date(item?.state?.startDate).getTime()) / 1000;
+        return +new Date() - new Date(item?.state?.startDate).getTime();
     };
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {

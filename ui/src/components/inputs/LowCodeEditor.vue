@@ -96,13 +96,10 @@
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
 
-    // @ts-expect-error no types for SearchField yet
     import SearchField from "../layout/SearchField.vue";
-    // @ts-expect-error no types for LogLevelSelector yet
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    // @ts-expect-error no types for Collapse yet
     import Collapse from "../layout/Collapse.vue";
     import Drawer from "../Drawer.vue";
     import Markdown from "../layout/Markdown.vue";

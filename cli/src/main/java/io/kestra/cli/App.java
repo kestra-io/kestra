@@ -93,7 +93,7 @@ public class App implements Callable<Integer> {
         try {
              exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
         } catch (CommandLine.InitializationException e){
-            System.err.println("Could not initialize picoli ComandLine, err: " + e.getMessage());
+            System.err.println("Could not initialize picocli CommandLine, err: " + e.getMessage());
             e.printStackTrace();
             exitCode = 1;
         }

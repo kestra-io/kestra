@@ -41,13 +41,13 @@
     import {useFlowTemplateEdit} from "../../composables/useFlowTemplateEdit";
     import useRouteContext from "../../composables/useRouteContext";
     import {useTemplateStore} from "../../stores/template";
-    import {useCoreStore} from "../../stores/core";
     import Editor from "../inputs/Editor.vue";
+    import {useUnsavedChangesStore} from "../../stores/unsavedChanges";
 
     const route = useRoute();
     const router = useRouter();
     const templateStore = useTemplateStore();
-    const coreStore = useCoreStore();
+    const unsavedChangesStore = useUnsavedChangesStore();
 
     const dataType = "template";
 
@@ -72,7 +72,7 @@
     );
 
     const onChange = () => {
-        coreStore.unsavedChange = previousContent.value !== content.value;
+        unsavedChangesStore.unsavedChange = previousContent.value !== content.value;
     };
 
     const reload = () => {

@@ -736,6 +736,14 @@ public class DefaultWorker implements Worker {
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
 
+            if (shutdown.get() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
+                // if the Worker is terminating and the task is not in success, it may have been terminated by the worker
+                // in this case; we return immediately without emitting any result as it would be resubmitted (except if WorkerTaskRestartStrategy is NEVER)
+                List<WorkerTaskResult> dynamicWorkerResults = workerTask.getRunContext().dynamicWorkerResults();
+                List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
+                return new WorkerTaskResult(workerTask.getTaskRun(), dynamicTaskRuns);
+            }
+
             if (workerTask.getTask().getRetry() != null &&
                 workerTask.getTask().getRetry().getWarningOnRetry() &&
                 workerTask.getTaskRun().attemptNumber() > 1 &&
@@ -971,7 +979,7 @@ public class DefaultWorker implements Worker {
                 Attributes.of(TraceUtils.ATTR_UID, workerJobCallable.getUid()),
                 () -> workerSecurityService.callInSecurityContext(workerJobCallable)
             );
-        } catch(Exception e) {
+        } catch (Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected
             // we add the exception to have some log in that case
             workerJobCallable.exception = e;

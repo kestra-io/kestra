@@ -1,22 +1,11 @@
 <template>
-    <el-tooltip
-        effect="light"
-        :persistent="false"
-        transition=""
-        :hideAfter="0"
-        :content="$t('force run tooltip')"
-        rawContent
+    <el-button
+        :disabled="!enabled"
+        :icon="RunFast"
+        @click="click"
     >
-        <component
-            :is="component"
-            :icon="RunFast"
-            @click="click"
-            :disabled="!enabled"
-            class="ms-0 me-1"
-        >
-            {{ $t("force run") }}
-        </component>
-    </el-tooltip>
+        {{ $t("force run") }}
+    </el-button>
 
     <el-dialog
         v-if="isDrawerOpen"
@@ -64,14 +53,10 @@
         state: ExecutionState;
     }
 
-    interface Props {
+    const props = defineProps<{
         execution: Execution;
-        component?: string;
-    }
+    }>();
 
-    const props = withDefaults(defineProps<Props>(), {
-        component: "el-button",
-    });
 
     const isDrawerOpen = ref(false);
 
@@ -116,9 +101,3 @@
         );
     });
 </script>
-
-<style scoped lang="scss">
-button.el-button {
-    cursor: pointer !important;
-}
-</style>

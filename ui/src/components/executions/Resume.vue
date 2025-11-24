@@ -1,13 +1,11 @@
 <template>
-    <component
-        :is="component"
+    <el-button
+        v-if="enabled"
         :icon="Play"
         @click="click"
-        v-if="enabled"
-        class="ms-0 me-1"
     >
         {{ $t('resume') }}
-    </component>
+    </el-button>
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -132,11 +130,3 @@
         },
     };
 </script>
-
-<style scoped lang="scss">
-    button.el-button {
-        cursor: pointer !important;
-        border-color: var(--ks-border-success);
-        color: var(--ks-content-success);
-    }
-</style>

@@ -1,13 +1,11 @@
 <template>
-    <component
-        :is="component"
+    <el-button
+        v-if="enabled"
         :icon="QueueFirstInLastOut"
         @click="isDrawerOpen = !isDrawerOpen"
-        v-if="enabled"
-        class="ms-0 me-1"
     >
         {{ $t('unqueue') }}
-    </component>
+    </el-button>
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -63,12 +61,9 @@
         };
     }
 
-    const props = withDefaults(defineProps<{
+    const props = defineProps<{
         execution: Execution;
-        component?: string;
-    }>(), {
-        component: "el-button"
-    });
+    }>();
 
     const {t} = useI18n();
     const toast = useToast();
@@ -105,9 +100,3 @@
             });
     }
 </script>
-
-<style scoped lang="scss">
-    button.el-button {
-        cursor: pointer !important;
-    }
-</style>

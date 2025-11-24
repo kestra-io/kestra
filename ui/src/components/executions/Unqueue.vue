@@ -24,7 +24,6 @@
                     v-for="item in states"
                     :key="item.code"
                     :value="item.code"
-                    :disabled="item.disabled"
                 >
                     <template #default>
                         <Status size="small" :label="true" class="me-1" :status="item.code" />

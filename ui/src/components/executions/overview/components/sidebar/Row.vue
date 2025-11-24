@@ -12,6 +12,10 @@
                 {{ row.value }}
             </el-text>
         </el-col>
+
+        <el-col v-if="$slots.action" :span="12">
+            <slot name="action" />
+        </el-col>
     </el-row>
 </template>
 
@@ -35,7 +39,8 @@
 }
 
 .el-row {
-    & :deep(.el-text) {
+    & :deep(.el-text),
+    & :deep(.el-button) {
         font-size: $font-size-sm;
     }
 

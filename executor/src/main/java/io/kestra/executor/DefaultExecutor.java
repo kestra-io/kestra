@@ -120,9 +120,6 @@ public class DefaultExecutor implements Executor {
     private RunContextFactory runContextFactory;
 
     @Inject
-    private FlowListenersInterface flowListeners;
-
-    @Inject
     private ExecutionMessageHandler executionMessageHandler;
     @Inject
     private ExecutionEventMessageHandler executionEventMessageHandler;
@@ -151,8 +148,6 @@ public class DefaultExecutor implements Executor {
     private final List<Runnable> receiveCancellations = new ArrayList<>();
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
-
-    private List<FlowWithSource> allFlows;
 
     private final java.util.concurrent.ExecutorService workerTaskResultExecutorService;
     private final java.util.concurrent.ExecutorService executionExecutorService;
@@ -195,18 +190,6 @@ public class DefaultExecutor implements Executor {
     @Override
     public void run() {
         setState(ServiceState.CREATED);
-
-        // listen to all flows and make sure we receive them before listening to other queues
-        flowListeners.run();
-        flowListeners.listen(flows -> this.allFlows = flows);
-        try {
-            Await.until(() -> this.allFlows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
-        } catch (TimeoutException e) {
-            log.error("Executor fatal exception: cannot get all flows after 5mn", e);
-            close();
-            KestraContext.getContext().shutdown();
-            return;
-        }
 
         // listen to executor related queues
         this.receiveCancellations.addFirst(this.executionQueue.receive(Executor.class, this::executionQueue));
@@ -726,8 +709,9 @@ public class DefaultExecutor implements Executor {
         }
     }
 
-    // TODO store FlowWithFlowTriggers on flow listener update to avoid recomputing them each time
     private void processFlowTriggers(Execution execution) throws QueueException {
+        Collection<FlowWithSource> allFlows = flowMetaStore.allLastVersion();
+
         // directly process simple conditions
         flowTriggerService.withFlowTriggersOnly(allFlows.stream())
             .filter(f -> ListUtils.emptyOnNull(f.getTrigger().getConditions()).stream().noneMatch(c -> c instanceof MultipleCondition) && f.getTrigger().getPreconditions() == null)

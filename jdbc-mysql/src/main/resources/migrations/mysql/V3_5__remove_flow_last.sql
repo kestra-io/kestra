@@ -1,0 +1,22 @@
+ALTER TABLE queues MODIFY COLUMN `type` ENUM(
+    'io.kestra.core.models.executions.Execution',
+    'io.kestra.core.models.executions.ExecutionKilled',
+    'io.kestra.core.runners.WorkerJob',
+    'io.kestra.core.runners.WorkerTaskResult',
+    'io.kestra.core.runners.WorkerInstance',
+    'io.kestra.core.runners.WorkerTaskRunning',
+    'io.kestra.core.models.executions.LogEntry',
+    'io.kestra.core.models.triggers.Trigger',
+    'io.kestra.ee.models.audits.AuditLog',
+    'io.kestra.core.models.executions.MetricEntry',
+    'io.kestra.core.runners.WorkerTriggerResult',
+    'io.kestra.core.runners.SubflowExecutionResult',
+    'io.kestra.core.server.ClusterEvent',
+    'io.kestra.core.runners.SubflowExecutionEnd',
+    'io.kestra.core.models.flows.FlowInterface',
+    'io.kestra.core.runners.MultipleConditionEvent',
+    'io.kestra.core.runners.ExecutionEvent',
+    'io.kestra.ee.models.tenants.Tenant',
+    'io.kestra.ee.models.Namespace',
+    'io.kestra.ee.models.server.WorkerGroup'
+) NOT NULL;

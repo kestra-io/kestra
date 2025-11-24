@@ -32,7 +32,7 @@
     import {State} from "@kestra-io/ui-libs"
     import FlowUtils from "../../../../../utils/flowUtils";
     import * as ExecutionUtils from "../../../../../utils/executionUtils";
-    import InputsForm from "../../components/inputs/InputsForm.vue";
+    import InputsForm from "../../../../../components/inputs/InputsForm.vue";
     import {inputsToFormData} from "../../../../../utils/submitTask";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../../../../stores/executions";

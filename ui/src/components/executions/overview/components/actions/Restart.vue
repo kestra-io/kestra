@@ -97,7 +97,7 @@
     import action from "../../../../../models/action"
     import permission from "../../../../../models/permission"
     import * as ExecutionUtils from "../../../../../utils/executionUtils"
-    import ReplayWithInputs from "./ReplayWithInputs.vue"
+    import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 

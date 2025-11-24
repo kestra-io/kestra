@@ -207,7 +207,6 @@ div.line {
         vertical-align: middle;
         /* prevent Firefox word breaks */
         max-width: calc(100% - 6rem);
-        /* allow breaking long words anywhere and avoid overflow across browsers */
         overflow-wrap: anywhere;
         word-break: break-word;
         min-width: 0;

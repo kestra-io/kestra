@@ -1,0 +1,257 @@
+<template>
+    <el-splitter
+        id="overview"
+        :layout="verticalLayout ? 'vertical' : 'horizontal'"
+        lazy
+    >
+        <el-splitter-panel :size="verticalLayout ? '50%' : '35%'">
+            <div class="sidebar">
+                <div class="state">
+                    <Status :status="execution!.state.current" />
+                </div>
+
+                <hr>
+                <div class="general">
+                    <Row :rows="general" />
+                </div>
+
+                <hr>
+                <div class="labels">
+                    Labels
+                </div>
+
+                <hr>
+                <div class="metadata">
+                    <Row :rows="metadata" />
+                </div>
+
+                <hr>
+                <div v-if="execution" class="actions">
+                    <Row :rows="[{icon: SortVariant, label: t('actions')}]" />
+                    <el-row :gutter="12">
+                        <el-col
+                            v-for="(action, index) in actions"
+                            :key="index"
+                            :span="12"
+                        >
+                            <component
+                                :is="action.component"
+                                v-bind="action.props || {}"
+                                v-on="action.on || {}"
+                                :execution
+                            />
+                        </el-col>
+                    </el-row>
+                </div>
+            </div>
+        </el-splitter-panel>
+
+        <el-splitter-panel>
+            <div class="main">
+                Main
+            </div>
+        </el-splitter-panel>
+    </el-splitter>
+</template>
+
+<script setup lang="ts">
+    import {onMounted, computed} from "vue";
+
+    import {useRoute} from "vue-router";
+    const route = useRoute();
+
+    import {useExecutionsStore} from "../../../stores/executions";
+    const store = useExecutionsStore();
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+
+    import moment from "moment";
+
+    import Utils from "../../../utils/utils";
+
+    import {Status, State} from "@kestra-io/ui-libs";
+
+    import Row from "./components/sidebar/Row.vue";
+
+    import Pause from "../Pause.vue";
+    import Resume from "../Resume.vue";
+    import Restart from "../Restart.vue";
+    import Unqueue from "../Unqueue.vue";
+    import ForceRun from "../ForceRun.vue";
+    import Kill from "../Kill.vue";
+
+    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
+    import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
+    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
+    import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
+    import Update from "vue-material-design-icons/Update.vue";
+    import TimerSand from "vue-material-design-icons/TimerSand.vue";
+    import History from "vue-material-design-icons/History.vue";
+    import SortVariant from "vue-material-design-icons/SortVariant.vue";
+
+    const emits = defineEmits(["follow"]);
+
+    const execution = computed(() => store.execution);
+    const general = computed(() => {
+        if (!execution.value) return [];
+
+        return [
+            {
+                icon: DotsSquare,
+                label: t("namespace"),
+                value: execution.value.namespace,
+            },
+            {
+                icon: FileTreeOutline,
+                label: t("flow"),
+                value: execution.value.flowId,
+            // TODO: Make it a link to the flow
+            },
+            {
+                icon: LayersTripleOutline,
+                label: t("revision"),
+                value: execution.value.flowRevision,
+            },
+        ];
+    });
+    const metadata = computed(() => {
+        if (!execution.value) return [];
+
+        return [
+            ...(execution.value.trigger?.id
+                ? [
+                    {
+                        icon: LightningBolt,
+                        label: t("trigger"),
+                        value: execution.value.trigger.id,
+                        // TODO: Make it a link to the trigger
+                    },
+                ]
+                : []),
+            {
+                icon: CalendarMonth,
+                label: t("created date"),
+                value: moment(execution.value.state.histories![0].date).fromNow(),
+            },
+            {
+                icon: Update,
+                label: t("latest_update"),
+                value: moment(
+                    State.isRunning(execution.value.state.current)
+                        ? undefined // Defaults to current date
+                        : execution.value.state.histories?.at(-1)?.date,
+                ).fromNow(),
+            },
+            {
+                icon: TimerSand,
+                label: t("duration"),
+                value: Utils.humanDuration(execution.value.state.duration),
+            },
+            {
+                icon: LayersTripleOutline,
+                label: t("attempt"),
+                value: execution.value.metadata.attemptNumber,
+            },
+            ...(execution.value.trigger?.type ===
+                "io.kestra.plugin.core.flow.Subflow" &&
+                execution.value.trigger?.variables?.executionId
+                ? [
+                    {
+                        icon: History,
+                        label: t("parent execution"),
+                        value: execution.value.trigger.variables.executionId,
+                        // TODO: Make it a link to the execution
+                    },
+                ]
+                : []),
+            ...(execution.value.originalId &&
+                execution.value.originalId !== execution.value.id
+                ? [
+                    {
+                        icon: History,
+                        label: t("original execution"),
+                        value: execution.value.originalId,
+                        // TODO: Make it a link to the execution
+                    },
+                ]
+                : []),
+        ];
+    });
+    const actions = computed(() => {
+        if (!execution.value) return [];
+
+        const follow = (event: any) => emits("follow", event);
+
+        return [
+            {component: Restart, on: {follow}},
+            {component: Restart, props: {isReplay: true}, on: {follow}},
+            execution.value.state.current !== "PAUSED"
+                ? {component: Pause}
+                : {component: Resume},
+            {component: Unqueue},
+            {component: ForceRun},
+            {component: Kill},
+
+        //     <!-- api -->
+        //  <!-- delete -->
+        ];
+    });
+
+    const loadExecution = (id: string) => store.loadExecution({id});
+
+    onMounted(() => {
+        if (!route.params.id) return;
+        loadExecution(route.params.id as string);
+    });
+
+    defineOptions({inheritAttrs: false});
+</script>
+
+<style scoped lang="scss">
+@import "@kestra-io/ui-libs/src/scss/variables";
+
+$font-size-sm: $font-size-base * 0.875; // Move it into varaibles file of ui-libs
+
+#overview {
+    .sidebar > div,
+    .main > div {
+        padding: calc($spacer * 1.5);
+    }
+
+    .sidebar {
+        height: 100%;
+        background-color: var(--ks-background-table-row);
+
+        & .actions .el-row {
+            margin-top: calc($spacer * 1.5);
+
+            & .el-col {
+                &:empty {
+                    // If button is not displayed for any reason, hide the whole column
+                    display: none;
+                }
+
+                & :deep(.el-button) {
+                    width: 100%;
+                    margin-bottom: calc($spacer / 1.5);
+                    padding: $spacer;
+                    font-size: $font-size-sm;
+                }
+            }
+        }
+    }
+
+    .main {
+        // TODO: Clean up if not used in the end
+    }
+
+    hr {
+        margin: 0;
+    }
+}
+</style>

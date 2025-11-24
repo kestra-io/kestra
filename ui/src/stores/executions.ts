@@ -32,10 +32,28 @@ export interface Execution{
         history: string;
         startDate: string;
         duration: string;
+        endDate?: string;
+        histories?: {
+            state: string;
+            date: string;
+        }[];
     }
+    trigger?: {
+        id: any;
+        type: string;
+        variables: {
+            executionId: string;
+        }
+    },
+    metadata: {
+        originalCreatedDate: string;
+        attemptNumber: string | number;
+    },
     inputs?: Record<string, any>;
     labels?: any[];
     namespace: string;
+    originalId?: string;
+    flowRevision?: number;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {

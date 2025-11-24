@@ -7,10 +7,13 @@
         <template #header v-if="hasValidDate">
             <div class="d-flex">
                 <Duration class="th text-end" :histories="execution.state.histories" />
-                <div class="timeline-header">
+                <div v-if="verticalLayout" class="timeline-header">
                     <span class="timeline-start">{{ startTime }}</span>
                     <span class="timeline-end">{{ endTime }}</span>
                 </div>
+                <span v-else class="text-end" v-for="(date, i) in dates" :key="i">
+                    {{ date }}
+                </span>
             </div>
         </template>
         <template #default>
@@ -30,12 +33,21 @@
                     >
                         <div class="d-flex flex-column">
                             <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
+                                <!-- Large screen: show chevron icons -->
+                                <div v-if="!verticalLayout" class="d-inline-flex">
+                                    <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
+                                    <ChevronDown v-else />
+                                </div>
                                 <el-tooltip placement="top-start" :persistent="false" transition="" :hideAfter="0" effect="light">
                                     <template #content>
                                         <code>{{ item.name }}</code>
                                         <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
                                     </template>
-                                    <span class="task-name">
+                                    <span v-if="verticalLayout" class="task-name">
+                                        <code>{{ item.name }}</code>
+                                        <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
+                                    </span>
+                                    <span v-else>
                                         <code>{{ item.name }}</code>
                                         <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                     </span>
@@ -89,7 +101,7 @@
         </template>
     </el-card>
 </template>
-<script lang="js">
+<script>
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import {State} from "@kestra-io/ui-libs"
     import Duration from "../layout/Duration.vue";
@@ -97,7 +109,10 @@
     import FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
 
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Warning from "vue-material-design-icons/Alert.vue";
     import ExecutionPending from "./ExecutionPending.vue";
     import {mapStores} from "pinia";
@@ -112,7 +127,15 @@
             DynamicScrollerItem,
             TaskRunDetails,
             Duration,
+            ChevronRight,
+            ChevronDown,
             ExecutionPending
+        },
+        setup() {
+            const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+            return {
+                verticalLayout
+            };
         },
         data() {
             return {

@@ -222,7 +222,7 @@
         const flowParsed = YAML_UTILS.parse(props.source);
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
-            () => {
+            async () => {
                 const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase();
                 if (
                     section === SECTIONS.TASKS.toLowerCase() &&
@@ -246,8 +246,7 @@
                     updatedYmlSource,
                     true,
                 );
-            },
-            () => {},
+            }
         );
     };
 

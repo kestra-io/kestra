@@ -1,21 +1,11 @@
 <template>
-    <el-tooltip
-        effect="light"
-        :persistent="false"
-        transition=""
-        :hideAfter="0"
-        :content="t('Set labels tooltip')"
-        rawContent
-        placement="bottom"
+    <el-button
+        :disabled="!enabled"
+        :icon="Plus"
+        @click="isOpen = !isOpen"
     >
-        <el-button
-            :icon="LabelMultiple"
-            @click="isOpen = !isOpen"
-            :disabled="!enabled"
-        >
-            {{ t("Set labels") }}
-        </el-button>
-    </el-tooltip>
+        {{ t("set_extra_labels") }}
+    </el-button>
 
     <el-dialog
         v-if="isOpen"
@@ -74,7 +64,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
 
-    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
 
     interface Label {
         key: string;

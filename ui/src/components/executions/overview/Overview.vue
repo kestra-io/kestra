@@ -5,9 +5,17 @@
         lazy
     >
         <el-splitter-panel :size="verticalLayout ? '50%' : '35%'">
-            <div class="sidebar">
+            <div v-if="execution" class="sidebar">
                 <div class="state">
-                    <Status :status="execution!.state.current" />
+                    <Row :rows="[{icon: StateMachine, label: t('state')}]">
+                        <template #action>
+                            <ChangeExecutionStatus
+                                :execution
+                                @follow="emits('follow', $event)"
+                            />
+                        </template>
+                    </Row>
+                    <Status :status="execution.state.current" />
                 </div>
 
                 <hr>
@@ -17,7 +25,11 @@
 
                 <hr>
                 <div class="labels">
-                    Labels
+                    <Row :rows="[{icon: LabelMultiple, label: t('labels')}]">
+                        <template #action>
+                            <SetLabels :execution />
+                        </template>
+                    </Row>
                 </div>
 
                 <hr>
@@ -26,7 +38,7 @@
                 </div>
 
                 <hr>
-                <div v-if="execution" class="actions">
+                <div class="actions">
                     <Row :rows="[{icon: SortVariant, label: t('actions')}]" />
                     <el-row :gutter="12">
                         <el-col
@@ -77,6 +89,8 @@
 
     import Row from "./components/sidebar/Row.vue";
 
+    import ChangeExecutionStatus from "../ChangeExecutionStatus.vue";
+    import SetLabels from "../SetLabels.vue";
     import Pause from "./components/actions/Pause.vue";
     //@ts-expect-error No declaration file
     import Resume from "./components/actions/Resume.vue";
@@ -87,6 +101,8 @@
     import Api from "./components/actions/Api.vue";
     import Delete from "./components/actions/Delete.vue";
 
+    import StateMachine from "vue-material-design-icons/StateMachine.vue";
+    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
@@ -228,6 +244,17 @@ $font-size-sm: $font-size-base * 0.875; // Move it into varaibles file of ui-lib
     .sidebar {
         height: 100%;
         background-color: var(--ks-background-table-row);
+
+        & :deep(.state),
+        & :deep(.labels) {
+            .el-row {
+                margin-bottom: calc($spacer * 1.5);
+            }
+
+            & button {
+                width: 100%;
+            }
+        }
 
         & .actions .el-row {
             margin-top: calc($spacer * 1.5);

@@ -78,11 +78,14 @@
     import Row from "./components/sidebar/Row.vue";
 
     import Pause from "./components/actions/Pause.vue";
+    //@ts-expect-error No declaration file
     import Resume from "./components/actions/Resume.vue";
     import Restart from "./components/actions/Restart.vue";
     import Unqueue from "./components/actions/Unqueue.vue";
     import ForceRun from "./components/actions/ForceRun.vue";
     import Kill from "./components/actions/Kill.vue";
+    import Api from "./components/actions/Api.vue";
+    import Delete from "./components/actions/Delete.vue";
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
@@ -196,9 +199,8 @@
             {component: Unqueue},
             {component: ForceRun},
             {component: Kill},
-
-        //     <!-- api -->
-        //  <!-- delete -->
+            {component: Api},
+            {component: Delete},
         ];
     });
 

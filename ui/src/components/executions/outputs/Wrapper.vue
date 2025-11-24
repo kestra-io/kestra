@@ -1,7 +1,7 @@
 <template>
     <div class="outputs">
-        <el-splitter>
-            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'">
+        <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
+            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
                 <div class="d-flex flex-column overflow-x-auto left">
                     <el-cascader-panel
                         ref="cascader"
@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef, onMounted, watch} from "vue";
+    import {ref, computed, shallowRef, onMounted, watch, onUnmounted} from "vue";
     import {ElTree} from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
@@ -432,6 +432,23 @@
         selectedValue.value !== debugExpression.value;
 
     const leftWidth = ref("70%");
+
+    const isMobile = ref(false);
+
+    onMounted(() => {
+        const mediaQuery = window.matchMedia("(max-width: 768px)");
+        isMobile.value = mediaQuery.matches;
+
+        const handler = (e: MediaQueryListEvent) => {
+            isMobile.value = e.matches;
+        };
+
+        mediaQuery.addEventListener("change", handler);
+
+        onUnmounted(() => {
+            mediaQuery.removeEventListener("change", handler);
+        });
+    });
 </script>
 
 <style scoped lang="scss">
@@ -569,5 +586,25 @@
 :deep(.complex-value-editor) {
     position: relative !important;
     z-index: auto !important;
+}
+
+//Mobile Version
+@media (max-width: 768px) {
+    :deep(.el-splitter) { 
+        .outputs-top {
+            margin: 10px;
+            border: 2px solid var(--ks-border-primary);
+            box-sizing: border-box;
+            overflow: hidden;
+            flex: 1 1 0 !important;
+            min-height: 0 !important;
+        }
+    }
+    :deep(.el-splitter-bar){
+        height: 4px !important;
+        width: auto !important;
+        
+    }
+    
 }
 </style>

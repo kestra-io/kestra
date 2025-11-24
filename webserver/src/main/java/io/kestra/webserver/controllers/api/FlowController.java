@@ -163,9 +163,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}")
     @Operation(tags = {"Flows"}, summary = "Get a flow")
-    @Schema(
-        implementation = FlowWithSource.class
-    )
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = FlowWithSource.class))})
     //FIXME we return Object instead of Flow as Micronaut, since 4, has an issue with subtypes serialization, see https://github.com/micronaut-projects/micronaut-core/issues/10294.
     public Object getFlow(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,

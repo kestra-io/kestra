@@ -8,6 +8,8 @@
             refresh: {shown: true, callback: load}
         }"
         legacyQuery
+        :defaultScope="false"
+        :defaultTimeRange="false"
     />
 
     <div v-bind="$attrs" v-loading="isLoading">

@@ -341,10 +341,10 @@
                 DeleteOutline,
                 Pencil,
                 Plus,
-                ContentSave,
+                ContentSave
             };
         },
-        emits: ["update:modelValue", "update:modelValueNoDefault", "confirm", "validation"],
+        emits: ["update:modelValue", "update:modelValueNoDefault", "update:checks", "confirm", "validation"],
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
             this.debouncedValidation = debounce(this.validateInputs, 500)
@@ -391,6 +391,7 @@
             document.removeEventListener("keydown", this._keyListener);
         },
         methods: {
+            
             normalizeJSON(value) {
                 try {
                     // Step 1: Remove trailing commas in objects and arrays
@@ -537,6 +538,7 @@
                 const formData = inputsToFormData(this, this.inputsMetaData, inputsValuesWithNoDefault);
 
                 const metadataCallback = (response) => {
+                    this.$emit("update:checks", response.checks || []);
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
                         if(it.enabled){
                             acc.push({...it.input, errors: it.errors, value: it.value || it.input.prefill, isDefault: it.isDefault});

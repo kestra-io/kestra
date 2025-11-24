@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 @JdbcQueueEnabled
 public class JdbcQueueFactory {
     @Inject
-    private QueueUtils queueUtils;
+    private QueueService queueService;
 
     @Inject
     private ApplicationContext applicationContext;
@@ -28,7 +28,7 @@ public class JdbcQueueFactory {
             .listAllEvent(this.getClass().getClassLoader(), DispatchEvent.class)
             .forEach(event -> applicationContext.registerSingleton(
                 DispatchQueueInterface.class,
-                new JdbcDispatchQueue<>(event, queueUtils, jdbcQueueClient),
+                new JdbcDispatchQueue<>(event, queueService, jdbcQueueClient),
                 Qualifiers.byTypeArguments(event),
                 true
             ));
@@ -37,7 +37,7 @@ public class JdbcQueueFactory {
             .listAllEvent(this.getClass().getClassLoader(), KeyedDispatchEvent.class)
             .forEach(event -> applicationContext.registerSingleton(
                 KeyedDispatchQueueInterface.class,
-                new JdbcKeyedDispatchQueue<>(event, queueUtils, jdbcQueueClient),
+                new JdbcKeyedDispatchQueue<>(event, queueService, jdbcQueueClient),
                 Qualifiers.byTypeArguments(event),
                 true
             ));
@@ -46,7 +46,7 @@ public class JdbcQueueFactory {
             .listAllEvent(this.getClass().getClassLoader(), BroadcastEvent.class)
             .forEach(event -> applicationContext.registerSingleton(
                 BroadcastQueueInterface.class,
-                new JdbcBroadcastQueue<>(event, queueUtils, jdbcQueueClient),
+                new JdbcBroadcastQueue<>(event, queueService, jdbcQueueClient),
                 Qualifiers.byTypeArguments(event),
                 true
             ));

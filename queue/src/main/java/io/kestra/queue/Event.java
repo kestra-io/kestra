@@ -1,5 +1,5 @@
 package io.kestra.queue;
 
-public interface GenericEvent {
+public interface Event {
     String key();
 }

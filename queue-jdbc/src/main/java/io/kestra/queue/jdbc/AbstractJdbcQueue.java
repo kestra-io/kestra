@@ -2,8 +2,8 @@ package io.kestra.queue.jdbc;
 
 import io.kestra.core.queues.QueueException;
 import io.kestra.queue.AbstractQueue;
-import io.kestra.queue.GenericEvent;
-import io.kestra.queue.QueueUtils;
+import io.kestra.queue.Event;
+import io.kestra.queue.QueueService;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -16,28 +16,28 @@ import java.util.stream.Collectors;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
-public abstract class AbstractJdbcQueue<T extends GenericEvent> extends AbstractQueue<T> {
+public abstract class AbstractJdbcQueue<T extends Event> extends AbstractQueue<T> {
     protected final JdbcQueueClient jdbcQueueClient;
 
-    public AbstractJdbcQueue(Class<T> cls, QueueUtils queueUtils, JdbcQueueClient jdbcQueueClient) {
-        super(cls, queueUtils);
+    public AbstractJdbcQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient) {
+        super(cls, queueService);
         this.jdbcQueueClient = jdbcQueueClient;
     }
 
-    public void internalEmit(@Nullable String key, T message) throws QueueException {
-        String serialize = this.queueUtils.serialize(this.cls, message);
+    protected void internalEmit(@Nullable String routingKey, T message) throws QueueException {
+        String serialize = this.queueService.serialize(this.cls, message);
 
-        jdbcQueueClient.publish(this.queueName(), key, message.key(), serialize);
+        jdbcQueueClient.publish(this.queueName(), routingKey, message.key(), serialize);
     }
 
-    public void internalEmit(@Nullable String key, List<T> messages) throws QueueException {
+    protected void internalEmit(@Nullable String routingKey, List<T> messages) throws QueueException {
         jdbcQueueClient.publish(
             this.queueName(),
-            key,
+            routingKey,
             messages
                 .stream()
                 .map(throwFunction(e -> {
-                    String serialize = this.queueUtils.serialize(this.cls, e);
+                    String serialize = this.queueService.serialize(this.cls, e);
 
                     return new AbstractMap.SimpleEntry<>(
                         e.key(),

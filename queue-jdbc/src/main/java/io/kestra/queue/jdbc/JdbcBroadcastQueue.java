@@ -4,7 +4,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.queue.BroadcastEvent;
 import io.kestra.queue.BroadcastQueueInterface;
 import io.kestra.queue.QueueSubscriber;
-import io.kestra.queue.QueueUtils;
+import io.kestra.queue.QueueService;
 import io.kestra.queue.jdbc.client.JdbcBroadcastSubscriber;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +13,8 @@ import java.util.List;
 
 @Slf4j
 public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractJdbcQueue<T> implements BroadcastQueueInterface<T> {
-    public JdbcBroadcastQueue(Class<T> cls, QueueUtils queueUtils, JdbcQueueClient jdbcQueueClient) {
-        super(cls, queueUtils, jdbcQueueClient);
+    public JdbcBroadcastQueue(Class<T> cls, QueueService queueService, JdbcQueueClient jdbcQueueClient) {
+        super(cls, queueService, jdbcQueueClient);
     }
 
     @Override
@@ -31,7 +31,7 @@ public class JdbcBroadcastQueue<T extends BroadcastEvent> extends AbstractJdbcQu
     public QueueSubscriber<T> subscriber() {
         return new JdbcBroadcastSubscriber<>(
             cls,
-            queueUtils,
+            queueService,
             jdbcQueueClient,
             queueName()
         );

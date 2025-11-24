@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.Getter;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.exception.DataException;
@@ -21,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.CRC32;
 
 @Singleton
@@ -35,16 +35,19 @@ public class JdbcQueueClient {
         io.kestra.jdbc.repository.AbstractJdbcRepository.field("created")
     );
 
-    @Inject
-    @Named("queue")
-    private AbstractJdbcRepository<JdbcQueueItem> jdbcRepository;
+    private final AbstractJdbcRepository<JdbcQueueItem> jdbcRepository;
 
-    @Inject
-    private JooqDSLContextWrapper dslContextWrapper;
+    private final JooqDSLContextWrapper dslContextWrapper;
 
-    @Inject
     @Getter
-    private JdbcQueueConfiguration configuration;
+    private final JdbcQueueConfiguration configuration;
+
+    @Inject
+    public JdbcQueueClient(@Named("queue") AbstractJdbcRepository<JdbcQueueItem> jdbcRepository, JooqDSLContextWrapper dslContextWrapper, JdbcQueueConfiguration configuration) {
+        this.jdbcRepository = jdbcRepository;
+        this.dslContextWrapper = dslContextWrapper;
+        this.configuration = configuration;
+    }
 
     public static Integer queueNameToType(String value) {
         return QUEUE_NAME_CRC32.computeIfAbsent(value, s -> {
@@ -113,8 +116,8 @@ public class JdbcQueueClient {
                 List<Long> processedItems = queueItems
                     .stream()
                     .map(queueItem -> {
-                        Exception exception = consumer.apply(queueItem.getValue());
-                        return exception == null ? queueItem.getOffset() : null;
+                        Exception exception = consumer.apply(queueItem.value());
+                        return exception == null ? queueItem.offset() : null;
                     })
                     .filter(Objects::nonNull)
                     .toList();
@@ -136,8 +139,8 @@ public class JdbcQueueClient {
         });
     }
 
-    public AtomicReference<Long> subscribeBroadcastMaxOffset(String queue) {
-        AtomicReference<Long> maxOffset = new AtomicReference<>();
+    public @Nullable Long fetchMaxOffset(String queue) {
+        Long maxOffset = null;
 
         Long initialOffset = dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
@@ -149,22 +152,23 @@ public class JdbcQueueClient {
         });
 
         if (initialOffset != null) {
-            maxOffset.set(initialOffset);
+            maxOffset = initialOffset;
         }
 
         return maxOffset;
     }
 
-    public Integer subscribeBroadcast(String queue, AtomicReference<Long> maxOffset, MessageConsumer<String, Exception> consumer) {
+    protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, MessageConsumer<String, Exception> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
+            Long maxOffsetResult = null;
 
             SelectConditionStep<Record> select = context.select(DSL.asterisk())
                 .from(this.jdbcRepository.getTable())
                 .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("type").eq(queueNameToType(queue)));
 
-            if (maxOffset.get() != null) {
-                select = select.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("offset").gt(maxOffset.get()));
+            if (maxOffset != null) {
+                select = select.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("offset").gt(maxOffset));
             }
 
             List<JdbcQueueItem> queueItems = select
@@ -177,17 +181,17 @@ public class JdbcQueueClient {
             if (!queueItems.isEmpty()) {
                 queueItems
                     .forEach(queueItem -> {
-                        consumer.apply(queueItem.getValue());
+                        consumer.apply(queueItem.value());
                     });
 
-                queueItems
+                maxOffsetResult = queueItems
                     .stream()
-                    .map(JdbcQueueItem::getOffset)
+                    .map(JdbcQueueItem::offset)
                     .max(Long::compareTo)
-                    .ifPresent(maxOffset::set);
+                    .orElse(null);
             }
 
-            return queueItems.size();
+            return Pair.of(queueItems.size(), maxOffsetResult);
         });
     }
 

@@ -7,9 +7,9 @@ import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Rethrow;
 import io.kestra.jdbc.runner.JdbcQueueConfiguration;
 import io.kestra.queue.AbstractSubscriber;
-import io.kestra.queue.GenericEvent;
+import io.kestra.queue.Event;
 import io.kestra.queue.QueueSubscriber;
-import io.kestra.queue.QueueUtils;
+import io.kestra.queue.QueueService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
@@ -19,28 +19,28 @@ import java.util.List;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 @Slf4j
-public abstract class JdbcSubscriber<T extends GenericEvent> extends AbstractSubscriber<T> {
+public abstract class JdbcSubscriber<T extends Event> extends AbstractSubscriber<T> {
     protected final JdbcQueueClient jdbcQueueClient;
     protected final String queueName;
 
     public JdbcSubscriber(
         Class<T> cls,
-        QueueUtils queueUtils,
+        QueueService queueService,
         JdbcQueueClient jdbcQueueClient,
         String queueName
     ) {
-        super(cls, queueUtils);
+        super(cls, queueService);
 
         this.jdbcQueueClient = jdbcQueueClient;
         this.queueName = queueName;
     }
 
-    protected abstract Integer pool(JdbcQueueClient.MessageConsumer<String, Exception> messageConsumer);
+    protected abstract Integer poll(JdbcQueueClient.MessageConsumer<String, Exception> messageConsumer);
 
     protected abstract void init();
 
     public QueueSubscriber<T> subscribe(Rethrow.ConsumerChecked<Either<T, DeserializationException>, Exception> consumer) throws QueueException {
-        this.queueUtils.execute(throwRunnable(() -> {
+        this.queueService.execute(throwRunnable(() -> {
             List<JdbcQueueConfiguration.Step> steps = this.jdbcQueueClient.getConfiguration().computeSteps();
             ZonedDateTime lastPoll = ZonedDateTime.now();
             Duration sleepDuration;
@@ -50,9 +50,9 @@ public abstract class JdbcSubscriber<T extends GenericEvent> extends AbstractSub
             while (this.isRunning() || this.isPaused()) {
                 this.waitIfPaused();
 
-                Integer count = this.pool(message -> {
+                Integer count = this.poll(message -> {
                     try {
-                        Either<T, DeserializationException> event = this.queueUtils.deserialize(this.cls, message);
+                        Either<T, DeserializationException> event = this.queueService.deserialize(this.cls, message);
                         consumer.accept(event);
 
                         return null;

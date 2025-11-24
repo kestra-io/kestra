@@ -5,7 +5,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Rethrow;
 
-public interface QueueSubscriber<T extends GenericEvent> {
+public interface QueueSubscriber<T extends Event> {
     /**
      * Start a subscription.
      *

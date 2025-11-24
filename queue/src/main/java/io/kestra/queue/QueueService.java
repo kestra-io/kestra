@@ -9,8 +9,8 @@ import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
+import io.kestra.core.utils.ExecutorsUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -22,25 +22,28 @@ import java.util.concurrent.ExecutorService;
 
 @Slf4j
 @Singleton
-public class QueueUtils {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson(false).copy();
+public class QueueService {
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson(false);
 
-    @Inject
-    @Named(QueueFactory.QUEUE_EXECUTOR)
     @Getter
-    ExecutorService executorService;
+    protected final ExecutorService executorService;
+
+    protected final QueueConfiguration queueConfiguration;
+
+    private final MetricRegistry metricRegistry;
 
     @Inject
-    protected QueueConfiguration queueConfiguration;
-
-    @Inject
-    private MetricRegistry metricRegistry;
+    public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry) {
+        this.executorService = executorsUtils.cachedThreadPool("queue-" + queueConfiguration.getType());
+        this.queueConfiguration = queueConfiguration;
+        this.metricRegistry = metricRegistry;
+    }
 
     public void execute(Runnable runnable) {
         this.executorService.execute(runnable);
     }
 
-    public <T extends GenericEvent> String serialize(Class<T> cls, T message) throws QueueException {
+    public <T extends Event> String serialize(Class<T> cls, T message) throws QueueException {
         try {
             String serialize = MAPPER.writeValueAsString(message);
 
@@ -71,7 +74,7 @@ public class QueueUtils {
         }
     }
 
-    public <T extends GenericEvent> Either<T, DeserializationException> deserialize(Class<T> cls, byte[] record) {
+    public <T extends Event> Either<T, DeserializationException> deserialize(Class<T> cls, byte[] record) {
         if (log.isTraceEnabled()) {
             log.trace("[{}] received message: {}", cls.getSimpleName(), new String(record));
         }
@@ -88,7 +91,7 @@ public class QueueUtils {
         }
     }
 
-    public <T extends GenericEvent> Either<T, DeserializationException> deserialize(Class<T> cls, String record) {
+    public <T extends Event> Either<T, DeserializationException> deserialize(Class<T> cls, String record) {
         if (log.isTraceEnabled()) {
             log.trace("[{}] received message: {}", cls.getSimpleName(), record);
         }

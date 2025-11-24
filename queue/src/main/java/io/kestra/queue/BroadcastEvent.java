@@ -1,4 +1,4 @@
 package io.kestra.queue;
 
-public interface BroadcastEvent extends GenericEvent {
+public interface BroadcastEvent extends Event {
 }

@@ -9,15 +9,17 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public abstract class AbstractSubscriber<T extends GenericEvent> extends AbstractQueue<T> implements QueueSubscriber<T> {
+public abstract class AbstractSubscriber<T extends Event> implements QueueSubscriber<T> {
     private final CountDownLatch stopped = new CountDownLatch(1);
     private final ReentrantLock pauseLock = new ReentrantLock();
     private final Condition unpaused = pauseLock.newCondition();
-
     private final AtomicReference<State> state = new AtomicReference<>(State.STOPPED);
+    protected final Class<T> cls;
+    protected final QueueService queueService;
 
-    public AbstractSubscriber(Class<T> cls, QueueUtils queueUtils) {
-        super(cls, queueUtils);
+    public AbstractSubscriber(Class<T> cls, QueueService queueService) {
+        this.cls = cls;
+        this.queueService = queueService;
     }
 
     protected void waitIfPaused() throws QueueException {

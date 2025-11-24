@@ -1,5 +1,5 @@
 package io.kestra.queue;
 
-public interface DispatchEvent extends GenericEvent {
+public interface DispatchEvent extends Event {
 
 }

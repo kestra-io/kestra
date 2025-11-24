@@ -31,11 +31,11 @@
 
     import {State} from "@kestra-io/ui-libs";
 
-    import {useExecutionsStore} from "../../stores/executions";
+    import {useExecutionsStore} from "../../../../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
-    import {useToast} from "../../utils/toast";
-    import action from "../../models/action";
-    import permission from "../../models/permission";
+    import {useToast} from "../../../../../utils/toast";
+    import action from "../../../../../models/action";
+    import permission from "../../../../../models/permission";
 
     const props = defineProps({
         execution: {

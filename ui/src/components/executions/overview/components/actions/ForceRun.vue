@@ -32,13 +32,13 @@
 <script setup lang="ts">
     import {ref, computed} from "vue";
     import {State} from "@kestra-io/ui-libs";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import {useExecutionsStore} from "../../stores/executions";
+    import permission from "../../../../../models/permission";
+    import action from "../../../../../models/action";
+    import {useExecutionsStore} from "../../../../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
 
     import {useI18n} from "vue-i18n";
-    import {useToast} from "../../utils/toast";
+    import {useToast} from "../../../../../utils/toast";
 
     import RunFast from "vue-material-design-icons/RunFast.vue";
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";

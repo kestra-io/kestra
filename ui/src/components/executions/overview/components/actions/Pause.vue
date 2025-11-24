@@ -21,14 +21,14 @@
 
 <script setup lang="ts">
     import Pause from "vue-material-design-icons/Pause.vue";
-    import {useExecutionsStore} from "../../stores/executions";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
+    import {useExecutionsStore} from "../../../../../stores/executions";
+    import permission from "../../../../../models/permission";
+    import action from "../../../../../models/action";
     import {State} from "@kestra-io/ui-libs";
     import {useAuthStore} from "override/stores/auth";
     import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useToast} from "../../utils/toast";
+    import {useToast} from "../../../../../utils/toast";
 
     const props = defineProps({
         execution: {

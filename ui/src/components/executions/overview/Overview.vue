@@ -77,12 +77,12 @@
 
     import Row from "./components/sidebar/Row.vue";
 
-    import Pause from "../Pause.vue";
-    import Resume from "../Resume.vue";
-    import Restart from "../Restart.vue";
-    import Unqueue from "../Unqueue.vue";
-    import ForceRun from "../ForceRun.vue";
-    import Kill from "../Kill.vue";
+    import Pause from "./components/actions/Pause.vue";
+    import Resume from "./components/actions/Resume.vue";
+    import Restart from "./components/actions/Restart.vue";
+    import Unqueue from "./components/actions/Unqueue.vue";
+    import ForceRun from "./components/actions/ForceRun.vue";
+    import Kill from "./components/actions/Kill.vue";
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";

@@ -238,7 +238,7 @@
     watch(isOpen, (newValue) => newValue && loadRevision())
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .execution-description {
     color: var(--ks-content-secondary);
 }

@@ -75,28 +75,30 @@ function usePluginsIcons() {
 
     function fetchIcons() {
         if (iconsLoaded.value) {
+            console.log("plugins icons already loaded returning cached");
             return Promise.resolve(icons.value);
         }
 
         if (_iconsPromise.value) {
+            console.log("plugins icons loading in progress returning existing promise");
             return _iconsPromise.value;
         }
 
         const apiPromise = apiStore.pluginIcons().then(async response => {
-            // await wait(4000);
+            console.log("plugins icons loaded from api store");
             apiIcons.value = response.data ?? {};
             return response.data;
         });
 
         const iconsPromise =
             axios.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
-                // await wait(9000);
+                console.log("plugins icons loaded from plugins store");
                 pluginsIcons.value = response.data ?? {};
                 return pluginsIcons.value;
             });
 
         _iconsPromise.value = Promise.all([apiPromise, iconsPromise]).then(async () => {
-            // await wait(10000);
+            console.log("plugins icons loaded from both sources");
             iconsLoaded.value = true;
             return icons.value;
         })

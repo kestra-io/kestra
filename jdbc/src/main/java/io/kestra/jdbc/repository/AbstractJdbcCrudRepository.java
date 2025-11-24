@@ -254,6 +254,8 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
             .getDslContextWrapper()
             .transaction(configuration -> {
                 DSLContext context = DSL.using(configuration);
+                SelectSeekStepN<Record1<String>> selectOrdered = null;
+
 
                 var select = context
                     .select(VALUE_FIELD)
@@ -262,10 +264,14 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
                     .and(condition);
 
                 if (orderByFields != null) {
-                    select.orderBy(orderByFields);
+                    selectOrdered = select.orderBy(orderByFields);
                 }
 
-                try (Stream<Record1<String>> stream = select.fetchSize(FETCH_SIZE).stream()){
+                ResultQuery<Record1<String>> selectFetched = selectOrdered != null ?
+                    selectOrdered.fetchSize(FETCH_SIZE) :
+                    select.fetchSize(FETCH_SIZE);
+
+                try (Stream<Record1<String>> stream = selectFetched.stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
                         .forEach(emitter::next);
                 } finally {

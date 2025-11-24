@@ -8,13 +8,6 @@
             <slot name="additional-right" />
             <div class="d-flex align-items-center gap-2" v-if="(canDelete || isAllowedTrigger || isAllowedEdit) && $route.params.tab !== 'audit-logs'">
                 <ul class="d-none d-xl-flex align-items-center">
-                    <li v-if="isAllowedEdit">
-                        <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
-                            <el-button :icon="Api">
-                                {{ $t("api") }}
-                            </el-button>
-                        </a>
-                    </li>
                     <li v-if="canDelete">
                         <el-button :icon="Delete" @click="deleteExecution">
                             {{ $t("delete") }}
@@ -34,12 +27,6 @@
                     </el-button>
                     <template #dropdown>
                         <el-dropdown-menu>
-                            <el-dropdown-item v-if="isAllowedEdit">
-                                <a :href="`${finalApiUrl}/executions/${execution.id}`" target="_blank">
-                                    <el-icon><Api /></el-icon>
-                                    {{ $t("api") }}
-                                </a>
-                            </el-dropdown-item>
                             <el-dropdown-item v-if="canDelete" @click="deleteExecution">
                                 <el-icon><Delete /></el-icon>
                                 {{ $t("delete") }}
@@ -65,7 +52,6 @@
 </template>
 
 <script setup>
-    import Api from "vue-material-design-icons/Api.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import DotsVerticalIcon from "vue-material-design-icons/DotsVertical.vue";
@@ -82,7 +68,6 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {State} from "@kestra-io/ui-libs"
-    import {apiUrl} from "override/utils/route";
     import {useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth"
 
@@ -101,9 +86,6 @@
             ...mapStores(useExecutionsStore, useAuthStore),
             execution() {
                 return this.executionsStore.execution;
-            },
-            finalApiUrl() {
-                return apiUrl();
             },
             canDelete() {
                 return this.execution && this.authStore.user?.isAllowed(permission.EXECUTION, action.DELETE, this.execution.namespace);

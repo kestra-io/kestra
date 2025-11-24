@@ -8,10 +8,6 @@
     >
         {{ $t("api") }}
     </el-button>
-
-    <a target="_blank">
-        <el-button :icon="Api" />
-    </a>
 </template>
 
 <script setup lang="ts">

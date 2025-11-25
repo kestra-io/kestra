@@ -67,6 +67,11 @@
             </div>
         </el-splitter-panel>
     </el-splitter>
+    <NoData
+        v-else
+        id="empty"
+        :text="t('execution not found', {executionId: route.params.id})"
+    />
 </template>
 
 <script setup lang="ts">
@@ -96,6 +101,8 @@
     import Row from "./components/sidebar/Row.vue";
     import Labels from "./components/sidebar/Labels.vue";
     import Timeline from "./components/sidebar/Timeline.vue";
+
+    import NoData from "../../layout/NoData.vue";
 
     import ChangeExecutionStatus from "../ChangeExecutionStatus.vue";
     import SetLabels from "../SetLabels.vue";
@@ -403,5 +410,10 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
         margin: 0;
         padding: 0;
     }
+}
+
+#empty {
+    height: 100%;
+    background-color: var(--ks-background-table-row);
 }
 </style>

@@ -43,8 +43,8 @@
                     <Row :rows="[{icon: SortVariant, label: t('actions')}]" />
                     <el-row :gutter="12">
                         <el-col
-                            v-for="(action, index) in actions"
-                            :key="index"
+                            v-for="(action, aIdx) in actions"
+                            :key="aIdx"
                             :span="12"
                         >
                             <component
@@ -111,7 +111,6 @@
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
-    import FormatListNumbered from "vue-material-design-icons/FormatListNumbered.vue";
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
@@ -164,17 +163,6 @@
                 label: t("created date"),
                 value: moment(execution.value.state.histories![0].date).fromNow(),
             },
-            ...(execution.value.metadata?.originalCreatedDate
-                ? [
-                    {
-                        icon: CalendarMonth,
-                        label: t("originalCreatedDate"),
-                        value: moment(
-                            execution.value.metadata.originalCreatedDate,
-                        ).fromNow(),
-                    },
-                ]
-                : []),
             ...(execution.value.scheduleDate
                 ? [
                     {
@@ -213,13 +201,6 @@
 
                     return Utils.humanDuration(deltaSeconds);
                 })(),
-            },
-            {
-                icon: FormatListNumbered,
-                label: t("steps"),
-                value: execution.value.taskRunList
-                    ? execution.value.taskRunList.length
-                    : 0,
             },
             {
                 icon: LayersTripleOutline,

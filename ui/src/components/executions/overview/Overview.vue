@@ -18,12 +18,12 @@
                     <Status :status="execution.state.current" />
                 </div>
 
-                <hr>
+                <el-divider />
                 <div class="general">
                     <Row :rows="general" />
                 </div>
 
-                <hr>
+                <el-divider />
                 <div class="labels">
                     <Row :rows="[{icon: LabelMultiple, label: t('labels')}]">
                         <template #action>
@@ -33,12 +33,12 @@
                     <Labels :labels="execution.labels || []" />
                 </div>
 
-                <hr>
+                <el-divider />
                 <div class="metadata">
                     <Row :rows="metadata" />
                 </div>
 
-                <hr>
+                <el-divider />
                 <div class="actions">
                     <Row :rows="[{icon: SortVariant, label: t('actions')}]" />
                     <el-row :gutter="12">
@@ -295,7 +295,7 @@
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-$font-size-sm: $font-size-base * 0.875; // Move it into varaibles file of ui-libs
+$font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of ui-libs
 
 #overview {
     .sidebar > div,
@@ -349,8 +349,9 @@ $font-size-sm: $font-size-base * 0.875; // Move it into varaibles file of ui-lib
         // TODO: Clean up if not used in the end
     }
 
-    hr {
+    div.el-divider {
         margin: 0;
+        padding: 0;
     }
 }
 </style>

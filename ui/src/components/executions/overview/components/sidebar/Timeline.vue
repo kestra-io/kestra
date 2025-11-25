@@ -7,12 +7,12 @@
 
             <el-timeline>
                 <el-timeline-item
-                    v-for="(entry, hIdx) in props.histories"
-                    :key="hIdx"
-                    :timestamp="formatDate(entry.date)"
-                    :color="State.getStateColor(entry.state)"
+                    v-for="(activity, aIdx) in props.histories"
+                    :key="aIdx"
+                    :timestamp="formatDate(activity.date)"
+                    :color="State.getStateColor(activity.state)"
                 >
-                    {{ entry.state }}
+                    {{ activity.state }}
                 </el-timeline-item>
             </el-timeline>
         </el-collapse-item>

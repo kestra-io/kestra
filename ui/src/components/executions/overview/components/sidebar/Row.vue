@@ -1,19 +1,19 @@
 <template>
     <el-row v-for="(row, key) in props.rows" :key="key">
-        <el-col :span="12" class="label">
+        <el-col :span="14" class="label">
             <component :is="row.icon" />
             <el-text truncated>
                 {{ row.label }}
             </el-text>
         </el-col>
 
-        <el-col v-if="row.value" :span="12" class="value">
+        <el-col v-if="row.value" :span="10" class="value">
             <el-text truncated>
                 {{ row.value }}
             </el-text>
         </el-col>
 
-        <el-col v-if="$slots.action" :span="12">
+        <el-col v-if="$slots.action" :span="10">
             <slot name="action" />
         </el-col>
     </el-row>

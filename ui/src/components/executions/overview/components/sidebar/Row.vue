@@ -1,5 +1,5 @@
 <template>
-    <el-row v-for="(row, key) in props.rows" :key="key">
+    <el-row v-for="(row, rIdx) in props.rows" :key="rIdx">
         <el-col :span="14" class="label">
             <component :is="row.icon" />
             <el-text truncated>

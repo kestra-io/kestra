@@ -334,6 +334,10 @@
 $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of ui-libs
 
 #overview {
+    .el-splitter-panel:has(> .sidebar:first-child) {
+        background-color: var(--ks-background-table-row);
+    }
+
     .sidebar > div,
     .main > div {
         padding: calc($spacer * 1.5);
@@ -341,7 +345,6 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
 
     .sidebar {
         height: 100%;
-        background-color: var(--ks-background-table-row);
 
         & :deep(.state),
         & :deep(.labels) {

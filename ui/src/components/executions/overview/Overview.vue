@@ -30,6 +30,7 @@
                             <SetLabels :execution />
                         </template>
                     </Row>
+                    <Labels :labels="execution.labels || []" />
                 </div>
 
                 <hr>
@@ -75,6 +76,9 @@
     import {useExecutionsStore} from "../../../stores/executions";
     const store = useExecutionsStore();
 
+    import {useMiscStore} from "override/stores/misc";
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS");
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
@@ -88,6 +92,7 @@
     import {Status, State} from "@kestra-io/ui-libs";
 
     import Row from "./components/sidebar/Row.vue";
+    import Labels from "./components/sidebar/Labels.vue";
 
     import ChangeExecutionStatus from "../ChangeExecutionStatus.vue";
     import SetLabels from "../SetLabels.vue";
@@ -106,6 +111,7 @@
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
+    import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
     import Update from "vue-material-design-icons/Update.vue";
@@ -176,6 +182,18 @@
                 label: t("attempt"),
                 value: execution.value.metadata.attemptNumber,
             },
+            ...(isOSS.value
+                ? []
+                : [
+                    {
+                        icon: AccountOutline,
+                        label: t("user"),
+                        value:
+                            execution.value.labels?.find(
+                                (label) => label.key === "system.username",
+                            )?.value ?? "-",
+                    },
+                ]),
             ...(execution.value.trigger?.type ===
                 "io.kestra.plugin.core.flow.Subflow" &&
                 execution.value.trigger?.variables?.executionId

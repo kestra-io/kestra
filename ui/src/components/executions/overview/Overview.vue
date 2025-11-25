@@ -133,12 +133,32 @@
                 icon: DotsSquare,
                 label: t("namespace"),
                 value: execution.value.namespace,
+                to: {
+                    name: "namespaces/update",
+                    params: {
+                        ...(route.params.tenant
+                            ? {tenant: route.params.tenant}
+                            : {}),
+                        id: execution.value.namespace,
+                        tab: "overview",
+                    },
+                },
             },
             {
                 icon: FileTreeOutline,
                 label: t("flow"),
                 value: execution.value.flowId,
-            // TODO: Make it a link to the flow
+                to: {
+                    name: "flows/update",
+                    params: {
+                        ...(route.params.tenant
+                            ? {tenant: route.params.tenant}
+                            : {}),
+                        namespace: execution.value.namespace,
+                        id: execution.value.flowId,
+                        tab: "overview",
+                    },
+                },
             },
             {
                 icon: LayersTripleOutline,
@@ -157,7 +177,17 @@
                         icon: LightningBolt,
                         label: t("trigger"),
                         value: execution.value.trigger.id,
-                        // TODO: Make it a link to the trigger
+                        to: {
+                            name: "admin/triggers",
+                            params: {
+                                ...(route.params.tenant
+                                    ? {tenant: route.params.tenant}
+                                    : {}),
+                            },
+                            query: {
+                                "filters[q][EQUALS]": execution.value.trigger.id,
+                            },
+                        },
                     },
                 ]
                 : []),
@@ -230,7 +260,18 @@
                         icon: History,
                         label: t("parent execution"),
                         value: execution.value.trigger.variables.executionId,
-                        // TODO: Make it a link to the execution
+                        to: {
+                            name: "executions/update",
+                            params: {
+                                ...(route.params.tenant
+                                    ? {tenant: route.params.tenant}
+                                    : {}),
+                                namespace: execution.value.namespace,
+                                flowId: execution.value.flowId,
+                                id: execution.value.trigger.variables.executionId,
+                                tab: "overview",
+                            },
+                        },
                     },
                 ]
                 : []),
@@ -241,7 +282,18 @@
                         icon: History,
                         label: t("original execution"),
                         value: execution.value.originalId,
-                        // TODO: Make it a link to the execution
+                        to: {
+                            name: "executions/update",
+                            params: {
+                                ...(route.params.tenant
+                                    ? {tenant: route.params.tenant}
+                                    : {}),
+                                namespace: execution.value.namespace,
+                                flowId: execution.value.flowId,
+                                id: execution.value.originalId,
+                                tab: "overview",
+                            },
+                        },
                     },
                 ]
                 : []),

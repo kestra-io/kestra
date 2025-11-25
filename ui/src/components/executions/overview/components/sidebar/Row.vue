@@ -9,7 +9,13 @@
 
         <el-col v-if="row.value" :span="10" class="value">
             <el-text truncated>
-                {{ row.value }}
+                <router-link v-if="row.to" :to="row.to">
+                    {{ row.value }}
+                </router-link>
+
+                <template v-else>
+                    {{ row.value }}
+                </template>
             </el-text>
         </el-col>
 
@@ -21,12 +27,14 @@
 
 <script setup lang="ts">
     import type {Component} from "vue";
+    import {RouteLocationRaw} from "vue-router";
 
     const props = defineProps<{
         rows: {
             icon: Component;
             label: string;
             value?: string | number;
+            to?: RouteLocationRaw;
         }[];
     }>();
 </script>

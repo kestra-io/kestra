@@ -114,6 +114,7 @@
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
+    import CalendarClock from "vue-material-design-icons/CalendarClock.vue";
     import Update from "vue-material-design-icons/Update.vue";
     import TimerSand from "vue-material-design-icons/TimerSand.vue";
     import History from "vue-material-design-icons/History.vue";
@@ -166,7 +167,7 @@
             ...(execution.value.scheduleDate
                 ? [
                     {
-                        icon: CalendarMonth,
+                        icon: CalendarClock,
                         label: t("scheduleDate"),
                         value: moment(execution.value.scheduleDate).fromNow(),
                     },

@@ -111,6 +111,7 @@
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
+    import FormatListNumbered from "vue-material-design-icons/FormatListNumbered.vue";
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
@@ -163,6 +164,26 @@
                 label: t("created date"),
                 value: moment(execution.value.state.histories![0].date).fromNow(),
             },
+            ...(execution.value.metadata?.originalCreatedDate
+                ? [
+                    {
+                        icon: CalendarMonth,
+                        label: t("originalCreatedDate"),
+                        value: moment(
+                            execution.value.metadata.originalCreatedDate,
+                        ).fromNow(),
+                    },
+                ]
+                : []),
+            ...(execution.value.scheduleDate
+                ? [
+                    {
+                        icon: CalendarMonth,
+                        label: t("scheduleDate"),
+                        value: moment(execution.value.scheduleDate).fromNow(),
+                    },
+                ]
+                : []),
             {
                 icon: Update,
                 label: t("latest_update"),
@@ -175,7 +196,30 @@
             {
                 icon: TimerSand,
                 label: t("duration"),
-                value: Utils.humanDuration(execution.value.state.duration),
+                value: (() => {
+                    const histories = execution.value.state.histories;
+
+                    if (!histories || histories.length === 0) return "-";
+
+                    const timestamp = (d: string) => new Date(d).getTime();
+
+                    const start = timestamp(histories[0].date);
+                    const last = histories[histories.length - 1];
+                    const isRunning = State.isRunning(last.state);
+
+                    const stop = isRunning ? Date.now() : timestamp(last.date);
+
+                    const deltaSeconds = (stop - start) / 1000;
+
+                    return Utils.humanDuration(deltaSeconds);
+                })(),
+            },
+            {
+                icon: FormatListNumbered,
+                label: t("steps"),
+                value: execution.value.taskRunList
+                    ? execution.value.taskRunList.length
+                    : 0,
             },
             {
                 icon: LayersTripleOutline,

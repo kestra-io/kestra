@@ -18,6 +18,11 @@ export interface Label{
     value: string;
 }
 
+export type Histories = {
+    state: string;
+    date: string;
+}
+
 export interface Execution{
     id: string;
     flowId?: string;
@@ -33,10 +38,7 @@ export interface Execution{
         startDate: string;
         duration: string;
         endDate?: string;
-        histories?: {
-            state: string;
-            date: string;
-        }[];
+        histories?: Histories[];
     }
     trigger?: {
         id: any;

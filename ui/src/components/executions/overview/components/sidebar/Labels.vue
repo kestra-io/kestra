@@ -2,7 +2,7 @@
     <el-row v-for="(label, index) in props.labels" :key="index">
         <el-col>
             <span>{{ label.key }}:</span>
-            <el-tag>
+            <el-tag :title="label.value">
                 {{ label.value }}
             </el-tag>
         </el-col>
@@ -22,14 +22,24 @@
     margin-bottom: calc($spacer / 1.5) !important;
 
     .el-col {
-        white-space: nowrap;
-        overflow-x: auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
         font-size: $font-size-sm;
 
         & :deep(.el-tag) {
             margin-left: calc($spacer / 1.5);
+            overflow: hidden;
             background-color: var(--ks-tag-background-active);
             color: $white;
+
+            & .el-tag__content {
+                display: block;
+                min-width: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
         }
     }
 }

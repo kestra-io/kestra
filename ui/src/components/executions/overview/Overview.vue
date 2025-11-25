@@ -334,7 +334,7 @@
 $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of ui-libs
 
 #overview {
-    .el-splitter-panel:has(> .sidebar:first-child) {
+    :deep(.el-splitter-panel:has(> .sidebar:first-child)) {
         background-color: var(--ks-background-table-row);
     }
 

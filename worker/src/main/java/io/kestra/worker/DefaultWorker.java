@@ -854,7 +854,7 @@ public class DefaultWorker implements Worker {
 
         metricRegistry
             .timer(MetricRegistry.METRIC_WORKER_ENDED_DURATION, MetricRegistry.METRIC_WORKER_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
-            .record(workerTask.getTaskRun().getState().getDuration());
+            .record(workerTask.getTaskRun().getState().getDurationOrComputeIt());
 
         Logs.logTaskRun(
             workerTask.getTaskRun(),

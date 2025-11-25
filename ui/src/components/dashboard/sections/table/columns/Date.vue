@@ -14,7 +14,8 @@
         },
     });
 
-    const format = localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll";
+    const momentLongDateFormat = "llll";
+    const format = localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? momentLongDateFormat;
     const formatDateIfPresent = (rawDate: string|undefined) => {
         if(rawDate){
             // moment(date) always return a Moment, if the date is undefined, it will return current date, we don't want that here

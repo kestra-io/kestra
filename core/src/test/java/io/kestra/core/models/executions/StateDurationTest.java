@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +26,7 @@ public class StateDurationTest {
                 new State.History(State.Type.CREATED, ONE)
             )
         );
-        assertThat(state.getDuration()).isCloseTo(Duration.between(ONE, NOW), Duration.ofMinutes(10));
+        assertThat(state.getDuration()).isEmpty();
     }
 
     @Test
@@ -38,7 +39,7 @@ public class StateDurationTest {
                 new State.History(State.Type.SUCCESS, THREE)
             )
         );
-        assertThat(state.getDuration()).isEqualTo(Duration.between(ONE, THREE));
+        assertThat(state.getDuration()).isEqualTo(Optional.of(Duration.between(ONE, THREE)));
     }
 
     @Test
@@ -50,6 +51,6 @@ public class StateDurationTest {
                 new State.History(State.Type.RUNNING, TWO)
             )
         );
-        assertThat(state.getDuration()).isCloseTo(Duration.between(ONE, NOW), Duration.ofMinutes(10));
+        assertThat(state.getDuration()).isEmpty();
     }
 }

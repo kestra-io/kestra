@@ -299,9 +299,14 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
 
             & button {
                 width: 100%;
+                overflow: hidden;
 
-                & span {
+                span:not(i span) {
+                    display: block;
+                    min-width: 0;
+                    white-space: nowrap;
                     overflow: hidden;
+                    text-overflow: ellipsis;
                 }
             }
         }
@@ -320,9 +325,14 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
                     margin-bottom: calc($spacer / 1.5);
                     padding: $spacer;
                     font-size: $font-size-sm;
+                    overflow: hidden;
 
-                    & span {
+                    span:not(i span) {
+                        display: block;
+                        min-width: 0;
+                        white-space: nowrap;
                         overflow: hidden;
+                        text-overflow: ellipsis;
                     }
                 }
             }

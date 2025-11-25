@@ -155,6 +155,7 @@
     },
     "steps": "Steps",
     "state": "State",
+    "state_history": "State history",
     "search term in message": "Search term in message",
     "search": "Search",
     "search blueprint": "Search blueprints",

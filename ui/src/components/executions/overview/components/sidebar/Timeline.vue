@@ -1,14 +1,22 @@
 <template>
-    <el-timeline>
-        <el-timeline-item
-            v-for="(entry, hIdx) in props.histories"
-            :key="hIdx"
-            :timestamp="formatDate(entry.date)"
-            :color="State.getStateColor(entry.state)"
-        >
-            {{ entry.state }}
-        </el-timeline-item>
-    </el-timeline>
+    <el-collapse accordion>
+        <el-collapse-item :icon="ChevronDown">
+            <template #title>
+                <span>{{ $t("state_history") }}</span>
+            </template>
+
+            <el-timeline>
+                <el-timeline-item
+                    v-for="(entry, hIdx) in props.histories"
+                    :key="hIdx"
+                    :timestamp="formatDate(entry.date)"
+                    :color="State.getStateColor(entry.state)"
+                >
+                    {{ entry.state }}
+                </el-timeline-item>
+            </el-timeline>
+        </el-collapse-item>
+    </el-collapse>
 </template>
 
 <script setup lang="ts">
@@ -19,6 +27,8 @@
 
     import moment from "moment";
 
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+
     const props = defineProps<{ histories: Histories[] }>();
 
     const F = localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll";
@@ -27,6 +37,34 @@
 
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
+
+.el-collapse {
+    margin-top: $spacer;
+
+    & :deep(.el-collapse-item__header),
+    & :deep(.el-collapse-item__content) {
+        padding-bottom: 0;
+        background-color: var(--ks-background-table-row);
+        font-size: $font-size-sm;
+    }
+
+    & :deep(.el-collapse-item__header) {
+        padding-top: 0;
+    }
+
+    & :deep(.el-collapse-item__header:focus:not(:hover)) {
+        color: var(--ks-content-secondary);
+    }
+
+    & :deep(.el-collapse-item__arrow.is-active) {
+        transform: rotate(180deg);
+    }
+
+    & :deep(.el-collapse-item__title) {
+        margin-right: calc($spacer / 2);
+        text-align: right;
+    }
+}
 
 .el-timeline {
     & :deep(.el-timeline-item) {

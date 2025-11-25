@@ -53,7 +53,7 @@ public class TracesTest {
         assertThat(attributes.get(TraceUtils.ATTR_NAMESPACE)).isEqualTo("io.kestra.tests");
         assertThat(attributes.get(TraceUtils.ATTR_FLOW_ID)).isEqualTo("minimal");
         assertThat(attributes.get(TraceUtils.ATTR_EXECUTION_ID)).isEqualTo(result.getId());
-        assertThat(attributes.get(TraceUtils.ATTR_SOURCE)).isEqualTo("io.kestra.jdbc.runner.JdbcExecutor");
+        assertThat(attributes.get(TraceUtils.ATTR_SOURCE)).isEqualTo("io.kestra.executor.DefaultExecutor");
     }
 
     @MockBean

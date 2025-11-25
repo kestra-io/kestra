@@ -1,6 +1,5 @@
 package io.kestra.core.services;
 
-import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -10,19 +9,17 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ExecutionEvent;
+import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -45,6 +42,10 @@ class ConcurrencyLimitServiceTest {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     private QueueInterface<Execution> executionQueue;
 
+
+    @Inject
+    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
+    private QueueInterface<ExecutionEvent> executionEventQueue;
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
 
@@ -54,21 +55,18 @@ class ConcurrencyLimitServiceTest {
     @Test
     @LoadFlows(value = "flows/valids/flow-concurrency-queue.yml", tenantId = CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT)
     void unqueueExecution() throws QueueException, TimeoutException, InterruptedException {
+        // await for the executions to be terminated
+        CountDownLatch terminated = new CountDownLatch(2);
+        Flux<ExecutionEvent> receive = TestsUtils.receive(executionEventQueue, (either) -> {
+            if (either.getLeft().flowId().equals("flow-concurrency-queue") && either.getLeft().eventType() == ExecutionEventType.TERMINATED) {
+                terminated.countDown();
+            }
+        });
+
         // run a first flow so the second is queued
         Execution first = runnerUtils.runOneUntilRunning(CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT, TESTS_FLOW_NS, "flow-concurrency-queue");
         Execution result = runUntilQueued(CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT, TESTS_FLOW_NS, "flow-concurrency-queue");
         assertThat(result.getState().isQueued()).isTrue();
-
-        // await for the execution to be terminated
-        CountDownLatch terminated = new CountDownLatch(2);
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, (either) -> {
-            if (either.getLeft().getId().equals(first.getId()) && either.getLeft().getState().isTerminated()) {
-                terminated.countDown();
-            }
-            if (either.getLeft().getId().equals(result.getId()) && either.getLeft().getState().isTerminated()) {
-                terminated.countDown();
-            }
-        });
 
         Execution unqueued = concurrencyLimitService.unqueue(result, State.Type.RUNNING);
         assertThat(unqueued.getState().isRunning()).isTrue();

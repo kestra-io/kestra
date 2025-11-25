@@ -5,6 +5,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
@@ -57,8 +58,9 @@ class ErrorControllerTest {
     void clearLogs() {
         appender.clear();
     }
+
     @Test
-    void type() {
+    void type() throws JsonProcessingException {
         Map<String, Object> flow = ImmutableMap.of(
             "id", IdUtils.create(),
             "namespace", "io.kestra.test",
@@ -67,17 +69,17 @@ class ErrorControllerTest {
                 "type", "io.kestra.invalid"
             ))
         );
+        String yaml = JacksonMapper.ofYaml().writeValueAsString(flow);
 
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Argument.of(Flow.class), Argument.of(Object.class))
+            client.toBlocking().retrieve(POST("/api/v1/main/flows", yaml).contentType(MediaType.APPLICATION_YAML_TYPE), Argument.of(Flow.class), Argument.of(Object.class))
         );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
 
         String response = exception.getResponse().getBody(String.class).get();
-        assertThat(response).contains("Invalid type: io.kestra.invalid");
-        assertThat(response).contains("\"path\":\"io.kestra.core.models.flows.Flow[\\\"tasks\\\"] > java.util.ArrayList[0]\"");
-        assertThat(response).contains("Failed to convert argument");
+        assertThat(response).contains("Invalid entity: Invalid type: io.kestra.invalid");
+        assertThat(response).contains("io.kestra.core.models.flows.FlowWithSource[\\\"tasks\\\"]->java.util.ArrayList[");
 
         // missing getter & setter on JsonError
         // assertThat(exception.getResponse().getBody(JsonError.class).get().getEmbedded().get("errors").get().getFirst().getPath(), containsInAnyOrder("tasks"));

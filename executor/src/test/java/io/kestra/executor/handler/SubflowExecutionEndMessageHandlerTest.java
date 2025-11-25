@@ -25,8 +25,7 @@ class SubflowExecutionEndMessageHandlerTest {
 
     @Test
     void shouldHandleAMessage() {
-        var flow = Fixtures.flow();
-        flowRepository.create(GenericFlow.of(flow));
+        var flow = flowRepository.create(GenericFlow.of(Fixtures.flow()));
         var parentExecution = Execution.newExecution(flow, Collections.emptyList());
         executionRepository.save(parentExecution);
         var execution = Execution.newExecution(flow, Collections.emptyList());

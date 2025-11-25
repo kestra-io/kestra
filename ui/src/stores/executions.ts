@@ -50,7 +50,7 @@ export interface Execution{
         attemptNumber: string | number;
     },
     inputs?: Record<string, any>;
-    labels?: any[];
+    labels?: Label[];
     namespace: string;
     originalId?: string;
     flowRevision?: number;

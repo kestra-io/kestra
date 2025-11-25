@@ -25,9 +25,6 @@ import java.util.Optional;
  * JUnit 5 extension to evaluate triggers and inject its Optional<Execution>.
  */
 public class TriggerEvaluationExtension implements ParameterResolver {
-    private static final ExtensionContext.Namespace NAMESPACE =
-        ExtensionContext.Namespace.create(KestraTestExtension.class);
-
     ApplicationContext context;
 
 
@@ -70,7 +67,7 @@ public class TriggerEvaluationExtension implements ParameterResolver {
     private void ensureContext(ExtensionContext extensionContext) {
         if (context == null) {
             context = extensionContext.getRoot()
-                .getStore(NAMESPACE)
+                .getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get()))
                 .get(ApplicationContext.class, ApplicationContext.class);
 
             if (context == null) {

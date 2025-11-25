@@ -9,8 +9,6 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.platform.commons.support.AnnotationSupport;
 
 public class KestraTestExtension extends MicronautJunit5Extension {
-    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(KestraTestExtension.class);
-
     @Override
     protected MicronautTestValue buildMicronautTestValue(Class<?> testClass) {
         return AnnotationSupport
@@ -33,7 +31,7 @@ public class KestraTestExtension extends MicronautJunit5Extension {
 
     @Override
     protected ExtensionContext.Store getStore(ExtensionContext context) {
-        return context.getRoot().getStore(NAMESPACE);
+        return context.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, context.getTestClass().get()));
     }
 
     @Override

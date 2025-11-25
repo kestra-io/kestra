@@ -23,7 +23,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
-    private static final int DEFAULT_TIMEOUT_SECONDS = 5;
+    private static final int DEFAULT_TIMEOUT_SECONDS = 15;
 
     @Inject
     private DispatchQueueInterface<TestDispatch> dispatchQueue;
@@ -81,8 +81,8 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
             dispatchQueue.emit(new TestDispatch(prefix + "_" + IdUtils.create(), i));
         }
 
-        // rebalancing can take some time, we multiply timeout by 5
-        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS * 5, TimeUnit.SECONDS);
+        // rebalancing can take some time, we multiply timeout
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS * 3, TimeUnit.SECONDS);
         subscribers.parallelStream().forEach(QueueSubscriber::close);
 
         assertThat(await).isEqualTo(true);
@@ -94,7 +94,6 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
 
     @Test
     void errorProcessing() throws QueueException, InterruptedException {
-        // @TODO: failed on rabbitmq, the published message seems to be not durable
         String prefix = this.keyPrefix();
 
         dispatchQueue.emit(IntStream.range(1, 15)

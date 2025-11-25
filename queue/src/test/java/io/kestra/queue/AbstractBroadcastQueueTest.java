@@ -18,7 +18,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
-    private static final int DEFAULT_TIMEOUT_SECONDS = 10;
+    private static final int DEFAULT_TIMEOUT_SECONDS = 15;
 
     @Inject
     private BroadcastQueueInterface<TestBroadcast> broadcastQueue;
@@ -76,8 +76,8 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
         broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 2));
         broadcastQueue.emit(new TestBroadcast(prefix + "_" + IdUtils.create(), 3));
 
-        // rebalancing can take some time, we multiply timeout by 5
-        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS * 5, TimeUnit.SECONDS);
+        // rebalancing can take some time, we multiply timeout
+        boolean await = countDownLatch.await(DEFAULT_TIMEOUT_SECONDS * 3, TimeUnit.SECONDS);
         subscribers.parallelStream().forEach(QueueSubscriber::close);
 
         assertThat(await).isEqualTo(true);

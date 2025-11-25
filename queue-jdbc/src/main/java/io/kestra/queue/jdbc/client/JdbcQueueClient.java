@@ -140,8 +140,6 @@ public class JdbcQueueClient {
     }
 
     public @Nullable Long fetchMaxOffset(String queue) {
-        Long maxOffset = null;
-
         Long initialOffset = dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
 
@@ -151,11 +149,7 @@ public class JdbcQueueClient {
                 .fetchAny("max", Long.class);
         });
 
-        if (initialOffset != null) {
-            maxOffset = initialOffset;
-        }
-
-        return maxOffset;
+        return initialOffset != null ? initialOffset : 0L;
     }
 
     protected Pair<Integer, Long> subscribeBroadcast(String queue, @Nullable Long maxOffset, MessageConsumer<String, Exception> consumer) {
@@ -191,7 +185,7 @@ public class JdbcQueueClient {
                     .orElse(null);
             }
 
-            return Pair.of(queueItems.size(), maxOffsetResult);
+            return Pair.of(queueItems.size(), maxOffsetResult != null ? maxOffsetResult : maxOffset);
         });
     }
 

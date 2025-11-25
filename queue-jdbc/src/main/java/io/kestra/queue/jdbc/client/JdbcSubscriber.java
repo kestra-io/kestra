@@ -58,10 +58,10 @@ public abstract class JdbcSubscriber<T extends Event> extends AbstractSubscriber
                         return null;
                     } catch (Exception e) {
                         log.warn(
-                            "[{}] message {} failed and was resubmitted to active queue, error: {}",
+                            "[{}] message failed and was resubmitted to active queue: {}",
                             cls.getSimpleName(),
                             message,
-                            e.getMessage()
+                            e
                         );
 
                         return e;

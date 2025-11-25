@@ -54,10 +54,11 @@ public abstract class AbstractKeyedDispatchQueueTest extends AbstractQueueTest {
         int rand = ThreadLocalRandom.current().nextInt(10, 50);;
         CountDownLatch countDownLatch = new CountDownLatch(rand);
         Collection<String> list = Collections.synchronizedCollection(new ArrayList<>());
-        List<QueueSubscriber<TestKeyedDispatch>> subscribers = new ArrayList<>();
+        Collection<QueueSubscriber<TestKeyedDispatch>> subscribers = Collections.synchronizedCollection(new ArrayList<>());
 
         IntStream.range(0, 3)
             .boxed()
+            .parallel()
             .forEach(throwConsumer(i -> subscribers.add(keyDispatchQueue
                 .subscriber(groupKey)
                 .subscribe(e -> {
@@ -78,7 +79,8 @@ public abstract class AbstractKeyedDispatchQueueTest extends AbstractQueueTest {
         assertThat(await).isEqualTo(true);
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         assertThat(list).hasSize(rand);
-        assertThat(list.stream().map(s -> s.substring(0, s.indexOf("-"))).toList()).contains("c000", "c001", "c002");
+        // based on the implementation, a consumer could process all messages
+        assertThat(list.stream().map(s -> s.substring(0, s.indexOf("-"))).toList()).containsAnyOf("c000", "c001", "c002");
         assertThat(list.stream().map(s -> s.substring(s.indexOf("-") + 1)).toList()).contains("i001", String.format("i%03d", rand - 1));
     }
 

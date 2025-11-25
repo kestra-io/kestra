@@ -1,6 +1,7 @@
 package io.kestra.executor.handler;
 
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.log.Log;
 
 import java.util.List;
@@ -14,8 +15,7 @@ final class Fixtures {
         return Flow.builder()
             .tenantId("tenant")
             .namespace("namespace")
-            .id("flow")
-            .revision(1)
+            .id(IdUtils.create())
             .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("Hello World").build()))
             .build();
     }

@@ -1,11 +1,12 @@
 <template>
     <el-splitter
+        v-if="execution"
         id="overview"
         :layout="verticalLayout ? 'vertical' : 'horizontal'"
         lazy
     >
         <el-splitter-panel :size="verticalLayout ? '50%' : '35%'">
-            <div v-if="execution" class="sidebar">
+            <div class="sidebar">
                 <div class="state">
                     <Row :rows="[{icon: StateMachine, label: t('state')}]">
                         <template #action>

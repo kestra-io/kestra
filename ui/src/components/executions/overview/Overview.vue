@@ -16,6 +16,7 @@
                         </template>
                     </Row>
                     <Status :status="execution.state.current" />
+                    <Timeline :histories="execution.state.histories || []" />
                 </div>
 
                 <el-divider />
@@ -93,6 +94,7 @@
 
     import Row from "./components/sidebar/Row.vue";
     import Labels from "./components/sidebar/Labels.vue";
+    import Timeline from "./components/sidebar/Timeline.vue";
 
     import ChangeExecutionStatus from "../ChangeExecutionStatus.vue";
     import SetLabels from "../SetLabels.vue";

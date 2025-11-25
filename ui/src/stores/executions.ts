@@ -54,6 +54,7 @@ export interface Execution{
     namespace: string;
     originalId?: string;
     flowRevision?: number;
+    scheduleDate?: string;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {

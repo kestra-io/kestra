@@ -4,7 +4,7 @@
         :layout="verticalLayout ? 'vertical' : 'horizontal'"
         lazy
     >
-        <el-splitter-panel :size="verticalLayout ? '50%' : '35%'">
+        <el-splitter-panel :size="verticalLayout ? '50%' : '35%'" min="35%">
             <div v-if="execution" class="sidebar">
                 <div class="state">
                     <Row :rows="[{icon: StateMachine, label: t('state')}]">
@@ -83,7 +83,7 @@
     const {t} = useI18n({useScope: "global"});
 
     import {useBreakpoints, breakpointsElement} from "@vueuse/core";
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("md");
 
     import moment from "moment";
 
@@ -271,6 +271,10 @@ $font-size-sm: $font-size-base * 0.875; // Move it into varaibles file of ui-lib
 
             & button {
                 width: 100%;
+
+                & span {
+                    overflow: hidden;
+                }
             }
         }
 
@@ -288,6 +292,10 @@ $font-size-sm: $font-size-base * 0.875; // Move it into varaibles file of ui-lib
                     margin-bottom: calc($spacer / 1.5);
                     padding: $spacer;
                     font-size: $font-size-sm;
+
+                    & span {
+                        overflow: hidden;
+                    }
                 }
             }
         }

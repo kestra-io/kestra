@@ -1,11 +1,15 @@
-package io.kestra.plugin.core.kv;
+package io.kestra.plugin.core.namespace;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.validations.KvVersionBehaviorValidation;
+import io.kestra.core.validations.FilesVersionBehaviorValidation;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -24,8 +28,8 @@ import java.util.stream.Collectors;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-@KvVersionBehaviorValidation
-public class Version extends KvPurgeBehavior {
+@FilesVersionBehaviorValidation
+public class Version extends FilesPurgeBehavior {
     @NotNull
     @JsonInclude
     @Builder.Default
@@ -44,20 +48,19 @@ public class Version extends KvPurgeBehavior {
     private Integer keepAmount;
 
     @Override
-    protected List<KVEntry> entriesToPurge(KVStore kvStore) throws IOException {
-        List<KVEntry> entries = kvStore.list(
+    protected List<NamespaceFile> entriesToPurge(String tenantId, Namespace namespaceStorage) {
+        List<NamespaceFile> entries = namespaceStorage.find(
             Pageable.UNPAGED.withSort(Sort.of(Sort.Order.desc("version"))),
             before == null
                 ? Collections.emptyList()
                 : List.of(QueryFilter.builder().field(QueryFilter.Field.UPDATED).operation(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO).value(ZonedDateTime.parse(before)).build()),
-            true,
             true,
             before == null ? FetchVersion.ALL : FetchVersion.OLD
         );
 
         if (keepAmount != null) {
             return entries.stream()
-                .collect(Collectors.groupingBy(KVEntry::key)).values().stream()
+                .collect(Collectors.groupingBy(NamespaceFile::path)).values().stream()
                 .flatMap(entriesForAKey -> entriesForAKey.stream().skip(keepAmount)).toList();
         }
 

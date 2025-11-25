@@ -66,6 +66,19 @@ public class InternalNamespace implements Namespace {
         this.tenant = tenant;
     }
 
+    @Override
+    public ArrayListTotal<NamespaceFile> find(Pageable pageable, List<QueryFilter> filters, boolean allowDeleted, FetchVersion fetchVersion) {
+        return namespaceFileMetadataRepository.find(
+            pageable,
+            tenant,
+            Stream.concat(filters.stream(), Stream.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()
+            )).toList(),
+            allowDeleted,
+            fetchVersion
+        ).map(throwFunction(NamespaceFile::fromMetadata));
+    }
+
     /**
      * {@inheritDoc}
      **/
@@ -347,7 +360,7 @@ public class InternalNamespace implements Namespace {
         Optional<Path> maybeParentPath = Optional.empty();
         while (
             (maybeParentPath = Optional.ofNullable(NamespaceFileMetadata.parentPath(maybeParentPath.map(Path::toString).orElse(path))).map(Path::of)).isPresent()
-            && !this.exists(maybeParentPath.get())
+                && !this.exists(maybeParentPath.get())
         ) {
             this.createDirectory(maybeParentPath.get());
             createdDirs.add(NamespaceFile.of(namespace, maybeParentPath.get().toString().endsWith("/") ? maybeParentPath.get().toString() : maybeParentPath.get() + "/", 1));
@@ -403,5 +416,26 @@ public class InternalNamespace implements Namespace {
         storage.delete(tenant, namespace, namespaceFile.storagePath().toUri());
         namespaceFileMetadataRepository.purge(List.of(NamespaceFileMetadata.of(tenant, namespaceFile)));
         return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Integer purge(List<NamespaceFile> namespaceFiles) throws IOException {
+        Integer purgedMetadataCount = this.namespaceFileMetadataRepository.purge(namespaceFiles.stream().map(namespaceFile -> NamespaceFileMetadata.of(tenant, namespaceFile)).toList());
+
+        long actualDeletedEntries = namespaceFiles.stream()
+            .map(NamespaceFile::storagePath)
+            .map(Path::toUri)
+            .map(throwFunction(uri -> this.storage.delete(tenant, namespace, uri)))
+            .filter(Boolean::booleanValue)
+            .count();
+
+        if (actualDeletedEntries != purgedMetadataCount) {
+            LOG.warn("Namespace Files Metadata purge reported {} deleted entries, but {} values were actually deleted from storage", purgedMetadataCount, actualDeletedEntries);
+        }
+
+        return purgedMetadataCount;
     }
 }

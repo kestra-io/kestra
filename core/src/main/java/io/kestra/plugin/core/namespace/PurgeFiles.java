@@ -1,19 +1,14 @@
-package io.kestra.plugin.core.kv;
+package io.kestra.plugin.core.namespace;
 
-import com.cronutils.utils.VisibleForTesting;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.ValidationErrorException;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.kv.KVEntry;
-import io.kestra.core.storages.kv.KVStore;
-import io.kestra.core.utils.ListUtils;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
 import io.kestra.plugin.core.purge.PurgeTask;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -22,10 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -45,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong;
             code = """
                 id: purge_kv_store
                 namespace: system
-
+                
                 tasks:
                   - id: purge_kv
                     type: io.kestra.plugin.core.kv.PurgeKV
@@ -57,67 +49,52 @@ import java.util.concurrent.atomic.AtomicLong;
         )
     }
 )
-public class PurgeKV extends Task implements PurgeTask<KVEntry>, RunnableTask<PurgeKV.Output> {
+public class PurgeFiles extends Task implements PurgeTask<NamespaceFile>, RunnableTask<PurgeFiles.Output> {
     @Schema(
-        title = "Key pattern, e.g. 'AI_*'",
-        description = "Delete only keys matching the glob pattern."
+        title = "File pattern, e.g. 'AI_*'",
+        description = "Delete only files whose path is matching the glob pattern."
     )
-    private Property<String> keyPattern;
+    private Property<String> filePattern;
 
     @Schema(
-        title = "List of namespaces to delete keys from",
+        title = "List of namespaces to delete files from",
         description = "If not set, all namespaces will be considered. Can't be used with `namespacePattern` - use one or the other."
     )
     private Property<List<String>> namespaces;
 
     @Schema(
-        title = "Glob pattern for the namespaces to delete keys from",
+        title = "Glob pattern for the namespaces to delete files from",
         description = "If not set (e.g., AI_*), all namespaces will be considered. Can't be used with `namespaces` - use one or the other."
     )
     private Property<String> namespacePattern;
 
     @Schema(
         title = "Purge behavior",
-        description = "Defines how keys are purged."
+        description = "Defines how files are purged."
     )
     @Builder.Default
     @Valid
-    private Property<KvPurgeBehavior> behavior = Property.ofValue(Key.builder().expiredOnly(true).build());
+    private Property<FilesPurgeBehavior> behavior = Property.ofValue(Version.builder().keepAmount(1).build());
 
     @Schema(
-        title = "Delete keys from child namespaces",
-        description = "Defaults to true. This means that if you set `namespaces` to `company`, it will also delete keys from `company.team`, `company.data`, etc."
+        title = "Delete files from child namespaces",
+        description = "Defaults to true. This means that if you set `namespaces` to `company`, it will also delete files from `company.team`, `company.data`, etc."
     )
     @Builder.Default
     private Property<Boolean> includeChildNamespaces = Property.ofValue(true);
 
-    /**
-     * @deprecated use behavior.type: key + behavior.expiredOnly instead. Setting this property will override the `behavior` property.
-     */
-    @Deprecated(since = "1.1.0", forRemoval = true)
-    private Property<Boolean> expiredOnly;
-
     @Override
     public Output run(RunContext runContext) throws Exception {
-        List<String> kvNamespaces = findNamespaces(runContext);
-        String renderedKeyPattern = runContext.render(keyPattern).as(String.class).orElse(null);
-        boolean keyFiltering = StringUtils.isNotBlank(renderedKeyPattern);
-        runContext.logger().info("purging {} namespaces: {}", kvNamespaces.size(), kvNamespaces);
+        List<String> filesNamespaces = findNamespaces(runContext);
+        runContext.logger().info("purging {} namespaces: {}", filesNamespaces.size(), filesNamespaces);
         AtomicLong count = new AtomicLong();
-        KvPurgeBehavior renderedBehavior;
-        if (expiredOnly != null) {
-            renderedBehavior = Key.builder()
-                .expiredOnly(runContext.render(expiredOnly).as(Boolean.class).orElse(true))
-                .build();
-        } else {
-            renderedBehavior = runContext.render(behavior).as(KvPurgeBehavior.class).orElseThrow();
+        FilesPurgeBehavior renderedBehavior = runContext.render(behavior).as(FilesPurgeBehavior.class).orElseThrow();
+        for (String ns : filesNamespaces) {
+            Namespace namespaceStorage = runContext.storage().namespace(ns);
+            List<NamespaceFile> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(runContext.flowInfo().tenantId(), namespaceStorage));
+            count.addAndGet(namespaceStorage.purge(toPurge));
         }
-        for (String ns : kvNamespaces) {
-            KVStore kvStore = runContext.namespaceKv(ns);
-            List<KVEntry> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(kvStore));
-            count.addAndGet(kvStore.purge(toPurge));
-        }
-        runContext.logger().info("purged {} keys", count.get());
+        runContext.logger().info("purged {} files", count.get());
 
         return Output.builder()
             .size(count.get())
@@ -126,13 +103,14 @@ public class PurgeKV extends Task implements PurgeTask<KVEntry>, RunnableTask<Pu
 
     @Override
     public Property<String> filterPattern() {
-        return keyPattern;
+        return filePattern;
     }
 
     @Override
-    public String filterTargetExtractor(KVEntry item) {
-        return item.key();
+    public String filterTargetExtractor(NamespaceFile item) {
+        return item.path();
     }
+
 
     @Builder
     @Getter

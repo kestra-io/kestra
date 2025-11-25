@@ -1,7 +1,12 @@
 package io.kestra.core.storages;
 
+import io.kestra.core.models.FetchVersion;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.PathMatcherPredicate;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.Sort;
 import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -10,6 +15,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -18,6 +25,8 @@ import java.util.function.Predicate;
  */
 public interface Namespace {
     String NAMESPACE_FILE_SCHEME = "nsfile";
+
+    ArrayListTotal<NamespaceFile> find(Pageable pageable, List<QueryFilter> filters, boolean allowDeleted, FetchVersion fetchVersion);
 
     /**
      * Gets the current namespace.
@@ -169,6 +178,15 @@ public interface Namespace {
      * @throws IOException if an error happens while performing the delete operation.
      */
     boolean purge(NamespaceFile namespaceFile) throws IOException;
+
+    /**
+     * Hard-deletes all provided namespaces files.
+     *
+     * @param namespaceFiles the namespace files to be purged.
+     * @return the amount of files that were purged.
+     * @throws IOException if an error happens while performing the delete operation.
+     */
+    Integer purge(List<NamespaceFile> namespaceFiles) throws IOException;
 
     /**
      * Checks if a directory is empty.

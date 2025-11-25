@@ -15,6 +15,9 @@ public class QueueConfiguration{
     @Nullable
     MessageProtection messageProtection;
 
+    @Nullable
+    String prefix;
+
     @Getter
     @ConfigurationProperties("message-protection")
     public static class MessageProtection{

@@ -17,7 +17,13 @@ public abstract class AbstractQueue<T extends Event> {
     }
 
     protected String queueName() {
-        return CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, this.cls.getSimpleName());
+        String result = "";
+
+        if (queueService.getQueueConfiguration().getPrefix() != null) {
+            result = queueService.getQueueConfiguration().getPrefix() + this.queueNameSeparator();
+        }
+
+        return result + CaseFormat.UPPER_CAMEL.to(CaseFormat.LOWER_UNDERSCORE, this.cls.getSimpleName());
     }
 
     protected String queueName(@Nullable String routingKey) {

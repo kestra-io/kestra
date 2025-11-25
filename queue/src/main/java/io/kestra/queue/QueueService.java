@@ -28,6 +28,7 @@ public class QueueService {
     @Getter
     protected final ExecutorService executorService;
 
+    @Getter
     protected final QueueConfiguration queueConfiguration;
 
     private final MetricRegistry metricRegistry;

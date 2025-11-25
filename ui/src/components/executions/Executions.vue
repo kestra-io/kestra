@@ -51,6 +51,7 @@
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
+                    :defaultScope="defaultScopeFilter"
                 />
             </template>
 
@@ -407,8 +408,7 @@
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import DataTable from "../layout/DataTable.vue";
-    import BulkSelect from "../layout/BulkSelect.vue";
-    //@ts-expect-error no declaration file
+    import BulkSelect from "../layout/BulkSelect.vue";    
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";
@@ -457,6 +457,7 @@
         hidden?: string[] | null;
         flowId?: string | undefined;
         namespace?: string | undefined;
+        defaultScopeFilter?: boolean;
     }>(), {
         embed: false,
         filter: true,
@@ -469,6 +470,7 @@
         hidden: null,
         flowId: undefined,
         namespace: undefined,
+        defaultScopeFilter: undefined
     });
 
     const emit = defineEmits<{

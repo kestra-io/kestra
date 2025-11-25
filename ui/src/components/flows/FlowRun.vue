@@ -4,9 +4,22 @@
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </el-alert>
-
+        <div class="flow-execution-checks-alerts">
+            <el-alert v-for="alert in checks || []" :type="alert.style.toLowerCase()" showIcon :closable="false" :key="alert">
+                {{ alert.message }}
+            </el-alert>
+        </div>
         <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <InputsForm :initialInputs="flow.inputs" :selectedTrigger="selectedTrigger" :flow="flow" v-model="inputs" :executeClicked="executeClicked" @confirm="onSubmit($refs.form)" @update:model-value-no-default="values => inputsNoDefaults=values" />
+            <InputsForm 
+                :initialInputs="flow.inputs" 
+                :selectedTrigger="selectedTrigger" 
+                :flow="flow" 
+                v-model="inputs"
+                :executeClicked="executeClicked"
+                @confirm="onSubmit($refs.form)"
+                @update:model-value-no-default="values => inputsNoDefaults=values" 
+                @update:checks="values => checks=values" 
+            />
 
             <el-collapse v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
@@ -48,7 +61,7 @@
                         <el-button
                             :data-test-id="buttonTestId"
                             :icon="buttonIcon"
-                            :disabled="!flowCanBeExecuted"
+                            :disabled="!flowCanBeExecuted || hasBlockingChecks()"
                             :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"
                             type="primary"
                             nativeType="submit"
@@ -113,6 +126,7 @@
                 collapseName: undefined,
                 newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB,
                 executeClicked: false,
+                checks: []
             };
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
@@ -141,6 +155,9 @@
             }
         },
         methods: {
+            hasBlockingChecks() {
+                return this.checks.filter(check => check.behavior === "BLOCK_EXECUTION").length > 0;
+            },
             getExecutionLabels() {
                 if (!this.execution.labels) {
                     return [];
@@ -243,6 +260,9 @@
 </script>
 
 <style scoped lang="scss">
+    .flow-execution-checks-alerts {
+        margin-bottom: 1rem;
+    }
     :deep(.el-collapse) {
         border-radius: var(--bs-border-radius-lg);
         border: 1px solid var(--ks-border-primary);

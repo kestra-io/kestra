@@ -125,11 +125,11 @@ class PluginControllerTest {
     @Test
     void docWithAlert() {
         DocumentationWithSchema doc = client.toBlocking().retrieve(
-            HttpRequest.GET(PATH + "/io.kestra.plugin.core.state.Set"),
+            HttpRequest.GET(PATH + "/io.kestra.core.plugins.test.DeprecatedTask"),
             DocumentationWithSchema.class
         );
 
-        assertThat(doc.getMarkdown()).contains("io.kestra.plugin.core.state.Set");
+        assertThat(doc.getMarkdown()).contains("io.kestra.core.plugins.test.DeprecatedTask");
         assertThat(doc.getMarkdown()).contains("::: warning\n");
     }
 

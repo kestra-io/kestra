@@ -38,8 +38,7 @@ class ExecutionEventMessageHandlerTest {
 
     @Test
     void shouldReturnAnExecutorForExistingExecution() {
-        var flow = Fixtures.flow();
-        flowRepository.create(GenericFlow.of(flow));
+        var flow = flowRepository.create(GenericFlow.of(Fixtures.flow()));
         var execution = Execution.newExecution(flow, Collections.emptyList());
         executionRepository.save(execution);
         var executionEvent = new ExecutionEvent(execution, ExecutionEventType.CREATED);

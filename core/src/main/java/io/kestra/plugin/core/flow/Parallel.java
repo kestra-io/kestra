@@ -2,7 +2,9 @@ package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -23,6 +25,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -174,6 +177,22 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
             runContext.render(this.concurrent).as(Integer.class).orElseThrow()
+        );
+    }
+
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
+
+        return FlowableUtils.resolveSequentialState(
+            execution,
+            childTasks,
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+            parentTaskRun,
+            runContext,
+            this.isAllowFailure(),
+            this.isAllowWarning()
         );
     }
 }

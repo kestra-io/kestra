@@ -17,8 +17,9 @@
     </span>
 </template>
 <script setup lang="ts">
-    import {computed, getCurrentInstance} from "vue";
+    import {computed} from "vue";
     import Utils from "../../utils/utils";
+    import moment from "moment";
 
     const props = defineProps({
         date: {
@@ -46,12 +47,11 @@
     function uid(key: string) {
         return key + "-" + Utils.uid();
     }
-    const {$moment, $filters} = getCurrentInstance()?.appContext.config.globalProperties || {} as any;
 
     const from = computed(() => {
-        return $moment(props.date).fromNow();
+        return moment(props.date).fromNow();
     })
     const full = computed(() => {
-        return $filters.date(props.date, props.format);
+        return moment(props.date).format(props.format);
     })
 </script>

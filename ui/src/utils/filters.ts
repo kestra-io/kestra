@@ -18,13 +18,16 @@ export function lower (value:string) {
     return value ? value.toString().toLowerCase() : "";
 }
 export function date (dateString:string, format?:string) {
+    const currentLocale = moment().locale();
+    const momentInstance = moment(dateString).locale(currentLocale);
     let f;
     if (format === "iso") {
         f = "YYYY-MM-DD HH:mm:ss.SSS";
     } else {
         f = format ?? localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll";
     }
-    return moment(dateString)
+   // Apply timezone and format using the correct locale
+    return momentInstance
         .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
         .format(f);
 }

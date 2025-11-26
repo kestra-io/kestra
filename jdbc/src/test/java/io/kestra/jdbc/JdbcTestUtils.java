@@ -3,16 +3,14 @@ package io.kestra.jdbc;
 import io.micronaut.flyway.FlywayConfigurationProperties;
 import io.micronaut.flyway.FlywayMigrator;
 import jakarta.annotation.PostConstruct;
-import lombok.SneakyThrows;
-import org.jooq.DSLContext;
-
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.SneakyThrows;
+import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.impl.DSL;
 
 import javax.sql.DataSource;
-
 import java.util.List;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
@@ -46,7 +44,7 @@ public class JdbcTestUtils {
                 .getTables()
                 .stream()
                 .filter(throwPredicate(table -> (table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
-                    table.getSchema().getName().equals("public")  || // for Postgres
+                    table.getSchema().getName().equals("public") || // for Postgres
                     table.getSchema().getName().equals("dbo") // for SQLServer
                 ))
                 .filter(table -> tableConfigs.getTableConfigs().stream().anyMatch(conf -> conf.table().equalsIgnoreCase(table.getName())))
@@ -54,6 +52,10 @@ public class JdbcTestUtils {
         });
     }
 
+    /**
+     * This should never be used ideally in OSS as it defeats the concurrent test runs and may drop a table in the middle of another test
+     */
+    @Deprecated
     @SneakyThrows
     public void drop() {
         dslContextWrapper.transaction((configuration) -> {
@@ -62,6 +64,11 @@ public class JdbcTestUtils {
             this.tables.forEach(t -> dslContext.delete(t).execute());
         });
     }
+
+    /**
+     * This should never be used ideally in OSS as it defeats the concurrent test runs and may drop a table in the middle of another test
+     */
+    @Deprecated
     public void migrate() {
         dslContextWrapper.transaction((configuration) -> {
             flywayMigrator.run(config, dataSource);

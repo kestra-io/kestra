@@ -5,7 +5,6 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.trace.TraceUtils;
-import io.kestra.jdbc.JdbcTestUtils;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.client.annotation.Client;
@@ -17,7 +16,6 @@ import io.opentelemetry.api.trace.Tracer;
 import io.opentelemetry.sdk.testing.junit5.OpenTelemetryExtension;
 import io.opentelemetry.sdk.trace.data.SpanData;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
@@ -33,15 +31,6 @@ public class TracesTest {
     @Inject
     @Client("/")
     private ReactorHttpClient client;
-
-    @Inject
-    private JdbcTestUtils jdbcTestUtils;
-
-    @AfterEach
-    protected void setup() {
-        jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
-    }
 
     @Test
     @LoadFlows({"flows/valids/minimal.yaml"})

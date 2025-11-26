@@ -4,6 +4,11 @@
             <ul>
                 <template v-if="$route.name === 'executions/list'">
                     <li>
+                        <el-button :icon="Download" @click="exportExecutionsAsStream()">
+                            {{ t('auditlog.export_csv') }}
+                        </el-button>
+                    </li>
+                    <li>
                         <template v-if="hasAnyExecute">
                             <TriggerFlow />
                         </template>
@@ -404,6 +409,7 @@
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
+    import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
     import Kicon from "../Kicon.vue";
@@ -411,7 +417,7 @@
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import DataTable from "../layout/DataTable.vue";
-    import BulkSelect from "../layout/BulkSelect.vue";    
+    import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import Sections from "../dashboard/sections/Sections.vue";
@@ -445,7 +451,7 @@
 
     const {t} = useI18n();
     const toast = useToast();
-    
+
     const executionFilter = useExecutionFilter();
     const flowExecutionFilter = useFlowExecutionFilter();
 
@@ -503,69 +509,69 @@
 
     const optionalColumns = ref([
         {
-            label: t("start date"), 
-            prop: "state.startDate", 
-            default: true, 
+            label: t("start date"),
+            prop: "state.startDate",
+            default: true,
             description: t("filter.table_column.executions.start-date")
         },
         {
-            label: t("end date"), 
-            prop: "state.endDate", 
-            default: true, 
+            label: t("end date"),
+            prop: "state.endDate",
+            default: true,
             description: t("filter.table_column.executions.end-date")
         },
         {
-            label: t("duration"), 
-            prop: "state.duration", 
-            default: true, 
+            label: t("duration"),
+            prop: "state.duration",
+            default: true,
             description: t("filter.table_column.executions.duration")
         },
         {
-            label: t("namespace"), 
-            prop: "namespace", 
-            default: true, 
+            label: t("namespace"),
+            prop: "namespace",
+            default: true,
             description: t("filter.table_column.executions.namespace")
         },
         {
-            label: t("flow"), 
-            prop: "flowId", 
-            default: true, 
+            label: t("flow"),
+            prop: "flowId",
+            default: true,
             description: t("filter.table_column.executions.flow")
         },
         {
-            label: t("labels"), 
-            prop: "labels", 
-            default: true, 
+            label: t("labels"),
+            prop: "labels",
+            default: true,
             description: t("filter.table_column.executions.labels")
         },
         {
-            label: t("state"), 
-            prop: "state.current", 
-            default: true, 
+            label: t("state"),
+            prop: "state.current",
+            default: true,
             description: t("filter.table_column.executions.state")
         },
         {
-            label: t("revision"), 
-            prop: "flowRevision", 
-            default: false, 
+            label: t("revision"),
+            prop: "flowRevision",
+            default: false,
             description: t("filter.table_column.executions.revision")
         },
         {
-            label: t("inputs"), 
-            prop: "inputs", 
-            default: false, 
+            label: t("inputs"),
+            prop: "inputs",
+            default: false,
             description: t("filter.table_column.executions.inputs")
         },
         {
-            label: t("outputs"), 
-            prop: "outputs", 
-            default: false, 
+            label: t("outputs"),
+            prop: "outputs",
+            default: false,
             description: t("filter.table_column.executions.outputs")
         },
         {
-            label: t("task id"), 
-            prop: "taskRunList.taskId", 
-            default: false, 
+            label: t("task id"),
+            prop: "taskRunList.taskId",
+            default: false,
             description: t("filter.table_column.executions.task-id")
         },
         {
@@ -576,9 +582,9 @@
         }
     ]);
 
-    const storageKey = computed(() => 
-        route.name === "flows/update" 
-            ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS 
+    const storageKey = computed(() =>
+        route.name === "flows/update"
+            ? storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS
             : storageKeys.DISPLAY_EXECUTIONS_COLUMNS
     );
 
@@ -587,7 +593,7 @@
         storageKey: storageKey.value
     });
 
-    const visibleColumns = computed(() => 
+    const visibleColumns = computed(() =>
         displayColumns.value
             .map(prop => optionalColumns.value.find(c => c.prop === prop))
             .filter(Boolean) as any[]
@@ -1047,6 +1053,12 @@
             executionLabels.value = [];
         }
     });
+
+    async function exportExecutionsAsStream() {
+        await executionsStore.exportExecutionsAsCSV(
+            route.query
+        )
+    }
 </script>
 
 

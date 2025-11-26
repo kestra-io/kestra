@@ -8,6 +8,7 @@ import io.kestra.plugin.core.dashboard.data.Flows;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Optional;
@@ -157,6 +158,8 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
             .filter(n -> n.startsWith(prefix))
             .toList();
     }
+
+    Flux<Flow> findAsync(String tenantId, List<QueryFilter> filters);
 
     FlowWithSource create(GenericFlow flow);
 

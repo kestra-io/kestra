@@ -14,6 +14,8 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -85,6 +87,30 @@ class SubflowRunnerTest {
         assertThat(childExecution.get().getId()).isEqualTo(childExecutionId);
         assertThat(childExecution.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(childExecution.get().getTaskRunList()).hasSize(1);
+        closing.run();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/subflow-parent-retry.yaml", "flows/valids/subflow-to-retry.yaml"})
+    void subflowOutputWithWait() throws QueueException, TimeoutException, InterruptedException {
+        List<Execution> childExecution = new ArrayList<>();
+        CountDownLatch countDownLatch = new CountDownLatch(4);
+        Runnable closing = executionQueue.receive(either -> {
+            if (either.isLeft() && either.getLeft().getFlowId().equals("subflow-to-retry") && either.getLeft().getState().isTerminated()) {
+                childExecution.add(either.getLeft());
+                countDownLatch.countDown();
+            }
+        });
+
+        Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-parent-retry");
+        assertThat(parentExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(parentExecution.getTaskRunList()).hasSize(5);
+
+        assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        // we should have 4 executions, two in SUCCESS and two in FAILED
+        assertThat(childExecution).hasSize(4);
+        assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.SUCCESS).count()).isEqualTo(2);
+        assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.FAILED).count()).isEqualTo(2);
         closing.run();
     }
 }

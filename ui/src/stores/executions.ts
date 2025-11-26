@@ -25,7 +25,9 @@ export type Histories = {
 
 export interface Execution{
     id: string;
+    namespace: string;
     flowId?: string;
+    tenantId?: string;
     taskRunList:  {
         id: string,
         taskId: string,
@@ -49,13 +51,12 @@ export interface Execution{
     },
     metadata: {
         originalCreatedDate: string;
-        attemptNumber: string | number;
+        attemptNumber: number;
     },
     inputs?: Record<string, any>;
     labels?: Label[];
     variables?: Record<string, any>;
     outputs?: Record<string, any>;
-    namespace: string;
     originalId?: string;
     flowRevision?: number;
     scheduleDate?: string;

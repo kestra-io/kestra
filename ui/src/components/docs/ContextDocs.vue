@@ -7,7 +7,7 @@
                 @click="goBack"
                 :disabled="!canGoBack"
                 :class="{disabled: !canGoBack}"
-                :aria-label="t('common.back')"
+                :aria-label="$t('common.back')"
             >
                 <span class="back-icon" aria-hidden="true">‹</span>
             </button>
@@ -44,7 +44,6 @@
 <script setup lang="ts">
     import {ref, watch, computed, getCurrentInstance, onUnmounted, onMounted} from "vue";
     import {useDocStore} from "../../stores/doc";
-    import {useI18n} from "vue-i18n";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import {MDCRenderer, getMDCParser} from "@kestra-io/ui-libs";
     import DocsLayout from "./DocsLayout.vue";
@@ -64,7 +63,6 @@
     const OFFLINE_MD = "You're seeing this because you are offline.\n\nHere's how to configure the right sidebar in Kestra to include custom links:\n\n```yaml\nkestra:\n  ee:\n    right-sidebar:\n      custom-links:\n        internal-docs:\n          title: \"Internal Docs\"\n          url: \"https://kestra.io/docs/\"\n        support-portal:\n          title: \"Support portal\"\n          url: \"https://kestra.io/support/\"\n```";
 
     const docStore = useDocStore();
-    const {t} = useI18n({useScope: "global"});
 
     const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null);
     const docHistory = ref<string[]>([]);

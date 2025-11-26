@@ -69,6 +69,20 @@
                     :elements="execution.variables"
                     :execution
                 />
+
+                <Cascader
+                    v-if="execution.inputs"
+                    :title="$t('inputs')"
+                    :elements="execution.inputs"
+                    :execution
+                />
+
+                <Cascader
+                    v-if="execution.outputs"
+                    :title="$t('flow_outputs')"
+                    :elements="execution.outputs"
+                    :execution
+                />
             </div>
         </el-splitter-panel>
     </el-splitter>

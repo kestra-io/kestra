@@ -63,7 +63,7 @@
 
         <el-splitter-panel>
             <div class="main">
-                Main
+                <div>Main</div>
             </div>
         </el-splitter-panel>
     </el-splitter>

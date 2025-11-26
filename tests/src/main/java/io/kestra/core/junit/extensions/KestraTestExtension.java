@@ -11,6 +11,7 @@ import org.junit.platform.commons.support.AnnotationSupport;
 public class KestraTestExtension extends MicronautJunit5Extension {
     @Override
     protected MicronautTestValue buildMicronautTestValue(Class<?> testClass) {
+        testProperties.put("kestra.jdbc.executor.thread-count", Runtime.getRuntime().availableProcessors() * 4);
         return AnnotationSupport
             .findAnnotation(testClass, KestraTest.class)
             .map(kestraTestAnnotation -> new MicronautTestValue(

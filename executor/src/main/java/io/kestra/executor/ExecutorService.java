@@ -268,13 +268,13 @@ public class ExecutorService {
                         Output outputs = flowableParent.outputs(runContext);
                         Map<String, Object> outputMap = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), outputs == null ? null : outputs.toMap());
                         Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
-                        /// flowable attempt state transition to terminated
-                            List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
-                                .map(ArrayList::new)
-                                .orElseGet(ArrayList::new);
-                            State.Type endedState=endedTask.get().getTaskRun().getState().getCurrent();
-                            TaskRunAttempt updated = attempts.getLast().withState(endedState);
-                            attempts.set( attempts.size() - 1, updated);
+                        // flowable attempt state transition to terminated
+                        List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
+                            .map(ArrayList::new)
+                            .orElseGet(ArrayList::new);
+                        State.Type endedState = endedTask.get().getTaskRun().getState().getCurrent();
+                        TaskRunAttempt updated = attempts.getLast().withState(endedState);
+                        attempts.set( attempts.size() - 1, updated);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
                             .withOutputs(variables)
@@ -1003,7 +1003,7 @@ public class ExecutorService {
                         executor.withExecution(
                             executor
                                 .getExecution()
-                                .withTaskRun(executableTaskRun.withState(State.Type.SKIPPED)),
+                                .withTaskRun(executableTaskRun.withState(State.Type.SKIPPED).addAttempt(TaskRunAttempt.builder().state(new State().withState(State.Type.SKIPPED)).build())),
                             "handleExecutableTaskSkipped"
                         );
                         return false;
@@ -1085,7 +1085,7 @@ public class ExecutorService {
                         executor.withExecution(
                             executor
                                 .getExecution()
-                                .withTaskRun(workerTask.getTaskRun().withState(State.Type.SKIPPED)),
+                                .withTaskRun(workerTask.getTaskRun().withState(State.Type.SKIPPED).addAttempt(TaskRunAttempt.builder().state(new State().withState(State.Type.SKIPPED)).build())),
                             "handleExecutionUpdatingTaskSkipped"
                         );
                         return false;

@@ -314,4 +314,11 @@ public class TaskRun implements TenantInterface {
             .build();
     }
 
+    public TaskRun addAttempt(TaskRunAttempt attempt) {
+        if (this.attempts == null) {
+            this.attempts = new ArrayList<>();
+        }
+        this.attempts.add(attempt);
+        return this;
+    }
 }

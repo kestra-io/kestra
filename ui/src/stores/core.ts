@@ -2,21 +2,13 @@ import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 import {ref} from "vue";
 import {useAxios} from "../utils/axios";
+import {Message} from "../components/ErrorToast.vue";
 
 interface GuidedProperties {
     tourStarted: boolean;
     manuallyContinue: boolean;
     template: any;
     saveFlow?: boolean;
-}
-
-interface Message {
-    message?: string;
-    type?: string;
-    title?: string;
-    variant?: string;
-    response?: any;
-    content?: any;
 }
 
 export const useCoreStore = defineStore("core", () => {

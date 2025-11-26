@@ -56,19 +56,65 @@ export function removeRefPrefix(ref?: string): string {
     return ref?.replace(/^#\/definitions\//, "") ?? "";
 }
 
-export const usePluginsStore = defineStore("plugins", () => {
-    const plugin = ref<PluginComponent>();
-    const versions = ref<string[]>();
-    const pluginAllProps = ref<any>();
-    const plugins = ref<Plugin[]>();
+function usePluginsIcons() {
+    const apiStore = useApiStore();
+
+    const iconsLoaded = ref(false)
+
     const apiIcons = ref<Record<string, string>>({});
     const pluginsIcons = ref<Record<string, string>>({});
+    const _iconsPromise = ref<Promise<Record<string, string>>>();
+    const axios = useAxios();
+
     const icons = computed(() => {
         return {
             ...pluginsIcons.value,
             ...apiIcons.value
         }
     })
+
+    function fetchIcons() {
+        if (iconsLoaded.value) {
+            return Promise.resolve(icons.value);
+        }
+
+        if (_iconsPromise.value) {
+            return _iconsPromise.value;
+        }
+
+        const apiPromise = apiStore.pluginIcons().then(async response => {
+            apiIcons.value = response.data ?? {};
+            return response.data;
+        });
+
+        const iconsPromise =
+            axios.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
+                pluginsIcons.value = response.data ?? {};
+                return pluginsIcons.value;
+            });
+
+        _iconsPromise.value = Promise.all([apiPromise, iconsPromise]).then(async () => {
+            iconsLoaded.value = true;
+            return icons.value;
+        })
+
+        return _iconsPromise.value;
+    }
+
+    return {
+        icons,
+        iconsLoaded,
+        fetchIcons,
+    }
+}
+
+export const usePluginsStore = defineStore("plugins", () => {
+    const plugin = ref<PluginComponent>();
+    const versions = ref<string[]>();
+    const pluginAllProps = ref<any>();
+    const plugins = ref<Plugin[]>();
+
+
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({});
     const editorPlugin = ref<(PluginComponent & {cls: string})>();
     const inputSchema = ref<any>();
@@ -76,7 +122,6 @@ export const usePluginsStore = defineStore("plugins", () => {
     const schemaType = ref<Record<string, any>>();
     const currentlyLoading = ref<{type?: string; version?: string}>();
     const forceIncludeProperties = ref<string[]>();
-    const _iconsPromise = ref<Promise<Record<string, string>>>();
 
     const axios = useAxios();
 
@@ -207,45 +252,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         return response.data;
     }
 
-    const iconsLoaded = ref(false)
-
-    function fetchIcons() {
-        if (iconsLoaded.value) {
-            return Promise.resolve(icons.value);
-        }
-
-        if (_iconsPromise.value) {
-            return _iconsPromise.value;
-        }
-
-        const apiStore = useApiStore();
-
-        const apiPromise = apiStore.pluginIcons().then(response => {
-            apiIcons.value = response.data ?? {};
-            return response.data;
-        });
-
-        const iconsPromise =
-            axios.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(response => {
-                pluginsIcons.value = response.data ?? {};
-                return pluginsIcons.value;
-            });
-
-        _iconsPromise.value = Promise.all([apiPromise, iconsPromise]).then(() => {
-            iconsLoaded.value = true;
-            return icons.value;
-        })
-
-        return _iconsPromise.value;
-    }
-
-    function groupIcons() {
-        return axios.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
-        .then(response => {
-            return response.data;
-        });
-    }
-
     function loadInputsType() {
         return axios.get(`${apiUrlWithoutTenants()}/plugins/inputs`, {}).then(response => {
             inputsType.value = response.data;
@@ -329,13 +335,21 @@ export const usePluginsStore = defineStore("plugins", () => {
         });
     }
 
+    const {icons, iconsLoaded, fetchIcons} = usePluginsIcons()
+
+    function groupIcons() {
+        return axios.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
+        .then(response => {
+            return response.data;
+        });
+    }
+
     return {
         // state
         plugin,
         versions,
         pluginAllProps,
         plugins,
-        icons,
         pluginsDocumentation,
         editorPlugin,
         inputSchema,
@@ -343,27 +357,30 @@ export const usePluginsStore = defineStore("plugins", () => {
         schemaType,
         currentlyLoading,
         forceIncludeProperties,
-        _iconsPromise,
-        // getters
+
         flowSchema,
         flowDefinitions,
         flowRootSchema,
         flowRootProperties,
         allTypes,
         deprecatedTypes,
-        // actions
+
         resolveRef,
         filteredPlugins,
         list,
         listWithSubgroup,
         load,
         loadVersions,
-        fetchIcons,
-        groupIcons,
         loadInputsType,
         loadInputSchema,
         loadSchemaType,
         lazyLoadSchemaType,
         updateDocumentation,
+
+        // icons
+        icons,
+        iconsLoaded,
+        fetchIcons,
+        groupIcons,
     };
 });

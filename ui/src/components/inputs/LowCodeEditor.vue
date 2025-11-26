@@ -97,13 +97,10 @@
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
 
-    // @ts-expect-error no types for SearchField yet
     import SearchField from "../layout/SearchField.vue";
-    // @ts-expect-error no types for LogLevelSelector yet
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    // @ts-expect-error no types for Collapse yet
     import Collapse from "../layout/Collapse.vue";
     import Drawer from "../Drawer.vue";
     import Markdown from "../layout/Markdown.vue";
@@ -231,7 +228,7 @@
         const flowParsed = YAML_UTILS.parse(props.source);
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
-            () => {
+            async () => {
                 const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase();
                 if (
                     section === SECTIONS.TASKS.toLowerCase() &&
@@ -255,8 +252,7 @@
                     updatedYmlSource,
                     true,
                 );
-            },
-            () => {},
+            }
         );
     };
 

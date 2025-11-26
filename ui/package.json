@@ -127,7 +127,7 @@
         "storybook-vue3-router": "^6.0.2",
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3",
-        "typescript-eslint": "^8.46.4",
+        "typescript-eslint": "^8.48.0",
         "uuid": "^13.0.0",
         "vite": "npm:rolldown-vite@latest",
         "vitest": "^3.2.4",

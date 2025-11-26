@@ -14,6 +14,7 @@ import org.jooq.impl.DSL;
 import javax.sql.DataSource;
 
 import java.util.List;
+import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -45,10 +46,7 @@ public class JdbcTestUtils {
                 .meta()
                 .getTables()
                 .stream()
-                .filter(throwPredicate(table -> (table.getSchema().getName().equals(dataSource.getConnection().getCatalog())) ||
-                    table.getSchema().getName().equals("public")  || // for Postgres
-                    table.getSchema().getName().equals("dbo") // for SQLServer
-                ))
+                .filter(throwPredicate(table -> (table.getSchema().getName().equals(Optional.ofNullable(dataSource.getConnection().getSchema()).orElse(dataSource.getConnection().getCatalog())))))
                 .filter(table -> tableConfigs.getTableConfigs().stream().anyMatch(conf -> conf.table().equalsIgnoreCase(table.getName())))
                 .toList();
         });

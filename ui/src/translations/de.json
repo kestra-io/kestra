@@ -706,7 +706,8 @@
       "options": "Datenoptionen",
       "periodic refresh": "Periodische Aktualisierung",
       "refresh": "Daten aktualisieren",
-      "reset": "Alle Filter zurücksetzen",
+      "reset": "Alle löschen",
+      "reset_all": "Alle Filter zurücksetzen",
       "reset_tooltip": "Auf Standard zurücksetzen",
       "save": "Speichern",
       "save duplicate": "Ein Filter mit diesem Namen existiert bereits.",
@@ -774,7 +775,8 @@
           "revision": "Version des flow, die für diese Ausführung verwendet wird",
           "start-date": "Wann die Ausführung gestartet wurde",
           "state": "Aktueller Ausführungszustand",
-          "task-id": "ID der letzten Task in der Ausführung"
+          "task-id": "ID der letzten Task in der Ausführung",
+          "trigger": "Trigger, der die Ausführung gestartet hat"
         },
         "flow_triggers": {
           "next execution date": "Wann der Trigger das nächste Mal ausgeführt wird",

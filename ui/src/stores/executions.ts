@@ -53,6 +53,8 @@ export interface Execution{
     },
     inputs?: Record<string, any>;
     labels?: Label[];
+    variables?: Record<string, any>;
+    outputs?: Record<string, any>;
     namespace: string;
     originalId?: string;
     flowRevision?: number;

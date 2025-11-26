@@ -26,7 +26,7 @@ export function date (dateString:string, format?:string) {
     } else {
         f = format ?? localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll";
     }
-   // Apply timezone and format using the correct locale
+    // Apply timezone and format using the correct locale
     return momentInstance
         .tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess())
         .format(f);

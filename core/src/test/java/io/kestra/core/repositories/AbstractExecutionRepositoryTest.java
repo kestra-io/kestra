@@ -840,4 +840,53 @@ inject(tenant);
         assertThat(byFlow.get(FLOW).getId()).isEqualTo(running.getId());
     }
 
+    @Test
+    void findAsync() {
+        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        Execution execA = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .namespace(NAMESPACE)
+            .flowId("flowA")
+            .flowRevision(1)
+            .state(new State())
+            .taskRunList(List.of())
+            .build();
+
+        Execution execB = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(tenant)
+            .namespace(NAMESPACE)
+            .flowId("flowB")
+            .flowRevision(1)
+            .state(new State())
+            .taskRunList(List.of())
+            .build();
+
+        Execution savedA = executionRepository.save(execA);
+        Execution savedB = executionRepository.save(execB);
+
+        try {
+            List<Execution> all = executionRepository.findAllAsync(tenant).collectList().block();
+            assertThat(all).isNotNull();
+            assertThat(all.stream().map(Execution::getId).toList())
+                .containsExactlyInAnyOrder(savedA.getId(), savedB.getId());
+
+            // filtered using repository find (pageable) since findAllAsync has no filters
+            List<QueryFilter> filters = List.of(QueryFilter.builder()
+                .field(QueryFilter.Field.FLOW_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value("flowA")
+                .build());
+
+            ArrayListTotal<Execution> filtered = executionRepository.find(Pageable.UNPAGED, tenant, filters);
+            assertThat(filtered.getTotal()).isEqualTo(1L);
+            assertThat(filtered.getFirst().getFlowId()).isEqualTo("flowA");
+        } finally {
+            executionRepository.delete(savedA);
+            executionRepository.delete(savedB);
+        }
+    }
+
 }

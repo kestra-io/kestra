@@ -29,7 +29,6 @@ import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
-import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.BeforeAll;
@@ -41,15 +40,14 @@ import org.slf4j.event.Level;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
 public abstract class AbstractFlowRepositoryTest {
@@ -682,6 +680,47 @@ public abstract class AbstractFlowRepositoryTest {
             deleteFlow(flowDeleted);
         }
     }
+
+    @Test
+    void findAsync() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flowA = builder(tenant, "flowA", "taskA").build();
+        FlowWithSource flowB = builder(tenant, "flowB", "taskB").build();
+
+        FlowWithSource savedA = flowRepository.create(GenericFlow.of(flowA));
+        FlowWithSource savedB = flowRepository.create(GenericFlow.of(flowB));
+
+        try {
+            List<Flow> all = flowRepository.findAsync(tenant, null)
+                .collectList()
+                .block(Duration.ofSeconds(5));
+
+            assertThat(all).isNotNull();
+            assertThat(all.stream().map(Flow::getId).toList())
+                .containsExactlyInAnyOrder(savedA.getId(), savedB.getId());
+
+            // with a query filter targeting flowA -> only flowA
+            QueryFilter filter = QueryFilter.builder()
+                .field(Field.QUERY)
+                .value(savedA.getId())
+                .operation(Op.EQUALS)
+                .build();
+
+            List<Flow> filtered = flowRepository.findAsync(tenant, List.of(filter))
+                .collectList()
+                .block(Duration.ofSeconds(5));
+
+            assertThat(filtered).isNotNull();
+            assertThat(filtered).hasSize(1);
+            assertThat(filtered.getFirst().getId()).isEqualTo(savedA.getId());
+        } finally {
+            deleteFlow(savedA);
+            deleteFlow(savedB);
+        }
+    }
+
+
 
     private static Flow createTestFlowForNamespace(String tenantId, String namespace) {
         return Flow.builder()

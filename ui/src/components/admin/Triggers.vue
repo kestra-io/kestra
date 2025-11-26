@@ -1,5 +1,11 @@
 <template>
-    <TopNavBar :title="routeInfo.title" />
+    <TopNavBar :title="routeInfo.title">
+        <template #additional-right>
+            <el-button :icon="Download" @click="exportTriggersAsStream()">
+                {{ t('auditlog.export_csv') }}
+            </el-button>
+        </template>
+    </TopNavBar>
     <section class="container" v-if="ready">
         <div>
             <DataTable
@@ -361,6 +367,7 @@
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
+    import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
     import Kicon from "../Kicon.vue";
@@ -831,6 +838,10 @@
             loadData(load);
         }
     });
+
+    async function exportTriggersAsStream() {
+        await triggerStore.exportTriggersAsCSV(route.query);
+    }
 </script>
 
 <style scoped lang="scss">

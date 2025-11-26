@@ -1775,7 +1775,8 @@
                 "revision": "Version of the flow used for this execution",
                 "inputs": "Input values provided to the execution",
                 "outputs": "Outputs emitted by the execution",
-                "task-id": "ID of the last task in the execution"
+                "task-id": "ID of the last task in the execution",
+                "trigger": "Trigger that started the execution"
             },
             "kv": {
                 "namespace": "Logical grouping where the key-value pair is stored",

@@ -8,7 +8,7 @@
         <el-splitter-panel :size="verticalLayout ? '50%' : '35%'">
             <div class="sidebar">
                 <div class="state">
-                    <Row :rows="[{icon: StateMachine, label: t('state')}]">
+                    <Row :rows="[{icon: StateMachine, label: $t('state')}]">
                         <template #action>
                             <ChangeExecutionStatus
                                 :execution
@@ -27,7 +27,7 @@
 
                 <el-divider />
                 <div class="labels">
-                    <Row :rows="[{icon: LabelMultiple, label: t('labels')}]">
+                    <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
                         <template #action>
                             <SetLabels :execution />
                         </template>
@@ -42,7 +42,7 @@
 
                 <el-divider />
                 <div class="actions">
-                    <Row :rows="[{icon: SortVariant, label: t('actions')}]" />
+                    <Row :rows="[{icon: SortVariant, label: $t('actions')}]" />
                     <el-row :gutter="12">
                         <el-col
                             v-for="(action, aIdx) in actions"
@@ -63,14 +63,19 @@
 
         <el-splitter-panel>
             <div class="main">
-                <div>Main</div>
+                <Cascader
+                    v-if="execution.variables"
+                    :title="$t('variables')"
+                    :elements="execution.variables"
+                    :execution
+                />
             </div>
         </el-splitter-panel>
     </el-splitter>
     <NoData
         v-else
         id="empty"
-        :text="t('execution not found', {executionId: route.params.id})"
+        :text="$t('execution not found', {executionId: route.params.id})"
     />
 </template>
 
@@ -101,6 +106,8 @@
     import Row from "./components/sidebar/Row.vue";
     import Labels from "./components/sidebar/Labels.vue";
     import Timeline from "./components/sidebar/Timeline.vue";
+
+    import Cascader from "./components/main/Cascader.vue";
 
     import NoData from "../../layout/NoData.vue";
 

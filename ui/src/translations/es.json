@@ -774,7 +774,8 @@
           "revision": "Versión del flow utilizada para esta ejecución",
           "start-date": "Cuando la ejecución comenzó",
           "state": "Estado actual de ejecución",
-          "task-id": "ID de la última task en la ejecución"
+          "task-id": "ID de la última task en la ejecución",
+          "trigger": "Trigger que inició la ejecución"
         },
         "flow_triggers": {
           "next execution date": "Cuándo se ejecutará el trigger a continuación",

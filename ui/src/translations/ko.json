@@ -774,7 +774,8 @@
           "revision": "이 실행에 사용된 flow의 버전",
           "start-date": "실행이 시작되었을 때",
           "state": "현재 실행 상태",
-          "task-id": "실행에서 마지막 task의 ID"
+          "task-id": "실행에서 마지막 task의 ID",
+          "trigger": "실행을 시작한 Trigger"
         },
         "flow_triggers": {
           "next execution date": "트리거가 다음에 실행될 때",

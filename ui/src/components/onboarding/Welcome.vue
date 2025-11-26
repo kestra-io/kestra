@@ -26,7 +26,9 @@
                     <p class="section-1-desc">
                         {{ $t("welcome_page.start") }}
                     </p>
+
                     <el-button
+                        v-if="isOSS"
                         @click="startTour"
                         :icon="Plus"
                         size="large"
@@ -35,6 +37,18 @@
                     >
                         {{ $t("welcome button create") }}
                     </el-button>
+                    <el-button
+                        v-else
+                        :icon="Plus"
+                        tag="router-link"
+                        :to="{name: 'flows/create'}"
+                        size="large"
+                        type="primary"
+                        class="px-3 p-4 section-1-link product-link"
+                    >
+                        {{ $t("welcome button create") }}
+                    </el-button>
+
                     <el-button
                         :icon="Play"
                         tag="a"
@@ -69,6 +83,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useAuthStore} from "override/stores/auth";
+    import {useMiscStore} from "override/stores/misc";
 
     const {topbar = true} = defineProps<{topbar?: boolean}>();
 
@@ -83,6 +98,8 @@
     const routeInfo = computed(() =>  ({title: t("welcome_page.welcome")}));
 
     const authStore = useAuthStore();
+
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const canCreate = computed(() => {
         return authStore.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);

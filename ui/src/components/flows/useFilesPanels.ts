@@ -129,7 +129,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
     // and set all tabs as not dirty
     provide(FILES_SAVE_ALL_INJECTION_KEY, async () => {
         const files:{
-            file: Parameters<typeof namespacesStore.createFile>[0]
+            file: Parameters<typeof namespacesStore.saveOrCreateFile>[0]
             tab: TabLiveWithContent
         }[] = [];
         for(const panel of panels.value){
@@ -153,7 +153,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
         if(files.length > 0){
             // parallelize saving of files
             await Promise.all(
-                files.map(file => namespacesStore.createFile(file.file)
+                files.map(file => namespacesStore.saveOrCreateFile(file.file)
                     // only remove the dirty flag once the file was saved
                     .then(() => file.tab.dirty = false))
             );

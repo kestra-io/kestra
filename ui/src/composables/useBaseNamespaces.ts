@@ -286,7 +286,7 @@ export const useBaseNamespacesStore = () => {
         deleteSecrets,
         createDirectory,
         readDirectory,
-        createFile,
+        saveOrCreateFile: createFile,
         readFile,
         searchFiles,
         importFileDirectory,

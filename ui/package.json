@@ -117,7 +117,7 @@
         "monaco-editor": "^0.52.2",
         "monaco-yaml": "5.3.1",
         "patch-package": "^8.0.1",
-        "playwright": "^1.55.0",
+        "playwright": "^1.57.0",
         "prettier": "^3.6.2",
         "rimraf": "^6.1.0",
         "rolldown-vite": "^7.2.5",

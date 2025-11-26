@@ -38,21 +38,6 @@
             />
         </el-popover>
 
-        <el-tooltip
-            v-if="filter.hasFilterKeys?.value"
-            placement="top"
-            effect="light"
-            :content="$t('filter.reset')"
-            :disabled="filter.readOnly?.value"
-        >
-            <el-button
-                :icon="Restore"
-                class="refresh-btn"
-                @click="handleReset"
-                :disabled="!canReset || filter.readOnly?.value"
-            />
-        </el-tooltip>
-
         <div
             v-if="filter.showSearchInput?.value"
             class="search-container"
@@ -83,6 +68,23 @@
             @remove="filter.removeFilter"
             @update="filter.updateFilter"
         />
+
+        <el-tooltip
+            v-if="filter.hasFilterKeys?.value"
+            placement="top"
+            effect="light"
+            :content="$t('filter.reset_all')"
+            :disabled="filter.readOnly?.value"
+        >
+            <el-button
+                link
+                class="refresh-btn"
+                @click="handleReset"
+                :disabled="!canReset || filter.readOnly?.value"
+            >
+                {{ $t("filter.reset") }}
+            </el-button>
+        </el-tooltip>
     </div>
 </template>
 
@@ -90,7 +92,7 @@
     import {ref, inject, nextTick, computed} from "vue";
     import {useDebounceFn} from "@vueuse/core";
     
-    import {FilterOutline, Restore} from "../utils/icons";
+    import {FilterOutline} from "../utils/icons";
 
     import FilterChip from "./layout/FilterChip.vue";
     import SearchInput from "./layout/SearchInput.vue";
@@ -137,7 +139,7 @@
     --ks-box-shadow: 0 1px 2px var(--ks-card-shadow);
 
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: flex-start;
     flex-wrap: wrap;
     gap: .5rem;
@@ -171,17 +173,15 @@
 }
 
 .refresh-btn {
-    background-color: var(--ks-button-background-secondary);
     margin: 0 !important;
-    padding: 0.5rem;
-    border-radius: 0.25rem;
-    font-size: 1rem;
-    color: var(--ks-content-primary);
-    box-shadow: var(--ks-box-shadow);
+    font-size: 12px;
+    color: var(--ks-content-secondary);
 
     &:hover {
-        background: var(--ks-button-background-secondary-hover);
+        color: var(--ks-content-primary);
+        text-decoration: underline;
     }
+
 }
 
 .search-container {

@@ -706,7 +706,8 @@
       "options": "डेटा विकल्प",
       "periodic refresh": "आवधिक रिफ्रेश",
       "refresh": "डेटा रिफ्रेश करें",
-      "reset": "सभी फ़िल्टर रीसेट करें",
+      "reset": "सभी साफ़ करें",
+      "reset_all": "सभी फ़िल्टर रीसेट करें",
       "reset_tooltip": "डिफ़ॉल्ट पर रीसेट करें",
       "save": "सहेजें",
       "save duplicate": "इस नाम का एक फ़िल्टर पहले से मौजूद है।",
@@ -774,7 +775,8 @@
           "revision": "इस execution के लिए उपयोग किए गए flow का संस्करण",
           "start-date": "जब निष्पादन शुरू हुआ",
           "state": "वर्तमान निष्पादन स्थिति",
-          "task-id": "अंतिम task का ID निष्पादन में"
+          "task-id": "अंतिम task का ID निष्पादन में",
+          "trigger": "जिस Trigger ने execution शुरू किया"
         },
         "flow_triggers": {
           "next execution date": "जब trigger अगली बार execute होगा",

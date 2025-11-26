@@ -6,9 +6,11 @@ services:
       MYSQL_USER: kestra
       MYSQL_PASSWORD: k3str4
       MYSQL_ROOT_PASSWORD: "p4ssw0rd"
-    command:
-      - --log-bin-trust-function-creators=1
-      - --sort-buffer-size=10485760
+    entrypoint: |
+      sh -c "
+        echo \"CREATE DATABASE IF NOT EXISTS kestra_unit_webserver;GRANT ALL PRIVILEGES ON kestra_unit_webserver.* TO 'kestra'@'%' WITH GRANT OPTION;\" > /docker-entrypoint-initdb.d/init.sql;
+        /usr/local/bin/docker-entrypoint.sh --log-bin-trust-function-creators=1 --innodb_ft_min_token_size=1 --ft_min_word_len=1 --sort-buffer-size=10485760
+      "
     ports:
       - 3306:3306
     restart: on-failure

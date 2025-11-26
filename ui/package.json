@@ -81,7 +81,7 @@
         "@codecov/vite-plugin": "^1.9.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@eslint/js": "^9.39.1",
-        "@playwright/test": "^1.56.1",
+        "@playwright/test": "^1.57.0",
         "@rushstack/eslint-patch": "^1.14.1",
         "@shikijs/markdown-it": "^3.15.0",
         "@storybook/addon-themes": "^9.1.16",

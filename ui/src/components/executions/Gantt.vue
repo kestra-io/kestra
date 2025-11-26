@@ -33,7 +33,6 @@
                     >
                         <div class="d-flex flex-column">
                             <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
-                                <!-- Large screen: show chevron icons -->
                                 <div v-if="!verticalLayout" class="d-inline-flex">
                                     <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                     <ChevronDown v-else />
@@ -44,7 +43,7 @@
                                         <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
                                     </template>
                                     <span v-if="verticalLayout" class="task-name">
-                                        <code>{{ item.name }}</code>
+                                        <code :title="item.name">{{ item.name }}</code>
                                         <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                     </span>
                                     <span v-else>
@@ -480,6 +479,7 @@
 
                 .task-name {
                     flex: 1;
+                    min-width: 100px;
                     white-space: nowrap;
                     overflow: hidden;
                     text-overflow: ellipsis;

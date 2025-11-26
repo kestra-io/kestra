@@ -774,7 +774,8 @@
           "revision": "用于此次执行的flow版本",
           "start-date": "执行开始时",
           "state": "当前执行状态",
-          "task-id": "执行中最后一个task的ID"
+          "task-id": "执行中最后一个task的ID",
+          "trigger": "启动执行的Trigger"
         },
         "flow_triggers": {
           "next execution date": "下次触发器执行时间",

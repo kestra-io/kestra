@@ -56,7 +56,7 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
 
     @Test
     void multipleConsumer() throws QueueException, InterruptedException {
-        int rand = 3; // ThreadLocalRandom.current().nextInt(10, 50);;
+        int rand = ThreadLocalRandom.current().nextInt(10, 50);;
         CountDownLatch countDownLatch = new CountDownLatch(3 * rand);
         Collection<String> list = Collections.synchronizedCollection(new ArrayList<>());
         Collection<QueueSubscriber<TestBroadcast>> subscribers = Collections.synchronizedCollection(new ArrayList<>());
@@ -87,7 +87,7 @@ public abstract class AbstractBroadcastQueueTest extends AbstractQueueTest {
         assertThat(list).contains("c000-i001", "c000-i002", "c000-i003");
         // all message sent to all consumers
         IntStream.range(1, 4).boxed().forEach(i -> {
-            assertThat(list.stream().filter(s -> s.endsWith(String.format("-i%03d", i))).count()).isEqualTo(3L);
+            assertThat(list.stream().filter(s -> s.endsWith(String.format("-i%03d", i))).count()).isEqualTo(rand);
         });
         // all consumers received all messages
         IntStream.range(0, rand).boxed().forEach(i -> {

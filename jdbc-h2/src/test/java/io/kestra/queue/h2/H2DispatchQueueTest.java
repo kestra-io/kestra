@@ -7,10 +7,13 @@ import io.kestra.queue.AbstractDispatchQueueTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.IOException;
 
 @KestraTest(environments =  {"test", "queue"})
+@Execution(ExecutionMode.SAME_THREAD)
 class H2DispatchQueueTest extends AbstractDispatchQueueTest {
     @Inject
     JdbcTestUtils jdbcTestUtils;

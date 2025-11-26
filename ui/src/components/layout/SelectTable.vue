@@ -19,7 +19,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted, onUnmounted, onUpdated, watch} from "vue";
+    import {ref, onMounted, onUnmounted, onUpdated, watch, nextTick} from "vue";
 
     const props = withDefaults(defineProps<{
         showSelection?: boolean;
@@ -113,10 +113,13 @@
         }
     }, {immediate: true});
 
+    const waitTableRender = () => nextTick();
+
     defineExpose({
         setSelection,
         clearSelection,
-        toggleRowExpansion
+        toggleRowExpansion,
+        waitTableRender
     });
 </script>
 <style scoped lang="scss">

@@ -64,9 +64,6 @@
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
     import {NODE, FLOW, EXECUTION, NAMESPACE, type Node} from "../utils/types";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();

@@ -127,14 +127,9 @@ public class EachSequential extends Sequential implements FlowableTask<VoidOutpu
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        List<ResolvedTask> childTasks = ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)).stream()
-            .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
-            .toList();
-        if (childTasks.isEmpty()) {
-            return Optional.of(State.Type.SUCCESS);
-        }
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
-        return FlowableUtils.resolveState(
+        return FlowableUtils.resolveSequentialState(
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),

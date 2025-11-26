@@ -161,13 +161,6 @@
         useDocStore().docId = "flowEditor";
     })
 
-    // watch(() => props.modelValue, (value) => {
-    //     if (isCodeEditor(editor) && editor?.getValue?.() !== value) {
-    //         preventCursorChange.value = true;
-    //     } else {
-    //         preventCursorChange.value = false;
-    //     }
-    // })
     watch(
         () => [props.modelValue, props.lang],
         ([value, newLang], [, oldLang]) => {

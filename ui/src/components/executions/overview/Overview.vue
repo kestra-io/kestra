@@ -42,7 +42,9 @@
 
                 <el-divider />
                 <div class="actions">
-                    <Row :rows="[{icon: SortVariant, label: $t('actions')}]" />
+                    <Row
+                        :rows="[{icon: SortVariant, label: $t('actions')}]"
+                    />
                     <el-row :gutter="12">
                         <el-col
                             v-for="(action, aIdx) in actions"
@@ -63,6 +65,56 @@
 
         <el-splitter-panel>
             <div class="main">
+                <div id="alerts">
+                    <el-alert
+                        v-if="matchesStatus('restarted')"
+                        :title="
+                            $t('execution restarted', {
+                                nbRestart:
+                                    execution.metadata?.attemptNumber - 1,
+                            })
+                        "
+                        type="warning"
+                        showIcon
+                        :closable="false"
+                    />
+
+                    <el-alert
+                        v-if="matchesStatus('replayed')"
+                        :title="$t('execution replayed')"
+                        :closable="false"
+                    />
+
+                    <el-alert v-if="matchesStatus('replay')" :closable="false">
+                        <template #title>
+                            <div>
+                                {{ $t("execution replay") }}
+                                <router-link
+                                    :to="{
+                                        name: 'executions/update',
+                                        params: {
+                                            tenant: execution.tenantId,
+                                            namespace: execution.namespace,
+                                            flowId: execution.flowId,
+                                            id: execution.originalId,
+                                        },
+                                    }"
+                                >
+                                    <Id
+                                        :value="execution.originalId"
+                                        :shrink="false"
+                                    />
+                                </router-link>
+                            </div>
+                        </template>
+                    </el-alert>
+
+                    <ErrorAlert
+                        v-if="execution.state.current === State.FAILED"
+                        :execution
+                    />
+                </div>
+
                 <Cascader
                     v-if="execution.variables"
                     :title="$t('variables')"
@@ -122,6 +174,8 @@
     import Timeline from "./components/sidebar/Timeline.vue";
 
     import Cascader from "./components/main/Cascader.vue";
+    import ErrorAlert from "./components/main/ErrorAlert.vue";
+    import Id from "../../Id.vue";
 
     import NoData from "../../layout/NoData.vue";
 
@@ -349,6 +403,18 @@
 
     const loadExecution = (id: string) => store.loadExecution({id});
 
+    const matchesStatus = (type: "restarted" | "replayed" | "replay") => {
+        if (!execution.value) return false;
+
+        const key = `system.${type}`;
+
+        return (
+            execution.value?.labels?.some(
+                (label) => label.key === key && String(label.value) === "true",
+            ) ?? false
+        );
+    };
+
     onMounted(() => {
         if (!route.params.id) return;
         loadExecution(route.params.id as string);
@@ -424,7 +490,11 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
     }
 
     .main {
-        // TODO: Clean up if not used in the end
+        #alerts {
+            .el-alert {
+                margin-bottom: $spacer;
+            }
+        }
     }
 
     div.el-divider {

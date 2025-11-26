@@ -245,6 +245,9 @@
                                         }}
                                     </code>
                                 </template>
+                                <template v-else-if="col.prop === 'trigger'">
+                                    <TriggerAvatar :execution="scope.row" />
+                                </template>
                             </template>
                             <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
                                 <el-tooltip :content="$t('taskid column details')" effect="light">
@@ -416,6 +419,7 @@
     import LabelInput from "../../components/labels/LabelInput.vue";
     //@ts-expect-error no declaration file
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
+    import TriggerAvatar from "../../components/flows/TriggerAvatar.vue";
 
     import {filterValidLabels} from "./utils";
     import {useToast} from "../../utils/toast";
@@ -563,6 +567,12 @@
             prop: "taskRunList.taskId", 
             default: false, 
             description: t("filter.table_column.executions.task-id")
+        },
+        {
+            label: t("triggers"), 
+            prop: "trigger", 
+            default: true, 
+            description: t("filter.table_column.executions.trigger")
         }
     ]);
 
@@ -584,7 +594,7 @@
     );
 
     const isColumnSortable = (prop: string) => {
-        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId"].includes(prop);
+        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger"].includes(prop);
     };
 
     const selectionMapper = (execution: any) => {

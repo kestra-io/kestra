@@ -3,7 +3,7 @@
         <div class="options-row">
             <div class="options-left">
                 <div v-if="filter.tableOptions.value?.chart?.shown !== false" class="option-item">
-                    <span class="option-label">{{ t("filter.show chart") }}</span>
+                    <span class="option-label">{{ $t("filter.show chart") }}</span>
                     <el-switch 
                         v-model="localChartVisible"
                     />
@@ -16,7 +16,7 @@
                         v-model="periodicRefreshEnabled"
                     />
                     <Kicon :tooltip="refreshTooltip" placement="top">
-                        <span class="option-label periodic">{{ t("filter.periodic refresh") }}</span>
+                        <span class="option-label periodic">{{ $t("filter.periodic refresh") }}</span>
                     </Kicon>
                 </div>
 
@@ -27,7 +27,7 @@
                     :size="'default'"
                     class="refresh-button"
                 >
-                    {{ t("filter.refresh") }}
+                    {{ $t("filter.refresh") }}
                 </el-button>
 
                 <el-popover
@@ -43,7 +43,7 @@
                     <template #reference>
                         <el-button size="default" class="columns-button" :icon="CogOutline">
                             <el-tooltip :content="$t('filter.customize columns')" placement="top" effect="light">
-                                <span>{{ t("filter.columns") }}</span>
+                                <span>{{ $t("filter.columns") }}</span>
                             </el-tooltip>
                         </el-button>
                     </template>
@@ -63,7 +63,6 @@
 
 <script setup lang="ts">
     import {ref, inject, watch} from "vue";
-    import {useI18n} from "vue-i18n";
 
     import Kicon from "../../Kicon.vue";
     import CustomColumns from "../segments/CustomColumns.vue";
@@ -73,7 +72,6 @@
     import {usePeriodicRefresh} from "../composables/usePeriodicRefresh";
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
 
-    const {t} = useI18n();
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
 
     const {isEnabled: periodicRefreshEnabled, tooltip: refreshTooltip, toggleRefresh} = usePeriodicRefresh();

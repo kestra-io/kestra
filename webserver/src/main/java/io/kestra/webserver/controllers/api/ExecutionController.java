@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
@@ -10,6 +11,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
@@ -44,7 +46,9 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.ExecutionStreamingService;
+import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.kestra.webserver.utils.filepreview.FileRender;
 import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
@@ -71,9 +75,9 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.extensions.Extension;
 import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -91,6 +95,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
+import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -191,16 +196,19 @@ public class ExecutionController {
     private Optional<OpenTelemetry> openTelemetry;
 
     @Inject
-    private ExecutionStreamingService executionStreamingService;
-
-    @Inject
     private LocalPathFactory localPathFactory;
 
     @Inject
     private SecureVariableRendererFactory secureVariableRendererFactory;
 
+    @Inject
+    private LogService logService;
+
     @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
     private boolean enableLocalFilePreview;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -691,7 +699,11 @@ public class ExecutionController {
         Execution execution = Execution.newExecution(flow, parsedLabels);
         return flowInputOutput
             .validateExecutionInputs(flow.getInputs(), flow, execution, inputs)
-            .map(values -> ApiValidateExecutionInputsResponse.of(id, namespace, values));
+            .map(values -> {
+                Map<String, Object> inputsAsMap = values.stream().collect(HashMap::new, (m,v)->m.put(v.input().getId(), v.value()), HashMap::putAll);
+                List<Check> checks = flowService.getFailedChecks(flow, inputsAsMap);
+                return ApiValidateExecutionInputsResponse.of(id, namespace, checks, values);
+            });
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -729,7 +741,24 @@ public class ExecutionController {
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(executionInputs -> {
-                Execution executionWithInputs = current.withInputs(executionInputs);
+                Check.Behavior behavior = Check.resolveBehavior(flowService.getFailedChecks(flow, executionInputs));
+                if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
+                    return Mono.error(new IllegalArgumentException(
+                        "Flow execution blocked: one or more condition checks evaluated to false."
+                    ));
+                }
+
+                final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
+                    .map(exec -> {
+                        if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
+                            this.logService.logExecution(current, log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
+                            return exec.withState(State.Type.FAILED);
+                        } else {
+                            return exec;
+                        }
+                    })
+                    .get();
+
                 try {
                     // inject the traceparent into the execution
                     openTelemetry
@@ -740,7 +769,7 @@ public class ExecutionController {
                     executionQueue.emit(executionWithInputs);
                     eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
 
-                    if (!wait) {
+                    if (!wait || executionWithInputs.getState().isFailed()) {
                         return Mono.just(ExecutionResponse.fromExecution(
                             executionWithInputs,
                             executionUrl(executionWithInputs)
@@ -1457,7 +1486,7 @@ public class ExecutionController {
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
         return executionService.validateForResume(execution, flow, inputs)
-            .map(values -> ApiValidateExecutionInputsResponse.of(execution.getFlowId(), execution.getNamespace(), values))
+            .map(values -> ApiValidateExecutionInputsResponse.of(execution.getFlowId(), execution.getNamespace(), List.of(), values))
             // need to consume the inputs in case of error
             .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast());
     }
@@ -2547,6 +2576,23 @@ public class ExecutionController {
         ).stream().map(LastExecutionResponse::ofExecution).toList();
     }
 
+    @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Executions"}, summary = "Export all executions as a streamed CSV file")
+    @SuppressWarnings("unchecked")
+    public MutableHttpResponse<Flux> exportExecutions(
+        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+    ) {
+
+        return HttpResponse.ok(
+                CSVUtils.toCSVFlux(
+                   executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
+                        .map(log -> objectMapper.convertValue(log, Map.class))
+                )
+            )
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");
+    }
+
     @Introspected
     public record LastExecutionResponse(
         @Parameter(description = "The execution's ID") String id,
@@ -2574,7 +2620,8 @@ public class ExecutionController {
         @Parameter(description = "The namespace")
         String namespace,
         @Parameter(description = "The flow's inputs")
-        List<ApiInputAndValue> inputs
+        List<ApiInputAndValue> inputs,
+        List<ApiCheckFailure> checks
     ) {
 
         @Introspected
@@ -2597,10 +2644,20 @@ public class ExecutionController {
             @Parameter(description = "The error message")
             String message
         ) {
-
         }
 
-        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<InputAndValue> inputs) {
+        @Introspected
+        public record ApiCheckFailure(
+            @Parameter(description = "The message")
+            String message,
+            @Parameter(description = "The message style")
+            Check.Style style,
+            @Parameter(description = "The behavior")
+            Check.Behavior behavior
+        ) {
+        }
+
+        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<Check> checks, List<InputAndValue> inputs) {
             return new ApiValidateExecutionInputsResponse(
                 id,
                 namespace,
@@ -2615,7 +2672,8 @@ public class ExecutionController {
                             .map(cv -> new ApiInputError(cv.getMessage()))
                             .toList()
                     ).orElse(List.of())
-                )).toList()
+                )).toList(),
+                checks.stream().map(check -> new ApiCheckFailure(check.getMessage(), check.getStyle(), check.getBehavior())).toList()
             );
         }
     }

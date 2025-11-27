@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -15,16 +16,14 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
@@ -41,10 +40,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -75,6 +76,9 @@ public class TriggerController {
 
     @Inject
     private ConditionService conditionService;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -224,7 +228,7 @@ public class TriggerController {
             null);
 
         Integer count = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .filter(trigger -> trigger.getExecutionId() != null || trigger.getEvaluateRunningDate() != null)
             .map(trigger -> {
                 try {
@@ -375,7 +379,7 @@ public class TriggerController {
     ) throws QueueException {
         // Updating the backfill within the flux does not works
         List<Trigger> triggers = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .collectList().block();
 
         int count = triggers == null ? 0 : backfillsAction(triggers, BACKFILL_ACTION.PAUSE);
@@ -428,7 +432,7 @@ public class TriggerController {
 
         // Updating the backfill within the flux does not works
         List<Trigger> triggers = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .collectList().block();
 
         int count = triggers == null ? 0 : backfillsAction(triggers, BACKFILL_ACTION.UNPAUSE);
@@ -497,7 +501,7 @@ public class TriggerController {
 
         // Updating the backfill within the flux does not works
         List<Trigger> triggers = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .collectList().block();
 
         int count = triggers == null ? 0 : backfillsAction(triggers, BACKFILL_ACTION.DELETE);
@@ -564,7 +568,7 @@ public class TriggerController {
         @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
     ) {
         Integer count = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .map(trigger -> {
                 try {
                     triggerRepository.delete(trigger);
@@ -616,7 +620,7 @@ public class TriggerController {
             null);
 
         Integer count = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .map(throwFunction(trigger -> {
                 this.setTriggerDisabled(trigger, disabled);
                 return 1;
@@ -626,6 +630,23 @@ public class TriggerController {
             .orElse(0);
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
+    }
+
+    @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Triggers"}, summary = "Export all triggers as a streamed CSV file")
+    @SuppressWarnings("unchecked")
+    public MutableHttpResponse<Flux> exportTriggers(
+        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+    ) {
+
+        return HttpResponse.ok(
+                CSVUtils.toCSVFlux(
+                    triggerRepository.findAsync(this.tenantService.resolveTenant(), filters)
+                        .map(log -> objectMapper.convertValue(log, Map.class))
+                )
+            )
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=triggers.csv");
     }
 
     public void setTriggerDisabled(Trigger trigger, Boolean disabled) throws QueueException {

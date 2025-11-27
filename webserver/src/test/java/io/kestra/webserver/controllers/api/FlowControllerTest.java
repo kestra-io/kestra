@@ -74,6 +74,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class FlowControllerTest {
     private static final String TEST_NAMESPACE = "io.kestra.unittest";
 
+    public static final String FLOW_PATH = "/api/v1/main/flows";
+
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -1097,6 +1099,34 @@ class FlowControllerTest {
         assertThat(result.getNodes().size()).isEqualTo(5);
         assertThat(result.getEdges().size()).isEqualTo(4);
     }
+
+    @Test
+    void exportFlows() {
+        Flow f1 = generateFlow("flow_export_1", "io.kestra.export", "a");
+        Flow f2 = generateFlow("flow_export_2", "io.kestra.export", "b");
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH, f1),
+            Flow.class
+        );
+        client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH, f2),
+            Flow.class
+        );
+
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET(FLOW_PATH + "/export"),
+            byte[].class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getHeaders().get("Content-Disposition")).contains("attachment; filename=flows.csv");
+        String csv = new String(response.body());
+        assertThat(csv).contains("id");
+        assertThat(csv).contains(f1.getId());
+        assertThat(csv).contains(f2.getId());
+    }
+
 
     private Flow generateFlow(String namespace, String inputName) {
         return generateFlow(IdUtils.create(), namespace, inputName);

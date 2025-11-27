@@ -236,7 +236,6 @@
     import Labels from "../layout/Labels.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import DataTable from "../layout/DataTable.vue";
-    //@ts-expect-error no declaration
     import SelectTable from "../layout/SelectTable.vue";
     import MultilineSecret from "./MultilineSecret.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
@@ -279,13 +278,15 @@
         keyOnly?: boolean;
         paneView?: boolean;
         namespaceColumn?: boolean;
+        includeInherited?: boolean;
     }>(), {
         addSecretModalVisible: false,
         namespace: undefined,
         filterable: true,
         keyOnly: false,
         paneView: false,
-        namespaceColumn: undefined
+        namespaceColumn: undefined,
+        includeInherited: false
     });
 
     const emit = defineEmits<{
@@ -465,11 +466,35 @@
 
             emit("update:isSecretReadOnly", secretsResponse.readOnly ?? false);
             
-            hasData.value = (secretsResponse.results?.length ?? 0) !== 0
+            let allSecrets = secretsResponse.results ?? [];
 
+            if (props.includeInherited && props.namespace) {
+                const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
+                
+                for (const parentNs of parentNamespaces) {
+                    const parentSecretsResponse = await secretsStore.find(loadQuery({
+                        filters: {
+                            namespace: {
+                                EQUALS: parentNs
+                            }
+                        }
+                    }));
+
+                    const parentSecrets = parentSecretsResponse?.results ?? [];
+                    if (parentSecrets.length > 0) {
+                        const currentKeys = new Set(allSecrets.map((s: any) => s?.key).filter(Boolean));
+                        const newSecrets = parentSecrets.filter(
+                            (s: any) => s?.key && !currentKeys.has(s.key)
+                        );
+                        allSecrets.push(...newSecrets);
+                    }
+                }
+            }
+
+            hasData.value = (allSecrets.length ?? 0) !== 0;
             areNamespaceSecretsReadOnly.value = secretsResponse.readOnly ?? false;
-            secrets.value = secretsResponse.results;
-            total.value = secretsResponse.total;
+            secrets.value = allSecrets;
+            total.value = allSecrets.length;
         } finally {
             if (callback) callback();
         }

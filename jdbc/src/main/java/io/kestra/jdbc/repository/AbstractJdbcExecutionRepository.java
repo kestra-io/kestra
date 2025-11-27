@@ -288,6 +288,15 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     @Override
+    public Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return findAllAsync(tenantId);
+        }
+        Condition condition = this.filter(filters, null, Resource.EXECUTION);
+        return findAsync(defaultFilter(tenantId), condition);
+    }
+
+    @Override
     public List<DailyExecutionStatistics> dailyStatisticsForAllTenants(
         @Nullable String query,
         @Nullable String namespace,

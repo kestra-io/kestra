@@ -25,7 +25,7 @@ const handleAuthError = (error, to) => {
 
 initApp(app, routes, null, en).then(({router, piniaStore}) => {
     router.beforeEach(async (to, from, next) => {
-        if (["login", "setup"].includes(to.name)) {
+        if (to.meta?.anonymous === true) {
             return next();
         }
 

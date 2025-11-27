@@ -59,7 +59,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Triggers.Fields dateFilterField() {
-        return null;
+        return Triggers.Fields.NEXT_EXECUTION_DATE;
     }
 
     public AbstractJdbcTriggerRepository(io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository,
@@ -82,7 +82,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
         JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
-        
+
         return jdbcSchedulerContext.getContext()
             .select(field("value"))
             .from(this.jdbcRepository.getTable())
@@ -98,9 +98,9 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             .fetch()
             .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
     }
-    
+
     public List<Trigger> findByNextExecutionDateReadyButLockedTriggers(ZonedDateTime now) {
-        
+
         return this.jdbcRepository.getDslContextWrapper()
             .transactionResult(configuration -> DSL.using(configuration)
                 .select(field("value"))
@@ -115,7 +115,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
                 .fetch()
                 .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class))));
     }
-    
+
     protected Temporal toNextExecutionTime(ZonedDateTime now) {
         return now.toOffsetDateTime();
     }
@@ -199,7 +199,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
     @Override
     public ArrayListTotal<Trigger> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, "next_execution_date", Resource.TRIGGER);
+        var condition = filter(filters, fieldsMapping.get(dateFilterField()), Resource.TRIGGER);
         return findPage(pageable, tenantId, condition);
     }
 
@@ -223,11 +223,13 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         return findPage(pageable, tenantId, condition);
     }
 
-    /** {@inheritDoc} */
     @Override
-    public Flux<Trigger> find(String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, "next_execution_date", Resource.TRIGGER);
-        return findAsync(tenantId, condition);
+    public Flux<Trigger> findAsync(String tenantId, List<QueryFilter> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return findAllAsync(tenantId);
+        }
+        Condition condition = this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.TRIGGER);
+        return findAsync(defaultFilter(tenantId), condition);
     }
 
     protected Condition fullTextCondition(String query) {

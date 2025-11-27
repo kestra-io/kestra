@@ -542,11 +542,15 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
             }
         }
 
-        #chart > div {
-            padding: calc($spacer * 2);
-            border: 1px solid var(--el-border-color-light);
-            border-radius: calc($spacer / 2);
-            background-color: var(--ks-background-card);
+        #chart {
+            padding-top: 0;
+
+            > div {
+                padding: calc($spacer * 2);
+                border: 1px solid var(--el-border-color-light);
+                border-radius: calc($spacer / 2);
+                background-color: var(--ks-background-card);
+            }
         }
     }
 

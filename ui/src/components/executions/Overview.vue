@@ -79,7 +79,7 @@
         </div>
 
         <el-row class="mb-3">
-            <el-col :span="24" class="gap-2 d-flex justify-content-end actions-buttons">
+            <el-col :span="24" class="gap-2 d-flex justify-content-end actions-buttons mb-version">
                 <SetLabels :execution="execution" />
                 <Restart isReplay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <Restart :execution="execution" @follow="forwardEvent('follow', $event)" />
@@ -92,7 +92,7 @@
             </el-col>
         </el-row>
 
-        <el-table tableLayout="auto" fixed :data="items" :showHeader="false" class="mb-0">
+        <el-table fixed :data="items" :showHeader="false" class="mb-0">
             <el-table-column prop="key" :label="$t('key')" />
 
             <el-table-column prop="value" :label="$t('value')">
@@ -144,6 +144,7 @@
             <el-button
                 :disabled="!hasPreviousExecution"
                 @click="navigateToExecution('previous')"
+                class="exec-btn"
             >
                 <el-icon class="el-icon--left">
                     <ChevronLeft />
@@ -154,6 +155,7 @@
             <el-button
                 :disabled="!hasNextExecution"
                 @click="navigateToExecution('next')"
+                class="exec-btn"
             >
                 {{ $t('next_execution') }}
                 <el-icon class="el-icon--right">
@@ -162,7 +164,7 @@
             </el-button>
         </div>
 
-        <div v-if="execution.trigger" class="my-5">
+        <div v-if="execution.trigger" class="my-5 overview-cascader">
             <h5>{{ $t("trigger") }}</h5>
             <TriggerCascader
                 :options="transform({
@@ -174,7 +176,7 @@
             />
         </div>
 
-        <div v-if="execution.inputs" class="my-5">
+        <div v-if="execution.inputs" class="my-5 overview-cascader">
             <h5>{{ $t("inputs") }}</h5>
             <KestraCascader
                 :options="transform(execution.inputs)"
@@ -183,7 +185,7 @@
             />
         </div>
 
-        <div v-if="execution.variables" class="my-5">
+        <div v-if="execution.variables" class="my-5 overview-cascader">
             <h5>{{ $t("variables") }}</h5>
             <KestraCascader
                 :options="transform(execution.variables)"
@@ -192,7 +194,7 @@
             />
         </div>
 
-        <div v-if="execution.outputs" class="my-5">
+        <div v-if="execution.outputs" class="my-5 overview-cascader">
             <h5>{{ $t("flow_outputs") }}</h5>
             <KestraCascader
                 :options="transform(execution.outputs)"
@@ -662,6 +664,40 @@
         border-top: 1px solid var(--ks-log-background-error);
         word-break: break-all;
         overflow-wrap: anywhere;
+    }
+}
+
+// Mobile Version
+
+@media (max-width: 768px) {
+
+    .mb-version{
+        display: grid !important;
+        grid: auto-flow / 1fr 1fr;
+    }
+
+    .overview-cascader{
+        .el-cascader-panel {
+            flex-direction: column;
+            overflow: hidden;
+            .el-cascader-menu{
+                max-width: 100%;
+            }
+        }
+    }
+
+    .el-table .el-table__cell{
+        min-width: 140px;
+    }
+
+    .exec-btn{
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 375px) {
+    .exec-btn{
+        font-size: 10px;
     }
 }
 </style>

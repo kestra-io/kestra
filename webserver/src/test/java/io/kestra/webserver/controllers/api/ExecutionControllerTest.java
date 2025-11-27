@@ -4,12 +4,15 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
+import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -227,11 +230,11 @@ class ExecutionControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
         assertThat(response.body()).isNull();
     }
-    
+
     @Test
     void webhookWithInputs() {
         record Hello(String hello) {}
-        
+
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
                 .POST(
@@ -240,11 +243,11 @@ class ExecutionControllerTest {
                 ),
             Execution.class
         );
-        
+
         assertThat(execution).isNotNull();
         assertThat(execution.getId()).isNotNull();
     }
-    
+
     @Test
     void resolveAbsoluteDateTime() {
         final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6,10, 0, ZoneId.systemDefault());
@@ -255,7 +258,6 @@ class ExecutionControllerTest {
         assertThat(executionController.resolveAbsoluteDateTime(null, offset, baseTimestamp)).isEqualTo(baseTimestamp.minus(offset));
         assertThrows(IllegalArgumentException.class, () -> executionController.resolveAbsoluteDateTime(absoluteTimestamp, offset, baseTimestamp));
     }
-
 
     @Test
     void nullLabels() {
@@ -487,7 +489,7 @@ class ExecutionControllerTest {
     }
 
     @Test
-   void shouldHaveAnUrlWhenCreated() {
+    void shouldHaveAnUrlWhenCreated() {
         // ExecutionController.ExecutionResponse cannot be deserialized because it didn't have any default constructor.
         // adding it would mean updating the Execution itself, which is too annoying, so for the test we just deserialize to a Map.
         Map<?, ?> executionResult = client.toBlocking().retrieve(
@@ -511,5 +513,41 @@ class ExecutionControllerTest {
         ));
 
         assertThat(error.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void exportExecutions() {
+        createAndExecuteFlow();
+
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET("/api/v1/main/executions/export"),
+            byte[].class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getHeaders().get("Content-Disposition")).contains("attachment; filename=executions.csv");
+        String csv = new String(response.body());
+        assertThat(csv).contains("id");
+    }
+
+    void createAndExecuteFlow() {
+        String namespaceId = "io.othercompany";
+        String flowId = "flowId";
+        Flow create = Flow.builder()
+            .id(flowId)
+            .tenantId(MAIN_TENANT)
+            .namespace(namespaceId)
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
+            .build();
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/flows", create),
+            Flow.class
+        );
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/executions/" + namespaceId + "/" + flowId, null),
+            Execution.class
+        );
     }
 }

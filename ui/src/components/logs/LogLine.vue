@@ -8,13 +8,13 @@
         <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="28">
             <MenuRight />
         </el-icon>
-        <span :style="levelStyle" class="el-tag log-level">{{ log.level }}</span>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ log.taskId ?? log.flowId ?? "" }}</span>
             <div
                 class="header"
                 :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
             >
+                <span :style="levelStyle" class="el-tag log-level">{{ log.level }}</span>
                 <span class="header-badge text-secondary">
                     {{ Filters.date(log.timestamp, "iso") }}
                 </span>
@@ -174,9 +174,7 @@ div.line {
     cursor: text;
     white-space: pre-wrap;
     word-break: break-all;
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
+    display: block;
 
     border-left-width: 2px !important;
     border-left-style: solid;
@@ -199,13 +197,25 @@ div.line {
 
     .log-level {
         padding: .25rem;
-        margin-top: 0.25rem;
-        align-self: center;
+        margin-top: 0;
+        display: inline-flex;
+        vertical-align: middle;
     }
 
     .log-content {
-        // prevent Firefox word breaks
-        flex-grow: 1;
+        display: inline-block;
+        vertical-align: middle;
+        /* prevent Firefox word breaks */
+        max-width: calc(100% - 6rem);
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        min-width: 0;
+
+        .header {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
 
         .header > * + * {
             margin-left: 1rem;
@@ -221,7 +231,8 @@ div.line {
         text-align: center;
         white-space: nowrap;
         vertical-align: baseline;
-        width: 40px;
+        width: auto;
+        min-width: 40px;
 
         span:first-child {
             margin-right: 6px;

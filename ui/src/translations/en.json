@@ -1593,7 +1593,8 @@
         "select filter": "Select a filter to add",
         "enter description": "Enter filter description",
         "enter label": "Enter filter label",
-        "reset": "Reset all filters",
+        "reset": "Clear all",
+        "reset_all": "Reset all filters",
         "reset_tooltip": "Reset to default",
         "drag to reorder columns": "Drag to reorder columns",
         "empty": "You don't have any saved filter yet.",
@@ -1775,7 +1776,8 @@
                 "revision": "Version of the flow used for this execution",
                 "inputs": "Input values provided to the execution",
                 "outputs": "Outputs emitted by the execution",
-                "task-id": "ID of the last task in the execution"
+                "task-id": "ID of the last task in the execution",
+                "trigger": "Trigger that started the execution"
             },
             "kv": {
                 "namespace": "Logical grouping where the key-value pair is stored",

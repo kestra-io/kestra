@@ -7,7 +7,7 @@
     import {useApiStore} from "../stores/api";
     import {useRoute} from "vue-router";
 
-    interface Message {
+    export interface Message {
         title?: string;
         message?: string;
         content?: {
@@ -96,14 +96,14 @@
 
         if (props.message.response) {
             error.error.response = {};
-            error.error.request = {};
+            error.error.request = {
+                method: props.message.response.config.method,
+                url: props.message.response.config.url,
+            };
 
             if (props.message.response.status) {
                 error.error.response.status = props.message.response.status;
             }
-
-            error.error.request.url = props.message.response.config.url;
-            error.error.request.method = props.message.response.config.method;
         }
 
         apiStore.events(error);

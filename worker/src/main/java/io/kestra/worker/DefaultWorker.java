@@ -413,7 +413,7 @@ public class DefaultWorker implements Worker {
                     WorkerTaskResult workerTaskResult = null;
                     try {
                         if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
-                            workerTaskResult = new WorkerTaskResult(currentWorkerTask.getTaskRun().withState(SKIPPED));
+                            workerTaskResult = new WorkerTaskResult(currentWorkerTask.getTaskRun().withState(SKIPPED).addAttempt(TaskRunAttempt.builder().workerId(this.id).state(new State().withState(SKIPPED)).build()));
                             this.workerTaskResultQueue.emit(workerTaskResult);
                         } else {
                             workerTaskResult = this.run(currentWorkerTask, false);

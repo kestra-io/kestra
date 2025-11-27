@@ -250,15 +250,9 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        List<ResolvedTask> childTasks = ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)).stream()
-            .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
-            .toList();
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
 
-        if (childTasks.isEmpty()) {
-            return Optional.of(State.Type.SUCCESS);
-        }
-
-        return FlowableUtils.resolveState(
+        return FlowableUtils.resolveSequentialState(
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),

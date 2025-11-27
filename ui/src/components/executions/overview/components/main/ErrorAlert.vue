@@ -1,7 +1,7 @@
 <template>
     <el-alert id="error" type="error" showIcon :closable="false">
         <template #title>
-            <div v-if="logs" @click="isExpanded = !isExpanded">
+            <div v-if="logs.length" @click="isExpanded = !isExpanded">
                 <Markdown
                     v-if="logs.at(-1)?.message"
                     :source="`${$t('execution_failed')}: ${logs.at(-1)!.message}`"

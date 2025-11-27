@@ -175,7 +175,7 @@ export const useFlowStore = defineStore("flow", () => {
                 if (flowBeforeEdit &&
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
-                    
+
                     coreStore.message = {
                         variant: "error",
                         title: t("readonly property"),
@@ -609,6 +609,22 @@ function deleteFlowAndDependencies() {
                 Utils.downloadUrl(response.request.responseURL, "flows.zip");
             });
     }
+
+    async function exportFlowAsCSV(params: any) {
+        const response = await axios.get(
+            `${apiUrl()}/flows/export/by-query/csv`,
+            {params, responseType: "blob"}
+        );
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "flows.csv");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    }
+
     function importFlows(options: { file: File, namespace: string, override?: boolean }) {
         return axios.post(`${apiUrl()}/flows/import`, Utils.toFormData(options), {
             headers: {"Content-Type": "multipart/form-data"}
@@ -871,6 +887,7 @@ function deleteFlowAndDependencies() {
         loadRevisions,
         exportFlowByIds,
         exportFlowByQuery,
+        exportFlowAsCSV,
         importFlows,
         disableFlowByIds,
         disableFlowByQuery,

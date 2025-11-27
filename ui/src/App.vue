@@ -5,7 +5,7 @@
         <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
-        <VueTour v-if="shouldRenderApp && route?.name && !isAnonymousRoute" />
+        <VueTour v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />
         <UnsavedChangesDialog />
     </el-config-provider>
 </template>
@@ -41,10 +41,6 @@
     const route = useRoute();
 
     const envName = computed(() => layoutStore.envName || miscStore.configs?.environment?.name);
-
-    const isLoginRoute = computed(() => route?.name?.toString().startsWith("login"));
-    const isSetupRoute = computed(() => route?.name === "setup");
-    const isAnonymousRoute = computed(() => isLoginRoute.value || isSetupRoute.value);
 
     const shouldRenderApp = computed(() => loaded.value);
 
@@ -91,7 +87,7 @@
     onMounted(async () => {
         setTitleEnvSuffix();
 
-        if (!isAnonymousRoute.value && BasicAuth.isLoggedIn()) {
+        if (!route?.meta?.anonymous && BasicAuth.isLoggedIn()) {
             try {
                 await loadGeneralResources();
             } catch (error) {

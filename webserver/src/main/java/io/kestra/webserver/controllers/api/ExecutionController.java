@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
@@ -45,7 +46,9 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.ExecutionStreamingService;
+import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.kestra.webserver.utils.filepreview.FileRender;
 import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
@@ -72,9 +75,9 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.extensions.Extension;
 import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -197,12 +200,15 @@ public class ExecutionController {
 
     @Inject
     private SecureVariableRendererFactory secureVariableRendererFactory;
-    
+
     @Inject
     private LogService logService;
 
     @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
     private boolean enableLocalFilePreview;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -741,7 +747,7 @@ public class ExecutionController {
                         "Flow execution blocked: one or more condition checks evaluated to false."
                     ));
                 }
-                
+
                 final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
                     .map(exec -> {
                         if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
@@ -752,7 +758,7 @@ public class ExecutionController {
                         }
                     })
                     .get();
-                
+
                 try {
                     // inject the traceparent into the execution
                     openTelemetry
@@ -2570,6 +2576,23 @@ public class ExecutionController {
         ).stream().map(LastExecutionResponse::ofExecution).toList();
     }
 
+    @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Executions"}, summary = "Export all executions as a streamed CSV file")
+    @SuppressWarnings("unchecked")
+    public MutableHttpResponse<Flux> exportExecutions(
+        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+    ) {
+
+        return HttpResponse.ok(
+                CSVUtils.toCSVFlux(
+                   executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
+                        .map(log -> objectMapper.convertValue(log, Map.class))
+                )
+            )
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");
+    }
+
     @Introspected
     public record LastExecutionResponse(
         @Parameter(description = "The execution's ID") String id,
@@ -2622,7 +2645,7 @@ public class ExecutionController {
             String message
         ) {
         }
-        
+
         @Introspected
         public record ApiCheckFailure(
             @Parameter(description = "The message")

@@ -1,7 +1,7 @@
 <template>
     <Layout
         :title="$t(`demos.namespace.${props.tab}.title`)"
-        :image="{source: sourceImg, alt: t(`demos.namespace.${props.tab}.title`)}"
+        :image="{source: sourceImg, alt: $t(`demos.namespace.${props.tab}.title`)}"
         :video="videoSource"
     >
         <template #message>

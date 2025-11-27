@@ -29,7 +29,6 @@
     import type {ColumnConfig} from "../../../composables/useTableColumns";
     import DraggableTableColumns from "../../layout/DraggableTableColumns.vue";
 
-    
     const props = defineProps<{
         storageKey: string;
         columns: ColumnConfig[];

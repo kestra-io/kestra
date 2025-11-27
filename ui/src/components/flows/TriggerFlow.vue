@@ -1,6 +1,9 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
+        <component :is="RemoteButton" v-if="RemoteButton" @click="onClick()">
+            {{ $t("execute") }}
+        </component>
+        <el-button v-else-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
         <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.tourStarted}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
@@ -84,6 +87,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useFlowStore} from "../../stores/flow";
+    import {loadRemote} from "@module-federation/enhanced/runtime";
 
     export default {
         components: {
@@ -121,8 +125,19 @@
                 icon: {
                     LightningBolt: shallowRef(LightningBolt),
                     Play: shallowRef(Play)
-                }
+                },
+                RemoteButton: null
             };
+        },
+        mounted() {
+            // to initialize shared dependencies,
+            // we force import a known import from the remote app
+            import("remote/remote-app").then(() => {   
+                // then we can load whatever we want from this remote
+                loadRemote("remote/remote-button").then((module) => {
+                    this.RemoteButton = module.default;
+                });
+            })
         },
         methods: {
             onClick() {

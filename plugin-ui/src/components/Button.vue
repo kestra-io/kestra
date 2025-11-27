@@ -10,7 +10,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <el-button @click="emit('click')" type="secondary">
+  <el-button @click="emit('click')" type="success">
     <slot /> {{ label }} <em>remote</em>
     <img :src="image" alt="Kestra Logo" style="width: 16px; height: 16px; margin-left: 5px;" />
   </el-button>

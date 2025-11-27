@@ -64,13 +64,6 @@ export default defineConfig({
     plugins: [
         federation({
             name: "host",
-            remotes: {
-                remote: { // for runtime processing
-                    type: "module", 
-                    name: "remote", // for build to work
-                    entry: "http://localhost:4174/remoteEntryRemote.js",
-                },
-            },
             shared: {
                 vue: { 
                     singleton: true, 

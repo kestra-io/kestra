@@ -74,6 +74,7 @@
 
 
 <script>
+    import {toRaw} from "vue";
     import FlowRun from "./FlowRun.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import Play from "vue-material-design-icons/Play.vue";
@@ -87,7 +88,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useFlowStore} from "../../stores/flow";
-    import {loadRemote} from "@module-federation/enhanced/runtime";
+    import {registerRemotes, registerShared, loadRemote} from "@module-federation/enhanced/runtime";
 
     export default {
         components: {
@@ -130,14 +131,23 @@
             };
         },
         mounted() {
-            // to initialize shared dependencies,
-            // we force import a known import from the remote app
-            import("remote/remote-app").then(() => {   
-                // then we can load whatever we want from this remote
-                loadRemote("remote/remote-button").then((module) => {
-                    this.RemoteButton = module.default;
-                });
-            })
+            registerRemotes([
+                {
+                    type: "module",
+                    name: "remote",
+                    entry: "http://localhost:4174/remoteEntryRemote.js"
+                },
+            ])
+
+            registerShared({
+                vue: {
+                    singleton: true,
+                },
+            });
+
+            loadRemote("remote/remote-button").then((module) => {
+                this.RemoteButton = toRaw(module.default);
+            });
         },
         methods: {
             onClick() {

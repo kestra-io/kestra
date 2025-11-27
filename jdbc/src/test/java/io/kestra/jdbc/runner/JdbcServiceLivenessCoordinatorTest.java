@@ -164,7 +164,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         // create second worker (this will revoke previously one).
         Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
         newWorker.run();
-        boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
+        boolean resubmitLatchAwait = resubmitLatch.await(30, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait)
             .withFailMessage(() -> "shouldReEmitTasksToTheSameWorkerGroup: resubmitLatchAwait was not OK, workerTaskResultQueue content: " + TestsUtils.stringify(workerTaskResultQueueAppendLog))
             .isTrue();

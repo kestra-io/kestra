@@ -21,7 +21,7 @@
                     }
                 }"
                 target="_blank"
-                :aria-label="t('common.openInNewTab')"
+                :aria-label="$t('common.openInNewTab')"
             >
                 <OpenInNew class="blank" />
             </router-link>
@@ -54,6 +54,8 @@
     import ContextInfoContent from "../ContextInfoContent.vue";
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue";
 
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
 
     import {useNetwork} from "@vueuse/core"
     import {useScrollMemory} from "../../composables/useScrollMemory"

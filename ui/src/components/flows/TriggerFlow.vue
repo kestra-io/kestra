@@ -74,11 +74,10 @@
 
 
 <script>
-    import {toRaw} from "vue";
+    import {shallowRef} from "vue";
     import FlowRun from "./FlowRun.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import Play from "vue-material-design-icons/Play.vue";
-    import {shallowRef} from "vue";
     import {useMediaQuery} from "@vueuse/core";
     import {pageFromRoute} from "../../utils/eventsRouter";
     import FlowWarningDialog from "./FlowWarningDialog.vue";
@@ -146,7 +145,7 @@
             });
 
             loadRemote("remote/remote-button").then((module) => {
-                this.RemoteButton = toRaw(module.default);
+                this.RemoteButton = shallowRef(module.default);
             });
         },
         methods: {

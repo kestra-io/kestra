@@ -46,7 +46,7 @@
                                     :navbar="false"
                                     :modelValue="computedDebugValue"
                                     @update:model-value="editorValue = $event"
-                                    @confirm="onDebugExpression($event || '')"
+                                    @confirm="onDebugExpression($event)"
                                     class="w-100"
                                 />
 

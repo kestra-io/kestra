@@ -34,10 +34,10 @@ import java.util.List;
             code = {
                 "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
                 "states: ",
-                " - KILLED",
-                " - FAILED",
-                " - WARNING",
-                " - SUCCESS"
+                "  - KILLED",
+                "  - FAILED",
+                "  - WARNING",
+                "  - SUCCESS"
             }
         )
     },

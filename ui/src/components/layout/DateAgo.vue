@@ -17,9 +17,11 @@
     </span>
 </template>
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, getCurrentInstance} from "vue";
     import Utils from "../../utils/utils";
     import moment from "moment";
+
+    const {$filters} = getCurrentInstance()?.appContext.config.globalProperties || {} as any;
 
     const props = defineProps({
         date: {
@@ -52,6 +54,6 @@
         return moment(props.date).fromNow();
     })
     const full = computed(() => {
-        return moment(props.date).format(props.format);
+        return $filters.date(props.date, props.format);
     })
 </script>

@@ -1,6 +1,11 @@
 <script lang="ts" setup>
+import image from "../remote_assets/logo.svg";
 defineProps<{
-    label: string
+    label?: string
+}>()
+
+const emit = defineEmits<{
+    (e: 'click'): void
 }>()
 </script>
 
@@ -15,7 +20,9 @@ defineProps<{
       padding: 0.5rem 1rem 0.5rem 1rem;
       color: rgb(24, 24, 24);
     "
+    @click="emit('click')"
   >
-    <slot /> {{ label }}
+    <slot /> {{ label }} 
+    <img :src="image" alt="Kestra Logo" style="width: 16px; height: 16px; margin-left: 5px;" />
   </button>
 </template>

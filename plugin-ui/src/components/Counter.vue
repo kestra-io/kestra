@@ -1,25 +1,19 @@
 <script setup lang="ts">
 import { storeToRefs } from "pinia";
 import { useStore } from "../stores/counter";
+import Button from "./Button.vue";
+import image from "../remote_assets/logo.svg";
 const store = useStore();
 const { count } = storeToRefs(store);
 </script>
 
 <template>
-  <button
-    style="
-      border: 0 solid #e2e8f0;
-      margin-top: 10px;
-      background-color: rgb(246, 179, 82);
-      border-radius: 0.25rem;
-      font-weight: 700;
-      padding: 0.5rem 1rem 0.5rem 1rem;
-      color: rgb(24, 24, 24);
-    "
+  <Button
     @click="store.increment"
   >
+    <img :src="image" alt="Kestra Logo" style="width: 20px; height: 20px; margin-right: 5px;" />
     Remote counter: {{ count }}
-  </button>
+</Button>
 </template>
 
 <style scoped />

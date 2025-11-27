@@ -493,6 +493,12 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
         #alerts {
             .el-alert {
                 margin-bottom: $spacer;
+
+                & :deep(.el-alert__icon) {
+                    font-size: var(--el-alert-icon-size);
+                    width: var(--el-alert-icon-size);
+                    margin-right: calc($spacer * 1.5);
+                }
             }
         }
     }

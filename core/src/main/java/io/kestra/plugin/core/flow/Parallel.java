@@ -1,21 +1,17 @@
 package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.utils.ListUtils;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -23,13 +19,16 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
 @ToString
@@ -45,8 +44,8 @@ import jakarta.validation.constraints.NotNull;
         @Example(
             full = true,
             title = """
-            Run tasks in parallel
-            """,
+                Run tasks in parallel
+                """,
             code = """
                 id: parallel
                 namespace: company.team
@@ -71,38 +70,38 @@ import jakarta.validation.constraints.NotNull;
         @Example(
             full = true,
             title = """
-            Run two sequences in parallel
-            """,
+                Run two sequences in parallel
+                """,
             code = """
                 id: parallel_sequences
                 namespace: company.team
 
                 tasks:
-                - id: parallel
+                  - id: parallel
                     type: io.kestra.plugin.core.flow.Parallel
                     tasks:
-                    - id: sequence1
+                      - id: sequence1
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
-                        - id: task1
+                          - id: task1
                             type: io.kestra.plugin.core.debug.Return
                             format: "{{ task.id }}"
 
-                        - id: task2
+                          - id: task2
                             type: io.kestra.plugin.core.debug.Return
                             format: "{{ task.id }}"
 
-                    - id: sequence2
+                      - id: sequence2
                         type: io.kestra.plugin.core.flow.Sequential
                         tasks:
-                        - id: task3
+                          - id: task3
                             type: io.kestra.plugin.core.debug.Return
                             format: "{{ task.id }}"
 
-                        - id: task4
+                          - id: task4
                             type: io.kestra.plugin.core.debug.Return
                             format: "{{ task.id }}"
-            """
+                """
         )
     },
     aliases = "io.kestra.core.tasks.flows.Parallel"

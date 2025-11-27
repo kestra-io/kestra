@@ -136,13 +136,15 @@
                     :execution
                 />
 
-                <div>
-                    <TimeSeries
-                        :chart="{...chart, content: YAML_CHART}"
-                        :filters
-                        showDefault
-                        wide
-                    />
+                <div id="chart">
+                    <div>
+                        <TimeSeries
+                            :chart="{...chart, content: YAML_CHART}"
+                            :filters
+                            showDefault
+                            execution
+                        />
+                    </div>
                 </div>
             </div>
         </el-splitter-panel>
@@ -538,6 +540,13 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
                     margin-right: calc($spacer * 1.5);
                 }
             }
+        }
+
+        #chart > div {
+            padding: calc($spacer * 2);
+            border: 1px solid var(--el-border-color-light);
+            border-radius: calc($spacer / 2);
+            background-color: var(--ks-background-card);
         }
     }
 

@@ -15,7 +15,7 @@
                 :data="parsedData"
                 :options
                 :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
-                :class="props.short ? 'short-chart' : 'chart'"
+                :class="props.short ? 'short-chart' : props.execution ? 'execution-chart' : 'chart'"
                 class="chart"
             />
         </div>
@@ -48,7 +48,7 @@
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
-        wide: {type: Boolean, default: false},
+        execution: {type: Boolean, default: false},
     });
 
 
@@ -80,8 +80,8 @@
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
-            barThickness: props.short ? 8 : props.wide ? 24: 12,
-            maxBarThickness: props.short ? 8 : props.wide ? 24: 12,
+            barThickness: props.short ? 8 : props.execution ? 24: 12,
+            maxBarThickness: props.short ? 8 : props.execution ? 24: 12,
             categoryPercentage: props.short ? 1.0 : 0.8,
             barPercentage: props.short ? 1.0 : 0.9,
             borderSkipped: false,
@@ -113,7 +113,7 @@
             scales: {
                 x: {
                     title: {
-                        display: props.short ? false : true,
+                        display: props.short || props.execution ? false : true,
                         text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
@@ -122,12 +122,12 @@
                 },
                 y: {
                     title: {
-                        display: props.short ? false : true,
+                        display: props.short || props.execution ? false : true,
                         text: aggregator.value[0]?.[1]?.displayName ?? aggregator.value[0]?.[0],
                     },
                     position: "left",
                     ...DEFAULTS,
-                    display: props.short ? false : true,
+                    display: props.short || props.execution ? false : true,
                     ticks: {
                         ...DEFAULTS.ticks,
                         callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
@@ -323,6 +323,15 @@
 .short-chart {
     &:not(.with-legend) {
         #{--chart-height}: 40px;
+    }
+
+    min-height: var(--chart-height);
+    max-height: var(--chart-height);
+}
+
+.execution-chart {
+    &:not(.with-legend) {
+        #{--chart-height}: 120px;
     }
 
     min-height: var(--chart-height);

@@ -308,6 +308,19 @@ export default class Utils {
             return "yyyy-MM-DD:HH:mm";
         }
     }
+
+    static getParentNamespaces(namespace: string): string[] {
+        if (!namespace) return [];
+
+        const parts = namespace.split(".");
+        const parents: string[] = [];
+
+        for (let i = 1; i <= parts.length; i++) {
+            parents.push(parts.slice(0, i).join("."));
+        }
+
+        return parents;
+    }
 }
 
 export const useTheme = () => {

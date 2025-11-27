@@ -169,6 +169,10 @@ export const useBaseNamespacesStore = () => {
         // NOOP IN OSS
     }
 
+    async function loadInheritedVariables(this: any, _: {id: string, commit?: boolean}) {
+        // NOOP IN OSS
+    }
+
     async function createDirectory(this: any, payload: {namespace: string; path: string}) {
         const URL = `${base(payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`;
         await axios.post(URL);
@@ -283,6 +287,7 @@ export const useBaseNamespacesStore = () => {
         createSecrets,
         patchSecret,
         deleteSecrets,
+        loadInheritedVariables,
         createDirectory,
         readDirectory,
         createFile,

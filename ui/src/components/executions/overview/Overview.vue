@@ -135,6 +135,15 @@
                     :elements="execution.outputs"
                     :execution
                 />
+
+                <div>
+                    <TimeSeries
+                        :chart="{...chart, content: YAML_CHART}"
+                        :filters
+                        showDefault
+                        wide
+                    />
+                </div>
             </div>
         </el-splitter-panel>
     </el-splitter>
@@ -173,9 +182,10 @@
     import Labels from "./components/sidebar/Labels.vue";
     import Timeline from "./components/sidebar/Timeline.vue";
 
-    import Cascader from "./components/main/Cascader.vue";
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
+    import Cascader from "./components/main/Cascader.vue";
+    import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
 
     import NoData from "../../layout/NoData.vue";
 
@@ -190,6 +200,9 @@
     import Kill from "./components/actions/Kill.vue";
     import Api from "./components/actions/Api.vue";
     import Delete from "./components/actions/Delete.vue";
+
+    import yaml from "yaml";
+    import YAML_CHART from "./components/main/assets/chart.yaml?raw";
 
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
@@ -219,8 +232,8 @@
                 to: {
                     name: "namespaces/update",
                     params: {
-                        ...(route.params.tenant
-                            ? {tenant: route.params.tenant}
+                        ...(execution.value.tenantId
+                            ? {tenant: execution.value.tenantId}
                             : {}),
                         id: execution.value.namespace,
                         tab: "overview",
@@ -234,8 +247,8 @@
                 to: {
                     name: "flows/update",
                     params: {
-                        ...(route.params.tenant
-                            ? {tenant: route.params.tenant}
+                        ...(execution.value.tenantId
+                            ? {tenant: execution.value.tenantId}
                             : {}),
                         namespace: execution.value.namespace,
                         id: execution.value.flowId,
@@ -263,8 +276,8 @@
                         to: {
                             name: "admin/triggers",
                             params: {
-                                ...(route.params.tenant
-                                    ? {tenant: route.params.tenant}
+                                ...(execution.value.tenantId
+                                    ? {tenant: execution.value.tenantId}
                                     : {}),
                             },
                             query: {
@@ -346,8 +359,8 @@
                         to: {
                             name: "executions/update",
                             params: {
-                                ...(route.params.tenant
-                                    ? {tenant: route.params.tenant}
+                                ...(execution.value.tenantId
+                                    ? {tenant: execution.value.tenantId}
                                     : {}),
                                 namespace: execution.value.namespace,
                                 flowId: execution.value.flowId,
@@ -368,8 +381,8 @@
                         to: {
                             name: "executions/update",
                             params: {
-                                ...(route.params.tenant
-                                    ? {tenant: route.params.tenant}
+                                ...(execution.value.tenantId
+                                    ? {tenant: execution.value.tenantId}
                                     : {}),
                                 namespace: execution.value.namespace,
                                 flowId: execution.value.flowId,
@@ -414,6 +427,31 @@
             ) ?? false
         );
     };
+
+    const chart = yaml.parse(YAML_CHART);
+    const filters = execution.value
+        ? [
+            ...(execution.value.tenantId
+                ? [
+                    {
+                        field: "tenant",
+                        operation: "EQUALS",
+                        value: execution.value.tenantId,
+                    },
+                ]
+                : []),
+            {
+                field: "namespace",
+                operation: "EQUALS",
+                value: execution.value.namespace,
+            },
+            {
+                field: "flowId",
+                operation: "EQUALS",
+                value: execution.value.flowId!,
+            },
+        ]
+        : [];
 
     onMounted(() => {
         if (!route.params.id) return;

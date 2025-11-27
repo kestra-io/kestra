@@ -48,6 +48,7 @@
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
+        wide: {type: Boolean, default: false},
     });
 
 
@@ -79,8 +80,8 @@
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
-            barThickness: props.short ? 8 : 12,
-            maxBarThickness: props.short ? 8 : 12,
+            barThickness: props.short ? 8 : props.wide ? 24: 12,
+            maxBarThickness: props.short ? 8 : props.wide ? 24: 12,
             categoryPercentage: props.short ? 1.0 : 0.8,
             barPercentage: props.short ? 1.0 : 0.9,
             borderSkipped: false,

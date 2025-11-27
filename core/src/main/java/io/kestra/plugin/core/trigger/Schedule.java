@@ -399,10 +399,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         // control conditions
         if (this.getConditions() != null) {
             try {
-                boolean conditionResults = this.validateScheduleCondition(conditionContext);
-                if (!conditionResults) {
-                    return Optional.empty();
-                }
+                this.validateScheduleCondition(conditionContext);
             } catch(InternalException ie) {
                 // validate schedule condition can fail to render variables
                 // in this case, we return a failed execution so the trigger is not evaluated each second
@@ -536,11 +533,11 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         Output.OutputBuilder<?, ?> outputBuilder = Output.builder()
             .date(output.getDate());
 
-        Optional<ZonedDateTime> nextWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), true);
-        nextWithCondition.ifPresent(outputBuilder::next);
+        this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), true)
+            .ifPresent(outputBuilder::next);
 
-        Optional<ZonedDateTime> previousWithCondition = this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), false);
-        previousWithCondition.ifPresent(outputBuilder::previous);
+        this.truePreviousNextDateWithCondition(executionTime, conditionContext, ZonedDateTime.from(output.getDate()), false)
+            .ifPresent(outputBuilder::previous);
 
         return outputBuilder.build();
     }
@@ -600,7 +597,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         }
 
         while (
-            (output.getDate().getYear() < ZonedDateTime.now().getYear() + 10) ||
+            (output.getDate().getYear() < ZonedDateTime.now().getYear() + 10) &&
                 (output.getDate().getYear() > ZonedDateTime.now().getYear() - 10)
         ) {
             if (output.getDate().plus(this.lateMaximumDelay).compareTo(ZonedDateTime.now()) < 0) {

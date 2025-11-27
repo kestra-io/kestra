@@ -101,24 +101,24 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         Map<String, Object> vars = conditionContext.getVariables();
-        ZonedDateTime currentDate = conditionContext.getRunContext().render(date).as(String.class, vars).map(it -> {
-            try {
-                return DateUtils.parseZonedDateTime(it);
-            } catch (InternalException e) {
-                throw new RuntimeException(e);
-            }
-        })
-        .orElseThrow();
+        String renderedDate = conditionContext.getRunContext().render(this.date).as(String.class, vars).orElseThrow();
+
+        ZonedDateTime currentDate;
+        try {
+            currentDate = DateUtils.parseZonedDateTime(renderedDate);
+        } catch (InternalException e) {
+            throw new RuntimeException(e);
+        }
 
         ZonedDateTime afterRendered = conditionContext.getRunContext().render(this.after).as(ZonedDateTime.class, vars).orElse(null);
         ZonedDateTime beforeRendered = conditionContext.getRunContext().render(this.before).as(ZonedDateTime.class, vars).orElse(null);
 
         if (beforeRendered != null && afterRendered != null) {
-            return !currentDate.isBefore(afterRendered) && !currentDate.isAfter(beforeRendered);
+            return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);
         } else if (beforeRendered != null) {
-            return !currentDate.isAfter(beforeRendered);
+            return currentDate.isBefore(beforeRendered);
         } else if (afterRendered != null) {
-            return !currentDate.isBefore(afterRendered);
+            return currentDate.isAfter(afterRendered) || currentDate.isEqual(afterRendered);
         } else {
             throw new IllegalConditionEvaluation("Invalid condition with no before nor after");
         }

@@ -192,26 +192,6 @@ charts:
           field: NEXT_EXECUTION_DATE
           displayName: Next Execution Date
 
-  - id: executions_per_namespace_bars
-    type: io.kestra.plugin.core.dashboard.chart.Bar
-    chartOptions:
-      displayName: Executions (per namespace)
-      description: Executions count per namespace
-      legend:
-        enabled: true
-      column: namespace
-      width: 12
-    data:
-      type: io.kestra.plugin.core.dashboard.data.Executions
-      columns:
-        namespace:
-          field: NAMESPACE
-        state:
-          field: STATE
-        total:
-          displayName: Executions
-          agg: COUNT
-
   - id: logs_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
     chartOptions:

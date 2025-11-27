@@ -706,7 +706,8 @@
       "options": "Options de Données",
       "periodic refresh": "Rafraîchissement périodique",
       "refresh": "Rafraîchir les données",
-      "reset": "Réinitialiser tous les filtres",
+      "reset": "Tout effacer",
+      "reset_all": "Réinitialiser tous les filtres",
       "reset_tooltip": "Réinitialiser par défaut",
       "save": "Enregistrer",
       "save duplicate": "Un filtre avec ce nom existe déjà.",
@@ -774,7 +775,8 @@
           "revision": "Version du flow utilisée pour cette exécution",
           "start-date": "Quand l'exécution a commencé",
           "state": "État actuel de l'exécution",
-          "task-id": "ID de la dernière task dans l'exécution"
+          "task-id": "ID de la dernière task dans l'exécution",
+          "trigger": "Déclencheur qui a démarré l'exécution"
         },
         "flow_triggers": {
           "next execution date": "Quand le trigger s'exécutera ensuite",

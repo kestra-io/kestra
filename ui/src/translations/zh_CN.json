@@ -706,7 +706,8 @@
       "options": "数据选项",
       "periodic refresh": "定期刷新",
       "refresh": "刷新数据",
-      "reset": "重置所有过滤器",
+      "reset": "清除所有",
+      "reset_all": "重置所有过滤器",
       "reset_tooltip": "重置为默认",
       "save": "保存",
       "save duplicate": "已存在同名过滤器。",
@@ -774,7 +775,8 @@
           "revision": "用于此次执行的flow版本",
           "start-date": "执行开始时",
           "state": "当前执行状态",
-          "task-id": "执行中最后一个task的ID"
+          "task-id": "执行中最后一个task的ID",
+          "trigger": "启动执行的Trigger"
         },
         "flow_triggers": {
           "next execution date": "下次触发器执行时间",

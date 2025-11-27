@@ -41,7 +41,7 @@
 </script>
 
 <script setup lang="ts">
-    import {computed, getCurrentInstance, inject, InjectionKey} from "vue";
+    import {computed, inject, InjectionKey} from "vue";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
@@ -51,6 +51,7 @@
     import localUtils from "../../utils/utils";
     import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
     import {useFlowStore} from "../../stores/flow";
+    import {useToast} from "../../utils/toast";
 
     defineProps<{
         haveChange: boolean;
@@ -82,7 +83,7 @@
     const flowHaveTasks = computed(() => flowStore.flowHaveTasks)
     const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
     const flowInfos = computed(() => flowStore.flowInfos)
-    const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
+    const toast = useToast();
     const flowWarnings = computed(() => {
 
         const outdatedWarning =

@@ -1,0 +1,36 @@
+{
+  "name": "module-federation-vite-vue3-remote",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite --port 4174",
+    "build": "run-p type-check build-only",
+    "preview": "vite preview --port 4174",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --noEmit",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
+  },
+  "dependencies": {
+    "esbuild-plugin-inline-image": "^0.0.9",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.24"
+  },
+  "devDependencies": {
+    "@module-federation/vite": "1.9.1",
+    "@rushstack/eslint-patch": "^1.15.0",
+    "@types/node": "^24.10.1",
+    "@vitejs/plugin-vue": "^6.0.2",
+    "@vitejs/plugin-vue-jsx": "^5.1.2",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/tsconfig": "^0.8.1",
+    "esbuild-plugin-vue-next": "^0.1.4",
+    "eslint": "^9.39.1",
+    "eslint-plugin-vue": "^10.5.1",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.6.2",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4",
+    "vue-tsc": "^3.1.4"
+  }
+}

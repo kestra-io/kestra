@@ -1,0 +1,16 @@
+{
+  "extends": "@vue/tsconfig/tsconfig.lib.json",
+  "include": [
+    "vite.config.*",
+    "vitest.config.*",
+    "cypress.config.*",
+    "playwright.config.*",
+    "module-federation/esBuildAdapter.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "types": ["node"],
+    "moduleResolution": "nodenext",
+    "module": "nodenext"
+  }
+}

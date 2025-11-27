@@ -248,7 +248,6 @@
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    //@ts-expect-error No declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
@@ -290,8 +289,33 @@
                 })
             }));
 
-            kvs.value = kvsResponse.results;
-            total.value = kvsResponse.total;
+            let allKvs = kvsResponse.results ?? [];
+
+            if (props.includeInherited && props.namespace) {
+                const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
+                
+                for (const parentNs of parentNamespaces) {
+                    const parentKvsResponse = await kvStore.find(loadQuery({
+                        filters: {
+                            namespace: {
+                                EQUALS: parentNs
+                            }
+                        }
+                    }));
+
+                    const parentKvs = parentKvsResponse?.results ?? [];
+                    if (parentKvs.length > 0) {
+                        const currentKeys = new Set(allKvs.map((kv: any) => kv?.key).filter(Boolean));
+                        const newKvs = parentKvs.filter(
+                            (kv: any) => kv?.key && !currentKeys.has(kv.key)
+                        );
+                        allKvs.push(...newKvs);
+                    }
+                }
+            }
+
+            kvs.value = allKvs;
+            total.value = allKvs.length;
         } finally {
             if (callback) callback();
         }
@@ -310,9 +334,11 @@
     const props = withDefaults(defineProps<{
         namespace?: string;
         paneView?: boolean;
+        includeInherited?: boolean;
     }>(), {
         namespace: undefined,
-        paneView: false
+        paneView: false,
+        includeInherited: false
     });
 
     const route = useRoute();

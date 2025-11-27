@@ -16,6 +16,7 @@ import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.log.Log;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.controllers.api.TriggerController.SetDisabledRequest;
 import io.kestra.webserver.responses.BulkResponse;
@@ -39,15 +40,34 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true, startScheduler = true)
 class TriggerControllerTest {
-
     public static final String TENANT_ID = TenantService.MAIN_TENANT;
     public static final String TRIGGER_PATH = "/api/v1/main/triggers";
+
+    public static final Trigger TRIGGER = Trigger.builder()
+        .flowId(IdUtils.create())
+        .namespace("io.kestra.unit-test")
+        .tenantId(MAIN_TENANT)
+        .triggerId(IdUtils.create())
+        .executionId(IdUtils.create())
+        .date(ZonedDateTime.now())
+        .evaluateRunningDate(ZonedDateTime.now())
+        .build();
+
+    public static final Flow FLOW = Flow.builder()
+        .id(TRIGGER.getFlowId())
+        .namespace("io.kestra.unit-test")
+        .tenantId(MAIN_TENANT)
+        .revision(1)
+        .tasks(Collections.singletonList(Log.builder().id("test").type(Log.class.getName()).message("{{ parent.outputs.args['my-forward'] }}").build()))
+        .triggers(List.of(Schedule.builder().id(TRIGGER.getTriggerId()).type(Schedule.class.getName()).cron("* * * * *").build()))
+        .build();
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -591,6 +611,29 @@ class TriggerControllerTest {
             .triggerId(triggerId).build());
 
         assertThat(deletedTrigger.isPresent()).isFalse();
+    }
+
+    @Test
+    void exportTriggers() {
+        jdbcFlowRepository.create(GenericFlow.of(FLOW));
+
+        Trigger t1 = TRIGGER.toBuilder().triggerId(IdUtils.create()).build();
+        Trigger t2 = TRIGGER.toBuilder().triggerId(IdUtils.create()).build();
+        jdbcTriggerRepository.save(t1);
+        jdbcTriggerRepository.save(t2);
+
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET(TRIGGER_PATH + "/export"),
+            byte[].class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getHeaders().get("Content-Disposition")).contains("attachment; filename=triggers.csv");
+        String csv = new String(response.body());
+        assertThat(csv).contains("triggerId");
+
+        assertThat(csv).contains(t1.getTriggerId());
+        assertThat(csv).contains(t2.getTriggerId());
     }
 
     private Flow createTestFlow() {

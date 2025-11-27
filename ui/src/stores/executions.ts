@@ -731,6 +731,21 @@ export const useExecutionsStore = defineStore("executions", () => {
         });
     }
 
+    const exportExecutionsAsCSV = async (params: any) => {
+        const response = await axios.get(
+            `${apiUrl()}/executions/export/by-query/csv`,
+            {params, responseType: "blob"}
+        );
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "executions.csv");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    }
+
     return {
         // State
         executions,
@@ -805,5 +820,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         appendLogs,
         appendFollowedLogs,
         getFlowExecutions,
+        exportExecutionsAsCSV
     };
 });

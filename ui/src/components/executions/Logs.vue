@@ -4,7 +4,7 @@
             :configuration="logExecutionsFilter"
             :tableOptions="{
                 chart: {shown: false},
-                columns: {shown: false}, 
+                columns: {shown: false},
                 refresh: {shown: true, callback: loadLogs}
             }"
             @search="filter = $event"
@@ -24,7 +24,7 @@
                 />
             </el-form-item>
             <el-form-item>
-                <el-button @click="expandCollapseAll()">
+                <el-button @click="expandCollapseAll()" :disabled="raw_view">
                     {{ logDisplayButtonText }}
                 </el-button>
             </el-form-item>
@@ -114,7 +114,7 @@
 
 <script setup>
     import {useLogExecutionsFilter} from "../filter/configurations";
-    
+
     const logExecutionsFilter = useLogExecutionsFilter();
 </script>
 <script>
@@ -245,7 +245,9 @@
             loadLogs(){
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
-                    minLevel: this.level
+                    params: {
+                        minLevel: this.level
+                    }
                 })
             },
             downloadContent() {
@@ -283,7 +285,9 @@
                 }
             },
             expandCollapseAll() {
-                this.$refs.logs.toggleExpandCollapseAll();
+                if (this.$refs.logs && this.$refs.logs.toggleExpandCollapseAll) {
+                    this.$refs.logs.toggleExpandCollapseAll();
+                }
             },
             toggleViewType() {
                 this.logCursor = undefined;

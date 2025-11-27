@@ -80,7 +80,6 @@
         "yaml": "^2.8.1"
     },
     "devDependencies": {
-        "@codecov/vite-plugin": "^1.9.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@eslint/js": "^9.39.1",
         "@playwright/test": "^1.56.1",

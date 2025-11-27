@@ -195,7 +195,7 @@ export default class Utils {
         return null; // Return null if no filename is found
     }
 
-    static switchTheme(miscStore: any, theme: string | undefined) {
+    static switchTheme(miscStore: any, theme?: string) {
         // default theme
         if (theme === undefined) {
             if (localStorage.getItem("theme")) {

@@ -1,5 +1,4 @@
 import Utils from "./utils";
-import {getCurrentInstance} from "vue";
 import {storageKeys} from "../utils/constants";
 import moment from "moment-timezone";
 
@@ -19,8 +18,8 @@ export function lower (value:string) {
     return value ? value.toString().toLowerCase() : "";
 }
 export function date (dateString:string, format?:string) {
-    const currentLocale = getCurrentInstance()?.appContext.config.globalProperties.$moment().locale();
-    const momentInstance = getCurrentInstance()?.appContext.config.globalProperties.$moment(dateString).locale(currentLocale);
+    const currentLocale = moment().locale();
+    const momentInstance = moment(dateString).locale(currentLocale);
     let f;
     if (format === "iso") {
         f = "YYYY-MM-DD HH:mm:ss.SSS";

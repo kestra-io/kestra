@@ -706,7 +706,8 @@
       "options": "Opcje Danych",
       "periodic refresh": "Okresowe odświeżanie",
       "refresh": "Odśwież dane",
-      "reset": "Zresetuj wszystkie filtry",
+      "reset": "Wyczyść wszystko",
+      "reset_all": "Resetuj wszystkie filtry",
       "reset_tooltip": "Przywróć domyślne ustawienia",
       "save": "Zapisz",
       "save duplicate": "Filtr o tej nazwie już istnieje.",
@@ -774,7 +775,8 @@
           "revision": "Wersja flow używana dla tej wykonania",
           "start-date": "Kiedy rozpoczęła się wykonanie",
           "state": "Bieżący stan wykonania",
-          "task-id": "ID ostatniego tasku w wykonaniu"
+          "task-id": "ID ostatniego tasku w wykonaniu",
+          "trigger": "Trigger, który rozpoczął wykonanie"
         },
         "flow_triggers": {
           "next execution date": "Kiedy trigger wykona się następnie",

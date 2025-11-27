@@ -7,7 +7,11 @@
         <template #header v-if="hasValidDate">
             <div class="d-flex">
                 <Duration class="th text-end" :histories="execution.state.histories" />
-                <span class="text-end" v-for="(date, i) in dates" :key="i">
+                <div v-if="verticalLayout" class="timeline-header">
+                    <span class="timeline-start">{{ startTime }}</span>
+                    <span class="timeline-end">{{ endTime }}</span>
+                </div>
+                <span v-else class="text-end" v-for="(date, i) in dates" :key="i">
                     {{ date }}
                 </span>
             </div>
@@ -29,7 +33,7 @@
                     >
                         <div class="d-flex flex-column">
                             <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
-                                <div class="d-inline-flex">
+                                <div v-if="!verticalLayout" class="d-inline-flex">
                                     <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                     <ChevronDown v-else />
                                 </div>
@@ -38,7 +42,11 @@
                                         <code>{{ item.name }}</code>
                                         <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
                                     </template>
-                                    <span>
+                                    <span v-if="verticalLayout" class="task-name">
+                                        <code :title="item.name">{{ item.name }}</code>
+                                        <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
+                                    </span>
+                                    <span v-else>
                                         <code>{{ item.name }}</code>
                                         <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                     </span>
@@ -100,6 +108,8 @@
     import FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Warning from "vue-material-design-icons/Alert.vue";
@@ -119,6 +129,12 @@
             ChevronRight,
             ChevronDown,
             ExecutionPending
+        },
+        setup() {
+            const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+            return {
+                verticalLayout
+            };
         },
         data() {
             return {
@@ -237,6 +253,17 @@
             },
             hasValidDate() {
                 return isFinite(this.delta());
+            },
+            startTime() {
+                if (!this.execution) return "";
+                return this.$moment(this.execution.state.histories[0].date).format("HH:mm:ss");
+            },
+            endTime() {
+                if (!this.execution) return "";
+                const endDate = State.isRunning(this.execution.state.current) 
+                    ? new Date() 
+                    : new Date(this.stop());
+                return this.$moment(endDate).format("HH:mm:ss");
             },
         },
         methods: {
@@ -385,6 +412,20 @@
                 > :not(.th) {
                     font-weight: normal;
                 }
+
+                .timeline-header {
+                    flex: 1;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: .5rem;
+                    font-weight: normal;
+
+                    .timeline-start, .timeline-end {
+                        font-size: var(--font-size-sm);
+                        color: var(--ks-content-primary);
+                    }
+                }
             }
         }
 
@@ -431,8 +472,27 @@
                     }
 
                     code {
-                        font-size: var(--font-size-xs);
+                        font-size: var(--font-size-sm);
                         color: var(--ks-content-primary);
+                    }
+                }
+
+                .task-name {
+                    flex: 1;
+                    min-width: 100px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+
+                    code {
+                        font-size: var(--font-size-sm);
+                        color: var(--ks-content-primary);
+                    }
+
+                    small {
+                        margin-left: 5px;
+                        font-family: var(--bs-font-monospace);
+                        font-size: var(--font-size-xs);
                     }
                 }
 

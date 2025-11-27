@@ -20,16 +20,6 @@
                     </Kicon>
                 </div>
 
-                <el-button
-                    v-if="filter.tableOptions.value?.refresh?.shown"
-                    @click="filter.refreshData"
-                    :icon="AutoRenew"
-                    :size="'default'"
-                    class="refresh-button"
-                >
-                    {{ t("filter.refresh") }}
-                </el-button>
-
                 <el-popover
                     v-if="filter.tableOptions.value?.columns?.shown !== false"
                     v-model:visible="isColumnsPanelVisible"
@@ -68,7 +58,7 @@
     import Kicon from "../../Kicon.vue";
     import CustomColumns from "../segments/CustomColumns.vue";
 
-    import {AutoRenew, CogOutline} from "../utils/icons";
+    import {CogOutline} from "../utils/icons";
 
     import {usePeriodicRefresh} from "../composables/usePeriodicRefresh";
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
@@ -147,7 +137,6 @@
         }
     }
 
-    .refresh-button,
     .columns-button {
         background-color: transparent;
         border: none;

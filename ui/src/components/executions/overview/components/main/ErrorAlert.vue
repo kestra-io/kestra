@@ -124,8 +124,6 @@
                 }
 
                 .el-button {
-                    background-color: var(--ks-log-background-error);
-                    border-color: var(--ks-log-border-error);
                     color: var(--ks-log-content-error);
                 }
 

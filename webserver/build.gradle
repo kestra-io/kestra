@@ -22,6 +22,11 @@ dependencies {
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 
+    // Enabling OAuth2 security besides basic authentiocation
+    implementation "io.micronaut.security:micronaut-security-oauth2"
+    implementation "io.micronaut.security:micronaut-security-jwt"
+    implementation "io.micronaut.session:micronaut-session"
+
     implementation("com.posthog.java:posthog:1.2.0")
 
     // ai

@@ -150,7 +150,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, shallowRef, onMounted, watch, onUnmounted} from "vue";
+    import {ref, computed, shallowRef, onMounted, watch} from "vue";
     import {ElTree} from "element-plus";
     import {useExecutionsStore} from "../../../stores/executions";
     import {usePluginsStore} from "../../../stores/plugins";
@@ -166,6 +166,7 @@
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
     import {useAxios} from "../../../utils/axios";
+    import {useMediaQuery} from "@vueuse/core";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -432,23 +433,7 @@
         selectedValue.value !== debugExpression.value;
 
     const leftWidth = ref("70%");
-
-    const isMobile = ref(false);
-
-    onMounted(() => {
-        const mediaQuery = window.matchMedia("(max-width: 768px)");
-        isMobile.value = mediaQuery.matches;
-
-        const handler = (e: MediaQueryListEvent) => {
-            isMobile.value = e.matches;
-        };
-
-        mediaQuery.addEventListener("change", handler);
-
-        onUnmounted(() => {
-            mediaQuery.removeEventListener("change", handler);
-        });
-    });
+    const isMobile = useMediaQuery("(max-width: 768px)");
 </script>
 
 <style scoped lang="scss">
@@ -595,7 +580,7 @@
             margin: 10px;
             border: 2px solid var(--ks-border-primary);
             box-sizing: border-box;
-            overflow: hidden;
+            overflow: auto;
             flex: 1 1 0 !important;
             min-height: 0 !important;
         }
@@ -605,6 +590,5 @@
         width: auto !important;
         
     }
-    
 }
 </style>

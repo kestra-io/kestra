@@ -258,6 +258,7 @@
     "no data current task": "There's no data available for the current task",
     "outputs": "Outputs",
     "flow_outputs": "Flow Outputs",
+    "no_flow_outputs": "No outputs available.",
     "output": "Output",
     "eval": {
       "title": "Debug Expression",
@@ -321,8 +322,10 @@
     "invalid flow": "Invalid flow",
     "invalid yaml": "Invalid YAML",
     "inputs": "Inputs",
+    "no_inputs": "No inputs available.",
     "input": "Input",
     "variables": "Variables",
+    "no_variables": "No variables available.",
     "download": "Download",
     "concurrency_limit": {
         "dialog_title": "Concurrency Limits",

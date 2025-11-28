@@ -2,16 +2,21 @@
     <div id="cascader">
         <div class="header">
             <el-text truncated>
-                {{ title }}
+                {{ props.title }}
             </el-text>
             <el-input
+                v-if="props.elements"
                 v-model="filter"
                 :placeholder="$t('search')"
                 :suffixIcon="Magnify"
             />
         </div>
 
-        <el-cascader-panel ref="cascader" :options="filteredOptions">
+        <el-cascader-panel
+            v-if="props.elements"
+            ref="cascader"
+            :options="filteredOptions"
+        >
             <template #default="{data}">
                 <VarValue
                     v-if="isFile(data.value)"
@@ -38,6 +43,8 @@
                 </div>
             </template>
         </el-cascader-panel>
+
+        <span v-else class="empty">{{ props.empty }}</span>
     </div>
 </template>
 
@@ -52,7 +59,8 @@
 
     const props = defineProps<{
         title: string;
-        elements: Record<string, any>;
+        empty: string;
+        elements?: Record<string, any>;
         execution: Execution;
     }>();
 
@@ -108,11 +116,13 @@
 
     const cascader = ref<any>(null);
     onMounted(() => {
-        formatted.value = format(props.elements);
+        if (props.elements) formatted.value = format(props.elements);
 
         // Open first node by default on page mount
-        const nodes = cascader.value.$el.querySelectorAll(".el-cascader-node");
-        if (nodes.length > 0) (nodes[0] as HTMLElement).click();
+        if (cascader?.value) {
+            const nodes = cascader.value.$el.querySelectorAll(".el-cascader-node");
+            if (nodes.length > 0) (nodes[0] as HTMLElement).click();
+        }
     });
 </script>
 
@@ -144,6 +154,11 @@
 
     .el-cascader-panel {
         overflow: auto;
+    }
+
+    .empty {
+        font-size: $font-size-sm;
+        color: var(--ks-content-secondary);
     }
 
     :deep(.el-cascader-menu) {

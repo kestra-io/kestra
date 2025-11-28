@@ -67,19 +67,6 @@
             <div class="main">
                 <div id="alerts">
                     <el-alert
-                        v-if="matchesStatus('restarted')"
-                        :title="
-                            $t('execution restarted', {
-                                nbRestart:
-                                    execution.metadata?.attemptNumber - 1,
-                            })
-                        "
-                        type="warning"
-                        showIcon
-                        :closable="false"
-                    />
-
-                    <el-alert
                         v-if="matchesStatus('replayed')"
                         :title="$t('execution replayed')"
                         :closable="false"
@@ -104,10 +91,23 @@
                                         :value="execution.originalId"
                                         :shrink="false"
                                     />
-                                </router-link>
+                                </router-link>.
                             </div>
                         </template>
                     </el-alert>
+
+                    <el-alert
+                        v-if="matchesStatus('restarted')"
+                        :title="
+                            $t('execution restarted', {
+                                nbRestart:
+                                    execution.metadata?.attemptNumber - 1,
+                            })
+                        "
+                        type="warning"
+                        showIcon
+                        :closable="false"
+                    />
 
                     <ErrorAlert
                         v-if="execution.state.current === State.FAILED"
@@ -116,23 +116,9 @@
                 </div>
 
                 <Cascader
-                    v-if="execution.variables"
-                    :title="$t('variables')"
-                    :elements="execution.variables"
-                    :execution
-                />
-
-                <Cascader
-                    v-if="execution.inputs"
-                    :title="$t('inputs')"
-                    :elements="execution.inputs"
-                    :execution
-                />
-
-                <Cascader
-                    v-if="execution.outputs"
-                    :title="$t('flow_outputs')"
-                    :elements="execution.outputs"
+                    v-for="(cascader, cIdx) in cascaders"
+                    :key="cIdx"
+                    v-bind="cascader"
                     :execution
                 />
 
@@ -438,6 +424,24 @@
         );
     };
 
+    const cascaders = [
+        {
+            title: t("variables"),
+            empty: t("no_variables"),
+            elements: execution.value?.variables,
+        },
+        {
+            title: t("inputs"),
+            empty: t("no_inputs"),
+            elements: execution.value?.inputs,
+        },
+        {
+            title: t("flow_outputs"),
+            empty: t("no_flow_outputs"),
+            elements: execution.value?.outputs,
+        },
+    ];
+
     const chart = yaml.parse(YAML_CHART);
     const filters = execution.value
         ? [
@@ -514,8 +518,7 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
 
             & .el-col {
                 &:empty {
-                    // If button is not displayed for any reason, hide the whole column
-                    display: none;
+                    display: none; // If button is not displayed for any reason, hide the whole column
                 }
 
                 & :deep(.el-button) {
@@ -538,9 +541,23 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
     }
 
     .main {
+        > div {
+            padding-bottom: 0;
+
+            &:last-child {
+                padding-bottom: calc($spacer * 1.5);
+            }
+        }
+
         #alerts {
+            &:empty {
+                display: none;
+            }
+
             .el-alert {
-                margin-bottom: $spacer;
+                &:not(:first-child) {
+                    margin-top: $spacer;
+                }
 
                 & :deep(.el-alert__icon) {
                     font-size: var(--el-alert-icon-size);
@@ -551,8 +568,6 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
         }
 
         #chart {
-            padding-top: 0;
-
             > div {
                 padding: calc($spacer * 2);
                 border: 1px solid var(--el-border-color-light);

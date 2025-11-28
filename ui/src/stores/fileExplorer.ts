@@ -206,7 +206,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 toast.error(t("namespace files.create.file_already_exists"));
                 return {};
             }
-            await namespacesStore.createFile({
+            await namespacesStore.saveOrCreateFile({
                 namespace: namespaceId.value,
                 path,
                 content,

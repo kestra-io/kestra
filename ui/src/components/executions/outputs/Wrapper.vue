@@ -1,7 +1,7 @@
 <template>
     <div class="outputs">
-        <el-splitter>
-            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'">
+        <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
+            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
                 <div class="d-flex flex-column overflow-x-auto left">
                     <el-cascader-panel
                         ref="cascader"
@@ -166,6 +166,7 @@
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
     import {useAxios} from "../../../utils/axios";
+    import {useMediaQuery} from "@vueuse/core";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -432,6 +433,7 @@
         selectedValue.value !== debugExpression.value;
 
     const leftWidth = ref("70%");
+    const isMobile = useMediaQuery("(max-width: 768px)");
 </script>
 
 <style scoped lang="scss">
@@ -569,5 +571,24 @@
 :deep(.complex-value-editor) {
     position: relative !important;
     z-index: auto !important;
+}
+
+//Mobile Version
+@media (max-width: 768px) {
+    :deep(.el-splitter) { 
+        .outputs-top {
+            margin: 10px;
+            border: 2px solid var(--ks-border-primary);
+            box-sizing: border-box;
+            overflow: auto;
+            flex: 1 1 0 !important;
+            min-height: 0 !important;
+        }
+    }
+    :deep(.el-splitter-bar){
+        height: 4px !important;
+        width: auto !important;
+        
+    }
 }
 </style>

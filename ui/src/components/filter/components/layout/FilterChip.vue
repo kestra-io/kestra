@@ -10,7 +10,6 @@
                 :content="formatTooltipValue(filter.value)"
                 placement="top"
                 effect="light"
-                :disabled="!Array.isArray(filter.value) || filter.value.length <= 1"
             >
                 <component :is="renderValueResult" />
             </el-tooltip>
@@ -54,7 +53,7 @@
     }>();
 
     const editPopover = ref<InstanceType<typeof FilterEditPopover>>();
-        
+
     const {getRelativeDateLabel} = useValues("executions");
 
     const shouldShowComparatorInPopper = computed(
@@ -70,7 +69,7 @@
         case value instanceof Date:
             return value.toLocaleDateString();
         case value && typeof value === "object" && "startDate" in value:
-            return `${value.startDate.toLocaleDateString()} - ${value.endDate.toLocaleDateString()}`;
+            return `${value.startDate.toLocaleString()} - ${value.endDate.toLocaleString()}`;
         case typeof value === "string" && /^P(T?\d+[HMD]|\d+[YMDW])/.test(value):
             return getRelativeDateLabel(value);
         default:
@@ -79,8 +78,8 @@
     };
 
     const formatTooltipValue = (value: FilterValueType) =>
-        Array.isArray(value) 
-            ? value.join(", ") 
+        Array.isArray(value)
+            ? value.join(", ")
             : String(formatValue(value));
 
     const hasValue = (value: FilterValueType) => {
@@ -105,7 +104,7 @@
         h("span", {class: "value"}, formatValue(props.filter.value))
     );
 
-    const isNegative = computed(() => 
+    const isNegative = computed(() =>
         props.filter.comparator === Comparators.NOT_EQUALS || props.filter.comparator === Comparators.NOT_IN
     );
 
@@ -133,11 +132,11 @@
     &:hover {
         background-color: var(--ks-button-background-secondary-hover);
     }
-    
+
     &.toggled {
         border-color: var(--ks-border-success);
     }
-    
+
     .content {
         display: flex;
         align-items: center;
@@ -168,7 +167,7 @@
         .comparator {
             color: var(--ks-chart-success);
             text-transform: lowercase;
-            
+
             &.negative {
                 color: var(--ks-chart-failed);
             }
@@ -187,7 +186,7 @@
             font-size: 14px;
         }
     }
-    
+
     :deep(.el-tag) {
         background-color: var(--ks-tag-background);
         color: var(--ks-content-secondary);

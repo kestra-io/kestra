@@ -5,7 +5,7 @@
         :layout="verticalLayout ? 'vertical' : 'horizontal'"
         lazy
     >
-        <el-splitter-panel :size="verticalLayout ? '50%' : '35%'">
+        <el-splitter-panel :size="verticalLayout ? '50%' : '30%'">
             <div class="sidebar">
                 <div class="state">
                     <Row :rows="[{icon: StateMachine, label: $t('state')}]">
@@ -80,10 +80,13 @@
                                     :to="{
                                         name: 'executions/update',
                                         params: {
-                                            tenant: execution.tenantId,
+                                            ...(execution.tenantId
+                                                ? {tenant: execution.tenantId}
+                                                : {}),
                                             namespace: execution.namespace,
                                             flowId: execution.flowId,
                                             id: execution.originalId,
+                                            tab: 'overview',
                                         },
                                     }"
                                 >
@@ -154,13 +157,13 @@
                 </div>
 
                 <div id="buttons">
-                    <el-button>
+                    <el-button @click="navigateToExecution('previous')">
                         <el-icon class="el-icon--left">
                             <ChevronLeft />
                         </el-icon>
                         {{ $t("prev_execution") }}
                     </el-button>
-                    <el-button>
+                    <el-button @click="navigateToExecution('next')">
                         {{ $t("next_execution") }}
                         <el-icon class="el-icon--right">
                             <ChevronRight />
@@ -180,10 +183,11 @@
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
 
-    import {useRoute} from "vue-router";
+    import {useRouter, useRoute} from "vue-router";
+    const router = useRouter();
     const route = useRoute();
 
-    import {useExecutionsStore} from "../../../stores/executions";
+    import {Execution, useExecutionsStore} from "../../../stores/executions";
     const store = useExecutionsStore();
 
     import {useMiscStore} from "override/stores/misc";
@@ -510,6 +514,51 @@
         ];
     });
 
+    const navigateToExecution = async (direction: "previous" | "next") => {
+        if (!execution.value) return;
+
+        try {
+            const params = {
+                namespace: execution.value.namespace,
+                flowId: execution.value.flowId,
+                pageSize: 100,
+                sort: "state.startDate:desc",
+            };
+
+            const response = await store.findExecutions(params);
+            const result = response?.results ?? [];
+
+            if (!result.length) return;
+
+            const currentIdx = result.findIndex(
+                (e: Execution) => e.id === execution.value!.id,
+            );
+
+            if (currentIdx === -1) return;
+
+            // next = newer (-1), previous = older (+1)
+            const targetIdx =
+                direction === "previous" ? currentIdx + 1 : currentIdx - 1;
+
+            if (targetIdx < 0 || targetIdx >= result.length) return;
+
+            const target = result[targetIdx];
+
+            router.push({
+                name: "executions/update",
+                params: {
+                    ...(target.tenantId ? {tenant: target.tenantId} : {}),
+                    namespace: target.namespace,
+                    flowId: target.flowId,
+                    id: target.id,
+                    tab: "overview",
+                },
+            });
+        } catch (error) {
+            console.error("Failed to navigate executions:", error);
+        }
+    };
+
     onMounted(() => {
         if (!route.params.id) return;
         loadExecution(route.params.id as string);
@@ -659,6 +708,7 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
             margin-bottom: $spacer;
 
             .el-button {
+                width: calc($spacer * 12);
                 font-size: $font-size-sm;
             }
         }

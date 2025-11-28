@@ -5,6 +5,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
@@ -12,7 +13,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerGroupMetaStore;
 import io.kestra.core.runners.WorkerJob;
 import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.services.LogService;
 import io.kestra.core.services.WorkerGroupService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -28,14 +28,12 @@ public class TriggerWorkerJobPublisher {
     
     private static final Logger log = LoggerFactory.getLogger(TriggerWorkerJobPublisher.class);
     
-    private final LogService logService;
     private final WorkerGroupMetaStore workerGroupMetaStore;
     private final WorkerGroupService workerGroupService;
     private final QueueInterface<WorkerJob> workerJobQueue;
     
     @Inject
-    public TriggerWorkerJobPublisher(LogService logService, WorkerGroupMetaStore workerGroupMetaStore, WorkerGroupService workerGroupService, QueueInterface<WorkerJob> workerJobQueue) {
-        this.logService = logService;
+    public TriggerWorkerJobPublisher(WorkerGroupMetaStore workerGroupMetaStore, WorkerGroupService workerGroupService, QueueInterface<WorkerJob> workerJobQueue) {
         this.workerGroupMetaStore = workerGroupMetaStore;
         this.workerGroupService = workerGroupService;
         this.workerJobQueue = workerJobQueue;
@@ -44,7 +42,7 @@ public class TriggerWorkerJobPublisher {
     public void send(TriggerState triggerState, AbstractTrigger trigger, FlowInterface flow, ConditionContext conditionContext) throws InternalException {
         
         if (log.isDebugEnabled()) {
-            logService.logTrigger(
+            Logs.logTrigger(
                 triggerState,
                 Level.DEBUG,
                 "[date: {}] Scheduling evaluation to the worker",

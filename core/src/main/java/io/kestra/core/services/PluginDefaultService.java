@@ -76,11 +76,7 @@ public class PluginDefaultService {
 
     @Inject
     protected PluginRegistry pluginRegistry;
-
-    @Inject
-    protected Provider<LogService> logService; // lazy-init
-
-
+    
     private final AtomicBoolean warnOnce = new AtomicBoolean(false);
 
     @PostConstruct

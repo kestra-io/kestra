@@ -5,7 +5,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.services.LogService;
+import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.model.TriggerState;
 import io.kestra.scheduler.stores.TriggerStateStore;
 import io.micronaut.core.util.CollectionUtils;
@@ -30,7 +30,6 @@ public class TriggerSchedulerMonitor implements Runnable {
     
     private final MetricRegistry metricRegistry;
     private final ExecutionRepositoryInterface executionRepository;
-    private final LogService logService;
     private final TriggerStateStore triggerStateStore;
     private final DefaultScheduler defaultScheduler;
     
@@ -38,11 +37,9 @@ public class TriggerSchedulerMonitor implements Runnable {
     public TriggerSchedulerMonitor(MetricRegistry metricRegistry, 
                                    ExecutionRepositoryInterface executionRepository,
                                    TriggerStateStore triggerStateStore,
-                                   LogService logService,
                                    DefaultScheduler defaultScheduler) {
         this.metricRegistry = metricRegistry;
         this.executionRepository = executionRepository;
-        this.logService = logService;
         this.triggerStateStore = triggerStateStore;
         this.defaultScheduler = defaultScheduler;
     }
@@ -68,7 +65,7 @@ public class TriggerSchedulerMonitor implements Runnable {
                             .record(Duration.between(state.getUpdatedAt(), Instant.now()));
                     }
                     if (state.getUpdatedAt() == null || state.getUpdatedAt().plusSeconds(60).isBefore(Instant.now())) {
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             state,
                             Level.WARN,
                             "No execution found, schedule is blocked since '{}'",
@@ -83,7 +80,7 @@ public class TriggerSchedulerMonitor implements Runnable {
                         .record(Duration.between(state.getUpdatedAt(), Instant.now()));
                 }
                 if (LOG.isDebugEnabled()) {
-                    logService.logTrigger(
+                    Logs.logTrigger(
                         state,
                         Level.DEBUG,
                         "Execution '{}' is still '{}', updated at '{}'",

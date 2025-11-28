@@ -17,7 +17,6 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerService;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.LogService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.plugin.core.condition.DayWeekInMonth;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
@@ -71,9 +70,6 @@ class TriggerSchedulerTest {
     
     @Inject
     SchedulableEvaluator schedulableEvaluator;
-    
-    @Inject
-    LogService logService;
     
     @Inject
     TriggerWorkerJobPublisher triggerWorkerJobPublisher;
@@ -599,8 +595,7 @@ class TriggerSchedulerTest {
             conditionService,
             pluginDefaultService,
             schedulableEvaluator,
-            logService,
-            new DefaultSchedulableTriggerFetcher(runContextFactory,logService, triggerStateStore, flowMetaStore, pluginDefaultService),
+            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
             triggerWorkerJobPublisher,
             triggerExecutionPublisher,
             new SchedulerConfiguration(1, Duration.ZERO, 100)

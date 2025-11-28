@@ -623,7 +623,7 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(t2);
 
         HttpResponse<byte[]> response = client.toBlocking().exchange(
-            HttpRequest.GET(TRIGGER_PATH + "/export"),
+            HttpRequest.GET(TRIGGER_PATH + "/export/by-query/csv"),
             byte[].class
         );
 

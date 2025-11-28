@@ -129,7 +129,16 @@
                                 <TimelineClockOutline />
                                 <span>{{ $t("recent_executions") }}</span>
                             </div>
-                            <div>selector</div>
+                            <div class="timerange">
+                                <el-select v-model="timerange">
+                                    <el-option
+                                        v-for="option in options"
+                                        :key="option.value"
+                                        :label="option.label"
+                                        :value="option.value"
+                                    />
+                                </el-select>
+                            </div>
                         </section>
                         <TimeSeries
                             :chart="{...chart, content: YAML_CHART}"
@@ -150,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed} from "vue";
+    import {onMounted, computed, ref} from "vue";
 
     import {useRoute} from "vue-router";
     const route = useRoute();
@@ -198,6 +207,7 @@
 
     import yaml from "yaml";
     import YAML_CHART from "./components/main/assets/chart.yaml?raw";
+    import {useValues} from "../../filter/composables/useValues";
 
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
@@ -467,6 +477,9 @@
         ]
         : [];
 
+    const options = useValues("executions").VALUES.RELATIVE_DATE;
+    const timerange = ref<string>("PT168H");
+
     onMounted(() => {
         if (!route.params.id) return;
         loadExecution(route.params.id as string);
@@ -583,11 +596,26 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
                     & .heading {
                         display: flex;
                         align-items: center;
+                        overflow: hidden;
 
-                        & span.material-design-icon {
-                            margin-right: calc($spacer / 2);
+                        & .material-design-icon {
+                            margin-right: $spacer;
                             font-size: $font-size-xl;
                             color: var(--ks-content-link);
+                        }
+
+                        & span:not(.material-design-icon) {
+                            display: block;
+                            min-width: 0;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
+                    }
+
+                    & .timerange {
+                        .el-select {
+                            width: calc($spacer * 10);
                         }
                     }
                 }

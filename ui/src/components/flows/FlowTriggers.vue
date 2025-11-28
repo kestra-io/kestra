@@ -213,7 +213,7 @@
         />
         <template #footer>
             <router-link
-                v-if="isSchedule(selectedTrigger.type)"
+                v-if="isSchedule(selectedTrigger?.type)"
                 :to="{
                     name: 'admin/triggers',
                     query: {

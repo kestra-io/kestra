@@ -88,16 +88,19 @@
         max-width: 100%;
         gap: 0;
 
-        & .el-alert__title div {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: var(--el-alert-title-font-size);
-            line-height: 24px;
-            color: var(--el-color-error);
+        & .el-alert__title {
+            & div,
+            & span {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-size: var(--el-alert-title-font-size);
+                line-height: 24px;
+                color: var(--el-color-error);
 
-            & .markdown p {
-                margin-bottom: 0;
+                & .markdown p {
+                    margin-bottom: 0;
+                }
             }
         }
 

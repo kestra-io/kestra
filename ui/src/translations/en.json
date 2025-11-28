@@ -604,7 +604,7 @@
     "kestra": "Kestra",
     "reach us": "Talk to us",
     "new version": "New version {version} available!",
-    "error detected": "Error(s) detected",
+    "error detected": "Error(s) detected.",
     "warning detected": "Warning(s) detected",
     "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",

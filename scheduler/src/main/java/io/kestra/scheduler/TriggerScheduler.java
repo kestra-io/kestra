@@ -22,9 +22,9 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.LabelService;
-import io.kestra.core.services.LogService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
@@ -70,7 +70,6 @@ public class TriggerScheduler {
     
     // Services
     private final RunContextFactory runContextFactory;
-    private final LogService logService;
     private final ConditionService conditionService;
     private final TriggerWorkerJobPublisher triggerWorkerJobPublisher;
     private final SchedulableEvaluator schedulableEvaluator;
@@ -96,7 +95,6 @@ public class TriggerScheduler {
                             ConditionService conditionService,
                             PluginDefaultService pluginDefaultService,
                             SchedulableEvaluator schedulableEvaluator,
-                            LogService logService,
                             DefaultSchedulableTriggerFetcher schedulableTriggerFetcher,
                             TriggerWorkerJobPublisher triggerWorkerJobPublisher,
                             TriggerExecutionPublisher triggerExecutionPublisher,
@@ -105,7 +103,6 @@ public class TriggerScheduler {
         this.flowMetaStore = flowMetaStore;
         this.runContextFactory = runContextFactory;
         this.pluginDefaultService = pluginDefaultService;
-        this.logService = logService;
         this.metricRegistry = metricRegistry;
         this.conditionService = conditionService;
         this.triggerWorkerJobPublisher = triggerWorkerJobPublisher;
@@ -184,7 +181,7 @@ public class TriggerScheduler {
                             newTriggerState = newTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
                         }
                         triggerStateStore.save(newTriggerState);
-                        logService.logTrigger(newTriggerState, log, Level.INFO, "New state initialized");
+                        Logs.logTrigger(newTriggerState, log, Level.INFO, "New state initialized");
                         
                     } catch (Exception e) {
                         logError(clock, conditionContext, flow, trigger.getId(), e);
@@ -350,7 +347,7 @@ public class TriggerScheduler {
     
     private void processPollingTrigger(Clock clock, TriggerState triggerState, TriggerEvaluationContext triggerEvaluationContext, PollingTriggerInterface trigger) {
         if (trigger.getInterval() == null) {
-            logService.logTrigger(
+            Logs.logTrigger(
                 triggerState,
                 triggerEvaluationContext.conditionContext().getRunContext().logger(),
                 Level.ERROR,
@@ -368,7 +365,7 @@ public class TriggerScheduler {
                 state = state.locked(clock, true);
                 triggerStateStore.save(state);
             } catch (Exception e) {
-                logService.logTrigger(
+                Logs.logTrigger(
                     triggerState,
                     triggerEvaluationContext.conditionContext().getRunContext().logger(),
                     Level.ERROR,
@@ -389,7 +386,7 @@ public class TriggerScheduler {
                 // disable trigger on invalid configuration
                 triggerStateStore.save(currentTriggerState.disabled(clock, true)); 
             }
-            logService.logTrigger(
+            Logs.logTrigger(
                 lastTriggerEvaluationContext.triggerState(),
                 logger,
                 Level.WARN,
@@ -429,7 +426,7 @@ public class TriggerScheduler {
             }
         }
         
-        logService.logTrigger(
+        Logs.logTrigger(
             triggerContext,
             Level.INFO,
             "Scheduled execution {} at '{}' started at '{}'",
@@ -441,8 +438,8 @@ public class TriggerScheduler {
     
     private void logError(Clock clock, ConditionContext conditionContext, FlowId flow, String triggerId, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
-        
-        logService.logExecution(
+
+        Logs.logExecution(
             flow,
             logger,
             Level.ERROR,

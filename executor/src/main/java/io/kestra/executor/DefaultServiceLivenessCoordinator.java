@@ -9,9 +9,9 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.*;
-import io.kestra.core.services.LogService;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.vnodes.VNodeController;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
@@ -62,7 +62,6 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     private final SkipExecutionService skipExecutionService;
     private final QueueInterface<WorkerJob> workerJobQueue;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
-    private final LogService logService;
     private final MetricRegistry metricRegistry;
     private final VNodeController vNodeController;
     // mutable for testing purpose
@@ -88,7 +87,6 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                                              final SkipExecutionService skipExecutionService,
                                              final @Named(QueueFactoryInterface.WORKERJOB_NAMED) QueueInterface<WorkerJob> workerJobQueue,
                                              final WorkerJobRunningStateStore workerJobRunningStateStore,
-                                             final LogService logService,
                                              final ServerConfig serverConfig,
                                              final MetricRegistry metricRegistry,
                                              final VNodeController vNodeController,
@@ -101,7 +99,6 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.skipExecutionService = skipExecutionService;
         this.workerJobQueue = workerJobQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
-        this.logService = logService;
         this.lockService = lockService;
         this.metricRegistry = metricRegistry;
         this.purgeRetention = purgeRetention;
@@ -364,13 +361,13 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                         .runContext(workerTaskRunning.getRunContext())
                         .build()
                     );
-                    logService.logTaskRun(
+                    Logs.logTaskRun(
                         workerTaskRunning.getTaskRun(),
                         Level.WARN,
                         "Resubmit WorkerTask."
                     );
                 } catch (QueueException e) {
-                    logService.logTaskRun(
+                    Logs.logTaskRun(
                         workerTaskRunning.getTaskRun(),
                         Level.ERROR,
                         "Unable to resubmit WorkerTask.",
@@ -388,13 +385,13 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                     .conditionContext(workerTriggerRunning.getConditionContext())
                     .triggerContext(workerTriggerRunning.getTriggerContext())
                     .build());
-                logService.logTrigger(
+                Logs.logTrigger(
                     workerTriggerRunning.getTriggerContext(),
                     Level.WARN,
                     "Re-emitting WorkerTrigger."
                 );
             } catch (QueueException e) {
-                logService.logTrigger(
+                Logs.logTrigger(
                     workerTriggerRunning.getTriggerContext(),
                     Level.ERROR,
                     "Unable to re-emit WorkerTrigger.",

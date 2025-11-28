@@ -9,7 +9,7 @@ import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
-import io.kestra.core.services.LogService;
+import io.kestra.core.utils.Logs;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +24,10 @@ public class SchedulableEvaluator {
     
     private final MetricRegistry metricRegistry;
     private final RunContextInitializer runContextInitializer;
-    private final LogService logService;
     
-    public SchedulableEvaluator(MetricRegistry metricRegistry, RunContextInitializer runContextInitializer, LogService logService) {
+    public SchedulableEvaluator(MetricRegistry metricRegistry, RunContextInitializer runContextInitializer) {
         this.metricRegistry = metricRegistry;
         this.runContextInitializer = runContextInitializer;
-        this.logService = logService;
     }
     
     public Optional<Execution> evaluate(Schedulable schedulable, TriggerContext context, ConditionContext conditionContext) {
@@ -47,7 +45,7 @@ public class SchedulableEvaluator {
                     Optional<Execution> evaluate = schedulable.evaluate(conditionContext, context);
                     
                     if (log.isDebugEnabled()) {
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             context,
                             Level.DEBUG,
                             "[type: {}] {}",
@@ -61,7 +59,7 @@ public class SchedulableEvaluator {
                     return evaluate;
                 } catch (Exception e) {
                     Logger logger = runContext.logger();
-                    logService.logTrigger(
+                    Logs.logTrigger(
                         context,
                         logger,
                         Level.WARN,

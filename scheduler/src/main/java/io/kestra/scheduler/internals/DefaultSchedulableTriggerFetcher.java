@@ -8,8 +8,8 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.services.LogService;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.SchedulableTriggerFetcher;
 import io.kestra.scheduler.model.TriggerState;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
@@ -36,7 +36,6 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
     
     // Services
     private final RunContextFactory runContextFactory;
-    private final LogService logService;
     
     // Stores
     private final TriggerStateStore triggerStateStore;
@@ -44,12 +43,10 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
     private final PluginDefaultService pluginDefaultService;
     
     public DefaultSchedulableTriggerFetcher(RunContextFactory runContextFactory,
-                                            LogService logService,
                                             TriggerStateStore triggerStateStore,
                                             FlowMetaStore flowMetaStore,
                                             PluginDefaultService pluginDefaultService) {
         this.runContextFactory = runContextFactory;
-        this.logService = logService;
         this.triggerStateStore = triggerStateStore;
         this.flowMetaStore = flowMetaStore;
         this.pluginDefaultService = pluginDefaultService;
@@ -129,7 +126,7 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
     private void logError(final ZonedDateTime now, ConditionContext conditionContext, FlowInterface flow, AbstractTrigger trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
         
-        logService.logExecution(
+        Logs.logExecution(
             flow,
             logger,
             Level.ERROR,

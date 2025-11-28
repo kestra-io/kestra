@@ -1,32 +1,27 @@
 <template>
     <NamespaceSelect
         data-type="flow"
-        :value="modelValue"
+        v-model="modelValue"
         :readOnly="!isCreating"
         allowCreate
-        @update:model-value="onInput"
     />
 </template>
-<script>
-    import {mapStores} from "pinia";
-    import Task from "./MixinTask";
+
+<script lang="ts" setup>
+    import {computed, onMounted} from "vue";
+    import {useFlowStore} from "../../../../stores/flow";
     import NamespaceSelect from "../../../namespaces/components/NamespaceSelect.vue";
 
-    import {useFlowStore} from "../../../../stores/flow";
-    export default {
-        components: {NamespaceSelect},
-        mixins: [Task],
-        created() {
-            const flowNamespace = this.flowStore.flow?.namespace;
-            if (!this.modelValue && flowNamespace) {
-                this.onInput(flowNamespace)
-            }
-        },
-        computed: {
-            ...mapStores(useFlowStore),
-            isCreating() {
-                return this.flowStore.isCreating;
-            }
+    const modelValue = defineModel<string>();
+
+    const flowStore = useFlowStore();
+
+    const isCreating = computed(() => flowStore.isCreating);
+
+    onMounted(() => {
+        const flowNamespace = flowStore.flow?.namespace;
+        if (!modelValue.value && flowNamespace) {
+            modelValue.value = flowNamespace;
         }
-    };
+    });
 </script>

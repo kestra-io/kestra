@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.apache.commons.io.FilenameUtils;
@@ -50,7 +51,7 @@ public final class YamlParser {
     }
 
     private static <T> String type(Class<T> cls) {
-        return cls.getSimpleName().toLowerCase();
+        return FlowInterface.class.isAssignableFrom(cls) ? "flow" : cls.getSimpleName().toLowerCase();
     }
 
     public static <T> T parse(File file, Class<T> cls) throws ConstraintViolationException {

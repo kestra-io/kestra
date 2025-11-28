@@ -199,14 +199,8 @@ public class PluginDefaultService {
         try {
             return this.injectAllDefaults(flow, false);
         } catch (Exception e) {
-            logger.warn(
-                "Can't inject plugin defaults on tenant {}, namespace '{}', flow '{}' with errors '{}'",
-                flow.getTenantId(),
-                flow.getNamespace(),
-                flow.getId(),
-                e.getMessage(),
-                e
-            );
+            String cause = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+            logService.get().logExecution(flow, logger, Level.WARN, "Unable to inject plugin defaults. Cause: '{}'", cause);
             return readWithoutDefaultsOrThrow(flow);
         }
     }
@@ -311,7 +305,7 @@ public class PluginDefaultService {
             result = parseFlowWithAllDefaults(flow.getTenantId(), flow.getNamespace(), flow.getRevision(), flow.isDeleted(), source, true, false);
         } catch (Exception e) {
             if (safe) {
-                logService.get().logExecution(flow, log, Level.ERROR, "Failed to read flow.", e);
+                logService.get().logExecution(flow, log, Level.WARN, "Unable to inject plugin default versions. Cause: {}", e.getMessage());
                 result = FlowWithException.from(flow, e);
 
                 // deleted is not part of the original 'source'

@@ -9,7 +9,6 @@ import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.LogService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -70,9 +69,6 @@ class DefaultSchedulerTest {
     
     @Inject
     SchedulableEvaluator schedulableEvaluator;
-    
-    @Inject
-    LogService logService;
     
     @Inject
     TriggerWorkerJobPublisher triggerWorkerJobPublisher;
@@ -191,8 +187,7 @@ class DefaultSchedulerTest {
             conditionService,
             pluginDefaultService,
             schedulableEvaluator,
-            logService,
-            new DefaultSchedulableTriggerFetcher(runContextFactory,logService, triggerStateStore, flowMetaStore, pluginDefaultService),
+            new DefaultSchedulableTriggerFetcher(runContextFactory, triggerStateStore, flowMetaStore, pluginDefaultService),
             triggerWorkerJobPublisher,
             triggerExecutionPublisher,
             SCHEDULER_CONFIGURATION
@@ -227,8 +222,7 @@ class DefaultSchedulerTest {
             flowMetaStore,
             triggerExecutionPublisher,
             runContextFactory,
-            conditionService,
-            logService
+            conditionService
         );
     }
     

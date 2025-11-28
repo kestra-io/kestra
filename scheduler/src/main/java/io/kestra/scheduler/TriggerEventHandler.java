@@ -11,7 +11,7 @@ import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.LogService;
+import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.events.CreateBackfillTrigger;
 import io.kestra.scheduler.events.ResetTrigger;
 import io.kestra.scheduler.events.SetDisableTrigger;
@@ -51,7 +51,6 @@ public class TriggerEventHandler {
     private final TriggerStateStore triggerStateStore;
     private final FlowMetaStore flowStateStore;
     private final TriggerExecutionPublisher triggerExecutionPublisher;
-    private final LogService logService;
     private final RunContextFactory runContextFactory;
     private final ConditionService conditionService;
     
@@ -60,12 +59,10 @@ public class TriggerEventHandler {
                                FlowMetaStore flowStateStore,
                                TriggerExecutionPublisher triggerExecutionPublisher,
                                RunContextFactory runContextFactory,
-                               ConditionService conditionService,
-                               LogService logService) {
+                               ConditionService conditionService) {
         this.triggerStateStore = triggerStateStore;
         this.flowStateStore = flowStateStore;
         this.triggerExecutionPublisher = triggerExecutionPublisher;
-        this.logService = logService;
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
     }
@@ -271,7 +268,7 @@ public class TriggerEventHandler {
             .orElse(null);
         
         if (trigger == null) {
-            logService.logTrigger(event.id(), Level.WARN, "Cannot process event '{}'. Cause: Trigger not found", event.type());
+            Logs.logTrigger(event.id(), Level.WARN, "Cannot process event '{}'. Cause: Trigger not found", event.type());
         }
         
         return Pair.of(flow, trigger);
@@ -281,7 +278,7 @@ public class TriggerEventHandler {
         FlowId flowId = FlowId.of(event.id().getTenantId(), event.id().getNamespace(), event.id().getFlowId(), revision);
         FlowWithSource flow = flowStateStore.find(flowId).orElse(null);
         if (flow == null) {
-            logService.logTrigger(event.id(), Level.WARN, "Cannot process event '{}'. Cause: Flow not found", event.type());
+            Logs.logTrigger(event.id(), Level.WARN, "Cannot process event '{}'. Cause: Flow not found", event.type());
             return null;
         }
         return flow;
@@ -290,7 +287,7 @@ public class TriggerEventHandler {
     private Optional<TriggerState> findTriggerState(final TriggerEvent event) {
         Optional<TriggerState> state = triggerStateStore.find(event.id());
         if (state.isEmpty()) {
-            logService.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
+            Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
         }
         return state;
     }

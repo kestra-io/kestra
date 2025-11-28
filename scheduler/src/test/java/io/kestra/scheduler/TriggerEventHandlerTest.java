@@ -8,7 +8,6 @@ import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
-import io.kestra.core.services.LogService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.scheduler.events.CreateBackfillTrigger;
 import io.kestra.scheduler.events.ResetTrigger;
@@ -47,9 +46,6 @@ class TriggerEventHandlerTest {
     @Inject
     private ConditionService conditionService;
     
-    @Inject
-    private LogService logService;
-    
     private TriggerEventHandler handler;
     
     private TriggerId triggerId;
@@ -72,8 +68,7 @@ class TriggerEventHandlerTest {
             new InMemoryFlowMetaStore(TEST_VNODE_COUNT, flows),
             triggerExecutionPublisher,
             runContextFactory,
-            conditionService,
-            logService
+            conditionService
         );
     }
     

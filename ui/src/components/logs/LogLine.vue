@@ -205,7 +205,6 @@ div.line {
     .log-content {
         display: inline-block;
         vertical-align: middle;
-        /* prevent Firefox word breaks */
         overflow-wrap: anywhere;
         word-break: break-word;
         min-width: 0;

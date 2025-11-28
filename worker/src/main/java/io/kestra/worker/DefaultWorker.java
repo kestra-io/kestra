@@ -20,7 +20,6 @@ import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
-import io.kestra.core.services.LogService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.VariablesService;
 import io.kestra.core.services.WorkerGroupService;
@@ -119,9 +118,6 @@ public class DefaultWorker implements Worker {
 
     @Inject
     private ServerConfig serverConfig;
-
-    @Inject
-    private LogService logService;
 
     @Inject
     private RunContextInitializer runContextInitializer;
@@ -464,7 +460,7 @@ public class DefaultWorker implements Worker {
             .increment();
 
         if (log.isDebugEnabled()) {
-            logService.logTrigger(
+            Logs.logTrigger(
                 workerTrigger.getTriggerContext(),
                 Level.DEBUG,
                 "[type: {}] {}",
@@ -537,7 +533,7 @@ public class DefaultWorker implements Worker {
 
         // We create an ERROR log attached to the execution
         Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
-        logService.logExecution(
+        Logs.logExecution(
             execution,
             logger,
             Level.ERROR,
@@ -592,7 +588,7 @@ public class DefaultWorker implements Worker {
                     runContextInitializer.forWorker(runContext, workerTrigger);
                     try {
 
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             workerTrigger.getTriggerContext(),
                             runContext.logger(),
                             Level.INFO,
@@ -629,7 +625,7 @@ public class DefaultWorker implements Worker {
                     } catch (Exception e) {
                         this.handleTriggerError(workerTrigger, e);
                     } finally {
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             workerTrigger.getTriggerContext(),
                             runContext.logger(),
                             Level.INFO,
@@ -679,7 +675,7 @@ public class DefaultWorker implements Worker {
             return workerTaskResult;
         }
 
-        logService.logTaskRun(
+        Logs.logTaskRun(
             workerTask.getTaskRun(),
             Level.INFO,
             "Type {} started",
@@ -860,7 +856,7 @@ public class DefaultWorker implements Worker {
             .timer(MetricRegistry.METRIC_WORKER_ENDED_DURATION, MetricRegistry.METRIC_WORKER_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
             .record(workerTask.getTaskRun().getState().getDuration());
 
-        logService.logTaskRun(
+        Logs.logTaskRun(
             workerTask.getTaskRun(),
             Level.INFO,
             "Type {} with state {} completed in {}",
@@ -874,7 +870,7 @@ public class DefaultWorker implements Worker {
         Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
 
         if (e instanceof InterruptedException || (e != null && e.getCause() instanceof InterruptedException)) {
-            logService.logTrigger(
+            Logs.logTrigger(
                 workerTrigger.getTriggerContext(),
                 logger,
                 Level.WARN,
@@ -882,7 +878,7 @@ public class DefaultWorker implements Worker {
                 workerTrigger.getTriggerContext().getDate()
             );
         } else {
-            logService.logTrigger(
+            Logs.logTrigger(
                 workerTrigger.getTriggerContext(),
                 logger,
                 Level.WARN,
@@ -1139,7 +1135,7 @@ public class DefaultWorker implements Worker {
                     // As a last resort, we try to stop the trigger via Thread.interrupt.
                     // If the trigger doesn't respond to interrupts, it may never terminate.
                     t.interrupt();
-                    logService.logTrigger(
+                    Logs.logTrigger(
                         t.getWorkerTrigger().getTriggerContext(),
                         t.getWorkerTrigger().getConditionContext().getRunContext().logger(),
                         Level.INFO,

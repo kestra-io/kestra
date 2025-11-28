@@ -3,7 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.tasks.retrys.Exponential;
 import io.kestra.core.runners.pebble.PebbleUtils;
-import io.kestra.core.services.LogService;
+import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
 import io.micronaut.context.annotation.Requires;
@@ -23,7 +23,7 @@ import java.util.Map;
 @Requires(property = "kestra.repository.type")
 public class ErrorLogsFunction  implements Function {
     @Inject
-    private LogService logService;
+    private ExecutionLogService logService;
 
     @Inject
     private PebbleUtils pebbleUtils;

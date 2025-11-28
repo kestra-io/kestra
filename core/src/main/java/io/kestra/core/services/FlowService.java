@@ -9,7 +9,6 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
@@ -33,7 +32,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -60,7 +58,7 @@ public class FlowService {
 
     @Inject
     Optional<FlowTopologyRepositoryInterface> flowTopologyRepository;
-    
+
     @Inject
     Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
 
@@ -94,7 +92,7 @@ public class FlowService {
         return flowRepository
             .orElseThrow(() -> new IllegalStateException("Cannot perform operation on flow. Cause: No FlowRepository"));
     }
-    
+
     /**
      * Evaluates all checks defined in the given flow using the provided inputs.
      * <p>
@@ -138,7 +136,7 @@ public class FlowService {
         }
         return List.of();
     }
-    
+
     /**
      * Validates the given flow source.
      * <p>
@@ -508,50 +506,6 @@ public class FlowService {
         }
 
         return flowRepository.get().delete(flow);
-    }
-
-    /**
-     * Return true if the namespace is allowed from the namespace denoted by 'fromTenant' and 'fromNamespace'.
-     * As namespace restriction is an EE feature, this will always return true in OSS.
-     */
-    public boolean isAllowedNamespace(String tenant, String namespace, String fromTenant, String fromNamespace) {
-        return true;
-    }
-
-    /**
-     * Check that the namespace is allowed from the namespace denoted by 'fromTenant' and 'fromNamespace'.
-     * If not, throw an IllegalArgumentException.
-     */
-    public void checkAllowedNamespace(String tenant, String namespace, String fromTenant, String fromNamespace) {
-        if (!isAllowedNamespace(tenant, namespace, fromTenant, fromNamespace)) {
-            throw new IllegalArgumentException("Namespace " + namespace + " is not allowed.");
-        }
-    }
-
-    /**
-     * Return true if the namespace is allowed from all the namespace in the 'fromTenant' tenant.
-     * As namespace restriction is an EE feature, this will always return true in OSS.
-     */
-    public boolean areAllowedAllNamespaces(String tenant, String fromTenant, String fromNamespace) {
-        return true;
-    }
-
-    /**
-     * Check that the namespace is allowed from all the namespace in the 'fromTenant' tenant.
-     * If not, throw an IllegalArgumentException.
-     */
-    public void checkAllowedAllNamespaces(String tenant, String fromTenant, String fromNamespace) {
-        if (!areAllowedAllNamespaces(tenant, fromTenant, fromNamespace)) {
-            throw new IllegalArgumentException("All namespaces are not allowed, you should either filter on a namespace or configure all namespaces to allow your namespace.");
-        }
-    }
-
-    /**
-     * Return true if require existing namespace is enabled and the namespace didn't already exist.
-     * As namespace management is an EE feature, this will always return false in OSS.
-     */
-    public boolean requireExistingNamespace(String tenant, String namespace) {
-        return false;
     }
 
     /**

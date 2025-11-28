@@ -11,7 +11,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
@@ -134,7 +133,6 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
     @VisibleForTesting
     protected List<String> findNamespaces(RunContext runContext) throws IllegalVariableEvaluationException {
         String tenantId = runContext.flowInfo().tenantId();
-        String currentNamespace = runContext.flowInfo().namespace();
         FlowRepositoryInterface flowRepositoryInterface = ((DefaultRunContext) runContext)
             .getApplicationContext().getBean(FlowRepositoryInterface.class);
         List<String> distinctNamespaces = flowRepositoryInterface.findDistinctNamespace(tenantId);
@@ -176,9 +174,8 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
             kvNamespaces.addAll(distinctNamespaces);
         }
 
-        FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
         for (String ns : kvNamespaces) {
-            flowService.checkAllowedNamespace(tenantId, ns, tenantId, currentNamespace);
+            runContext.acl().allowNamespace(ns);
         }
         return kvNamespaces;
     }

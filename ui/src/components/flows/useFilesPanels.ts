@@ -125,24 +125,38 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
 
     const namespacesStore = useNamespacesStore();
 
-    // on save all files, save all files
+    // on save all files, save all namespace files
     // and set all tabs as not dirty
     provide(FILES_SAVE_ALL_INJECTION_KEY, async () => {
+        const files:{
+            file: Parameters<typeof namespacesStore.saveOrCreateFile>[0]
+            tab: TabLiveWithContent
+        }[] = [];
         for(const panel of panels.value){
             for(const tab of panel.tabs as TabLiveWithContent[]){
-                if(!tab.content || !tab.path){
+                if(!tab.uid.startsWith(`${CODE_PREFIX}-`) || !tab.content || !tab.path || !tab.dirty){
                     continue
                 }
                 if(namespace.value === undefined){
                     throw new Error(`Cannot save file "${tab.path}": namespace is undefined`)
                 }
-                await namespacesStore.createFile({
-                    namespace: namespace.value,
-                    path: tab.path,
-                    content: tab.content
+                files.push({
+                    file:{
+                        namespace: namespace.value,
+                        path: tab.path,
+                        content: tab.content
+                    },
+                    tab
                 });
-                tab.dirty = false;
             }
+        }
+        if(files.length > 0){
+            // parallelize saving of files
+            await Promise.all(
+                files.map(file => namespacesStore.saveOrCreateFile(file.file)
+                    // only remove the dirty flag once the file was saved
+                    .then(() => file.tab.dirty = false))
+            );
         }
     });
 

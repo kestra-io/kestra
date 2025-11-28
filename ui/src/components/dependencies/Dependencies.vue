@@ -8,28 +8,28 @@
             <div class="controls">
                 <el-button
                     size="small"
-                    :title="t('dependency.controls.zoom_in')"
+                    :title="$t('dependency.controls.zoom_in')"
                     @click="handlers.zoomIn"
                 >
                     <Plus />
                 </el-button>
                 <el-button
                     size="small"
-                    :title="t('dependency.controls.zoom_out')"
+                    :title="$t('dependency.controls.zoom_out')"
                     @click="handlers.zoomOut"
                 >
                     <Minus />
                 </el-button>
                 <el-button
                     size="small"
-                    :title="t('dependency.controls.clear_selection')"
+                    :title="$t('dependency.controls.clear_selection')"
                     @click="handlers.clearSelection"
                 >
                     <SelectionRemove />
                 </el-button>
                 <el-button
                     size="small"
-                    :title="t('dependency.controls.fit_view')"
+                    :title="$t('dependency.controls.fit_view')"
                     @click="handlers.fit"
                 >
                     <FitToScreenOutline />
@@ -60,9 +60,6 @@
 
     import {useRoute} from "vue-router";
     const route = useRoute();
-
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
 
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";

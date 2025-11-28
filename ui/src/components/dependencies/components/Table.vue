@@ -2,14 +2,14 @@
     <section id="input">
         <el-input
             v-model="search"
-            :placeholder="t('dependency.search.placeholder')"
+            :placeholder="$t('dependency.search.placeholder')"
             clearable
         />
     </section>
 
     <el-table
         :data="results"
-        :emptyText="t('dependency.search.no_results', {term: search})"
+        :emptyText="$t('dependency.search.no_results', {term: search})"
         :showHeader="false"
         class="nodes"
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"
@@ -63,9 +63,6 @@
     import {Status} from "@kestra-io/ui-libs";
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
-
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
 
     import {NODE, FLOW, EXECUTION, NAMESPACE, type Node} from "../utils/types";
 

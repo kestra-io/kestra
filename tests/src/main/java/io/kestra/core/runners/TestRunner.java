@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @Singleton
 public class TestRunner implements Runnable, AutoCloseable {
-    @Setter private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors()) * 16;
+    @Setter private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors()) * 4;
     @Setter private boolean schedulerEnabled = true;
     @Setter private boolean workerEnabled = true;
 

@@ -150,7 +150,7 @@
                 }),
             },
             onClick: (e, elements) => {
-                if (data.type === "io.kestra.plugin.core.dashboard.data.Logs") {
+                if (data.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) {
                     return;
                 }
                 chartClick(moment, router, route, {}, parsedData.value, elements, "label");

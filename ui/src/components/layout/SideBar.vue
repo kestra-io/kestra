@@ -11,7 +11,7 @@
     >
         <template #header>
             <SidebarToggleButton
-                @toggle="collapsed = onToggleCollapse(!collapsed)"
+                @toggle="onToggleCollapse(!collapsed)"
             />
             <div class="logo">
                 <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onUpdated, ref, computed, h, watch} from "vue";
+    import {onUpdated, computed, h, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {useMediaQuery} from "@vueuse/core";
@@ -58,10 +58,8 @@
     const layoutStore = useLayoutStore();
 
     function onToggleCollapse(folded: boolean) {
-        collapsed.value = folded;
         layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
-
         return folded;
     }
 
@@ -118,9 +116,17 @@
         ];
     });
 
-    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
-
+    // Detect if viewport is mobile-sized (≤768px)
     const isSmallScreen = useMediaQuery("(max-width: 768px)")
+    
+    // On mobile devices, initialise sidebar as collapsed by default
+    // This ensures mobile users start with an unobstructed view
+    if (isSmallScreen.value) {
+        layoutStore.setSideMenuCollapsed(true)
+    }
+
+    // Use computed property to reactively sync with layout store
+    const collapsed = computed(() => layoutStore.sideMenuCollapsed)
 
     watch(() => $route.name, (newRoute, oldRoute) => {
         if (newRoute !== oldRoute && isSmallScreen.value && !collapsed.value) {
@@ -146,7 +152,22 @@
         }
     }
 }
-
+// Mobile-specific styling: hide sidebar when collapsed, show as overlay when expanded
+@media (max-width: 768px) {
+    // Completely hide the sidebar when collapsed on mobile
+    #side-menu.vsm_collapsed {
+        display: none;
+    }
+    // Show sidebar as overlay when expanded
+    #side-menu:not(.vsm_collapsed) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1040;
+        width: 268px;
+    }
+}
 #side-menu {
     position: static;
     z-index: 1039;

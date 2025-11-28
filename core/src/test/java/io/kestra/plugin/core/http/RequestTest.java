@@ -15,7 +15,10 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import io.micronaut.http.*;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -628,6 +631,10 @@ class RequestTest {
 
     @Controller
     static class MockController {
+
+        private static final int LARGE_BODY_SIZE = 20 * 1024 * 1024; // 20MB > 19MB safeguard
+        private static final String LARGE_BODY = "a".repeat(LARGE_BODY_SIZE);
+
         @Get("/hello")
         HttpResponse<String> hello() {
             return HttpResponse.ok("{ \"hello\": \"world\" }");
@@ -722,6 +729,36 @@ class RequestTest {
         @Get("/uri%20with%20space")
         HttpResponse<String> uriWithSpace() {
             return HttpResponse.ok("Hello World");
+        }
+
+        @Get("/large")
+        HttpResponse<String> large() {
+            return HttpResponse.ok(LARGE_BODY);
+        }
+    }
+
+    @Test
+    void largeBodyFailsFast() {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.ofValue(server.getURL().toString() + "/large"))
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> task.run(runContext)
+            );
+
+            assertThat(exception.getMessage())
+                .contains("Response body is too large to store in task outputs")
+                .contains("Download");
         }
     }
 }

@@ -161,13 +161,33 @@
         useDocStore().docId = "flowEditor";
     })
 
-    watch(() => props.modelValue, (value) => {
-        if (isCodeEditor(editor) && editor?.getValue?.() !== value) {
-            preventCursorChange.value = true;
-        } else {
-            preventCursorChange.value = false;
+    watch(
+        () => [props.modelValue, props.lang],
+        ([value, newLang], [, oldLang]) => {
+            preventCursorChange.value = isCodeEditor(editor) && editor?.getValue?.() !== value;
+            if (newLang === oldLang) return;
+            if (isDiff.value || !editor || !isCodeEditor(editor)) return;
+
+            const monacoRef = monacoEditor.value?.monaco;
+            const model = editor.getModel?.();
+            if (!monacoRef || !model) return;
+
+            let lang = "plaintext";
+            if (newLang && typeof newLang === "string" && newLang.trim()) {
+                lang = newLang.includes("json")
+                    ? "json"
+                    : newLang.includes("-")
+                        ? newLang.split("-")[0]
+                        : newLang;
+            }
+            try {
+                monacoRef.editor.setModelLanguage(model, lang);
+            } catch (e) {
+                console.warn("Failed to set model language", e);
+            }
         }
-    })
+    );
+
 
     const themeComputed = computed(() => {
         return useMiscStore().theme;

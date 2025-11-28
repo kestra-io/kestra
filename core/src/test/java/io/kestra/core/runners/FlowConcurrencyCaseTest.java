@@ -13,7 +13,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -171,8 +170,9 @@ public class FlowConcurrencyCaseTest {
 
         assertThat(executionResult1.getState().getCurrent()).isEqualTo(Type.FAILED);
         // it should have been queued after restarted
-        assertThat(executionResult1.getState().getHistories().stream().anyMatch(history -> history.getState() == Type.RESTARTED)).isTrue();
-        assertThat(executionResult1.getState().getHistories().stream().anyMatch(history -> history.getState() == Type.QUEUED)).isTrue();
+        List<Type> stateList = executionResult1.getState().getHistories().stream().map(History::getState).toList();
+        assertThat(stateList).contains(Type.RESTARTED);
+        assertThat(stateList).contains(Type.QUEUED);
         assertThat(executionResult2.getState().getCurrent()).isEqualTo(Type.FAILED);
         assertThat(executionResult2.getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(executionResult2.getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);

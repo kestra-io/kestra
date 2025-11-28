@@ -5,6 +5,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -175,7 +176,7 @@ public class TestRunnerUtils {
         throws QueueException, InterruptedException {
         //We need to wait before restarting to make sure the execution is cleaned before we restart.
         Thread.sleep(100L);
-        return emitAndAwaitExecution(predicate, execution, duration);
+        return emitAndAwaitExecution(seenExecution -> predicate.test(seenExecution) && seenExecution.getState().getHistories().stream().map(State.History::getState).anyMatch(State.Type.RESTARTED::equals), execution, duration);
     }
 
     public Execution emitAndAwaitExecution(Predicate<Execution> predicate, Execution execution, Duration duration)

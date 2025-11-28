@@ -520,7 +520,7 @@ class ExecutionControllerTest {
         createAndExecuteFlow();
 
         HttpResponse<byte[]> response = client.toBlocking().exchange(
-            HttpRequest.GET("/api/v1/main/executions/export"),
+            HttpRequest.GET("/api/v1/main/executions/export/by-query/csv"),
             byte[].class
         );
 

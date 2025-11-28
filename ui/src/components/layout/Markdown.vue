@@ -724,11 +724,13 @@
 
 /* Card grid + card */
 :deep(.doc-card-grid) {
+  container-type: inline-size;
   display: grid;
   gap: var(--spacer, 1rem);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
   align-items: start;
 }
+
 :deep(.doc-card) {
   background: var(--ks-background-panel);
   border: 1px solid var(--ks-border-primary);
@@ -739,6 +741,7 @@
   flex-direction: column;
   gap: 0;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0;
 }
 :deep(.doc-card.is-hidden) {
   display: none;
@@ -749,6 +752,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
+  min-width: 0;
   background: none;
   border: none;
   color: var(--ks-content-primary);
@@ -769,9 +773,11 @@
 }
 :deep(.doc-card__title) {
   flex: 1 1 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 :deep(.doc-card__indicator) {
   width: 0.85rem;

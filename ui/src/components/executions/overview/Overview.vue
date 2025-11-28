@@ -138,6 +138,13 @@
 
                 <div id="chart">
                     <div>
+                        <section>
+                            <div class="heading">
+                                <TimelineClockOutline />
+                                <span>{{ $t("recent_executions") }}</span>
+                            </div>
+                            <div>selector</div>
+                        </section>
                         <TimeSeries
                             :chart="{...chart, content: YAML_CHART}"
                             :filters
@@ -219,6 +226,7 @@
     import TimerSand from "vue-material-design-icons/TimerSand.vue";
     import History from "vue-material-design-icons/History.vue";
     import SortVariant from "vue-material-design-icons/SortVariant.vue";
+    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
 
     const emits = defineEmits(["follow"]);
 
@@ -550,6 +558,24 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
                 border: 1px solid var(--el-border-color-light);
                 border-radius: calc($spacer / 2);
                 background-color: var(--ks-background-card);
+
+                > section:first-child {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: $spacer;
+
+                    & .heading {
+                        display: flex;
+                        align-items: center;
+
+                        & span.material-design-icon {
+                            margin-right: calc($spacer / 2);
+                            font-size: $font-size-xl;
+                            color: var(--ks-content-link);
+                        }
+                    }
+                }
             }
         }
     }

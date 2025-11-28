@@ -2,7 +2,7 @@ import {defineComponent, ref} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
-import {useAxios} from "../../../../src/utils/axios.js";
+import {useStore} from "vuex";
 
 const meta = {
     title: "inputs/InputsForm",
@@ -21,21 +21,25 @@ const meta = {
 export default meta;
 
 const Sut = defineComponent((props) => {
-    const axios = useAxios()
+    const store = useStore()
 
-    axios.post = (uri) => {
-        if (!uri.endsWith("/validate")) {
-            return {data: []}
-        }
-        return  Promise.resolve({data: {
-                "inputs": props.inputs.map(x => ({
-                    input: x,
-                    enabled: true,
-                    isDefault: false,
-                    errors: []
-                }))
+    store.$http = {
+        post(uri) {
+            if (!uri.endsWith("/validate")) {
+                return {data: []}
             }
-        })}
+            return Promise.resolve({
+                data: {
+                    "inputs": props.inputs.map(x => ({
+                        input: x,
+                        enabled: true,
+                        isDefault: false,
+                        errors: []
+                    }))
+                }
+            })
+        }
+    }
 
 
     const values = ref({});

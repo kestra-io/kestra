@@ -679,6 +679,7 @@
   border: 1px solid var(--ks-border-primary);
   border-radius: var(--el-border-radius-base);
   margin-top: 0.75rem;
+  overflow-x: scroll;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 :deep(details.doc-collapsible[open]) {

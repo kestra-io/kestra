@@ -1,6 +1,6 @@
 <template>
     <div class="outputs">
-        <el-splitter>
+        <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
             <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'">
                 <div class="d-flex flex-column overflow-x-auto left">
                     <ElCascaderPanel
@@ -113,6 +113,7 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
     import {ElCascaderPanel} from "element-plus";
+    import {useMediaQuery} from "@vueuse/core";
     import CopyToClipboard from "../layout/CopyToClipboard.vue";
     import Editor from "../inputs/Editor.vue";
     import VarValue from "./VarValue.vue";
@@ -140,8 +141,9 @@
     const debugStackTrace = ref("");
     const isJSON = ref(false);
     const expandedValue = ref("");
-    const leftWidth = ref("70%");
-    const rightWidth = ref("30%");
+    const isMobile = useMediaQuery("(max-width: 768px)");
+    const leftWidth = isMobile ? ref("50%") : ref("70%");
+    const rightWidth = isMobile ? ref("50%") : ref("30%");
 
     const selectedValue = computed(() => {
         if (!selected.value?.length) return null;
@@ -332,6 +334,7 @@
 
 :deep(.el-cascader-panel) {
     min-height: 197px;
+    height: 100%;
     border: 1px solid var(--ks-border-primary);
     border-radius: 0;
     overflow-x: auto !important;
@@ -430,5 +433,16 @@
         font-weight: bold;
         font-size: var(--el-font-size-base);
     }
+}
+
+@media (max-width: 768px) {
+    .outputs {
+        height: 600px;
+        margin-top: 15px;
+    }
+    :deep(.el-cascader-panel) {
+        height: 100%;
+    }
+    
 }
 </style>

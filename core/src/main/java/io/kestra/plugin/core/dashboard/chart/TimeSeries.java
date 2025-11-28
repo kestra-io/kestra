@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.dashboard.chart;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -23,42 +22,41 @@ import lombok.experimental.SuperBuilder;
 @TimeSeriesChartValidation
 @Schema(
     title = "Track trends over time with dynamic time series charts."
-    )
+)
 @Plugin(
     examples = {
         @Example(
             title = "Display a chart with Executions over the last week.",
             full = true,
-            code = { """
+            code = """
                 charts:
                   - id: executions_timeseries
                     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
                     chartOptions:
-                        displayName: Total Executions
-                        description: Executions last week
-                        legend:
-                            enabled: true
-                        column: date
-                        colorByColumn: state
+                      displayName: Total Executions
+                      description: Executions last week
+                      legend:
+                        enabled: true
+                      column: date
+                      colorByColumn: state
                     data:
-                        type: io.kestra.plugin.core.dashboard.data.Executions
-                        columns:
-                            date:
-                                field: START_DATE
-                                displayName: Date
-                            state:
-                                field: STATE
-                            total:
-                                displayName: Executions
-                                agg: COUNT
-                                graphStyle: BARS
-                            duration:
-                                displayName: Duration
-                                field: DURATION
-                                agg: SUM
-                                graphStyle: LINES
+                      type: io.kestra.plugin.core.dashboard.data.Executions
+                      columns:
+                        date:
+                          field: START_DATE
+                          displayName: Date
+                        state:
+                          field: STATE
+                        total:
+                          displayName: Executions
+                          agg: COUNT
+                          graphStyle: BARS
+                        duration:
+                          displayName: Duration
+                          field: DURATION
+                          agg: SUM
+                          graphStyle: LINES
                 """
-            }
         )
     }
 )

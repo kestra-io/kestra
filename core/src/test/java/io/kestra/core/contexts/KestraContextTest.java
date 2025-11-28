@@ -17,12 +17,12 @@ class KestraContextTest {
     KestraContext context;
 
     @Test
-    void shouldGetWorkerMaxNumThreads() {
+    void shouldGetWorkerMaxNumThreads() throws InterruptedException {
         // When
         context.injectWorkerConfigs(16, null);
 
         // Then
-        assertThat(KestraContext.getContext().getWorkerMaxNumThreads()).isEqualTo(Optional.of(16));
+        assertThat(context.getWorkerMaxNumThreads()).isEqualTo(Optional.of(16));
     }
 
     @Test
@@ -31,6 +31,6 @@ class KestraContextTest {
         context.injectWorkerConfigs(null, "my-key");
 
         // Then
-        assertThat(KestraContext.getContext().getWorkerGroupKey()).isEqualTo(Optional.of("my-key"));
+        assertThat(context.getWorkerGroupKey()).isEqualTo(Optional.of("my-key"));
     }
 }

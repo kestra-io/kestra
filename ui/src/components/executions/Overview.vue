@@ -164,7 +164,7 @@
             </el-button>
         </div>
 
-        <div v-if="execution.trigger" class="my-5 overview-cascader">
+        <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
             <TriggerCascader
                 :options="transform({
@@ -684,6 +684,9 @@
                 max-width: 100%;
             }
         }
+    }
+    .el-cascader-menu__list{
+        border-bottom: var(--el-cascader-menu-border);
     }
 
     .el-table .el-table__cell{

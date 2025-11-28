@@ -1115,12 +1115,13 @@ class FlowControllerTest {
         );
 
         HttpResponse<byte[]> response = client.toBlocking().exchange(
-            HttpRequest.GET(FLOW_PATH + "/export"),
+            HttpRequest.GET(FLOW_PATH + "/export/by-query/csv"),
             byte[].class
         );
 
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         assertThat(response.getHeaders().get("Content-Disposition")).contains("attachment; filename=flows.csv");
+
         String csv = new String(response.body());
         assertThat(csv).contains("id");
         assertThat(csv).contains(f1.getId());

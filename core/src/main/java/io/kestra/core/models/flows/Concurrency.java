@@ -25,7 +25,7 @@ public class Concurrency {
         QUEUE, CANCEL, FAIL;
     }
 
-    public static boolean maybeConcurrencyLimited(State.Type type) {
+    public static boolean possibleTransitions(State.Type type) {
         return type.equals(State.Type.CANCELLED) || type.equals(State.Type.FAILED);
     }
 }

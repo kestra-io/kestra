@@ -57,20 +57,26 @@ public class FlowConcurrencyCaseTest {
 
     public void flowConcurrencyCancel() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, NAMESPACE, "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
-        Execution execution2 = runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-cancel");
-
+        List<Execution> shouldFailExecutions = List.of(
+            runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-cancel"),
+            runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-cancel")
+        );
         assertThat(execution1.getState().isRunning()).isTrue();
-        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+
+        assertThat(shouldFailExecutions.stream().map(Execution::getState).map(State::getCurrent)).allMatch(Type.CANCELLED::equals);
 
         runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution1);
     }
 
     public void flowConcurrencyFail() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, NAMESPACE, "flow-concurrency-fail", null, null, Duration.ofSeconds(30));
-        Execution execution2 = runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-fail");
+        List<Execution> shouldFailExecutions = List.of(
+            runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-fail"),
+            runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-fail")
+        );
 
         assertThat(execution1.getState().isRunning()).isTrue();
-        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(shouldFailExecutions.stream().map(Execution::getState).map(State::getCurrent)).allMatch(State.Type.FAILED::equals);
 
         runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution1);
     }

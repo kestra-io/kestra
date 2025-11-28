@@ -152,6 +152,21 @@
                         />
                     </div>
                 </div>
+
+                <div id="buttons">
+                    <el-button>
+                        <el-icon class="el-icon--left">
+                            <ChevronLeft />
+                        </el-icon>
+                        {{ $t("prev_execution") }}
+                    </el-button>
+                    <el-button>
+                        {{ $t("next_execution") }}
+                        <el-icon class="el-icon--right">
+                            <ChevronRight />
+                        </el-icon>
+                    </el-button>
+                </div>
             </div>
         </el-splitter-panel>
     </el-splitter>
@@ -228,6 +243,8 @@
     import History from "vue-material-design-icons/History.vue";
     import SortVariant from "vue-material-design-icons/SortVariant.vue";
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
 
     const emits = defineEmits(["follow"]);
 
@@ -632,6 +649,17 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
                         }
                     }
                 }
+            }
+        }
+
+        #buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: $spacer;
+
+            .el-button {
+                font-size: $font-size-sm;
             }
         }
     }

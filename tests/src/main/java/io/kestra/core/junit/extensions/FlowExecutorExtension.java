@@ -25,8 +25,6 @@ import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
 public class FlowExecutorExtension implements AfterEachCallback, ParameterResolver {
-    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(KestraTestExtension.class);
-
     private ApplicationContext context;
 
     @Override
@@ -40,7 +38,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
     public Object resolveParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
         if (context == null) {
-            context = extensionContext.getRoot().getStore(NAMESPACE).get(ApplicationContext.class, ApplicationContext.class);
+            context = extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get())).get(ApplicationContext.class, ApplicationContext.class);
 
             if (context == null) {
                 throw new IllegalStateException("No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'");

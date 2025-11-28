@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.kv;
 
-
 import com.cronutils.utils.VisibleForTesting;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.ValidationErrorException;
@@ -46,7 +45,7 @@ import java.util.concurrent.atomic.AtomicLong;
             code = """
                 id: purge_kv_store
                 namespace: system
-                
+
                 tasks:
                   - id: purge_kv
                     type: io.kestra.plugin.core.kv.PurgeKV

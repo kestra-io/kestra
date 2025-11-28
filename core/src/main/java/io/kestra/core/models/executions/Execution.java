@@ -658,18 +658,20 @@ public class Execution implements DeletedInterface, TenantInterface {
     public boolean hasFailedNoRetry(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun) {
         return this.findTaskRunByTasks(resolvedTasks, parentTaskRun)
             .stream()
-            .anyMatch(taskRun -> {
-                ResolvedTask resolvedTask = resolvedTasks.stream()
-                    .filter(t -> t.getTask().getId().equals(taskRun.getTaskId())).findFirst()
-                    .orElse(null);
-                if (resolvedTask == null) {
-                    log.warn("Can't find task for taskRun '{}' in parentTaskRun '{}'",
-                        taskRun.getId(), parentTaskRun.getId());
-                    return false;
-                }
-                return !taskRun.shouldBeRetried(resolvedTask.getTask().getRetry())
-                    && taskRun.getState().isFailed();
-            });
+            // NOTE: we check on isFailed first to avoid the costly shouldBeRetried() method
+            .anyMatch(taskRun -> taskRun.getState().isFailed() && shouldNotBeRetried(resolvedTasks, parentTaskRun, taskRun));
+    }
+
+    private static boolean shouldNotBeRetried(List<ResolvedTask> resolvedTasks, TaskRun parentTaskRun, TaskRun taskRun) {
+        ResolvedTask resolvedTask = resolvedTasks.stream()
+            .filter(t -> t.getTask().getId().equals(taskRun.getTaskId())).findFirst()
+            .orElse(null);
+        if (resolvedTask == null) {
+            log.warn("Can't find task for taskRun '{}' in parentTaskRun '{}'",
+                taskRun.getId(), parentTaskRun.getId());
+            return false;
+        }
+        return !taskRun.shouldBeRetried(resolvedTask.getTask().getRetry());
     }
 
     public boolean hasCreated() {

@@ -426,10 +426,11 @@
             },
             updateDefaults() {
                 for (const input of this.inputsMetaData || []) {
-                    const {type, id, value} = input;
+                    const {type, id, value, defaults} = input;
+                    const valueOrDefault = value ?? defaults;
                     if (this.inputsValues[id] === undefined || this.inputsValues[id] === null || input.isDefault) {
                         if (type === "MULTISELECT") {
-                            this.multiSelectInputs[id] = value;
+                            this.multiSelectInputs[id] = valueOrDefault;
                         } else if(type === "JSON" && value == undefined && input.isDefault) {
                             /*
                             * Handle multiline JSON default values
@@ -437,7 +438,7 @@
                             */
                             this.inputsValues[id] = Inputs.normalize(type, this.normalizeJSON(input.defaults));
                         } else {
-                            this.inputsValues[id] = Inputs.normalize(type, input.defaults);
+                            this.inputsValues[id] = Inputs.normalize(type, valueOrDefault);
                         }
                     }
                 }

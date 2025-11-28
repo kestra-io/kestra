@@ -801,6 +801,7 @@
             return action(options)
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
+                    toggleAllUnselected();
                     loadData();
                 });
         } else {
@@ -814,6 +815,7 @@
             return action(options)
                 .then((r: any) => {
                     toast.success(t(success, {executionCount: r.data.count}));
+                    toggleAllUnselected();
                     loadData();
                 }).catch((e: any) => {
                     toast.error(e?.invalids.map((exec: any) => {
@@ -993,6 +995,7 @@
                     })
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
+                        toggleAllUnselected();
                         loadData();
                     });
             } else {
@@ -1003,6 +1006,7 @@
                     })
                     .then((r: any) => {
                         toast.success(t("Set labels done", {executionCount: r.data.count}));
+                        toggleAllUnselected();
                         loadData();
                     }).catch((e: any) => toast.error(e.invalids.map((exec: any) => {
                         return {message: t(exec.message, {executionId: exec.invalidValue})};

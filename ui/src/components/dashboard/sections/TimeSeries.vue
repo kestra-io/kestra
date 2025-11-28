@@ -20,7 +20,7 @@
             />
         </div>
     </el-tooltip>
-    <NoData v-else-if="!props.short || generated?.total === 0" />
+    <NoData v-else-if="!props.short || (props.execution && generated?.total === 0)" />
 </template>
 
 <script setup lang="ts">

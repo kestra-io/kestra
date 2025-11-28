@@ -103,7 +103,7 @@
 <style lang="scss" scoped>
 .filters-panel {
     height: fit-content;
-    max-height: 654px;
+    max-height: 500px;
     display: flex;
     flex-direction: column;
     border-radius: 8px;

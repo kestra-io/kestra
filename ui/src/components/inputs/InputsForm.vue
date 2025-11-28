@@ -406,12 +406,12 @@
             },
             updateDefaults() {
                 for (const input of this.inputsMetaData || []) {
-                    const {type, id, value} = input;
+                    const {type, id, value, defaults} = input;
                     if (this.inputsValues[id] === undefined || this.inputsValues[id] === null || input.isDefault) {
                         if (type === "MULTISELECT") {
-                            this.multiSelectInputs[id] = value;
+                            this.multiSelectInputs[id] = value ?? defaults;
                         }
-                        this.inputsValues[id] = Inputs.normalize(type, value);
+                        this.inputsValues[id] = Inputs.normalize(type, value ?? defaults);
                     }
                 }
             },

@@ -1,7 +1,7 @@
 <template>
     <div :id="containerID" />
     <el-tooltip
-        v-if="generated !== undefined"
+        v-if="generated?.total > 0"
         effect="light"
         placement="top"
         :persistent="false"
@@ -20,7 +20,7 @@
             />
         </div>
     </el-tooltip>
-    <NoData v-else-if="!props.short" />
+    <NoData v-else-if="!props.short || generated?.total === 0" />
 </template>
 
 <script setup lang="ts">
@@ -295,8 +295,8 @@
     });
     const {data: generated, generate} = useChartGenerator(props);
 
-    function refresh() {
-        return generate(getDashboard(route, "id")!);
+    function refresh(customFilters?: FilterObject[]) {
+        return generate(getDashboard(route, "id")!, undefined, customFilters);
     }
 
     defineExpose({

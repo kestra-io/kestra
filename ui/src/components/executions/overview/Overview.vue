@@ -130,7 +130,10 @@
                                 <span>{{ $t("recent_executions") }}</span>
                             </div>
                             <div class="timerange">
-                                <el-select v-model="timerange">
+                                <el-select
+                                    v-model="timerange"
+                                    @change="chartRef!.refresh(filters)"
+                                >
                                     <el-option
                                         v-for="option in options"
                                         :key="option.value"
@@ -141,6 +144,7 @@
                             </div>
                         </section>
                         <TimeSeries
+                            ref="chartRef"
                             :chart="{...chart, content: YAML_CHART}"
                             :filters
                             showDefault
@@ -179,6 +183,7 @@
     import moment from "moment";
 
     import Utils from "../../../utils/utils";
+    import {FilterObject} from "../../../utils/filters";
 
     import {Status, State} from "@kestra-io/ui-libs";
 
@@ -452,9 +457,15 @@
         },
     ];
 
+    const options = useValues("executions").VALUES.RELATIVE_DATE.slice(0, -1); // Remove last 365 days option
+    const timerange = ref<string>("PT168H"); // Default to last 7 days
+
+    const chartRef = ref<InstanceType<typeof TimeSeries> | null>(null);
     const chart = yaml.parse(YAML_CHART);
-    const filters = execution.value
-        ? [
+    const filters = computed((): FilterObject[] => {
+        if (!execution.value) return [];
+
+        return [
             ...(execution.value.tenantId
                 ? [
                     {
@@ -474,11 +485,13 @@
                 operation: "EQUALS",
                 value: execution.value.flowId!,
             },
-        ]
-        : [];
-
-    const options = useValues("executions").VALUES.RELATIVE_DATE;
-    const timerange = ref<string>("PT168H");
+            {
+                field: "timeRange",
+                operation: "EQUALS",
+                value: timerange.value,
+            },
+        ];
+    });
 
     onMounted(() => {
         if (!route.params.id) return;

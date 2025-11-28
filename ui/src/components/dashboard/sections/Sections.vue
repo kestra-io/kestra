@@ -27,7 +27,7 @@
                         <div id="charts_buttons">
                             <KestraIcon
                                 v-if="isTableChart(chart.type)"
-                                :tooltip="t('dashboards.export')"
+                                :tooltip="$t('dashboards.export')"
                             >
                                 <el-button
                                     @click="dashboardStore.export(dashboard, chart, {filters})"
@@ -39,7 +39,7 @@
 
                             <KestraIcon
                                 v-if="props.dashboard?.id !== 'default'"
-                                :tooltip="t('dashboards.edition.chart')"
+                                :tooltip="$t('dashboards.edition.chart')"
                             >
                                 <el-button
                                     tag="router-link"
@@ -81,9 +81,6 @@
 
     import {useDashboardStore} from "../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
-
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
 
     import KestraIcon from "../../Kicon.vue";
 

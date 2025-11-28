@@ -1,20 +1,16 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.server.ServerConfig;
-import io.kestra.core.server.ServerInstance;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceInstance;
-import io.kestra.core.server.ServiceStateTransition;
-import io.kestra.core.server.ServiceType;
-import io.kestra.core.server.WorkerTaskRestartStrategy;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.server.*;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;
 import io.kestra.jdbc.JdbcTestUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -23,8 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static io.kestra.core.server.ServiceStateTransition.Result.FAILED;
 import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEEDED;

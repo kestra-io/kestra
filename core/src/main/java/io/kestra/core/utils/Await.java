@@ -13,6 +13,10 @@ public class Await {
         Await.untilWithSleepInterval(condition, null);
     }
 
+    public static void untilWithTimeout(BooleanSupplier condition, Duration timeout) throws TimeoutException {
+        Await.until(condition, null, timeout);
+    }
+
     public static void untilWithSleepInterval(BooleanSupplier condition, Duration sleep) {
         if (sleep == null) {
             sleep = defaultSleep;

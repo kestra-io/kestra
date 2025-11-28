@@ -87,7 +87,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useFlowStore} from "../../stores/flow";
-    import {registerRemotes, registerShared, loadRemote, createInstance} from "@module-federation/enhanced/runtime";
+    import {registerRemotes, registerShared, loadRemote} from "@module-federation/enhanced/runtime";
 
     export default {
         components: {
@@ -130,10 +130,6 @@
             };
         },
         mounted() {
-            createInstance({
-                name: "kestraHost",
-                shared: {vue: {singleton: true}}
-            })
             registerRemotes([
                 {
                     type: "module",

@@ -6,28 +6,6 @@ import {federation} from "@module-federation/vite";
 import {commit} from "./plugins/commit"
 import {codecovVitePlugin} from "@codecov/vite-plugin";
 
-export const manualChunks = {
-    // bundle dashboard and all its dependencies in a single chunk
-    "dashboard": [
-        "src/components/dashboard/Dashboard.vue",
-        "src/components/dashboard/components/Create.vue",
-        "src/override/components/dashboard/Edit.vue"
-    ],
-    // bundle flows and all its dependencies in a second chunk
-    "flows": [
-        "src/components/flows/Flows.vue",
-        "src/components/flows/FlowCreate.vue",
-        "src/components/flows/FlowsSearch.vue",
-        "src/components/flows/FlowRoot.vue"
-    ],
-    "markdownDeps": [
-        "shiki/langs/yaml.mjs",
-        "shiki/langs/python.mjs",
-        "shiki/langs/javascript.mjs",
-        "src/utils/markdownDeps.ts"
-    ]
-}
-
 export default defineConfig({
     base: "",
     build: {
@@ -37,9 +15,6 @@ export default defineConfig({
                 "https://fonts.googleapis.com",
                 "https://fonts.gstatic.com"
             ],
-            output: {
-                manualChunks
-            }
         }
     },
     server: {

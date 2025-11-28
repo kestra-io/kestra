@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
@@ -20,7 +21,10 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
-import io.kestra.core.server.*;
+import io.kestra.core.server.ClusterEvent;
+import io.kestra.core.server.Metric;
+import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.topologies.FlowTopologyService;
@@ -30,7 +34,6 @@ import io.kestra.core.utils.*;
 import io.kestra.executor.ExecutorService;
 import io.kestra.executor.FlowTriggerService;
 import io.kestra.executor.SLAService;
-import io.kestra.core.services.SkipExecutionService;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.repository.AbstractJdbcFlowTopologyRepository;
@@ -228,7 +231,7 @@ public class JdbcExecutor implements ExecutorInterface {
      * to force Micronaut to respect order when invoking pre-destroy order.
      *
      * @param serviceLivenessCoordinator The {@link JdbcServiceLivenessCoordinator}.
-     * @param flowMetaStore             The {@link FlowMetaStoreInterface}.
+     * @param flowMetaStore              The {@link FlowMetaStoreInterface}.
      * @param flowTopologyRepository     The {@link AbstractJdbcFlowTopologyRepository}.
      * @param eventPublisher             The {@link ApplicationEventPublisher}.
      */
@@ -242,7 +245,7 @@ public class JdbcExecutor implements ExecutorInterface {
         final ExecutorsUtils executorsUtils,
         final MaintenanceService maintenanceService,
         @Value("${kestra.jdbc.executor.thread-count:0}") final int threadCount
-        ) {
+    ) {
         this.serviceLivenessCoordinator = serviceLivenessCoordinator;
         this.flowMetaStore = flowMetaStore;
         this.flowTopologyRepository = flowTopologyRepository;
@@ -473,7 +476,7 @@ public class JdbcExecutor implements ExecutorInterface {
     void reEmitWorkerJobsForWorkers(final Configuration configuration,
                                     final List<String> ids) {
         metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT, MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION)
-                .increment(ids.size());
+            .increment(ids.size());
 
         workerJobRunningRepository.getWorkerJobWithWorkerDead(configuration.dsl(), ids)
             .forEach(workerJobRunning -> {
@@ -552,10 +555,10 @@ public class JdbcExecutor implements ExecutorInterface {
                 execution,
                 FlowId.uidWithoutRevision(execution),
                 () -> {
+                    Executor executor = new Executor(execution, null);
                     try {
-
-                        final FlowWithSource flow = findFlow(execution);
-                        Executor executor = new Executor(execution, null).withFlow(flow);
+                        final FlowWithSource flow = findFlowOrThrow(execution);
+                        executor = executor.withFlow(flow);
 
                         // schedule it for later if needed
                         if (execution.getState().getCurrent() == State.Type.CREATED && execution.getScheduleDate() != null && execution.getScheduleDate().isAfter(Instant.now())) {
@@ -711,20 +714,20 @@ public class JdbcExecutor implements ExecutorInterface {
                                 .filter(subflowExecution -> this.deduplicateSubflowExecution(execution, executorState, subflowExecution.getParentTaskRun()))
                                 .toList();
 
-                                    subflowExecutionDedup
-                                        .forEach(throwConsumer(subflowExecution -> {
-                                            Execution subExecution = subflowExecution.getExecution();
-                                            String log = String.format("Created new execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]]", subExecution.getId(), subExecution.getFlowId(), subExecution.getNamespace());
+                            subflowExecutionDedup
+                                .forEach(throwConsumer(subflowExecution -> {
+                                    Execution subExecution = subflowExecution.getExecution();
+                                    String log = String.format("Created new execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]]", subExecution.getId(), subExecution.getFlowId(), subExecution.getNamespace());
 
-                                            JdbcExecutor.log.info(log);
+                                    JdbcExecutor.log.info(log);
 
-                                            logQueue.emit(LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
-                                                .level(Level.INFO)
-                                                .message(log)
-                                                .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())
-                                                .thread(Thread.currentThread().getName())
-                                                .build()
-                                            );
+                                    logQueue.emit(LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
+                                        .level(Level.INFO)
+                                        .message(log)
+                                        .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())
+                                        .thread(Thread.currentThread().getName())
+                                        .build()
+                                    );
 
                                     executionQueue.emit(subflowExecution.getExecution());
                                 }));
@@ -744,6 +747,11 @@ public class JdbcExecutor implements ExecutorInterface {
                         Span.current().recordException(e).setStatus(StatusCode.ERROR);
 
                         return null;
+                    } catch (FlowNotFoundException e) {
+                        return Pair.of(
+                            handleFailedExecutionFromExecutor(executor, e),
+                            executorState
+                        );
                     }
                 }
             );
@@ -761,7 +769,7 @@ public class JdbcExecutor implements ExecutorInterface {
         } catch (QueueException ex) {
             // fail silently
         }
-        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() :  failedExecution.getExecution().withState(State.Type.FAILED);
+        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() : failedExecution.getExecution().withState(State.Type.FAILED);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -791,13 +799,13 @@ public class JdbcExecutor implements ExecutorInterface {
             if (execution.hasTaskRunJoinable(message.getTaskRun())) {
                 try {
                     // process worker task result
-                    executorService.addWorkerTaskResult(current, () -> findFlow(execution), message);
+                    executorService.addWorkerTaskResult(current, throwSupplier(() -> findFlowOrThrow(execution)), message);
                     // join worker result
                     return Pair.of(
                         current,
                         pair.getRight()
                     );
-                } catch (InternalException e) {
+                } catch (InternalException | FlowNotFoundException e) {
                     return Pair.of(
                         handleFailedExecutionFromExecutor(current, e),
                         pair.getRight()
@@ -843,7 +851,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
             if (execution.hasTaskRunJoinable(message.getParentTaskRun())) { // TODO if we remove this check, we can avoid adding 'iteration' on the 'isSame()' method
                 try {
-                    FlowWithSource flow = findFlow(execution);
+                    FlowWithSource flow = findFlowOrThrow(execution);
                     Task task = flow.findTaskByTaskId(message.getParentTaskRun().getTaskId());
                     TaskRun taskRun;
 
@@ -900,7 +908,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         current,
                         pair.getRight()
                     );
-                } catch (InternalException e) {
+                } catch (InternalException | FlowNotFoundException e) {
                     return Pair.of(
                         handleFailedExecutionFromExecutor(current, e),
                         pair.getRight()
@@ -943,8 +951,8 @@ public class JdbcExecutor implements ExecutorInterface {
                 throw new IllegalStateException("Execution state don't exist for " + message.getParentExecutionId() + ", receive " + message);
             }
 
-            FlowWithSource flow = findFlow(execution);
             try {
+                FlowWithSource flow = findFlowOrThrow(execution);
                 ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.getTaskId());
                 if (!executableTask.waitForExecution()) {
                     return null;
@@ -967,7 +975,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         log.error("Unable to emit the subflow execution result", ex);
                     }
                 }
-            } catch (InternalException e) {
+            } catch (InternalException | FlowNotFoundException e) {
                 log.error("Unable to process the subflow execution end", e);
             }
             return null;
@@ -1113,7 +1121,7 @@ public class JdbcExecutor implements ExecutorInterface {
             // the terminated state can come from the execution queue, in this case we always have a flow in the executor
             // or from a worker task in an afterExecution block, in this case we need to load the flow
             if (executor.getFlow() == null && executor.getExecution().getState().isTerminated()) {
-                executor = executor.withFlow(findFlow(executor.getExecution()));
+                executor = executor.withFlow(findFlowOrThrow(executor.getExecution()));
             }
             boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
 
@@ -1210,7 +1218,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     ((JdbcQueue<WorkerJob>) workerJobQueue).deleteByKeys(taskRunKeys);
                 }
             }
-        } catch (QueueException e) {
+        } catch (QueueException | FlowNotFoundException e) {
             if (!ignoreFailure) {
                 // If we cannot add the new worker task result to the execution, we fail it
                 executionRepository.lock(executor.getExecution().getId(), pair -> {
@@ -1244,8 +1252,17 @@ public class JdbcExecutor implements ExecutorInterface {
             .forEach(throwConsumer(multipleCondition -> multipleConditionEventQueue.emit(multipleCondition)));
     }
 
-    private FlowWithSource findFlow(Execution execution) {
-        FlowInterface flow = this.flowMetaStore.findByExecution(execution).orElseThrow();
+    private FlowWithSource findFlowOrThrow(Execution execution) throws FlowNotFoundException {
+        return findFlow(execution).orElseThrow(() -> new FlowNotFoundException("Unable to find flow %s for execution %s".formatted(execution.getTenantId() + "/" + execution.getNamespace() + "/" + execution.getFlowId(), execution.getId())));
+    }
+
+    private Optional<FlowWithSource> findFlow(Execution execution) {
+        Optional<FlowInterface> maybeFlow = this.flowMetaStore.findByExecution(execution);
+        if (maybeFlow.isEmpty()) {
+            return Optional.empty();
+        }
+
+        FlowInterface flow = maybeFlow.get();
         FlowWithSource flowWithSource = pluginDefaultService.injectDefaults(flow, execution);
 
         if (templateExecutorInterface.isPresent()) {
@@ -1260,7 +1277,7 @@ public class JdbcExecutor implements ExecutorInterface {
             }
         }
 
-        return flowWithSource;
+        return Optional.of(flowWithSource);
     }
 
     /**
@@ -1307,7 +1324,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
                         Execution newAttempt = executionService.retryTask(
                             pair.getKey(),
-                            findFlow(pair.getKey()),
+                            findFlowOrThrow(pair.getKey()),
                             executionDelay.getTaskRunId()
                         );
                         executor = executor.withExecution(newAttempt, "retryFailedTask");
@@ -1319,7 +1336,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     }
                     // Handle WaitFor
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.CONTINUE_FLOWABLE)) {
-                        Execution execution  = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
+                        Execution execution = executionService.retryWaitFor(executor.getExecution(), executionDelay.getTaskRunId());
                         executor = executor.withExecution(execution, "continueLoop");
                     }
                 } catch (Exception e) {
@@ -1345,21 +1362,22 @@ public class JdbcExecutor implements ExecutorInterface {
 
         slaMonitorStorage.processExpired(Instant.now(), slaMonitor -> {
             Executor result = executionRepository.lock(slaMonitor.getExecutionId(), pair -> {
-                // TODO flow with source is not needed here. Maybe the best would be to not add the flow inside the executor to trace all usage
-                FlowWithSource flow = findFlow(pair.getLeft());
-                Executor executor = new Executor(pair.getLeft(), null).withFlow(flow);
-                Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
-                if (sla.isEmpty()) {
-                    // this can happen in case the flow has been updated and the SLA removed
-                    log.debug("Cannot find the SLA '{}' in the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
-                    return null;
-                }
-
-                metricRegistry
-                    .counter(MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
-                    .increment();
-
+                Executor executor = new Executor(pair.getLeft(), null);
                 try {
+                    // TODO flow with source is not needed here. Maybe the best would be to not add the flow inside the executor to trace all usage
+                    FlowWithSource flow = findFlowOrThrow(pair.getLeft());
+                    executor = executor.withFlow(flow);
+                    Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
+                    if (sla.isEmpty()) {
+                        // this can happen in case the flow has been updated and the SLA removed
+                        log.debug("Cannot find the SLA '{}' in the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
+                        return null;
+                    }
+
+                    metricRegistry
+                        .counter(MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                        .increment();
+
                     RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
                     Optional<Violation> violation = slaService.evaluateExecutionMonitoringSLA(runContext, executor.getExecution(), sla.get());
                     if (violation.isPresent()) { // should always be true

@@ -81,6 +81,7 @@
         "yaml": "^2.8.1"
     },
     "devDependencies": {
+        "@codecov/vite-plugin": "^1.9.1",
         "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
         "@eslint/js": "^9.39.1",
         "@playwright/test": "^1.56.1",
@@ -149,7 +150,10 @@
         "bootstrap": {
             "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
         },
-        "storybook": "$storybook"
+        "storybook": "$storybook",
+        "@codecov/vite-plugin":{
+            "vite": "$vite"
+        }
     },
     "lint-staged": {
         "**/*.{js,mjs,cjs,ts,vue}": "eslint --fix"

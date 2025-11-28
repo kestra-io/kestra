@@ -4,7 +4,7 @@ import vue from "@vitejs/plugin-vue";
 import {federation} from "@module-federation/vite";
 
 import {commit} from "./plugins/commit"
-// import {codecovVitePlugin} from "@codecov/vite-plugin";
+import {codecovVitePlugin} from "@codecov/vite-plugin";
 
 export const manualChunks = {
     // bundle dashboard and all its dependencies in a single chunk
@@ -82,12 +82,12 @@ export default defineConfig({
             }
         }),
         commit(),
-        // codecovVitePlugin({
-        //     enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
-        //     bundleName: "ui",
-        //     uploadToken: process.env.CODECOV_TOKEN,
-        //     telemetry: false
-        // }),
+        codecovVitePlugin({
+            enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+            bundleName: "ui",
+            uploadToken: process.env.CODECOV_TOKEN,
+            telemetry: false
+        }),
     ],
     assetsInclude: ["**/*.md"],
     css: {

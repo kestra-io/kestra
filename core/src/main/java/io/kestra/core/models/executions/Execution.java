@@ -12,6 +12,7 @@ import com.google.common.collect.Streams;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
@@ -53,7 +54,7 @@ import java.util.zip.CRC32;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class Execution implements DeletedInterface, TenantInterface {
+public class Execution implements DeletedInterface, TenantInterface, HasUID {
 
     @With
     @Hidden
@@ -128,6 +129,12 @@ public class Execution implements DeletedInterface, TenantInterface {
 
     @Nullable
     List<Breakpoint> breakpoints;
+
+    @Override
+    @JsonIgnore
+    public String uid() {
+        return id;
+    }
 
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.

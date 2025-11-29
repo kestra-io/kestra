@@ -2,7 +2,6 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
-import io.kestra.core.queues.QueueService;
 import io.kestra.jdbc.repository.AbstractJdbcTemplateRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -18,9 +17,8 @@ import java.util.Collections;
 public class PostgresTemplateRepository extends AbstractJdbcTemplateRepository {
     @Inject
     public PostgresTemplateRepository(@Named("templates") PostgresRepository<Template> repository,
-                                      QueueService queueService,
                                       ApplicationContext applicationContext) {
-        super(repository, queueService, applicationContext);
+        super(repository, applicationContext);
     }
 
     @Override

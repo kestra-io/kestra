@@ -6,7 +6,6 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.micronaut.context.ApplicationContext;
@@ -26,8 +25,8 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcCrudRep
     private final ApplicationEventPublisher<CrudEvent<Template>> eventPublisher;
 
     @SuppressWarnings("unchecked")
-    public AbstractJdbcTemplateRepository(io.kestra.jdbc.AbstractJdbcRepository<Template> jdbcRepository, QueueService queueService, ApplicationContext applicationContext) {
-        super(jdbcRepository, queueService);
+    public AbstractJdbcTemplateRepository(io.kestra.jdbc.AbstractJdbcRepository<Template> jdbcRepository, ApplicationContext applicationContext) {
+        super(jdbcRepository);
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.templateQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TEMPLATE_NAMED));
     }

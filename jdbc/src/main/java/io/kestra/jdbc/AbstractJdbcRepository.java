@@ -3,8 +3,8 @@ package io.kestra.jdbc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.data.model.Pageable;
@@ -32,8 +32,6 @@ import java.util.stream.IntStream;
 public abstract class AbstractJdbcRepository<T> {
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
-    protected final QueueService queueService;
-
     protected final Class<T> cls;
 
     @Setter
@@ -48,10 +46,8 @@ public abstract class AbstractJdbcRepository<T> {
     @SuppressWarnings("unchecked")
     public AbstractJdbcRepository(
         JdbcTableConfig tableConfig,
-        QueueService queueService,
         JooqDSLContextWrapper dslContextWrapper) {
         this.cls = (Class<T>) tableConfig.cls();
-        this.queueService = queueService;
         this.dslContextWrapper = dslContextWrapper;
         this.table = DSL.table(tableConfig.table());
     }
@@ -59,7 +55,7 @@ public abstract class AbstractJdbcRepository<T> {
     abstract public Condition fullTextCondition(List<String> fields, String query);
 
     public String key(T entity) {
-        String key = queueService.key(entity);
+        String key = entity instanceof HasUID hasUID ? hasUID.uid() : null;
 
         if (key != null) {
             return key;

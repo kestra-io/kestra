@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -17,7 +18,7 @@ import java.util.List;
 //  then rename the ExecutorInterface to just Executor (to be used as a queue consumer)
 @Getter
 @AllArgsConstructor
-public class Executor {
+public class Executor implements HasUID {
     private Execution execution;
     private Exception exception;
     private final List<String> from = new ArrayList<>();
@@ -193,5 +194,10 @@ public class Executor {
     public long incrementAndGetSeqId() {
         this.seqId++;
         return seqId;
+    }
+
+    @Override
+    public String uid() {
+        return execution.getId();
     }
 }

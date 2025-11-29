@@ -35,7 +35,7 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
     public MysqlRepository(@Parameter JdbcTableConfig jdbcTableConfig,
                            QueueService queueService,
                            JooqDSLContextWrapper dslContextWrapper) {
-        super(jdbcTableConfig, queueService, dslContextWrapper);
+        super(jdbcTableConfig, dslContextWrapper);
         this.table = DSL.table(DSL.quotedName(this.getTable().getName()));
     }
 

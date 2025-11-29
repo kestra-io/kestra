@@ -19,7 +19,6 @@ import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
@@ -101,12 +100,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     @SuppressWarnings("unchecked")
     public AbstractJdbcExecutionRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository,
-        QueueService queueService,
         ApplicationContext applicationContext,
         AbstractJdbcExecutorStateStorage executorStateStorage,
         JdbcFilterService filterService
     ) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
         this.executorStateStorage = executorStateStorage;
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.kestraConfig = applicationContext.getBean(KestraConfig.class);

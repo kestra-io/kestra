@@ -9,7 +9,6 @@ import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
@@ -36,9 +35,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
     private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
 
     public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository,
-                                        QueueService queueService,
                                         JdbcFilterService filterService) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
 
         this.filterService = filterService;
     }

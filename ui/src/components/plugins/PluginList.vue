@@ -28,7 +28,6 @@
         </el-breadcrumb>
         <SearchField 
             v-if="navigationStack.length === 0" 
-            :key="searchKey" 
             class="search-field" 
             :router="false" 
             @search="value => searchQuery = value" 
@@ -100,7 +99,6 @@
     const currentGroup = ref<string>("");
     const currentSubgroup = ref<string>();
     const searchQuery = ref<string>("");
-    const searchKey = ref<number>(0);
     const icons = ref<Record<string, string>>({});
     const navigationStack = ref<NavigationItem[]>([]);
     const currentDocumentationPlugin = ref<any>(null);
@@ -184,7 +182,6 @@
 
     const openGroup = (plugin: any) => {
         searchQuery.value = "";
-        searchKey.value++;
         currentGroup.value = plugin.group;
         currentView.value = "group";
         currentDocumentationPlugin.value = null;

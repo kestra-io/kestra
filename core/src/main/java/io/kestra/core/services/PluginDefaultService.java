@@ -23,6 +23,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.flow.Template;
 import io.micronaut.context.annotation.Value;
@@ -30,7 +31,6 @@ import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -82,10 +82,7 @@ public class PluginDefaultService {
 
     @Inject
     protected PluginRegistry pluginRegistry;
-
-    @Inject
-    protected Provider<LogService> logService; // lazy-init
-
+    
     @Value("{kestra.templates.enabled:false}")
     private boolean templatesEnabled;
 
@@ -255,7 +252,7 @@ public class PluginDefaultService {
         if (source == null) {
             // This should never happen
             String error = "Cannot apply plugin defaults. Cause: flow has no defined source.";
-            logService.get().logExecution(flow, log, Level.ERROR, error);
+            Logs.logExecution(flow, log, Level.ERROR, error);
             throw new IllegalArgumentException(error);
         }
 
@@ -311,7 +308,7 @@ public class PluginDefaultService {
             result = parseFlowWithAllDefaults(flow.getTenantId(), flow.getNamespace(), flow.getRevision(), flow.isDeleted(), source, true, false);
         } catch (Exception e) {
             if (safe) {
-                logService.get().logExecution(flow, log, Level.ERROR, "Failed to read flow.", e);
+                Logs.logExecution(flow, log, Level.ERROR, "Failed to read flow.", e);
                 result = FlowWithException.from(flow, e);
 
                 // deleted is not part of the original 'source'

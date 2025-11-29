@@ -27,19 +27,18 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a chart with a list of Flows.",
             full = true,
-            code = { """
-            charts:
-              - id: list_flows
-                type: io.kestra.plugin.core.dashboard.chart.Table
-                data:
-                  type: io.kestra.plugin.core.dashboard.data.Flows
-                  columns:
-                    namespace:
-                      field: NAMESPACE
-                    id:
-                      field: ID
-            """
-          }
+            code = """
+                charts:
+                  - id: list_flows
+                    type: io.kestra.plugin.core.dashboard.chart.Table
+                    data:
+                      type: io.kestra.plugin.core.dashboard.data.Flows
+                      columns:
+                        namespace:
+                          field: NAMESPACE
+                        id:
+                          field: ID
+                """
         )
     }
 )

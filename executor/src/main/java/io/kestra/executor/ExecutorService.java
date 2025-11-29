@@ -20,6 +20,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.LoopUntil;
@@ -60,9 +61,6 @@ public class ExecutorService {
 
     @Inject
     private ConditionService conditionService;
-
-    @Inject
-    private LogService logService;
 
     @Inject
     private FlowInputOutput flowInputOutput;
@@ -112,7 +110,7 @@ public class ExecutorService {
         if (flow.getConcurrency() != null && runningCount >= flow.getConcurrency().getLimit()) {
             return switch (flow.getConcurrency().getBehavior()) {
                 case QUEUE -> {
-                    logService.logExecution(
+                    Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
                         "Execution is queued due to concurrency limit exceeded, {} running(s)",
@@ -198,7 +196,7 @@ public class ExecutorService {
 
     public Execution onNexts(Execution execution, List<TaskRun> nexts) {
         if (log.isTraceEnabled()) {
-            logService.logExecution(
+            Logs.logExecution(
                 execution,
                 Level.TRACE,
                 "Found {} next(s) {}",
@@ -225,7 +223,7 @@ public class ExecutorService {
                 .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
                 .increment();
 
-            logService.logExecution(
+            Logs.logExecution(
                 execution,
                 Level.INFO,
                 "Flow started"
@@ -268,13 +266,13 @@ public class ExecutorService {
                         Output outputs = flowableParent.outputs(runContext);
                         Map<String, Object> outputMap = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), outputs == null ? null : outputs.toMap());
                         Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
-                        /// flowable attempt state transition to terminated
-                            List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
-                                .map(ArrayList::new)
-                                .orElseGet(ArrayList::new);
-                            State.Type endedState=endedTask.get().getTaskRun().getState().getCurrent();
-                            TaskRunAttempt updated = attempts.getLast().withState(endedState);
-                            attempts.set( attempts.size() - 1, updated);
+                        // flowable attempt state transition to terminated
+                        List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
+                            .map(ArrayList::new)
+                            .orElseGet(ArrayList::new);
+                        State.Type endedState = endedTask.get().getTaskRun().getState().getCurrent();
+                        TaskRunAttempt updated = attempts.getLast().withState(endedState);
+                        attempts.set( attempts.size() - 1, updated);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
                             .withOutputs(variables)
@@ -406,7 +404,7 @@ public class ExecutorService {
                 outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);
             } catch (Exception e) {
-                logService.logExecution(
+                Logs.logExecution(
                     executor.getExecution(),
                     Level.ERROR,
                     "Failed to render output values",
@@ -417,7 +415,7 @@ public class ExecutorService {
             }
         }
 
-        logService.logExecution(
+        Logs.logExecution(
             newExecution,
             Level.INFO,
             "Flow completed with state {} in {}",
@@ -799,7 +797,7 @@ public class ExecutorService {
             .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
             .increment();
 
-        logService.logExecution(
+        Logs.logExecution(
             executor.getExecution(),
             Level.INFO,
             "Flow restarted"
@@ -939,7 +937,7 @@ public class ExecutorService {
                 ).toList();
                 Execution newExecution = executor.getExecution().withTaskRunList(newTaskRuns).withState(State.Type.BREAKPOINT);
                 executorToReturn = executorToReturn.withExecution(newExecution, "handleBreakpoint");
-                logService.logExecution(
+                Logs.logExecution(
                     newExecution,
                     Level.INFO,
                     "Flow is suspended at a breakpoint."
@@ -1001,7 +999,7 @@ public class ExecutorService {
                         executor.withExecution(
                             executor
                                 .getExecution()
-                                .withTaskRun(executableTaskRun.withState(State.Type.SKIPPED)),
+                                .withTaskRun(executableTaskRun.withState(State.Type.SKIPPED).addAttempt(TaskRunAttempt.builder().state(new State().withState(State.Type.SKIPPED)).build())),
                             "handleExecutableTaskSkipped"
                         );
                         return false;
@@ -1081,7 +1079,7 @@ public class ExecutorService {
                         executor.withExecution(
                             executor
                                 .getExecution()
-                                .withTaskRun(workerTask.getTaskRun().withState(State.Type.SKIPPED)),
+                                .withTaskRun(workerTask.getTaskRun().withState(State.Type.SKIPPED).addAttempt(TaskRunAttempt.builder().state(new State().withState(State.Type.SKIPPED)).build())),
                             "handleExecutionUpdatingTaskSkipped"
                         );
                         return false;

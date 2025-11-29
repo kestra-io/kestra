@@ -43,9 +43,9 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
 
     /**
      * Find all triggers that match the query, return a flux of triggers
-     * as the search is not paginated
      */
-    Flux<Trigger> find(String tenantId, List<QueryFilter> filters);
+    Flux<Trigger> findAsync(String tenantId, List<QueryFilter> filters);
+
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return Function.identity();

@@ -31,9 +31,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 @KestraTest(startRunner = true)
+@org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
 public class WorkingDirectoryTest {
     @Inject
     Suite suite;

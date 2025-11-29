@@ -53,12 +53,10 @@ public final class ExecutableUtils {
     }
 
     public static SubflowExecutionResult subflowExecutionResult(TaskRun parentTaskrun, Execution execution) {
-        List<TaskRunAttempt> attempts = parentTaskrun.getAttempts() == null ? new ArrayList<>() : new ArrayList<>(parentTaskrun.getAttempts());
-        attempts.add(TaskRunAttempt.builder().state(parentTaskrun.getState()).build());
         return SubflowExecutionResult.builder()
             .executionId(execution.getId())
             .state(parentTaskrun.getState().getCurrent())
-            .parentTaskRun(parentTaskrun.withAttempts(attempts))
+            .parentTaskRun(parentTaskrun.addAttempt(TaskRunAttempt.builder().state(parentTaskrun.getState()).build()))
             .build();
     }
 

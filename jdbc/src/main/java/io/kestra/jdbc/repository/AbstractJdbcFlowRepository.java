@@ -46,11 +46,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -800,6 +803,48 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))
             );
+    }
+
+    @Override
+    public Flux<Flow> findAsync(String tenantId, List<QueryFilter> filters) {
+        return this.findAsync(tenantId, filters, Resource.FLOW);
+    }
+
+    protected Flux<Flow> findAsync(String tenantId, @Nullable List<QueryFilter> filters, QueryFilter.Resource resource) {
+        if (filters == null || filters.isEmpty()) {
+            return findAsync(defaultFilter(tenantId), null);
+        }
+        Condition condition = this.filter(filters, null, resource);
+        return findAsync(defaultFilter(tenantId), condition);
+    }
+
+    protected Flux<Flow> findAsync(Condition defaultFilter, Condition condition, OrderField<Flow>... orderByFields) {
+        return Flux.create(emitter -> this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                var select = context
+                    .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                    .from(this.jdbcRepository.getTable())
+                    .where(defaultFilter);
+
+                if (condition != null) {
+                    select = select.and(condition);
+                }
+
+                if (orderByFields != null) {
+                    select.orderBy(orderByFields);
+                }
+
+                try (Stream<Record4<String, String, String, String>> stream =  select.fetchSize(FETCH_SIZE).stream()){
+                    stream
+                        .map(record -> (Flow) jdbcRepository.map(record))
+                        .forEach(emitter::next);
+                } finally {
+                    emitter.complete();
+                }
+            }), FluxSink.OverflowStrategy.BUFFER);
     }
 
     @Override

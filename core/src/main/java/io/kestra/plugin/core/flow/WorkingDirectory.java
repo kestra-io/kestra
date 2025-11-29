@@ -141,12 +141,12 @@ import jakarta.validation.constraints.NotNull;
                       - id: first
                         type: io.kestra.plugin.scripts.shell.Commands
                         commands:
-                        - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
+                          - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
                       - id: second
                         type: io.kestra.plugin.scripts.shell.Commands
                         commands:
-                        - |
-                          echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::''
+                          - |
+                            echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::''
                 """
         ),
         @Example(

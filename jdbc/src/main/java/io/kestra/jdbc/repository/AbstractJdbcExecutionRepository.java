@@ -238,8 +238,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     private Condition computeFindCondition(@Nullable List<QueryFilter> filters) {
         boolean hasKindFilter = filters != null && filters.stream()
             .anyMatch(f -> KIND.value().equalsIgnoreCase(f.field().name()) );
-        return hasKindFilter ?  this.filter(filters, "start_date", Resource.EXECUTION) :
-            this.filter(filters, "start_date", Resource.EXECUTION).and(NORMAL_KIND_CONDITION);
+        return hasKindFilter ?  this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION) :
+            this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.EXECUTION).and(NORMAL_KIND_CONDITION);
     }
 
     private SelectConditionStep<Record1<Object>> findSelect(
@@ -285,6 +285,15 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     public ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable) {
         var condition = field("namespace").eq(namespace).and(field("flow_id").eq(id));
         return findPage(pageable, tenantId, condition);
+    }
+
+    @Override
+    public Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return findAllAsync(tenantId);
+        }
+        Condition condition = this.filter(filters, fieldsMapping.get(dateFilterField()) , Resource.EXECUTION);
+        return findAsync(defaultFilter(tenantId), condition);
     }
 
     @Override
@@ -459,7 +468,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         @Nullable DateUtils.GroupType groupBy,
         @Nullable List<State.Type> state
     ) {
-        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate), "start_date", groupBy));
+        List<Field<?>> dateFields = new ArrayList<>(groupByFields(Duration.between(startDate, endDate), fieldsMapping.get(dateFilterField()), groupBy));
         List<Field<?>> selectFields = new ArrayList<>(fields);
         selectFields.addAll(List.of(
             DSL.count().as("count"),
@@ -467,7 +476,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             DSL.max(field("state_duration", Long.class)).as("duration_max"),
             DSL.sum(field("state_duration", Long.class)).as("duration_sum")
         ));
-        selectFields.addAll(groupByFields(Duration.between(startDate, endDate), "start_date", groupBy, true));
+        selectFields.addAll(groupByFields(Duration.between(startDate, endDate), fieldsMapping.get(dateFilterField()), groupBy, true));
 
         return jdbcRepository
             .getDslContextWrapper()

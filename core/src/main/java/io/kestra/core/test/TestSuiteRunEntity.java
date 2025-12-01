@@ -26,7 +26,7 @@ public record TestSuiteRunEntity(
     List<UnitTestResult> results
 ) implements DeletedInterface, TenantInterface, HasUID {
 
-    public static TestSuiteRunEntity create(String tenantId, TestSuiteUid testSuiteUid, TestSuiteRunResult testSuiteRunResult) {
+    public static TestSuiteRunEntity create(String tenantId, TestSuiteUid testSuiteUid, TestSuiteRunResult testSuiteRunResult, String ttttttt) {
         return new TestSuiteRunEntity(
             testSuiteRunResult.id(),
             testSuiteRunResult.id(),

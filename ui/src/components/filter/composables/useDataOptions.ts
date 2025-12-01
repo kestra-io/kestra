@@ -1,10 +1,9 @@
 import {ref, computed, watch} from "vue";
 import {TableOptions} from "../utils/filterTypes";
-
-const LOCAL_STORAGE_KEY = "filterDataOptions";
+import {storageKeys} from "../../../utils/constants";
 
 export function useDataOptions(options: TableOptions) {
-    const showOptions = ref((localStorage.getItem(LOCAL_STORAGE_KEY) ?? "false").toLowerCase() === "true");
+    const showOptions = ref((localStorage.getItem(storageKeys.FILTER_DATA_OPTIONS_PREFIX) ?? "false").toLowerCase() === "true");
     const chartVisible = ref(options.chart?.value ?? true);
 
     watch(() => options.chart?.value, (newValue) => {
@@ -14,7 +13,7 @@ export function useDataOptions(options: TableOptions) {
 
     const toggleOptions = () => {
         showOptions.value = !showOptions.value;
-        localStorage.setItem(LOCAL_STORAGE_KEY, String(showOptions.value));
+        localStorage.setItem(storageKeys.FILTER_DATA_OPTIONS_PREFIX, String(showOptions.value));
     }
 
     const updateChart = (val: boolean) => {

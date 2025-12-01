@@ -138,6 +138,9 @@ public class ExecutionController {
     private FlowService flowService;
 
     @Inject
+    private NamespaceService namespaceService;
+
+    @Inject
     protected ExecutionRepositoryInterface executionRepository;
 
     @Inject
@@ -871,7 +874,7 @@ public class ExecutionController {
         if (Namespace.NAMESPACE_FILE_SCHEME.equals(path.getScheme())) {
             // if there is an authority, it means the namespace file is for another namespace, so we check it
             if (path.getAuthority() != null) {
-                flowService.checkAllowedNamespace(execution.getTenantId(), path.getAuthority(), execution.getTenantId(), execution.getNamespace());
+                namespaceService.checkAllowedNamespace(execution.getTenantId(), path.getAuthority(), execution.getTenantId(), execution.getNamespace());
             }
             return null;
         }

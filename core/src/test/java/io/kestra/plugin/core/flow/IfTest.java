@@ -132,4 +132,13 @@ class IfTest {
         assertThat(execution.getTaskRunList()).hasSize(9);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/if-condition-fail.yaml")
+    void ifConditionFail(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
 }

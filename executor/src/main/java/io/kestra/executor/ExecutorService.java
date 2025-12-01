@@ -261,26 +261,30 @@ public class ExecutorService {
                 WorkerTaskResult workerTaskResult = endedTask.get();
                 // Compute outputs for the parent Flowable task if a terminated state was resolved
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
+                    Variables variables;
                     try {
                         // as flowable tasks can save outputs during iterative execution, we must merge the maps here
                         Output outputs = flowableParent.outputs(runContext);
                         Map<String, Object> outputMap = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), outputs == null ? null : outputs.toMap());
-                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
-                        // flowable attempt state transition to terminated
-                        List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
-                            .map(ArrayList::new)
-                            .orElseGet(ArrayList::new);
-                        State.Type endedState = endedTask.get().getTaskRun().getState().getCurrent();
-                        TaskRunAttempt updated = attempts.getLast().withState(endedState);
-                        attempts.set( attempts.size() - 1, updated);
-                        return Optional.of(new WorkerTaskResult(workerTaskResult
-                            .getTaskRun()
-                            .withOutputs(variables)
-                            .withAttempts(attempts)
-                        ));
+                        variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
+                        variables = Variables.empty();
                     }
+
+                    // flowable attempt state transition to terminated
+                    List<TaskRunAttempt> attempts = Optional.ofNullable(parentTaskRun.getAttempts())
+                        .map(ArrayList::new)
+                        .orElseGet(ArrayList::new);
+                    State.Type endedState = endedTask.get().getTaskRun().getState().getCurrent();
+                    TaskRunAttempt updated = attempts.getLast().withState(endedState);
+                    attempts.set( attempts.size() - 1, updated);
+
+                    return Optional.of(new WorkerTaskResult(workerTaskResult
+                        .getTaskRun()
+                        .withOutputs(variables)
+                        .withAttempts(attempts)
+                    ));
                 }
                 return endedTask;
             }

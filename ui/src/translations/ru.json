@@ -595,6 +595,7 @@
     "export": "Экспорт",
     "export all flows": "Экспортировать все flows",
     "export all templates": "Экспортировать все шаблоны",
+    "export_csv": "Экспортировать как CSV",
     "exports": "Экспорты",
     "failed to render pdf": "Не удалось отобразить предварительный просмотр PDF",
     "false": "Ложь",

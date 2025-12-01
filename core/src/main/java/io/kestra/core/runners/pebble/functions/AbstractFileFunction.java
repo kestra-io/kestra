@@ -2,7 +2,7 @@ package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.LocalPathFactory;
-import io.kestra.core.services.FlowService;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.InternalNamespace;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.StorageContext;
@@ -36,7 +36,7 @@ abstract class AbstractFileFunction implements Function {
     private static final Pattern EXECUTION_FILE = Pattern.compile(".*/.*/executions/.*/tasks/.*/.*");
 
     @Inject
-    protected FlowService flowService;
+    protected NamespaceService namespaceService;
 
     @Inject
     protected StorageInterface storageInterface;
@@ -92,7 +92,7 @@ abstract class AbstractFileFunction implements Function {
                 } else {
                     namespace = (String) Optional.ofNullable(args.get(NAMESPACE)).orElse(flow.get(NAMESPACE));
                     fileUri = URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.namespaceFilePrefix(namespace) + "/" + str);
-                    flowService.checkAllowedNamespace(tenantId, namespace, tenantId, flow.get(NAMESPACE));
+                    namespaceService.checkAllowedNamespace(tenantId, namespace, tenantId, flow.get(NAMESPACE));
                 }
             } else {
                 throw new PebbleException(null, "Unable to read the file " + path, lineNumber, self.getName());
@@ -177,7 +177,7 @@ abstract class AbstractFileFunction implements Function {
         // 5. replace '/' with '.'
         namespace = namespace.replace("/", ".");
 
-        flowService.checkAllowedNamespace(tenantId, namespace, tenantId, fromNamespace);
+        namespaceService.checkAllowedNamespace(tenantId, namespace, tenantId, fromNamespace);
 
         return namespace;
     }
@@ -198,7 +198,7 @@ abstract class AbstractFileFunction implements Function {
         // we will transform nsfile URI into a kestra URI so it is handled seamlessly by all functions
         String customNs = Optional.ofNullable((String) args.get(NAMESPACE)).orElse(nsFileUri.getAuthority());
         if (customNs != null) {
-            flowService.checkAllowedNamespace(tenantId, customNs, tenantId, flow.get(NAMESPACE));
+            namespaceService.checkAllowedNamespace(tenantId, customNs, tenantId, flow.get(NAMESPACE));
         }
         return Optional.ofNullable(customNs).orElse(flow.get(NAMESPACE));
     }

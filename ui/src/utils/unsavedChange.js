@@ -42,5 +42,6 @@ export default (app, router) => {
                 return;
             }
         }
+        next();
     });
 }

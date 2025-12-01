@@ -221,7 +221,7 @@
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
     import Cascader from "./components/main/Cascader.vue";
-    import TriggerCascader from "./components/main/TriggerCascader.vue"; // TODO: Remove after refactoring of the component
+    import TriggerCascader from "./components/main/TriggerCascader.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
 
     import NoData from "../../layout/NoData.vue";

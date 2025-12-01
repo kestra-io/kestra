@@ -2,7 +2,7 @@
     <TopNavBar :title="routeInfo.title">
         <template #additional-right>
             <el-button :icon="Download" @click="exportTriggersAsStream()">
-                {{ t('auditlog.export_csv') }}
+                {{ t('export_csv') }}
             </el-button>
         </template>
     </TopNavBar>

@@ -125,6 +125,14 @@
                     :execution
                 />
 
+                <!-- TODO: To be reworked and integrated into the Cascader component -->
+                <TriggerCascader
+                    :title="t('trigger')"
+                    :empty="t('no_trigger')"
+                    :elements="execution.trigger"
+                    :execution
+                />
+
                 <div id="chart">
                     <div>
                         <section>
@@ -213,6 +221,7 @@
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
     import Cascader from "./components/main/Cascader.vue";
+    import TriggerCascader from "./components/main/TriggerCascader.vue"; // TODO: Remove after refactoring of the component
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
 
     import NoData from "../../layout/NoData.vue";

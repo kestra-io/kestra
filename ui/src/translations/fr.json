@@ -642,6 +642,7 @@
       "customize columns": "Personnaliser les colonnes du tableau",
       "customize tooltip": "Personnaliser les filtres à afficher",
       "delete filter": "Supprimer le filtre",
+      "delete filter confirm": "Êtes-vous sûr de vouloir supprimer ce filtre ?",
       "description": "Description",
       "deselect all": "Tout désélectionner",
       "drag to reorder": "Faites glisser pour réorganiser",

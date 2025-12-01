@@ -642,6 +642,7 @@
       "customize columns": "तालिका स्तंभों को अनुकूलित करें",
       "customize tooltip": "कौन से फ़िल्टर प्रदर्शित करने हैं, इसे अनुकूलित करें",
       "delete filter": "फ़िल्टर हटाएं",
+      "delete filter confirm": "क्या आप वाकई इस फ़िल्टर को हटाना चाहते हैं?",
       "description": "विवरण",
       "deselect all": "सभी को अचयनित करें",
       "drag to reorder": "पुनः क्रमबद्ध करने के लिए खींचें",

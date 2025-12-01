@@ -38,6 +38,7 @@ import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Logs;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.converters.QueryFilterFormat;
@@ -200,10 +201,7 @@ public class ExecutionController {
 
     @Inject
     private SecureVariableRendererFactory secureVariableRendererFactory;
-
-    @Inject
-    private LogService logService;
-
+    
     @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
     private boolean enableLocalFilePreview;
 
@@ -751,7 +749,7 @@ public class ExecutionController {
                 final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
                     .map(exec -> {
                         if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
-                            this.logService.logExecution(current, log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
+                            Logs.logExecution(current, log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
                             return exec.withState(State.Type.FAILED);
                         } else {
                             return exec;

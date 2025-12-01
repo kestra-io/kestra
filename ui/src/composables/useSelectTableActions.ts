@@ -10,7 +10,8 @@ export function useSelectTableActions({
     const queryBulkAction = ref(false)
     const selection = ref<any[]>([])
 
-    const elTable = computed(() => dataTableRef.value?.$refs?.table)
+    const selectTable = computed(() => dataTableRef.value)
+    const elTable = computed(() => selectTable.value?.$refs?.table)
 
     selectionMapper = selectionMapper ?? ((element: any) => element)
 
@@ -23,8 +24,9 @@ export function useSelectTableActions({
     }
 
     const toggleAllUnselected = () => {
-        elTable.value?.clearSelection()
+        selectTable.value?.clearSelection()
         queryBulkAction.value = false
+        selection.value = []
     }
 
     const toggleAllSelection = () => {

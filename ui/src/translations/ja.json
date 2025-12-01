@@ -642,6 +642,7 @@
       "customize columns": "テーブル列をカスタマイズ",
       "customize tooltip": "表示するフィルターをカスタマイズ",
       "delete filter": "フィルターを削除",
+      "delete filter confirm": "このフィルターを削除してもよろしいですか？",
       "description": "説明",
       "deselect all": "すべて選択解除",
       "drag to reorder": "ドラッグして並べ替え",

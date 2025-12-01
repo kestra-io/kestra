@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.server.*;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;

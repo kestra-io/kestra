@@ -642,6 +642,7 @@
       "customize columns": "Tabellenspalten anpassen",
       "customize tooltip": "Anpassen, welche Filter angezeigt werden",
       "delete filter": "Filter löschen",
+      "delete filter confirm": "Möchten Sie diesen Filter wirklich entfernen?",
       "description": "Beschreibung",
       "deselect all": "Alles abwählen",
       "drag to reorder": "Zum Neuanordnen ziehen",

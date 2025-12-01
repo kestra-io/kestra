@@ -1,5 +1,6 @@
 package io.kestra.executor.handler;
 
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -56,7 +57,7 @@ public class SubflowExecutionResultMessageHandler implements ExecutorMessageHand
 
             if (execution.hasTaskRunJoinable(message.getParentTaskRun())) { // TODO if we remove this check, we can avoid adding 'iteration' on the 'isSame()' method
                 try {
-                    FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow();
+                    FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                     Task task = flow.findTaskByTaskId(message.getParentTaskRun().getTaskId());
                     TaskRun taskRun;
 
@@ -110,7 +111,7 @@ public class SubflowExecutionResultMessageHandler implements ExecutorMessageHand
 
                     // join worker result
                     return current;
-                } catch (InternalException e) {
+                } catch (InternalException | FlowNotFoundException e) {
                     return executorService.handleFailedExecutionFromExecutor(current, e);
                 }
             }

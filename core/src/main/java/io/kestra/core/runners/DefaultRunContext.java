@@ -123,7 +123,12 @@ public class DefaultRunContext extends RunContext {
         this.traceParent = traceParent;
     }
 
+    /**
+     * @deprecated Plugin should not use the ApplicationContext anymore, and neither should they cast to this implementation.
+     *             Plugin should instead rely on supported API only.
+     */
     @JsonIgnore
+    @Deprecated(since = "1.2.0", forRemoval = true)
     public ApplicationContext getApplicationContext() {
         return applicationContext;
     }
@@ -572,6 +577,11 @@ public class DefaultRunContext extends RunContext {
     @Override
     public boolean isInitialized() {
         return isInitialized.get();
+    }
+
+    @Override
+    public AclChecker acl() {
+        return new AclCheckerImpl(this.applicationContext, flowInfo());
     }
 
     @Override

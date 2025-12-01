@@ -8,7 +8,6 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -82,8 +81,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         if (Objects.equals(renderedNamespace, flowNamespace)) {
             value = getValueWithInheritance(runContext, flowNamespace, renderedKey);
         } else {
-            FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-            flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
+            runContext.acl().allowNamespace(renderedNamespace).check();
             value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
         }
 

@@ -595,6 +595,7 @@
     "export": "Esporta",
     "export all flows": "Esporta tutti i flows",
     "export all templates": "Esporta tutti i template",
+    "export_csv": "Esporta come CSV",
     "exports": "Esportazioni",
     "failed to render pdf": "Impossibile visualizzare l'anteprima PDF",
     "false": "Falso",

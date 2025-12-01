@@ -491,6 +491,7 @@
     "seeing old revision": "You are seeing an old revision: {revision}",
     "export": "Export",
     "exports": "Exports",
+    "export_csv": "Export as CSV",
     "template export": "Are you sure you want to export <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exported",
     "export all templates": "Export all templates",

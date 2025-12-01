@@ -180,6 +180,24 @@ public record QueryFilter(
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS);
             }
+        },
+        PATH("path") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN);
+            }
+        },
+        PARENT_PATH("parentPath") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.STARTS_WITH);
+            }
+        },
+        VERSION("version") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+            }
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
@@ -272,6 +290,19 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY,
                     Field.NAMESPACE,
+                    Field.UPDATED
+                );
+            }
+        },
+        NAMESPACE_FILE_METADATA {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE,
+                    Field.PATH,
+                    Field.PARENT_PATH,
+                    Field.VERSION,
                     Field.UPDATED
                 );
             }

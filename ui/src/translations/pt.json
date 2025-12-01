@@ -1149,6 +1149,12 @@
         "new_file": "Novo nome com extensão:",
         "new_folder": "Novo nome da pasta:"
       },
+      "revisions": {
+        "history": "Histórico de revisões",
+        "restore": {
+          "success": "Revisão do arquivo restaurada com sucesso"
+        }
+      },
       "toggle": {
         "hide": "Ocultar arquivos do namespace",
         "show": "Mostrar arquivos do namespace"

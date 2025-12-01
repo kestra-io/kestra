@@ -1149,6 +1149,12 @@
         "new_file": "新的文件名（带扩展名）：",
         "new_folder": "新的文件夹名："
       },
+      "revisions": {
+        "history": "修订历史",
+        "restore": {
+          "success": "文件修订已成功恢复"
+        }
+      },
       "toggle": {
         "hide": "隐藏命名空间文件",
         "show": "显示命名空间文件"

@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import javax.annotation.CheckReturnValue;
 import java.util.List;
 
 /**
@@ -17,6 +18,7 @@ public interface AclChecker {
      * <p>
      * IMPORTANT: remember to call the <code>check()</code> method to check the ACL.
      */
+    @CheckReturnValue
     AllowedResources allowAllNamespaces();
 
     /**
@@ -24,6 +26,7 @@ public interface AclChecker {
      * <p>
      * IMPORTANT: remember to call the <code>check()</code> method to check the ACL.
      */
+    @CheckReturnValue
     AllowedResources allowNamespace(String namespace);
 
     /**
@@ -31,6 +34,7 @@ public interface AclChecker {
      * <p>
      * IMPORTANT: remember to call the <code>check()</code> method to check the ACL.
      */
+    @CheckReturnValue
     AllowedResources allowNamespaces(List<String> namespaces);
 
     /**

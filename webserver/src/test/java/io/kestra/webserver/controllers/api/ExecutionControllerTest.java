@@ -14,6 +14,8 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.*;
+import io.micronaut.http.sse.Event;
+import reactor.core.publisher.Flux;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
@@ -227,11 +229,11 @@ class ExecutionControllerTest {
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
         assertThat(response.body()).isNull();
     }
-    
+
     @Test
     void webhookWithInputs() {
         record Hello(String hello) {}
-        
+
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
                 .POST(
@@ -240,11 +242,11 @@ class ExecutionControllerTest {
                 ),
             Execution.class
         );
-        
+
         assertThat(execution).isNotNull();
         assertThat(execution.getId()).isNotNull();
     }
-    
+
     @Test
     void resolveAbsoluteDateTime() {
         final ZonedDateTime absoluteTimestamp = ZonedDateTime.of(2023, 2, 3, 4, 6,10, 0, ZoneId.systemDefault());
@@ -499,6 +501,56 @@ class ExecutionControllerTest {
 
         assertThat(executionResult).isNotNull();
         assertThat(executionResult.get("url")).isEqualTo("http://localhost:8081/ui/main/executions/io.kestra.tests/minimal/" + executionResult.get("id"));
+    }
+    
+    @Test
+    void followExecution_ValidExecution_SendsStartThenProgress() {
+        // Given: Create a real execution
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal", null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        // When: Following the execution
+        Flux<Event<Execution>> result = executionController.followExecution(execution.getId());
+        List<Event<Execution>> events = result.take(2).collectList().block(Duration.ofSeconds(15));
+
+        // Then: First event is "start" with minimal data (just ID)
+        assertThat(events).isNotNull();
+        assertThat(events.size()).isGreaterThanOrEqualTo(1);
+        
+        Event<Execution> startEvent = events.get(0);
+        assertThat(startEvent.getId()).isEqualTo("start");
+        assertThat(startEvent.getData()).isNotNull();
+        assertThat(startEvent.getData().getId()).isEqualTo(execution.getId());
+        
+        // Second event should have complete data
+        if (events.size() > 1) {
+            Event<Execution> progressEvent = events.get(1);
+            assertThat(progressEvent.getData()).isNotNull();
+        }
+    }
+    @Test
+    void followExecution_WaitsForExecution() {
+        // Given: Create execution
+        Execution execution = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal", null)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
+            Execution.class
+        );
+
+        // When: Following immediately
+        long startTime = System.currentTimeMillis();
+        Flux<Event<Execution>> result = executionController.followExecution(execution.getId());
+        Event<Execution> firstEvent = result.blockFirst(Duration.ofSeconds(15));
+        long endTime = System.currentTimeMillis();
+
+        // Then: Should receive event within reasonable time (not hang forever)
+        assertThat(firstEvent).isNotNull();
+        
+        long elapsedTime = endTime - startTime;
+        assertThat(elapsedTime).isLessThan(12000L); // Less than 12 seconds
     }
 
     @Test

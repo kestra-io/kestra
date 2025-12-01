@@ -14,8 +14,6 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class ExecutorsUtils {
-    @Inject
-    private ThreadMainFactoryBuilder threadFactoryBuilder;
 
     @Inject
     private MeterRegistry meterRegistry;
@@ -24,7 +22,7 @@ public class ExecutorsUtils {
         return this.wrap(
             name,
             Executors.newCachedThreadPool(
-                threadFactoryBuilder.build(name + "_%d")
+                ThreadMainFactoryBuilder.build(name + "_%d")
             )
         );
     }
@@ -36,7 +34,7 @@ public class ExecutorsUtils {
             60L,
             TimeUnit.SECONDS,
             new LinkedBlockingQueue<>(),
-            threadFactoryBuilder.build(name + "_%d")
+            ThreadMainFactoryBuilder.build(name + "_%d")
         );
 
         threadPoolExecutor.allowCoreThreadTimeOut(true);
@@ -51,7 +49,7 @@ public class ExecutorsUtils {
         return this.wrap(
             name,
             Executors.newSingleThreadExecutor(
-                threadFactoryBuilder.build(name + "_%d")
+                ThreadMainFactoryBuilder.build(name + "_%d")
             )
         );
     }
@@ -60,7 +58,7 @@ public class ExecutorsUtils {
         return this.wrap(
             name,
             Executors.newSingleThreadScheduledExecutor(
-                threadFactoryBuilder.build(name + "_%d")
+                ThreadMainFactoryBuilder.build(name + "_%d")
             )
         );
     }

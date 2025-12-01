@@ -437,7 +437,7 @@ public class ExecutorService {
 
         metricRegistry
             .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION_DESCRIPTION, metricRegistry.tags(newExecution))
-            .record(newExecution.getState().getDuration());
+            .record(newExecution.getState().getDurationOrComputeIt());
 
         return executor.withExecution(newExecution, "onEnd");
     }
@@ -1170,7 +1170,7 @@ public class ExecutorService {
                     MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION,
                     metricRegistry.tags(workerTaskResult)
                 )
-                .record(taskRun.getState().getDuration());
+                .record(taskRun.getState().getDurationOrComputeIt());
         }
     }
 

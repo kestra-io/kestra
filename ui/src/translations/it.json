@@ -1149,6 +1149,12 @@
         "new_file": "Nuovo nome con estensione:",
         "new_folder": "Nuovo nome della cartella:"
       },
+      "revisions": {
+        "history": "Cronologia delle revisioni",
+        "restore": {
+          "success": "Revisione del file ripristinata con successo"
+        }
+      },
       "toggle": {
         "hide": "Nascondi file del namespace",
         "show": "Mostra file del namespace"

@@ -1149,6 +1149,12 @@
         "new_file": "Nowa nazwa z rozszerzeniem:",
         "new_folder": "Nowa nazwa folderu:"
       },
+      "revisions": {
+        "history": "Historia wersji",
+        "restore": {
+          "success": "Przywrócenie wersji pliku zakończone sukcesem"
+        }
+      },
       "toggle": {
         "hide": "Ukryj pliki namespace",
         "show": "Pokaż pliki namespace"

@@ -20,9 +20,10 @@ public class IonFileRender extends FileRender {
     }
 
     private void renderContent(InputStream filestream) throws IOException {
-        List<Object> list = new ArrayList<>();
-        this.truncated = FileSerde.reader(filestream, this.maxLine, throwConsumer(list::add));
-
-        this.content = list;
+        try (InputStream input = filestream) {
+            List<Object> list = new ArrayList<>();
+            this.truncated = FileSerde.reader(input, this.maxLine, throwConsumer(list::add));
+            this.content = list;
+        }
     }
 }

@@ -179,29 +179,13 @@ public final class FileSerde {
     }
 
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, InputStream input, Class<T> type) throws IOException {
-        return readAll(objectMapper, input, (Object) type);
+        MappingIterator<T> mappingIterator = objectMapper.readerFor(type).readValues(input);
+        return readAll(mappingIterator);
     }
 
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, InputStream input, TypeReference<T> type) throws IOException {
-        return readAll(objectMapper, input, (Object) type);
-    }
-
-    private static <T> Flux<T> readAll(ObjectMapper objectMapper, InputStream input, Object type) throws IOException {
-        return Flux.create(sink -> {
-            try {
-                MappingIterator<T> mappingIterator;
-                if (type instanceof Class) {
-                    mappingIterator = objectMapper.readerFor((Class<T>) type).readValues(input);
-                } else {
-                    mappingIterator = objectMapper.readerFor((TypeReference<T>) type).readValues(input);
-                }
-
-                mappingIterator.forEachRemaining(sink::next);
-                sink.complete();
-            } catch (IOException e) {
-                sink.error(e);
-            }
-        }, FluxSink.OverflowStrategy.BUFFER);
+        MappingIterator<T> mappingIterator = objectMapper.readerFor(type).readValues(input);
+        return readAll(mappingIterator);
     }
 
     /**
@@ -225,6 +209,8 @@ public final class FileSerde {
 
 
     /**
+     * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
+     *
      * @deprecated Use {@link #writeAllBinary(OutputStream, Flux)} instead for better compression and hashing.
      */
     @Deprecated
@@ -270,15 +256,16 @@ public final class FileSerde {
                 JsonGenerator generator = ionFactory.createGenerator(hashWriter);
                 generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
+                SequenceWriter seqWriter = DEFAULT_OBJECT_MAPPER.writer().writeValues(generator);
+
                 values
                     .filter(Objects::nonNull)
-                    .doOnNext(throwConsumer(item -> {
-                        DEFAULT_OBJECT_MAPPER.writeValue(generator, item);
-                    }))
+                    .doOnNext(throwConsumer(seqWriter::write))
                     .count()
                     .subscribe(
                         count -> {
                             try {
+                                seqWriter.flush();
                                 hashWriter.finish();
                                 byte[] digest = hashWriter.digest();
                                 hashWriter.close();

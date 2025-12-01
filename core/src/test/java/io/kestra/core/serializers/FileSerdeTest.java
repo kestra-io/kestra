@@ -206,4 +206,22 @@ class FileSerdeTest {
         assertThat(readBack.getFirst().value).isEqualTo("value1");
     }
 
+
+    @Test
+    void backwardCompatibility_WriteText_ReadInputStream() throws IOException {
+        Path tempFile = createTempFile();
+        List<SimpleEntry> input = List.of(new SimpleEntry(1, "val1"), new SimpleEntry(2, "val2"));
+
+        // 1. Write using OLD method (Text)
+        FileSerde.writeAll(Files.newBufferedWriter(tempFile), Flux.fromIterable(input)).block();
+
+        // 2. Read using NEW method (InputStream)
+        List<SimpleEntry> result = FileSerde.readAll(Files.newInputStream(tempFile), SimpleEntry.class)
+            .collectList()
+            .block();
+
+        assertThat(result).hasSize(2);
+        assertThat(result.getFirst().value).isEqualTo("val1");
+    }
+
 }

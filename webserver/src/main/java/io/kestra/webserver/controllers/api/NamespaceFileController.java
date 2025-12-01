@@ -155,6 +155,8 @@ public class NamespaceFileController {
         @Parameter(description = "The internal storage uri") @QueryValue String path,
         @Parameter(description = "The file to upload") @Part CompletedFileUpload fileContent
     ) throws Exception {
+        path = normalizePath(path);
+
         String tenantId = tenantService.resolveTenant();
         if (fileContent.getFilename().toLowerCase().endsWith(".zip")) {
             try (ZipInputStream archive = new ZipInputStream(fileContent.getInputStream())) {
@@ -258,6 +260,8 @@ public class NamespaceFileController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri of the file / directory to delete") @QueryValue String path
     ) throws IOException, URISyntaxException {
+        path = normalizePath(path);
+
         URI encodedPath = null;
         if (!path.startsWith("/")) {
             path = "/" + path;
@@ -301,6 +305,13 @@ public class NamespaceFileController {
         if (forbiddenPathPatterns.stream().anyMatch(pattern -> pattern.matcher(path.getPath()).matches())) {
             throw new IllegalArgumentException("Forbidden path: " + path.getPath());
         }
+    }
+
+    private String normalizePath(String path) {
+        if (path == null || path.isEmpty()) {
+            return path;
+        }
+        return Path.of(path).normalize().toString();
     }
 
     private void ensureWritableNamespaceFile(URI path) {

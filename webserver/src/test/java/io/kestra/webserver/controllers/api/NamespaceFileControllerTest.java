@@ -289,6 +289,32 @@ class NamespaceFileControllerTest {
     }
 
     @Test
+    void deleteFileDirectoryWithCurrentDirectoryPrefix() throws IOException {
+        storageInterface.put(TENANT_ID, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/file.txt")), new ByteArrayInputStream("Hello".getBytes()));
+
+        client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/main/namespaces/" + NAMESPACE + "/files?path=./folder/file.txt", null));
+
+        assertThat(storageInterface.exists(
+            TENANT_ID, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/file.txt")))).isFalse();
+        assertThat(storageInterface.exists(
+            TENANT_ID, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder")))).isFalse();
+    }
+
+    @Test
+    void createFileWithCurrentDirectoryPrefix() throws IOException {
+        MultipartBody body = MultipartBody.builder()
+            .addPart("fileContent", "test.txt", "Hello".getBytes())
+            .build();
+        client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/namespaces/" + NAMESPACE + "/files?path=./folder/test.txt", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
+        );
+
+        assertThat(storageInterface.exists(
+            TENANT_ID, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/test.txt")))).isTrue();
+    }
+
+    @Test
     void forbiddenPaths() {
         assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/files?path=/_flows/test.yml")));
         assertForbiddenErrorThrown(() -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/files/stats?path=/_flows/test.yml"), TestFileAttributes.class));

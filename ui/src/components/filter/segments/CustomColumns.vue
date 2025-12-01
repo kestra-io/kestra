@@ -69,6 +69,7 @@
         justify-content: space-between;
         align-items: flex-start;
         padding: 0.75rem 1rem 0.5rem;
+        background-color: var(--ks-background-table-header);
         border-bottom: 1px solid var(--ks-border-primary);
         flex-shrink: 0;
         position: sticky;

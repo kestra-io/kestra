@@ -335,7 +335,7 @@
     const saveFileContent = async () => {
         clearTimeout(timeout.value);
         if(!namespace.value || !props.path || props.flow) return
-        await namespacesStore.createFile({
+        await namespacesStore.saveOrCreateFile({
             namespace: namespace.value,
             path: props.path,
             content: editorContent.value || "",

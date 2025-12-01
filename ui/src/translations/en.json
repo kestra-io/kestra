@@ -1578,6 +1578,7 @@
         "customize tooltip": "Customize which filters to display",
         "customize columns": "Customize table columns",
         "delete filter": "Delete filter",
+        "delete filter confirm": "Are you sure you want to remove this filter?",
         "edit filter": "Edit filter",
         "options": "Data Options",
         "periodic refresh": "Periodic refresh",

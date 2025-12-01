@@ -176,10 +176,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
-
-    @Inject
-    private LogService logService;
-
+    
     @Inject
     private SLAMonitorStorage slaMonitorStorage;
 
@@ -494,13 +491,13 @@ public class JdbcExecutor implements ExecutorInterface {
                                 .runContext(workerTaskRunning.getRunContext())
                                 .build()
                             );
-                            logService.logTaskRun(
+                            Logs.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.WARN,
                                 "Re-resubmitting WorkerTask."
                             );
                         } catch (QueueException e) {
-                            logService.logTaskRun(
+                            Logs.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
                                 Level.ERROR,
                                 "Unable to re-resubmit WorkerTask.",
@@ -518,13 +515,13 @@ public class JdbcExecutor implements ExecutorInterface {
                             .conditionContext(workerTriggerRunning.getConditionContext())
                             .triggerContext(workerTriggerRunning.getTriggerContext())
                             .build());
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             workerTriggerRunning.getTriggerContext(),
                             Level.WARN,
                             "Re-emitting WorkerTrigger."
                         );
                     } catch (QueueException e) {
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             workerTriggerRunning.getTriggerContext(),
                             Level.ERROR,
                             "Unable to re-emit WorkerTrigger.",

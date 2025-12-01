@@ -97,7 +97,6 @@
     import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
 
-    // Types
     interface Props {
         component?: string;
         task?: Record<string, any>;
@@ -113,7 +112,6 @@
         flowSource?: string;
     }
 
-    // Props definition
     const props = withDefaults(defineProps<Props>(), {
         component: "el-button",
         task: undefined,
@@ -167,7 +165,6 @@
             : flowStore.flow?.source;
     });
    
-    // Methods
     const load = async (taskId: string) => {
         await flowStore.loadFlow({
             namespace: props.namespace,
@@ -225,7 +222,6 @@
         }, 500) as any;
     };
 
-    // Watchers
     watch(() => props.task, async (newTask) => {
         if (newTask) {
             taskYaml.value = YAML_UTILS.stringify(newTask);

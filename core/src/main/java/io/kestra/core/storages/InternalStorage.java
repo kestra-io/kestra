@@ -98,6 +98,13 @@ public class InternalStorage implements Storage {
 
     }
 
+    @Override
+    public FileAttributes getAttributes(URI uri) throws IOException {
+        uriGuard(uri);
+
+        return this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri);
+    }
+
     /**
      * {@inheritDoc}
      **/

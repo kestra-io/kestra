@@ -6,9 +6,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -97,10 +95,10 @@ public class Get extends Task implements RunnableTask<Get.Output> {
     private Optional<KVValue> getValueWithInheritance(RunContext runContext, String flowNamespace, String renderedKey)
             throws IOException, ResourceExpiredException {
         Optional<KVValue> value = Optional.empty();
-        KVStoreService kvStoreService = ((DefaultRunContext) runContext).getApplicationContext().getBean(KVStoreService.class);
         String inheritedNamespace = flowNamespace;
         while (value.isEmpty()) {
-            value = kvStoreService.get(runContext.flowInfo().tenantId(), inheritedNamespace, flowNamespace).getValue(renderedKey);
+
+            value = runContext.namespaceKv(inheritedNamespace).getValue(renderedKey);
             if (!inheritedNamespace.contains(".")){
                 return value;
             }

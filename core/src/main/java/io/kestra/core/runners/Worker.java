@@ -1092,7 +1092,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         );
 
         // wait for task completion
-        Await.until(
+        Await.untilWithSleepInterval(
             () -> {
                 ServiceState serviceState = shutdownState.get();
                 if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {

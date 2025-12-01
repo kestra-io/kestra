@@ -1,5 +1,5 @@
 <template>
-    <div id="cascader">
+    <div :id="`cascader-${props.title}`">
         <div class="header">
             <el-text truncated>
                 {{ props.title }}
@@ -129,7 +129,7 @@
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-#cascader {
+[id^="cascader-"] {
     overflow: hidden;
 
     .header {

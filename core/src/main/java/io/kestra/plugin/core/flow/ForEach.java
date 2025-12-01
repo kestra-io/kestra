@@ -209,6 +209,14 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     )
     private Object values;
 
+    @Schema(
+        title = "Maximum number of values to iterate",
+        description = "If the resolved `values` list size exceeds this limit, the task fails immediately and no child task groups are started."
+    )
+    @PluginProperty
+    @Builder.Default
+    private Integer maxValues = 100;
+
     @PositiveOrZero
     @NotNull
     @Builder.Default
@@ -245,7 +253,21 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.values);
+        List<ResolvedTask> resolved = FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.values);
+
+        if (this.maxValues != null) {
+            long uniqueValues = resolved
+                .stream()
+                .map(ResolvedTask::getValue)
+                .distinct()
+                .count();
+
+            if (uniqueValues > this.maxValues) {
+                throw new IllegalArgumentException("ForEach resolved values count " + uniqueValues + " exceeds maxValues " + this.maxValues);
+            }
+        }
+
+        return resolved;
     }
 
     @Override
@@ -266,10 +288,11 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        List<ResolvedTask> resolvedTasks = this.childTasks(runContext, parentTaskRun);
         if (this.concurrencyLimit == 1) {
             return FlowableUtils.resolveSequentialNexts(
                 execution,
-                this.childTasks(runContext, parentTaskRun),
+                resolvedTasks,
                 FlowableUtils.resolveTasks(this.errors, parentTaskRun),
                 FlowableUtils.resolveTasks(this._finally, parentTaskRun),
                 parentTaskRun
@@ -278,7 +301,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
 
         return FlowableUtils.resolveConcurrentNexts(
             execution,
-            FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.values),
+            resolvedTasks,
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,

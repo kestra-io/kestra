@@ -243,6 +243,14 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     @Schema(title = "How to split the items into batches")
     private ForEachItem.Batch batch = Batch.builder().build();
 
+    @Schema(
+        title = "Maximum number of batches (child subflows)",
+        description = "If the number of computed batches exceeds this limit, the task fails immediately and no subflow is triggered."
+    )
+    @PluginProperty
+    @Builder.Default
+    private Integer maxBatches = 100000;
+
     @NotEmpty
     @Schema(
         title = "The namespace of the subflow to be executed"
@@ -378,7 +386,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
     public List<Task> getTasks() {
         return List.of(
-            new ForEachItemSplit(this.getId(), this.items, this.batch),
+            new ForEachItemSplit(this.getId(), this.items, this.batch, this.maxBatches),
             new ForEachItemExecutable(this.getId(), this.inputs, this.inheritLabels, this.labels, this.wait, this.transmitFailed, this.scheduleDate,
                 new ExecutableTask.SubflowId(this.namespace, this.flowId, Optional.ofNullable(this.revision)), this.restartBehavior
             ),
@@ -399,10 +407,12 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
 
         private String items;
         private Batch batch;
+        private Integer maxBatches;
 
-        private ForEachItemSplit(String parentId, String items, Batch batch) {
+        private ForEachItemSplit(String parentId, String items, Batch batch, Integer maxBatches) {
             this.items = items;
             this.batch = batch;
+            this.maxBatches = maxBatches;
 
             this.id = parentId + SUFFIX;
             this.type = ForEachItemSplit.class.getName();
@@ -418,6 +428,14 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             }
 
             List<URI> splits = StorageService.split(runContext, this.batch, URI.create(renderedUri));
+            if (this.maxBatches != null) {
+                int count = splits.size();
+                if (count > this.maxBatches) {
+                    var errorMessage = "ForEachItem computed batches " + count + " exceeds maxBatches " + this.maxBatches;
+                    runContext.logger().error(errorMessage);
+                    throw new IllegalArgumentException(errorMessage);
+                }
+            }
             String fileContent = splits.stream().map(uri -> uri.toString()).collect(Collectors.joining(System.lineSeparator()));
             try (ByteArrayInputStream bis = new ByteArrayInputStream(fileContent.getBytes())){
                 URI splitsFile = runContext.storage().putFile(bis, "splits.txt");

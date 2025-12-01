@@ -8,6 +8,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
+import io.kestra.core.validations.ValidationConfiguration;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
@@ -51,6 +52,9 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
 
     @Inject
     private FlowService flowService;
+
+    @Inject
+    private ValidationConfiguration validationConfiguration;
 
     @Override
     public boolean isValid(
@@ -167,6 +171,17 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
                 " [" + String.join(", ", invalidOutputs) + "]");
         }
 
+        // workflow-level concurrency upper-bound check
+        Integer flowMaxConcurrency = validationConfiguration != null ? validationConfiguration.getFlowMaxConcurrency() : null;
+        if (flowMaxConcurrency != null && value.getConcurrency() != null && value.getConcurrency().getLimit() != null) {
+            if (value.getConcurrency().getLimit() > flowMaxConcurrency) {
+                violations.add("Flow concurrency.limit " + value.getConcurrency().getLimit() + " exceeding the maximum allowed " + flowMaxConcurrency);
+            }
+        }
+
+        // task-level upper-bound checks for specific tasks
+        addConcurrencyLimitViolations(allTasks, violations);
+
         if (!violations.isEmpty()) {
             context.disableDefaultConstraintViolation();
             context.buildConstraintViolationWithTemplate("Invalid Flow: " + String.join(", ", violations))
@@ -175,6 +190,45 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         } else {
             return true;
         }
+    }
+
+    private void addConcurrencyLimitViolations(List<Task> allTasks, List<String> violations) {
+        // Validate ForEach.concurrencyLimit and ForEach.maxValues against configured maxima
+        Integer foreachMaxConcurrency = validationConfiguration != null ? validationConfiguration.getForeachMaxConcurrency() : null;
+        Integer foreachMaxValues = validationConfiguration != null ? validationConfiguration.getForeachMaxValues() : null;
+        Integer foreachItemMaxBatches = validationConfiguration != null ? validationConfiguration.getForeachItemMaxBatches() : null;
+
+        for (Task task : allTasks) {
+            // io.kestra.plugin.core.flow.ForEach
+            if (task instanceof io.kestra.plugin.core.flow.ForEach forEach) {
+                if (foreachMaxConcurrency != null) {
+                    Integer configured = forEach.getConcurrencyLimit();
+                    if (configured != null && configured > foreachMaxConcurrency) {
+                        violations.add("ForEach task '" + safeId(forEach.getId()) + "' has concurrencyLimit " + configured + " exceeding the maximum allowed " + foreachMaxConcurrency);
+                    }
+                }
+                if (foreachMaxValues != null) {
+                    Integer configured = forEach.getMaxValues();
+                    if (configured != null && configured > foreachMaxValues) {
+                        violations.add("ForEach task '" + safeId(forEach.getId()) + "' has maxValues " + configured + " exceeding the maximum allowed " + foreachMaxValues);
+                    }
+                }
+            }
+
+            // io.kestra.plugin.core.flow.ForEachItem
+            if (task instanceof io.kestra.plugin.core.flow.ForEachItem forEachItem) {
+                if (foreachItemMaxBatches != null) {
+                    Integer configured = forEachItem.getMaxBatches();
+                    if (configured != null && configured > foreachItemMaxBatches) {
+                        violations.add("ForEachItem task '" + safeId(forEachItem.getId()) + "' has maxBatches " + configured + " exceeding the maximum allowed " + foreachItemMaxBatches);
+                    }
+                }
+            }
+        }
+    }
+
+    private static String safeId(String id) {
+        return Optional.ofNullable(id).orElse("<unknown>");
     }
 
     private static boolean checkObjectFieldsWithPatterns(Object object, List<Pattern> patterns) {

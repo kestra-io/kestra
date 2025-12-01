@@ -1171,7 +1171,9 @@ public class JdbcExecutor implements ExecutorInterface {
                     boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
                         && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
                         && execution.getState().getHistories().stream().noneMatch(h -> h.getState().isRunning());
-                    if (!queuedThenKilled) {
+                    boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
+                        && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
+                    if (!queuedThenKilled && !concurrencyShortCircuitState) {
                         concurrencyLimitStorage.decrement(executor.getFlow());
 
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {

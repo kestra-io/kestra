@@ -125,7 +125,7 @@ public class ExecutorService {
                 case CANCEL ->
                     executionRunning
                         .withExecution(executionRunning.getExecution().withState(State.Type.CANCELLED))
-                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
                 case FAIL -> {
                     var failedExecution = executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded"));
                     try {
@@ -135,7 +135,7 @@ public class ExecutorService {
                     }
                     yield executionRunning
                         .withExecution(failedExecution.getExecution())
-                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.RUNNING);
+                        .withConcurrencyState(ExecutionRunning.ConcurrencyState.FAILED);
                 }
 
             };

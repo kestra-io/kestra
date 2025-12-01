@@ -21,6 +21,7 @@ export const useLogExecutionsFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("logs");
                         return VALUES.LEVELS;
                     },
+                    visibleByDefault: true
                 }
             ]
         };

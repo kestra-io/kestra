@@ -8,7 +8,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.ExecutionLogService;
-import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -91,14 +90,13 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
     @Override
     public Output run(RunContext runContext) throws Exception {
         ExecutionLogService logService = ((DefaultRunContext)runContext).getApplicationContext().getBean(ExecutionLogService.class);
-        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
 
         // validate that this namespace is authorized on the target namespace / all namespaces
         var flowInfo = runContext.flowInfo();
         if (namespace == null){
-            flowService.checkAllowedAllNamespaces(flowInfo.tenantId(), flowInfo.tenantId(), flowInfo.namespace());
+            runContext.acl().allowAllNamespaces().check();
         } else if (!flowInfo.namespace().equals(runContext.render(namespace).as(String.class).orElse(null))) {
-            flowService.checkAllowedNamespace(flowInfo.tenantId(), runContext.render(namespace).as(String.class).orElse(null), flowInfo.tenantId(), flowInfo.namespace());
+            runContext.acl().allowNamespace(runContext.render(namespace).as(String.class).orElse(null)).check();
         }
 
         var logLevelsRendered = runContext.render(this.logLevels).asList(Level.class);

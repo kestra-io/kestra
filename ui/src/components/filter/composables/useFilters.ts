@@ -335,7 +335,29 @@ export function useFilters(
             markAsPreApplied(parsedFilters);
         }
 
-        appliedFilters.value = parsedFilters;
+        /**
+         * Initialize default visible filters. These filters are marked with visibleByDefault: true
+         * and are automatically added to the filter list when the page loads, even if no value
+         * are present to filter. Users can remove them, but they will reappear on page refresh.
+         */
+        const parsedFilterKeys = new Set(parsedFilters.map(f => f.key));
+        const defaultVisibleFilters = configuration.keys
+            ?.filter(key => key.visibleByDefault && !parsedFilterKeys.has(key.key))
+            .map(key => {
+                const comparator = (key.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
+                return {
+                    id: `${key.key}-default-${Date.now()}`,
+                    key: key.key,
+                    keyLabel: key.label,
+                    comparator,
+                    comparatorLabel: COMPARATOR_LABELS[comparator],
+                    value: key.valueType === "multi-select" ? [] : "",
+                    valueLabel: "",
+                    isDefaultVisible: true
+                } as AppliedFilter;
+            }) ?? [];
+
+        appliedFilters.value = [...parsedFilters, ...defaultVisibleFilters];
     };
 
     watch(() => route.query, initializeFromRoute, {deep: true, immediate: false});

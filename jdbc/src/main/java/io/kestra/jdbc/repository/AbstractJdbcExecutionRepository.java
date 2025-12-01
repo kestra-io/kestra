@@ -624,7 +624,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     private DailyExecutionStatistics dailyExecutionStatisticsMap(Instant date, List<ExecutionStatistics> result, String groupByType) {
-        long durationSum = result.stream().map(ExecutionStatistics::getDurationSum).mapToLong(value -> value).sum();
+        long durationSum = result.stream().map(ExecutionStatistics::getDurationSum).mapToLong(value -> value != null ? value : 0).sum();
         long count = result.stream().map(ExecutionStatistics::getCount).mapToLong(value -> value).sum();
 
         DailyExecutionStatistics build = DailyExecutionStatistics.builder()
@@ -632,8 +632,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             .groupBy(groupByType)
             .duration(DailyExecutionStatistics.Duration.builder()
                 .avg(Duration.ofMillis(durationSum / count))
-                .min(result.stream().map(ExecutionStatistics::getDurationMin).min(Long::compare).map(Duration::ofMillis).orElse(null))
-                .max(result.stream().map(ExecutionStatistics::getDurationMax).max(Long::compare).map(Duration::ofMillis).orElse(null))
+                .min(result.stream().map(ExecutionStatistics::getDurationMin).map(x -> x != null ? x : 0).min(Long::compare).map(Duration::ofMillis).orElse(null))
+                .max(result.stream().map(ExecutionStatistics::getDurationMax).map(x -> x != null ? x : 0).max(Long::compare).map(Duration::ofMillis).orElse(null))
                 .sum(Duration.ofMillis(durationSum))
                 .count(count)
                 .build()

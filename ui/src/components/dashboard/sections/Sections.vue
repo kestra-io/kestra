@@ -74,7 +74,8 @@
     import {ref, computed} from "vue";
 
     import type {Dashboard, Chart} from "../composables/useDashboards";
-    import {TYPES, isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards";
+    import {isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards";
+    import {TYPES} from "../dashboard-types";
 
     import {useRoute} from "vue-router";
     const route = useRoute();
@@ -110,11 +111,11 @@
         title: getChartTitle(chart),
         description: chart?.chartOptions?.description,
     });
-    
+
     // Make the overview of flows/dashboard/namespace specific
     const filters = computed(() => {
         const baseFilters: { field: string; operation: string; value: string | string[] }[] = [];
-        
+
         if (route.name === "flows/update") {
             baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.namespace as string});
             baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string});
@@ -177,7 +178,7 @@ section#charts {
             grid-column: span #{$i};
         }
     }
-    
+
     @for $i from 4 through 12 {
         .dash-width-#{$i} {
             grid-column: span 3;

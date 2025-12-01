@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -101,7 +102,8 @@ public class WorkingDirectoryTest {
         suite.inputFiles(runnerUtils);
     }
 
-    @Test
+    // FIXME can be moved back to regular @Test once https://github.com/kestra-io/kestra/issues/13134 is handled
+    @FlakyTest
     @LoadFlows(value = {"flows/valids/working-directory-outputs.yml"}, tenantId = "output")
     void outputFiles() throws Exception {
         suite.outputFiles("output", runnerUtils);

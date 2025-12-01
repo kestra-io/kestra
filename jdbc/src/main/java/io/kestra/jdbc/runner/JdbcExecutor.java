@@ -895,7 +895,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
                         metricRegistry
                             .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
-                            .record(taskRun.getState().getDuration());
+                            .record(taskRun.getState().getDurationOrComputeIt());
 
                         log.trace("TaskRun terminated: {}", taskRun);
                     }

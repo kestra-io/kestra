@@ -36,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ConcurrencyLimitServiceTest {
     private static final String TESTS_FLOW_NS = "io.kestra.tests";
     private static final String TENANT_ID = "main";
+    private static final String CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT = "concurrency_limit_service_test_unqueue_execution_tenant";
 
     @Inject
     private RunnerUtils runnerUtils;
@@ -57,11 +58,11 @@ class ConcurrencyLimitServiceTest {
     }
 
     @Test
-    @LoadFlows("flows/valids/flow-concurrency-queue.yml")
+    @LoadFlows(value = "flows/valids/flow-concurrency-queue.yml", tenantId = CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT)
     void unqueueExecution() throws QueueException, TimeoutException, InterruptedException {
         // run a first flow so the second is queued
-        Execution first = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "flow-concurrency-queue");
-        Execution result = runUntilQueued(TESTS_FLOW_NS, "flow-concurrency-queue");
+        Execution first = runnerUtils.runOneUntilRunning(CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT, TESTS_FLOW_NS, "flow-concurrency-queue");
+        Execution result = runUntilQueued(CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT, TESTS_FLOW_NS, "flow-concurrency-queue");
         assertThat(result.getState().isQueued()).isTrue();
 
         // await for the execution to be terminated
@@ -84,7 +85,7 @@ class ConcurrencyLimitServiceTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")
+    @ExecuteFlow(value = "flows/valids/flow-concurrency-queue.yml", tenantId = "concurrency_limit_service_test_find_by_id_tenant")
     void findById(Execution execution) {
         Optional<ConcurrencyLimit> limit = concurrencyLimitService.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
 
@@ -95,7 +96,7 @@ class ConcurrencyLimitServiceTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")
+    @ExecuteFlow(value = "flows/valids/flow-concurrency-queue.yml", tenantId = "concurrency_limit_service_test_update_tenant")
     void update(Execution execution) {
         Optional<ConcurrencyLimit> limit = concurrencyLimitService.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
 
@@ -110,7 +111,7 @@ class ConcurrencyLimitServiceTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/flow-concurrency-queue.yml")
+    @ExecuteFlow(value = "flows/valids/flow-concurrency-queue.yml", tenantId = "concurrency_limit_service_test_list_tenant")
     void list(Execution execution) {
         List<ConcurrencyLimit> list = concurrencyLimitService.find(execution.getTenantId());
 
@@ -121,19 +122,23 @@ class ConcurrencyLimitServiceTest {
     }
 
     private Execution runUntilQueued(String namespace, String flowId) throws TimeoutException, QueueException {
-        return runUntilState(namespace, flowId, State.Type.QUEUED);
+        return runUntilQueued(TENANT_ID, namespace, flowId);
     }
 
-    private Execution runUntilState(String namespace, String flowId, State.Type state) throws TimeoutException, QueueException {
-        Execution execution = this.createExecution(namespace, flowId);
+    private Execution runUntilQueued(String tenantId, String namespace, String flowId) throws TimeoutException, QueueException {
+        return runUntilState(tenantId, namespace, flowId, State.Type.QUEUED);
+    }
+
+    private Execution runUntilState(String tenantId, String namespace, String flowId, State.Type state) throws TimeoutException, QueueException {
+        Execution execution = this.createExecution(tenantId, namespace, flowId);
         return runnerUtils.awaitExecution(
             it -> execution.getId().equals(it.getId()) && it.getState().getCurrent() == state,
             throwRunnable(() -> this.executionQueue.emit(execution)),
             Duration.ofSeconds(1));
     }
 
-    private Execution createExecution(String namespace, String flowId) {
-        Flow flow = flowRepositoryInterface.findById(TENANT_ID, namespace, flowId).orElseThrow();
+    private Execution createExecution(String tenantId, String namespace, String flowId) {
+        Flow flow = flowRepositoryInterface.findById(tenantId, namespace, flowId).orElseThrow();
         return Execution.newExecution(flow, null);
     }
 }

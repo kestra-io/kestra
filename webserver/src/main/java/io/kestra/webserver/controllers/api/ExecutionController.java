@@ -1928,74 +1928,78 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
         String subscriberId = UUID.randomUUID().toString();
-        
+
         return Flux.<Event<Execution>>create(emitter -> {
-                emitter.next(Event.of(Execution.builder()
-                    .id(executionId)
-                    .build()
-                ).id("start"));
-                
-                try {
-                    // Wait for execution to exist in repository (up to 10 seconds)
-                    Execution execution = Await.until(
+            try {
+                // Wait for execution to exist in repository (up to 10 seconds)
+                Execution execution = Await.until(
                         () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
                         Duration.ofMillis(500),
                         Duration.ofSeconds(10)
-                    );
-                    
-                    // If execution not found after waiting, return 404 error
-                    if (execution == null) {
-                        emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                );
+
+                // If execution not found after waiting, return 404 error
+                if (execution == null) {
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
                             "Execution not found for id: " + executionId));
-                        return;
-                    }
-                    
-                    // Fetch the flow associated with this execution
-                    Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
-                    
-                    // If execution is already complete, send final state and close connection
-                    if (streamingService.isStopFollow(flow, execution)) {
-                        emitter.next(Event.of(execution).id("end"));
-                        emitter.complete();
-                        return;
-                    }
-                    
-                    // Send updated execution data with progress
-                    emitter.next(Event.of(execution).id("progress"));
-                    
-                    // Register subscriber to receive real-time updates
-                    streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
-                    
-                    Execution finalExecution = execution;
-                    execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
-                            .orElseGet(() -> {
-                                log.error("Execution not found but we previously found it, this is a bug, executionId: '{}'", executionId);
-                                return finalExecution;
-                            });
-                    
-                    // Check again if execution completed during subscription
-                    if (streamingService.isStopFollow(flow, execution)) {
-                        emitter.next(Event.of(execution).id("end"));
-                        emitter.complete();
-                    }
-                    
-                    // If execution is at a breakpoint, send progress update
-                    if (execution.getState().isBreakpoint()) {
-                        emitter.next(Event.of(execution).id("progress"));
-                    }
-                    
-                } catch (IllegalStateException e) {
-                    log.error(e.getMessage(), e);
-                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
-                        "Unable to find flow for execution " + executionId));
-                } catch (Exception e) {
-                    log.error(e.getMessage(), e);
-                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
-                        "Unable to follow execution " + executionId));
+                    return;
                 }
-            }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1))
-            .doFinally(ignored -> streamingService.unregisterSubscriber(executionId, subscriberId));
+
+                // Send initial event immediately with minimal real Execution object
+                Execution startExecution = Execution.builder()
+                        .id(execution.getId())
+                        .namespace(execution.getNamespace())
+                        .flowId(execution.getFlowId())
+                        .state(execution.getState())
+                        .build();
+                emitter.next(Event.of(startExecution).id("start"));
+
+                // Fetch the flow associated with this execution
+                Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+
+                // If execution is already complete, send final state and close connection
+                if (streamingService.isStopFollow(flow, execution)) {
+                    emitter.next(Event.of(execution).id("end"));
+                    emitter.complete();
+                    return;
+                }
+
+                // Send updated execution data with progress
+                emitter.next(Event.of(execution).id("progress"));
+
+                // Register subscriber to receive real-time updates
+                streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
+
+                Execution finalExecution = execution;
+                execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
+                        .orElseGet(() -> {
+                            log.error("Execution not found but we previously found it, this is a bug, executionId: '{}'", executionId);
+                            return finalExecution;
+                        });
+
+                // Check again if execution completed during subscription
+                if (streamingService.isStopFollow(flow, execution)) {
+                    emitter.next(Event.of(execution).id("end"));
+                    emitter.complete();
+                }
+
+                // If execution is at a breakpoint, send progress update
+                if (execution.getState().isBreakpoint()) {
+                    emitter.next(Event.of(execution).id("progress"));
+                }
+
+            } catch (IllegalStateException e) {
+                log.error(e.getMessage(), e);
+                emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                        "Unable to find flow for execution " + executionId));
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+                emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                        "Unable to follow execution " + executionId));
+            }
+        }, FluxSink.OverflowStrategy.BUFFER)
+                .timeout(Duration.ofHours(1))
+                .doFinally(ignored -> streamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
     @ExecuteOn(TaskExecutors.IO)

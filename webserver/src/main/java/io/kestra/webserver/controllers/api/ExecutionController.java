@@ -39,6 +39,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.controllers.api.ExecutionController.ApiValidateExecutionInputsResponse.ApiCheckFailure;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -1927,48 +1928,67 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @PathVariable String executionId
     ) {
         String subscriberId = UUID.randomUUID().toString();
+        
         return Flux.<Event<Execution>>create(emitter -> {
-                // Send initial event
-                emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
 
-                // Check if execution exists
+                // Send immediate "connected" event to prevent SSE socket from hanging
+                // if browser tab is closed before receiving any data.
+                // This event intentionally contains null data and should be ignored by SDK clients.
+                emitter.next(Event.of((Execution)null).id("connected"));
+                
                 try {
+                    // Wait for execution to exist in repository (up to 10 seconds)
                     Execution execution = Await.until(
                         () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
                         Duration.ofMillis(500),
                         Duration.ofSeconds(10)
                     );
-
+                    
+                    // If execution not found after waiting, return 404 error
+                    if (execution == null) {
+                        emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                            "Execution not found for id: " + executionId));
+                        return;
+                    }
+                    
+                    // Fetch the flow associated with this execution
                     Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
-
-                    // If execution is already complete, just send final state
+                    
+                    // If execution is already complete, send final state and close connection
                     if (streamingService.isStopFollow(flow, execution)) {
                         emitter.next(Event.of(execution).id("end"));
                         emitter.complete();
                         return;
                     }
-
-                    // Send current state
+                    
+                    // Send "start" event with real execution data
+                    emitter.next(Event.of(execution).id("start"));
+                    
+                    // Send current execution state
                     emitter.next(Event.of(execution).id("progress"));
-
-                    // Register for updates
+                    
+                    // Register subscriber to receive real-time updates
                     streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
-
-                    // Fetch again the execution to avoid race when execution is ended before we are subscribed
+                    
                     Execution finalExecution = execution;
-                    execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseGet(() -> {
-                        log.error("Execution not found but we previously found it, this is a bug, executionId: '{}'", executionId);
-                        // return the old execution fallback
-                        return finalExecution;
-                    });
+                    execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
+                            .orElseGet(() -> {
+                                log.error("Execution not found but we previously found it, this is a bug, executionId: '{}'", executionId);
+                                // Return the old execution as fallback
+                                return finalExecution;
+                            });
+                    
+                    // Check again if execution completed during subscription
                     if (streamingService.isStopFollow(flow, execution)) {
                         emitter.next(Event.of(execution).id("end"));
                         emitter.complete();
                     }
-
+                    
+                    // If execution is at a breakpoint, send progress update
                     if (execution.getState().isBreakpoint()) {
                         emitter.next(Event.of(execution).id("progress"));
                     }
+                    
                 } catch (IllegalStateException e) {
                     log.error(e.getMessage(), e);
                     emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
@@ -1976,10 +1996,10 @@ public class ExecutionController {
                 } catch (Exception e) {
                     log.error(e.getMessage(), e);
                     emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
-                        "Unable to find execution " + executionId));
+                        "Unable to follow execution " + executionId));
                 }
             }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)) // avoid idle SSE sockets by setting a between-item timeout
+            .timeout(Duration.ofHours(1)) // Avoid idle SSE sockets by setting a between-item timeout
             .doFinally(ignored -> streamingService.unregisterSubscriber(executionId, subscriberId));
     }
 

@@ -642,6 +642,7 @@
       "customize columns": "테이블 열 사용자 정의",
       "customize tooltip": "표시할 필터 사용자 지정",
       "delete filter": "필터 삭제",
+      "delete filter confirm": "이 필터를 제거하시겠습니까?",
       "description": "설명",
       "deselect all": "모두 선택 해제",
       "drag to reorder": "끌어서 순서 변경",

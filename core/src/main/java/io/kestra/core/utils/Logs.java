@@ -19,7 +19,7 @@ public final class Logs {
     private static final String EXECUTION_PREFIX_WITH_TENANT = FLOW_PREFIX_WITH_TENANT + "[execution: {}] ";
     private static final String TRIGGER_PREFIX_WITH_TENANT = FLOW_PREFIX_WITH_TENANT + "[trigger: {}] ";
     private static final String TASKRUN_PREFIX_WITH_TENANT = FLOW_PREFIX_WITH_TENANT + "[task: {}] [execution: {}] [taskrun: {}] ";
-    
+
     private Logs() {}
 
     public static void logExecution(FlowId flow, Logger logger, Level level, String message, Object... args) {
@@ -48,7 +48,7 @@ public final class Logs {
      */
     public static void logTrigger(TriggerId trigger, Level level, String message, Object... args) {
         Logger logger = logger(trigger);
-        logTrigger(triggerContext, logger, level, message, args);
+        logTrigger(trigger, logger, level, message, args);
     }
 
     public static void logTrigger(TriggerId trigger, Logger logger, Level level, String message, Object... args) {

@@ -1,5 +1,6 @@
 package io.kestra.executor.handler;
 
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowInterface;
@@ -42,8 +43,8 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
         }
 
         executionStateStore.lock(message.getParentExecutionId(), execution -> {
-            FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow();
             try {
+                FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.getTaskId());
                 if (!executableTask.waitForExecution()) {
                     return null;
@@ -66,7 +67,7 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
                         log.error("Unable to emit the subflow execution result", ex);
                     }
                 }
-            } catch (InternalException e) {
+            } catch (InternalException | FlowNotFoundException e) {
                 log.error("Unable to process the subflow execution end", e);
             }
             return null;

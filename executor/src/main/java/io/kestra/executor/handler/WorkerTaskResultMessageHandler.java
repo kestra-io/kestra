@@ -1,5 +1,6 @@
 package io.kestra.executor.handler;
 
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.WorkerTaskResult;
@@ -37,10 +38,14 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
             if (execution.hasTaskRunJoinable(message.getTaskRun())) {
                 try {
                     // process worker task result
-                    executorService.addWorkerTaskResult(current, () -> flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(), message);
+                    executorService.addWorkerTaskResult(
+                        current,
+                        () -> flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution)),
+                        message
+                    );
                     // join worker result
                     return current;
-                } catch (InternalException e) {
+                } catch (InternalException | FlowNotFoundException e) {
                     return executorService.handleFailedExecutionFromExecutor(current, e);
                 }
             }

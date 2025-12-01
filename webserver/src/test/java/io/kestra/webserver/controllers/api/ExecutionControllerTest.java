@@ -536,7 +536,7 @@ class ExecutionControllerTest {
             .id(flowId)
             .tenantId(MAIN_TENANT)
             .namespace(namespaceId)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()))
             .build();
 
         client.toBlocking().retrieve(

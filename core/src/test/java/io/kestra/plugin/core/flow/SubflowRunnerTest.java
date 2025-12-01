@@ -97,9 +97,10 @@ class SubflowRunnerTest {
     void subflowOutputWithWait() throws QueueException, TimeoutException, InterruptedException {
         List<Execution> childExecution = new ArrayList<>();
         CountDownLatch countDownLatch = new CountDownLatch(4);
-        Runnable closing = executionQueue.receive(either -> {
-            if (either.isLeft() && either.getLeft().getFlowId().equals("subflow-to-retry") && either.getLeft().getState().isTerminated()) {
-                childExecution.add(either.getLeft());
+        Runnable closing = executionEventQueue.receive(either -> {
+            if (either.isLeft() && either.getLeft().flowId().equals("subflow-to-retry") && either.getLeft().eventType() == ExecutionEventType.TERMINATED) {
+                var execution = executionRepository.findById(either.getLeft().tenantId(), either.getLeft().executionId()).orElseThrow();
+                childExecution.add(execution);
                 countDownLatch.countDown();
             }
         });

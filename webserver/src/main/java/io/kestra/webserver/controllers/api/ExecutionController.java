@@ -1930,11 +1930,10 @@ public class ExecutionController {
         String subscriberId = UUID.randomUUID().toString();
         
         return Flux.<Event<Execution>>create(emitter -> {
-
-                // Send immediate "connected" event to prevent SSE socket from hanging
-                // if browser tab is closed before receiving any data.
-                // This event intentionally contains null data and should be ignored by SDK clients.
-                emitter.next(Event.of((Execution)null).id("connected"));
+                emitter.next(Event.of(Execution.builder()
+                    .id(executionId)
+                    .build()
+                ).id("start"));
                 
                 try {
                     // Wait for execution to exist in repository (up to 10 seconds)
@@ -1961,10 +1960,7 @@ public class ExecutionController {
                         return;
                     }
                     
-                    // Send "start" event with real execution data
-                    emitter.next(Event.of(execution).id("start"));
-                    
-                    // Send current execution state
+                    // Send updated execution data with progress
                     emitter.next(Event.of(execution).id("progress"));
                     
                     // Register subscriber to receive real-time updates
@@ -1974,7 +1970,6 @@ public class ExecutionController {
                     execution = executionRepository.findById(tenantService.resolveTenant(), executionId)
                             .orElseGet(() -> {
                                 log.error("Execution not found but we previously found it, this is a bug, executionId: '{}'", executionId);
-                                // Return the old execution as fallback
                                 return finalExecution;
                             });
                     
@@ -1999,7 +1994,7 @@ public class ExecutionController {
                         "Unable to follow execution " + executionId));
                 }
             }, FluxSink.OverflowStrategy.BUFFER)
-            .timeout(Duration.ofHours(1)) // Avoid idle SSE sockets by setting a between-item timeout
+            .timeout(Duration.ofHours(1))
             .doFinally(ignored -> streamingService.unregisterSubscriber(executionId, subscriberId));
     }
 

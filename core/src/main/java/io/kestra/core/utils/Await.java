@@ -10,10 +10,14 @@ public class Await {
     private static final Duration defaultSleep = Duration.ofMillis(100);
 
     public static void until(BooleanSupplier condition) {
-        Await.until(condition, null);
+        Await.untilWithSleepInterval(condition, null);
     }
 
-    public static void until(BooleanSupplier condition, Duration sleep) {
+    public static void untilWithTimeout(BooleanSupplier condition, Duration timeout) throws TimeoutException {
+        until(condition, null, timeout);
+    }
+
+    public static void untilWithSleepInterval(BooleanSupplier condition, Duration sleep) {
         if (sleep == null) {
             sleep = defaultSleep;
         }
@@ -74,10 +78,10 @@ public class Await {
         return result.get();
     }
 
-    public static <T> T until(Supplier<T> supplier, Duration sleep) {
+    public static <T> T untilWithSleepInterval(Supplier<T> supplier, Duration sleep) {
         AtomicReference<T> result = new AtomicReference<>();
 
-        Await.until(untilSupplier(supplier, result), sleep);
+        Await.untilWithSleepInterval(untilSupplier(supplier, result), sleep);
 
         return result.get();
     }

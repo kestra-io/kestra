@@ -377,6 +377,7 @@
     "no result": "There are no results to be shown.",
     "empty search": "Search results are empty",
     "trigger": "Trigger",
+    "no_trigger": "No trigger available.",
     "triggers": "Triggers",
     "trigger details": "Trigger details",
     "triggerflow disabled": "Trigger is disabled from flow definition",

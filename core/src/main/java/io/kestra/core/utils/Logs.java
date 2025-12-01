@@ -48,7 +48,7 @@ public final class Logs {
      */
     public static void logTrigger(TriggerId trigger, Level level, String message, Object... args) {
         Logger logger = logger(trigger);
-        logTrigger(triggerContext, logger, level, message, args);
+        logTrigger(trigger, logger, level, message, args);
     }
 
     public static void logTrigger(TriggerId trigger, Logger logger, Level level, String message, Object... args) {

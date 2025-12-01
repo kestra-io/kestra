@@ -2,6 +2,7 @@ package io.kestra.executor;
 
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
@@ -467,7 +468,7 @@ public class DefaultExecutor implements Executor {
                     }
                     // Handle failed task retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_TASK)) {
-                        FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow();
+                        FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                         Execution newAttempt = executionService.retryTask(
                             execution,
                             flow,
@@ -503,7 +504,7 @@ public class DefaultExecutor implements Executor {
 
         slaMonitorStateStore.processExpired(Instant.now(), slaMonitor -> {
             Optional<ExecutorContext> maybeExecutor = executionStateStore.lock(slaMonitor.getExecutionId(), execution -> {
-                FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow();
+                FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
                 if (sla.isEmpty()) {
                     // this can happen in case the flow has been updated and the SLA removed
@@ -600,7 +601,8 @@ public class DefaultExecutor implements Executor {
             // the terminated state can come from the execution queue, in this case we always have a flow in the executor
             // or from a worker task in an afterExecution block, in this case we need to load the flow
             if (executor.getFlow() == null && executor.getExecution().getState().isTerminated()) {
-                FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(executor.getExecution()).orElseThrow();
+                var execution = executor.getExecution();
+                FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                 executor = executor.withFlow(flow);
             }
             boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());

@@ -1,5 +1,6 @@
 package io.kestra.executor.handler;
 
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -89,7 +90,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
             FlowId.uidWithoutRevision(execution),
             () -> {
                 try {
-                    final FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow();
+                    final FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
                     ExecutorContext executor = new ExecutorContext(execution, flow);
 
                     // schedule it for later if needed
@@ -251,7 +252,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                     }
 
                     return executor;
-                } catch (QueueException e) {
+                } catch (QueueException | FlowNotFoundException e) {
                     try {
                         Execution failedExecution = fail(execution, e);
                         this.executionQueue.emit(failedExecution);

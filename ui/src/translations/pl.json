@@ -642,6 +642,7 @@
       "customize columns": "Dostosuj kolumny tabeli",
       "customize tooltip": "Dostosuj, które filtry mają być wyświetlane",
       "delete filter": "Usuń filtr",
+      "delete filter confirm": "Czy na pewno chcesz usunąć ten filtr?",
       "description": "Opis",
       "deselect all": "Odznacz wszystko",
       "drag to reorder": "Przeciągnij, aby zmienić kolejność",

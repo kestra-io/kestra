@@ -18,7 +18,6 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
     import Alert from "vue-material-design-icons/Alert.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
     import Badge from "../global/Badge.vue";
@@ -28,8 +27,6 @@
     import action from "../../models/action";
     import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
-
-    const {t} = useI18n();
 
     defineProps<{
         routeInfo: {

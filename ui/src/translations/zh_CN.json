@@ -642,6 +642,7 @@
       "customize columns": "自定义表格列",
       "customize tooltip": "自定义显示哪些过滤器",
       "delete filter": "删除过滤器",
+      "delete filter confirm": "您确定要删除此过滤器吗？",
       "description": "描述",
       "deselect all": "取消全选",
       "drag to reorder": "拖动以重新排序",

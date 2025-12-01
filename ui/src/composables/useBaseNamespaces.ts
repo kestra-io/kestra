@@ -291,7 +291,7 @@ export const useBaseNamespacesStore = () => {
         loadInheritedVariables,
         createDirectory,
         readDirectory,
-        createFile,
+        saveOrCreateFile: createFile,
         readFile,
         searchFiles,
         importFileDirectory,

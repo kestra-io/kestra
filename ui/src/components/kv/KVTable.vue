@@ -561,6 +561,7 @@
                         .deleteKvs({namespace, request: {keys: kvs.map(kv => kv.key)}})
                         .then(() => {
                             toast.deleted(`${kvs.length} KV(s) from ${namespace} namespace`);
+                            toggleAllUnselected();
                             loadData();
                         });
                 });

@@ -5,13 +5,13 @@
         @click="onShow"
         ref="taskEdit"
     >
-        <span v-if="component !== 'el-button' && !isHidden">{{ t("show task source") }}</span>
+        <span v-if="component !== 'el-button' && !isHidden">{{ $t("show task source") }}</span>
         <Drawer
             v-if="isModalOpen"
             v-model="isModalOpen"
         >
             <template #header>
-                <code>{{ taskId || task?.id || t("add task") }}</code>
+                <code>{{ taskId || task?.id || $t("add task") }}</code>
             </template>
             <template #footer>
                 <div v-loading="isLoading">
@@ -24,7 +24,7 @@
                         :disabled="errors && !!errors.length"
                         type="primary"
                     >
-                        {{ t("save task") }}
+                        {{ $t("save task") }}
                     </el-button>
                     <el-alert
                         showIcon
@@ -33,7 +33,7 @@
                         v-if="revision && revisions?.length !== revision"
                         type="warning"
                     >
-                        <strong>{{ t("seeing old revision", {revision: revision}) }}</strong>
+                        <strong>{{ $t("seeing old revision", {revision: revision}) }}</strong>
                     </el-alert>
                 </div>
             </template>
@@ -41,7 +41,7 @@
             <el-tabs v-model="activeTabs">
                 <el-tab-pane v-if="!readOnly" name="form">
                     <template #label>
-                        <span>{{ t("form") }}</span>
+                        <span>{{ $t("form") }}</span>
                     </template>
                     <TaskEditor
                         ref="editor"
@@ -52,7 +52,7 @@
                 </el-tab-pane>
                 <el-tab-pane name="source">
                     <template #label>
-                        <span>{{ t("source") }}</span>
+                        <span>{{ $t("source") }}</span>
                     </template>
                     <Editor
                         :readOnly="readOnly"
@@ -69,7 +69,7 @@
                 <el-tab-pane v-if="pluginMarkdown" name="documentation">
                     <template #label>
                         <span>
-                            {{ t("documentation.documentation") }}
+                            {{ $t("documentation.documentation") }}
                         </span>
                     </template>
                     <div class="documentation">
@@ -83,7 +83,6 @@
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
-    import {useI18n} from "vue-i18n";
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
@@ -98,9 +97,6 @@
     import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
 
-    const {t} = useI18n()
-
-    // Types
     interface Props {
         component?: string;
         task?: Record<string, any>;
@@ -116,7 +112,6 @@
         flowSource?: string;
     }
 
-    // Props definition
     const props = withDefaults(defineProps<Props>(), {
         component: "el-button",
         task: undefined,
@@ -170,7 +165,6 @@
             : flowStore.flow?.source;
     });
    
-    // Methods
     const load = async (taskId: string) => {
         await flowStore.loadFlow({
             namespace: props.namespace,
@@ -228,7 +222,6 @@
         }, 500) as any;
     };
 
-    // Watchers
     watch(() => props.task, async (newTask) => {
         if (newTask) {
             taskYaml.value = YAML_UTILS.stringify(newTask);

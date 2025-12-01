@@ -117,9 +117,9 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
         var flowInfo = runContext.flowInfo();
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
         if (renderedNamespace == null){
-            runContext.acl().allowAllNamespaces();
+            runContext.acl().allowAllNamespaces().check();
         } else if (!renderedNamespace.equals(flowInfo.namespace())) {
-            runContext.acl().allowNamespace(renderedNamespace);
+            runContext.acl().allowNamespace(renderedNamespace).check();
         }
 
         ExecutionService.PurgeResult purgeResult = executionService.purge(

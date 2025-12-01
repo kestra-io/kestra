@@ -127,12 +127,12 @@ public class Count extends Task implements RunnableTask<Count.Output> {
 
         // check that all flows are allowed
         if (flows != null) {
-            flows.forEach(flow -> runContext.acl().allowNamespace(flow.getNamespace()));
+            flows.forEach(flow -> runContext.acl().allowNamespace(flow.getNamespace()).check());
         }
 
         if (namespaces != null) {
             var renderedNamespaces = runContext.render(this.namespaces).asList(String.class);
-            renderedNamespaces.forEach(namespace -> runContext.acl().allowNamespace(namespace));
+            renderedNamespaces.forEach(namespace -> runContext.acl().allowNamespace(namespace).check());
         }
 
         List<ExecutionCount> executionCounts = executionRepository.executionCounts(

@@ -94,9 +94,9 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
         // validate that this namespace is authorized on the target namespace / all namespaces
         var flowInfo = runContext.flowInfo();
         if (namespace == null){
-            runContext.acl().allowAllNamespaces();
+            runContext.acl().allowAllNamespaces().check();
         } else if (!flowInfo.namespace().equals(runContext.render(namespace).as(String.class).orElse(null))) {
-            runContext.acl().allowNamespace(runContext.render(namespace).as(String.class).orElse(null));
+            runContext.acl().allowNamespace(runContext.render(namespace).as(String.class).orElse(null)).check();
         }
 
         var logLevelsRendered = runContext.render(this.logLevels).asList(Level.class);

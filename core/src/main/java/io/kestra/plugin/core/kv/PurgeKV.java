@@ -175,7 +175,7 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
         }
 
         for (String ns : kvNamespaces) {
-            runContext.acl().allowNamespace(ns);
+            runContext.acl().allowNamespace(ns).check();
         }
         return kvNamespaces;
     }

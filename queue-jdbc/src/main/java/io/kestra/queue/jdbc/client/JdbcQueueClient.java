@@ -59,10 +59,12 @@ public class JdbcQueueClient {
     }
 
     public void publish(String queue, @Nullable String routingKey, String key, String value) throws QueueException {
-        this.publish(queue, routingKey, Map.of(key, value));
+        this.publish(List.of(new PublishedMessage(queue, routingKey, key, value)));
     }
 
-    public void publish(String queue, @Nullable String routingKey, Map<String, String> values) throws QueueException {
+    public record PublishedMessage(String queue, String routingKey, String key, String value) {}
+
+    public void publish(List<PublishedMessage> messages) throws QueueException {
         try {
             dslContextWrapper.transaction(configuration -> {
                 DSLContext context = DSL.using(configuration);
@@ -71,12 +73,12 @@ public class JdbcQueueClient {
                     .insertInto(jdbcRepository.getTable())
                     .columns(COLUMNS);
 
-                for (Map.Entry<String, String> entry : values.entrySet()) {
+                for (PublishedMessage entry : messages) {
                     insert = insert.values(
-                        queueNameToType(queue),
-                        routingKey,
-                        entry.getKey(),
-                        JSONB.valueOf(entry.getValue()),
+                        queueNameToType(entry.queue),
+                        entry.routingKey,
+                        entry.key,
+                        JSONB.valueOf(entry.value),
                         Instant.now()
                     );
                 }
@@ -93,7 +95,7 @@ public class JdbcQueueClient {
         }
     }
 
-    public Integer subscribeDispatch(String queue, @Nullable String routingKey, MessageConsumer<String, Exception> consumer) {
+    public Integer subscribeDispatch(String queue, @Nullable List<String> routingKeys, MessageConsumer<String, Exception> consumer) {
         return dslContextWrapper.transactionResult(conf -> {
             DSLContext context = DSL.using(conf);
 
@@ -101,8 +103,8 @@ public class JdbcQueueClient {
                 .from(this.jdbcRepository.getTable())
                 .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("type").eq(queueNameToType(queue)));
 
-            if (routingKey != null) {
-                select = select.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("routing_key").eq(routingKey));
+            if (routingKeys != null) {
+                select = select.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("routing_key").in(routingKeys));
             }
 
             List<JdbcQueueItem> queueItems = select
@@ -127,8 +129,8 @@ public class JdbcQueueClient {
                         .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("type").eq(queueNameToType(queue)))
                         .and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("offset", Long.class).in(processedItems));
 
-                    if (routingKey != null) {
-                        delete = delete.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("routing_key").eq(routingKey));
+                    if (routingKeys != null) {
+                        delete = delete.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("routing_key").in(routingKeys));
                     }
 
                     delete.execute();

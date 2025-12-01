@@ -34,7 +34,7 @@ public class JdbcKeyedDispatchQueue<T extends KeyedDispatchEvent> extends Abstra
             queueService,
             jdbcQueueClient,
             queueName(),
-            routingKey
+            List.of(routingKey)
         );
     }
 }

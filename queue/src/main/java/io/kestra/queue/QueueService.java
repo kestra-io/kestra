@@ -10,6 +10,8 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.scheduler.SchedulerConfiguration;
+import io.kestra.scheduler.vnodes.VNodes;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
@@ -25,31 +27,39 @@ import java.util.concurrent.ExecutorService;
 public class QueueService {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson(false);
 
+    private final MetricRegistry metricRegistry;
+
+    @Getter
+    private final int vNodeCount;
+
     @Getter
     protected final ExecutorService executorService;
 
     @Getter
     protected final QueueConfiguration queueConfiguration;
 
-    private final MetricRegistry metricRegistry;
-
     @Inject
-    public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry) {
+    public QueueService(ExecutorsUtils executorsUtils, QueueConfiguration queueConfiguration, MetricRegistry metricRegistry, SchedulerConfiguration schedulerConfiguration) {
         this.executorService = executorsUtils.cachedThreadPool("queue-" + queueConfiguration.getType());
         this.queueConfiguration = queueConfiguration;
         this.metricRegistry = metricRegistry;
+        this.vNodeCount = schedulerConfiguration.vnodes();
     }
 
     public void execute(Runnable runnable) {
         this.executorService.execute(runnable);
     }
 
+    public int computeVNode(String key) {
+        return VNodes.computeVNode(this.vNodeCount, key);
+    }
+
     public <T extends Event> String serialize(Class<T> cls, T message) throws QueueException {
         try {
             String serialize = MAPPER.writeValueAsString(message);
 
-            if (log.isTraceEnabled()) {
-                log.trace("[{}] produced message: {}", cls.getSimpleName(), serialize);
+            if (log.isDebugEnabled()) {
+                log.debug("[{}] produced message: {}", cls.getSimpleName(), serialize);
             }
 
             int byteLength = serialize.getBytes(StandardCharsets.UTF_8).length;
@@ -76,8 +86,8 @@ public class QueueService {
     }
 
     public <T extends Event> Either<T, DeserializationException> deserialize(Class<T> cls, byte[] record) {
-        if (log.isTraceEnabled()) {
-            log.trace("[{}] received message: {}", cls.getSimpleName(), new String(record));
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] received message: {}", cls.getSimpleName(), new String(record));
         }
 
         try {
@@ -93,8 +103,8 @@ public class QueueService {
     }
 
     public <T extends Event> Either<T, DeserializationException> deserialize(Class<T> cls, String record) {
-        if (log.isTraceEnabled()) {
-            log.trace("[{}] received message: {}", cls.getSimpleName(), record);
+        if (log.isDebugEnabled()) {
+            log.debug("[{}] received message: {}", cls.getSimpleName(), record);
         }
 
         try {

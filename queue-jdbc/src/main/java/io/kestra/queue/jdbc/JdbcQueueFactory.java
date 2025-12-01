@@ -50,5 +50,14 @@ public class JdbcQueueFactory {
                 Qualifiers.byTypeArguments(event),
                 true
             ));
+
+        QueueFactory
+            .listAllEvent(this.getClass().getClassLoader(), VNodeDispatchEvent.class)
+            .forEach(event -> applicationContext.registerSingleton(
+                VNodeDispatchQueueInterface.class,
+                new JdbcVNodeDispatchQueue<>(event, queueService, jdbcQueueClient),
+                Qualifiers.byTypeArguments(event),
+                true
+            ));
     }
 }

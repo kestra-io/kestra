@@ -12,6 +12,7 @@ import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -31,20 +32,14 @@ public abstract class AbstractJdbcQueue<T extends Event> extends AbstractQueue<T
     }
 
     protected void internalEmit(@Nullable String routingKey, List<T> messages) throws QueueException {
-        jdbcQueueClient.publish(
-            this.queueName(),
-            routingKey,
-            messages
-                .stream()
-                .map(throwFunction(e -> {
-                    String serialize = this.queueService.serialize(this.cls, e);
+        jdbcQueueClient.publish(messages
+            .stream()
+            .map(throwFunction(e -> {
+                String serialize = this.queueService.serialize(this.cls, e);
 
-                    return new AbstractMap.SimpleEntry<>(
-                        e.key(),
-                        serialize
-                    );
-                }))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                return new JdbcQueueClient.PublishedMessage(this.queueName(), routingKey, e.key(), serialize);
+            }))
+            .toList()
         );
     }
 }

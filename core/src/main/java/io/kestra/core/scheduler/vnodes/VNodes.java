@@ -12,12 +12,12 @@ import java.util.Objects;
  * Utility class for computing vNodes.
  */
 public final class VNodes {
-    
+
     private static final HashFunction HASH_FUNCTION = Hashing.murmur3_32_fixed();
-    
+
     /**
      * Computes the consistent hash for the given key.
-     * 
+     *
      * @param key   the key.
      * @return a hash.
      */
@@ -25,7 +25,7 @@ public final class VNodes {
         int hash = HASH_FUNCTION.hashString(key, StandardCharsets.UTF_8).asInt();
         return hash & 0x7fffffff; // ensure positive
     }
-    
+
     /**
      * Computes the vNode owning the given trigger.
      *
@@ -37,7 +37,7 @@ public final class VNodes {
         Objects.requireNonNull(id, "id cannot be null");
         return computeVNode(vNodeCount, FlowId.uidWithoutRevision(FlowId.of(id.getTenantId(), id.getNamespace(), id.getFlowId(), null)));
     }
-    
+
     /**
      * Computes the vNode owning the given flow.
      *
@@ -49,8 +49,8 @@ public final class VNodes {
         Objects.requireNonNull(id, "id cannot be null");
         return computeVNode(vNodeCount, FlowId.uidWithoutRevision(id));
     }
-    
-    private static int computeVNode(int vNodeCount, String key) {
+
+    public static int computeVNode(int vNodeCount, String key) {
         return Math.floorMod(hash(key), vNodeCount);
     }
 }

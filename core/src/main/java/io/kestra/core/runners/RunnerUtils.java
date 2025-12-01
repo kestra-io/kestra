@@ -159,6 +159,11 @@ public class RunnerUtils {
     }
 
     @VisibleForTesting
+    public Execution awaitExecution(Predicate<Execution> predicate, Duration duration) throws TimeoutException {
+        return awaitExecution(predicate, () -> {}, duration);
+    }
+
+    @VisibleForTesting
     public Execution awaitExecution(Predicate<Execution> predicate, Runnable executionEmitter, Duration duration) throws TimeoutException {
         AtomicReference<Execution> receive = new AtomicReference<>();
 

@@ -257,7 +257,7 @@ public class FlowConcurrencyCaseTest {
         assertThat(forEachItem.getState().getCurrent()).isEqualTo(Type.RUNNING);
 
 
-        Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), throwRunnable(() -> executionQueue.emit(forEachItem)), Duration.ofSeconds(60));
+        Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), Duration.ofSeconds(60));
         assertThat(terminated.getState().getCurrent()).isEqualTo(Type.SUCCESS);
 
         List<Execution> executions = runnerUtils.awaitFlowExecutionNumber(2, tenantId, NAMESPACE, "flow-concurrency-queue");

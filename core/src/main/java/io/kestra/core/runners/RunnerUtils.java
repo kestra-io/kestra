@@ -3,14 +3,19 @@ package io.kestra.core.runners;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.Await;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -35,7 +40,14 @@ public class RunnerUtils {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    protected QueueInterface<ExecutionKilled> killQueue;
+
+    @Inject
     private FlowRepositoryInterface flowRepository;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @Inject
     private ExecutionService executionService;
@@ -170,6 +182,62 @@ public class RunnerUtils {
 
 
         return receive.get();
+    }
+
+    public List<Execution> awaitFlowExecutionNumber(int number, String tenantId, String namespace, String flowId) {
+        return awaitFlowExecutionNumber(number, tenantId, namespace, flowId, null);
+    }
+
+    public List<Execution> awaitFlowExecutionNumber(int number, String tenantId, String namespace, String flowId, Duration duration) {
+        AtomicReference<List<Execution>> receive = new AtomicReference<>();
+        Flow flow = flowRepository
+            .findById(tenantId, namespace, flowId, Optional.empty())
+            .orElseThrow(
+                () -> new IllegalArgumentException("Unable to find flow '" + flowId + "'"));
+        try {
+            if (duration == null){
+                duration = Duration.ofSeconds(20);
+            }
+            Await.until(() -> {
+                ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(
+                    tenantId, namespace, flowId, Pageable.UNPAGED);
+                if (byFlowId.size() == number
+                    && byFlowId.stream()
+                    .filter(e -> executionService.isTerminated(flow, e))
+                    .toList().size() == number) {
+                    receive.set(byFlowId);
+                    return true;
+                }
+                return false;
+            }, Duration.ofMillis(50), duration);
+
+        } catch (TimeoutException e) {
+            ArrayListTotal<Execution> byFlowId = executionRepository.findByFlowId(
+                tenantId, namespace, flowId, Pageable.UNPAGED);
+            if (!byFlowId.isEmpty()) {
+                throw new RuntimeException("%d Execution found for flow %s, but %d where awaited".formatted(byFlowId.size(), flowId, number));
+            } else {
+                throw new RuntimeException("No execution for flow %s exist in the database".formatted(flowId));
+            }
+        }
+
+        return receive.get();
+    }
+
+    public Execution killExecution(Execution execution) throws QueueException, TimeoutException {
+        killQueue.emit(ExecutionKilledExecution.builder()
+            .executionId(execution.getId())
+            .isOnKillCascade(true)
+            .state(ExecutionKilled.State.REQUESTED)
+            .tenantId(execution.getTenantId())
+            .build());
+
+        return awaitExecution(isTerminatedExecution(
+            execution,
+            flowRepository
+                .findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()))
+                .orElse(null)
+        ), throwRunnable(() -> this.executionQueue.emit(execution)), Duration.ofSeconds(60));
     }
 
     @VisibleForTesting

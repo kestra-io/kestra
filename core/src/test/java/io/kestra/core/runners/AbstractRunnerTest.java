@@ -33,6 +33,7 @@ import org.junitpioneer.jupiter.RetryingTest;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 // must be per-class to allow calling once init() which took a lot of time
 public abstract class AbstractRunnerTest {
+    public static final String TENANT_1 = "tenant1";
 
     @Inject
     protected RunnerUtils runnerUtils;
@@ -436,9 +437,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/flow-concurrency-for-each-item.yaml", "flows/valids/flow-concurrency-queue.yml"})
+    @LoadFlows(value = {"flows/valids/flow-concurrency-for-each-item.yaml", "flows/valids/flow-concurrency-queue.yml"}, tenantId = TENANT_1)
     protected void flowConcurrencyWithForEachItem() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyWithForEachItem();
+        flowConcurrencyCaseTest.flowConcurrencyWithForEachItem(TENANT_1);
     }
 
     @Test

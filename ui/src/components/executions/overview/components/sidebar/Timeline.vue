@@ -10,7 +10,7 @@
                     v-for="(activity, aIdx) in props.histories"
                     :key="aIdx"
                     :timestamp="formatDate(activity.date)"
-                    :color="State.getStateColor(activity.state)"
+                    :color="getSchemeValue(activity.state)"
                 >
                     {{ activity.state }}
                 </el-timeline-item>
@@ -22,7 +22,7 @@
 <script setup lang="ts">
     import type {Histories} from "../../../../../stores/executions";
 
-    import {State} from "@kestra-io/ui-libs";
+    import {getSchemeValue} from "../../../../../utils/scheme";
     import {storageKeys} from "../../../../../utils/constants";
 
     import moment from "moment";

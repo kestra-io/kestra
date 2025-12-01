@@ -1,15 +1,11 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.services.FlowService;
-import io.kestra.core.services.KVStoreService;
-import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.services.NamespaceService;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -33,7 +29,7 @@ public class InternalStorage implements Storage {
     private final Logger logger;
     private final StorageContext context;
     private final StorageInterface storage;
-    private final FlowService flowService;
+    private final NamespaceService namespaceService;
 
     /**
      * Creates a new {@link InternalStorage} instance.
@@ -52,11 +48,11 @@ public class InternalStorage implements Storage {
      * @param context The storage context.
      * @param storage The storage to delegate operations.
      */
-    public InternalStorage(Logger logger, StorageContext context, StorageInterface storage, FlowService flowService) {
+    public InternalStorage(Logger logger, StorageContext context, StorageInterface storage, NamespaceService namespaceService) {
         this.logger = logger;
         this.context = context;
         this.storage = storage;
-        this.flowService = flowService;
+        this.namespaceService = namespaceService;
     }
 
     /**
@@ -74,8 +70,8 @@ public class InternalStorage implements Storage {
     public Namespace namespace(String namespace) {
         boolean isExternalNamespace = !namespace.equals(context.getNamespace());
         // Checks whether the contextual namespace is allowed to access the passed namespace.
-        if (isExternalNamespace && flowService != null) {
-            flowService.checkAllowedNamespace(
+        if (isExternalNamespace && namespaceService != null) {
+            namespaceService.checkAllowedNamespace(
                 context.getTenantId(), namespace, // requested Tenant/Namespace
                 context.getTenantId(), context.getNamespace() // from Tenant/Namespace
             );

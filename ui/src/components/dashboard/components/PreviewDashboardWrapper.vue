@@ -12,7 +12,7 @@
 <script lang="ts" setup>
     import {ref, watch} from "vue";
     import Sections from "../sections/Sections.vue";
-    import {Chart} from "../composables/useDashboards";
+    import {Chart} from "../types.ts";
     import {useDashboardStore} from "../../../stores/dashboard";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import throttle from "lodash/throttle";
@@ -44,7 +44,7 @@
         , {immediate: true}
     );
 
-    
+
 
     async function loadChart(chart: any) {
         const yamlChart = YAML_UTILS.stringify(chart);

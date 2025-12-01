@@ -580,6 +580,11 @@ public class DefaultRunContext extends RunContext {
     }
 
     @Override
+    public AclChecker acl() {
+        return new AclCheckerImpl(this.applicationContext, flowInfo());
+    }
+
+    @Override
     public LocalPath localPath() {
         return localPath;
     }

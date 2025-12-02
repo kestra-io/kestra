@@ -1,9 +1,11 @@
 package io.kestra.scheduler;
 
-import io.kestra.scheduler.vnodes.VNodes;
+import io.kestra.core.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.utils.Disposable;
 import io.kestra.jdbc.runner.JdbcQueueEnabled;
-import io.kestra.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerEvent;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;

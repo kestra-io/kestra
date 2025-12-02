@@ -1,7 +1,7 @@
 package io.kestra.scheduler.utils;
 
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.scheduler.stores.TriggerStateStore;
 
 import java.time.ZonedDateTime;

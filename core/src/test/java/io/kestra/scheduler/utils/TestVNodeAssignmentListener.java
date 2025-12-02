@@ -1,6 +1,6 @@
 package io.kestra.scheduler.utils;
 
-import io.kestra.scheduler.vnodes.internals.DefaultVNodesAssigner;
+import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
 
 import java.util.ArrayList;
 import java.util.List;

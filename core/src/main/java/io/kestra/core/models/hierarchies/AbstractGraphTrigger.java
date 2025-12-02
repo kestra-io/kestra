@@ -1,7 +1,7 @@
 package io.kestra.core.models.hierarchies;
 
 import io.kestra.core.models.triggers.*;
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.Setter;

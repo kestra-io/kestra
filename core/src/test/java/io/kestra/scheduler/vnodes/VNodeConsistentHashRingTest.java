@@ -1,6 +1,6 @@
 package io.kestra.scheduler.vnodes;
 
-import io.kestra.scheduler.vnodes.VNodeConsistentHashRing;
+import io.kestra.core.scheduler.vnodes.VNodeConsistentHashRing;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

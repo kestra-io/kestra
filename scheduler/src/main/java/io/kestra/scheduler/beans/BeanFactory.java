@@ -2,7 +2,7 @@ package io.kestra.scheduler.beans;
 
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.scheduler.stores.CachedFlowMetaStore;
 import io.kestra.scheduler.stores.CachedTriggerStateStore;
 import io.kestra.scheduler.stores.DefaultFlowMetaStore;

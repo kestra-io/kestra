@@ -1,10 +1,10 @@
 package io.kestra.scheduler.vnodes.internals;
 
-import io.kestra.scheduler.vnodes.internals.DefaultVNodesAssigner;
-import io.kestra.scheduler.events.SchedulerEvent;
-import io.kestra.scheduler.events.SchedulerEvent.VNodesAssignmentRejected;
-import io.kestra.scheduler.events.SchedulerEvent.VNodesAssignmentRelease;
-import io.kestra.scheduler.events.SchedulerEvent.VNodesAssignmentRequest;
+import io.kestra.core.scheduler.vnodes.internals.DefaultVNodesAssigner;
+import io.kestra.core.scheduler.events.SchedulerEvent;
+import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRejected;
+import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRelease;
+import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRequest;
 import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;
 import io.kestra.scheduler.utils.TestVNodeAssignmentListener;
 import org.junit.jupiter.api.BeforeEach;

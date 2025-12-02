@@ -1,8 +1,9 @@
 package io.kestra.scheduler;
 
+import io.kestra.core.scheduler.SchedulerEventQueue;
 import io.kestra.core.utils.Disposable;
 import io.kestra.jdbc.runner.JdbcQueueEnabled;
-import io.kestra.scheduler.events.SchedulerEvent;
+import io.kestra.core.scheduler.events.SchedulerEvent;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;

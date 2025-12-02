@@ -3,7 +3,7 @@ package io.kestra.scheduler.stores;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 
 import java.util.List;
 import java.util.Optional;

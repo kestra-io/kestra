@@ -2,7 +2,7 @@ package io.kestra.scheduler.vnodes;
 
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.scheduler.vnodes.VNodes;
+import io.kestra.core.scheduler.vnodes.VNodes;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

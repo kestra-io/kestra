@@ -15,6 +15,7 @@ import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.context.ApplicationContext;
@@ -76,6 +77,9 @@ public class RunContextFactory {
     @Inject
     private KVStoreService kvStoreService;
 
+    @Inject
+    private NamespaceFactory namespaceFactory;
+
     // hacky
     public RunContextInitializer initializer() {
         return applicationContext.getBean(RunContextInitializer.class);
@@ -103,7 +107,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Execution
             .withPluginConfiguration(Map.of())
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService, namespaceFactory))
             .withVariableRenderer(variableRenderer)
             .withVariables(runVariableModifier.apply(
                     newRunVariablesBuilder()
@@ -133,7 +137,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Task
             .withPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()))
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory))
             .withVariables(newRunVariablesBuilder()
                 .withFlow(flow)
                 .withTask(task)
@@ -173,7 +177,7 @@ public class RunContextFactory {
         RunContextLogger runContextLogger = new RunContextLogger();
         return newBuilder()
             .withLogger(runContextLogger)
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forFlow(flow), storageInterface, namespaceService))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forFlow(flow), storageInterface, namespaceService, namespaceFactory))
             .withVariables(variables)
             .withSecretInputs(secretInputsFromFlow(flow))
             .build();
@@ -212,7 +216,8 @@ public class RunContextFactory {
                     }
                 },
                 storageInterface,
-                namespaceService
+                namespaceService,
+                namespaceFactory
             ))
             .withVariables(variables)
             .withTask(task)

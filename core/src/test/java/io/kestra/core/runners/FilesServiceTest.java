@@ -2,6 +2,8 @@ package io.kestra.core.runners;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.context.ApplicationContext;
@@ -15,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -36,6 +39,9 @@ class FilesServiceTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private NamespaceFactory namespaceFactory;
 
     @Test
     void overrideExistingInputFile() throws Exception {
@@ -136,11 +142,11 @@ class FilesServiceTest {
         return tempFile.toPath().toUri();
     }
 
-    private URI createNsFile(boolean nsInAuthority) throws IOException {
+    private URI createNsFile(boolean nsInAuthority) throws IOException, URISyntaxException {
         String namespace = "namespace";
         String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 }

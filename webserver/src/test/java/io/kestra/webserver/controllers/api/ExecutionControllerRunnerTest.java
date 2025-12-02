@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -26,7 +25,8 @@ import io.kestra.core.runners.InputsTest;
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
@@ -60,9 +60,11 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -125,6 +127,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private NamespaceFactory namespaceFactory;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
@@ -844,7 +849,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
-    void previewNsFileFromExecution() throws TimeoutException, QueueException, IOException {
+    void previewNsFileFromExecution() throws TimeoutException, QueueException, IOException, URISyntaxException {
         HashMap<String, Object> newInputs = new HashMap<>(InputsTest.inputs);
         URI file = createNsFile(false);
         newInputs.put("file", file);
@@ -2338,11 +2343,11 @@ class ExecutionControllerRunnerTest {
         return tempFile.toPath().toUri();
     }
 
-    private URI createNsFile(boolean nsInAuthority) throws IOException {
+    private URI createNsFile(boolean nsInAuthority) throws IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 

@@ -1149,6 +1149,12 @@
         "new_file": "확장자를 포함한 새 이름:",
         "new_folder": "새 폴더 이름:"
       },
+      "revisions": {
+        "history": "수정 기록",
+        "restore": {
+          "success": "파일 수정이 성공적으로 복원되었습니다."
+        }
+      },
       "toggle": {
         "hide": "namespace 파일 숨기기",
         "show": "namespace 파일 보기"

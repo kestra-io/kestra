@@ -1149,6 +1149,12 @@
         "new_file": "Nouveau nom avec extension :",
         "new_folder": "Nouveau nom de dossier :"
       },
+      "revisions": {
+        "history": "Historique des révisions",
+        "restore": {
+          "success": "Révision du fichier restaurée avec succès"
+        }
+      },
       "toggle": {
         "hide": "Masquer les fichiers de l'espace de noms",
         "show": "Afficher les fichiers de l'espace de noms"

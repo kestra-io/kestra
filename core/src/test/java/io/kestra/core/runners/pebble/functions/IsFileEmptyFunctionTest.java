@@ -4,7 +4,8 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.annotation.Property;
@@ -15,7 +16,9 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -36,6 +39,9 @@ class IsFileEmptyFunctionTest {
 
     @Inject
     StorageInterface storageInterface;
+
+    @Inject
+    NamespaceFactory namespaceFactory;
 
     private URI getInternalStorageURI(String executionId) {
         return URI.create("/" + NAMESPACE.replace(".", "/") + "/" + FLOW + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
@@ -64,14 +70,13 @@ class IsFileEmptyFunctionTest {
     }
 
     @Test
-    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
+    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
-        String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("NOT AN EMPTY FILE".getBytes()));
+        String value = "NOT AN EMPTY FILE";
+        URI nsFile = createNsFile(false, value);
 
         boolean render = Boolean.parseBoolean(
-            variableRenderer.render("{{ isFileEmpty('" + filePath + "', namespace='" + namespace + "') }}",
+            variableRenderer.render("{{ isFileEmpty('" + nsFile.getPath() + "', namespace='" + namespace + "') }}",
                 Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT))));
         assertFalse(render);
     }
@@ -157,8 +162,8 @@ class IsFileEmptyFunctionTest {
 
 
     @Test
-    void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException {
-        URI file = createNsFile(false);
+    void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        URI file = createNsFile(false, "Hello World");
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "flow",
@@ -172,8 +177,8 @@ class IsFileEmptyFunctionTest {
     }
 
     @Test
-    void shouldProcessNamespaceFileFromAnotherNamespace() throws IOException, IllegalVariableEvaluationException {
-        URI file = createNsFile(true);
+    void shouldProcessNamespaceFileFromAnotherNamespace() throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        URI file = createNsFile(true, "Hello World");
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "flow",
@@ -186,11 +191,11 @@ class IsFileEmptyFunctionTest {
         assertThat(variableRenderer.render("{{ isFileEmpty(nsfile) }}", variables)).isEqualTo("false");
     }
 
-    private URI createNsFile(boolean nsInAuthority) throws IOException {
+    private URI createNsFile(boolean nsInAuthority, String value) throws IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream(value.getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 

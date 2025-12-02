@@ -255,6 +255,10 @@ public class State {
             return this == Type.RUNNING || this == Type.KILLING;
         }
 
+        public boolean onlyRunning() {
+            return this == Type.RUNNING;
+        }
+
         public boolean isFailed() {
             return this == Type.FAILED;
         }

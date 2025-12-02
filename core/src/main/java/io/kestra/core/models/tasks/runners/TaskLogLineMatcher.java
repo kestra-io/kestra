@@ -27,7 +27,7 @@ import static io.kestra.core.runners.RunContextLogger.ORIGINAL_TIMESTAMP_KEY;
  * ::{"outputs":{"key":"value"}}::
  * }</pre>
  */
-class TaskLogLineMatcher {
+public class TaskLogLineMatcher {
 
     protected static final Pattern LOG_DATA_SYNTAX = Pattern.compile("^::(\\{.*})::$");
 

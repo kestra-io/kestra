@@ -539,7 +539,7 @@ class FlowServiceTest {
     @Getter
     @NoArgsConstructor
     @Deprecated
-    static class DeprecatedTask extends Task implements RunnableTask<VoidOutput> {
+    public static class DeprecatedTask extends Task implements RunnableTask<VoidOutput> {
         @NotBlank
         @PluginProperty(dynamic = true)
         @Deprecated

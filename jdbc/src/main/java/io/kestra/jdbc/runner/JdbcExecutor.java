@@ -746,11 +746,19 @@ public class JdbcExecutor implements ExecutorInterface {
 
                         return null;
                     } catch (FlowNotFoundException e) {
-                        return Pair.of(
-                            handleFailedExecutionFromExecutor(executor, e),
-                            executorState
-                        );
+                        // avoid infinite loop
+                        if (!executor.getExecution().getState().getCurrent().isFailed()) {
+                            return Pair.of(
+                                handleFailedExecutionFromExecutor(executor, e),
+                                executorState
+                            );
+                        }
                     }
+
+                    return Pair.of(
+                        executor,
+                        executorState
+                    );
                 }
             );
         });
@@ -803,12 +811,25 @@ public class JdbcExecutor implements ExecutorInterface {
                         current,
                         pair.getRight()
                     );
-                } catch (InternalException | FlowNotFoundException e) {
+                } catch (InternalException e) {
                     return Pair.of(
                         handleFailedExecutionFromExecutor(current, e),
                         pair.getRight()
                     );
+                } catch (FlowNotFoundException e) {
+                    // avoid infinite loop
+                    if (!current.getExecution().getState().getCurrent().isFailed()) {
+                        return Pair.of(
+                            handleFailedExecutionFromExecutor(current, e),
+                            pair.getRight()
+                        );
+                    }
                 }
+
+                return Pair.of(
+                    current,
+                    pair.getRight()
+                );
             }
 
             return null;
@@ -906,12 +927,25 @@ public class JdbcExecutor implements ExecutorInterface {
                         current,
                         pair.getRight()
                     );
-                } catch (InternalException | FlowNotFoundException e) {
+                } catch (InternalException e) {
                     return Pair.of(
                         handleFailedExecutionFromExecutor(current, e),
                         pair.getRight()
                     );
+                } catch (FlowNotFoundException e) {
+                    // avoid infinite loop
+                    if (!current.getExecution().getState().getCurrent().isFailed()) {
+                        return Pair.of(
+                            handleFailedExecutionFromExecutor(current, e),
+                            pair.getRight()
+                        );
+                    }
                 }
+
+                return Pair.of(
+                    current,
+                    pair.getRight()
+                );
             }
 
             return null;

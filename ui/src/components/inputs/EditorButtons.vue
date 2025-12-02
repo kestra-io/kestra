@@ -36,7 +36,6 @@
             </template>
         </el-dropdown>
     </div>
-
     <div>
         <el-button
             v-if="isNamespace || isAllowedEdit"
@@ -51,9 +50,7 @@
         </el-button>
     </div>
 </template>
-
 <script setup lang="ts">
-
     import {computed} from "vue";
 
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";

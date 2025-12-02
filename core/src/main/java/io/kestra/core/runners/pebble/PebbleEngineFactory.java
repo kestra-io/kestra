@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.pebble.functions.RenderingFunctionInterface;
 import io.micronaut.context.ApplicationContext;
@@ -18,35 +19,37 @@ import java.util.stream.Collectors;
 
 @Singleton
 public class PebbleEngineFactory {
-    
+
     private final ApplicationContext applicationContext;
     private final VariableRenderer.VariableConfiguration variableConfiguration;
-    
+    private final MetricRegistry metricRegistry;
+
     @Inject
-    public PebbleEngineFactory(ApplicationContext applicationContext, @Nullable VariableRenderer.VariableConfiguration variableConfiguration) {
+    public PebbleEngineFactory(ApplicationContext applicationContext, @Nullable VariableRenderer.VariableConfiguration variableConfiguration, MetricRegistry metricRegistry) {
         this.applicationContext = applicationContext;
         this.variableConfiguration = variableConfiguration;
+        this.metricRegistry = metricRegistry;
     }
-    
+
     public PebbleEngine create() {
         PebbleEngine.Builder builder = newPebbleEngineBuilder();
         this.applicationContext.getBeansOfType(Extension.class).forEach(builder::extension);
         return builder.build();
     }
-    
+
     public PebbleEngine createWithMaskedFunctions(VariableRenderer renderer, final List<String> functionsToMask) {
-        
+
         PebbleEngine.Builder builder = newPebbleEngineBuilder();
-        
+
         this.applicationContext.getBeansOfType(Extension.class).stream()
             .map(e -> functionsToMask.stream().anyMatch(fun -> e.getFunctions().containsKey(fun))
                 ? extensionWithMaskedFunctions(renderer, e, functionsToMask)
                 : e)
             .forEach(builder::extension);
-        
+
         return builder.build();
     }
-    
+
     private PebbleEngine.Builder newPebbleEngineBuilder() {
         PebbleEngine.Builder builder = new PebbleEngine.Builder()
             .registerExtensionCustomizer(ExtensionCustomizer::new)
@@ -54,13 +57,15 @@ public class PebbleEngineFactory {
             .cacheActive(this.variableConfiguration.getCacheEnabled())
             .newLineTrimming(false)
             .autoEscaping(false);
-        
+
         if (this.variableConfiguration.getCacheEnabled()) {
-            builder = builder.templateCache(new PebbleLruCache(this.variableConfiguration.getCacheSize()));
+            PebbleLruCache cache = new PebbleLruCache(this.variableConfiguration.getCacheSize());
+            cache.register(metricRegistry);
+            builder = builder.templateCache(cache);
         }
         return builder;
     }
-    
+
     private Extension extensionWithMaskedFunctions(VariableRenderer renderer, Extension initialExtension, List<String> maskedFunctions) {
         return (Extension) Proxy.newProxyInstance(
             initialExtension.getClass().getClassLoader(),
@@ -74,16 +79,16 @@ public class PebbleEngineFactory {
                             } else if (RenderingFunctionInterface.class.isAssignableFrom(entry.getValue().getClass())) {
                                 return Map.entry(entry.getKey(), this.variableRendererProxy(renderer, entry.getValue()));
                             }
-                            
+
                             return entry;
                         }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 }
-                
+
                 return method.invoke(initialExtension, methodArgs);
             }
         );
     }
-    
+
     private Function variableRendererProxy(VariableRenderer renderer, Function initialFunction) {
         return (Function) Proxy.newProxyInstance(
             initialFunction.getClass().getClassLoader(),
@@ -96,7 +101,7 @@ public class PebbleEngineFactory {
             }
         );
     }
-    
+
     private Function maskedFunctionProxy(Function initialFunction) {
         return (Function) Proxy.newProxyInstance(
             initialFunction.getClass().getClassLoader(),

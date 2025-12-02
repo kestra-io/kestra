@@ -1,29 +1,30 @@
 package io.kestra.core.runners.pebble;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import io.kestra.core.metrics.MetricRegistry;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import io.pebbletemplates.pebble.cache.PebbleCache;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
-import lombok.extern.slf4j.Slf4j;
 
-import java.util.concurrent.ExecutionException;
+import java.util.List;
 import java.util.function.Function;
 
-@Slf4j
 public class PebbleLruCache implements PebbleCache<Object, PebbleTemplate> {
-    Cache<Object, PebbleTemplate> cache;
+    private final Cache<Object, PebbleTemplate> cache;
 
     public PebbleLruCache(int maximumSize) {
-        cache = CacheBuilder.newBuilder()
+        cache = Caffeine.newBuilder()
             .initialCapacity(250)
             .maximumSize(maximumSize)
+            .recordStats()
             .build();
     }
 
     @Override
     public PebbleTemplate computeIfAbsent(Object key, Function<? super Object, ? extends PebbleTemplate> mappingFunction) {
         try {
-            return cache.get(key, () -> mappingFunction.apply(key));
+            return cache.get(key, k -> mappingFunction.apply(key));
         } catch (Exception e) {
             // we retry the mapping function in order to let the exception be thrown instead of being capture by cache
             return mappingFunction.apply(key);
@@ -33,5 +34,14 @@ public class PebbleLruCache implements PebbleCache<Object, PebbleTemplate> {
     @Override
     public void invalidateAll() {
         cache.invalidateAll();
+    }
+
+    public void register(MetricRegistry metricRegistry) {
+        CaffeineCacheMetrics<Object, PebbleTemplate, Cache<Object, PebbleTemplate>> metrics = new CaffeineCacheMetrics<>(
+            cache,
+            "pebble.lru.cache",
+            List.of()
+        );
+        metricRegistry.bind(metrics);
     }
 }

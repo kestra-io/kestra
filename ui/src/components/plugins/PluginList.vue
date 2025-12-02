@@ -338,8 +338,16 @@
     }
 
     .search-field {
-        width: 40%;
+        width: 35%;
         margin-left: auto;
+
+        :deep(.el-input__inner) {
+            font-size: 14px;
+
+            &::placeholder {
+                color: var(--ks-content-tertiary) !important;
+            }
+        }
     }
 
     .el-breadcrumb {

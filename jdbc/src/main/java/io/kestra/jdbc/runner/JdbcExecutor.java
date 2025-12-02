@@ -69,6 +69,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.*;
+import static io.kestra.core.utils.Rethrow.failAwareConsumer;
 
 @SuppressWarnings("deprecation")
 @Singleton
@@ -222,6 +223,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private final java.util.concurrent.ExecutorService workerTaskResultExecutorService;
     private final java.util.concurrent.ExecutorService executionExecutorService;
     private final int numberOfThreads;
+    private final boolean skipFailure;
 
     /**
      * Creates a new {@link JdbcExecutor} instance. Both constructor and field injection are used
@@ -241,7 +243,8 @@ public class JdbcExecutor implements ExecutorInterface {
         final TracerFactory tracerFactory,
         final ExecutorsUtils executorsUtils,
         final MaintenanceService maintenanceService,
-        @Value("${kestra.jdbc.executor.thread-count:0}") final int threadCount
+        @Value("${kestra.jdbc.executor.thread-count:0}") final int threadCount,
+        @Value("${kestra.jdbc.executor.skip-failure:false}") final boolean skipFailure
     ) {
         this.serviceLivenessCoordinator = serviceLivenessCoordinator;
         this.flowMetaStore = flowMetaStore;
@@ -256,6 +259,7 @@ public class JdbcExecutor implements ExecutorInterface {
         this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, Runtime.getRuntime().availableProcessors());
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-execution-executor");
+        this.skipFailure = skipFailure;
     }
 
     @PostConstruct
@@ -295,27 +299,27 @@ public class JdbcExecutor implements ExecutorInterface {
 
         this.receiveCancellations.addFirst(((JdbcQueue<Execution>) this.executionQueue).receiveBatch(
             Executor.class,
-            executions -> {
+            failAwareConsumer(executions -> {
                 List<CompletableFuture<Void>> futures = executions.stream()
                     .map(execution -> CompletableFuture.runAsync(() -> executionQueue(execution), executionExecutorService))
                     .toList();
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-            }
+            }, skipFailure)
         ));
         this.receiveCancellations.addFirst(((JdbcQueue<WorkerTaskResult>) this.workerTaskResultQueue).receiveBatch(
             Executor.class,
-            workerTaskResults -> {
+            failAwareConsumer(workerTaskResults -> {
                 List<CompletableFuture<Void>> futures = workerTaskResults.stream()
                     .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
                     .toList();
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-            }
+            }, skipFailure)
         ));
-        this.receiveCancellations.addFirst(this.killQueue.receive(Executor.class, this::killQueue));
-        this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
-        this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));
-        this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
-        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        this.receiveCancellations.addFirst(this.killQueue.receive(Executor.class, failAwareConsumer(this::killQueue, skipFailure)));
+        this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, failAwareConsumer(this::subflowExecutionResultQueue, skipFailure)));
+        this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, failAwareConsumer(this::subflowExecutionEndQueue, skipFailure)));
+        this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, failAwareConsumer(this::multipleConditionEventQueue, skipFailure)));
+        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(failAwareConsumer(this::clusterEventQueue, skipFailure))));
 
         executionDelayFuture = scheduledDelay.scheduleAtFixedRate(
             this::executionDelaySend,
@@ -369,9 +373,10 @@ public class JdbcExecutor implements ExecutorInterface {
             }
         );
 
+        // if we cannot create a FlowWithException, ignore the message
         this.receiveCancellations.addFirst(flowQueue.receive(
             FlowTopology.class,
-            either -> {
+            failAwareConsumer(either -> {
                 FlowInterface flow;
                 if (either.isRight()) {
                     log.error("Unable to deserialize a flow: {}", either.getRight().getMessage());
@@ -404,8 +409,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 } catch (Exception e) {
                     log.error("Unable to save flow topology for flow " + flow.uid(), e);
                 }
-
-            }
+            }, skipFailure)
         ));
 
         if (this.maintenanceService.isInMaintenanceMode()) {

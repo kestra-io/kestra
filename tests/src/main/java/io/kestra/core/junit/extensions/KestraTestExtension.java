@@ -12,6 +12,7 @@ public class KestraTestExtension extends MicronautJunit5Extension {
     @Override
     protected MicronautTestValue buildMicronautTestValue(Class<?> testClass) {
         testProperties.put("kestra.jdbc.executor.thread-count", Runtime.getRuntime().availableProcessors() * 4);
+        testProperties.put("kestra.jdbc.executor.skip-failure", true);
         return AnnotationSupport
             .findAnnotation(testClass, KestraTest.class)
             .map(kestraTestAnnotation -> new MicronautTestValue(

@@ -1,13 +1,11 @@
 <template>
-    <component
-        :is="component"
+    <el-button
+        v-if="enabled"
         :icon="Play"
         @click="click"
-        v-if="enabled"
-        class="ms-0 me-1"
     >
         {{ $t('resume') }}
-    </component>
+    </el-button>
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -29,15 +27,15 @@
 </script>
 
 <script>
-    import permission from "../../models/permission";
-    import action from "../../models/action";
+    import permission from "../../../../../models/permission";
+    import action from "../../../../../models/action";
     import {State} from "@kestra-io/ui-libs"
-    import FlowUtils from "../../utils/flowUtils";
-    import * as ExecutionUtils from "../../utils/executionUtils";
-    import InputsForm from "../../components/inputs/InputsForm.vue";
-    import {inputsToFormData} from "../../utils/submitTask";
+    import FlowUtils from "../../../../../utils/flowUtils";
+    import * as ExecutionUtils from "../../../../../utils/executionUtils";
+    import InputsForm from "../../../../../components/inputs/InputsForm.vue";
+    import {inputsToFormData} from "../../../../../utils/submitTask";
     import {mapStores} from "pinia";
-    import {useExecutionsStore} from "../../stores/executions";
+    import {useExecutionsStore} from "../../../../../stores/executions";
     import {useAuthStore} from "override/stores/auth"
 
     export default {
@@ -132,11 +130,3 @@
         },
     };
 </script>
-
-<style scoped lang="scss">
-    button.el-button {
-        cursor: pointer !important;
-        border-color: var(--ks-border-success);
-        color: var(--ks-content-success);
-    }
-</style>

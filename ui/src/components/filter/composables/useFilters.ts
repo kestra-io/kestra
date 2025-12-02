@@ -319,6 +319,26 @@ export function useFilters(
         return Array.from(filtersMap.values());
     };
 
+
+        /**
+        * Initialize default visible filters. These filters are marked with visibleByDefault: true
+        * and are automatically added to the filter list when the page loads, even if no value
+        * are present to filter. Users can remove them, but they will reappear on page refresh.
+        */
+
+    const createDefaultVisibleFilters = (excludedKeys = new Set<string>()) =>
+        configuration.keys
+            ?.filter(key => key.visibleByDefault && !excludedKeys.has(key.key))
+            .map(key => {
+                const comparator = (key.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
+                const value = key.valueType === "multi-select" ? [] : "";
+                const valueLabel = "";
+                return {
+                    ...createAppliedFilter(key.key, key, comparator, value, valueLabel, "default"),
+                    isDefaultVisible: true
+                } as AppliedFilter;
+            }) ?? [];
+
     const initializeFromRoute = () => {
         if (showSearchInput) {
             searchQuery.value =
@@ -335,29 +355,8 @@ export function useFilters(
             markAsPreApplied(parsedFilters);
         }
 
-        /**
-         * Initialize default visible filters. These filters are marked with visibleByDefault: true
-         * and are automatically added to the filter list when the page loads, even if no value
-         * are present to filter. Users can remove them, but they will reappear on page refresh.
-         */
         const parsedFilterKeys = new Set(parsedFilters.map(f => f.key));
-        const defaultVisibleFilters = configuration.keys
-            ?.filter(key => key.visibleByDefault && !parsedFilterKeys.has(key.key))
-            .map(key => {
-                const comparator = (key.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
-                return {
-                    id: `${key.key}-default-${Date.now()}`,
-                    key: key.key,
-                    keyLabel: key.label,
-                    comparator,
-                    comparatorLabel: COMPARATOR_LABELS[comparator],
-                    value: key.valueType === "multi-select" ? [] : "",
-                    valueLabel: "",
-                    isDefaultVisible: true
-                } as AppliedFilter;
-            }) ?? [];
-
-        appliedFilters.value = [...parsedFilters, ...defaultVisibleFilters];
+        appliedFilters.value = [...parsedFilters, ...createDefaultVisibleFilters(parsedFilterKeys)];
     };
 
     watch(() => route.query, initializeFromRoute, {deep: true, immediate: false});
@@ -404,6 +403,12 @@ export function useFilters(
 
     const resetToPreApplied = () => {
         searchQuery.value = "";
+
+        const parsedFilters = legacyQuery ? parseLegacyFilters() : parseEncodedFilters();
+
+        const parsedFilterKeys = new Set(parsedFilters.map((f: AppliedFilter) => f.key));
+        appliedFilters.value = [...parsedFilters, ...createDefaultVisibleFilters(parsedFilterKeys)];
+
         resetDefaultFilter();
     };
     

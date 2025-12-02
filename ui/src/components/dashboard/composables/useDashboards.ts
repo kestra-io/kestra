@@ -68,8 +68,8 @@ export function useChartGenerator(props: {chart: Chart; filters: FilterObject[];
     const EMPTY_TEXT = t("dashboards.empty");
 
     const data = ref();
-    async function generate(id: string, pagination?: { pageNumber: number; pageSize: number }) {
-        const filters = props.filters.concat(decodeSearchParams(route.query) ?? []);
+    async function generate(id: string, pagination?: { pageNumber: number; pageSize: number }, customFilters?: FilterObject[]) {
+        const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) ?? []);
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
 
         if (!props.showDefault) {

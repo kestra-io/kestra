@@ -41,7 +41,7 @@
     });
 
     const routeInfo = computed(() => ({
-        title: docStore.pageMetadata?.title ??t("docs"),
+        title: docStore.pageMetadata?.title ?? t("docs"),
     }));
 
     watch(

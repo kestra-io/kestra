@@ -11,8 +11,7 @@ import Logs from "../Logs.vue";
 import Gantt from "../Gantt.vue";
 //@ts-expect-error no declaration file
 import Topology from "../Topology.vue";
-//@ts-expect-error no declaration file
-import Overview from "../Overview.vue";
+import Overview from "../overview/Overview.vue";
 import DemoAuditLogs from "../../demo/AuditLogs.vue";
 import ExecutionMetric from "../ExecutionMetric.vue";
 import ExecutionOutput from "../outputs/Wrapper.vue";
@@ -88,9 +87,11 @@ export function useExecutionRoot() {
     const getBaseTabs = () => {
         return [
             {
-                name: undefined,
+                name: "overview",
                 component: Overview,
                 title: t("overview"),
+                maximized: true,
+                noOverflow: true
             },
             {
                 name: "gantt",

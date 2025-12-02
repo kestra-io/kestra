@@ -595,6 +595,7 @@
     "export": "Eksportuj",
     "export all flows": "Eksportuj wszystkie flows",
     "export all templates": "Eksportuj wszystkie szablony",
+    "export_csv": "Eksportuj jako CSV",
     "exports": "Eksporty",
     "failed to render pdf": "Nie udało się wygenerować podglądu PDF",
     "false": "Fałsz",
@@ -1147,6 +1148,12 @@
         "label": "Zmień nazwę",
         "new_file": "Nowa nazwa z rozszerzeniem:",
         "new_folder": "Nowa nazwa folderu:"
+      },
+      "revisions": {
+        "history": "Historia wersji",
+        "restore": {
+          "success": "Przywrócenie wersji pliku zakończone sukcesem"
+        }
       },
       "toggle": {
         "hide": "Ukryj pliki namespace",

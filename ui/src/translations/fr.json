@@ -595,6 +595,7 @@
     "export": "Exporter",
     "export all flows": "Exporter tous les flows",
     "export all templates": "Exporter tous les templates",
+    "export_csv": "Exporter en CSV",
     "exports": "Exporter",
     "failed to render pdf": "Impossible de rendre l'aperçu PDF",
     "false": "Faux",
@@ -1147,6 +1148,12 @@
         "label": "Renommer",
         "new_file": "Nouveau nom avec extension :",
         "new_folder": "Nouveau nom de dossier :"
+      },
+      "revisions": {
+        "history": "Historique des révisions",
+        "restore": {
+          "success": "Révision du fichier restaurée avec succès"
+        }
       },
       "toggle": {
         "hide": "Masquer les fichiers de l'espace de noms",

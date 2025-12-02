@@ -595,6 +595,7 @@
     "export": "エクスポート",
     "export all flows": "すべてのflowをエクスポート",
     "export all templates": "すべてのテンプレートをエクスポート",
+    "export_csv": "CSVとしてエクスポート",
     "exports": "エクスポート",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
@@ -1147,6 +1148,12 @@
         "label": "名前を変更",
         "new_file": "拡張子付きの新しい名前:",
         "new_folder": "新しいフォルダー名:"
+      },
+      "revisions": {
+        "history": "リビジョン履歴",
+        "restore": {
+          "success": "ファイルのリビジョンが正常に復元されました"
+        }
       },
       "toggle": {
         "hide": "namespaceファイルを非表示",

@@ -895,7 +895,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
                         metricRegistry
                             .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
-                            .record(taskRun.getState().getDuration());
+                            .record(taskRun.getState().getDurationOrComputeIt());
 
                         log.trace("TaskRun terminated: {}", taskRun);
                     }
@@ -1171,7 +1171,9 @@ public class JdbcExecutor implements ExecutorInterface {
                     boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
                         && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
                         && execution.getState().getHistories().stream().noneMatch(h -> h.getState().isRunning());
-                    if (!queuedThenKilled) {
+                    boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
+                        && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
+                    if (!queuedThenKilled && !concurrencyShortCircuitState) {
                         concurrencyLimitStorage.decrement(executor.getFlow());
 
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {

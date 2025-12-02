@@ -595,6 +595,7 @@
     "export": "निर्यात करें",
     "export all flows": "सभी Flows निर्यात करें",
     "export all templates": "सभी templates निर्यात करें",
+    "export_csv": "CSV के रूप में निर्यात करें",
     "exports": "निर्यात",
     "failed to render pdf": "PDF प्रस्तुत करने में विफल",
     "false": "असत्य",
@@ -1147,6 +1148,12 @@
         "label": "नाम बदलें",
         "new_file": "एक्सटेंशन के साथ नया नाम:",
         "new_folder": "नए फ़ोल्डर का नाम:"
+      },
+      "revisions": {
+        "history": "संशोधन इतिहास",
+        "restore": {
+          "success": "फ़ाइल संशोधन सफलतापूर्वक पुनर्स्थापित किया गया"
+        }
       },
       "toggle": {
         "hide": "Namespace फ़ाइलें छिपाएं",

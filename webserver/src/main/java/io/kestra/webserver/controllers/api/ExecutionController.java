@@ -28,10 +28,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
-import io.kestra.core.storages.InternalNamespace;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.StorageContext;
-import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
@@ -138,6 +135,9 @@ public class ExecutionController {
     private FlowService flowService;
 
     @Inject
+    private NamespaceService namespaceService;
+
+    @Inject
     protected ExecutionRepositoryInterface executionRepository;
 
     @Inject
@@ -200,8 +200,11 @@ public class ExecutionController {
     private LocalPathFactory localPathFactory;
 
     @Inject
+    private NamespaceFactory namespaceFactory;
+
+    @Inject
     private SecureVariableRendererFactory secureVariableRendererFactory;
-    
+
     @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
     private boolean enableLocalFilePreview;
 
@@ -871,7 +874,7 @@ public class ExecutionController {
         if (Namespace.NAMESPACE_FILE_SCHEME.equals(path.getScheme())) {
             // if there is an authority, it means the namespace file is for another namespace, so we check it
             if (path.getAuthority() != null) {
-                flowService.checkAllowedNamespace(execution.getTenantId(), path.getAuthority(), execution.getTenantId(), execution.getNamespace());
+                namespaceService.checkAllowedNamespace(execution.getTenantId(), path.getAuthority(), execution.getTenantId(), execution.getNamespace());
             }
             return null;
         }
@@ -948,9 +951,9 @@ public class ExecutionController {
         );
     }
 
-    private URI nsFileToInternalStorageURI(URI path, Execution execution) {
-        InternalNamespace internalNamespace = new InternalNamespace(execution.getTenantId(), execution.getNamespace(), storageInterface);
-        return internalNamespace.get(Path.of(path.getPath())).uri();
+    private URI nsFileToInternalStorageURI(URI path, Execution execution) throws IOException {
+        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace(), storageInterface);
+        return namespace.get(Path.of(path.getPath())).uri();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1511,7 +1514,7 @@ public class ExecutionController {
     }
 
     protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution,
-        Flow flow) {
+                                                         Flow flow) {
         Pause.Resumed resumed = createResumed();
 
         return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)
@@ -2584,7 +2587,7 @@ public class ExecutionController {
 
         return HttpResponse.ok(
                 CSVUtils.toCSVFlux(
-                   executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
+                    executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
                         .map(log -> objectMapper.convertValue(log, Map.class))
                 )
             )

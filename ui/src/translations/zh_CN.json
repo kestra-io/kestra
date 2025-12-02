@@ -595,6 +595,7 @@
     "export": "导出",
     "export all flows": "导出所有流程",
     "export all templates": "导出所有模板",
+    "export_csv": "导出为CSV",
     "exports": "导出",
     "failed to render pdf": "渲染PDF预览失败",
     "false": "假",
@@ -1147,6 +1148,12 @@
         "label": "重命名",
         "new_file": "新的文件名（带扩展名）：",
         "new_folder": "新的文件夹名："
+      },
+      "revisions": {
+        "history": "修订历史",
+        "restore": {
+          "success": "文件修订已成功恢复"
+        }
       },
       "toggle": {
         "hide": "隐藏命名空间文件",

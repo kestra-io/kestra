@@ -595,6 +595,7 @@
     "export": "Esporta",
     "export all flows": "Esporta tutti i flows",
     "export all templates": "Esporta tutti i template",
+    "export_csv": "Esporta come CSV",
     "exports": "Esportazioni",
     "failed to render pdf": "Impossibile visualizzare l'anteprima PDF",
     "false": "Falso",
@@ -1147,6 +1148,12 @@
         "label": "Rinomina",
         "new_file": "Nuovo nome con estensione:",
         "new_folder": "Nuovo nome della cartella:"
+      },
+      "revisions": {
+        "history": "Cronologia delle revisioni",
+        "restore": {
+          "success": "Revisione del file ripristinata con successo"
+        }
       },
       "toggle": {
         "hide": "Nascondi file del namespace",

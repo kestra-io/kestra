@@ -595,6 +595,7 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
+    "export_csv": "CSV로 내보내기",
     "exports": "내보내기 목록",
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",
@@ -1147,6 +1148,12 @@
         "label": "이름 변경",
         "new_file": "확장자를 포함한 새 이름:",
         "new_folder": "새 폴더 이름:"
+      },
+      "revisions": {
+        "history": "수정 기록",
+        "restore": {
+          "success": "파일 수정이 성공적으로 복원되었습니다."
+        }
       },
       "toggle": {
         "hide": "namespace 파일 숨기기",

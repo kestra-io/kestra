@@ -595,6 +595,7 @@
     "export": "Exportar",
     "export all flows": "Exportar todos los flows",
     "export all templates": "Exportar todas las plantillas",
+    "export_csv": "Exportar como CSV",
     "exports": "Exportaciones",
     "failed to render pdf": "Error al renderizar la vista previa del PDF",
     "false": "Falso",
@@ -1147,6 +1148,12 @@
         "label": "Renombrar",
         "new_file": "Nuevo nombre con extensión:",
         "new_folder": "Nuevo nombre de carpeta:"
+      },
+      "revisions": {
+        "history": "Historial de revisiones",
+        "restore": {
+          "success": "Revisión del archivo restaurada con éxito"
+        }
       },
       "toggle": {
         "hide": "Ocultar archivos del namespace",

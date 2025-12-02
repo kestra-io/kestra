@@ -20,7 +20,6 @@ import java.util.Optional;
 @Slf4j
 @Getter
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-@AllArgsConstructor
 @ToString
 @EqualsAndHashCode
 public class PersistedKvMetadata implements DeletedInterface, TenantInterface, HasUID {
@@ -54,6 +53,19 @@ public class PersistedKvMetadata implements DeletedInterface, TenantInterface, H
 
     private boolean deleted;
 
+    public PersistedKvMetadata(String tenantId, String namespace, String name, String description, Integer version, boolean last, @Nullable Instant expirationDate, @Nullable Instant created, @Nullable Instant updated, boolean deleted) {
+        this.tenantId = tenantId;
+        this.namespace = namespace;
+        this.name = name;
+        this.description = description;
+        this.version = version;
+        this.last = last;
+        this.expirationDate = expirationDate;
+        this.created = Optional.ofNullable(created).orElse(Instant.now());
+        this.updated = updated;
+        this.deleted = deleted;
+    }
+
     public static PersistedKvMetadata from(String tenantId, KVEntry kvEntry) {
         return PersistedKvMetadata.builder()
             .tenantId(tenantId)
@@ -68,12 +80,15 @@ public class PersistedKvMetadata implements DeletedInterface, TenantInterface, H
     }
 
     public PersistedKvMetadata asLast() {
-        Instant saveDate = Instant.now();
-        return this.toBuilder().created(Optional.ofNullable(this.created).orElse(saveDate)).updated(saveDate).last(true).build();
+        return this.toBuilder().updated(Instant.now()).last(true).build();
+    }
+
+    public PersistedKvMetadata toDeleted() {
+        return this.toBuilder().updated(Instant.now()).deleted(true).build();
     }
 
     @Override
     public String uid() {
-        return IdUtils.fromParts(getTenantId(), getNamespace(), getName(), getVersion().toString());
+        return IdUtils.fromParts(getTenantId(), getNamespace(), getName(), String.valueOf(getVersion()));
     }
 }

@@ -8,8 +8,9 @@ import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
-import io.kestra.core.services.FlowService;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
@@ -44,7 +45,10 @@ public class RunContextInitializer {
     protected StorageInterface storageInterface;
 
     @Inject
-    protected FlowService flowService;
+    protected NamespaceFactory namespaceFactory;
+
+    @Inject
+    protected NamespaceService namespaceService;
 
     @Value("${kestra.encryption.secret-key}")
     protected Optional<String> secretKey;
@@ -135,7 +139,7 @@ public class RunContextInitializer {
 
         runContext.setVariables(enrichedVariables);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
-        runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, flowService));
+        runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
         runContext.setLogger(runContextLogger);
         runContext.setTask(task);
 
@@ -230,7 +234,8 @@ public class RunContextInitializer {
             runContextLogger.logger(),
             context,
             storageInterface,
-            flowService
+            namespaceService,
+            namespaceFactory
         );
 
         runContext.setLogger(runContextLogger);

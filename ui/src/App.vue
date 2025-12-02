@@ -66,16 +66,7 @@
             },
         },
         async created() {
-            this.setTitleEnvSuffix()
-
-            if (!this.isAnonymousRoute && BasicAuth.isLoggedIn()) {
-                try {
-                    await this.loadGeneralResources()
-                } catch (error) {
-                    console.warn("Failed to load general resources:", error)
-                }
-            }
-
+            this.setTitleEnvSuffix();
             this.displayApp();
         },
         methods: {
@@ -121,6 +112,18 @@
         watch: {
             envName() {
                 this.setTitleEnvSuffix();
+            },
+            "$route?.meta?.anonymous": {
+                async handler(anonymous) {
+                    if (!anonymous && BasicAuth.isLoggedIn()) {
+                        try {
+                            await this.loadGeneralResources();
+                        } catch (error) {
+                            console.warn("Failed to load general resources:", error);
+                        }
+                    }
+                },
+                immediate: true
             }
         }
     };

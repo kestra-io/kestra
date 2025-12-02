@@ -21,7 +21,7 @@ import io.kestra.jdbc.runner.JdbcTransactionContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.ITriggers;
 import io.kestra.plugin.core.dashboard.data.Triggers;
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.micronaut.data.model.Pageable;
 import lombok.Getter;
 import org.jooq.*;

@@ -1,8 +1,8 @@
 package io.kestra.core.models.triggers;
 
 import io.kestra.core.models.HasUID;
-import io.kestra.scheduler.model.TriggerState;
-import io.kestra.scheduler.vnodes.VNodes;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.vnodes.VNodes;
 import io.micronaut.core.annotation.Nullable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

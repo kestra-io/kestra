@@ -4,7 +4,7 @@ import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.scheduler.SchedulerClock;
+import io.kestra.core.scheduler.SchedulerClock;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.DateTimeException;

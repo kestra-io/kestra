@@ -1,12 +1,11 @@
 package io.kestra.scheduler.utils;
 
 import io.kestra.core.utils.Disposable;
-import io.kestra.scheduler.SchedulerEventQueue;
-import io.kestra.scheduler.events.SchedulerEvent;
+import io.kestra.core.scheduler.SchedulerEventQueue;
+import io.kestra.core.scheduler.events.SchedulerEvent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**

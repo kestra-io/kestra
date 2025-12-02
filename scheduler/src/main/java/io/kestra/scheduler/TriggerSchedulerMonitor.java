@@ -6,7 +6,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.utils.Logs;
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.scheduler.stores.TriggerStateStore;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.model.Pageable;

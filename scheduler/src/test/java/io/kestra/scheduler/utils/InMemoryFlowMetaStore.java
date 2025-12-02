@@ -2,7 +2,7 @@ package io.kestra.scheduler.utils;
 
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.scheduler.vnodes.VNodes;
+import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.scheduler.stores.FlowMetaStore;
 
 import java.util.*;

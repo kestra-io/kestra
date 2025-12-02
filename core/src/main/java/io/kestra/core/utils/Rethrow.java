@@ -1,7 +1,10 @@
 package io.kestra.core.utils;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.function.*;
 
+@Slf4j
 public final class Rethrow {
     @FunctionalInterface
     public interface ConsumerChecked<T, E extends Exception> {
@@ -116,5 +119,18 @@ public final class Rethrow {
     @SuppressWarnings("unchecked")
     private static <E extends Exception, R> R throwException(Exception exception) throws E {
         throw (E) exception;
+    }
+
+    public static <T> Consumer<T> failAwareConsumer(Consumer<T> consumer, boolean failSilently) {
+        return t -> {
+            try {
+                consumer.accept(t);
+            } catch (Exception exception) {
+                if (!failSilently) {
+                    throw exception;
+                }
+                log.warn("Suppressed exception from consumer", exception);
+            }
+        };
     }
 }

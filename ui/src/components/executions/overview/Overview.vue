@@ -164,20 +164,7 @@
                     </div>
                 </div>
 
-                <div id="buttons">
-                    <el-button @click="navigateToExecution('previous')">
-                        <el-icon class="el-icon--left">
-                            <ChevronLeft />
-                        </el-icon>
-                        {{ $t("prev_execution") }}
-                    </el-button>
-                    <el-button @click="navigateToExecution('next')">
-                        {{ $t("next_execution") }}
-                        <el-icon class="el-icon--right">
-                            <ChevronRight />
-                        </el-icon>
-                    </el-button>
-                </div>
+                <PrevNext :execution />
             </div>
         </el-splitter-panel>
     </el-splitter>
@@ -191,11 +178,10 @@
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
 
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
+    import {useRoute} from "vue-router";
     const route = useRoute();
 
-    import {Execution, useExecutionsStore} from "../../../stores/executions";
+    import {useExecutionsStore} from "../../../stores/executions";
     const store = useExecutionsStore();
 
     import {useMiscStore} from "override/stores/misc";
@@ -223,6 +209,7 @@
     import Cascader from "./components/main/Cascader.vue";
     import TriggerCascader from "./components/main/TriggerCascader.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
+    import PrevNext from "./components/main/PrevNext.vue";
 
     import NoData from "../../layout/NoData.vue";
 
@@ -256,8 +243,6 @@
     import History from "vue-material-design-icons/History.vue";
     import SortVariant from "vue-material-design-icons/SortVariant.vue";
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
 
     const emits = defineEmits(["follow"]);
 
@@ -523,51 +508,6 @@
         ];
     });
 
-    const navigateToExecution = async (direction: "previous" | "next") => {
-        if (!execution.value) return;
-
-        try {
-            const params = {
-                namespace: execution.value.namespace,
-                flowId: execution.value.flowId,
-                pageSize: 100,
-                sort: "state.startDate:desc",
-            };
-
-            const response = await store.findExecutions(params);
-            const result = response?.results ?? [];
-
-            if (!result.length) return;
-
-            const currentIdx = result.findIndex(
-                (e: Execution) => e.id === execution.value!.id,
-            );
-
-            if (currentIdx === -1) return;
-
-            // next = newer (-1), previous = older (+1)
-            const targetIdx =
-                direction === "previous" ? currentIdx + 1 : currentIdx - 1;
-
-            if (targetIdx < 0 || targetIdx >= result.length) return;
-
-            const target = result[targetIdx];
-
-            router.push({
-                name: "executions/update",
-                params: {
-                    ...(target.tenantId ? {tenant: target.tenantId} : {}),
-                    namespace: target.namespace,
-                    flowId: target.flowId,
-                    id: target.id,
-                    tab: "overview",
-                },
-            });
-        } catch (error) {
-            console.error("Failed to navigate executions:", error);
-        }
-    };
-
     onMounted(() => {
         if (!route.params.id) return;
         loadExecution(route.params.id as string);
@@ -707,18 +647,6 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
                         }
                     }
                 }
-            }
-        }
-
-        #buttons {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: $spacer;
-
-            .el-button {
-                width: calc($spacer * 12);
-                font-size: $font-size-sm;
             }
         }
     }

@@ -18,12 +18,15 @@
     import ContextInfoBar from "../../../components/ContextInfoBar.vue"
     import SurveyDialog from "../../../components/SurveyDialog.vue"
     import {onMounted, ref, watch} from "vue"
+    import {useRoute} from "vue-router"
     import {useSurveySkip} from "../../../composables/useSurveyData"
     import {useCoreStore} from "../../../stores/core"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../../stores/layout"
     import {usePluginsStore} from "../../../stores/plugins"
+    import * as BasicAuth from "../../../utils/basicAuth"
 
+    const route = useRoute()
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const layoutStore = useLayoutStore()
@@ -52,7 +55,9 @@
     const pluginsStore = usePluginsStore()
 
     onMounted(() => {
-        pluginsStore.fetchIcons()
+        if (!route.meta?.anonymous && BasicAuth.isLoggedIn()) {
+            pluginsStore.fetchIcons()
+        }
         // ensure UI state is synchronized with store
         onMenuCollapse(Boolean(layoutStore.sideMenuCollapsed))
         checkForSurveyDialog()

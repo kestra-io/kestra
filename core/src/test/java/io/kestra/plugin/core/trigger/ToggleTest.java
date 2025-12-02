@@ -8,7 +8,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.runners.TestRunnerUtils;

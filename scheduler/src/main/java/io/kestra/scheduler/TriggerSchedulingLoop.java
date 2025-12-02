@@ -1,6 +1,6 @@
 package io.kestra.scheduler;
 
-import io.kestra.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

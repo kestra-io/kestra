@@ -4,7 +4,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.plugin.core.dashboard.data.Triggers;
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;

@@ -3,7 +3,7 @@ package io.kestra.scheduler.models;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 
 /**
  * Represents the context data required to evaluate a trigger is ready to be scheduled.

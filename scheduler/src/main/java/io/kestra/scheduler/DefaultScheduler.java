@@ -2,12 +2,14 @@ package io.kestra.scheduler;
 
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.runners.Scheduler;
+import io.kestra.core.scheduler.SchedulerClock;
+import io.kestra.core.scheduler.TriggerEventQueue;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.scheduler.vnodes.VNodesAssigner;
+import io.kestra.core.scheduler.vnodes.VNodesAssigner;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobResultSubscriber;
 import io.kestra.scheduler.stores.TriggerStateStore;
 import io.micronaut.context.annotation.Primary;

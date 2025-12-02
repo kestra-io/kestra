@@ -1,10 +1,10 @@
 package io.kestra.scheduler.stores;
 
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.scheduler.SchedulerConfiguration;
-import io.kestra.scheduler.vnodes.VNodes;
+import io.kestra.core.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.vnodes.VNodes;
 
 import java.time.ZonedDateTime;
 import java.util.List;

@@ -2,6 +2,10 @@ package io.kestra.scheduler.events;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.scheduler.events.ResetTrigger;
+import io.kestra.core.scheduler.events.TriggerCreated;
+import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerEventType;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Enums;
 import org.junit.jupiter.api.Test;

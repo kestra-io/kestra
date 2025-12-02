@@ -5,7 +5,6 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.scheduler.model.TriggerState;
 import io.kestra.core.runners.*;
 
 public interface QueueFactoryInterface {

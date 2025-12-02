@@ -3,6 +3,11 @@
         <template #additional-right>
             <ul class="header-actions-list">
                 <li>
+                    <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
+                        {{ t('export_csv') }}
+                    </el-button>
+                </li>
+                <li>
                     <el-button :icon="Upload" @click="file?.click()">
                         {{ t("import") }}
                     </el-button>
@@ -53,6 +58,7 @@
                             refresh: {shown: true, callback: refresh}
                         }"
                         @update-properties="updateDisplayColumns"
+                        :defaultScope="!route.name?.toString().startsWith('namespaces/')"
                     />
                 </template>
 
@@ -313,7 +319,7 @@
 
     const {t} = useI18n();
     const toast = useToast()
-    
+
     const flowFilter = useFlowFilter();
 
     const lastExecutionByFlowReady = ref(false);
@@ -322,39 +328,39 @@
 
     const optionalColumns = ref([
         {
-            label: t("labels"), 
-            prop: "labels", 
-            default: true, 
+            label: t("labels"),
+            prop: "labels",
+            default: true,
             description: t("filter.table_column.flows.labels")
         },
         {
-            label: t("namespace"), 
-            prop: "namespace", 
-            default: true, 
+            label: t("namespace"),
+            prop: "namespace",
+            default: true,
             description: t("filter.table_column.flows.namespace")
         },
         {
-            label: t("last execution date"), 
-            prop: "state.startDate", 
-            default: true, 
+            label: t("last execution date"),
+            prop: "state.startDate",
+            default: true,
             description: t("filter.table_column.flows.last execution date")
         },
         {
-            label: t("last execution status"), 
-            prop: "state.current", 
-            default: true, 
+            label: t("last execution status"),
+            prop: "state.current",
+            default: true,
             description: t("filter.table_column.flows.last execution status")
         },
         {
-            label: t("execution statistics"), 
-            prop: "state", 
-            default: true, 
+            label: t("execution statistics"),
+            prop: "state",
+            default: true,
             description: t("filter.table_column.flows.execution statistics")
         },
         {
-            label: t("triggers"), 
-            prop: "triggers", 
-            default: true, 
+            label: t("triggers"),
+            prop: "triggers",
+            default: true,
             description: t("filter.table_column.flows.triggers")
         },
     ]);
@@ -404,9 +410,9 @@
     }
 
     const {
-        queryWithFilter, 
-        onPageChanged, 
-        onRowDoubleClick, 
+        queryWithFilter,
+        onPageChanged,
+        onRowDoubleClick,
         onSort,
         ready
     } = useDataTableActions({
@@ -424,10 +430,10 @@
     }
 
     const {
-        selection, 
-        queryBulkAction, 
-        handleSelectionChange, 
-        toggleAllUnselected, 
+        selection,
+        queryBulkAction,
+        handleSelectionChange,
+        toggleAllUnselected,
         toggleAllSelection
     } = useSelectTableActions({
         dataTableRef: selectTableRef,
@@ -502,10 +508,12 @@
                 if (queryBulkAction.value) {
                     return flowStore.exportFlowByQuery(loadQuery()).then(() => {
                         toast.success(t("flows exported", {count: flowCount}));
+                        toggleAllUnselected();
                     });
                 } else {
                     return flowStore.exportFlowByIds({ids: selection.value}).then(() => {
                         toast.success(t("flows exported", {count: flowCount}));
+                        toggleAllUnselected();
                     });
                 }
             }
@@ -519,11 +527,13 @@
                 if (queryBulkAction.value) {
                     return flowStore.disableFlowByQuery(loadQuery()).then((r: any) => {
                         toast.success(t("flows disabled", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 } else {
                     return flowStore.disableFlowByIds({ids: selectionIds.value}).then((r: any) => {
                         toast.success(t("flows disabled", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 }
@@ -546,11 +556,13 @@
                 if (queryBulkAction.value) {
                     return flowStore.enableFlowByQuery(loadQuery()).then((r: any) => {
                         toast.success(t("flows enabled", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 } else {
                     return flowStore.enableFlowByIds({ids: selectionIds.value}).then((r: any) => {
                         toast.success(t("flows enabled", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 }
@@ -565,11 +577,13 @@
                 if (queryBulkAction.value) {
                     return flowStore.deleteFlowByQuery(loadQuery()).then((r: any) => {
                         toast.success(t("flows deleted", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 } else {
                     return flowStore.deleteFlowByIds({ids: selectionIds.value}).then((r: any) => {
                         toast.success(t("flows deleted", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 }
@@ -629,6 +643,12 @@
             value: DEFAULT_DURATION,
             operation: "EQUALS"
         }];
+    }
+
+    async function exportFlowsAsStream() {
+        await flowStore.exportFlowAsCSV(
+            route.query
+        )
     }
 </script>
 

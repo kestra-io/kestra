@@ -6,10 +6,12 @@ export class BasePage {
     constructor(public readonly page: Page) { }
 
     async login() {
-        await this.page.goto("/ui");
+        await this.page.goto("/");
         await this.page.getByRole("textbox", {name: "Email"}).fill(shared.username);
         await this.page.getByRole("textbox", {name: "Password"}).fill(shared.password);
         await this.page.getByRole("button", {name: "Login"}).click();
+
+        await this.page.goto("/");
 
         await expect(this.page.getByRole("heading", {name: "Overview"})).toBeVisible();
     }

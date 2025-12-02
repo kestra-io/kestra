@@ -17,10 +17,16 @@ import {
     KV_COMPARATORS
 } from "../utils/filterTypes";
 import {usePreAppliedFilters} from "./usePreAppliedFilters";
-import {applyDefaultFilters} from "./useDefaultFilter";
+import {useDefaultFilter} from "./useDefaultFilter";
 
 
-export function useFilters(configuration: FilterConfiguration, showSearchInput = true, legacyQuery = false) {
+export function useFilters(
+    configuration: FilterConfiguration, 
+    showSearchInput = true, 
+    legacyQuery = false, 
+    defaultScope?: boolean, 
+    defaultTimeRange?: boolean
+) {
     const router = useRouter();
     const route = useRoute();
 
@@ -313,6 +319,26 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         return Array.from(filtersMap.values());
     };
 
+
+        /**
+        * Initialize default visible filters. These filters are marked with visibleByDefault: true
+        * and are automatically added to the filter list when the page loads, even if no value
+        * are present to filter. Users can remove them, but they will reappear on page refresh.
+        */
+
+    const createDefaultVisibleFilters = (excludedKeys = new Set<string>()) =>
+        configuration.keys
+            ?.filter(key => key.visibleByDefault && !excludedKeys.has(key.key))
+            .map(key => {
+                const comparator = (key.comparators?.[0] as Comparators) ?? Comparators.EQUALS;
+                const value = key.valueType === "multi-select" ? [] : "";
+                const valueLabel = "";
+                return {
+                    ...createAppliedFilter(key.key, key, comparator, value, valueLabel, "default"),
+                    isDefaultVisible: true
+                } as AppliedFilter;
+            }) ?? [];
+
     const initializeFromRoute = () => {
         if (showSearchInput) {
             searchQuery.value =
@@ -329,7 +355,8 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
             markAsPreApplied(parsedFilters);
         }
 
-        appliedFilters.value = parsedFilters;
+        const parsedFilterKeys = new Set(parsedFilters.map(f => f.key));
+        appliedFilters.value = [...parsedFilters, ...createDefaultVisibleFilters(parsedFilterKeys)];
     };
 
     watch(() => route.query, initializeFromRoute, {deep: true, immediate: false});
@@ -368,10 +395,21 @@ export function useFilters(configuration: FilterConfiguration, showSearchInput =
         updateRoute();
     };
 
+    const {resetDefaultFilter} = useDefaultFilter({
+        legacyQuery,
+        includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
+        includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
+    });
+
     const resetToPreApplied = () => {
-        const defaultQuery = applyDefaultFilters({}, {configuration, route, legacyQuery}).query;
         searchQuery.value = "";
-        router.push({query: defaultQuery});
+
+        const parsedFilters = legacyQuery ? parseLegacyFilters() : parseEncodedFilters();
+
+        const parsedFilterKeys = new Set(parsedFilters.map((f: AppliedFilter) => f.key));
+        appliedFilters.value = [...parsedFilters, ...createDefaultVisibleFilters(parsedFilterKeys)];
+
+        resetDefaultFilter();
     };
     
     watch(searchQuery, () => {

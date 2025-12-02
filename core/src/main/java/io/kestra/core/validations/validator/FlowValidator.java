@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -52,6 +53,9 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     @Inject
     private FlowService flowService;
 
+    @Inject
+    private NamespaceService namespaceService;
+
     @Override
     public boolean isValid(
         @Nullable Flow value,
@@ -67,7 +71,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             violations.add("Flow id is a reserved keyword: " + value.getId() + ". List of reserved keywords: " + String.join(", ", RESERVED_FLOW_IDS));
         }
 
-        if (flowService.requireExistingNamespace(value.getTenantId(), value.getNamespace())) {
+        if (namespaceService.requireExistingNamespace(value.getTenantId(), value.getNamespace())) {
             violations.add("Namespace '" + value.getNamespace() + "' does not exist but is required to exist before a flow can be created in it.");
         }
 

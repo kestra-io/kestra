@@ -4,7 +4,7 @@
         v-if="service != null"
     >
         <template #default>
-            <strong>{{ service.id }}</strong>: {{ t("hostname") }}={{ service.server.hostname }}, {{ t("version") }}={{ service.server.version }}, {{ t("state") }}={{ service.state }}
+            <strong>{{ service.id }}</strong>: {{ $t("hostname") }}={{ service.server.hostname }}, {{ $t("version") }}={{ service.server.version }}, {{ $t("state") }}={{ service.state }}
         </template>
     </component>
 </template>
@@ -12,7 +12,6 @@
 <script setup lang="ts">
     import {ref, onMounted} from "vue";
     import {useServiceStore} from "../../stores/service";
-    import {useI18n} from "vue-i18n";
 
     interface Props {
         component?: string;
@@ -27,7 +26,6 @@
         follow: []
     }>();
 
-    const {t} = useI18n();
     const serviceStore = useServiceStore();
     const service = ref();
 

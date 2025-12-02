@@ -7,10 +7,11 @@ import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
+import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
 export default [
     //Initial
-    {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}}},
+    {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
 
     //Dashboards
@@ -18,15 +19,31 @@ export default [
         name: "home",
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
-        beforeEnter: (to, from, next) => {
+        beforeEnter: (to, _from, next) => {
+            // This specific case is to avoid redirecting dashboards twice:
+            // - once here in beforeEnter
+            // - once in useDefaultFilter composable
+
+            // We analyzed other ways to fix this:
+            // - using nextTick in useDefaultFilter to delay the redirection
+            // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
+            // but both were more complex and fragile than this simple check.
+            const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
             if (!to.params.dashboard) {
                 next({
-                    name: "home",
+                    ...to,
                     params: {
                         ...to.params,
                         dashboard: "default",
                     },
-                    query: to.query,
+                    query,
+                });
+                return;
+            }
+            if(change) {
+                next({
+                    ...to, 
+                    query,
                 });
                 return;
             }
@@ -97,9 +114,9 @@ export default [
     {name: "admin/concurrency-limits", path: "/:tenant?/admin/concurrency-limits", component: () => import("../components/admin/ConcurrencyLimits.vue")},
 
     //Setup
-    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout}},
+    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
     //Login
-    {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout}},
+    {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
 
     //Errors
     {name: "errors/404-wildcard", path: "/:tenant?/:pathMatch(.*)", component: Errors, props: {code: 404}},

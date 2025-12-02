@@ -6,6 +6,7 @@ import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 import {useCoreStore} from "./core";
+import {useUnsavedChangesStore} from "./unsavedChanges";
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {makeToast} from "../utils/toast";
@@ -99,6 +100,7 @@ export const useFlowStore = defineStore("flow", () => {
     const axios = useAxios();
 
     const coreStore = useCoreStore();
+    const unsavedChangesStore = useUnsavedChangesStore();
 
     const t = (key: string, values?: Record<string, any>) => {
         if (!globalI18n.value) {
@@ -115,7 +117,7 @@ export const useFlowStore = defineStore("flow", () => {
     const haveChange = computed(() => flowYamlOrigin.value !== flowYaml.value);
 
     watch(haveChange, (newValue) => {
-        coreStore.unsavedChange = newValue;
+        unsavedChangesStore.unsavedChange = newValue;
     });
 
     async function saveAll() {
@@ -173,7 +175,7 @@ export const useFlowStore = defineStore("flow", () => {
                 if (flowBeforeEdit &&
                         (flowOnValidation.id !== flowBeforeEdit.id ||
                             flowOnValidation.namespace !== flowBeforeEdit.namespace)) {
-                    
+
                     coreStore.message = {
                         variant: "error",
                         title: t("readonly property"),
@@ -607,6 +609,22 @@ function deleteFlowAndDependencies() {
                 Utils.downloadUrl(response.request.responseURL, "flows.zip");
             });
     }
+
+    async function exportFlowAsCSV(params: any) {
+        const response = await axios.get(
+            `${apiUrl()}/flows/export/by-query/csv`,
+            {params, responseType: "blob"}
+        );
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "flows.csv");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    }
+
     function importFlows(options: { file: File, namespace: string, override?: boolean }) {
         return axios.post(`${apiUrl()}/flows/import`, Utils.toFormData(options), {
             headers: {"Content-Type": "multipart/form-data"}
@@ -869,6 +887,7 @@ function deleteFlowAndDependencies() {
         loadRevisions,
         exportFlowByIds,
         exportFlowByQuery,
+        exportFlowAsCSV,
         importFlows,
         disableFlowByIds,
         disableFlowByQuery,

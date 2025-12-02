@@ -1,11 +1,5 @@
 package io.kestra.plugin.core.flow;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -17,6 +11,12 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Optional;
@@ -60,24 +60,23 @@ import java.util.Optional;
                 namespace: company.team
 
                 tasks:
-                - id: allow_failure
+                  - id: allow_failure
                     type: io.kestra.plugin.core.flow.AllowFailure
                     tasks:
-                    - id: fail_silently
+                      - id: fail_silently
                         type: io.kestra.plugin.scripts.shell.Commands
                         taskRunner:
                         type: io.kestra.plugin.core.runner.Process
                         commands:
-                        - exit 1
+                          - exit 1
 
-                - id: print_to_console
+                  - id: print_to_console
                     type: io.kestra.plugin.scripts.shell.Commands
                     taskRunner:
                     type: io.kestra.plugin.core.runner.Process
                     commands:
-                    - echo "this will run since previous failure was allowed ✅"
-
-            """
+                      - echo "this will run since previous failure was allowed ✅"
+                """
         )
     },
     aliases = "io.kestra.core.tasks.flows.AllowFailure"

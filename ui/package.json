@@ -38,8 +38,8 @@
         "cronstrue": "^3.9.0",
         "cytoscape": "^3.33.0",
         "dagre": "^0.8.5",
-        "el-table-infinite-scroll": "^3.0.7",
-        "element-plus": "2.11.7",
+        "dotenv": "^17.2.3",
+        "element-plus": "2.11.8",
         "humanize-duration": "^3.33.1",
         "js-yaml": "^4.1.1",
         "lodash": "^4.17.21",
@@ -67,7 +67,7 @@
         "vue-axios": "^3.5.2",
         "vue-chartjs": "^5.3.3",
         "vue-gtag": "^3.6.3",
-        "vue-i18n": "^11.1.12",
+        "vue-i18n": "^11.2.2",
         "vue-material-design-icons": "^5.3.1",
         "vue-router": "^4.6.3",
         "vue-sidebar-menu": "^5.8.0",
@@ -147,9 +147,6 @@
     "overrides": {
         "bootstrap": {
             "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
-        },
-        "el-table-infinite-scroll": {
-            "vue": "^3.5.21"
         },
         "storybook": "$storybook",
         "vite": "npm:rolldown-vite@latest"

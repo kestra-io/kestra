@@ -1,0 +1,1 @@
+ALTER TABLE kv_metadata ALTER COLUMN "created" TIMESTAMP NOT NULL GENERATED ALWAYS AS (PARSEDATETIME(LEFT(COALESCE(JQ_STRING("value", '.created'), JQ_STRING("value", '.updated')), 23) || '+00:00', 'yyyy-MM-dd''T''HH:mm:ss.SSSXXX'))

@@ -74,7 +74,7 @@ public abstract class AbstractTriggerRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         triggerRepository.save(generateDefaultTrigger(tenant));
 
-        List<Trigger> entries = triggerRepository.find(tenant, List.of(filter)).collectList().block();
+        List<Trigger> entries = triggerRepository.findAsync(tenant, List.of(filter)).collectList().block();
 
         assertThat(entries).hasSize(1);
     }
@@ -195,5 +195,36 @@ public abstract class AbstractTriggerRepositoryTest {
         long count = triggerRepository.countAll(tenant);
         // Then
         assertThat(count).isEqualTo(1);
+    }
+
+    @Test
+    void findAsync() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        Trigger.TriggerBuilder<?, ?> builderA = trigger(tenant).flowId("flowA").triggerId("tA");
+        Trigger.TriggerBuilder<?, ?> builderB = trigger(tenant).flowId("flowB").triggerId("tB");
+
+        Trigger savedA = triggerRepository.save(builderA.build());
+        Trigger savedB = triggerRepository.save(builderB.build());
+
+        try {
+            List<Trigger> all = triggerRepository.findAsync(tenant, null).collectList().block();
+            assertThat(all).isNotNull();
+            assertThat(all.stream().map(Trigger::getTriggerId).toList())
+                .containsExactlyInAnyOrder(savedA.getTriggerId(), savedB.getTriggerId());
+
+            List<QueryFilter> filters = List.of(QueryFilter.builder()
+                .field(QueryFilter.Field.FLOW_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value("flowA")
+                .build());
+
+            List<Trigger> filtered = triggerRepository.findAsync(tenant, filters).collectList().block();
+            assertThat(filtered).hasSize(1);
+            assertThat(filtered.get(0).getFlowId()).isEqualTo("flowA");
+        } finally {
+            triggerRepository.delete(savedA);
+            triggerRepository.delete(savedB);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -29,14 +30,13 @@ import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
+import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
@@ -57,6 +57,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.*;
@@ -89,6 +90,9 @@ public class FlowController {
 
     @Inject
     private TenantService tenantService;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
 
     @ExecuteOn(TaskExecutors.IO)
@@ -163,9 +167,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}")
     @Operation(tags = {"Flows"}, summary = "Get a flow")
-    @Schema(
-        implementation = FlowWithSource.class
-    )
+    @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = FlowWithSource.class))})
     //FIXME we return Object instead of Flow as Micronaut, since 4, has an issue with subtypes serialization, see https://github.com/micronaut-projects/micronaut-core/issues/10294.
     public Object getFlow(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
@@ -732,7 +734,7 @@ public class FlowController {
         var flows = ids.stream()
             .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .toList();
-        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "." + flow.getId() + ".yml");
+        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "." + flow.getId() + ".yaml");
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
 
@@ -897,6 +899,22 @@ public class FlowController {
             throw new IllegalArgumentException("Following invalids flows were not imported: " + String.join(", ", wrongFiles));
         }
         return HttpResponse.ok(wrongFiles);
+    }
+
+    @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Flows"}, summary = "Export all flows as a streamed CSV file")
+    @SuppressWarnings("unchecked")
+    public MutableHttpResponse<Flux> exportFlows(
+        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+    ) {
+        return HttpResponse.ok(
+                CSVUtils.toCSVFlux(
+                    flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
+                        .map(log -> objectMapper.convertValue(log, Map.class))
+                )
+            )
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");
     }
 
     protected GenericFlow parseFlowSource(final String source) {

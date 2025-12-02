@@ -1,0 +1,23 @@
+id: single_flow_executions
+
+type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+
+chartOptions:
+  column: date
+  colorByColumn: state
+
+data:
+  type: io.kestra.plugin.core.dashboard.data.Executions
+
+  columns:
+    date:
+      field: START_DATE
+      displayName: Date
+
+    state:
+      field: STATE
+
+    total:
+      agg: COUNT
+      displayName: Executions
+      graphStyle: BARS

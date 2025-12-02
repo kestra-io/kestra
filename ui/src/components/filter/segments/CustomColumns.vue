@@ -2,8 +2,8 @@
     <div class="customize-columns-panel">
         <div class="header">
             <div class="title">
-                <h6>{{ t("filter.customize columns") }}</h6>
-                <small>{{ t("filter.drag to reorder columns") }}</small>
+                <h6>{{ $t("filter.customize columns") }}</h6>
+                <small>{{ $t("filter.drag to reorder columns") }}</small>
             </div>
             <el-button link :icon="Close" @click="$emit('close')" size="small" class="close-icon" />
         </div>
@@ -25,13 +25,10 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
-    import {useI18n} from "vue-i18n";
     import {Close} from "../utils/icons";
     import type {ColumnConfig} from "../../../composables/useTableColumns";
     import DraggableTableColumns from "../../layout/DraggableTableColumns.vue";
 
-    const {t} = useI18n();
-    
     const props = defineProps<{
         storageKey: string;
         columns: ColumnConfig[];
@@ -72,6 +69,7 @@
         justify-content: space-between;
         align-items: flex-start;
         padding: 0.75rem 1rem 0.5rem;
+        background-color: var(--ks-background-table-header);
         border-bottom: 1px solid var(--ks-border-primary);
         flex-shrink: 0;
         position: sticky;

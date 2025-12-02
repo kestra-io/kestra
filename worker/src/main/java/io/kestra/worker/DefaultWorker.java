@@ -20,7 +20,6 @@ import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
-import io.kestra.core.services.LogService;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.VariablesService;
 import io.kestra.core.services.WorkerGroupService;
@@ -119,9 +118,6 @@ public class DefaultWorker implements Worker {
 
     @Inject
     private ServerConfig serverConfig;
-
-    @Inject
-    private LogService logService;
 
     @Inject
     private RunContextInitializer runContextInitializer;
@@ -413,7 +409,7 @@ public class DefaultWorker implements Worker {
                     WorkerTaskResult workerTaskResult = null;
                     try {
                         if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
-                            workerTaskResult = new WorkerTaskResult(currentWorkerTask.getTaskRun().withState(SKIPPED));
+                            workerTaskResult = new WorkerTaskResult(currentWorkerTask.getTaskRun().withState(SKIPPED).addAttempt(TaskRunAttempt.builder().workerId(this.id).state(new State().withState(SKIPPED)).build()));
                             this.workerTaskResultQueue.emit(workerTaskResult);
                         } else {
                             workerTaskResult = this.run(currentWorkerTask, false);
@@ -464,7 +460,7 @@ public class DefaultWorker implements Worker {
             .increment();
 
         if (log.isDebugEnabled()) {
-            logService.logTrigger(
+            Logs.logTrigger(
                 workerTrigger.getTriggerContext(),
                 Level.DEBUG,
                 "[type: {}] {}",
@@ -537,7 +533,7 @@ public class DefaultWorker implements Worker {
 
         // We create an ERROR log attached to the execution
         Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
-        logService.logExecution(
+        Logs.logExecution(
             execution,
             logger,
             Level.ERROR,
@@ -592,7 +588,7 @@ public class DefaultWorker implements Worker {
                     runContextInitializer.forWorker(runContext, workerTrigger);
                     try {
 
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             workerTrigger.getTriggerContext(),
                             runContext.logger(),
                             Level.INFO,
@@ -629,7 +625,7 @@ public class DefaultWorker implements Worker {
                     } catch (Exception e) {
                         this.handleTriggerError(workerTrigger, e);
                     } finally {
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             workerTrigger.getTriggerContext(),
                             runContext.logger(),
                             Level.INFO,
@@ -679,7 +675,7 @@ public class DefaultWorker implements Worker {
             return workerTaskResult;
         }
 
-        logService.logTaskRun(
+        Logs.logTaskRun(
             workerTask.getTaskRun(),
             Level.INFO,
             "Type {} started",
@@ -735,6 +731,14 @@ public class DefaultWorker implements Worker {
                 );
             }
             io.kestra.core.models.flows.State.Type state = lastAttempt.getState().getCurrent();
+
+            if (shutdown.get() && serverConfig.workerTaskRestartStrategy() != WorkerTaskRestartStrategy.NEVER && state.isFailed()) {
+                // if the Worker is terminating and the task is not in success, it may have been terminated by the worker
+                // in this case; we return immediately without emitting any result as it would be resubmitted (except if WorkerTaskRestartStrategy is NEVER)
+                List<WorkerTaskResult> dynamicWorkerResults = workerTask.getRunContext().dynamicWorkerResults();
+                List<TaskRun> dynamicTaskRuns = dynamicWorkerResults(dynamicWorkerResults);
+                return new WorkerTaskResult(workerTask.getTaskRun(), dynamicTaskRuns);
+            }
 
             if (workerTask.getTask().getRetry() != null &&
                 workerTask.getTask().getRetry().getWarningOnRetry() &&
@@ -850,9 +854,9 @@ public class DefaultWorker implements Worker {
 
         metricRegistry
             .timer(MetricRegistry.METRIC_WORKER_ENDED_DURATION, MetricRegistry.METRIC_WORKER_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
-            .record(workerTask.getTaskRun().getState().getDuration());
+            .record(workerTask.getTaskRun().getState().getDurationOrComputeIt());
 
-        logService.logTaskRun(
+        Logs.logTaskRun(
             workerTask.getTaskRun(),
             Level.INFO,
             "Type {} with state {} completed in {}",
@@ -866,7 +870,7 @@ public class DefaultWorker implements Worker {
         Logger logger = workerTrigger.getConditionContext().getRunContext().logger();
 
         if (e instanceof InterruptedException || (e != null && e.getCause() instanceof InterruptedException)) {
-            logService.logTrigger(
+            Logs.logTrigger(
                 workerTrigger.getTriggerContext(),
                 logger,
                 Level.WARN,
@@ -874,7 +878,7 @@ public class DefaultWorker implements Worker {
                 workerTrigger.getTriggerContext().getDate()
             );
         } else {
-            logService.logTrigger(
+            Logs.logTrigger(
                 workerTrigger.getTriggerContext(),
                 logger,
                 Level.WARN,
@@ -971,7 +975,7 @@ public class DefaultWorker implements Worker {
                 Attributes.of(TraceUtils.ATTR_UID, workerJobCallable.getUid()),
                 () -> workerSecurityService.callInSecurityContext(workerJobCallable)
             );
-        } catch(Exception e) {
+        } catch (Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected
             // we add the exception to have some log in that case
             workerJobCallable.exception = e;
@@ -1090,7 +1094,7 @@ public class DefaultWorker implements Worker {
         );
 
         // wait for task completion
-        Await.until(
+        Await.untilWithSleepInterval(
             () -> {
                 ServiceState serviceState = shutdownState.get();
                 if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {
@@ -1131,7 +1135,7 @@ public class DefaultWorker implements Worker {
                     // As a last resort, we try to stop the trigger via Thread.interrupt.
                     // If the trigger doesn't respond to interrupts, it may never terminate.
                     t.interrupt();
-                    logService.logTrigger(
+                    Logs.logTrigger(
                         t.getWorkerTrigger().getTriggerContext(),
                         t.getWorkerTrigger().getConditionContext().getRunContext().logger(),
                         Level.INFO,

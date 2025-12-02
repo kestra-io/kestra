@@ -197,11 +197,6 @@ public abstract class AbstractFlowRepositoryTest {
             .labels(Label.from(Map.of("foo", "baz")))
             .build();
 
-        FlowWithSource flowWithDifferentLabel1 =builder(tenant)
-            .id("flow-with-different-label1")
-            .labels(Label.from(Map.of("foo", "baz")))
-            .build();
-
         try {
             flowWithLabel = flowRepository.create(GenericFlow.of(flowWithLabel));
             flowWithoutLabel = flowRepository.create(GenericFlow.of(flowWithoutLabel));

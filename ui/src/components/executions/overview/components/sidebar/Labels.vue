@@ -31,7 +31,7 @@
             margin-left: calc($spacer / 1.5);
             overflow: hidden;
             background-color: var(--ks-tag-background-active);
-            color: $white;
+            color: var(--ks-tag-content);
 
             & .el-tag__content {
                 display: block;

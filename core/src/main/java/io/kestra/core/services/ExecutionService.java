@@ -958,26 +958,18 @@ public class ExecutionService {
         return trigger.resetExecution(flowWithDefaults, execution, conditionContext);
     }
 
-    public List<ResolvedTaskRun> resolveTaskRuns(Flow flow, List<TaskRun> taskRuns) {
-        
-        return taskRuns.stream()
-            .map(taskRun -> {
-                try {
-                    // Look up the corresponding task definition
-                    Task task = flow.findTaskByTaskId(taskRun.getTaskId());
+    public List<ResolvedTaskRun> resolveTaskRuns(Flow flow, List<TaskRun> taskRuns) throws InternalException {
+    return taskRuns.stream()
+        .map(throwFunction((TaskRun taskRun) -> {  
+            Task task = flow.findTaskByTaskId(taskRun.getTaskId());
 
-                    ResolvedTask resolvedTask = ResolvedTask.of(task);
+            ResolvedTask resolvedTask = ResolvedTask.of(task);
 
-                    return ResolvedTaskRun.builder()
-                        .taskRun(taskRun)
-                        .resolvedTask(resolvedTask)
-                        .build();
-                } catch (InternalException e) {
-
-                    // Propagate as unchecked to allow use within Stream pipeline
-                    throw new RuntimeException(e);
-                }
-            })
-            .collect(Collectors.toList());
+            return ResolvedTaskRun.builder()
+                .taskRun(taskRun)
+                .resolvedTask(resolvedTask)
+                .build();
+        }))
+        .collect(Collectors.toList());
     }
 }

@@ -53,7 +53,7 @@
 
     import VarValue from "../../../VarValue.vue";
 
-    import {Execution} from "src/stores/executions";
+    import {Execution} from "../../../../../stores/executions";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 

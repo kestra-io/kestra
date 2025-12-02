@@ -180,7 +180,7 @@ class FileSerdeTest {
 
 
     @Test
-    void writeAllBinary_checkFormatAndHash() throws IOException {
+    void writeAllBinary_checkFormat() throws IOException {
         Path outputTempFilePath = createTempFile();
 
         final List<SimpleEntry> inputValues = List.of(
@@ -188,11 +188,9 @@ class FileSerdeTest {
             new SimpleEntry(2, "value2")
         );
 
-        var result = FileSerde.writeAllBinary(Files.newOutputStream(outputTempFilePath), Flux.fromIterable(inputValues)).block();
+        Long resultCount = FileSerde.writeAllBinary(Files.newOutputStream(outputTempFilePath), Flux.fromIterable(inputValues)).block();
 
-        assertThat(result).isNotNull();
-        assertThat(result.getKey()).isEqualTo(2L);
-        assertThat(result.getValue()).isNotNull();
+        assertThat(resultCount).isEqualTo(2L);
 
         byte[] fileBytes = Files.readAllBytes(outputTempFilePath);
         assertThat(fileBytes.length).isGreaterThan(4);

@@ -152,7 +152,6 @@ allprojects {
 
             // ion
             implementation 'com.amazon.ion:ion-java:1.11.9'
-            implementation 'com.amazon.ion:ion-hash-java:1.0.0'
 
             // kestra
             implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'

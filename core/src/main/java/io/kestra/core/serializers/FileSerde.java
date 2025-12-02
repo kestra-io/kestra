@@ -20,10 +20,6 @@ import java.util.function.Consumer;
 
 import com.amazon.ion.IonWriter;
 import com.amazon.ion.system.IonBinaryWriterBuilder;
-import com.amazon.ionhash.IonHashWriter;
-import com.amazon.ionhash.IonHashWriterBuilder;
-import com.amazon.ionhash.MessageDigestIonHasherProvider;
-import java.util.AbstractMap;
 
 public final class FileSerde {
     /**
@@ -116,35 +112,45 @@ public final class FileSerde {
 
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * @deprecated Use {@link #readAll(InputStream, Class)} instead.
      */
+    @Deprecated(since = "1.2", forRemoval = true)
     public static Flux<Object> readAll(Reader reader) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, reader, DEFAULT_TYPE_REFERENCE);
     }
 
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * @deprecated Use {@link #readAll(InputStream, TypeReference)} instead.
      */
+    @Deprecated(since = "1.2", forRemoval = true)
     public static <T> Flux<T> readAll(Reader reader, TypeReference<T> type) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, reader, type);
     }
 
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * @deprecated Use {@link #readAll(InputStream, Class)} instead.
      */
+    @Deprecated(since = "1.2", forRemoval = true)
     public static <T> Flux<T> readAll(Reader reader, Class<T> type) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, reader, type);
     }
 
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * @deprecated Use {@link #readAll(ObjectMapper, InputStream, Class)} instead.
      */
+    @Deprecated(since = "1.2", forRemoval = true)
     public static Flux<Object> readAll(ObjectMapper objectMapper, Reader in) throws IOException {
         return readAll(objectMapper, in, DEFAULT_TYPE_REFERENCE);
     }
 
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * @deprecated Use {@link #readAll(ObjectMapper, InputStream, TypeReference)} instead.
      */
+    @Deprecated(since = "1.2", forRemoval = true)
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, TypeReference<T> type) throws IOException {
         MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
         return readAll(mappingIterator);
@@ -152,7 +158,9 @@ public final class FileSerde {
 
     /**
      * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * @deprecated Use {@link #readAll(ObjectMapper, InputStream, Class)} instead.
      */
+    @Deprecated(since = "1.2", forRemoval = true)
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, Class<T> type) throws IOException {
         MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
         return readAll(mappingIterator);
@@ -213,14 +221,16 @@ public final class FileSerde {
      *
      * @deprecated Use {@link #writeAllBinary(OutputStream, Flux)} instead for better compression and hashing.
      */
-    @Deprecated
+    @Deprecated(since = "1.2", forRemoval = true)
     public static <T> Mono<Long> writeAll(Writer writer, Flux<T> values) throws IOException {
         return writeAll(DEFAULT_OBJECT_MAPPER, writer, values);
     }
 
     /**
      * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
+     * @deprecated Use {@link #writeAllBinary(OutputStream, Flux)} instead.
      */
+    @Deprecated(since = "1.2", forRemoval = true)
     public static <T> Mono<Long> writeAll(ObjectMapper objectMapper, Writer writer, Flux<T> values) throws IOException {
         SequenceWriter seqWriter = createSequenceWriter(objectMapper, writer, new TypeReference<T>() {});
         return writeAll(values, seqWriter);
@@ -235,25 +245,18 @@ public final class FileSerde {
     }
 
     /**
-     * Writes a Flux of values to an OutputStream in Ion Binary format and returns the count and SHA-256 hash.
-     * * @param output The raw output stream (do not wrap in Writer)
+     * Writes a Flux of values to an OutputStream in Ion Binary format.
+     * @param output The raw output stream (do not wrap in Writer)
      * @param values The data to write
-     * @return A Mono containing a Map.Entry where Key = Count (Long) and Value = SHA-256 Hash (String)
+     * @return A Mono containing the Count (Long)
      */
-    public static <T> Mono<AbstractMap.SimpleEntry<Long, String>> writeAllBinary(OutputStream output, Flux<T> values) {
+    public static <T> Mono<Long> writeAllBinary(OutputStream output, Flux<T> values) {
         return Mono.create(sink -> {
             try {
-                MessageDigestIonHasherProvider hasherProvider = new MessageDigestIonHasherProvider("SHA-256");
-
                 IonWriter binaryWriter = IonBinaryWriterBuilder.standard().build(output);
 
-                IonHashWriter hashWriter = IonHashWriterBuilder.standard()
-                    .withHasherProvider(hasherProvider)
-                    .withWriter(binaryWriter)
-                    .build();
-
                 IonFactory ionFactory = (IonFactory) DEFAULT_OBJECT_MAPPER.getFactory();
-                JsonGenerator generator = ionFactory.createGenerator(hashWriter);
+                JsonGenerator generator = ionFactory.createGenerator(binaryWriter);
                 generator.disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
                 SequenceWriter seqWriter = DEFAULT_OBJECT_MAPPER.writer().writeValues(generator);
@@ -266,16 +269,10 @@ public final class FileSerde {
                         count -> {
                             try {
                                 seqWriter.flush();
-                                hashWriter.finish();
-                                byte[] digest = hashWriter.digest();
-                                hashWriter.close();
+                                binaryWriter.finish();
+                                binaryWriter.close();
 
-                                StringBuilder hexString = new StringBuilder();
-                                for (byte b : digest) {
-                                    hexString.append(String.format("%02x", b));
-                                }
-
-                                sink.success(new AbstractMap.SimpleEntry<>(count, hexString.toString()));
+                                sink.success(count);
                             } catch (IOException e) {
                                 sink.error(e);
                             }

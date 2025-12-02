@@ -3,8 +3,8 @@ package io.kestra.scheduler.stores;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.scheduler.SchedulerConfiguration;
-import io.kestra.scheduler.vnodes.VNodes;
+import io.kestra.core.scheduler.SchedulerConfiguration;
+import io.kestra.core.scheduler.vnodes.VNodes;
 
 import java.util.List;
 import java.util.Optional;

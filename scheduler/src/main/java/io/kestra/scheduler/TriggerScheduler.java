@@ -20,6 +20,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.PluginDefaultService;
@@ -28,13 +29,13 @@ import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
-import io.kestra.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.pubsub.TriggerExecutionPublisher;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.scheduler.stores.TriggerStateStore;
-import io.kestra.scheduler.vnodes.VNodes;
+import io.kestra.core.scheduler.vnodes.VNodes;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import jakarta.inject.Inject;
@@ -169,7 +170,7 @@ public class TriggerScheduler {
                     try {
 
                         // Create a TriggerState
-                        TriggerState newTriggerState = io.kestra.scheduler.model.TriggerState.of(flow, trigger, vNode);
+                        TriggerState newTriggerState = TriggerState.of(flow, trigger, vNode);
                         
                         // new worker triggers will be evaluated immediately except schedule that will be evaluated at the next cron schedule
                         if (trigger instanceof WorkerTriggerInterface) {

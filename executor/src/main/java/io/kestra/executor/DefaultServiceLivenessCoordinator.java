@@ -12,7 +12,7 @@ import io.kestra.core.server.*;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Logs;
-import io.kestra.scheduler.vnodes.VNodeController;
+import io.kestra.core.scheduler.vnodes.VNodeController;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;

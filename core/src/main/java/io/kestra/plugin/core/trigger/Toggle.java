@@ -7,8 +7,8 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.scheduler.TriggerEventQueue;
-import io.kestra.scheduler.events.SetDisableTrigger;
+import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.events.SetDisableTrigger;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
@@ -18,7 +18,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Map;
 import java.util.Optional;
 
 @SuperBuilder

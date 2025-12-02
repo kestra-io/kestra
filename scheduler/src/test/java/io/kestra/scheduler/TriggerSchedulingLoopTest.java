@@ -1,6 +1,6 @@
 package io.kestra.scheduler;
 
-import io.kestra.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -727,7 +727,9 @@
   container-type: inline-size;
   display: grid;
   gap: var(--spacer, 1rem);
-  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  // single column when component is narrow, otherwise auto-fit with a ma of 2 columns
+  // 45% is the min-size of a column when 2 fit side by side with gap
+  grid-template-columns: repeat(auto-fit, minmax(max(260px, 45%), 1fr));
   align-items: start;
 }
 

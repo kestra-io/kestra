@@ -507,7 +507,7 @@
     "environment color setting": "Color del entorno",
     "environment name setting": "Nombre del entorno",
     "error": "Error",
-    "error detected": "Error(es) detectado(s)",
+    "error detected": "Se detectaron errores.",
     "error in editor": "Se ha encontrado un error en el editor",
     "errorLogs": "Registros de errores",
     "errors": {
@@ -539,7 +539,7 @@
     "execution": "Ejecución",
     "execution already finished": "Ejecución <code>{executionId}</code> ya finalizada",
     "execution labels": "Etiquetas de ejecución",
-    "execution not found": "Ejecución <code>{executionId}</code> no encontrada",
+    "execution not found": "La ejecución <code>{executionId}</code> no se encuentra.",
     "execution not in state FAILED": "Ejecución <code>{executionId}</code> no está en estado FAILED",
     "execution not in state PAUSED": "Ejecución <code>{executionId}</code> no está en estado PAUSED",
     "execution replay": "Esta ejecución es una repetición de",
@@ -554,7 +554,7 @@
       "metrics": "Eliminar métricas",
       "storage": "Eliminar archivos de almacenamiento interno"
     },
-    "execution_failed": "¡La ejecución falló! El último error fue",
+    "execution_failed": "¡Ejecución fallida!\nEl último error fue",
     "execution_guide": {
       "get_started": {
         "text": "Sigue la Guía de inicio rápido para instalar Kestra y comenzar a crear tus primeros flujos de trabajo.",
@@ -595,6 +595,7 @@
     "export": "Exportar",
     "export all flows": "Exportar todos los flows",
     "export all templates": "Exportar todas las plantillas",
+    "export_csv": "Exportar como CSV",
     "exports": "Exportaciones",
     "failed to render pdf": "Error al renderizar la vista previa del PDF",
     "false": "Falso",
@@ -642,6 +643,7 @@
       "customize columns": "Personalizar columnas de la tabla",
       "customize tooltip": "Personalizar qué filtros mostrar",
       "delete filter": "Eliminar filtro",
+      "delete filter confirm": "¿Está seguro de que desea eliminar este filtro?",
       "description": "Descripción",
       "deselect all": "Deseleccionar todo",
       "drag to reorder": "Arrastrar para reordenar",
@@ -1051,6 +1053,7 @@
     "last modified": "Última modificación",
     "last trigger date": "Fecha de último trigger",
     "last trigger date tooltip": "Cuando el trigger se ejecutó por última vez. Puede estar en el pasado al ejecutar un backfill.",
+    "latest_update": "Última actualización",
     "launch execution": "Ejecutar",
     "learn_more": "Aprender más",
     "leave page": "Salir de la página",
@@ -1146,6 +1149,12 @@
         "label": "Renombrar",
         "new_file": "Nuevo nombre con extensión:",
         "new_folder": "Nuevo nombre de carpeta:"
+      },
+      "revisions": {
+        "history": "Historial de revisiones",
+        "restore": {
+          "success": "Revisión del archivo restaurada con éxito"
+        }
       },
       "toggle": {
         "hide": "Ocultar archivos del namespace",
@@ -1272,6 +1281,8 @@
     },
     "no_data": "Parece que no hay nada aquí... ¡todavía!<br/>Ajusta tus filtros o inténtalo de nuevo.",
     "no_file_choosen": "No se ha elegido archivo",
+    "no_flow_outputs": "No hay outputs disponibles.",
+    "no_inputs": "No hay inputs disponibles.",
     "no_logs_data": "Sin datos",
     "no_logs_data_description": "No se encontraron logs para los filtros seleccionados. <br> Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
@@ -1285,6 +1296,8 @@
     },
     "no_results_found": "No se encontraron resultados",
     "no_tasks_running": "Todavía no hay tasks en ejecución.",
+    "no_trigger": "No hay trigger disponible.",
+    "no_variables": "No hay variables disponibles.",
     "now": "Ahora",
     "of": "de",
     "ok": "OK",
@@ -1419,6 +1432,7 @@
     "reach us": "Habla con nosotros",
     "read-more": "Leer más sobre",
     "readonly property": "Propiedad de solo lectura",
+    "recent_executions": "Ejecuciones Recientes",
     "refresh": "Actualizar",
     "reject": "Rechazar",
     "relative": "Relativo",
@@ -1518,6 +1532,7 @@
     "sequential": "Secuencial",
     "server type": "Tipo de servidor",
     "services": "Servicios",
+    "set_extra_labels": "Establecer etiquetas adicionales",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1678,6 +1693,7 @@
     "start datetime": "Fecha y hora de inicio",
     "started date": "Fecha de inicio",
     "state": "Estado",
+    "state_history": "Historial de estado",
     "stats": "Estadísticas",
     "steps": "Pasos",
     "stream": "Stream",

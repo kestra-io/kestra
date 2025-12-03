@@ -6,9 +6,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.storages.StorageInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -51,10 +49,9 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
 
     @Override
     public Delete.Output run(RunContext runContext) throws Exception {
-        StorageInterface storageInterface = ((DefaultRunContext)runContext).getApplicationContext().getBean(StorageInterface.class);
         URI render = URI.create(runContext.render(this.uri).as(String.class).orElseThrow());
 
-        boolean delete = storageInterface.delete(runContext.flowInfo().tenantId(), runContext.flowInfo().namespace(), render);
+        boolean delete = runContext.storage().deleteFile(render);
 
         if (runContext.render(errorOnMissing).as(Boolean.class).orElseThrow() && !delete) {
             throw new NoSuchElementException("Unable to find file '" + render + "'");

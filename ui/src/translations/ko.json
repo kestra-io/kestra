@@ -507,7 +507,7 @@
     "environment color setting": "환경 색상",
     "environment name setting": "환경 이름",
     "error": "오류",
-    "error detected": "오류 감지됨",
+    "error detected": "오류가 감지되었습니다.",
     "error in editor": "편집기에서 오류가 발견되었습니다",
     "errorLogs": "오류 logs",
     "errors": {
@@ -539,7 +539,7 @@
     "execution": "실행",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
     "execution labels": "실행 라벨",
-    "execution not found": "실행 <code>{executionId}</code>을(를) 찾을 수 없습니다",
+    "execution not found": "<code>{executionId}</code> 실행을 찾을 수 없습니다.",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
     "execution not in state PAUSED": "실행 <code>{executionId}</code>이(가) PAUSED 상태가 아닙니다",
     "execution replay": "이 실행은 다음의 재실행입니다:",
@@ -554,7 +554,7 @@
       "metrics": "메트릭 삭제",
       "storage": "내부 저장소 파일 삭제"
     },
-    "execution_failed": "실행 실패! 마지막 오류는",
+    "execution_failed": "실행 실패!\n마지막 오류는",
     "execution_guide": {
       "get_started": {
         "text": "Quickstart Guide를 따라 Kestra를 설치하고 첫 번째 workflow를 구축하세요.",
@@ -595,6 +595,7 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
+    "export_csv": "CSV로 내보내기",
     "exports": "내보내기 목록",
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",
@@ -642,6 +643,7 @@
       "customize columns": "테이블 열 사용자 정의",
       "customize tooltip": "표시할 필터 사용자 지정",
       "delete filter": "필터 삭제",
+      "delete filter confirm": "이 필터를 제거하시겠습니까?",
       "description": "설명",
       "deselect all": "모두 선택 해제",
       "drag to reorder": "끌어서 순서 변경",
@@ -1051,6 +1053,7 @@
     "last modified": "마지막 수정",
     "last trigger date": "마지막 trigger 날짜",
     "last trigger date tooltip": "트리거가 마지막으로 실행된 시점입니다. 백필을 실행할 때 과거일 수 있습니다.",
+    "latest_update": "최신 업데이트",
     "launch execution": "실행",
     "learn_more": "자세히 알아보기",
     "leave page": "페이지 나가기",
@@ -1146,6 +1149,12 @@
         "label": "이름 변경",
         "new_file": "확장자를 포함한 새 이름:",
         "new_folder": "새 폴더 이름:"
+      },
+      "revisions": {
+        "history": "수정 기록",
+        "restore": {
+          "success": "파일 수정이 성공적으로 복원되었습니다."
+        }
       },
       "toggle": {
         "hide": "namespace 파일 숨기기",
@@ -1272,6 +1281,8 @@
     },
     "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
     "no_file_choosen": "파일이 선택되지 않음",
+    "no_flow_outputs": "출력 없음.",
+    "no_inputs": "입력값이 없습니다.",
     "no_logs_data": "데이터 없음",
     "no_logs_data_description": "선택한 필터에 대한 로그가 없습니다. <br> 필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
@@ -1285,6 +1296,8 @@
     },
     "no_results_found": "결과를 찾을 수 없습니다",
     "no_tasks_running": "아직 실행 중인 task가 없습니다.",
+    "no_trigger": "사용 가능한 trigger가 없습니다.",
+    "no_variables": "사용 가능한 변수가 없습니다.",
     "now": "지금",
     "of": "의",
     "ok": "확인",
@@ -1419,6 +1432,7 @@
     "reach us": "문의하기",
     "read-more": "자세히 알아보기",
     "readonly property": "읽기 전용 속성",
+    "recent_executions": "최근 실행",
     "refresh": "새로 고침",
     "reject": "거부",
     "relative": "상대적",
@@ -1518,6 +1532,7 @@
     "sequential": "순차적",
     "server type": "서버 유형",
     "services": "서비스",
+    "set_extra_labels": "추가 label 설정",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1678,6 +1693,7 @@
     "start datetime": "시작 날짜 및 시간",
     "started date": "시작 날짜",
     "state": "상태",
+    "state_history": "상태 기록",
     "stats": "통계",
     "steps": "단계",
     "stream": "스트림",

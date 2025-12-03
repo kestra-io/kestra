@@ -507,7 +507,7 @@
     "environment color setting": "环境颜色",
     "environment name setting": "环境名称",
     "error": "错误",
-    "error detected": "检测到错误",
+    "error detected": "检测到错误。",
     "error in editor": "在编辑器中发现错误",
     "errorLogs": "错误日志",
     "errors": {
@@ -539,7 +539,7 @@
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
     "execution labels": "执行标签",
-    "execution not found": "未找到执行 <code>{executionId}</code>",
+    "execution not found": "执行 <code>{executionId}</code> 未找到。",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
     "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
     "execution replay": "此执行是以下内容的重放",
@@ -554,7 +554,7 @@
       "metrics": "删除指标",
       "storage": "删除内部存储文件"
     },
-    "execution_failed": "执行失败！最后的错误是",
+    "execution_failed": "执行失败！\n最后一个错误是",
     "execution_guide": {
       "get_started": {
         "text": "请按照快速入门指南安装Kestra并开始构建您的第一个工作流。",
@@ -595,6 +595,7 @@
     "export": "导出",
     "export all flows": "导出所有流程",
     "export all templates": "导出所有模板",
+    "export_csv": "导出为CSV",
     "exports": "导出",
     "failed to render pdf": "渲染PDF预览失败",
     "false": "假",
@@ -642,6 +643,7 @@
       "customize columns": "自定义表格列",
       "customize tooltip": "自定义显示哪些过滤器",
       "delete filter": "删除过滤器",
+      "delete filter confirm": "您确定要删除此过滤器吗？",
       "description": "描述",
       "deselect all": "取消全选",
       "drag to reorder": "拖动以重新排序",
@@ -1051,6 +1053,7 @@
     "last modified": "上次修改",
     "last trigger date": "上次触发日期",
     "last trigger date tooltip": "触发器上次执行的时间。在运行backfill时可能是过去的时间。",
+    "latest_update": "最新更新",
     "launch execution": "执行",
     "learn_more": "了解更多",
     "leave page": "离开页面",
@@ -1146,6 +1149,12 @@
         "label": "重命名",
         "new_file": "新的文件名（带扩展名）：",
         "new_folder": "新的文件夹名："
+      },
+      "revisions": {
+        "history": "修订历史",
+        "restore": {
+          "success": "文件修订已成功恢复"
+        }
       },
       "toggle": {
         "hide": "隐藏命名空间文件",
@@ -1272,6 +1281,8 @@
     },
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_file_choosen": "未选择文件",
+    "no_flow_outputs": "没有可用的output。",
+    "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
@@ -1285,6 +1296,8 @@
     },
     "no_results_found": "未找到结果",
     "no_tasks_running": "尚无任务正在运行。",
+    "no_trigger": "没有可用的trigger。",
+    "no_variables": "没有可用的变量。",
     "now": "现在",
     "of": "的",
     "ok": "确定",
@@ -1419,6 +1432,7 @@
     "reach us": "联系我们",
     "read-more": "了解更多关于",
     "readonly property": "只读属性",
+    "recent_executions": "最近执行",
     "refresh": "刷新",
     "reject": "拒绝",
     "relative": "相对",
@@ -1518,6 +1532,7 @@
     "sequential": "顺序",
     "server type": "服务器类型",
     "services": "服务",
+    "set_extra_labels": "设置额外的labels",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1678,6 +1693,7 @@
     "start datetime": "开始日期时间",
     "started date": "开始日期",
     "state": "状态",
+    "state_history": "状态历史",
     "stats": "统计",
     "steps": "步骤",
     "stream": "流",

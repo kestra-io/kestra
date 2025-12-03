@@ -507,7 +507,7 @@
     "environment color setting": "Цвет окружения",
     "environment name setting": "Имя окружения",
     "error": "Ошибка",
-    "error detected": "Обнаружены ошибки",
+    "error detected": "Обнаружена ошибка(и).",
     "error in editor": "В редакторе найдена ошибка",
     "errorLogs": "Логи ошибок",
     "errors": {
@@ -539,7 +539,7 @@
     "execution": "Выполнение",
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
     "execution labels": "Метки выполнения",
-    "execution not found": "Выполнение <code>{executionId}</code> не найдено",
+    "execution not found": "Выполнение <code>{executionId}</code> не найдено.",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",
     "execution not in state PAUSED": "Выполнение <code>{executionId}</code> не в состоянии PAUSED",
     "execution replay": "Это выполнение является повтором",
@@ -554,7 +554,7 @@
       "metrics": "Удалить метрики",
       "storage": "Удалить внутренние файлы хранения"
     },
-    "execution_failed": "Выполнение FAILED! Последняя ошибка была",
+    "execution_failed": "Выполнение завершилось с ошибкой!\nПоследняя ошибка была",
     "execution_guide": {
       "get_started": {
         "text": "Следуйте Руководству по быстрому старту, чтобы установить Kestra и начать создавать свои первые workflows.",
@@ -595,6 +595,7 @@
     "export": "Экспорт",
     "export all flows": "Экспортировать все flows",
     "export all templates": "Экспортировать все шаблоны",
+    "export_csv": "Экспортировать как CSV",
     "exports": "Экспорты",
     "failed to render pdf": "Не удалось отобразить предварительный просмотр PDF",
     "false": "Ложь",
@@ -642,6 +643,7 @@
       "customize columns": "Настроить столбцы таблицы",
       "customize tooltip": "Настроить, какие фильтры отображать",
       "delete filter": "Удалить фильтр",
+      "delete filter confirm": "Вы уверены, что хотите удалить этот фильтр?",
       "description": "Описание",
       "deselect all": "Снять выделение со всех",
       "drag to reorder": "Перетащите для изменения порядка",
@@ -1051,6 +1053,7 @@
     "last modified": "Последнее изменение",
     "last trigger date": "Дата последнего срабатывания",
     "last trigger date tooltip": "Когда trigger выполнялся в последний раз. Может быть в прошлом при запуске backfill.",
+    "latest_update": "Последнее обновление",
     "launch execution": "Выполнить",
     "learn_more": "Узнать больше",
     "leave page": "Покинуть страницу",
@@ -1146,6 +1149,12 @@
         "label": "Переименовать",
         "new_file": "Новое имя с расширением:",
         "new_folder": "Новое имя папки:"
+      },
+      "revisions": {
+        "history": "История изменений",
+        "restore": {
+          "success": "Файл успешно восстановлен до предыдущей версии"
+        }
       },
       "toggle": {
         "hide": "Скрыть файлы namespace",
@@ -1272,6 +1281,8 @@
     },
     "no_data": "Похоже, здесь пока ничего нет…<br/>Измените фильтры или попробуйте снова!",
     "no_file_choosen": "Файл не выбран",
+    "no_flow_outputs": "Нет доступных output.",
+    "no_inputs": "Нет доступных input.",
     "no_logs_data": "Нет данных",
     "no_logs_data_description": "Для выбранных фильтров логи не найдены. <br> Попробуйте изменить фильтры, изменить временной диапазон или проверьте, выполнялся ли flow недавно.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
@@ -1285,6 +1296,8 @@
     },
     "no_results_found": "Результаты не найдены",
     "no_tasks_running": "Ещё нет запущенных tasks.",
+    "no_trigger": "Триггер недоступен.",
+    "no_variables": "Переменные недоступны.",
     "now": "Сейчас",
     "of": "из",
     "ok": "ОК",
@@ -1419,6 +1432,7 @@
     "reach us": "Свяжитесь с нами",
     "read-more": "Узнать больше о",
     "readonly property": "Свойство только для чтения",
+    "recent_executions": "Недавние выполнения",
     "refresh": "Обновить",
     "reject": "Отклонить",
     "relative": "Относительный",
@@ -1518,6 +1532,7 @@
     "sequential": "Последовательный",
     "server type": "Тип сервера",
     "services": "Сервисы",
+    "set_extra_labels": "Установить дополнительные labels",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1678,6 +1693,7 @@
     "start datetime": "Дата и время начала",
     "started date": "Дата начала",
     "state": "Состояние",
+    "state_history": "История состояния",
     "stats": "Статистика",
     "steps": "Шаги",
     "stream": "Поток",

@@ -507,7 +507,7 @@
     "environment color setting": "पर्यावरण रंग",
     "environment name setting": "पर्यावरण नाम",
     "error": "त्रुटि",
-    "error detected": "त्रुटि का पता चला",
+    "error detected": "त्रुटि(त्रुटियाँ) पाई गईं।",
     "error in editor": "संपादक में एक त्रुटि पाई गई है",
     "errorLogs": "त्रुटियाँ logs",
     "errors": {
@@ -539,7 +539,7 @@
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
     "execution labels": "निष्पादन labels",
-    "execution not found": "निष्पादन <code>{executionId}</code> नहीं मिला",
+    "execution not found": "<code>{executionId}</code> निष्पादन नहीं मिला।",
     "execution not in state FAILED": "निष्पादन <code>{executionId}</code> FAILED स्थिति में नहीं है",
     "execution not in state PAUSED": "निष्पादन <code>{executionId}</code> PAUSED स्थिति में नहीं है",
     "execution replay": "यह निष्पादन का पुनरावृत्ति है",
@@ -554,7 +554,7 @@
       "metrics": "Metrics हटाएं",
       "storage": "आंतरिक स्टोरेज फाइलें हटाएं"
     },
-    "execution_failed": "निष्पादन FAILED! अंतिम त्रुटि थी",
+    "execution_failed": "निष्पादन विफल हुआ!\nअंतिम त्रुटि थी",
     "execution_guide": {
       "get_started": {
         "text": "क्विकस्टार्ट गाइड का पालन करें ताकि आप Kestra को इंस्टॉल कर सकें और अपनी पहली workflows बनाना शुरू कर सकें।",
@@ -595,6 +595,7 @@
     "export": "निर्यात करें",
     "export all flows": "सभी Flows निर्यात करें",
     "export all templates": "सभी templates निर्यात करें",
+    "export_csv": "CSV के रूप में निर्यात करें",
     "exports": "निर्यात",
     "failed to render pdf": "PDF प्रस्तुत करने में विफल",
     "false": "असत्य",
@@ -642,6 +643,7 @@
       "customize columns": "तालिका स्तंभों को अनुकूलित करें",
       "customize tooltip": "कौन से फ़िल्टर प्रदर्शित करने हैं, इसे अनुकूलित करें",
       "delete filter": "फ़िल्टर हटाएं",
+      "delete filter confirm": "क्या आप वाकई इस फ़िल्टर को हटाना चाहते हैं?",
       "description": "विवरण",
       "deselect all": "सभी को अचयनित करें",
       "drag to reorder": "पुनः क्रमबद्ध करने के लिए खींचें",
@@ -1051,6 +1053,7 @@
     "last modified": "अंतिम संशोधित",
     "last trigger date": "अंतिम ट्रिगर की तारीख",
     "last trigger date tooltip": "ट्रिगर ने आखिरी बार कब निष्पादित किया था। जब एक backfill चल रहा हो तो यह अतीत में हो सकता है।",
+    "latest_update": "नवीनतम अपडेट",
     "launch execution": "निष्पादित करें",
     "learn_more": "और जानें",
     "leave page": "पृष्ठ छोड़ें",
@@ -1146,6 +1149,12 @@
         "label": "नाम बदलें",
         "new_file": "एक्सटेंशन के साथ नया नाम:",
         "new_folder": "नए फ़ोल्डर का नाम:"
+      },
+      "revisions": {
+        "history": "संशोधन इतिहास",
+        "restore": {
+          "success": "फ़ाइल संशोधन सफलतापूर्वक पुनर्स्थापित किया गया"
+        }
       },
       "toggle": {
         "hide": "Namespace फ़ाइलें छिपाएं",
@@ -1272,6 +1281,8 @@
     },
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
     "no_file_choosen": "कोई फ़ाइल चयनित नहीं",
+    "no_flow_outputs": "कोई output उपलब्ध नहीं है।",
+    "no_inputs": "कोई input उपलब्ध नहीं है।",
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले। <br> कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
@@ -1285,6 +1296,8 @@
     },
     "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
+    "no_trigger": "कोई trigger उपलब्ध नहीं है।",
+    "no_variables": "कोई वेरिएबल उपलब्ध नहीं हैं।",
     "now": "अब",
     "of": "का",
     "ok": "ठीक है",
@@ -1419,6 +1432,7 @@
     "reach us": "हमसे बात करें",
     "read-more": "और अधिक पढ़ें",
     "readonly property": "केवल-पढ़ने की संपत्ति",
+    "recent_executions": "हाल की Executions",
     "refresh": "ताज़ा करें",
     "reject": "अस्वीकार करें",
     "relative": "सापेक्ष",
@@ -1518,6 +1532,7 @@
     "sequential": "अनुक्रमिक",
     "server type": "सर्वर प्रकार",
     "services": "सेवाएँ",
+    "set_extra_labels": "अतिरिक्त labels सेट करें",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1678,6 +1693,7 @@
     "start datetime": "प्रारंभ दिनांक और समय",
     "started date": "प्रारंभ तिथि",
     "state": "स्थिति",
+    "state_history": "स्थिति इतिहास",
     "stats": "आँकड़े",
     "steps": "चरण",
     "stream": "स्ट्रीम",

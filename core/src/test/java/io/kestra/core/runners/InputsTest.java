@@ -12,11 +12,14 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+
+import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -49,6 +52,9 @@ public class InputsTest {
 
     @Inject
     private TestRunnerUtils runnerUtils;
+
+    @Inject
+    private NamespaceFactory namespaceFactory;
 
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")
@@ -429,9 +435,9 @@ public class InputsTest {
 
     @Test
     @LoadFlows(value = {"flows/valids/inputs.yaml"}, tenantId = "tenant18")
-    void fileInputWithNsfile() throws IOException, QueueException, TimeoutException {
+    void fileInputWithNsfile() throws IOException, QueueException, TimeoutException, URISyntaxException {
         HashMap<String, Object> inputs = new HashMap<>(InputsTest.inputs);
-        URI file = createNsFile(false, "tenant18");
+        URI file = createNsFile(false);
         inputs.put("file", file);
 
         Execution execution = runnerUtils.runOne(
@@ -452,11 +458,11 @@ public class InputsTest {
         return tempFile.toPath().toUri();
     }
 
-    private URI createNsFile(boolean nsInAuthority, String tenantId) throws IOException {
+    private URI createNsFile(boolean nsInAuthority) throws IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(tenantId, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(tenantId, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 }

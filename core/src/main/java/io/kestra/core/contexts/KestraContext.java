@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -83,6 +84,11 @@ public abstract class KestraContext {
     public abstract PluginRegistry getPluginRegistry();
 
     public abstract StorageInterface getStorageInterface();
+
+    /**
+     * Returns the Micronaut active environments.
+     */
+    public abstract Set<String> getEnvironments();
 
     /**
      * Shutdowns the Kestra application.
@@ -181,6 +187,11 @@ public abstract class KestraContext {
         public StorageInterface getStorageInterface() {
             // Lazy init of the PluginRegistry.
             return this.applicationContext.getBean(StorageInterface.class);
+        }
+
+        @Override
+        public Set<String> getEnvironments() {
+            return this.applicationContext.getEnvironment().getActiveNames();
         }
     }
 }

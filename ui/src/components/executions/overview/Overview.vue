@@ -77,18 +77,13 @@
                             <div>
                                 {{ $t("execution replay") }}
                                 <router-link
-                                    :to="{
-                                        name: 'executions/update',
-                                        params: {
-                                            ...(execution.tenantId
-                                                ? {tenant: execution.tenantId}
-                                                : {}),
-                                            namespace: execution.namespace,
-                                            flowId: execution.flowId,
-                                            id: execution.originalId,
-                                            tab: 'overview',
-                                        },
-                                    }"
+                                    :to="
+                                        createLink(
+                                            'executions',
+                                            execution,
+                                            execution.originalId,
+                                        )
+                                    "
                                 >
                                     <Id
                                         :value="execution.originalId"
@@ -195,6 +190,7 @@
 
     import moment from "moment";
 
+    import {createLink} from "./utils/links";
     import Utils from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
@@ -255,32 +251,13 @@
                 icon: DotsSquare,
                 label: t("namespace"),
                 value: execution.value.namespace,
-                to: {
-                    name: "namespaces/update",
-                    params: {
-                        ...(execution.value.tenantId
-                            ? {tenant: execution.value.tenantId}
-                            : {}),
-                        id: execution.value.namespace,
-                        tab: "overview",
-                    },
-                },
+                to: createLink("namespaces", execution.value),
             },
             {
                 icon: FileTreeOutline,
                 label: t("flow"),
                 value: execution.value.flowId,
-                to: {
-                    name: "flows/update",
-                    params: {
-                        ...(execution.value.tenantId
-                            ? {tenant: execution.value.tenantId}
-                            : {}),
-                        namespace: execution.value.namespace,
-                        id: execution.value.flowId,
-                        tab: "overview",
-                    },
-                },
+                to: createLink("flows", execution.value),
             },
             {
                 icon: LayersTripleOutline,
@@ -382,18 +359,11 @@
                         icon: History,
                         label: t("parent execution"),
                         value: execution.value.trigger.variables.executionId,
-                        to: {
-                            name: "executions/update",
-                            params: {
-                                ...(execution.value.tenantId
-                                    ? {tenant: execution.value.tenantId}
-                                    : {}),
-                                namespace: execution.value.namespace,
-                                flowId: execution.value.flowId,
-                                id: execution.value.trigger.variables.executionId,
-                                tab: "overview",
-                            },
-                        },
+                        to: createLink(
+                            "executions",
+                            execution.value,
+                            execution.value.trigger.variables.executionId,
+                        ),
                     },
                 ]
                 : []),
@@ -404,18 +374,11 @@
                         icon: History,
                         label: t("original execution"),
                         value: execution.value.originalId,
-                        to: {
-                            name: "executions/update",
-                            params: {
-                                ...(execution.value.tenantId
-                                    ? {tenant: execution.value.tenantId}
-                                    : {}),
-                                namespace: execution.value.namespace,
-                                flowId: execution.value.flowId,
-                                id: execution.value.originalId,
-                                tab: "overview",
-                            },
-                        },
+                        to: createLink(
+                            "executions",
+                            execution.value,
+                            execution.value.originalId,
+                        ),
                     },
                 ]
                 : []),

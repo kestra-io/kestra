@@ -51,8 +51,6 @@
         AppliedFilter
     } from "../utils/filterTypes";
 
-
-
     const props = defineProps<{
         configuration: FilterConfiguration;
         appliedFilters: AppliedFilter[];

@@ -507,7 +507,7 @@
     "environment color setting": "環境色",
     "environment name setting": "環境名",
     "error": "エラー",
-    "error detected": "エラーが検出されました",
+    "error detected": "エラーが検出されました。",
     "error in editor": "エディタにエラーが見つかりました",
     "errorLogs": "エラーログ",
     "errors": {
@@ -539,7 +539,7 @@
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
     "execution labels": "実行ラベル",
-    "execution not found": "実行<code>{executionId}</code>が見つかりません",
+    "execution not found": "<code>{executionId}</code> の実行が見つかりません。",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
     "execution not in state PAUSED": "実行<code>{executionId}</code>はPAUSED状態ではありません",
     "execution replay": "この実行は次のリプレイです",
@@ -554,11 +554,15 @@
       "metrics": "メトリクスを削除",
       "storage": "内部ストレージファイルを削除"
     },
-    "execution_failed": "実行に失敗しました！最後のエラーは",
+    "execution_failed": "実行に失敗しました！\n最後のエラーは",
     "execution_guide": {
       "get_started": {
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。",
         "title": "はじめに ⚡"
+      },
+      "namespaces": {
+        "text": "namespaceは、flowとそのコンポーネントの論理的なグループ化です。",
+        "title": "名前空間について"
       },
       "videos_tutorials": {
         "text": "ビデオチュートリアルで始めましょう。",
@@ -591,6 +595,7 @@
     "export": "エクスポート",
     "export all flows": "すべてのflowをエクスポート",
     "export all templates": "すべてのテンプレートをエクスポート",
+    "export_csv": "CSVとしてエクスポート",
     "exports": "エクスポート",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
@@ -638,6 +643,7 @@
       "customize columns": "テーブル列をカスタマイズ",
       "customize tooltip": "表示するフィルターをカスタマイズ",
       "delete filter": "フィルターを削除",
+      "delete filter confirm": "このフィルターを削除してもよろしいですか？",
       "description": "説明",
       "deselect all": "すべて選択解除",
       "drag to reorder": "ドラッグして並べ替え",
@@ -702,7 +708,8 @@
       "options": "データオプション",
       "periodic refresh": "定期更新",
       "refresh": "データを更新",
-      "reset": "すべてのフィルターをリセット",
+      "reset": "すべてクリア",
+      "reset_all": "すべてのフィルターをリセット",
       "reset_tooltip": "デフォルトにリセット",
       "save": "保存",
       "save duplicate": "この名前のフィルターはすでに存在します。",
@@ -770,7 +777,8 @@
           "revision": "この実行に使用されたflowのバージョン",
           "start-date": "実行が開始されたとき",
           "state": "現在の実行状態",
-          "task-id": "実行中の最後のタスクのID"
+          "task-id": "実行中の最後のタスクのID",
+          "trigger": "実行を開始したTrigger"
         },
         "flow_triggers": {
           "next execution date": "次にtriggerが実行されるとき",
@@ -1045,8 +1053,10 @@
     "last modified": "最終更新日時",
     "last trigger date": "最終トリガー日時",
     "last trigger date tooltip": "トリガーが最後に実行された時刻。バックフィルを実行している場合、過去の時刻になることがあります。",
+    "latest_update": "最新の更新",
     "launch execution": "実行",
     "learn_more": "詳細を確認",
+    "leave page": "ページを離れる",
     "light_background": "これは、明るい背景で作業する際の推奨オプションです。",
     "light_version": "ライトバージョン",
     "line-by-line": "行ごと表示",
@@ -1140,6 +1150,12 @@
         "new_file": "拡張子付きの新しい名前:",
         "new_folder": "新しいフォルダー名:"
       },
+      "revisions": {
+        "history": "リビジョン履歴",
+        "restore": {
+          "success": "ファイルのリビジョンが正常に復元されました"
+        }
+      },
       "toggle": {
         "hide": "namespaceファイルを非表示",
         "show": "namespaceファイルを表示"
@@ -1178,6 +1194,8 @@
     "no-executions-view": {
       "guidance_desc": "フローを実行するためのガイダンスが必要ですか？",
       "guidance_sub_desc": "ドキュメントを参照して、必要なすべての情報を確認してください。",
+      "namespace_guidance_desc": "Namespaceを管理するためのガイダンスが必要ですか？",
+      "namespace_sub_title": "このダッシュボードを埋めるために、このnamespaceから1つ以上のflowを実行します。",
       "sub_title": "「Execute」ボタンをクリックして、最初のworkflowのexecutionを開始してください。",
       "title": "自動化を開始"
     },
@@ -1263,6 +1281,8 @@
     },
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "no_file_choosen": "ファイルが選択されていません",
+    "no_flow_outputs": "出力は利用できません。",
+    "no_inputs": "入力が利用できません。",
     "no_logs_data": "データなし",
     "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
@@ -1276,6 +1296,8 @@
     },
     "no_results_found": "結果が見つかりません",
     "no_tasks_running": "タスクはまだ実行されていません。",
+    "no_trigger": "トリガーが利用できません。",
+    "no_variables": "変数は利用できません。",
     "now": "現在",
     "of": "の",
     "ok": "OK",
@@ -1410,6 +1432,7 @@
     "reach us": "お問い合わせ",
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
+    "recent_executions": "最近の実行",
     "refresh": "更新",
     "reject": "拒否",
     "relative": "相対",
@@ -1509,6 +1532,7 @@
     "sequential": "逐次",
     "server type": "サーバータイプ",
     "services": "サービス",
+    "set_extra_labels": "追加のラベルを設定",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1669,6 +1693,7 @@
     "start datetime": "開始日時",
     "started date": "開始日",
     "state": "状態",
+    "state_history": "状態履歴",
     "stats": "統計",
     "steps": "ステップ",
     "stream": "ストリーム",
@@ -1786,6 +1811,8 @@
     "unqueue title": "実行 <code>{id}</code> をキューから外します。<br/>ただし、flowの並行性制限には従わないため、許可された制限を超えて実行が行われる可能性があります。",
     "unqueue title multiple": "<code>{count}</code>件の実行をキューから外してもよろしいですか？<br/><br/>flowの並行性制限を守らないため、許可された制限を超えて実行される可能性があります。",
     "unsaved changed ?": "保存されていない変更があります。このページを離れますか？",
+    "unsaved changes": "未保存の変更",
+    "unsaved changes warning": "未保存の変更があります。このページを離れると、変更は失われます。",
     "up trend": "増加",
     "update": "更新",
     "update aborted": "更新が中止されました",

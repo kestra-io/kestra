@@ -1,7 +1,6 @@
 package io.kestra.cli.commands.flows.namespaces;
 
 import io.kestra.cli.App;
-import io.micronaut.configuration.picocli.PicocliRunner;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.cli.AbstractCommand;
@@ -22,8 +21,6 @@ public class FlowNamespaceCommand extends AbstractCommand {
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "flow", "namespace",  "--help");
-
-        return 0;
+        return App.runCli(new String[]{"flow", "namespace",  "--help"});
     }
 }

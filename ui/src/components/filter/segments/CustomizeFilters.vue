@@ -5,11 +5,11 @@
                 <h6>{{ t("filter.customize") }}</h6>
                 <small>{{ t("filter.select filter") }}</small>
             </div>
-            <el-button 
-                link 
-                :icon="Close" 
-                @click="$emit('close')" 
-                size="small" 
+            <el-button
+                link
+                :icon="Close"
+                @click="$emit('close')"
+                size="small"
                 class="close-icon"
             />
         </div>
@@ -53,12 +53,12 @@
     } from "../utils/filterTypes";
 
     const {t} = useI18n();
-    
+
     const props = defineProps<{
         configuration: FilterConfiguration;
         appliedFilters: AppliedFilter[];
     }>();
-    
+
     const emits = defineEmits<{
         close: [];
         "add-filter": [filter: AppliedFilter];
@@ -103,7 +103,7 @@
 <style lang="scss" scoped>
 .filters-panel {
     height: fit-content;
-    max-height: 327px;
+    max-height: 500px;
     display: flex;
     flex-direction: column;
     border-radius: 8px;
@@ -119,6 +119,7 @@
         justify-content: space-between;
         align-items: flex-start;
         padding: 0.75rem 1rem 0.5rem;
+        background-color: var(--ks-background-table-header);
         border-bottom: 1px solid var(--ks-border-primary);
         flex-shrink: 0;
         position: sticky;

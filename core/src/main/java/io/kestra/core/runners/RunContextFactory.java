@@ -6,16 +6,16 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginConfigurations;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.services.KVStoreService;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.context.ApplicationContext;
@@ -41,7 +41,7 @@ public class RunContextFactory {
 
     @Inject
     protected VariableRenderer variableRenderer;
-    
+
     @Inject
     protected SecureVariableRendererFactory secureVariableRendererFactory;
 
@@ -49,7 +49,7 @@ public class RunContextFactory {
     protected StorageInterface storageInterface;
 
     @Inject
-    protected FlowService flowService;
+    protected NamespaceService namespaceService;
 
     @Inject
     protected MetricRegistry metricRegistry;
@@ -77,15 +77,18 @@ public class RunContextFactory {
     @Inject
     private KVStoreService kvStoreService;
 
+    @Inject
+    private NamespaceFactory namespaceFactory;
+
     // hacky
     public RunContextInitializer initializer() {
         return applicationContext.getBean(RunContextInitializer.class);
     }
-    
+
     public RunContext of(FlowInterface flow, Execution execution) {
         return of(flow, execution, Function.identity());
     }
-    
+
     public RunContext of(FlowInterface flow, Execution execution, boolean decryptVariable) {
         return of(flow, execution, Function.identity(), decryptVariable);
     }
@@ -93,18 +96,18 @@ public class RunContextFactory {
     public RunContext of(FlowInterface flow, Execution execution, Function<RunVariables.Builder, RunVariables.Builder> runVariableModifier) {
         return of(flow, execution, runVariableModifier, true);
     }
-    
+
     public RunContext of(FlowInterface flow, Execution execution, Function<RunVariables.Builder, RunVariables.Builder> runVariableModifier, boolean decryptVariables) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(execution);
-        
+
         VariableRenderer variableRenderer = decryptVariables ? this.variableRenderer : secureVariableRendererFactory.createOrGet();
-        
+
         return newBuilder()
             // Logger
             .withLogger(runContextLogger)
             // Execution
             .withPluginConfiguration(Map.of())
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, flowService))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forExecution(execution), storageInterface, namespaceService, namespaceFactory))
             .withVariableRenderer(variableRenderer)
             .withVariables(runVariableModifier.apply(
                     newRunVariablesBuilder()
@@ -134,7 +137,7 @@ public class RunContextFactory {
             .withLogger(runContextLogger)
             // Task
             .withPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()))
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, flowService))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory))
             .withVariables(newRunVariablesBuilder()
                 .withFlow(flow)
                 .withTask(task)
@@ -150,8 +153,8 @@ public class RunContextFactory {
             .build();
     }
 
-    public RunContext of(Flow flow, AbstractTrigger trigger) {
-        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger, null);
+    public RunContext of(FlowInterface flow, AbstractTrigger trigger) {
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger);
         return newBuilder()
             // Logger
             .withLogger(runContextLogger)
@@ -170,11 +173,11 @@ public class RunContextFactory {
 
 
     @VisibleForTesting
-    public RunContext of(final Flow flow, final Map<String, Object> variables) {
+    public RunContext of(final FlowInterface flow, final Map<String, Object> variables) {
         RunContextLogger runContextLogger = new RunContextLogger();
         return newBuilder()
             .withLogger(runContextLogger)
-            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forFlow(flow), storageInterface, flowService))
+            .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forFlow(flow), storageInterface, namespaceService, namespaceFactory))
             .withVariables(variables)
             .withSecretInputs(secretInputsFromFlow(flow))
             .build();
@@ -213,7 +216,8 @@ public class RunContextFactory {
                     }
                 },
                 storageInterface,
-                flowService
+                namespaceService,
+                namespaceFactory
             ))
             .withVariables(variables)
             .withTask(task)

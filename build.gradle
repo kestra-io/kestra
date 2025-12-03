@@ -7,7 +7,7 @@ buildscript {
     }
 
     dependencies {
-        classpath "net.e175.klaus:zip-prefixer:0.3.1"
+        classpath "net.e175.klaus:zip-prefixer:0.4.0"
     }
 }
 
@@ -21,7 +21,7 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "7.0.1.6134"
+    id "org.sonarqube" version "7.1.0.6387"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -32,7 +32,7 @@ plugins {
 
     // release
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.5.3"
+    id "com.gorylenko.gradle-git-properties" version "2.5.4"
     id 'signing'
     id "com.vanniktech.maven.publish" version "0.35.0"
 

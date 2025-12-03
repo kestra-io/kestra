@@ -507,7 +507,7 @@
     "environment color setting": "Color del entorno",
     "environment name setting": "Nombre del entorno",
     "error": "Error",
-    "error detected": "Error(es) detectado(s)",
+    "error detected": "Se detectaron errores.",
     "error in editor": "Se ha encontrado un error en el editor",
     "errorLogs": "Registros de errores",
     "errors": {
@@ -539,7 +539,7 @@
     "execution": "Ejecución",
     "execution already finished": "Ejecución <code>{executionId}</code> ya finalizada",
     "execution labels": "Etiquetas de ejecución",
-    "execution not found": "Ejecución <code>{executionId}</code> no encontrada",
+    "execution not found": "La ejecución <code>{executionId}</code> no se encuentra.",
     "execution not in state FAILED": "Ejecución <code>{executionId}</code> no está en estado FAILED",
     "execution not in state PAUSED": "Ejecución <code>{executionId}</code> no está en estado PAUSED",
     "execution replay": "Esta ejecución es una repetición de",
@@ -554,11 +554,15 @@
       "metrics": "Eliminar métricas",
       "storage": "Eliminar archivos de almacenamiento interno"
     },
-    "execution_failed": "¡La ejecución falló! El último error fue",
+    "execution_failed": "¡Ejecución fallida!\nEl último error fue",
     "execution_guide": {
       "get_started": {
         "text": "Sigue la Guía de inicio rápido para instalar Kestra y comenzar a crear tus primeros flujos de trabajo.",
         "title": "Comenzar ⚡"
+      },
+      "namespaces": {
+        "text": "Los namespaces son agrupaciones lógicas de flows y sus componentes.",
+        "title": "Acerca de Namespaces"
       },
       "videos_tutorials": {
         "text": "Comienza con nuestros tutoriales en video.",
@@ -591,6 +595,7 @@
     "export": "Exportar",
     "export all flows": "Exportar todos los flows",
     "export all templates": "Exportar todas las plantillas",
+    "export_csv": "Exportar como CSV",
     "exports": "Exportaciones",
     "failed to render pdf": "Error al renderizar la vista previa del PDF",
     "false": "Falso",
@@ -638,6 +643,7 @@
       "customize columns": "Personalizar columnas de la tabla",
       "customize tooltip": "Personalizar qué filtros mostrar",
       "delete filter": "Eliminar filtro",
+      "delete filter confirm": "¿Está seguro de que desea eliminar este filtro?",
       "description": "Descripción",
       "deselect all": "Deseleccionar todo",
       "drag to reorder": "Arrastrar para reordenar",
@@ -702,7 +708,8 @@
       "options": "Opciones de Datos",
       "periodic refresh": "Actualización periódica",
       "refresh": "Actualizar datos",
-      "reset": "Restablecer todos los filtros",
+      "reset": "Borrar todo",
+      "reset_all": "Restablecer todos los filtros",
       "reset_tooltip": "Restablecer a los valores predeterminados",
       "save": "Guardar",
       "save duplicate": "Ya existe un filtro con este nombre.",
@@ -770,7 +777,8 @@
           "revision": "Versión del flow utilizada para esta ejecución",
           "start-date": "Cuando la ejecución comenzó",
           "state": "Estado actual de ejecución",
-          "task-id": "ID de la última task en la ejecución"
+          "task-id": "ID de la última task en la ejecución",
+          "trigger": "Trigger que inició la ejecución"
         },
         "flow_triggers": {
           "next execution date": "Cuándo se ejecutará el trigger a continuación",
@@ -1045,8 +1053,10 @@
     "last modified": "Última modificación",
     "last trigger date": "Fecha de último trigger",
     "last trigger date tooltip": "Cuando el trigger se ejecutó por última vez. Puede estar en el pasado al ejecutar un backfill.",
+    "latest_update": "Última actualización",
     "launch execution": "Ejecutar",
     "learn_more": "Aprender más",
+    "leave page": "Salir de la página",
     "light_background": "Esta es la opción preferida al trabajar con un fondo claro.",
     "light_version": "Versión ligera",
     "line-by-line": "línea por línea",
@@ -1140,6 +1150,12 @@
         "new_file": "Nuevo nombre con extensión:",
         "new_folder": "Nuevo nombre de carpeta:"
       },
+      "revisions": {
+        "history": "Historial de revisiones",
+        "restore": {
+          "success": "Revisión del archivo restaurada con éxito"
+        }
+      },
       "toggle": {
         "hide": "Ocultar archivos del namespace",
         "show": "Mostrar archivos del namespace"
@@ -1178,6 +1194,8 @@
     "no-executions-view": {
       "guidance_desc": "¿Necesitas orientación para ejecutar tu flow?",
       "guidance_sub_desc": "Sigue la documentación para toda la información que necesitas.",
+      "namespace_guidance_desc": "¿Necesitas orientación para gestionar tu Namespace?",
+      "namespace_sub_title": "Ejecuta uno o más flows de este namespace para llenar este panel.",
       "sub_title": "Haz clic en el botón Ejecutar para iniciar la ejecución de tu primer flujo de trabajo.",
       "title": "Comienza a automatizar con"
     },
@@ -1263,6 +1281,8 @@
     },
     "no_data": "Parece que no hay nada aquí... ¡todavía!<br/>Ajusta tus filtros o inténtalo de nuevo.",
     "no_file_choosen": "No se ha elegido archivo",
+    "no_flow_outputs": "No hay outputs disponibles.",
+    "no_inputs": "No hay inputs disponibles.",
     "no_logs_data": "Sin datos",
     "no_logs_data_description": "No se encontraron logs para los filtros seleccionados. <br> Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
@@ -1276,6 +1296,8 @@
     },
     "no_results_found": "No se encontraron resultados",
     "no_tasks_running": "Todavía no hay tasks en ejecución.",
+    "no_trigger": "No hay trigger disponible.",
+    "no_variables": "No hay variables disponibles.",
     "now": "Ahora",
     "of": "de",
     "ok": "OK",
@@ -1410,6 +1432,7 @@
     "reach us": "Habla con nosotros",
     "read-more": "Leer más sobre",
     "readonly property": "Propiedad de solo lectura",
+    "recent_executions": "Ejecuciones Recientes",
     "refresh": "Actualizar",
     "reject": "Rechazar",
     "relative": "Relativo",
@@ -1509,6 +1532,7 @@
     "sequential": "Secuencial",
     "server type": "Tipo de servidor",
     "services": "Servicios",
+    "set_extra_labels": "Establecer etiquetas adicionales",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1669,6 +1693,7 @@
     "start datetime": "Fecha y hora de inicio",
     "started date": "Fecha de inicio",
     "state": "Estado",
+    "state_history": "Historial de estado",
     "stats": "Estadísticas",
     "steps": "Pasos",
     "stream": "Stream",
@@ -1786,6 +1811,8 @@
     "unqueue title": "Desencolar ejecución <code>{id}</code>.<br/>Tenga en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían estar ejecutándose más ejecuciones de las permitidas.",
     "unqueue title multiple": "¿Está seguro de que desea descolar <code>{count}</code> ejecuciones?<br/><br/>Tenga en cuenta que no respetará el límite de concurrencia del flow, por lo que podrían estar ejecutándose más ejecuciones de las permitidas.",
     "unsaved changed ?": "Tienes cambios no guardados, ¿quieres salir de esta página?",
+    "unsaved changes": "Cambios no guardados",
+    "unsaved changes warning": "Tienes cambios no guardados. Si abandonas esta página, tus cambios se perderán.",
     "up trend": "Aumentando",
     "update": "Actualizar",
     "update aborted": "actualización abortada",

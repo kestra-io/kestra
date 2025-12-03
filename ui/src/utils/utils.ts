@@ -195,7 +195,7 @@ export default class Utils {
         return null; // Return null if no filename is found
     }
 
-    static switchTheme(miscStore: any, theme: string | undefined) {
+    static switchTheme(miscStore: any, theme?: string) {
         // default theme
         if (theme === undefined) {
             if (localStorage.getItem("theme")) {
@@ -307,6 +307,19 @@ export default class Utils {
         } else {
             return "yyyy-MM-DD:HH:mm";
         }
+    }
+
+    static getParentNamespaces(namespace: string): string[] {
+        if (!namespace) return [];
+
+        const parts = namespace.split(".");
+        const parents: string[] = [];
+
+        for (let i = 1; i <= parts.length; i++) {
+            parents.push(parts.slice(0, i).join("."));
+        }
+
+        return parents;
     }
 }
 

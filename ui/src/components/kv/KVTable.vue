@@ -248,7 +248,6 @@
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    //@ts-expect-error No declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
@@ -261,6 +260,7 @@
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
     import {useKvFilter} from "../filter/configurations";
+    import moment from "moment-timezone";
 
     import {useTableColumns} from "../../composables/useTableColumns";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
@@ -272,7 +272,6 @@
     import DataTable from "../layout/DataTable.vue";
     import _merge from "lodash/merge";
     import {type DataTableRef, useDataTableActions} from "../../composables/useDataTableActions.ts";
-
     const dataTable = useTemplateRef<DataTableRef>("dataTable");
 
     const loadData = async (callback?: () => void) => {
@@ -290,8 +289,33 @@
                 })
             }));
 
-            kvs.value = kvsResponse.results;
-            total.value = kvsResponse.total;
+            let allKvs = kvsResponse.results ?? [];
+
+            if (props.includeInherited && props.namespace) {
+                const parentNamespaces = Utils.getParentNamespaces(props.namespace).slice(0, -1);
+                
+                for (const parentNs of parentNamespaces) {
+                    const parentKvsResponse = await kvStore.find(loadQuery({
+                        filters: {
+                            namespace: {
+                                EQUALS: parentNs
+                            }
+                        }
+                    }));
+
+                    const parentKvs = parentKvsResponse?.results ?? [];
+                    if (parentKvs.length > 0) {
+                        const currentKeys = new Set(allKvs.map((kv: any) => kv?.key).filter(Boolean));
+                        const newKvs = parentKvs.filter(
+                            (kv: any) => kv?.key && !currentKeys.has(kv.key)
+                        );
+                        allKvs.push(...newKvs);
+                    }
+                }
+            }
+
+            kvs.value = allKvs;
+            total.value = allKvs.length;
         } finally {
             if (callback) callback();
         }
@@ -310,9 +334,11 @@
     const props = withDefaults(defineProps<{
         namespace?: string;
         paneView?: boolean;
+        includeInherited?: boolean;
     }>(), {
         namespace: undefined,
-        paneView: false
+        paneView: false,
+        includeInherited: false
     });
 
     const route = useRoute();
@@ -497,6 +523,11 @@
             kv.value.value = JSON.stringify(value);
         } else if (type === "BOOLEAN") {
             kv.value.value = value;
+        } else if (type === "DATETIME") {
+            // Follow Timezone from Settings to display KV of type DATETIME (issue #9428)
+            // Convert the datetime value to the user's timezone for proper display in the date picker
+            const userTimezone = localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) || moment.tz.guess();
+            kv.value.value = moment(value).tz(userTimezone).toDate();
         } else {
             kv.value.value = value.toString();
         }
@@ -530,6 +561,7 @@
                         .deleteKvs({namespace, request: {keys: kvs.map(kv => kv.key)}})
                         .then(() => {
                             toast.deleted(`${kvs.length} KV(s) from ${namespace} namespace`);
+                            toggleAllUnselected();
                             loadData();
                         });
                 });

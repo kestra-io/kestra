@@ -39,7 +39,6 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -83,7 +82,6 @@ public abstract class AbstractScheduler implements Scheduler {
     private final ConditionService conditionService;
     private final PluginDefaultService pluginDefaultService;
     private final WorkerGroupService workerGroupService;
-    private final LogService logService;
     protected SchedulerExecutionStateInterface executionState;
     private final WorkerGroupExecutorInterface workerGroupExecutorInterface;
     private final MaintenanceService maintenanceService;
@@ -136,7 +134,6 @@ public abstract class AbstractScheduler implements Scheduler {
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.pluginDefaultService = applicationContext.getBean(PluginDefaultService.class);
         this.workerGroupService = applicationContext.getBean(WorkerGroupService.class);
-        this.logService = applicationContext.getBean(LogService.class);
         this.serviceStateEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.executionEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.workerGroupExecutorInterface = applicationContext.getBean(WorkerGroupExecutorInterface.class);
@@ -703,7 +700,7 @@ public abstract class AbstractScheduler implements Scheduler {
                                     this.triggerState.save(triggerRunning, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/polling");
                                     this.sendWorkerTriggerToWorker(flowWithTrigger);
                                 } catch (InternalException e) {
-                                    logService.logTrigger(
+                                    Logs.logTrigger(
                                         f.getTriggerContext(),
                                         logger,
                                         Level.ERROR,
@@ -728,7 +725,7 @@ public abstract class AbstractScheduler implements Scheduler {
                                     this.triggerState.save(trigger, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/schedule");
                                 }
                             } else {
-                                logService.logTrigger(
+                                Logs.logTrigger(
                                     f.getTriggerContext(),
                                     logger,
                                     Level.ERROR,
@@ -879,7 +876,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
                     }
                     if (lastTrigger.getUpdatedDate() == null || lastTrigger.getUpdatedDate().plusSeconds(60).isBefore(Instant.now())) {
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             lastTrigger,
                             Level.WARN,
                             "Execution '{}' is not found, schedule is blocked since '{}'",
@@ -895,7 +892,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
                 }
                 if (log.isDebugEnabled()) {
-                    logService.logTrigger(
+                    Logs.logTrigger(
                         lastTrigger,
                         Level.DEBUG,
                         "Execution '{}' is still '{}', updated at '{}'",
@@ -936,7 +933,7 @@ public abstract class AbstractScheduler implements Scheduler {
             }
         }
 
-        logService.logTrigger(
+        Logs.logTrigger(
             executionWithTrigger.getTriggerContext(),
             Level.INFO,
             "Scheduled execution {} at '{}' started at '{}'",
@@ -969,7 +966,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     );
 
                     if (log.isDebugEnabled()) {
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             flowWithTrigger.getTriggerContext(),
                             Level.DEBUG,
                             "[type: {}] {}",
@@ -994,7 +991,7 @@ public abstract class AbstractScheduler implements Scheduler {
     private void logError(FlowWithWorkerTrigger flowWithWorkerTriggerNextDate, Throwable e) {
         Logger logger = flowWithWorkerTriggerNextDate.getConditionContext().getRunContext().logger();
 
-        logService.logTrigger(
+        Logs.logTrigger(
             flowWithWorkerTriggerNextDate.getTriggerContext(),
             logger,
             Level.WARN,
@@ -1013,7 +1010,7 @@ public abstract class AbstractScheduler implements Scheduler {
         trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
 
-        logService.logExecution(
+        Logs.logExecution(
             flow,
             logger,
             Level.ERROR,
@@ -1027,7 +1024,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
     private void sendWorkerTriggerToWorker(FlowWithWorkerTrigger flowWithTrigger) throws InternalException {
         if (log.isDebugEnabled()) {
-            logService.logTrigger(
+            Logs.logTrigger(
                 flowWithTrigger.getTriggerContext(),
                 Level.DEBUG,
                 "[date: {}] Scheduling evaluation to the worker",

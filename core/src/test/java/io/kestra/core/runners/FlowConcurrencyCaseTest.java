@@ -13,7 +13,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -26,7 +25,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.time.Duration;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
@@ -58,22 +59,32 @@ public class FlowConcurrencyCaseTest {
 
     public void flowConcurrencyCancel() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, NAMESPACE, "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
-        Execution execution2 = runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-cancel");
+        try {
+            List<Execution> shouldFailExecutions = List.of(
+                runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-cancel"),
+                runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-cancel")
+            );
+            assertThat(execution1.getState().isRunning()).isTrue();
 
-        assertThat(execution1.getState().isRunning()).isTrue();
-        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
-
-        runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution1);
+            assertThat(shouldFailExecutions.stream().map(Execution::getState).map(State::getCurrent)).allMatch(Type.CANCELLED::equals);
+        } finally {
+            runnerUtils.killExecution(execution1);
+        }
     }
 
     public void flowConcurrencyFail() throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, NAMESPACE, "flow-concurrency-fail", null, null, Duration.ofSeconds(30));
-        Execution execution2 = runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-fail");
+        try {
+            List<Execution> shouldFailExecutions = List.of(
+                runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-fail"),
+                runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "flow-concurrency-fail")
+            );
 
-        assertThat(execution1.getState().isRunning()).isTrue();
-        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-
-        runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), execution1);
+            assertThat(execution1.getState().isRunning()).isTrue();
+            assertThat(shouldFailExecutions.stream().map(Execution::getState).map(State::getCurrent)).allMatch(State.Type.FAILED::equals);
+        } finally {
+            runnerUtils.killExecution(execution1);
+        }
     }
 
     public void flowConcurrencyQueue() throws QueueException {
@@ -136,11 +147,11 @@ public class FlowConcurrencyCaseTest {
         URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
         Execution forEachItem = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-for-each-item", null,
-        (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs), Duration.ofSeconds(5));
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs), Duration.ofSeconds(5));
         assertThat(forEachItem.getState().getCurrent()).isEqualTo(Type.RUNNING);
 
 
-        Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(),forEachItem);
+        Execution terminated = runnerUtils.awaitExecution(e -> e.getState().isTerminated(), forEachItem);
         assertThat(terminated.getState().getCurrent()).isEqualTo(Type.SUCCESS);
 
         List<Execution> executions = runnerUtils.awaitFlowExecutionNumber(2, tenantId, NAMESPACE, "flow-concurrency-queue");
@@ -171,8 +182,9 @@ public class FlowConcurrencyCaseTest {
 
         assertThat(executionResult1.getState().getCurrent()).isEqualTo(Type.FAILED);
         // it should have been queued after restarted
-        assertThat(executionResult1.getState().getHistories().stream().anyMatch(history -> history.getState() == Type.RESTARTED)).isTrue();
-        assertThat(executionResult1.getState().getHistories().stream().anyMatch(history -> history.getState() == Type.QUEUED)).isTrue();
+        List<Type> stateList = executionResult1.getState().getHistories().stream().map(History::getState).toList();
+        assertThat(stateList).contains(Type.RESTARTED);
+        assertThat(stateList).contains(Type.QUEUED);
         assertThat(executionResult2.getState().getCurrent()).isEqualTo(Type.FAILED);
         assertThat(executionResult2.getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(executionResult2.getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);

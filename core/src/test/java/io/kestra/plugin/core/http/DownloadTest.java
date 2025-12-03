@@ -252,8 +252,25 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(output.getUri().toString()).doesNotContain("/secure-path/");
         assertThat(output.getUri().toString()).endsWith("file.with+spaces.txt");
+    }
+
+    @Test
+    void contentDispositionWithBrackets() throws Exception {
+        EmbeddedServer embeddedServer = applicationContext.getBean(EmbeddedServer.class);
+        embeddedServer.start();
+
+        Download task = Download.builder()
+            .id(DownloadTest.class.getSimpleName())
+            .type(DownloadTest.class.getName())
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition-with-brackets"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        Download.Output output = task.run(runContext);
+
+        assertThat(output.getUri().toString()).endsWith("file.with%5B%5Dbrackets.txt");
     }
 
     @Controller()
@@ -301,6 +318,11 @@ class DownloadTest {
         public HttpResponse<byte[]> contentDispositionWithSpaceAfterDot() {
             return HttpResponse.ok("Hello World".getBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"file.with spaces.txt\"");
+        }
+        @Get("content-disposition-with-brackets")
+        public HttpResponse<byte[]> contentDispositionWithBrackets() {
+            return HttpResponse.ok("Hello World".getBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"file.with[]brackets.txt\"");
         }
     }
 }

@@ -1,22 +1,16 @@
 <template>
     <div class="wrapper">
         <el-button type="secondary" @click="emit('reject')">
-            {{ t('reject') }}
+            {{ $t("reject") }}
         </el-button>
         <el-button type="primary" @click="emit('accept')">
-            {{ t('accept') }}
+            {{ $t("accept") }}
         </el-button>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {getCurrentInstance} from "vue";
-
-    const t = getCurrentInstance()!.appContext.config.globalProperties.$t;
-    const emit = defineEmits<{
-        accept: [];
-        reject: [];
-    }>();
+    const emit = defineEmits<{ accept: []; reject: [] }>();
 </script>
 
 <style scoped lang="scss">
@@ -26,13 +20,13 @@
     justify-content: end;
     align-items: center;
     gap: 10px;
-    background: #1E202AD9;
+    background: #1e202ad9;
     backdrop-filter: blur(10px);
     padding: 1rem;
-    border-top:1px solid var(--ks-border-primary);
+    border-top: 1px solid var(--ks-border-primary);
 
     html.light & {
-        background: #F8F9FA80;
+        background: #f8f9fa80;
     }
 
     &:deep(.el-button) {

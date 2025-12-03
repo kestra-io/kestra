@@ -39,13 +39,13 @@ public interface TriggerRepositoryInterface extends QueryBuilderInterface<Trigge
      * @param tenantId the tenant of the triggers
      * @return The count.
      */
-    int count(@Nullable String tenantId);
+    long countAll(@Nullable String tenantId);
 
     /**
      * Find all triggers that match the query, return a flux of triggers
-     * as the search is not paginated
      */
-    Flux<Trigger> find(String tenantId, List<QueryFilter> filters);
+    Flux<Trigger> findAsync(String tenantId, List<QueryFilter> filters);
+
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return Function.identity();

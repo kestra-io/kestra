@@ -1,8 +1,10 @@
 package io.kestra.core.storages;
 
+import io.kestra.core.annotations.Retryable;
 import jakarta.annotation.Nullable;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -45,6 +47,15 @@ public interface Storage {
      * @throws IOException              if an error happens while accessing the file.
      */
     InputStream getFile(URI uri) throws IOException;
+
+    /**
+     * Retrieves the metadata attributes for the given URI.
+     *
+     * @param uri       the URI of the object
+     * @return the file attributes
+     * @throws IOException if the attributes cannot be retrieved
+     */
+    FileAttributes getAttributes(URI uri) throws IOException;
 
     /**
      * Deletes the file for the given URI.

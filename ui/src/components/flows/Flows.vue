@@ -1,7 +1,12 @@
 <template>
     <TopNavBar v-if="topbar" :title="routeInfo.title">
         <template #additional-right>
-            <ul>
+            <ul class="header-actions-list">
+                <li>
+                    <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
+                        {{ t('export_csv') }}
+                    </el-button>
+                </li>
                 <li>
                     <el-button :icon="Upload" @click="file?.click()">
                         {{ t("import") }}
@@ -53,6 +58,7 @@
                             refresh: {shown: true, callback: refresh}
                         }"
                         @update-properties="updateDisplayColumns"
+                        :defaultScope="!route.name?.toString().startsWith('namespaces/')"
                     />
                 </template>
 
@@ -249,8 +255,8 @@
 
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, useTemplateRef} from "vue";
-    import {useRoute, useRouter} from "vue-router";
+    import {ref, computed, useTemplateRef} from "vue";
+    import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
     import * as FILTERS from "../../utils/filters";
@@ -284,7 +290,6 @@
     import permission from "../../models/permission";
 
     import {useToast} from "../../utils/toast";
-    import {defaultNamespace} from "../../composables/useNamespaces";
 
     import {useFlowStore} from "../../stores/flow";
     import {useAuthStore} from "override/stores/auth";
@@ -294,7 +299,6 @@
     import {useTableColumns} from "../../composables/useTableColumns";
     import {DataTableRef, useDataTableActions} from "../../composables/useDataTableActions";
     import {useSelectTableActions} from "../../composables/useSelectTableActions";
-
 
     const props = withDefaults(defineProps<{
         topbar?: boolean;
@@ -312,11 +316,10 @@
     const miscStore = useMiscStore();
 
     const route = useRoute();
-    const router = useRouter();
 
     const {t} = useI18n();
     const toast = useToast()
-    
+
     const flowFilter = useFlowFilter();
 
     const lastExecutionByFlowReady = ref(false);
@@ -325,39 +328,39 @@
 
     const optionalColumns = ref([
         {
-            label: t("labels"), 
-            prop: "labels", 
-            default: true, 
+            label: t("labels"),
+            prop: "labels",
+            default: true,
             description: t("filter.table_column.flows.labels")
         },
         {
-            label: t("namespace"), 
-            prop: "namespace", 
-            default: true, 
+            label: t("namespace"),
+            prop: "namespace",
+            default: true,
             description: t("filter.table_column.flows.namespace")
         },
         {
-            label: t("last execution date"), 
-            prop: "state.startDate", 
-            default: true, 
+            label: t("last execution date"),
+            prop: "state.startDate",
+            default: true,
             description: t("filter.table_column.flows.last execution date")
         },
         {
-            label: t("last execution status"), 
-            prop: "state.current", 
-            default: true, 
+            label: t("last execution status"),
+            prop: "state.current",
+            default: true,
             description: t("filter.table_column.flows.last execution status")
         },
         {
-            label: t("execution statistics"), 
-            prop: "state", 
-            default: true, 
+            label: t("execution statistics"),
+            prop: "state",
+            default: true,
             description: t("filter.table_column.flows.execution statistics")
         },
         {
-            label: t("triggers"), 
-            prop: "triggers", 
-            default: true, 
+            label: t("triggers"),
+            prop: "triggers",
+            default: true,
             description: t("filter.table_column.flows.triggers")
         },
     ]);
@@ -407,9 +410,9 @@
     }
 
     const {
-        queryWithFilter, 
-        onPageChanged, 
-        onRowDoubleClick, 
+        queryWithFilter,
+        onPageChanged,
+        onRowDoubleClick,
         onSort,
         ready
     } = useDataTableActions({
@@ -427,10 +430,10 @@
     }
 
     const {
-        selection, 
-        queryBulkAction, 
-        handleSelectionChange, 
-        toggleAllUnselected, 
+        selection,
+        queryBulkAction,
+        handleSelectionChange,
+        toggleAllUnselected,
         toggleAllSelection
     } = useSelectTableActions({
         dataTableRef: selectTableRef,
@@ -505,10 +508,12 @@
                 if (queryBulkAction.value) {
                     return flowStore.exportFlowByQuery(loadQuery()).then(() => {
                         toast.success(t("flows exported", {count: flowCount}));
+                        toggleAllUnselected();
                     });
                 } else {
                     return flowStore.exportFlowByIds({ids: selection.value}).then(() => {
                         toast.success(t("flows exported", {count: flowCount}));
+                        toggleAllUnselected();
                     });
                 }
             }
@@ -522,11 +527,13 @@
                 if (queryBulkAction.value) {
                     return flowStore.disableFlowByQuery(loadQuery()).then((r: any) => {
                         toast.success(t("flows disabled", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 } else {
                     return flowStore.disableFlowByIds({ids: selectionIds.value}).then((r: any) => {
                         toast.success(t("flows disabled", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 }
@@ -549,11 +556,13 @@
                 if (queryBulkAction.value) {
                     return flowStore.enableFlowByQuery(loadQuery()).then((r: any) => {
                         toast.success(t("flows enabled", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 } else {
                     return flowStore.enableFlowByIds({ids: selectionIds.value}).then((r: any) => {
                         toast.success(t("flows enabled", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 }
@@ -568,11 +577,13 @@
                 if (queryBulkAction.value) {
                     return flowStore.deleteFlowByQuery(loadQuery()).then((r: any) => {
                         toast.success(t("flows deleted", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 } else {
                     return flowStore.deleteFlowByIds({ids: selectionIds.value}).then((r: any) => {
                         toast.success(t("flows deleted", {count: r.data.count}));
+                        toggleAllUnselected();
                         loadData(() => { });
                     });
                 }
@@ -634,24 +645,11 @@
         }];
     }
 
-    onMounted(() => {
-        const query = {...route.query};
-        const queryKeys = Object.keys(query);
-        let queryHasChanged = false;
-
-        if (props.namespace === undefined && defaultNamespace() && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
-            query["filters[namespace][PREFIX]"] = defaultNamespace();
-            queryHasChanged = true;
-        }
-
-        if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
-            query["filters[scope][EQUALS]"] = "USER";
-            queryHasChanged = true;
-        }
-
-        if (queryHasChanged) router.replace({query});
-    });
-
+    async function exportFlowsAsStream() {
+        await flowStore.exportFlowAsCSV(
+            route.query
+        )
+    }
 </script>
 
 <style scoped lang="scss">
@@ -678,5 +676,17 @@
 
 :deep(.flows-table) .el-scrollbar__thumb {
     background-color: var(--ks-border-active) !important;
+}
+.header-actions-list {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    gap: 0.5rem;
+
+    @media (max-width: 570px) {
+        flex-direction: column;
+        align-items: flex-end;
+    }
 }
 </style>

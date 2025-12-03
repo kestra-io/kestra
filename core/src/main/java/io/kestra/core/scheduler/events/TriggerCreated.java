@@ -1,5 +1,6 @@
 package io.kestra.core.scheduler.events;
 
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.triggers.TriggerId;
 
 import java.time.Instant;
@@ -9,11 +10,12 @@ import java.time.Instant;
  */
 public record TriggerCreated(
     TriggerId id,
+    int revision,
     Instant timestamp,
-    int revision
+    EventId eventId
 ) implements TriggerEvent {
     
     public TriggerCreated(TriggerId id, int revision) {
-        this(id, Instant.now(), revision);
+        this(id, revision, Instant.now(), EventId.create());
     }
 }

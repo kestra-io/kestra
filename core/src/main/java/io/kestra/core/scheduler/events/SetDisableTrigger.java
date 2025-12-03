@@ -1,5 +1,6 @@
 package io.kestra.core.scheduler.events;
 
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.triggers.TriggerId;
 
 import java.time.Instant;
@@ -9,11 +10,12 @@ import java.time.Instant;
  */
 public record SetDisableTrigger(
     TriggerId id,
+    boolean disabled,
     Instant timestamp,
-    boolean disabled
+    EventId eventId
 ) implements TriggerEvent {
     
     public SetDisableTrigger(TriggerId id, Boolean disabled) {
-        this(id, Instant.now(), disabled);
+        this(id, disabled, Instant.now(), EventId.create());
     }
 }

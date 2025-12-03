@@ -82,7 +82,7 @@ public class TriggerEventPublisher implements AutoCloseable {
                     FlowService.findRemovedTrigger(flow, previous);
 
                 triggersDeleted.forEach(trigger ->
-                    sendEvent(new TriggerDeleted(TriggerId.of(flow, trigger), Instant.now()))
+                    sendEvent(new TriggerDeleted(TriggerId.of(flow, trigger)))
                 );
             }
 
@@ -91,7 +91,7 @@ public class TriggerEventPublisher implements AutoCloseable {
                     .stream()
                     .filter(trigger -> trigger instanceof WorkerTriggerInterface)
                     .forEach(trigger ->
-                        sendEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision(), Instant.now()))
+                        sendEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision()))
                     );
                 return;
             }
@@ -101,7 +101,7 @@ public class TriggerEventPublisher implements AutoCloseable {
                     .stream()
                     .filter(trigger -> trigger instanceof WorkerTriggerInterface)
                     .forEach(trigger ->
-                        sendEvent(new TriggerCreated(TriggerId.of(flow, trigger), Instant.now(), flow.getRevision()))
+                        sendEvent(new TriggerCreated(TriggerId.of(flow, trigger), flow.getRevision()))
                     );
             }
         }));

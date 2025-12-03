@@ -566,7 +566,7 @@ public class DefaultWorker implements Worker {
             .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
             .increment();
         
-        triggerEventQueue.send(new TriggerReceived(TriggerId.of(workerTrigger.getTriggerContext()), Instant.now(), getId()));
+        triggerEventQueue.send(new TriggerReceived(TriggerId.of(workerTrigger.getTriggerContext()), getId()));
 
         this.metricRegistry
             .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, MetricRegistry.METRIC_WORKER_TRIGGER_DURATION_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))

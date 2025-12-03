@@ -612,6 +612,10 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
                 }
             }
         }
+
+        & :deep(.el-empty) {
+            padding: 0;
+        }
     }
 
     div.el-divider {

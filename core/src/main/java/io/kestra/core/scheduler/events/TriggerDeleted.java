@@ -1,5 +1,6 @@
 package io.kestra.core.scheduler.events;
 
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.triggers.TriggerId;
 
 import java.time.Instant;
@@ -9,9 +10,10 @@ import java.time.Instant;
  */
 public record TriggerDeleted(
     TriggerId id,
-    Instant timestamp
+    Instant timestamp,
+    EventId eventId
 ) implements TriggerEvent {
     public TriggerDeleted(TriggerId id) {
-        this(id, Instant.now());
+        this(id, Instant.now(), EventId.create());
     }
 }

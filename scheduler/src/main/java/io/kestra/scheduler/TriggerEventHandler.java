@@ -1,5 +1,6 @@
 package io.kestra.scheduler;
 
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -78,7 +79,7 @@ public class TriggerEventHandler {
         LOG.debug("Received event {} for {} at {}", event.type(), event.id(), event.timestamp());
         switch (event) {
             // Events
-            case TriggerCreated evt -> onTriggerCreated(evt, vNode);
+            case TriggerCreated evt -> onTriggerCreated(clock, evt, vNode);
             case TriggerDeleted evt -> onTriggerDeleted(evt);
             case TriggerUpdated evt -> onTriggerUpdated(clock, evt);
             case TriggerExecutionTerminated evt -> onTriggerExecutionTerminated(clock, evt);
@@ -101,6 +102,7 @@ public class TriggerEventHandler {
     void onCreateBackfill(Clock clock, CreateBackfillTrigger event) {
         findTriggerState(event).ifPresent(state -> {
             state = state
+                .lastEventId(clock, event.eventId())
                 .backfill(clock, Backfill
                     .builder()
                     .start(event.backfill().start())
@@ -138,7 +140,10 @@ public class TriggerEventHandler {
     void onSetTriggerDisable(Clock clock, SetPauseBackfillTrigger event) {
         findTriggerState(event).ifPresent(state -> {
             if (state.getBackfill() != null) {
-                triggerStateStore.save(state.backfill(clock, state.getBackfill().toBuilder().paused(event.pause()).build()));
+                state = state
+                    .lastEventId(clock, event.eventId())
+                    .backfill(clock, state.getBackfill().toBuilder().paused(event.pause()).build());
+                triggerStateStore.save(state);
             }
         });
     }
@@ -151,7 +156,10 @@ public class TriggerEventHandler {
      */
     void onSetTriggerDisable(Clock clock, SetDisableTrigger event) {
         findTriggerState(event).ifPresent(state -> {
-            triggerStateStore.save(state.disabled(clock, event.disabled()));
+            state = state
+                .lastEventId(clock, event.eventId())
+                .disabled(clock, event.disabled());
+            triggerStateStore.save(state);
         });
     }
     
@@ -163,6 +171,7 @@ public class TriggerEventHandler {
     void onTriggerExecutionTerminated(Clock clock, TriggerExecutionTerminated event) {
         findTriggerState(event).ifPresent(state -> {
             triggerStateStore.save(state
+                .lastEventId(clock, event.eventId())
                 .locked(clock, false)
                 .updateForExecutionState(clock, event.executionState())
             );
@@ -190,6 +199,7 @@ public class TriggerEventHandler {
                 newState.updateForExecution(clock, event.execution());
             }
             
+            newState = state.lastEventId(clock, event.eventId());
             triggerStateStore.save(newState);
             
             if (event.execution() != null) {
@@ -206,7 +216,10 @@ public class TriggerEventHandler {
      */
     void onTriggerReceived(Clock clock, TriggerReceived event) {
         findTriggerState(event).ifPresent(state -> {
-            triggerStateStore.save(state.workerId(clock, event.workerId()));
+            state = state
+                .lastEventId(clock, event.eventId())
+                .workerId(clock, event.workerId());
+            triggerStateStore.save(state);
         });
     }
     
@@ -217,7 +230,10 @@ public class TriggerEventHandler {
      */
     void onResetTrigger(Clock clock, ResetTrigger event) {
         findTriggerState(event).ifPresent(state -> {
-            triggerStateStore.save(state.reset(clock));
+            state = state
+                .lastEventId(clock, event.eventId())
+                .reset(clock);
+            triggerStateStore.save(state);
         });
     }
     
@@ -230,7 +246,10 @@ public class TriggerEventHandler {
         findTriggerState(event).ifPresent(state -> {
             Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
             if (data.getRight() != null) {
-                triggerStateStore.save(state.update(clock, data.getRight()));
+                state = state
+                    .lastEventId(clock, event.eventId())
+                    .update(clock, data.getRight());
+                triggerStateStore.save(state);
             }
         });
     }
@@ -249,10 +268,13 @@ public class TriggerEventHandler {
      *
      * @param event the event.
      */
-    void onTriggerCreated(TriggerCreated event, Integer vNode) {
+    void onTriggerCreated(Clock clock, TriggerCreated event, Integer vNode) {
         Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
         if (data.getRight() != null) {
-            triggerStateStore.save(TriggerState.of(event.id(), data.getRight().getStopAfter(), data.getRight().isDisabled(), vNode));
+            TriggerState state = TriggerState
+                .of(event.id(), data.getRight().getStopAfter(), data.getRight().isDisabled(), vNode)
+                .lastEventId(clock, event.eventId());
+            triggerStateStore.save(state);
         }
     }
     
@@ -288,7 +310,18 @@ public class TriggerEventHandler {
         Optional<TriggerState> state = triggerStateStore.find(event.id());
         if (state.isEmpty()) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
+            return Optional.empty();
         }
-        return state;
+
+        // Ensure event can't be process twice - most queuing systems provide at-least once semantic
+        TriggerState current = state.get();
+        EventId lastEventId = current.getLastEventId();
+        if (lastEventId == null || event.eventId().isNewerThan(lastEventId)) {
+            return state;
+        }
+        
+        // Ignore because it's an older or duplicate event
+        Logs.logTrigger(event.id(), Level.WARN, "Skipping event {}. Cause: Event is older than last applied event.", event.type());
+        return Optional.empty();
     }
 }

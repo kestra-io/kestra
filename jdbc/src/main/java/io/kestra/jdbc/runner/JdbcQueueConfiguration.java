@@ -23,12 +23,12 @@ public record JdbcQueueConfiguration(
     @Bindable(defaultValue = "true")
     Boolean immediateRepoll
 ) {
-    
+
     public List<Step> computeSteps() {
         if (this.maxPollInterval.compareTo(this.minPollInterval) <= 0) {
             throw new IllegalArgumentException("'maxPollInterval' (" + this.maxPollInterval + ") must be greater than 'minPollInterval' (" + this.minPollInterval + ")");
         }
-        
+
         List<Step> steps = new ArrayList<>();
         Step currentStep = new Step(this.maxPollInterval, this.pollSwitchInterval);
         steps.add(currentStep);
@@ -44,7 +44,7 @@ public record JdbcQueueConfiguration(
         Collections.sort(steps);
         return steps;
     }
-    
+
     public record Step(Duration pollInterval, Duration switchInterval) implements Comparable<Step> {
         @Override
         public int compareTo(Step o) {

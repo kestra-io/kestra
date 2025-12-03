@@ -5,8 +5,11 @@ import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.queue.AbstractDispatchQueueTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 @KestraTest(environments =  {"test", "queue"})
+@Execution(ExecutionMode.SAME_THREAD)
 class MysqlDispatchQueueTest extends AbstractDispatchQueueTest {
     @Inject
     JdbcTestUtils jdbcTestUtils;

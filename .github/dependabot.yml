@@ -51,7 +51,7 @@ updates:
 
       storybook:
         applies-to: version-updates
-        patterns: ["@storybook/*"]
+        patterns: ["storybook*", "@storybook/*"]
 
       vitest:
         applies-to: version-updates
@@ -65,6 +65,7 @@ updates:
             "@rollup/*",
             "@swc/*",
             "@types/*",
+            "storybook*",
             "@storybook/*",
             "vitest",
             "@vitest/*",
@@ -81,6 +82,7 @@ updates:
             "@rollup/*",
             "@swc/*",
             "@types/*",
+            "storybook*",
             "@storybook/*",
             "vitest",
             "@vitest/*",
@@ -98,6 +100,7 @@ updates:
             "@rollup/*",
             "@swc/*",
             "@types/*",
+            "storybook*",
             "@storybook/*",
             "vitest",
             "@vitest/*",

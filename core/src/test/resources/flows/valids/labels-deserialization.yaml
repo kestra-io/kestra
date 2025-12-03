@@ -1,4 +1,4 @@
-id: full
+id: labels-deserialization
 namespace: io.kestra.tests
 labels:
   key1: 123

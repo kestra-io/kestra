@@ -32,6 +32,8 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.exceptions.HttpStatusException;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,6 +48,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -648,7 +651,8 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         assertThat(data.getTotal()).isEqualTo(1L);
-        assertThat(data).first().hasFieldOrPropertyWithValue("count", 1);
+        assertThat(data).first().hasFieldOrProperty("count");
+        assertThat(data).first().extracting("count").hasToString("1");
         assertThat(data).first().hasFieldOrPropertyWithValue("id", execution.getId());
     }
 
@@ -831,12 +835,7 @@ inject(tenant);
                         )
                     )
                 ).build();
-            try {
-                var res= JacksonMapper.ofJson().writeValueAsString(successExecution);
-                System.out.println(res);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+
             assertThat(successExecution.getState().getDuration().get()).isCloseTo(Duration.ofSeconds(20), Duration.ofMillis(3));
             executionRepository.save(successExecution);
 
@@ -888,7 +887,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.asc("state_duration"));
+        var sort = createSortLikeInControllers(List.of("state.duration:asc"), executionRepository.sortMapping());
         var sortedByShortestDuration = executionRepository.find(Pageable.from(sort), tenant, emptyFilters);
 
         // then
@@ -916,7 +915,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.desc("state_duration"));
+        var sort = createSortLikeInControllers(List.of("state.duration:desc"), executionRepository.sortMapping());
         var sortedByLongestDuration = executionRepository.find(Pageable.from(sort), tenant, emptyFilters);
 
         // then
@@ -945,7 +944,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.asc("start_date"));
+        var sort = createSortLikeInControllers(List.of("state.startDate:asc"), executionRepository.sortMapping());
         var page = Pageable.from(1, 1, sort);
         var findByMoreRecentStartDate = executionRepository.find(
             page,
@@ -968,7 +967,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.desc("start_date"));
+        var sort = createSortLikeInControllers(List.of("state.startDate:desc"), executionRepository.sortMapping());
         var page = Pageable.from(1, 1, sort);
         var findByMoreRecentStartDate = executionRepository.find(
             page,
@@ -981,6 +980,28 @@ inject(tenant);
             .as("assert order when finding by last start date")
             .map(Execution::getId)
             .containsExactly(testData.failedExecution().getId());
+    }
+
+    // duplicated from PageableUtils, because mapping is different between PG and ES
+    private Sort createSortLikeInControllers(List<String> sort, Function<String, String> sortMapper) {
+        return sort == null ? null :
+            Sort.of(sort
+                .stream()
+                .map(s -> {
+                    String[] split = s.split(":");
+                    if (split.length != 2) {
+                        throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid sort parameter");
+                    }
+                    String col = split[0];
+
+                    if (sortMapper != null) {
+                        col = sortMapper.apply(col);
+                    }
+
+                    return split[1].equals("asc") ? Sort.Order.asc(col) : Sort.Order.desc(col);
+                })
+                .toList()
+            );
     }
 
     @Test

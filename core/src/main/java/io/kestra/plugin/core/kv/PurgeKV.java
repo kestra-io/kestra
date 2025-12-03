@@ -11,10 +11,10 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.purge.PurgeTask;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Builder;
@@ -57,7 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
         )
     }
 )
-public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
+public class PurgeKV extends Task implements PurgeTask<KVEntry>, RunnableTask<PurgeKV.Output> {
     @Schema(
         title = "Key pattern, e.g. 'AI_*'",
         description = "Delete only keys matching the glob pattern."
@@ -82,7 +82,7 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
     )
     @Builder.Default
     @Valid
-    private Property<PurgeBehavior> behavior = Property.ofValue(Key.builder().expiredOnly(true).build());
+    private Property<KvPurgeBehavior> behavior = Property.ofValue(Key.builder().expiredOnly(true).build());
 
     @Schema(
         title = "Delete keys from child namespaces",
@@ -104,24 +104,17 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
         boolean keyFiltering = StringUtils.isNotBlank(renderedKeyPattern);
         runContext.logger().info("purging {} namespaces: {}", kvNamespaces.size(), kvNamespaces);
         AtomicLong count = new AtomicLong();
-        PurgeBehavior renderedBehavior;
+        KvPurgeBehavior renderedBehavior;
         if (expiredOnly != null) {
             renderedBehavior = Key.builder()
                 .expiredOnly(runContext.render(expiredOnly).as(Boolean.class).orElse(true))
                 .build();
         } else {
-            renderedBehavior = runContext.render(behavior).as(PurgeBehavior.class).orElseThrow();
+            renderedBehavior = runContext.render(behavior).as(KvPurgeBehavior.class).orElseThrow();
         }
         for (String ns : kvNamespaces) {
             KVStore kvStore = runContext.namespaceKv(ns);
-            List<KVEntry> toPurge = renderedBehavior.entriesToPurge(kvStore).stream()
-                .filter(kv -> {
-                    if (keyFiltering) {
-                        return FilenameUtils.wildcardMatch(kv.key(), renderedKeyPattern);
-                    }
-                    return true;
-                })
-                .toList();
+            List<KVEntry> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(kvStore));
             count.addAndGet(kvStore.purge(toPurge));
         }
         runContext.logger().info("purged {} keys", count.get());
@@ -131,58 +124,15 @@ public class PurgeKV extends Task implements RunnableTask<PurgeKV.Output> {
             .build();
     }
 
-    @VisibleForTesting
-    protected List<String> findNamespaces(RunContext runContext) throws IllegalVariableEvaluationException {
-        String tenantId = runContext.flowInfo().tenantId();
-        String currentNamespace = runContext.flowInfo().namespace();
-        FlowRepositoryInterface flowRepositoryInterface = ((DefaultRunContext) runContext)
-            .getApplicationContext().getBean(FlowRepositoryInterface.class);
-        List<String> distinctNamespaces = flowRepositoryInterface.findDistinctNamespace(tenantId);
-        List<String> renderedNamespaces = runContext.render(namespaces).asList(String.class);
-        String renderedNamespacePattern = runContext.render(namespacePattern).as(String.class).orElse(null);
-
-        if (!ListUtils.isEmpty(renderedNamespaces) && StringUtils.isNotBlank(renderedNamespacePattern)) {
-            throw new ValidationErrorException(List.of("Properties `namespaces` and `namespacePattern` can't be used at the same time — use one or the other."));
-        }
-
-        List<String> kvNamespaces = new ArrayList<>();
-        if (StringUtils.isNotBlank(renderedNamespacePattern)) {
-            kvNamespaces.addAll(distinctNamespaces.stream()
-                .filter(ns -> FilenameUtils.wildcardMatch(ns, renderedNamespacePattern))
-                .toList());
-        } else if (!renderedNamespaces.isEmpty()) {
-            if (runContext.render(includeChildNamespaces).as(Boolean.class).orElse(true)) {
-                kvNamespaces.addAll(distinctNamespaces.stream()
-                    .filter(ns -> {
-                        for (String renderedNamespace : renderedNamespaces) {
-                            if (ns.startsWith(renderedNamespace)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }).toList());
-            } else {
-                kvNamespaces.addAll(distinctNamespaces.stream()
-                    .filter(ns -> {
-                        for (String renderedNamespace : renderedNamespaces) {
-                            if (ns.equals(renderedNamespace)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }).toList());
-            }
-        } else {
-            kvNamespaces.addAll(distinctNamespaces);
-        }
-
-        FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-        for (String ns : kvNamespaces) {
-            flowService.checkAllowedNamespace(tenantId, ns, tenantId, currentNamespace);
-        }
-        return kvNamespaces;
+    @Override
+    public Property<String> filterPattern() {
+        return keyPattern;
     }
 
+    @Override
+    public String filterTargetExtractor(KVEntry item) {
+        return item.key();
+    }
 
     @Builder
     @Getter

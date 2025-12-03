@@ -4,7 +4,7 @@
             <ul class="header-actions-list">
                 <li>
                     <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
-                        {{ t('auditlog.export_csv') }}
+                        {{ t('export_csv') }}
                     </el-button>
                 </li>
                 <li>

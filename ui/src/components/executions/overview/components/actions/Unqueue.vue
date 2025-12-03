@@ -1,13 +1,11 @@
 <template>
-    <component
-        :is="component"
+    <el-button
+        v-if="enabled"
         :icon="QueueFirstInLastOut"
         @click="isDrawerOpen = !isDrawerOpen"
-        v-if="enabled"
-        class="ms-0 me-1"
     >
         {{ $t('unqueue') }}
-    </component>
+    </el-button>
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
@@ -26,7 +24,6 @@
                     v-for="item in states"
                     :key="item.code"
                     :value="item.code"
-                    :disabled="item.disabled"
                 >
                     <template #default>
                         <Status size="small" :label="true" class="me-1" :status="item.code" />
@@ -46,13 +43,13 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
-    import {useExecutionsStore} from "../../stores/executions";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
+    import {useExecutionsStore} from "../../../../../stores/executions";
+    import permission from "../../../../../models/permission";
+    import action from "../../../../../models/action";
     import {State, Status} from "@kestra-io/ui-libs"
     import {useAuthStore} from "override/stores/auth"
     import {useI18n} from "vue-i18n";
-    import {useToast} from "../../utils/toast";
+    import {useToast} from "../../../../../utils/toast";
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
 
     interface Execution {
@@ -63,12 +60,9 @@
         };
     }
 
-    const props = withDefaults(defineProps<{
+    const props = defineProps<{
         execution: Execution;
-        component?: string;
-    }>(), {
-        component: "el-button"
-    });
+    }>();
 
     const {t} = useI18n();
     const toast = useToast();
@@ -105,9 +99,3 @@
             });
     }
 </script>
-
-<style scoped lang="scss">
-    button.el-button {
-        cursor: pointer !important;
-    }
-</style>

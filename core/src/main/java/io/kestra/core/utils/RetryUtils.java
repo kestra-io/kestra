@@ -17,36 +17,36 @@ import org.slf4j.Logger;
 
 import java.io.Serial;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import jakarta.inject.Singleton;
+public final class RetryUtils {
+    private RetryUtils() {
+        // utility class pattern
+    }
 
-@Singleton
-public class RetryUtils {
-    public <T, E extends Throwable> Instance<T, E> of() {
+    public static <T, E extends Throwable> Instance<T, E> of() {
         return Instance.<T, E>builder()
             .build();
     }
 
-    public <T, E extends Throwable> Instance<T, E> of(AbstractRetry policy) {
+    public static <T, E extends Throwable> Instance<T, E> of(AbstractRetry policy) {
         return Instance.<T, E>builder()
             .policy(policy)
             .build();
     }
 
-    public <T, E extends Throwable> Instance<T, E> of(AbstractRetry policy, Function<RetryFailed, E> failureFunction) {
+    public static <T, E extends Throwable> Instance<T, E> of(AbstractRetry policy, Function<RetryFailed, E> failureFunction) {
         return Instance.<T, E>builder()
             .policy(policy)
             .failureFunction(failureFunction)
             .build();
     }
 
-    public <T, E extends Throwable> Instance<T, E> of(AbstractRetry policy, Logger logger) {
+    public static <T, E extends Throwable> Instance<T, E> of(AbstractRetry policy, Logger logger) {
         return Instance.<T, E>builder()
             .policy(policy)
             .logger(logger)
@@ -199,7 +199,6 @@ public class RetryUtils {
 
         private final int attemptCount;
         private final Duration elapsedTime;
-        private final Instant startTime;
 
         public <T> RetryFailed(ExecutionAttemptedEvent<? extends T> event) {
             super(
@@ -210,7 +209,6 @@ public class RetryUtils {
 
             this.attemptCount = event.getAttemptCount();
             this.elapsedTime = event.getElapsedTime();
-            this.startTime = event.getStartTime().get();
         }
     }
 }

@@ -1,20 +1,18 @@
 <template>
-    <component
-        :is="component"
-        :icon="PauseBox"
-        @click="click"
+    <el-button
         :disabled="!enabled"
-        class="ms-0 me-1"
+        :icon="Pause"
+        @click="click"
     >
         {{ t('pause') }}
-    </component>
+    </el-button>
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
             <span v-html="t('pause title', {id: execution.id})" />
         </template>
         <template #footer>
-            <el-button :icon="PauseBox" type="primary" @click="pause()" nativeType="submit">
+            <el-button :icon="Pause" type="primary" @click="pause()" nativeType="submit">
                 {{ t('pause') }}
             </el-button>
         </template>
@@ -22,24 +20,20 @@
 </template>
 
 <script setup lang="ts">
-    import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import {useExecutionsStore} from "../../stores/executions";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
+    import Pause from "vue-material-design-icons/Pause.vue";
+    import {useExecutionsStore} from "../../../../../stores/executions";
+    import permission from "../../../../../models/permission";
+    import action from "../../../../../models/action";
     import {State} from "@kestra-io/ui-libs";
     import {useAuthStore} from "override/stores/auth";
     import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useToast} from "../../utils/toast";
+    import {useToast} from "../../../../../utils/toast";
 
     const props = defineProps({
         execution: {
             type: Object,
             required: true
-        },
-        component: {
-            type: String,
-            default: "el-button"
         }
     });
 
@@ -74,9 +68,3 @@
         });
     };
 </script>
-
-<style scoped lang="scss">
-    button.el-button {
-        cursor: pointer !important;
-    }
-</style>

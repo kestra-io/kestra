@@ -123,8 +123,11 @@
     // This ensures mobile users start with an unobstructed view
     if (isSmallScreen.value) {
         layoutStore.setSideMenuCollapsed(true)
+    } else {
+        // Desktop: check localStorage, default to expanded if no preference
+        const savedState = localStorage.getItem("sidebar-collapsed")
+        layoutStore.setSideMenuCollapsed(savedState === "true")
     }
-
     // Use computed property to reactively sync with layout store
     const collapsed = computed(() => layoutStore.sideMenuCollapsed)
 
@@ -166,6 +169,12 @@
         height: 100vh;
         z-index: 1040;
         width: 268px;
+    }
+}
+// Desktop: completely hide sidebar when collapsed (no mini icon version)
+@media (min-width: 769px) {
+    #side-menu.vsm_collapsed {
+        display: none;
     }
 }
 #side-menu {

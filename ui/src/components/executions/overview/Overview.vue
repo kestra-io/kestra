@@ -615,6 +615,14 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
 
         & :deep(.el-empty) {
             padding: 0;
+
+            & .el-empty__image {
+                width: calc($spacer * 8) !important;
+            }
+
+            & .el-empty__description {
+                margin-top: calc($spacer / 2);
+            }
         }
     }
 

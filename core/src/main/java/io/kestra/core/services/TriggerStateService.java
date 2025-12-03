@@ -25,7 +25,6 @@ import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.util.List;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -35,12 +34,12 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Singleton
 public class TriggerStateService {
-    
+
     private final TriggerRepositoryInterface triggerRepository;
     private final FlowRepositoryInterface flowRepository;
     private final TriggerEventQueue triggerEventQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
-    
+
     @Inject
     public TriggerStateService(final TriggerRepositoryInterface triggerRepository,
                                final FlowRepositoryInterface flowRepository,
@@ -51,7 +50,7 @@ public class TriggerStateService {
         this.executionKilledQueue = executionKilledQueue;
         this.flowRepository = flowRepository;
     }
-    
+
     /**
      * Toggles all triggers matching the given filters.
      *
@@ -72,7 +71,7 @@ public class TriggerStateService {
             .blockOptional()
             .orElse(0);
     }
-    
+
     /**
      * Toggles the trigger for given identifier.
      *
@@ -82,21 +81,21 @@ public class TriggerStateService {
     public void toggleTriggerById(TriggerId trigger, boolean disabled) throws NotFoundException, ConflictException {
         Flow flow = this.flowRepository.findById(trigger.getTenantId(), trigger.getNamespace(), trigger.getFlowId())
             .orElseThrow(() -> new NotFoundException("Flow not found for trigger: %s".formatted(trigger)));
-        
+
         AbstractTrigger abstractTrigger = flow.getTriggers().stream().filter(t -> t.getId().equals(trigger.getTriggerId())).findFirst()
             .orElseThrow(() -> new NotFoundException("Trigger not found: %s".formatted(trigger)));
-        
+
         if (abstractTrigger instanceof RealtimeTriggerInterface) {
             throw new ConflictException("Realtime triggers can not be updated through the API, please edit the trigger from the flow.");
         }
-        
-        triggerEventQueue.send(new SetDisableTrigger(TriggerId.of(trigger), Instant.now(), disabled));
+
+        triggerEventQueue.send(new SetDisableTrigger(TriggerId.of(trigger), disabled));
     }
-    
+
     public int deleteAllBackfills(List<TriggerId> triggers) {
         return backfillsAction(Flux.fromIterable(triggers), BackfillAction.DELETE);
     }
-    
+
     /**
      * Deletes all backfills for triggers matching the given filters.
      *
@@ -107,28 +106,28 @@ public class TriggerStateService {
     public int deleteBackfillMatching(String tenant, List<QueryFilter> filters) {
         return backfillsAction(triggerRepository.find(tenant, filters), BackfillAction.DELETE);
     }
-    
+
     /**
      * Pauses all backfills for the given triggers.
      *
-     * @param triggers  the triggers.
+     * @param triggers the triggers.
      * @return the number of backfill paused.
      */
     public int pauseAllBackfillByIds(List<TriggerId> triggers) {
         return backfillsAction(Flux.fromIterable(triggers), BackfillAction.PAUSE);
     }
-    
-    
+
+
     /**
      * Resumes all backfills for the given triggers.
      *
-     * @param triggers  the triggers.
+     * @param triggers the triggers.
      * @return the number of backfill resumed.
      */
     public int resumeAllBackfillByIds(List<TriggerId> triggers) {
         return backfillsAction(Flux.fromIterable(triggers), BackfillAction.RESUME);
     }
-    
+
     /**
      * Pauses all backfills for triggers matching the given filters.
      *
@@ -139,7 +138,7 @@ public class TriggerStateService {
     public int pauseAllBackfillMatching(String tenant, List<QueryFilter> filters) {
         return backfillsAction(triggerRepository.find(tenant, filters), BackfillAction.PAUSE);
     }
-    
+
     /**
      * Resumes all backfills for triggers matching the given filters.
      *
@@ -150,7 +149,7 @@ public class TriggerStateService {
     public int resumeAllBackfillMatching(String tenant, List<QueryFilter> filters) {
         return backfillsAction(triggerRepository.find(tenant, filters), BackfillAction.RESUME);
     }
-    
+
     /**
      * Create a trigger backfill for the given identifier.
      *
@@ -161,7 +160,7 @@ public class TriggerStateService {
         getTriggerState(triggerId);  // check if state exists.
         triggerEventQueue.send(new CreateBackfillTrigger(TriggerId.of(triggerId), backfill));
     }
-    
+
     /**
      * Deletes the trigger backfill for the given identifier.
      *
@@ -170,9 +169,9 @@ public class TriggerStateService {
      */
     public void deleteBackfill(TriggerId triggerId) {
         getTriggerState(triggerId);  // check if state exists.
-        triggerEventQueue.send(new DeleteBackfillTrigger(TriggerId.of(triggerId), Instant.now()));
+        triggerEventQueue.send(new DeleteBackfillTrigger(TriggerId.of(triggerId)));
     }
-    
+
     /**
      * Pauses the trigger backfill for the given identifier.
      *
@@ -181,9 +180,9 @@ public class TriggerStateService {
      */
     public void setBackfillPaused(TriggerId triggerId, boolean paused) {
         getTriggerState(triggerId);  // check if state exists.
-        triggerEventQueue.send(new SetPauseBackfillTrigger(TriggerId.of(triggerId), Instant.now(), paused));
+        triggerEventQueue.send(new SetPauseBackfillTrigger(TriggerId.of(triggerId), paused));
     }
-    
+
     /**
      * Resets a trigger for the given identifier.
      *
@@ -200,9 +199,9 @@ public class TriggerStateService {
             .triggerId(triggerId.getTriggerId())
             .build()
         );
-        triggerEventQueue.send(new ResetTrigger(TriggerId.of(triggerId), Instant.now()));
+        triggerEventQueue.send(new ResetTrigger(TriggerId.of(triggerId)));
     }
-    
+
     /**
      * Unlocks a trigger.
      *
@@ -215,13 +214,13 @@ public class TriggerStateService {
         return triggerRepository.findById(trigger)
             .map(state -> {
                 if (state.isLocked()) {
-                    triggerEventQueue.send(new ResetTrigger(TriggerId.of(trigger), Instant.now()));
+                    triggerEventQueue.send(new ResetTrigger(TriggerId.of(trigger)));
                     return state.locked(Clock.systemDefaultZone(), false);
                 }
                 throw new ConflictException("trigger %s is already unlocked".formatted(trigger));
             }).orElseThrow(() -> new NotFoundException("Trigger %s not found".formatted(trigger)));
     }
-    
+
     /**
      * Unlocks multiple triggers.
      *
@@ -240,11 +239,11 @@ public class TriggerStateService {
      * @return the number of triggers successfully unlocked.
      * @throws NotFoundException if a trigger can't be found.
      */
-    public int unlockAllTriggersMatching(String tenant, List<QueryFilter> filters) throws NotFoundException{
+    public int unlockAllTriggersMatching(String tenant, List<QueryFilter> filters) throws NotFoundException {
         Flux<TriggerId> flux = triggerRepository.find(tenant, filters).filter(TriggerState::isLocked).map(TriggerId::of);
         return unlockAllTriggersByIds(flux);
     }
-    
+
     private int unlockAllTriggersByIds(final Flux<TriggerId> triggers) {
         return triggers.map(trigger -> {
                 try {
@@ -258,7 +257,7 @@ public class TriggerStateService {
             .blockOptional()
             .orElse(0);
     }
-    
+
     private int backfillsAction(Flux<? extends TriggerId> triggers, BackfillAction action) {
         return triggers.map(trigger -> {
             try {
@@ -280,11 +279,11 @@ public class TriggerStateService {
             }
         }).reduce(Integer::sum).blockOptional().orElse(0);
     }
-    
+
     private TriggerState getTriggerState(TriggerId triggerId) {
         return triggerRepository.findById(triggerId).orElseThrow(() -> new NotFoundException("Trigger %s not found".formatted(triggerId)));
     }
-    
+
     private enum BackfillAction {
         PAUSE,
         RESUME,

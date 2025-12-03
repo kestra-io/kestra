@@ -20,7 +20,7 @@ class TriggerEventTest {
     void shouldSerializeEvent() throws JsonProcessingException {
         // Given
         TriggerId id = new TriggerId.Default("tenant", "namespace", "flow", "trigger");
-        TriggerCreated event = new TriggerCreated(id, Instant.now(), 1);
+        TriggerCreated event = new TriggerCreated(id, 1);
         
         // When - then
         String serialized = JacksonMapper.ofJson().writeValueAsString(event);
@@ -29,6 +29,6 @@ class TriggerEventTest {
     
     @Test
     void shouldGetTriggerEventType() {
-        assertThat(Enums.fromClassName(new ResetTrigger(null, null), TriggerEventType.class)).isEqualTo(TriggerEventType.RESET_TRIGGER);
+        assertThat(Enums.fromClassName(new ResetTrigger(null), TriggerEventType.class)).isEqualTo(TriggerEventType.RESET_TRIGGER);
     }
 }

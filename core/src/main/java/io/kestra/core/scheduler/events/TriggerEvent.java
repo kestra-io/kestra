@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.utils.Enums;
@@ -33,20 +34,30 @@ import java.util.Map;
     @JsonSubTypes.Type(value = TriggerEvent.Invalid.class, name = "INVALID"),
 })
 public interface TriggerEvent extends HasUID {
-    
+
     /**
      * @return the trigger identifier.
      */
     @JsonProperty
     @JsonDeserialize(as = TriggerId.Default.class)
     TriggerId id();
-    
+
     /**
      * @return the event timestamp.
      */
     @JsonProperty
     Instant timestamp();
-    
+
+    /**
+     * The event unique identifier.
+     * <p>
+     * Can be used to de-duplicate events.
+     *
+     * @return the event identifier.
+     */
+    @JsonProperty
+    EventId eventId();
+
     /**
      * @return the event type.
      */
@@ -54,7 +65,7 @@ public interface TriggerEvent extends HasUID {
     default TriggerEventType type() {
         return Enums.fromClassName(this, TriggerEventType.class);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -63,18 +74,20 @@ public interface TriggerEvent extends HasUID {
     default String uid() {
         return this.id().uid();
     }
-    
+
     record Invalid(TriggerId id,
                    Instant timestamp,
+                   EventId eventId,
                    Map<String, Object> properties
     ) implements TriggerEvent {
-        
+
         @JsonCreator
         public Invalid(@JsonProperty("id") TriggerId id,
-                       @JsonProperty("timestamp") Instant timestamp) {
-            this(id, timestamp, new HashMap<>());
+                       @JsonProperty("timestamp") Instant timestamp,
+                       @JsonProperty("eventId") EventId eventId) {
+            this(id, timestamp, eventId, new HashMap<>());
         }
-        
+
         @JsonAnySetter
         public void addProperty(String key, Object value) {
             this.properties.put(key, value);

@@ -1,6 +1,7 @@
 package io.kestra.core.scheduler.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.kestra.core.events.EventId;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.State;
@@ -41,6 +42,8 @@ public final class TriggerState implements TriggerId {
     private final int vnode;
     private final boolean locked;
     private final String workerId;
+    // the last-event id that mutate this state. 
+    private final EventId lastEventId;
     
     @JsonProperty
     public Long getNextEvaluationEpoch() {
@@ -90,6 +93,7 @@ public final class TriggerState implements TriggerId {
             disabled,
             vnode,
             false,
+            null,
             null
         );
     }
@@ -257,6 +261,16 @@ public final class TriggerState implements TriggerId {
             .tenantId(tenantId)
             .build();
     }
+    /**
+     * Sets the tenant of this trigger state.
+     *
+     * @return a new {@link TriggerState}
+     */
+    public TriggerState lastEventId(Clock clock, EventId eventId) {
+        return update(clock)
+            .lastEventId(eventId)
+            .build();
+    }
     
     private Backfill getBackFillForNextEvaluationDate(final Instant nextEvaluationDate) {
         final ZonedDateTime localNextEvaluationDate = toZonedDateTime(nextEvaluationDate);
@@ -289,7 +303,8 @@ public final class TriggerState implements TriggerId {
             .locked(locked)
             .workerId(workerId)
             .vnode(vnode)
-            .disabled(disabled);
+            .disabled(disabled)
+            .lastEventId(lastEventId);
     }
 
     // Lombok hack to properly generate Javadoc

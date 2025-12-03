@@ -242,7 +242,7 @@ class YamlParserTest {
         Flow flow = parse("flows/valids/labels-deserialization.yaml");
         // like change execution state api,Serialize flow to YAML/JSON string
         String s = OBJECT_MAPPER.writeValueAsString(flow);
-        assertThat(s).isEqualTo("id: full\n" +
+        assertThat(s).isEqualTo("id: labels-deserialization\n" +
             "namespace: io.kestra.tests\n" +
             "disabled: false\n" +
             "deleted: false\n" +

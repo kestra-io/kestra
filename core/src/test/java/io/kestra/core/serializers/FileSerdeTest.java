@@ -180,7 +180,7 @@ class FileSerdeTest {
 
 
     @Test
-    void writeAllBinary_checkFormat() throws IOException {
+    void writeAll_checkFormat() throws IOException {
         Path outputTempFilePath = createTempFile();
 
         final List<SimpleEntry> inputValues = List.of(
@@ -188,7 +188,7 @@ class FileSerdeTest {
             new SimpleEntry(2, "value2")
         );
 
-        Long resultCount = FileSerde.writeAllBinary(Files.newOutputStream(outputTempFilePath), Flux.fromIterable(inputValues)).block();
+        Long resultCount = FileSerde.writeAll(Files.newOutputStream(outputTempFilePath), Flux.fromIterable(inputValues)).block();
 
         assertThat(resultCount).isEqualTo(2L);
 

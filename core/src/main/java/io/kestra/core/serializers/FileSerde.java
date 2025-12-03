@@ -112,7 +112,7 @@ public final class FileSerde {
 
     /**
      * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
-     * @deprecated Use {@link #readAll(InputStream, Class)} instead.
+     * @deprecated Use {@link #readAll(InputStream)} instead.
      */
     @Deprecated(since = "1.2", forRemoval = true)
     public static Flux<Object> readAll(Reader reader) throws IOException {
@@ -183,6 +183,13 @@ public final class FileSerde {
      * Jackson auto-detects if the stream is Ion Text or Ion Binary.
      * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
      */
+    public static Flux<Object> readAll(InputStream input) throws IOException {
+        return readAll(DEFAULT_OBJECT_MAPPER, input, DEFAULT_TYPE_REFERENCE);
+    }
+
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
+     */
     public static <T> Flux<T> readAll(InputStream input, Class<T> type) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, input, type);
     }
@@ -233,7 +240,7 @@ public final class FileSerde {
     /**
      * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
      *
-     * @deprecated Use {@link #writeAllBinary(OutputStream, Flux)} instead for better compression and hashing.
+     * @deprecated Use {@link #writeAll(OutputStream, Flux)} instead for better compression and hashing.
      */
     @Deprecated(since = "1.2", forRemoval = true)
     public static <T> Mono<Long> writeAll(Writer writer, Flux<T> values) throws IOException {
@@ -242,7 +249,7 @@ public final class FileSerde {
 
     /**
      * For performance, it is advised to wrap the writer inside a BufferedWriter, see {@link #BUFFER_SIZE}.
-     * @deprecated Use {@link #writeAllBinary(OutputStream, Flux)} instead.
+     * @deprecated Use {@link #writeAll(OutputStream, Flux)} instead.
      */
     @Deprecated(since = "1.2", forRemoval = true)
     public static <T> Mono<Long> writeAll(ObjectMapper objectMapper, Writer writer, Flux<T> values) throws IOException {
@@ -264,7 +271,7 @@ public final class FileSerde {
      * @param values The data to write
      * @return A Mono containing the Count (Long)
      */
-    public static <T> Mono<Long> writeAllBinary(OutputStream output, Flux<T> values) {
+    public static <T> Mono<Long> writeAll(OutputStream output, Flux<T> values) {
         return Mono.create(sink -> {
             try {
                 IonWriter binaryWriter = IonBinaryWriterBuilder.standard().build(output);

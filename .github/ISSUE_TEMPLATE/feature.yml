@@ -2,6 +2,7 @@ name: Feature request
 description: Suggest a new feature or improvement to enhance the project
 
 labels: ["enhancement", "area/backend", "area/frontend"]
+type: Feature
 
 body:
   - type: textarea

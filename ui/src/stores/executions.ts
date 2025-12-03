@@ -26,7 +26,7 @@ export type Histories = {
 export interface Execution{
     id: string;
     namespace: string;
-    flowId?: string;
+    flowId: string;
     tenantId?: string;
     taskRunList:  {
         id: string,

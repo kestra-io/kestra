@@ -1,15 +1,21 @@
 <template>
     <div class="tabs-wrapper">
         <div class="tabs">
-            <button
+            <el-tooltip
                 v-for="element of tabs"
                 :key="element.uid"
-                :class="{active: openTabs.includes(element.uid)}"
-                @click="setTabValue(element.uid)"
+                :content="element.button.label"
+                placement="bottom"
+                :showAfter="500"
             >
-                <component class="tabs-icon" :is="element.button.icon" />
-                {{ element.button.label }}
-            </button>
+                <button
+                    :class="{active: openTabs.includes(element.uid)}"
+                    @click="setTabValue(element.uid)"
+                >
+                    <component class="tabs-icon" :is="element.button.icon" />
+                    <span class="tab-label">{{ element.button.label }}</span>
+                </button>
+            </el-tooltip>
         </div>
         <slot />
     </div>
@@ -34,6 +40,7 @@
 
 <style scoped lang="scss">
     @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
+    
     .tabs-wrapper{
         display:flex;
         align-items: center;
@@ -59,40 +66,71 @@
         background-size: 250% 100%;
         background-position: 100% 0;
         transition: background-position .2s;
+        
+        overflow-x: auto;
+        scrollbar-width: none; 
     }
+    
     .tabs{
-        padding: .5rem 1rem;
+        padding: 0.5rem 1rem;
         display: flex;
-        flex-wrap: wrap;
-        gap: .25rem .5rem;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 0.5rem;
 
-        > button{
-            background: none;
-            border: none;
-            padding: .5rem;
-            font-size: .8rem;
+        > button { 
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
             color: var(--ks-color-text-primary);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: opacity .2s;
-            gap: .25rem;
-            opacity: .5;
+            transition: all 0.2s ease-in-out;
+            gap: 0.4rem;
+            opacity: 0.7;
+            cursor: pointer; 
 
             &:hover{
-                color: var(--ks-color-text-secondary);
+                background-color: rgba(255, 255, 255, 0.1);
                 opacity: 1;
             }
 
             &.active{
+                background-color: rgba(255, 255, 255, 0.15);
+                border-color: rgba(255, 255, 255, 0.1);
                 color: var(--ks-color-text-primary);
+                font-weight: 600;
                 opacity: 1;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             }
         }
     }
 
     .tabs-icon {
-        margin-right: .25rem;
-        vertical-align: bottom;
+        font-size: 1.1em;
+        vertical-align: middle;
+        flex-shrink: 0;
+    }
+
+    @media (max-width: 1200px) {
+        .tab-label {
+            display: none;
+        }
+
+        .tabs {
+            gap: 0.25rem;
+            padding: 0.4rem 0.5rem;
+        }
+        
+        .tabs > button {
+            padding: 0.5rem;
+            gap: 0;
+            aspect-ratio: 1 / 1;
+        }
     }
 </style>

@@ -154,6 +154,16 @@ public abstract class AbstractExecutionRepositoryTest {
             ).trigger(executionTrigger).build());
         }
 
+        // add a NORMAL kind execution, it should be fetched correctly
+        executionRepository.save(builder(
+            tenantId,
+            State.Type.SUCCESS,
+            null
+        )
+            .trigger(executionTrigger)
+            .kind(ExecutionKind.NORMAL)
+            .build());
+
         // add a test execution, this should be ignored in search & statistics
         executionRepository.save(builder(
             State.Type.SUCCESS,
@@ -176,16 +186,16 @@ public abstract class AbstractExecutionRepositoryTest {
 
     static Stream<Arguments> filterCombinations() {
         return Stream.of(
-            Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unittest").operation(Op.EQUALS).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unittest").operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(), 1),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build(), 15),
-            Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.STATE).value(Type.RUNNING).operation(Op.EQUALS).build(), 5),
-            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 28)
+            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 29)
         );
     }
 
@@ -211,7 +221,7 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, null);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
 
         List<QueryFilter> filters = List.of(QueryFilter.builder()
@@ -275,7 +285,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value("io.kestra")
             .build());
         executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
     }
 
     @Test
@@ -291,7 +301,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value(executionTriggerId)
             .build());
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10), MAIN_TENANT, filters);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
         filters = List.of(QueryFilter.builder()
@@ -301,7 +311,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .build());
 
         executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
 
@@ -312,12 +322,12 @@ public abstract class AbstractExecutionRepositoryTest {
             .build());
 
         executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters );
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger()).isNull();
 
         executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, null);
-        assertThat(executions.getTotal()).isEqualTo(56L);
+        assertThat(executions.getTotal()).isEqualTo(58L);
     }
 
     @Test
@@ -325,7 +335,7 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  MAIN_TENANT, null);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
 
         var filters = List.of(QueryFilter.builder()
@@ -732,7 +742,7 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         List<Execution> executions = executionRepository.findAllAsync(MAIN_TENANT).collectList().block();
-        assertThat(executions).hasSize(29); // used by the backup so it contains TEST executions
+        assertThat(executions).hasSize(30); // used by the backup so it contains TEST executions
     }
 
     @Test

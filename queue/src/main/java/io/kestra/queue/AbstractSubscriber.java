@@ -16,9 +16,11 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
     private final AtomicReference<State> state = new AtomicReference<>(State.STOPPED);
     protected final Class<T> cls;
     protected final QueueService queueService;
+    protected final String logPrefix;
 
     public AbstractSubscriber(Class<T> cls, QueueService queueService) {
         this.cls = cls;
+        this.logPrefix = "[%s]".formatted(this.cls.getSimpleName());
         this.queueService = queueService;
     }
 
@@ -33,17 +35,17 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         try {
             while (this.state.get().equals(State.PAUSED)) {
                 if (log.isDebugEnabled()) {
-                    log.debug("[{}] paused, waiting to resume", this.cls.getSimpleName());
+                    log.debug("{} paused, waiting to resume", logPrefix);
                 }
 
                 try {
                     unpaused.await(); // Wait until resume() signals
                 } catch (InterruptedException e) {
-                    throw new QueueException("[" + this.cls.getSimpleName() + "] interrupted while paused", e);
+                    throw new QueueException(this.logPrefix + " interrupted while paused", e);
                 }
 
                 if (log.isDebugEnabled()) {
-                    log.debug("[{}] resumed", this.cls.getSimpleName());
+                    log.debug("{} resumed", logPrefix);
                 }
             }
         } finally {
@@ -61,19 +63,19 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
 
     private boolean changeState(State expected, State newState) {
         if (log.isDebugEnabled()) {
-            log.debug("[{}] change state requested {} to {}", this.cls.getSimpleName(), expected, newState);
+            log.debug("{} change state requested {} to {}", logPrefix, expected, newState);
         }
 
         if (this.state.compareAndSet(expected, newState)) {
             return true;
         }
 
-        throw new IllegalStateException("[" + this.cls.getSimpleName() + "] illegal state change to " + newState + " from " + newState + ", current state is " + this.state.get());
+        throw new IllegalStateException(logPrefix + " illegal state change to " + newState + " from " + newState + ", current state is " + this.state.get());
     }
 
     protected void markReady() {
         if (log.isDebugEnabled()) {
-            log.debug("[{}] Mark ready received", this.cls.getSimpleName());
+            log.debug("{} Mark ready received", logPrefix);
         }
 
         this.changeState(State.STOPPED, State.RUNNING);
@@ -81,7 +83,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
 
     public void pause() {
         if (log.isDebugEnabled()) {
-            log.debug("[{}] pause received", this.cls.getSimpleName());
+            log.debug("{} pause received", logPrefix);
         }
 
         this.changeState(State.RUNNING, State.PAUSED);
@@ -89,7 +91,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
 
     public void resume() {
         if (log.isDebugEnabled()) {
-            log.debug("[{}] resume received", this.cls.getSimpleName());
+            log.debug("{} resume received", logPrefix);
         }
 
         pauseLock.lock();
@@ -104,7 +106,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
 
     protected void markEnd() {
         if (log.isDebugEnabled()) {
-            log.debug("[{}] mark end received", this.cls.getSimpleName());
+            log.debug("{} mark end received", logPrefix);
         }
 
         if (this.isRunning()) {
@@ -116,7 +118,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
 
     public void close() {
         if (log.isDebugEnabled()) {
-            log.debug("[{}] close received", this.cls.getSimpleName());
+            log.debug("{} close received", logPrefix);
         }
 
         // in case it's paused and blocked
@@ -136,7 +138,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
             stopped.await();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.warn("[{}}] interrupted while waiting to be stopped.", this.cls.getSimpleName());
+            log.warn("{} interrupted while waiting to be stopped.", logPrefix);
         }
     }
 

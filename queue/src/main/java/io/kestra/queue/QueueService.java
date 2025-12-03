@@ -70,13 +70,13 @@ public class QueueService {
 
                 // we let terminated execution messages to go through anyway
                 if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
-                    throw new MessageTooBigException("Message of size " + byteLength + " has exceeded the configured limit of " + queueConfiguration.getMessageProtection().getLimit());
+                    throw new MessageTooBigException("[" + cls.getSimpleName() + "] message of size " + byteLength + " has exceeded the configured limit of " + queueConfiguration.getMessageProtection().getLimit());
                 }
             }
 
             return serialize;
         } catch (JsonProcessingException e) {
-            throw new QueueException("Failed to produce '" + message.getClass() + "'", e);
+            throw new QueueException("[" + cls.getSimpleName() + "] failed to produce: " + e.getMessage(), e);
         } finally {
             String[] tags = {MetricRegistry.TAG_QUEUE_TYPE, cls.getSimpleName()};
             metricRegistry

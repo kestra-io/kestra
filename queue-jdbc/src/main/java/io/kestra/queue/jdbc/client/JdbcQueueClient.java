@@ -170,8 +170,6 @@ public class JdbcQueueClient {
             List<JdbcQueueItem> queueItems = select
                 .orderBy(io.kestra.jdbc.repository.AbstractJdbcRepository.field("offset").asc())
                 .limit(configuration.pollSize())
-                .forUpdate()
-                .skipLocked()
                 .fetchInto(JdbcQueueItem.class);
 
             if (!queueItems.isEmpty()) {

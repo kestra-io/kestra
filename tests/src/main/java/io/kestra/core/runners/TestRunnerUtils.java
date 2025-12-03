@@ -3,6 +3,8 @@ package io.kestra.core.runners;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
@@ -37,6 +39,10 @@ public class TestRunnerUtils {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    protected QueueInterface<ExecutionKilled> killQueue;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -299,6 +305,22 @@ public class TestRunnerUtils {
         }
 
         return receive.get();
+    }
+
+    public Execution killExecution(Execution execution) throws QueueException {
+        killQueue.emit(ExecutionKilledExecution.builder()
+            .executionId(execution.getId())
+            .isOnKillCascade(true)
+            .state(ExecutionKilled.State.REQUESTED)
+            .tenantId(execution.getTenantId())
+            .build());
+
+        return awaitExecution(isTerminatedExecution(
+            execution,
+            flowRepository
+                .findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()))
+                .orElse(null)
+        ), execution);
     }
 
     @VisibleForTesting

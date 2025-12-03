@@ -20,7 +20,7 @@
             </template>
         </el-tab-pane>
     </el-tabs>
-    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
+    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized, 'no-overflow': activeTab.noOverflow}">
         <BlueprintDetail
             v-if="selectedBlueprintId"
             :blueprintId="selectedBlueprintId"
@@ -60,6 +60,7 @@
         query?: any;
         component?: any;
         maximized?: boolean;
+        noOverflow?: boolean;
         "v-on"?: any;
     }
 
@@ -198,6 +199,10 @@ section.container.mt-4:has(> section.empty) {
     margin: 0 !important;
     padding: 0;
     flex-grow: 1;
+}
+
+.no-overflow {
+    overflow: hidden;
 }
 
 .editor-splitter {

@@ -9,62 +9,6 @@ import {useI18n} from "vue-i18n";
 
 import {decodeSearchParams} from "../../filter/utils/helpers";
 
-export type Dashboard = {
-    id: string;
-    charts: Chart[];
-    title?: string;
-    sourceCode?: string;
-    [key: string]: unknown;
-};
-
-export type Chart = {
-    id: string;
-    type: string;
-    chartOptions?: {
-        displayName?: string;
-        description?: string;
-        width?: number;
-        pagination?: {
-            enabled?: boolean;
-            [key: string]: unknown;
-        };
-        legend?:{
-            enabled?: boolean;
-        };
-        column: string;
-        [key: string]: unknown;
-    };
-    data?: {
-        columns?: {
-            [key: string]: Record<string, any>;
-        };
-        [key: string]: unknown;
-    };
-    content?: string;
-    source?: {
-        type?: string;
-        content?: string;
-        [key: string]: unknown;
-    };
-
-    [key: string]: unknown;
-};
-
-export type Request = {
-    chart: Chart["content"];
-    globalFilter?: Parameters;
-};
-
-export type Parameters = {
-    pageNumber?: number;
-    pageSize?: number;
-    startDate?: Date;
-    endDate?: Date;
-    namespace?: string;
-    labels?: Record<string, string>;
-    filters?: Record<string, any>;
-};
-
 export const ALLOWED_CREATION_ROUTES = ["home", "flows/update", "namespaces/update"];
 
 export const STORAGE_KEYS = (params: RouteParams) => {
@@ -95,22 +39,11 @@ export function getDashboard(route: RouteLocation, type: "key" | "id"): string |
     return type === "key" ? storageKey : localStorage.getItem(storageKey) || "default";
 };
 
-import Bar from "../sections/Bar.vue";
-import KPI from "../sections/KPI.vue";
-import Markdown from "../sections/Markdown.vue";
-import Pie from "../sections/Pie.vue";
-import Table from "../sections/Table.vue";
-import TimeSeries from "../sections/TimeSeries.vue";
-import {FilterObject} from "../../../utils/filters";
 
-export const TYPES: Record<string, any> = {
-    "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
-    "io.kestra.plugin.core.dashboard.chart.KPI": KPI,
-    "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
-    "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
-    "io.kestra.plugin.core.dashboard.chart.Table": Table,
-    "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
-};
+import {FilterObject} from "../../../utils/filters";
+import {Chart, Parameters, Request} from "../types.ts";
+
+
 
 export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI";
 
@@ -135,8 +68,8 @@ export function useChartGenerator(props: {chart: Chart; filters: FilterObject[];
     const EMPTY_TEXT = t("dashboards.empty");
 
     const data = ref();
-    async function generate(id: string, pagination?: { pageNumber: number; pageSize: number }) {
-        const filters = props.filters.concat(decodeSearchParams(route.query) ?? []);
+    async function generate(id: string, pagination?: { pageNumber: number; pageSize: number }, customFilters?: FilterObject[]) {
+        const filters = customFilters ?? props.filters.concat(decodeSearchParams(route.query) ?? []);
         const parameters: Parameters = {...pagination, filters: (filters ?? {})};
 
         if (!props.showDefault) {
@@ -159,3 +92,5 @@ export function useChartGenerator(props: {chart: Chart; filters: FilterObject[];
 
     return {percentageShown, EMPTY_TEXT, data, generate};
 }
+
+export * from "../types";

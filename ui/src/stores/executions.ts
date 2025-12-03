@@ -18,9 +18,16 @@ export interface Label{
     value: string;
 }
 
+export type Histories = {
+    state: string;
+    date: string;
+}
+
 export interface Execution{
     id: string;
+    namespace: string;
     flowId?: string;
+    tenantId?: string;
     taskRunList:  {
         id: string,
         taskId: string,
@@ -32,10 +39,27 @@ export interface Execution{
         history: string;
         startDate: string;
         duration: string;
+        endDate?: string;
+        histories?: Histories[];
     }
+    trigger?: {
+        id: any;
+        type: string;
+        variables: {
+            executionId: string;
+        }
+    },
+    metadata: {
+        originalCreatedDate: string;
+        attemptNumber: number;
+    },
     inputs?: Record<string, any>;
-    labels?: any[];
-    namespace: string;
+    labels?: Label[];
+    variables?: Record<string, any>;
+    outputs?: Record<string, any>;
+    originalId?: string;
+    flowRevision?: number;
+    scheduleDate?: string;
 }
 
 export const useExecutionsStore = defineStore("executions", () => {

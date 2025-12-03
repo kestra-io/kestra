@@ -22,7 +22,7 @@
                     <el-header>
                         <AlertCircle class="align-middle text-danger" />
                         <span class="align-middle">
-                            {{ t("error detected") }}
+                            {{ $t("error detected") }}
                         </span>
                     </el-header>
                     <el-main v-for="error in errors" :key="error">{{ error }}</el-main>
@@ -50,7 +50,7 @@
                     <el-header>
                         <Alert class="align-middle text-warning" />
                         <span class="align-middle">
-                            {{ t("warning detected") }}
+                            {{ $t("warning detected") }}
                         </span>
                     </el-header>
                     <el-main>
@@ -86,7 +86,7 @@
                     <el-header>
                         <Alert class="align-middle text-info" />
                         <span class="align-middle">
-                            {{ t("informative notice") }}
+                            {{ $t("informative notice") }}
                         </span>
                     </el-header>
                     <el-main>{{ infos.join("<\n") }}</el-main>
@@ -94,7 +94,7 @@
             </template>
             <el-button v-bind="$attrs" :link="link" :size="size" type="default" class="info">
                 <Alert class="text-info" />
-                <span class="text-info label">{{ t("informative notice") }}</span>
+                <span class="text-info label">{{ $t("informative notice") }}</span>
             </el-button>
         </el-tooltip>
     </span>
@@ -105,9 +105,6 @@
     import CheckBoldIcon from "vue-material-design-icons/CheckBold.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
-    import {useI18n} from "vue-i18n";
-
-    const {t} = useI18n();
 
     defineOptions({
         inheritAttrs: false,

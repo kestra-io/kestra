@@ -13,7 +13,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -127,14 +126,13 @@ public class Count extends Task implements RunnableTask<Count.Output> {
         var flowInfo = runContext.flowInfo();
 
         // check that all flows are allowed
-        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
         if (flows != null) {
-            flows.forEach(flow -> flowService.checkAllowedNamespace(flowInfo.tenantId(), flow.getNamespace(), flowInfo.tenantId(), flowInfo.namespace()));
+            flows.forEach(flow -> runContext.acl().allowNamespace(flow.getNamespace()).check());
         }
 
         if (namespaces != null) {
             var renderedNamespaces = runContext.render(this.namespaces).asList(String.class);
-            renderedNamespaces.forEach(namespace -> flowService.checkAllowedNamespace(flowInfo.tenantId(), namespace, flowInfo.tenantId(), flowInfo.namespace()));
+            renderedNamespaces.forEach(namespace -> runContext.acl().allowNamespace(namespace).check());
         }
 
         List<ExecutionCount> executionCounts = executionRepository.executionCounts(

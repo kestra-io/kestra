@@ -80,8 +80,6 @@ export const useExecutionsStore = defineStore("executions", () => {
     const namespaces = ref<string[]>([]);
     const flowsExecutable = ref<any[]>([]);
 
-    const lastFilters = ref<Record<string, any> | undefined>(undefined);
-
     // clear flow graph when execution is reset
     // since it is supposed to represent the current execution's flow
     watch(execution, (newExecution) => {
@@ -278,8 +276,6 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const findExecutions = (options: { commit?: boolean } & Record<string, any>) => {
-        lastFilters.value = options; // Save the last used filters so the single-execution prev/next buttons can reuse them
-
         return axios.get(`${apiUrl()}/executions/search`, {params: options}).then(response => {
             if (options.commit !== false) {
                 executions.value = response.data.results;
@@ -763,7 +759,6 @@ export const useExecutionsStore = defineStore("executions", () => {
         flowGraph,
         namespaces,
         flowsExecutable,
-        lastFilters,
         // Actions
         restartExecution,
         bulkRestartExecution,

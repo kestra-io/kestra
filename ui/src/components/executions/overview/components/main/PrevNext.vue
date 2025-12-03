@@ -1,13 +1,27 @@
+<!-- this.hasPreviousExecution = currentIndex < executions.length - 1;
+                // Next means we can go to newer executions.
+                this.hasNextExecution = currentIndex > 0; -->
 <template>
     <div id="buttons">
-        <el-button @click="navigateToExecution('previous')">
+        <el-button
+            :disabled="currentIdx + 1 === results.length"
+            @click="navigateToExecution('previous')"
+        >
             <el-icon class="el-icon--left">
                 <ChevronLeft />
             </el-icon>
-            {{ $t("prev_execution") }}
+            Older date
         </el-button>
-        <el-button @click="navigateToExecution('next')">
-            {{ $t("next_execution") }}
+
+        <span>
+            {{ currentIdx !== undefined ? currentIdx + 1 : "unknown" }} /
+            {{ results.length }}</span>
+
+        <el-button
+            :disabled="currentIdx === 0"
+            @click="navigateToExecution('next')"
+        >
+            Newer date
             <el-icon class="el-icon--right">
                 <ChevronRight />
             </el-icon>
@@ -16,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+    import {onMounted, ref} from "vue";
     import {useRouter} from "vue-router";
     const router = useRouter();
 
@@ -25,55 +40,49 @@
     } from "../../../../../stores/executions";
     const store = useExecutionsStore();
 
+    import {createLink} from "../../utils/links";
+
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
 
     const props = defineProps<{ execution: Execution }>();
 
-    const navigateToExecution = async (direction: "previous" | "next") => {
+    const results = ref<Execution[]>([]);
+
+    const currentIdx = ref<number>(0);
+
+    const loadExecutions = async (params: Record<string, any>) => {
         if (!props.execution) return;
 
-        try {
-            const params = {
-                namespace: props.execution.namespace,
-                flowId: props.execution.flowId,
-                pageSize: 100,
-                sort: "state.startDate:desc",
-            };
+        const response = await store.findExecutions(params);
 
-            const response = await store.findExecutions(params);
-            const result = response?.results ?? [];
-
-            if (!result.length) return;
-
-            const currentIdx = result.findIndex(
-                (e: Execution) => e.id === props.execution.id,
-            );
-
-            if (currentIdx === -1) return;
-
-            // next = newer (-1), previous = older (+1)
-            const targetIdx =
-                direction === "previous" ? currentIdx + 1 : currentIdx - 1;
-
-            if (targetIdx < 0 || targetIdx >= result.length) return;
-
-            const target = result[targetIdx];
-
-            router.push({
-                name: "executions/update",
-                params: {
-                    ...(target.tenantId ? {tenant: target.tenantId} : {}),
-                    namespace: target.namespace,
-                    flowId: target.flowId,
-                    id: target.id,
-                    tab: "overview",
-                },
-            });
-        } catch (error) {
-            console.error("Failed to navigate executions:", error);
-        }
+        results.value = response.results;
     };
+
+    const navigateToExecution = async (direction: "previous" | "next") => {
+        if (currentIdx.value === -1) return;
+
+        currentIdx.value =
+            direction === "previous" ? currentIdx.value + 1 : currentIdx.value - 1;
+
+        if (currentIdx.value < 0 || currentIdx.value >= results.value.length)
+            return;
+        router.push(createLink("executions", results.value[currentIdx.value]));
+    };
+
+    onMounted(async () => {
+        await loadExecutions({
+            namespace: props.execution.namespace,
+            flowId: props.execution.flowId,
+            page: 1,
+            size: 100,
+            sort: "state.startDate:desc",
+        });
+
+        currentIdx.value = results.value.findIndex(
+            (e: Execution) => e.id === props.execution.id,
+        );
+    });
 </script>
 
 <style scoped lang="scss">

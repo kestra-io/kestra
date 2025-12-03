@@ -1,8 +1,8 @@
 package io.kestra.core.runners.pebble;
 
-import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.runners.pebble.functions.RenderingFunctionInterface;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
 import io.pebbletemplates.pebble.PebbleEngine;
@@ -22,13 +22,13 @@ public class PebbleEngineFactory {
 
     private final ApplicationContext applicationContext;
     private final VariableRenderer.VariableConfiguration variableConfiguration;
-    private final MetricRegistry metricRegistry;
+    private final MeterRegistry meterRegistry;
 
     @Inject
-    public PebbleEngineFactory(ApplicationContext applicationContext, @Nullable VariableRenderer.VariableConfiguration variableConfiguration, MetricRegistry metricRegistry) {
+    public PebbleEngineFactory(ApplicationContext applicationContext, @Nullable VariableRenderer.VariableConfiguration variableConfiguration, MeterRegistry meterRegistry) {
         this.applicationContext = applicationContext;
         this.variableConfiguration = variableConfiguration;
-        this.metricRegistry = metricRegistry;
+        this.meterRegistry = meterRegistry;
     }
 
     public PebbleEngine create() {
@@ -60,7 +60,7 @@ public class PebbleEngineFactory {
 
         if (this.variableConfiguration.getCacheEnabled()) {
             PebbleLruCache cache = new PebbleLruCache(this.variableConfiguration.getCacheSize());
-            cache.register(metricRegistry);
+            cache.register(meterRegistry);
             builder = builder.templateCache(cache);
         }
         return builder;

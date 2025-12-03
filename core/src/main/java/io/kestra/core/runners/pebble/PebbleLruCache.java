@@ -2,12 +2,11 @@ package io.kestra.core.runners.pebble;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import io.kestra.core.metrics.MetricRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import io.pebbletemplates.pebble.cache.PebbleCache;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 
-import java.util.List;
 import java.util.function.Function;
 
 public class PebbleLruCache implements PebbleCache<Object, PebbleTemplate> {
@@ -24,7 +23,7 @@ public class PebbleLruCache implements PebbleCache<Object, PebbleTemplate> {
     @Override
     public PebbleTemplate computeIfAbsent(Object key, Function<? super Object, ? extends PebbleTemplate> mappingFunction) {
         try {
-            return cache.get(key, k -> mappingFunction.apply(key));
+            return cache.get(key, mappingFunction);
         } catch (Exception e) {
             // we retry the mapping function in order to let the exception be thrown instead of being capture by cache
             return mappingFunction.apply(key);
@@ -36,12 +35,7 @@ public class PebbleLruCache implements PebbleCache<Object, PebbleTemplate> {
         cache.invalidateAll();
     }
 
-    public void register(MetricRegistry metricRegistry) {
-        CaffeineCacheMetrics<Object, PebbleTemplate, Cache<Object, PebbleTemplate>> metrics = new CaffeineCacheMetrics<>(
-            cache,
-            "pebble.lru.cache",
-            List.of()
-        );
-        metricRegistry.bind(metrics);
+    public void register(MeterRegistry meterRegistry) {
+        CaffeineCacheMetrics.monitor(meterRegistry, cache, "pebble-template");
     }
 }

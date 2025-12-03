@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
@@ -22,6 +21,7 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
@@ -164,7 +164,7 @@ class RunVariablesTest {
     void nonResolvableDynamicInputsShouldBeSkipped() {
         VariableRenderer.VariableConfiguration mkVariableConfiguration = Mockito.mock(VariableRenderer.VariableConfiguration.class);
         ApplicationContext mkApplicationContext = Mockito.mock(ApplicationContext.class);
-        MetricRegistry mkMetricRegistry = Mockito.mock(MetricRegistry.class);
+        MeterRegistry mkMeterRegistry = Mockito.mock(MeterRegistry.class);
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withFlow(Flow
                 .builder()
@@ -177,7 +177,7 @@ class RunVariablesTest {
                 .build()
             )
             .withExecution(Execution.builder().id(IdUtils.create()).build())
-            .build(new RunContextLogger(), PropertyContext.create(new VariableRenderer(new PebbleEngineFactory(mkApplicationContext, mkVariableConfiguration, mkMetricRegistry), mkVariableConfiguration)));
+            .build(new RunContextLogger(), PropertyContext.create(new VariableRenderer(new PebbleEngineFactory(mkApplicationContext, mkVariableConfiguration, mkMeterRegistry), mkVariableConfiguration)));
 
         Assertions.assertEquals(Map.of(
             "a", true

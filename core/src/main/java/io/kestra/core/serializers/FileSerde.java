@@ -111,7 +111,7 @@ public final class FileSerde {
     }
 
     /**
-     * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
      * @deprecated Use {@link #readAll(InputStream, Class)} instead.
      */
     @Deprecated(since = "1.2", forRemoval = true)
@@ -120,7 +120,7 @@ public final class FileSerde {
     }
 
     /**
-     * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
      * @deprecated Use {@link #readAll(InputStream, TypeReference)} instead.
      */
     @Deprecated(since = "1.2", forRemoval = true)
@@ -129,7 +129,7 @@ public final class FileSerde {
     }
 
     /**
-     * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
      * @deprecated Use {@link #readAll(InputStream, Class)} instead.
      */
     @Deprecated(since = "1.2", forRemoval = true)
@@ -138,7 +138,7 @@ public final class FileSerde {
     }
 
     /**
-     * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
      * @deprecated Use {@link #readAll(ObjectMapper, InputStream, Class)} instead.
      */
     @Deprecated(since = "1.2", forRemoval = true)
@@ -147,7 +147,7 @@ public final class FileSerde {
     }
 
     /**
-     * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
      * @deprecated Use {@link #readAll(ObjectMapper, InputStream, TypeReference)} instead.
      */
     @Deprecated(since = "1.2", forRemoval = true)
@@ -157,7 +157,7 @@ public final class FileSerde {
     }
 
     /**
-     * For performance, it is advised to wrap the reader inside a BufferedReader, see {@link #BUFFER_SIZE}.
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
      * @deprecated Use {@link #readAll(ObjectMapper, InputStream, Class)} instead.
      */
     @Deprecated(since = "1.2", forRemoval = true)
@@ -166,6 +166,10 @@ public final class FileSerde {
         return readAll(mappingIterator);
     }
 
+
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
+     */
     public static <T> Flux<T> readAll(MappingIterator<T> mappingIterator) throws IOException {
         return Flux.<T>create(sink -> {
                 mappingIterator.forEachRemaining(sink::next);
@@ -177,20 +181,30 @@ public final class FileSerde {
     /**
      * Reads values from an InputStream.
      * Jackson auto-detects if the stream is Ion Text or Ion Binary.
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
      */
     public static <T> Flux<T> readAll(InputStream input, Class<T> type) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, input, type);
     }
 
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
+     */
     public static <T> Flux<T> readAll(InputStream input, TypeReference<T> type) throws IOException {
         return readAll(DEFAULT_OBJECT_MAPPER, input, type);
     }
 
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
+     */
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, InputStream input, Class<T> type) throws IOException {
         MappingIterator<T> mappingIterator = objectMapper.readerFor(type).readValues(input);
         return readAll(mappingIterator);
     }
 
+    /**
+     * For performance, it is advised to wrap the input stream inside a BufferedInputStream, see {@link #BUFFER_SIZE}
+     */
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, InputStream input, TypeReference<T> type) throws IOException {
         MappingIterator<T> mappingIterator = objectMapper.readerFor(type).readValues(input);
         return readAll(mappingIterator);

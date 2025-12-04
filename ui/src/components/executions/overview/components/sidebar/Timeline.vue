@@ -79,6 +79,10 @@
         }
     }
 
+    & :deep(.el-timeline-item__content) {
+        color: var(--ks-content-primary);
+    }
+
     & :deep(.el-timeline-item__timestamp) {
         position: absolute;
         top: 0;
@@ -87,10 +91,6 @@
         margin-top: 0;
         text-align: right;
         color: var(--ks-content-tertiary);
-    }
-
-    & :deep(.el-timeline-item__content) {
-        color: var(--ks-content-primary);
     }
 
     & :deep(.el-timeline-item__tail) {

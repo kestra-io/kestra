@@ -72,11 +72,13 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
         synchronized (lock){
             flows.forEach(flow -> {
                 Optional<Flow> fresh = flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
-                fresh.ifPresent(value -> flowRepository.delete(FlowWithSource.of(value, "unused")));
-
-                executionRepository.findByFlowId(
-                    loadFlows.tenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED
-                ).forEach(executionRepository::delete);
+                fresh.ifPresent(freshFlow -> {
+                        flowRepository.delete(FlowWithSource.of(freshFlow, "unused"));
+                        executionRepository.findByFlowId(
+                            loadFlows.tenantId(), freshFlow.getNamespace(),freshFlow.getId(), Pageable.UNPAGED
+                        ).forEach(executionRepository::delete);
+                    }
+                    );
             });
         }
 

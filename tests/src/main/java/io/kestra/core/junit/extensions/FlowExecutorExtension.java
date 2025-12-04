@@ -1,25 +1,30 @@
 package io.kestra.core.junit.extensions;
+
+import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
+
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.Objects;
-import lombok.SneakyThrows;
-import org.junit.jupiter.api.extension.AfterEachCallback;
-import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ParameterContext;
-import org.junit.jupiter.api.extension.ParameterResolutionException;
-import org.junit.jupiter.api.extension.ParameterResolver;
+import java.util.*;
 
-public class FlowExecutorExtension implements AfterEachCallback, ParameterResolver {
+import lombok.SneakyThrows;
+import org.junit.jupiter.api.extension.*;
+
+public class FlowExecutorExtension implements AfterEachCallback, ParameterResolver, AfterAllCallback {
     private ApplicationContext context;
+    private static final Object lock =new Object();
+    private final Set<Flow> allFlows= new HashSet<>();
     @Override
     public boolean supportsParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
@@ -55,9 +60,32 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) {
-    }
+    public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
+        ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
+        FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
 
+        String path = executeFlow.value();
+        URL resource = loadFile(path);
+        Flow loadedFlow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
+
+        List<Flow> flows=  flowRepository.findAllForAllTenants().stream()
+            .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
+            .filter(flow -> Objects.equals(flow.getTenantId(), executeFlow.tenantId())).toList();
+        allFlows.addAll(flows);
+    }
+    @Override
+    public void afterAll(ExtensionContext extensionContext)  {
+        FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
+        synchronized (lock){
+            allFlows.forEach(flow ->
+                {
+                    Optional<Flow> fresh = flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+                    fresh.ifPresent(value -> flowRepository.delete(FlowWithSource.of(value, "unused")));
+                }
+            );
+            allFlows.clear();
+        }
+    }
     private static ExecuteFlow getExecuteFlow(ExtensionContext extensionContext) {
         ExecuteFlow executeFlow = extensionContext.getTestMethod()
             .orElseThrow()

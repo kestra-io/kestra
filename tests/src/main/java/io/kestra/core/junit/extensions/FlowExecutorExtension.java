@@ -65,25 +65,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
-        ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
-        FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
-
-        String path = executeFlow.value();
-        URL resource = loadFile(path);
-        Flow loadedFlow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
-
-        List<Flow> flows=  flowRepository.findAllForAllTenants().stream()
-            .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
-            .filter(flow -> Objects.equals(flow.getTenantId(), executeFlow.tenantId())).toList();
-        synchronized (lock){
-            flows.forEach(flow ->
-                {
-                    Optional<Flow> fresh = flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
-                    fresh.ifPresent(value -> flowRepository.delete(FlowWithSource.of(value, "unused")));
-                }
-            );
-        }
+    public void afterEach(ExtensionContext extensionContext) {
     }
 
     private static ExecuteFlow getExecuteFlow(ExtensionContext extensionContext) {

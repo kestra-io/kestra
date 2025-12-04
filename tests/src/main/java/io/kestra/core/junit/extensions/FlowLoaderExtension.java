@@ -16,8 +16,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -25,7 +23,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallback {
     private ApplicationContext applicationContext;
-    private static final Object lock =new Object();
+
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
         if (applicationContext == null) {
@@ -53,31 +51,7 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
-        LoadFlows loadFlows = getLoadFlows(extensionContext);
-        FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
-        ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
-
-        Set<String> flowIds = new HashSet<>();
-        for (String path : loadFlows.value()) {
-            URL resource = loadFile(path);
-            Flow flow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
-            flowIds.add(flow.getId());
-        }
-        List<Flow> flows = flowRepository.findAllForAllTenants().stream()
-            .filter(flow -> flowIds.contains(flow.getId()))
-            .filter(flow -> loadFlows.tenantId().equals(flow.getTenantId()))
-            .toList();
-
-        synchronized (lock){
-            flows.forEach(flow -> {
-                Optional<Flow> fresh = flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
-                fresh.ifPresent(freshFlow -> {
-                        flowRepository.delete(FlowWithSource.of(freshFlow, "unused"));
-                    }
-                    );
-            });
-        }
+    public void afterEach(ExtensionContext extensionContext) {
 
     }
 

@@ -16,9 +16,11 @@ export const createLink = (
     execution: Execution,
     customID?: string,
 ): RouteLocationRaw => {
+    if (!execution) return {};
+
     const params: Record<string, string> = {tab: "overview"};
 
-    if (execution.tenantId) params.tenant = execution.tenantId;
+    if (execution?.tenantId) params.tenant = execution.tenantId;
 
     switch (type) {
         case "namespaces":

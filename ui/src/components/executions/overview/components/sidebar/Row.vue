@@ -27,6 +27,7 @@
 
 <script setup lang="ts">
     import type {Component} from "vue";
+
     import {RouteLocationRaw} from "vue-router";
 
     const props = defineProps<{

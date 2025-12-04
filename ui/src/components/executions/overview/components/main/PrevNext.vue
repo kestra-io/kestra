@@ -1,27 +1,15 @@
-<!-- this.hasPreviousExecution = currentIndex < executions.length - 1;
-                // Next means we can go to newer executions.
-                this.hasNextExecution = currentIndex > 0; -->
 <template>
     <div id="buttons">
         <el-button
-            :disabled="currentIdx + 1 === results.length"
-            @click="navigateToExecution('previous')"
+            :icon="ChevronLeft"
+            :disabled="prevDisabled"
+            @click="navigate('previous')"
         >
-            <el-icon class="el-icon--left">
-                <ChevronLeft />
-            </el-icon>
-            Older date
+            {{ $t("prev_execution") }}
         </el-button>
 
-        <span>
-            {{ currentIdx !== undefined ? currentIdx + 1 : "unknown" }} /
-            {{ results.length }}</span>
-
-        <el-button
-            :disabled="currentIdx === 0"
-            @click="navigateToExecution('next')"
-        >
-            Newer date
+        <el-button :disabled="nextDisabled" @click="navigate('next')">
+            {{ $t("next_execution") }}
             <el-icon class="el-icon--right">
                 <ChevronRight />
             </el-icon>
@@ -30,7 +18,8 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue";
+    import {onMounted, computed, ref} from "vue";
+
     import {useRouter} from "vue-router";
     const router = useRouter();
 
@@ -47,41 +36,74 @@
 
     const props = defineProps<{ execution: Execution }>();
 
+    const currentPage = ref(1);
+
+    const total = ref(0);
     const results = ref<Execution[]>([]);
 
-    const currentIdx = ref<number>(0);
+    const currentIdx = ref(-1);
 
-    const loadExecutions = async (params: Record<string, any>) => {
-        if (!props.execution) return;
+    const prevDisabled = computed(
+        () => total.value && currentIdx.value + 1 === total.value,
+    );
+    const nextDisabled = computed(() => total.value && currentIdx.value === 0);
+
+    const loadExecutions = async () => {
+        const params = {
+            "filters[namespace][PREFIX]": props.execution.namespace,
+            "filters[flowId][EQUALS]": props.execution.flowId,
+            "filters[timeRange][EQUALS]": "P365D", // Extended to 365 days for better navigation
+            page: currentPage.value,
+            size: 100,
+            sort: "state.startDate:desc",
+        };
 
         const response = await store.findExecutions(params);
 
-        results.value = response.results;
-    };
-
-    const navigateToExecution = async (direction: "previous" | "next") => {
-        if (currentIdx.value === -1) return;
-
-        currentIdx.value =
-            direction === "previous" ? currentIdx.value + 1 : currentIdx.value - 1;
-
-        if (currentIdx.value < 0 || currentIdx.value >= results.value.length)
-            return;
-        router.push(createLink("executions", results.value[currentIdx.value]));
-    };
-
-    onMounted(async () => {
-        await loadExecutions({
-            namespace: props.execution.namespace,
-            flowId: props.execution.flowId,
-            page: 1,
-            size: 100,
-            sort: "state.startDate:desc",
-        });
+        total.value = response.total;
+        results.value.push(...response.results);
 
         currentIdx.value = results.value.findIndex(
             (e: Execution) => e.id === props.execution.id,
         );
+
+        // If not found and more pages exist, load next page
+        if (currentIdx.value === -1 && results.value.length < total.value) {
+            currentPage.value += 1;
+            await loadExecutions();
+        }
+
+        // If found, move router
+        if (currentIdx.value !== -1) {
+            router.push(createLink("executions", results.value[currentIdx.value]));
+        }
+    };
+
+    const navigate = async (direction: "previous" | "next") => {
+        if (currentIdx.value === -1) return;
+
+        if (direction === "previous") {
+            if (prevDisabled.value) return;
+            currentIdx.value += 1;
+        } else {
+            if (nextDisabled.value) return;
+            currentIdx.value -= 1;
+        }
+
+        // If we reached the end of loaded data but not total, load new page
+        if (
+            currentIdx.value >= results.value.length - 1 &&
+            results.value.length < total.value
+        ) {
+            currentPage.value += 1;
+            await loadExecutions();
+        } else {
+            router.push(createLink("executions", results.value[currentIdx.value]));
+        }
+    };
+
+    onMounted(async () => {
+        await loadExecutions();
     });
 </script>
 
@@ -95,7 +117,6 @@
     margin-bottom: $spacer;
 
     .el-button {
-        width: calc($spacer * 12);
         font-size: $font-size-sm;
     }
 }

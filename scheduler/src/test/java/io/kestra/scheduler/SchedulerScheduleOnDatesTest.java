@@ -90,6 +90,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
 
         Trigger trigger = Trigger
             .builder()
+            .tenantId(TENANT_ID)
             .triggerId("schedule")
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
@@ -145,6 +146,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
         ZonedDateTime lastDate = ZonedDateTime.now().minusHours(3L);
         Trigger lastTrigger = Trigger
             .builder()
+            .tenantId(TENANT_ID)
             .triggerId("recoverALLMissing")
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
@@ -196,6 +198,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
         ZonedDateTime lastDate = ZonedDateTime.now().minusHours(3L);
         Trigger lastTrigger = Trigger
             .builder()
+            .tenantId(TENANT_ID)
             .triggerId("recoverLASTMissing")
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
@@ -248,6 +251,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
         ZonedDateTime lastDate = ZonedDateTime.now().minusHours(3L);
         Trigger lastTrigger = Trigger
             .builder()
+            .tenantId(TENANT_ID)
             .triggerId("recoverNONEMissing")
             .flowId(flow.getId())
             .namespace(flow.getNamespace())

@@ -5,7 +5,7 @@
                 <template v-if="$route.name === 'executions/list'">
                     <li>
                         <el-button :icon="Download" @click="exportExecutionsAsStream()">
-                            {{ t('auditlog.export_csv') }}
+                            {{ t('export_csv') }}
                         </el-button>
                     </li>
                     <li>
@@ -198,10 +198,7 @@
                                     <DateAgo :inverted="true" :date="scope.row?.state?.endDate" />
                                 </template>
                                 <template v-else-if="col.prop === 'state.duration'">
-                                    <span v-if="isRunning(scope.row)">{{
-                                        humanizeDuration(durationFrom(scope.row).toString())
-                                    }}</span>
-                                    <span v-else>{{ humanizeDuration(scope.row?.state?.duration) }}</span>
+                                    <Duration :field="scope.row?.state?.duration" :startDate="scope.row?.state?.startDate" />
                                 </template>
                                 <template v-else-if="col.prop === 'namespace' && $route.name !== 'flows/update'">
                                     <span :title="invisibleSpace(scope.row?.namespace)">{{ invisibleSpace(scope.row?.namespace) }}</span>
@@ -430,8 +427,9 @@
     import {filterValidLabels} from "./utils";
     import {useToast} from "../../utils/toast";
     import {storageKeys} from "../../utils/constants";
-    import {humanizeDuration, invisibleSpace} from "../../utils/filters";
+    import {invisibleSpace} from "../../utils/filters";
     import Utils from "../../utils/utils";
+    import Duration from "../../components/dashboard/sections/table/columns/Duration.vue";
 
     import action from "../../models/action";
     import permission from "../../models/permission";
@@ -744,10 +742,6 @@
         load(onDataLoaded);
     };
 
-    const isRunning = (item: any) => {
-        return State.isRunning(item?.state?.current);
-    };
-
     const loadQuery = (base: any) => {
         let queryFilter = queryWithFilter();
 
@@ -765,10 +759,6 @@
         }
 
         return _merge(base, queryFilter);
-    };
-
-    const durationFrom = (item: any) => {
-        return (+new Date() - new Date(item?.state?.startDate).getTime()) / 1000;
     };
 
     const genericConfirmAction = (message: string, queryAction: string, byIdAction: string, success: string, showCancelButton = true) => {

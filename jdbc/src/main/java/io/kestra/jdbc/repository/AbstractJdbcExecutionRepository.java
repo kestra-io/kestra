@@ -9,6 +9,7 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.ExecutionStatistics;
@@ -63,7 +64,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     private static final Field<String> STATE_CURRENT_FIELD = field("state_current", String.class);
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     private static final Field<Object> START_DATE_FIELD = field("start_date");
-    private static final Condition NORMAL_KIND_CONDITION = field("kind").isNull();
+    private static final Condition NORMAL_KIND_CONDITION = field("kind").isNull().or(field("kind").eq(ExecutionKind.NORMAL.name()));
 
     private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
     private final ApplicationContext applicationContext;
@@ -624,7 +625,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     }
 
     private DailyExecutionStatistics dailyExecutionStatisticsMap(Instant date, List<ExecutionStatistics> result, String groupByType) {
-        long durationSum = result.stream().map(ExecutionStatistics::getDurationSum).mapToLong(value -> value).sum();
+        long durationSum = result.stream().map(ExecutionStatistics::getDurationSum).mapToLong(value -> value != null ? value : 0).sum();
         long count = result.stream().map(ExecutionStatistics::getCount).mapToLong(value -> value).sum();
 
         DailyExecutionStatistics build = DailyExecutionStatistics.builder()
@@ -632,8 +633,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             .groupBy(groupByType)
             .duration(DailyExecutionStatistics.Duration.builder()
                 .avg(Duration.ofMillis(durationSum / count))
-                .min(result.stream().map(ExecutionStatistics::getDurationMin).min(Long::compare).map(Duration::ofMillis).orElse(null))
-                .max(result.stream().map(ExecutionStatistics::getDurationMax).max(Long::compare).map(Duration::ofMillis).orElse(null))
+                .min(result.stream().map(ExecutionStatistics::getDurationMin).map(x -> x != null ? x : 0).min(Long::compare).map(Duration::ofMillis).orElse(null))
+                .max(result.stream().map(ExecutionStatistics::getDurationMax).map(x -> x != null ? x : 0).max(Long::compare).map(Duration::ofMillis).orElse(null))
                 .sum(Duration.ofMillis(durationSum))
                 .count(count)
                 .build()

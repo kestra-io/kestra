@@ -255,31 +255,33 @@ public abstract class AbstractLogRepositoryTest {
         for (int i = 0; i < 20; i++) {
             logRepository.save(builder.build());
         }
+        // normal kind should also be retrieved
+        logRepository.save(builder.executionKind(ExecutionKind.NORMAL).build());
 
         ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(1, 50));
 
         assertThat(find.size()).isEqualTo(50);
-        assertThat(find.getTotal()).isEqualTo(101L);
+        assertThat(find.getTotal()).isEqualTo(102L);
 
         find = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(3, 50));
 
-        assertThat(find.size()).isEqualTo(1);
-        assertThat(find.getTotal()).isEqualTo(101L);
+        assertThat(find.size()).isEqualTo(2);
+        assertThat(find.getTotal()).isEqualTo(102L);
 
         find = logRepository.findByExecutionIdAndTaskId(tenant, executionId, logEntry2.getTaskId(), null, Pageable.from(1, 50));
 
-        assertThat(find.size()).isEqualTo(21);
-        assertThat(find.getTotal()).isEqualTo(21L);
+        assertThat(find.size()).isEqualTo(22);
+        assertThat(find.getTotal()).isEqualTo(22L);
 
         find = logRepository.findByExecutionIdAndTaskRunId(tenant, executionId, logEntry2.getTaskRunId(), null, Pageable.from(1, 10));
 
         assertThat(find.size()).isEqualTo(10);
-        assertThat(find.getTotal()).isEqualTo(21L);
+        assertThat(find.getTotal()).isEqualTo(22L);
 
         find = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenant, executionId, logEntry2.getTaskRunId(), null, 0, Pageable.from(1, 10));
 
         assertThat(find.size()).isEqualTo(10);
-        assertThat(find.getTotal()).isEqualTo(21L);
+        assertThat(find.getTotal()).isEqualTo(22L);
 
         find = logRepository.findByExecutionIdAndTaskRunId(tenant, executionId, logEntry2.getTaskRunId(), null, Pageable.from(10, 10));
 

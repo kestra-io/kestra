@@ -734,7 +734,7 @@ public class FlowController {
         var flows = ids.stream()
             .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .toList();
-        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "." + flow.getId() + ".yml");
+        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "." + flow.getId() + ".yaml");
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
 

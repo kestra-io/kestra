@@ -10,7 +10,8 @@ import picocli.CommandLine;
     description = "populate metadata for entities",
     subcommands = {
         KvMetadataMigrationCommand.class,
-        SecretsMetadataMigrationCommand.class
+        SecretsMetadataMigrationCommand.class,
+        NsFilesMetadataMigrationCommand.class
     }
 )
 @Slf4j

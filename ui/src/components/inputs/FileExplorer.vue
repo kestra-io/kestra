@@ -127,7 +127,7 @@
         >
             <template #empty>
                 <div class="m-4 empty">
-                    <img :src="FileExplorerEmpty">
+                    <img alt="Empty icon" :src="FileExplorerEmpty">
                     <h3>{{ t("namespace files.no_items.heading") }}</h3>
                     <p>{{ t("namespace files.no_items.paragraph") }}</p>
                 </div>
@@ -166,6 +166,9 @@
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ t("namespace files.create.folder") }}
+                            </el-dropdown-item>
+                            <el-dropdown-item v-if="data.leaf && !multiSelected" @click="showRevisionsHistory(data)">
+                                {{ t("namespace files.revisions.history") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
                                 {{ t("namespace files.path.copy") }}
@@ -321,6 +324,27 @@
             </template>
         </el-dialog>
 
+        <el-dialog
+            v-model="revisionsHistory.visible"
+            :title="t('namespace files.revisions.history')"
+            width="75%"
+            top="10vh"
+        >
+            <Revisions
+                v-if="revisionsHistory.visible"
+                :lang="revisionsHistory.path.split('.').pop()!"
+                :revisions="revisionsHistory.revisions"
+                :revisionSource="fetchRevisionSource"
+                @restore="restore"
+                :editRouteQuery="false"
+                class="revision-history-dialog-body"
+            >
+                <template #crud="{revision}">
+                    <Crud permission="FLOW" :detail="{resourceType: 'NAMESPACE_FILE', namespace: route.params.namespace, path: revisionsHistory.path, revision}" />
+                </template>
+            </Revisions>
+        </el-dialog>
+
         <el-menu
             v-if="tabContextMenu.visible"
             :style="{
@@ -340,12 +364,15 @@
 </template>
 
 <script lang="ts">
+    import {InjectionKey} from "vue";
+    import {EditorTabProps} from "./EditorWrapper.vue";
+
     export const FILES_OPEN_TAB_INJECTION_KEY = Symbol("files-open-tab-injection-key") as InjectionKey<(tab: EditorTabProps) => void>;
     export const FILES_CLOSE_TAB_INJECTION_KEY = Symbol("files-close-tab-injection-key") as InjectionKey<(tab: {path: string}) => void>;
 </script>
 
 <script lang="ts" setup>
-    import {ref, computed, onMounted, onBeforeUnmount, nextTick, InjectionKey, inject, watch} from "vue";
+    import {ref, computed, onMounted, onBeforeUnmount, nextTick, inject, watch} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
     import Utils from "../../utils/utils";
@@ -358,7 +385,6 @@
     import TypeIcon from "../utils/icons/Type.vue";
     import {useI18n} from "vue-i18n";
     import {useToast} from "../../utils/toast";
-    import {EditorTabProps} from "./EditorWrapper.vue";
     import {
         ElTreeNode,
         getFileNameWithExtension,
@@ -367,6 +393,8 @@
         TreeNodeFile,
         useFileExplorerStore
     } from "../../stores/fileExplorer";
+    import Revisions, {Revision} from "../layout/Revisions.vue";
+    import Crud from "override/components/auth/Crud.vue";
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -424,6 +452,7 @@
     const filePicker = ref<HTMLInputElement>();
     const folderPicker = ref<HTMLInputElement>();
     const dropdowns = ref<Record<string, {handleClose: () => void; handleOpen: () => void}>>({});
+    const revisionsHistory = ref<{ visible: boolean, path: string, revisions: Revision[] }>({visible: false, path: "", revisions: []});
     const confirmation = ref<{ visible: boolean; data?: any; nodes?: any[] }>({visible: false, data: {}});
     const nodeBeforeDrag = ref<{
         parent: string;
@@ -506,6 +535,35 @@
                 });
             }
         }
+    }
+
+    async function fetchRevisionSource(revision: number): Promise<string> {
+        return namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})
+    }
+
+    async function restore(source: string) {
+        await namespacesStore.saveOrCreateFile({
+            namespace: namespaceId.value,
+            path: revisionsHistory.value.path,
+            content: source
+        });
+
+        toast.success(t("namespace files.revisions.restore.success"));
+
+        closeTab?.({path: revisionsHistory.value.path});
+        openTab?.({
+            name: revisionsHistory.value.path.split("/").pop()!,
+            path: revisionsHistory.value.path,
+            extension: revisionsHistory.value.path.split(".").pop()!,
+            flow: false,
+            dirty: false
+        })
+
+        const newRevision = revisionsHistory.value.revisions.map(r => r.revision).sort((a, b) => a - b).reverse()[0] + 1;
+        revisionsHistory.value.revisions = [...revisionsHistory.value.revisions, {
+            revision: newRevision,
+            source: source
+        }];
     }
 
     async function removeSelectedFiles() {
@@ -688,7 +746,7 @@
 
     async function removeItems() {
         if(confirmation.value.nodes === undefined) return;
-        await Promise.all(confirmation.value.nodes.map(async (node, i) => {
+        await Promise.all(confirmation.value.nodes.map(async (node) => {
             const path = filesStore.getPath(node.id) ?? "";
             try {
                 await namespacesStore.deleteFileDirectory({
@@ -716,6 +774,15 @@
             ...folder,
         }, creation)
         dialog.value = {...DIALOG_DEFAULTS};
+    }
+
+    async function showRevisionsHistory(data: TreeNode) {
+        revisionsHistory.value.path = filesStore.getPath(data.id) ?? "";
+        revisionsHistory.value.revisions = (await namespacesStore.fileRevisions({
+            namespace: namespaceId.value,
+            path: revisionsHistory.value.path
+        }));
+        revisionsHistory.value.visible = true;
     }
 
     function copyPath(name: TreeNode) {
@@ -776,6 +843,11 @@
     overflow-x: hidden;
     min-width: calc(20% - 11px);
     width: 20%;
+
+    :deep(.revision-history-dialog-body) {
+        // We substract the dialog margins and title height (78px)
+        height: calc(100vh - (var(--el-dialog-margin-top) * 2) - 78px);
+    }
 
     .filter{
         .el-input__wrapper {

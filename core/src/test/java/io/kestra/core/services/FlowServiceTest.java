@@ -297,26 +297,6 @@ class FlowServiceTest {
     }
 
     @Test
-    void isAllowedNamespace() {
-        assertTrue(flowService.isAllowedNamespace("tenant", "namespace", "fromTenant", "fromNamespace"));
-    }
-
-    @Test
-    void checkAllowedNamespace() {
-        flowService.checkAllowedNamespace("tenant", "namespace", "fromTenant", "fromNamespace");
-    }
-
-    @Test
-    void areAllowedAllNamespaces() {
-        assertTrue(flowService.areAllowedAllNamespaces("tenant", "fromTenant", "fromNamespace"));
-    }
-
-    @Test
-    void checkAllowedAllNamespaces() {
-        flowService.checkAllowedAllNamespaces("tenant", "fromTenant", "fromNamespace");
-    }
-
-    @Test
     void delete() {
         FlowWithSource flow = create("deleteTest", "test", 1);
         FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
@@ -437,20 +417,20 @@ class FlowServiceTest {
         assertThat(results).hasSize(1);
         assertThat(results.getFirst().getConstraints()).contains("Flow id is a reserved keyword: pause");
     }
-    
+
     @Test
     void shouldReturnEmptyListGivenFlowWithNoChecks() {
         // Given
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of());
-        
+
         // When
         List<Check> result = flowService.getFailedChecks(flow, Map.of());
-        
+
         // Then
         assertThat(result).isEmpty();
     }
-    
+
     @Test
     void shouldReturnCheckWhenConditionEvaluatesFalse() {
         // Given
@@ -463,15 +443,15 @@ class FlowServiceTest {
         when(flow.getChecks()).thenReturn(List.of(failingCheck));
         when(flow.getNamespace()).thenReturn("io.kestra.unittest");
         when(flow.getId()).thenReturn("test");
-        
+
         // When
         List<Check> result = flowService.getFailedChecks(flow, Map.of());
-        
+
         // Then
         assertThat(result).hasSize(1);
         assertThat(result.getFirst()).isEqualTo(failingCheck);
     }
-    
+
     @Test
     void shouldReturnEmptyListWhenConditionEvaluatesTrue() {
         // Given
@@ -484,14 +464,14 @@ class FlowServiceTest {
         when(flow.getChecks()).thenReturn(List.of(passingCheck));
         when(flow.getNamespace()).thenReturn("io.kestra.unittest");
         when(flow.getId()).thenReturn("test");
-        
+
         // When
         List<Check> result = flowService.getFailedChecks(flow, Map.of());
-        
+
         // Then
         assertThat(result).isEmpty();
     }
-    
+
     @Test
     void shouldReturnCheckWithErrorMessageWhenExceptionThrown() {
         // Given
@@ -504,10 +484,10 @@ class FlowServiceTest {
         when(flow.getChecks()).thenReturn(List.of(check));
         when(flow.getNamespace()).thenReturn("io.kestra.unittest");
         when(flow.getId()).thenReturn("test");
-        
+
         // When
         List<Check> result = flowService.getFailedChecks(flow, Map.of());
-        
+
         // Then
         assertThat(result).hasSize(1);
         Check errorCheck = result.getFirst();
@@ -515,22 +495,22 @@ class FlowServiceTest {
         assertThat(errorCheck.getStyle()).isEqualTo(Check.Style.ERROR);
         assertThat(errorCheck.getMessage()).contains("Failed to evaluate check condition. Cause:");
     }
-    
+
     @Test
     void shouldHandleMultipleChecksWithMixedResults() {
         // Given
         Check passCheck = Check.builder().condition("{{ true }}").message("pass").build();
         Check failCheck = Check.builder().condition("{{ false }}").message("fail").build();
         Check exceptionCheck = Check.builder().condition("{{ invalidFunction }}").message("exception").build();
-        
+
         Flow flow = mock(Flow.class);
         when(flow.getChecks()).thenReturn(List.of(passCheck, failCheck, exceptionCheck));
         when(flow.getNamespace()).thenReturn("io.kestra.unittest");
         when(flow.getId()).thenReturn("test");
-        
+
         // When
         List<Check> result = flowService.getFailedChecks(flow, Map.of());
-        
+
         // Then
         assertThat(result).hasSize(2);
         assertThat(result).contains(failCheck);

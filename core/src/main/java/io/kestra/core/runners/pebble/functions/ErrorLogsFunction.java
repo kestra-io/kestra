@@ -28,9 +28,6 @@ public class ErrorLogsFunction  implements Function {
     @Inject
     private PebbleUtils pebbleUtils;
 
-    @Inject
-    private RetryUtils retryUtils;
-
     @Override
     public List<String> getArgumentNames() {
         return Collections.emptyList();
@@ -46,7 +43,7 @@ public class ErrorLogsFunction  implements Function {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         Map<String, String> execution = (Map<String, String>) context.getVariable("execution");
 
-        RetryUtils.Instance<List<LogEntry>, Throwable> retry = retryUtils.of(Exponential.builder()
+        RetryUtils.Instance<List<LogEntry>, Throwable> retry = RetryUtils.of(Exponential.builder()
             .delayFactor(2.0)
             .interval(Duration.ofMillis(100))
             .maxInterval(Duration.ofSeconds(1))

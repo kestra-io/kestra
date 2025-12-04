@@ -4,10 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.FlowService;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -38,6 +36,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 abstract public class PluginUtilsService {
 
     private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
+    private static final TaskLogLineMatcher LOG_LINE_MATCHER = new TaskLogLineMatcher();
 
     public static Map<String, String> createOutputFiles(
         Path tempDirectory,
@@ -170,12 +169,9 @@ abstract public class PluginUtilsService {
     }
 
     public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Instant customInstant) {
-
-        TaskLogLineMatcher logLineMatcher = ((DefaultRunContext) runContext).getApplicationContext().getBean(TaskLogLineMatcher.class);
-
         Map<String, Object> outputs = new HashMap<>();
         try {
-            Optional<TaskLogMatch> matches = logLineMatcher.matches(line, logger, runContext, customInstant);
+            Optional<TaskLogMatch> matches = LOG_LINE_MATCHER.matches(line, logger, runContext, customInstant);
             if (matches.isPresent()) {
                 TaskLogMatch taskLogMatch = matches.get();
                 outputs.putAll(taskLogMatch.outputs());
@@ -215,8 +211,7 @@ abstract public class PluginUtilsService {
                 realNamespace = runContext.render(namespace);
                 realFlowId = runContext.render(flowId);
                 // validate that the flow exists: a.k.a access is authorized by this namespace
-                FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
-                flowService.checkAllowedNamespace(flowInfo.tenantId(), realNamespace, flowInfo.tenantId(), flowInfo.namespace());
+                runContext.acl().allowNamespace(realNamespace).check();
             } else if (namespace != null || flowId != null) {
                 throw new IllegalArgumentException("Both `namespace` and `flowId` must be set when `executionId` is set.");
             } else {

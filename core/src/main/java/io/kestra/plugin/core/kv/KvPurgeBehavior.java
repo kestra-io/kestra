@@ -21,7 +21,7 @@ import java.util.List;
 @NoArgsConstructor
 @SuperBuilder
 @Introspected
-public abstract class PurgeBehavior {
+public abstract class KvPurgeBehavior {
     abstract public String getType();
 
     protected abstract List<KVEntry> entriesToPurge(KVStore kvStore) throws IOException;

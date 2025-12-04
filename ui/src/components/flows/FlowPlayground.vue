@@ -89,7 +89,7 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import EmptyVisualPlayground from "../../assets/empty_visuals/playground.svg"
     import {useExecutionsStore} from "../../stores/executions";
-    import Kill from "../executions/Kill.vue";
+    import Kill from "../executions/overview/components/actions/Kill.vue";
 
     const {t} = useI18n();
 

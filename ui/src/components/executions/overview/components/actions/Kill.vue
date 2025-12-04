@@ -1,6 +1,6 @@
 <template>
-    <el-dropdown v-if="enabled" placement="bottom-end">
-        <el-button type="default" :icon="Circle" @click="kill(true)">
+    <el-dropdown v-if="enabled" placement="bottom-end" class="kill-dropdown">
+        <el-button :icon="Circle" @click="kill(true)">
             {{ t("kill") }}
         </el-button>
         <template #dropdown>
@@ -31,11 +31,11 @@
 
     import {State} from "@kestra-io/ui-libs";
 
-    import {useExecutionsStore} from "../../stores/executions";
+    import {useExecutionsStore} from "../../../../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
-    import {useToast} from "../../utils/toast";
-    import action from "../../models/action";
-    import permission from "../../models/permission";
+    import {useToast} from "../../../../../utils/toast";
+    import action from "../../../../../models/action";
+    import permission from "../../../../../models/permission";
 
     const props = defineProps({
         execution: {
@@ -74,11 +74,10 @@
 </script>
 
 <style scoped lang="scss">
-    button.el-button {
-        cursor: pointer !important;
-        border-color: var(--ks-border-error);
-        color: var(--ks-content-error);
+    .kill-dropdown {
+        width: 100%;
     }
+
     .m-dropdown-menu {
         width: fit-content !important;
 

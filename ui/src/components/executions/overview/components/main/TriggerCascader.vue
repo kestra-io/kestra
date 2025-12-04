@@ -1,12 +1,31 @@
 <template>
-    <div class="outputs">
-        <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
-            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'">
+    <div :id="`cascader-${props.title}`">
+        <div class="header">
+            <el-text truncated>
+                {{ props.title }}
+            </el-text>
+            <el-input
+                v-if="props.elements"
+                v-model="filter"
+                :placeholder="$t('search')"
+                :suffixIcon="Magnify"
+            />
+        </div>
+
+        <el-splitter
+            v-if="props.elements"
+            :layout="verticalLayout ? 'vertical' : 'horizontal'"
+        >
+            <el-splitter-panel
+                v-model:size="leftWidth"
+                :min="'30%'"
+                :max="'70%'"
+            >
                 <div class="d-flex flex-column overflow-x-auto left">
                     <ElCascaderPanel
                         ref="cascader"
                         v-model="selected"
-                        :options="options"
+                        :options="filteredOptions"
                         :border="false"
                         class="flex-grow-1 cascader"
                         @change="onSelectionChange"
@@ -55,7 +74,9 @@
                                     :icon="Refresh"
                                     @click="
                                         onDebugExpression(
-                                            editorValue.length > 0 ? editorValue : computedDebugValue,
+                                            editorValue.length > 0
+                                                ? editorValue
+                                                : computedDebugValue,
                                         )
                                     "
                                     class="mt-3"
@@ -100,24 +121,39 @@
 
                         <VarValue
                             v-if="selectedValue && displayVarValue()"
-                            :value="selectedValue?.uri ? selectedValue?.uri : selectedValue"
+                            :value="
+                                selectedValue?.uri
+                                    ? selectedValue?.uri
+                                    : selectedValue
+                            "
                             :execution="execution"
                         />
                     </div>
                 </div>
             </el-splitter-panel>
         </el-splitter>
+        <span v-else class="empty">{{ props.empty }}</span>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, watch} from "vue";
+    import {ref, computed, watch, onMounted} from "vue";
     import {ElCascaderPanel} from "element-plus";
-    import {useMediaQuery} from "@vueuse/core";
-    import CopyToClipboard from "../layout/CopyToClipboard.vue";
-    import Editor from "../inputs/Editor.vue";
-    import VarValue from "./VarValue.vue";
+    import CopyToClipboard from "../../../../layout/CopyToClipboard.vue";
+    import Magnify from "vue-material-design-icons/Magnify.vue";
+    import Editor from "../../../../inputs/Editor.vue";
+    import VarValue from "../../../VarValue.vue";
     import Refresh from "vue-material-design-icons/Refresh.vue";
+
+    onMounted(() => {
+        if (props.elements) formatted.value = format(props.elements);
+
+        // Open first node by default on page mount
+        if (cascader?.value) {
+            const nodes = cascader.value.$el.querySelectorAll(".el-cascader-node");
+            if (nodes.length > 0) (nodes[0] as HTMLElement).click();
+        }
+    });
 
     interface CascaderOption {
         label: string;
@@ -128,7 +164,9 @@
     }
 
     const props = defineProps<{
-        options: CascaderOption[];
+        title: string;
+        empty: string;
+        elements?: CascaderOption;
         execution: any;
     }>();
 
@@ -141,13 +179,58 @@
     const debugStackTrace = ref("");
     const isJSON = ref(false);
     const expandedValue = ref("");
-    const isMobile = useMediaQuery("(max-width: 768px)");
-    const leftWidth = isMobile ? ref("50%") : ref("70%");
-    const rightWidth = isMobile ? ref("50%") : ref("30%");
+
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("md");
+    
+    const leftWidth = verticalLayout ? ref("50%") : ref("80%");
+    const rightWidth = verticalLayout ? ref("50%") : ref("20%");
+
+    const formatted = ref<Node[]>([]);
+    const format = (obj: Record<string, any>): Node[] => {
+        return Object.entries(obj).map(([key, value]) => {
+            const children =
+                typeof value === "object" && value !== null
+                    ? Object.entries(value).map(([k, v]) => format({[k]: v})[0])
+                    : [{label: value, value: value}];
+
+            // Filter out children with undefined label and value
+            const filteredChildren = children.filter(
+                (child) => child.label !== undefined || child.value !== undefined,
+            );
+
+            // Return node with or without children based on existence
+            const node = {label: key, value: key};
+
+            // Include children only if there are valid entries
+            if (filteredChildren.length) {
+                node.children = filteredChildren;
+            }
+
+            return node;
+        });
+    };
+    const filter = ref("");
+    const filteredOptions = computed(() => {
+        if (filter.value === "") return formatted.value;
+
+        const lowercase = filter.value.toLowerCase();
+        return formatted.value.filter((node) => {
+            const matchesNode = node.label.toLowerCase().includes(lowercase);
+
+            if (!node.children) return matchesNode;
+
+            const matchesChildren = node.children.some((c) =>
+                c.label.toLowerCase().includes(lowercase),
+            );
+
+            return matchesNode || matchesChildren;
+        });
+    });
 
     const selectedValue = computed(() => {
         if (!selected.value?.length) return null;
-        
+
         const node = selectedNode();
         return node?.value || node?.label;
     });
@@ -157,27 +240,29 @@
             const path = selected.value.join(".");
             return `{{ trigger.${path} }}`;
         }
-        
+
         if (expandedValue.value) {
             return `{{ trigger.${expandedValue.value} }}`;
         }
-        
+
         return "{{ trigger }}";
     });
 
     function selectedNode(): CascaderOption | null {
         if (!selected.value?.length) return null;
-        
-        let currentOptions: CascaderOption[] = props.options;
+
+        let currentOptions: CascaderOption[] = props.elements;
         let currentNode: CascaderOption | undefined = undefined;
-        
+
         for (const value of selected.value) {
-            currentNode = currentOptions?.find(option => option.value === value || option.label === value);
+            currentNode = currentOptions?.find(
+                (option) => option.value === value || option.label === value,
+            );
             if (currentNode?.children) {
                 currentOptions = currentNode.children;
             }
         }
-        
+
         return currentNode || null;
     }
 
@@ -186,43 +271,57 @@
             typeof value !== "string" || value.length < 16
                 ? value
                 : `${value.substring(0, 16)}...`;
-        
+
         return {
             label: trim(data.value || data.label),
-            regular: typeof data.value !== "object"
+            regular: typeof data.value !== "object",
         };
     }
 
     function onNodeClick(data: any) {
         let path = "";
-        
+
         if (selected.value?.length) {
             path = selected.value.join(".");
         }
-        
+
         if (!path) {
-            const findNodePath = (options: CascaderOption[], targetNode: any, currentPath: string[] = []): string[] | null => {
-                for (const option of options) {
+            const findNodePath = (
+                options: Record<string, any>[],
+                targetNode: any,
+                currentPath: string[] = [],
+            ): string[] | null => {
+                const localOptions = Array.isArray(options)
+                    ? options
+                    : [options]
+                for (const option of localOptions) {
                     const newPath = [...currentPath, option.value || option.label];
-                    
-                    if ((option.value === targetNode.value || option.label === targetNode.label) || 
-                        (option.value === (targetNode.value || targetNode.label)) ||
-                        (option.label === (targetNode.value || targetNode.label))) {
+
+                    if (
+                        option.value === targetNode.value ||
+                        option.label === targetNode.label ||
+                        option.value === (targetNode.value || targetNode.label) ||
+                        option.label === (targetNode.value || targetNode.label)
+                    ) {
                         return newPath;
                     }
-                    
+
                     if (option.children) {
-                        const found = findNodePath(option.children, targetNode, newPath);
+                        const found = findNodePath(
+                            option.children ?? [],
+                            targetNode,
+                            newPath,
+                        );
                         if (found) return found;
                     }
                 }
                 return null;
             };
-            
-            const nodePath = findNodePath(props.options, data);
+
+            const nodePath = findNodePath(props.elements ?? [], data);
             path = nodePath ? nodePath.join(".") : "";
         }
-        
+
         if (path) {
             expandedValue.value = path;
             debugExpression.value = "";
@@ -242,29 +341,34 @@
     }
 
     function displayVarValue(): boolean {
-        return Boolean(selectedValue.value && 
-            typeof selectedValue.value === "string" && 
-            (selectedValue.value.startsWith("kestra://") || 
-                selectedValue.value.startsWith("http://") || 
-                selectedValue.value.startsWith("https://")));
+        return Boolean(
+            selectedValue.value &&
+                typeof selectedValue.value === "string" &&
+                (selectedValue.value.startsWith("kestra://") ||
+                    selectedValue.value.startsWith("http://") ||
+                    selectedValue.value.startsWith("https://")),
+        );
     }
 
     function evaluateExpression(expression: string, trigger: any): any {
         try {
-            const cleanExpression = expression.replace(/^\{\{\s*/, "").replace(/\s*\}\}$/, "").trim();
-            
+            const cleanExpression = expression
+                .replace(/^\{\{\s*/, "")
+                .replace(/\s*\}\}$/, "")
+                .trim();
+
             if (cleanExpression === "trigger") {
                 return trigger;
             }
-            
+
             if (!cleanExpression.startsWith("trigger.")) {
                 throw new Error("Expression must start with \"trigger.\"");
             }
-            
+
             const path = cleanExpression.substring(8);
             const parts = path.split(".");
             let result = trigger;
-            
+
             for (const part of parts) {
                 if (result && typeof result === "object" && part in result) {
                     result = result[part];
@@ -272,7 +376,7 @@
                     throw new Error(`Property "${part}" not found`);
                 }
             }
-            
+
             return result;
         } catch (error: any) {
             throw new Error(`Failed to evaluate expression: ${error.message}`);
@@ -283,9 +387,9 @@
         try {
             debugError.value = "";
             debugStackTrace.value = "";
-            
+
             const result = evaluateExpression(expression, props.execution?.trigger);
-            
+
             try {
                 if (typeof result === "object" && result !== null) {
                     debugExpression.value = JSON.stringify(result, null, 2);
@@ -298,7 +402,6 @@
                 debugExpression.value = String(result);
                 isJSON.value = false;
             }
-            
         } catch (error: any) {
             debugError.value = error.message || "Failed to evaluate expression";
             debugStackTrace.value = error.stack || "";
@@ -307,15 +410,19 @@
         }
     }
 
-    watch(selected, (newValue) => {
-        if (newValue?.length) {
-            const path = newValue.join(".");
-            expandedValue.value = path;
-            debugExpression.value = "";
-            debugError.value = "";
-            debugStackTrace.value = "";
-        }
-    }, {deep: true});
+    watch(
+        selected,
+        (newValue) => {
+            if (newValue?.length) {
+                const path = newValue.join(".");
+                expandedValue.value = path;
+                debugExpression.value = "";
+                debugError.value = "";
+                debugStackTrace.value = "";
+            }
+        },
+        {deep: true},
+    );
 </script>
 
 <style scoped lang="scss">
@@ -420,7 +527,7 @@
     .debug-wrapper {
         min-height: 197px;
         border: 1px solid var(--ks-border-primary);
-        border-left-width: .5px;
+        border-left-width: 0.5px;
         border-radius: 0;
         padding: 0;
         background-color: var(--ks-background-body);
@@ -443,6 +550,90 @@
     :deep(.el-cascader-panel) {
         height: 100%;
     }
-    
+}
+
+
+@import "@kestra-io/ui-libs/src/scss/variables";
+
+[id^="cascader-"] {
+    overflow: hidden;
+
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: $spacer;
+
+        > .el-text {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            font-size: $font-size-xl;
+        }
+
+        > .el-input {
+            display: flex;
+            align-items: center;
+            width: calc($spacer * 16);
+        }
+    }
+
+    .el-cascader-panel {
+        overflow: auto;
+    }
+
+    .empty {
+        font-size: $font-size-sm;
+        color: var(--ks-content-secondary);
+    }
+
+    :deep(.el-cascader-menu) {
+        min-width: 300px;
+        max-width: 300px;
+
+        .el-cascader-menu__list {
+            padding: 0;
+        }
+
+        .el-cascader-menu__wrap {
+            height: 100%;
+        }
+
+        .node {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        & .el-cascader-node {
+            height: 36px;
+            line-height: 36px;
+            font-size: $font-size-sm;
+            color: var(--ks-content-primary);
+            padding: 0 30px 0 5px;
+
+            &[aria-haspopup="false"] {
+                padding-right: 0.5rem !important;
+            }
+
+            &:hover {
+                background-color: var(--ks-border-primary);
+            }
+
+            &.in-active-path,
+            &.is-active {
+                background-color: var(--ks-border-primary);
+                font-weight: normal;
+            }
+
+            .el-cascader-node__prefix {
+                display: none;
+            }
+
+            code span.regular {
+                color: var(--ks-content-primary);
+            }
+        }
+    }
 }
 </style>

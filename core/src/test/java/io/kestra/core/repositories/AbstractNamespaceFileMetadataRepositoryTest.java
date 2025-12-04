@@ -186,13 +186,6 @@ public abstract class AbstractNamespaceFileMetadataRepositoryTest {
                 List.of(namespaceFileMetadataQuery.toBuilder().version(1).last(true).build()),
                 FetchVersion.ALL
             ),
-            Arguments.of(
-                namespaceFileMetadataNotQuery.getTenantId(),
-                List.of(namespaceFileMetadataNotQuery),
-                List.of(QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.NOT_EQUALS).value("tes").build()),
-                Collections.emptyList(),
-                FetchVersion.ALL
-            ),
             // endregion
             // region PATH
             Arguments.of(

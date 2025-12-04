@@ -89,15 +89,15 @@
     import {ref, computed, watch, getCurrentInstance} from "vue"
     import {useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
-    import {useToast} from "../../utils/toast"
+    import {useToast} from "../../../../../utils/toast"
     import {State} from "@kestra-io/ui-libs"
-    import {useFlowStore} from "../../stores/flow"
+    import {useFlowStore} from "../../../../../stores/flow"
     import {useAuthStore} from "override/stores/auth"
-    import {useExecutionsStore} from "../../stores/executions"
-    import action from "../../models/action"
-    import permission from "../../models/permission"
-    import * as ExecutionUtils from "../../utils/executionUtils"
-    import ReplayWithInputs from "./ReplayWithInputs.vue"
+    import {useExecutionsStore} from "../../../../../stores/executions"
+    import action from "../../../../../models/action"
+    import permission from "../../../../../models/permission"
+    import * as ExecutionUtils from "../../../../../utils/executionUtils"
+    import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
 
@@ -238,7 +238,7 @@
     watch(isOpen, (newValue) => newValue && loadRevision())
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .execution-description {
     color: var(--ks-content-secondary);
 }

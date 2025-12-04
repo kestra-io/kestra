@@ -129,7 +129,7 @@
     import {State, Utils as LibUtils} from "@kestra-io/ui-libs"
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
-    import Restart from "./Restart.vue";
+    import Restart from "./overview/components/actions/Restart.vue";
     import * as LogUtils from "../../utils/logs";
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import {mapStores} from "pinia";

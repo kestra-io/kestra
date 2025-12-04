@@ -74,9 +74,6 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
                 Optional<Flow> fresh = flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
                 fresh.ifPresent(freshFlow -> {
                         flowRepository.delete(FlowWithSource.of(freshFlow, "unused"));
-                        executionRepository.findByFlowId(
-                            loadFlows.tenantId(), freshFlow.getNamespace(),freshFlow.getId(), Pageable.UNPAGED
-                        ).forEach(executionRepository::delete);
                     }
                     );
             });

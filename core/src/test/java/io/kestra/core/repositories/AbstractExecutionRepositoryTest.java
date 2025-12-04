@@ -156,7 +156,6 @@ public abstract class AbstractExecutionRepositoryTest {
 
         // add a NORMAL kind execution, it should be fetched correctly
         executionRepository.save(builder(
-            tenantId,
             State.Type.SUCCESS,
             null
         )

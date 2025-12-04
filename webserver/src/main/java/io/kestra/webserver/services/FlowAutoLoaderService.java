@@ -1,7 +1,7 @@
 package io.kestra.webserver.services;
 
 import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
@@ -23,6 +23,8 @@ import reactor.core.publisher.Mono;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static io.kestra.core.utils.Rethrow.throwFunction;
+
 /**
  * Service for automatically loading initial flows from the community blueprints at server startup.
  */
@@ -35,17 +37,18 @@ public class FlowAutoLoaderService {
     public static final String PURGE_SYSTEM_FLOW_BLUEPRINT_ID = "234";
 
     @Inject
-    protected FlowRepositoryInterface repository;
+    private FlowService flowService;
 
     @Inject
     @Client("api")
-    protected HttpClient httpClient;
+    private HttpClient httpClient;
 
     @Inject
     private NamespaceUtils namespaceUtils;
 
     @Inject
     private VersionProvider versionProvider;
+
     @Inject
     private TenantService tenantService;
 
@@ -72,12 +75,12 @@ public class FlowAutoLoaderService {
                         return body;
                     })
                 )
-                .map(source -> {
+                .map(throwFunction(source -> {
                     GenericFlow flow = GenericFlow.fromYaml(tenantService.resolveTenant(), source);
-                    repository.create(flow);
+                    flowService.create(flow);
                     log.debug("Loaded flow '{}/{}'.", flow.getNamespace(), flow.getId());
                     return 1;
-                })
+                }))
                 .onErrorReturn(0)
                 .onErrorContinue((throwable, o) -> {
                     // log error in debug to not spam user with stacktrace, e.g., flow maybe already registered.

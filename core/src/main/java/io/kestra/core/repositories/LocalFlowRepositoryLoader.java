@@ -3,11 +3,10 @@ package io.kestra.core.repositories;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.serializers.YamlParser;
-import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.Rethrow;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -43,10 +42,7 @@ public class LocalFlowRepositoryLoader {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-    private ModelValidator modelValidator;
-
-    @Inject
-    private PluginDefaultService pluginDefaultService;
+    private FlowService flowService;
 
     public void load(URL basePath) throws IOException, URISyntaxException {
         load(MAIN_TENANT, basePath);
@@ -95,19 +91,16 @@ public class LocalFlowRepositoryLoader {
                         String source = Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset());
                         GenericFlow parsed = GenericFlow.fromYaml(tenantId, source);
 
-                        FlowWithSource flowWithSource = pluginDefaultService.injectAllDefaults(parsed, false);
-                        modelValidator.validate(flowWithSource);
-
-                        FlowInterface existing = flowByUidInRepository.get(flowWithSource.uidWithoutRevision());
+                        FlowInterface existing = flowByUidInRepository.get(parsed.uidWithoutRevision());
 
                         if (existing == null) {
-                            flowRepository.create(parsed);
+                            flowService.create(parsed);
                             log.trace("Created flow {}.{}", parsed.getNamespace(), parsed.getId());
                         } else {
-                            flowRepository.update(parsed, existing);
+                            flowService.update(parsed, existing);
                             log.trace("Updated flow {}.{}", parsed.getNamespace(), parsed.getId());
                         }
-                    } catch (FlowProcessingException | ConstraintViolationException e) {
+                    } catch (FlowProcessingException | ConstraintViolationException | QueueException e) {
                         log.warn("Unable to create flow {}", file, e);
                     }
                 }));

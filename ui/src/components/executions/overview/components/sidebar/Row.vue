@@ -56,8 +56,6 @@
     & :deep(.label) {
         display: flex;
         align-items: center;
-        font-family: $font-family-monospace;
-        text-transform: uppercase;
 
         & span.material-design-icon {
             margin-right: calc($spacer / 2);

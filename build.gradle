@@ -204,6 +204,9 @@ subprojects {subProj ->
 
             //assertj
             testImplementation 'org.assertj:assertj-core'
+
+            // awaitility
+            testImplementation 'org.awaitility:awaitility'
         }
 
         def commonTestConfig = { Test t ->

@@ -9,17 +9,31 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.topologies.FlowTopologyService;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
+import io.kestra.scheduler.TriggerEventQueue;
+import io.kestra.scheduler.events.TriggerCreated;
+import io.kestra.scheduler.events.TriggerDeleted;
+import io.kestra.scheduler.events.TriggerEvent;
+import io.kestra.scheduler.events.TriggerUpdated;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
@@ -30,7 +44,10 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -45,22 +62,48 @@ import java.util.stream.StreamSupport;
 @Slf4j
 public class FlowService {
     @Inject
-    Optional<FlowRepositoryInterface> flowRepository;
+    private Optional<FlowRepositoryInterface> flowRepository;
 
     @Inject
-    PluginDefaultService pluginDefaultService;
+    private PluginDefaultService pluginDefaultService;
 
     @Inject
-    PluginRegistry pluginRegistry;
+    private PluginRegistry pluginRegistry;
 
     @Inject
-    ModelValidator modelValidator;
+    private ModelValidator modelValidator;
 
     @Inject
-    Optional<FlowTopologyRepositoryInterface> flowTopologyRepository;
+    private Optional<FlowTopologyRepositoryInterface> flowTopologyRepository;
 
     @Inject
-    Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
+    private Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
+
+    @Inject
+    private FlowTopologyService flowTopologyService;
+
+    @Inject
+    @Named(QueueFactoryInterface.FLOW_NAMED)
+    private QueueInterface<FlowInterface> flowQueue;
+
+    @Inject
+    private TriggerEventQueue triggerEventQueue;
+
+    private final ExecutorService executorService;
+
+    @Inject
+    public FlowService(ExecutorsUtils executorsUtils) {
+        this.executorService = executorsUtils.maxCachedThreadPool(Runtime.getRuntime().availableProcessors(), "flow-service");
+    }
+
+    @PreDestroy
+    void close() throws InterruptedException {
+        executorService.shutdown();
+
+        if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) {
+            executorService.shutdownNow();
+        }
+    }
 
     /**
      * Validates and creates the given flow.
@@ -68,24 +111,147 @@ public class FlowService {
      * The validation of the flow is done from the source after injecting all plugin default values.
      *
      * @param flow             The flow.
-     * @param strictValidation Specifies whether to perform a strict validation of the flow.
      * @return The created {@link FlowWithSource}.
      */
-    public FlowWithSource create(GenericFlow flow, final boolean strictValidation) throws FlowProcessingException {
+    public FlowWithSource create(GenericFlow flow) throws FlowProcessingException, QueueException {
+        // FIXME validation is done both here and in the repo
         Objects.requireNonNull(flow, "Cannot create null flow");
         if (flow.getSource() == null || flow.getSource().isBlank()) {
             throw new IllegalArgumentException("Cannot create flow with null or blank source");
         }
 
-        // Inject plugin default versions, and perform parsing validation when strictValidation = true (i.e., checking unknown and duplicated properties).
-        FlowWithSource parsed = pluginDefaultService.parseFlowWithVersionDefaults(flow.getTenantId(), flow.getSource(), strictValidation);
+        // Inject plugin default versions, and perform strict parsing validation (i.e., checking unknown and duplicated properties).
+        FlowWithSource parsed = pluginDefaultService.parseFlowWithVersionDefaults(flow.getTenantId(), flow.getSource(), true);
 
         // Validate Flow with defaults values
         // Do not perform a strict parsing validation to ignore unknown
         // properties that might be injecting through default values.
         modelValidator.validate(pluginDefaultService.injectAllDefaults(parsed, false));
 
-        return repository().create(flow);
+        FlowWithSource created = repository().create(flow);
+
+        // impact downstream consumers: topology, scheduler and flow metastore
+        impactDownstreamConsumers(created);
+
+        return created;
+    }
+
+    /**
+     * Validates and creates the given flow.
+     * <p>
+     * The validation of the flow is done from the source after injecting all plugin default values.
+     *
+     * @param flow             The flow.
+     * @return The created {@link FlowWithSource}.
+     */
+    public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws FlowProcessingException, QueueException {
+        // FIXME validation is done both here and in the repo
+        Objects.requireNonNull(flow, "Cannot create null flow");
+        if (flow.getSource() == null || flow.getSource().isBlank()) {
+            throw new IllegalArgumentException("Cannot create flow with null or blank source");
+        }
+        Objects.requireNonNull(previous, "Cannot update a flow with null previous");
+
+        // Inject plugin default versions, and perform strict parsing validation (i.e., checking unknown and duplicated properties).
+        FlowWithSource parsed = pluginDefaultService.parseFlowWithVersionDefaults(flow.getTenantId(), flow.getSource(), true);
+
+        // Validate Flow with defaults values
+        // Do not perform a strict parsing validation to ignore unknown
+        // properties that might be injecting through default values.
+        modelValidator.validate(pluginDefaultService.injectAllDefaults(parsed, false));
+
+        FlowWithSource updated = repository().update(flow, previous);
+
+        // impact downstream consumers: topology, scheduler and flow metastore
+        impactDownstreamConsumers(updated);
+
+        return updated;
+    }
+
+    /**
+     * Delete a flow.
+     */
+    public FlowWithSource delete(FlowWithSource flow) throws QueueException {
+        if (flowRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        FlowWithSource deleted = flowRepository.get().delete(flow);
+
+        // impact downstream consumers: topology, scheduler and flow metastore
+        impactDownstreamConsumers(deleted);
+
+        return deleted;
+    }
+
+    private void impactDownstreamConsumers(FlowWithSource flow) throws QueueException {
+        // update the topology asynchronously
+        executorService.submit(() -> updateTopology(flow));
+
+        // compute triggers events for the Scheduler
+        recomputeTriggers(flow);
+
+        // send it to the flow queue for the flow metastore
+        flowQueue.emit(flow);
+    }
+
+    private void updateTopology(FlowWithSource flow) {
+        flowTopologyRepository.get().save(
+            flow,
+            (flow.isDeleted() ?
+                Stream.<FlowTopology>empty() :
+                flowTopologyService
+                    .topology(
+                        flow,
+                        flowRepository.get().findAllWithSource(flow.getTenantId())
+                    )
+            )
+                .distinct()
+                .toList()
+        );
+    }
+
+    private void recomputeTriggers(FlowWithSource flow) {
+        var previous = flow.getRevision() <= 1 ? null : flowRepository.get().findById(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.of(flow.getRevision() - 1)).orElse(null);
+
+        if (flow.isDeleted() || previous != null) {
+            List<AbstractTrigger> triggersDeleted = flow.isDeleted() ?
+                ListUtils.emptyOnNull(flow.getTriggers()) :
+                FlowService.findRemovedTrigger(flow, previous);
+
+            triggersDeleted.forEach(trigger ->
+                sendTriggerEvent(new TriggerDeleted(TriggerId.of(flow, trigger), Instant.now()))
+            );
+        }
+
+        if (previous != null && !Objects.equals(previous.getRevision(), flow.getRevision())) {
+            FlowService.findUpdatedTrigger(flow, previous)
+                .stream()
+                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
+                .forEach(trigger ->
+                    sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision(), Instant.now()))
+                );
+            FlowService.findNewTrigger(flow, previous)
+                .stream()
+                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
+                .forEach(trigger ->
+                    sendTriggerEvent(new TriggerUpdated(TriggerId.of(flow, trigger), flow.getRevision(), Instant.now()))
+                );
+            return;
+        }
+
+        if (flow.getTriggers() != null) {
+            flow.getTriggers()
+                .stream()
+                .filter(trigger -> trigger instanceof WorkerTriggerInterface)
+                .forEach(trigger ->
+                    sendTriggerEvent(new TriggerCreated(TriggerId.of(flow, trigger), Instant.now(), flow.getRevision()))
+                );
+        }
+    }
+
+    private void sendTriggerEvent(TriggerEvent event) {
+        this.triggerEventQueue.send(event);
     }
 
     private FlowRepositoryInterface repository() {
@@ -260,10 +426,6 @@ public class FlowService {
         return flowRepository.get().findById(tenantId, namespace, flowId);
     }
 
-    public Stream<FlowInterface> keepLastVersion(Stream<FlowInterface> stream) {
-        return keepLastVersionCollector(stream);
-    }
-
     public List<String> deprecationPaths(Flow flow) {
         return deprecationTraversal("", flow).toList();
     }
@@ -425,31 +587,6 @@ public class FlowService {
             .filter(method -> !Modifier.isStatic(method.getModifiers()));
     }
 
-    public Collection<FlowInterface> keepLastVersion(List<FlowInterface> flows) {
-        return keepLastVersionCollector(flows.stream()).toList();
-    }
-
-    public Stream<FlowInterface> keepLastVersionCollector(Stream<FlowInterface> stream) {
-        // Use a Map to track the latest version of each flow
-        Map<String, FlowInterface> latestFlows = new HashMap<>();
-
-        stream.forEach(flow -> {
-            String uid = flow.uidWithoutRevision();
-            FlowInterface existing = latestFlows.get(uid);
-
-            // Update only if the current flow has a higher revision
-            if (existing == null || flow.getRevision() > existing.getRevision()) {
-                latestFlows.put(uid, flow);
-            } else if (flow.getRevision().equals(existing.getRevision()) && flow.isDeleted()) {
-                // Edge case: prefer deleted flow with the same revision
-                latestFlows.put(uid, flow);
-            }
-        });
-
-        // Return the non-deleted flows
-        return latestFlows.values().stream().filter(flow -> !flow.isDeleted());
-    }
-
     public boolean removeUnwanted(Flow f, Execution execution) {
         // we don't allow recursive
         return !f.uidWithoutRevision().equals(FlowId.uidWithoutRevision(execution));
@@ -471,6 +608,16 @@ public class FlowService {
             .filter(oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
                 .stream()
                 .anyMatch(trigger -> trigger.getId().equals(oldTrigger.getId()) && !EqualsBuilder.reflectionEquals(trigger, oldTrigger))
+            )
+            .toList();
+    }
+
+    public static List<AbstractTrigger> findNewTrigger(Flow flow, Flow previous) {
+        return ListUtils.emptyOnNull(flow.getTriggers())
+            .stream()
+            .filter(oldTrigger -> ListUtils.emptyOnNull(previous.getTriggers())
+                .stream()
+                .noneMatch(trigger -> trigger.getId().equals(oldTrigger.getId()))
             )
             .toList();
     }
@@ -497,15 +644,6 @@ public class FlowService {
         }
 
         return flowRepository.get().findByNamespacePrefix(tenantId, namespacePrefix);
-    }
-
-    // Used in Git plugin
-    public FlowWithSource delete(FlowWithSource flow) {
-        if (flowRepository.isEmpty()) {
-            throw noRepositoryException();
-        }
-
-        return flowRepository.get().delete(flow);
     }
 
     /**

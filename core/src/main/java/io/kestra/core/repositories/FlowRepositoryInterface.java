@@ -161,10 +161,22 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     Flux<Flow> findAsync(String tenantId, List<QueryFilter> filters);
 
+    /**
+     * Create a flow.
+     * It should not be called directly but instead <code>FlowService.create(GenericFlow flow)</code> should be used as it re-computes topology and triggers.
+     */
     FlowWithSource create(GenericFlow flow);
 
+    /**
+     * Update a flow.
+     * It should not be called directly but instead <code>FlowService.update(GenericFlow flow)</code> should be used as it re-computes topology and triggers.
+     */
     FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException;
 
+    /**
+     * Delete a flow.
+     * It should not be called directly but instead <code>FlowService.delete(GenericFlow flow)</code> should be used as it re-computes topology and triggers.
+     */
     FlowWithSource delete(FlowInterface flow);
 
     Boolean existAnyNoAcl(String tenantId);

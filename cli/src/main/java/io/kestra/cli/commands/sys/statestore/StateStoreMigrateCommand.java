@@ -57,7 +57,7 @@ public class StateStoreMigrateCommand extends AbstractCommand {
             String taskRunValue = statesUriPart.length > 2 ? statesUriPart[1] : null;
             String stateSubName = statesUriPart[statesUriPart.length - 1];
             boolean flowScoped = flowQualifierWithStateQualifiers[0].endsWith("/" + flow.getId());
-            StateStore stateStore = new StateStore(runContext(runContextFactory, flow), false);
+            StateStore stateStore = new StateStore(runContextFactory.of(flow, Map.of()), false);
 
             try (InputStream is = storageInterface.get(flow.getTenantId(), flow.getNamespace(), stateStoreFileUri)) {
                 stateStore.putState(flowScoped, stateName, stateSubName, taskRunValue, is.readAllBytes());
@@ -69,13 +69,5 @@ public class StateStoreMigrateCommand extends AbstractCommand {
 
         stdOut("Successfully ran the state-store migration.");
         return 0;
-    }
-
-    private RunContext runContext(RunContextFactory runContextFactory, Flow flow) {
-        Map<String, String> flowVariables = new HashMap<>();
-        flowVariables.put("tenantId", flow.getTenantId());
-        flowVariables.put("id", flow.getId());
-        flowVariables.put("namespace", flow.getNamespace());
-        return runContextFactory.of(flow, Map.of("flow", flowVariables));
     }
 }

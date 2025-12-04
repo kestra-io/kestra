@@ -49,7 +49,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, ref} from "vue";
+    import {onMounted, computed, ref} from "vue";
 
     import VarValue from "../../../VarValue.vue";
 

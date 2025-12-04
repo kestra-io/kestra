@@ -21,6 +21,7 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVValue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
@@ -37,16 +38,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class RunVariablesTest {
-    
+
     @Inject
     VariableRenderer renderer;
-    
+
     @Inject
     StorageInterface storageInterface;
 
     @Inject
     KvMetadataRepositoryInterface kvMetadataRepository;
-    
+
     @MockBean(KVStoreService.class)
     KVStoreService testKVStoreService() {
         return new KVStoreService() {
@@ -61,7 +62,7 @@ class RunVariablesTest {
             }
         };
     }
-    
+
     @Test
     @SuppressWarnings("unchecked")
     void shouldGetEmptyVariables() {
@@ -163,6 +164,7 @@ class RunVariablesTest {
     void nonResolvableDynamicInputsShouldBeSkipped() {
         VariableRenderer.VariableConfiguration mkVariableConfiguration = Mockito.mock(VariableRenderer.VariableConfiguration.class);
         ApplicationContext mkApplicationContext = Mockito.mock(ApplicationContext.class);
+        MeterRegistry mkMeterRegistry = Mockito.mock(MeterRegistry.class);
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withFlow(Flow
                 .builder()
@@ -175,13 +177,13 @@ class RunVariablesTest {
                 .build()
             )
             .withExecution(Execution.builder().id(IdUtils.create()).build())
-            .build(new RunContextLogger(), PropertyContext.create(new VariableRenderer(new PebbleEngineFactory(mkApplicationContext, mkVariableConfiguration), mkVariableConfiguration)));
+            .build(new RunContextLogger(), PropertyContext.create(new VariableRenderer(new PebbleEngineFactory(mkApplicationContext, mkVariableConfiguration, mkMeterRegistry), mkVariableConfiguration)));
 
         Assertions.assertEquals(Map.of(
             "a", true
         ), variables.get("inputs"));
     }
-    
+
     @Test
     void shouldBuildVariablesGivenFlowWithInputHavingDefaultPebbleExpression() {
         FlowInterface flow = GenericFlow.fromYaml(TenantService.MAIN_TENANT, """
@@ -192,12 +194,12 @@ class RunVariablesTest {
               type: STRING
               defaults: "{{ kv('???') }}"
             """);
-        
+
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withFlow(flow)
             .withExecution(Execution.builder().id(IdUtils.create()).build())
             .build(new RunContextLogger(), PropertyContext.create(renderer));
-        
+
         assertThat(variables.get("inputs")).isEqualTo(Map.of("input", "value"));
     }
 }

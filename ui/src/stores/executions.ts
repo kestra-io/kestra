@@ -26,7 +26,7 @@ export type Histories = {
 export interface Execution{
     id: string;
     namespace: string;
-    flowId?: string;
+    flowId: string;
     tenantId?: string;
     taskRunList:  {
         id: string,
@@ -79,7 +79,6 @@ export const useExecutionsStore = defineStore("executions", () => {
     const flowGraph = ref<any | undefined>(undefined);
     const namespaces = ref<string[]>([]);
     const flowsExecutable = ref<any[]>([]);
-
 
     // clear flow graph when execution is reset
     // since it is supposed to represent the current execution's flow

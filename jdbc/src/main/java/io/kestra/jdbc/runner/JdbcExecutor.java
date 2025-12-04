@@ -1135,11 +1135,18 @@ public class JdbcExecutor implements ExecutorInterface {
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     FlowWithSource flow = executor.getFlow();
-                    triggerRepository
-                        .findByExecution(execution)
-                        .ifPresent(trigger -> {
-                            this.triggerState.update(executionService.resetExecution(flow, execution, trigger));
-                        });
+
+                    if (flow == null) {
+                        log.error("Couldn't reset trigger for execution {} as flow {} is missing. Trigger {} might stay stuck.",
+                            execution.getId(),
+                            execution.getTenantId() + "/" + execution.getNamespace() + "/" + execution.getFlowId(),
+                            execution.getTrigger().getId()
+                        );
+                    } else {
+                        triggerRepository
+                            .findByExecution(execution)
+                            .ifPresent(trigger -> this.triggerState.update(executionService.resetExecution(flow, execution, trigger)));
+                    }
                 }
 
                 return;

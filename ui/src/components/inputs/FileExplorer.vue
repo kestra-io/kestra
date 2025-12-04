@@ -331,6 +331,7 @@
             top="10vh"
         >
             <Revisions
+                v-if="revisionsHistory.visible"
                 :lang="revisionsHistory.path.split('.').pop()!"
                 :revisions="revisionsHistory.revisions"
                 :revisionSource="fetchRevisionSource"
@@ -541,7 +542,7 @@
     }
 
     async function restore(source: string) {
-        await namespacesStore.createFile({
+        await namespacesStore.saveOrCreateFile({
             namespace: namespaceId.value,
             path: revisionsHistory.value.path,
             content: source

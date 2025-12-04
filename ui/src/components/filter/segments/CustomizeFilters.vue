@@ -2,8 +2,8 @@
     <div class="filters-panel">
         <div class="header">
             <div class="title">
-                <h6>{{ t("filter.customize") }}</h6>
-                <small>{{ t("filter.select filter") }}</small>
+                <h6>{{ $t("filter.customize") }}</h6>
+                <small>{{ $t("filter.select filter") }}</small>
             </div>
             <el-button
                 link
@@ -37,22 +37,19 @@
         </div>
 
         <div class="footer">
-            <small>{{ t("filter.filters_added", {selected: selectedCount, total: totalCount}) }}</small>
+            <small>{{ $t("filter.filters_added", {selected: selectedCount, total: totalCount}) }}</small>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
-    import {useI18n} from "vue-i18n";
     import {Close, Plus} from "../utils/icons";
     import {
         FilterConfiguration,
         FilterKeyConfig,
         AppliedFilter
     } from "../utils/filterTypes";
-
-    const {t} = useI18n();
 
     const props = defineProps<{
         configuration: FilterConfiguration;

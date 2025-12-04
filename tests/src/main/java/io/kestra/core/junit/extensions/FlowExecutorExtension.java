@@ -1,25 +1,16 @@
 package io.kestra.core.junit.extensions;
-
-import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
-
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -29,7 +20,6 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 
 public class FlowExecutorExtension implements AfterEachCallback, ParameterResolver {
     private ApplicationContext context;
-    private static final Object lock =new Object();
     @Override
     public boolean supportsParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {

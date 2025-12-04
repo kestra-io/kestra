@@ -32,6 +32,8 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.exceptions.HttpStatusException;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,6 +48,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -158,6 +161,16 @@ public abstract class AbstractExecutionRepositoryTest {
             ).trigger(executionTrigger).build());
         }
 
+        // add a NORMAL kind execution, it should be fetched correctly
+        executionRepository.save(builder(
+            tenantId,
+            State.Type.SUCCESS,
+            null
+        )
+            .trigger(executionTrigger)
+            .kind(ExecutionKind.NORMAL)
+            .build());
+
         // add a test execution, this should be ignored in search & statistics
         executionRepository.save(builder(
             tenantId,
@@ -182,16 +195,16 @@ public abstract class AbstractExecutionRepositoryTest {
 
     static Stream<Arguments> filterCombinations() {
         return Stream.of(
-            Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unittest").operation(Op.EQUALS).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unittest").operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(), 1),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build(), 15),
-            Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.STATE).value(Type.RUNNING).operation(Op.EQUALS).build(), 5),
-            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 28)
+            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 29)
         );
     }
 
@@ -219,7 +232,7 @@ public abstract class AbstractExecutionRepositoryTest {
         inject(tenant);
 
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  tenant, null);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
 
         List<QueryFilter> filters = List.of(QueryFilter.builder()
@@ -283,7 +296,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value("io.kestra")
             .build());
         executions = executionRepository.find(Pageable.from(1, 10),  tenant, filters);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
     }
 
     @Test
@@ -300,7 +313,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value(executionTriggerId)
             .build());
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10), tenant, filters);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
         filters = List.of(QueryFilter.builder()
@@ -310,7 +323,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .build());
 
         executions = executionRepository.find(Pageable.from(1, 10),  tenant, filters);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
 
@@ -321,12 +334,12 @@ public abstract class AbstractExecutionRepositoryTest {
             .build());
 
         executions = executionRepository.find(Pageable.from(1, 10),  tenant, filters );
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger()).isNull();
 
         executions = executionRepository.find(Pageable.from(1, 10),  tenant, null);
-        assertThat(executions.getTotal()).isEqualTo(56L);
+        assertThat(executions.getTotal()).isEqualTo(58L);
     }
 
     @Test
@@ -335,7 +348,7 @@ public abstract class AbstractExecutionRepositoryTest {
         inject(tenant);
 
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  tenant, null);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
 
         var filters = List.of(QueryFilter.builder()
@@ -638,7 +651,8 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         assertThat(data.getTotal()).isEqualTo(1L);
-        assertThat(data).first().hasFieldOrPropertyWithValue("count", 1);
+        assertThat(data).first().hasFieldOrProperty("count");
+        assertThat(data).first().extracting("count").hasToString("1");
         assertThat(data).first().hasFieldOrPropertyWithValue("id", execution.getId());
     }
 
@@ -661,7 +675,7 @@ public abstract class AbstractExecutionRepositoryTest {
 inject(tenant);
 
         List<Execution> executions = executionRepository.findAllAsync(tenant).collectList().block();
-        assertThat(executions).hasSize(29); // used by the backup so it contains TEST executions
+        assertThat(executions).hasSize(30); // used by the backup so it contains TEST executions
     }
 
     @Test
@@ -821,12 +835,7 @@ inject(tenant);
                         )
                     )
                 ).build();
-            try {
-                var res= JacksonMapper.ofJson().writeValueAsString(successExecution);
-                System.out.println(res);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+
             assertThat(successExecution.getState().getDuration().get()).isCloseTo(Duration.ofSeconds(20), Duration.ofMillis(3));
             executionRepository.save(successExecution);
 
@@ -878,7 +887,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.asc("state_duration"));
+        var sort = createSortLikeInControllers(List.of("state.duration:asc"), executionRepository.sortMapping());
         var sortedByShortestDuration = executionRepository.find(Pageable.from(sort), tenant, emptyFilters);
 
         // then
@@ -906,7 +915,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.desc("state_duration"));
+        var sort = createSortLikeInControllers(List.of("state.duration:desc"), executionRepository.sortMapping());
         var sortedByLongestDuration = executionRepository.find(Pageable.from(sort), tenant, emptyFilters);
 
         // then
@@ -935,7 +944,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.asc("start_date"));
+        var sort = createSortLikeInControllers(List.of("state.startDate:asc"), executionRepository.sortMapping());
         var page = Pageable.from(1, 1, sort);
         var findByMoreRecentStartDate = executionRepository.find(
             page,
@@ -958,7 +967,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.desc("start_date"));
+        var sort = createSortLikeInControllers(List.of("state.startDate:desc"), executionRepository.sortMapping());
         var page = Pageable.from(1, 1, sort);
         var findByMoreRecentStartDate = executionRepository.find(
             page,
@@ -971,6 +980,28 @@ inject(tenant);
             .as("assert order when finding by last start date")
             .map(Execution::getId)
             .containsExactly(testData.failedExecution().getId());
+    }
+
+    // duplicated from PageableUtils, because mapping is different between PG and ES
+    private Sort createSortLikeInControllers(List<String> sort, Function<String, String> sortMapper) {
+        return sort == null ? null :
+            Sort.of(sort
+                .stream()
+                .map(s -> {
+                    String[] split = s.split(":");
+                    if (split.length != 2) {
+                        throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid sort parameter");
+                    }
+                    String col = split[0];
+
+                    if (sortMapper != null) {
+                        col = sortMapper.apply(col);
+                    }
+
+                    return split[1].equals("asc") ? Sort.Order.asc(col) : Sort.Order.desc(col);
+                })
+                .toList()
+            );
     }
 
     @Test

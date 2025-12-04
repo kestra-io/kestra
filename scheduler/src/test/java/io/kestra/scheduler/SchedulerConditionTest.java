@@ -77,6 +77,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         flowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
+            .tenantId(TENANT_ID)
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .triggerId("hourly")

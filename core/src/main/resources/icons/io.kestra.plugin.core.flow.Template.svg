@@ -1,7 +1,7 @@
 <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="80" height="80" fill="#F2F2F2"/>
+
 <g filter="url(#filter0_ii_0_1)">
-<rect width="1936" height="1336" transform="translate(-960 -466)" fill="white"/>
+
 <g filter="url(#filter1_i_0_1)">
 <path d="M0 20C0 8.95431 8.95431 0 20 0H60C71.0457 0 80 8.95431 80 20V60C80 71.0457 71.0457 80 60 80H20C8.95431 80 0 71.0457 0 60V20Z" fill="url(#paint0_linear_0_1)"/>
 </g>

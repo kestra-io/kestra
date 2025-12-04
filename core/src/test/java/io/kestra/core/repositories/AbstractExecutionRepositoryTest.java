@@ -351,7 +351,7 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), MAIN_TENANT, null);
-        assertThat(taskRuns.getTotal()).isEqualTo(74L);
+        assertThat(taskRuns.getTotal()).isEqualTo(77L);
         assertThat(taskRuns.size()).isEqualTo(10);
 
         var filters = List.of(QueryFilter.builder()

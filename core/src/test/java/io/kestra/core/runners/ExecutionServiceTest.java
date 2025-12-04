@@ -239,8 +239,8 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @ExecuteFlow(value = "flows/valids/each-sequential-nested.yaml", tenantId = TENANT_2)
-    void replayEachSeq(Execution execution) throws Exception {
+    @ExecuteFlow(value = "flows/valids/each-sequential-nested.yaml")
+    void replayEachSeq1(Execution execution) throws Exception {
         assertThat(execution.getTaskRunList()).hasSize(23);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
@@ -258,7 +258,7 @@ class ExecutionServiceTest {
     }
 
     @Test
-    @ExecuteFlow(value = "flows/valids/each-sequential-nested.yaml", tenantId = TENANT_1)
+    @ExecuteFlow(value = "flows/valids/each-sequential-nested.yaml")
     void replayEachSeq2(Execution execution) throws Exception {
         assertThat(execution.getTaskRunList()).hasSize(23);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

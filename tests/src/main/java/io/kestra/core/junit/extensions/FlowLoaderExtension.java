@@ -16,6 +16,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -23,7 +25,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallback {
     private ApplicationContext applicationContext;
-
+    private static final Object lock =new Object();
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
         if (applicationContext == null) {
@@ -62,14 +64,22 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
             Flow flow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
             flowIds.add(flow.getId());
         }
-        flowRepository.findAllForAllTenants().stream()
+        List<Flow> flows = flowRepository.findAllForAllTenants().stream()
             .filter(flow -> flowIds.contains(flow.getId()))
             .filter(flow -> loadFlows.tenantId().equals(flow.getTenantId()))
-            .forEach(flow -> {
-                flowRepository.delete(FlowWithSource.of(flow, "unused"));
-                executionRepository.findByFlowId(loadFlows.tenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED)
-                    .forEach(executionRepository::delete);
+            .toList();
+
+        synchronized (lock){
+            flows.forEach(flow -> {
+                Optional<Flow> fresh = flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+                fresh.ifPresent(value -> flowRepository.delete(FlowWithSource.of(value, "unused")));
+
+                executionRepository.findByFlowId(
+                    loadFlows.tenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED
+                ).forEach(executionRepository::delete);
             });
+        }
+
     }
 
     private static LoadFlows getLoadFlows(ExtensionContext extensionContext) {

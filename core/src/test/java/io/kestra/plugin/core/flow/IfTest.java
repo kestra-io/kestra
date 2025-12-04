@@ -9,7 +9,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.time.Duration;
 import java.util.List;
@@ -28,9 +28,9 @@ class IfTest {
     private TestRunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows(value = {"flows/valids/if-condition.yaml"}, tenantId = TENANT_ID)
+    @LoadFlows(value = {"flows/valids/if-condition.yaml"})
     void ifTruthy() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
         List<TaskRunAttempt> flowableAttempts=execution.findTaskRunsByTaskId("if").getFirst().getAttempts();
 
@@ -41,14 +41,14 @@ class IfTest {
         assertThat(flowableAttempts).isNotNull();
         assertThat(flowableAttempts.getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
+        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", "true") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
+        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", 1) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);

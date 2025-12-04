@@ -48,6 +48,8 @@ public class LocalFlowRepositoryLoader {
     @Inject
     private PluginDefaultService pluginDefaultService;
 
+    private static final Object lock = new Object();
+
     public void load(URL basePath) throws IOException, URISyntaxException {
         load(MAIN_TENANT, basePath);
     }
@@ -82,11 +84,12 @@ public class LocalFlowRepositoryLoader {
         load(MAIN_TENANT, basePath);
     }
 
-    public void load(String tenantId, File basePath) throws IOException {
-        Map<String, FlowInterface> flowByUidInRepository = flowRepository.findAllForAllTenants()
-            .stream()
-            .filter(flow -> tenantId.equals(flow.getTenantId()))
-            .collect(Collectors.toMap(FlowId::uidWithoutRevision, Function.identity()));
+    public synchronized void load(String tenantId, File basePath) throws IOException {
+
+          Map<String, FlowInterface> flowByUidInRepository = flowRepository.findAllForAllTenants()
+              .stream()
+              .filter(flow -> tenantId.equals(flow.getTenantId()))
+              .collect(Collectors.toMap(FlowId::uidWithoutRevision, Function.identity()));
 
         try (Stream<Path> pathStream = Files.walk(basePath.toPath())) {
             pathStream.filter(YamlParser::isValidExtension)
@@ -95,22 +98,22 @@ public class LocalFlowRepositoryLoader {
                         String source = Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset());
                         GenericFlow parsed = GenericFlow.fromYaml(tenantId, source);
 
-                        FlowWithSource flowWithSource = pluginDefaultService.injectAllDefaults(parsed, false);
-                        modelValidator.validate(flowWithSource);
+                          FlowWithSource flowWithSource = pluginDefaultService.injectAllDefaults(parsed, false);
+                          modelValidator.validate(flowWithSource);
+                          FlowInterface existing = flowByUidInRepository.get(flowWithSource.uidWithoutRevision());
+                          if (existing == null) {
+                              flowRepository.create(parsed);
+                              log.trace("Created flow {}.{}.{}", parsed.getNamespace(), parsed.getId(),Thread.currentThread().getName());
+                          } else {
+                              flowRepository.update(parsed, existing);
+                              log.trace("Updated flow {}.{}.{}", parsed.getNamespace(), parsed.getId(),Thread.currentThread().getName());
+                          }
+                      } catch (FlowProcessingException | ConstraintViolationException e) {
+                          log.warn("Unable to create flow {}", file, e);
+                      }
+                  }));
 
-                        FlowInterface existing = flowByUidInRepository.get(flowWithSource.uidWithoutRevision());
+      }
 
-                        if (existing == null) {
-                            flowRepository.create(parsed);
-                            log.trace("Created flow {}.{}", parsed.getNamespace(), parsed.getId());
-                        } else {
-                            flowRepository.update(parsed, existing);
-                            log.trace("Updated flow {}.{}", parsed.getNamespace(), parsed.getId());
-                        }
-                    } catch (FlowProcessingException | ConstraintViolationException e) {
-                        log.warn("Unable to create flow {}", file, e);
-                    }
-                }));
-        }
     }
 }

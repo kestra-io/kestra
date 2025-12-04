@@ -16,7 +16,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -26,7 +29,7 @@ import org.junit.jupiter.api.extension.ParameterResolver;
 
 public class FlowExecutorExtension implements AfterEachCallback, ParameterResolver {
     private ApplicationContext context;
-
+    private static final Object lock =new Object();
     @Override
     public boolean supportsParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {
@@ -69,10 +72,18 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         String path = executeFlow.value();
         URL resource = loadFile(path);
         Flow loadedFlow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
-        flowRepository.findAllForAllTenants().stream()
+
+        List<Flow> flows=  flowRepository.findAllForAllTenants().stream()
             .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
-            .filter(flow -> Objects.equals(flow.getTenantId(), executeFlow.tenantId()))
-            .forEach(flow -> flowRepository.delete(FlowWithSource.of(flow, "unused")));
+            .filter(flow -> Objects.equals(flow.getTenantId(), executeFlow.tenantId())).toList();
+        synchronized (lock){
+            flows.forEach(flow ->
+                {
+                    Optional<Flow> fresh = flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId());
+                    fresh.ifPresent(value -> flowRepository.delete(FlowWithSource.of(value, "unused")));
+                }
+            );
+        }
     }
 
     private static ExecuteFlow getExecuteFlow(ExtensionContext extensionContext) {

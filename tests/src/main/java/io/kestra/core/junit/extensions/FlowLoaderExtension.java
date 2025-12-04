@@ -1,6 +1,7 @@
 package io.kestra.core.junit.extensions;
 
 import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.flows.Flow;
@@ -9,6 +10,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
@@ -51,9 +53,10 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
+    public void afterEach(ExtensionContext extensionContext) throws Exception {
         LoadFlows loadFlows = getLoadFlows(extensionContext);
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
+        FlowService flowService = applicationContext.getBean(FlowService.class);
         ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
 
         Set<String> flowIds = new HashSet<>();
@@ -65,11 +68,11 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> flowIds.contains(flow.getId()))
             .filter(flow -> loadFlows.tenantId().equals(flow.getTenantId()))
-            .forEach(flow -> {
-                flowRepository.delete(FlowWithSource.of(flow, "unused"));
+            .forEach(throwConsumer(flow -> {
+                flowService.delete(FlowWithSource.of(flow, "unused"));
                 executionRepository.findByFlowId(loadFlows.tenantId(), flow.getNamespace(), flow.getId(), Pageable.UNPAGED)
                     .forEach(executionRepository::delete);
-            });
+            }));
     }
 
     private static LoadFlows getLoadFlows(ExtensionContext extensionContext) {

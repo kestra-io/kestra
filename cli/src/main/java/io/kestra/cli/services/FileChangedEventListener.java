@@ -9,6 +9,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.services.PluginDefaultService;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.scheduling.io.watch.FileWatchConfiguration;
@@ -28,6 +29,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Optional;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
+
 @Singleton
 @Slf4j
 @Requires(property = "micronaut.io.watch.enabled", value = "true")
@@ -39,6 +42,9 @@ public class FileChangedEventListener {
 
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
+
+    @Inject
+    private FlowService flowService;
 
     @Inject
     private PluginDefaultService pluginDefaultService;
@@ -62,7 +68,7 @@ public class FileChangedEventListener {
 
     public void startListeningFromConfig() throws IOException, InterruptedException {
         if (fileWatchConfiguration != null && fileWatchConfiguration.isEnabled()) {
-            this.flowFilesManager = new LocalFlowFileWatcher(flowRepositoryInterface);
+            this.flowFilesManager = new LocalFlowFileWatcher(flowRepositoryInterface, flowService);
             List<Path> paths = fileWatchConfiguration.getPaths();
             this.setup(paths);
 
@@ -162,10 +168,10 @@ public class FileChangedEventListener {
                                     flows.stream()
                                         .filter(flow -> flow.getPath().equals(filePath.toString()))
                                         .findFirst()
-                                        .ifPresent(flowWithPath -> {
+                                        .ifPresent(throwConsumer(flowWithPath -> {
                                             flowFilesManager.deleteFlow(flowWithPath.getTenantId(), flowWithPath.getNamespace(), flowWithPath.getId());
                                             this.flows.removeIf(fwp -> fwp.uidWithoutRevision().equals(flowWithPath.uidWithoutRevision()));
-                                        });
+                                        }));
                                 } catch (IOException e) {
                                     log.error("Error reading file: {}", entry, e);
                                 }
@@ -175,10 +181,10 @@ public class FileChangedEventListener {
                             flows.stream()
                                 .filter(flow -> flow.getPath().equals(filePath.toString()))
                                 .findFirst()
-                                .ifPresent(flowWithPath -> {
+                                .ifPresent(throwConsumer(flowWithPath -> {
                                     flowFilesManager.deleteFlow(flowWithPath.getTenantId(), flowWithPath.getNamespace(), flowWithPath.getId());
                                     this.flows.removeIf(fwp -> fwp.uidWithoutRevision().equals(flowWithPath.uidWithoutRevision()));
-                                });
+                                }));
                         }
                     }
                 } catch (Exception e) {
@@ -215,7 +221,11 @@ public class FileChangedEventListener {
 
                         if (flow.isPresent() && flows.stream().noneMatch(flowWithPath -> flowWithPath.uidWithoutRevision().equals(flow.get().uidWithoutRevision()))) {
                             flows.add(FlowWithPath.of(flow.get(), file.toString()));
-                            flowFilesManager.createOrUpdateFlow(GenericFlow.fromYaml(getTenantIdFromPath(file), content));
+                            try {
+                                flowFilesManager.createOrUpdateFlow(GenericFlow.fromYaml(getTenantIdFromPath(file), content));
+                            } catch (Exception e) {
+                                log.error("Unexpected error while watching flows", e);
+                            }
                         }
                     }
                     return FileVisitResult.CONTINUE;

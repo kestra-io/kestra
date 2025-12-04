@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -7,7 +8,8 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
@@ -18,7 +20,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,7 +30,7 @@ class DefaultFlowMetaStoreTest {
     private DefaultFlowMetaStore flowMetaStore;
 
     @Inject
-    private FlowRepositoryInterface flowRepository;
+    private FlowService flowService;
 
     @AfterEach
     void clean() {
@@ -37,16 +38,15 @@ class DefaultFlowMetaStoreTest {
     }
 
     @Test
-    void findById() {
-        Flow test = createFlow();
-        flowRepository.create(GenericFlow.of(test));
+    void findById() throws FlowProcessingException, QueueException {
+        FlowWithSource test = flowService.create(GenericFlow.of(createFlow()));
 
         Optional<FlowInterface> maybeFlow = flowMetaStore.findById(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty());
 
         assertThat(maybeFlow).isPresent();
         assertThat(maybeFlow.get().getId()).isEqualTo(test.getId());
 
-        flowRepository.delete(test);
+        flowService.delete(test);
     }
 
     @Test
@@ -58,11 +58,10 @@ class DefaultFlowMetaStoreTest {
     }
 
     @Test
-    void findByIdShouldReturnLastRevision() {
-        Flow test = createFlow();
-        flowRepository.create(GenericFlow.of(test));
+    void findByIdShouldReturnLastRevision() throws FlowProcessingException, QueueException {
+        FlowWithSource test = flowService.create(GenericFlow.of(createFlow()));
         Flow updated = test.toBuilder().tasks(List.of(Return.builder().id("return").format(Property.ofValue("new format")).type(Return.class.getName()).build())).build();
-        flowRepository.update(GenericFlow.of(updated), test);
+        flowService.update(GenericFlow.of(updated), test);
 
         Optional<FlowInterface> maybeFlow = flowMetaStore.findById(test.getTenantId(), test.getNamespace(), test.getId(), Optional.of(2));
 
@@ -70,14 +69,13 @@ class DefaultFlowMetaStoreTest {
         assertThat(maybeFlow.get().getId()).isEqualTo(test.getId());
         assertThat(maybeFlow.get().getRevision()).isEqualTo(2);
 
-        flowRepository.delete(test);
+        flowService.delete(test);
     }
 
     @Test
-    void findByIdShouldReturnPreviousRevision() {
-        Flow test = createFlow();
-        flowRepository.create(GenericFlow.of(test));
-        flowRepository.update(GenericFlow.of(test.toBuilder().revision(2).build()), test);
+    void findByIdShouldReturnPreviousRevision() throws FlowProcessingException, QueueException {
+        FlowWithSource test = flowService.create(GenericFlow.of(createFlow()));
+        flowService.update(GenericFlow.of(test.toBuilder().revision(2).build()), test);
 
         Optional<FlowInterface> maybeFlow = flowMetaStore.findById(test.getTenantId(), test.getNamespace(), test.getId(), Optional.of(1));
 
@@ -85,14 +83,13 @@ class DefaultFlowMetaStoreTest {
         assertThat(maybeFlow.get().getId()).isEqualTo(test.getId());
         assertThat(maybeFlow.get().getRevision()).isEqualTo(1);
 
-        flowRepository.delete(test);
+        flowService.delete(test);
     }
 
     @Test
-    void findByIdShouldReturnEmptyForDeletedFlow() throws InterruptedException {
-        Flow test = createFlow();
-        flowRepository.create(GenericFlow.of(test));
-        flowRepository.delete(test);
+    void findByIdShouldReturnEmptyForDeletedFlow() throws InterruptedException, FlowProcessingException, QueueException {
+        FlowWithSource test = flowService.create(GenericFlow.of(createFlow()));
+        flowService.delete(test);
         Thread.sleep(100); // make sure the metastore receive the deletion
 
         Optional<FlowInterface> maybeFlow = flowMetaStore.findById(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty());
@@ -101,9 +98,9 @@ class DefaultFlowMetaStoreTest {
     }
 
     @Test
-    void findByExecution() {
+    void findByExecution() throws FlowProcessingException, QueueException {
         Flow test = createFlow();
-        FlowWithSource created = flowRepository.create(GenericFlow.of(test));
+        FlowWithSource created = flowService.create(GenericFlow.of(test));
         Execution execution = Execution.newExecution(created, null, null, Optional.empty());
 
         Optional<FlowInterface> maybeFlow = flowMetaStore.findByExecution(execution);
@@ -111,7 +108,7 @@ class DefaultFlowMetaStoreTest {
         assertThat(maybeFlow).isPresent();
         assertThat(maybeFlow.get().getId()).isEqualTo(test.getId());
 
-        flowRepository.delete(test);
+        flowService.delete(created);
     }
 
     @Test
@@ -125,9 +122,9 @@ class DefaultFlowMetaStoreTest {
     }
 
     @Test
-    void findByExecutionThenInjectDefaults() {
+    void findByExecutionThenInjectDefaults() throws FlowProcessingException, QueueException {
         Flow test = createFlow();
-        FlowWithSource created = flowRepository.create(GenericFlow.of(test));
+        FlowWithSource created = flowService.create(GenericFlow.of(test));
         Execution execution = Execution.newExecution(created, null, null, Optional.empty());
 
         Optional<FlowWithSource> maybeFlow = flowMetaStore.findByExecutionThenInjectDefaults(execution);
@@ -135,7 +132,7 @@ class DefaultFlowMetaStoreTest {
         assertThat(maybeFlow).isPresent();
         assertThat(maybeFlow.get().getId()).isEqualTo(test.getId());
 
-        flowRepository.delete(test);
+        flowService.delete(created);
     }
 
     @Test
@@ -149,11 +146,11 @@ class DefaultFlowMetaStoreTest {
     }
 
     @Test
-    void allLastVersion() throws TimeoutException, InterruptedException {
+    void allLastVersion() throws InterruptedException, FlowProcessingException, QueueException {
         FlowWithSource test1 = createFlow();
-        flowRepository.create(GenericFlow.of(test1));
+        flowService.create(GenericFlow.of(test1));
         FlowWithSource test2 = createFlow();
-        flowRepository.create(GenericFlow.of(test2));
+        flowService.create(GenericFlow.of(test2));
         Thread.sleep(100); // make sure the metastore receive the items
 
         Collection<FlowWithSource> flows = flowMetaStore.allLastVersion();
@@ -163,16 +160,15 @@ class DefaultFlowMetaStoreTest {
     }
 
     @Test
-    void findByIdFromTask() {
-        Flow test = createFlow();
-        flowRepository.create(GenericFlow.of(test));
+    void findByIdFromTask() throws FlowProcessingException, QueueException {
+        FlowWithSource test = flowService.create(GenericFlow.of(createFlow()));
 
         Optional<FlowInterface> maybeFlow = flowMetaStore.findByIdFromTask(test.getTenantId(), test.getNamespace(), test.getId(), Optional.empty(), test.getTenantId(), test.getNamespace(), test.getId());
 
         assertThat(maybeFlow).isPresent();
         assertThat(maybeFlow.get().getId()).isEqualTo(test.getId());
 
-        flowRepository.delete(test);
+        flowService.delete(test);
     }
 
     @Test

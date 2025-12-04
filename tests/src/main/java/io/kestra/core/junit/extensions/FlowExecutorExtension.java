@@ -1,6 +1,7 @@
 package io.kestra.core.junit.extensions;
 
 import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.models.executions.Execution;
@@ -10,9 +11,9 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -62,9 +63,10 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
+    public void afterEach(ExtensionContext extensionContext) throws Exception {
         ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
         FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
+        FlowService flowService = context.getBean(FlowService.class);
 
         String path = executeFlow.value();
         URL resource = loadFile(path);
@@ -72,13 +74,12 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
             .filter(flow -> Objects.equals(flow.getTenantId(), executeFlow.tenantId()))
-            .forEach(flow -> flowRepository.delete(FlowWithSource.of(flow, "unused")));
+            .forEach(throwConsumer(flow -> flowService.delete(FlowWithSource.of(flow, "unused"))));
     }
 
     private static ExecuteFlow getExecuteFlow(ExtensionContext extensionContext) {
-        ExecuteFlow executeFlow = extensionContext.getTestMethod()
+        return extensionContext.getTestMethod()
             .orElseThrow()
             .getAnnotation(ExecuteFlow.class);
-        return executeFlow;
     }
 }

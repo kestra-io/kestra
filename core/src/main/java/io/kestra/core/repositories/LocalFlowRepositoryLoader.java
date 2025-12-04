@@ -102,10 +102,10 @@ public class LocalFlowRepositoryLoader {
 
                         if (existing == null) {
                             flowRepository.create(parsed);
-                            log.trace("Created flow {}.{}.{}", parsed.getNamespace(), parsed.getId(), Thread.currentThread().getName());
+                            log.trace("Created flow {}.{} by thread {}", parsed.getNamespace(), parsed.getId(), Thread.currentThread().getName());
                         } else {
                             flowRepository.update(parsed, existing);
-                            log.trace("Updated flow {}.{}.{}", parsed.getNamespace(), parsed.getId(), Thread.currentThread().getName());
+                            log.trace("Updated flow {}.{} by thread {}", parsed.getNamespace(), parsed.getId(), Thread.currentThread().getName());
                         }
                     } catch (FlowProcessingException | ConstraintViolationException e) {
                         log.warn("Unable to create flow {}", file, e);

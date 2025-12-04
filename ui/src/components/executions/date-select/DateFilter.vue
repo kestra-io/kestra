@@ -6,13 +6,11 @@
             class="filter"
         >
             <el-radio-button
-                data-test-id="date-filter-relative-selector"
                 :value="filterType.RELATIVE"
             >
                 {{ $t("relative") }}
             </el-radio-button>
             <el-radio-button
-                data-test-id="date-filter-absolute-selector"
                 :value="filterType.ABSOLUTE"
             >
                 {{ $t("absolute") }}
@@ -38,13 +36,11 @@
             class="filter"
         >
             <el-radio-button
-                data-test-id="date-filter-relative-selector"
                 :value="filterType.RELATIVE"
             >
                 {{ $t("relative") }}
             </el-radio-button>
             <el-radio-button
-                data-test-id="date-filter-absolute-selector"
                 :value="filterType.ABSOLUTE"
             >
                 {{ $t("absolute") }}

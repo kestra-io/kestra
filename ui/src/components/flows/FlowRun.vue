@@ -59,7 +59,6 @@
                 <div class="right-align">
                     <el-form-item class="submit">
                         <el-button
-                            :data-test-id="buttonTestId"
                             :icon="buttonIcon"
                             :disabled="!flowCanBeExecuted || hasBlockingChecks()"
                             :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"

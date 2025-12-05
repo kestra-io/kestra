@@ -163,4 +163,10 @@
         margin: .5rem;
         gap: .5rem;
     }
+    @media screen and (max-width: 768px) {
+        .button-wrapper {
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
+    }
 </style>

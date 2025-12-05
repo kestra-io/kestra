@@ -3,17 +3,16 @@
         class="filter-container"
         :class="{'filter-shrink': filter.searchInputFullWidth.value}"
     >
-        <el-tooltip :content="$t('filter.refresh')" placement="top" effect="light">
-            <el-button
-                v-if="filter.tableOptions.value?.refresh?.shown"
-                @click="filter.refreshData"
-                :icon="Refresh"
-                :size="'default'"
-                class="refresh-button"
-            >
-                <span class="d-none">{{ $t("filter.refresh") }}</span>
-            </el-button>
-        </el-tooltip>
+        <el-button
+            v-if="filter.tableOptions.value?.refresh?.shown"
+            @click="filter.refreshData"
+            :icon="Refresh"
+            :size="'default'"
+            class="refresh-button"
+        >
+            <span class="refresh-text">{{ $t("filter.refresh") }}</span>
+        </el-button>
+
         <SaveFilters
             v-if="!filter.searchInputFullWidth.value"
             :disabled="
@@ -159,20 +158,38 @@
     }
 
     .refresh-button {
+        cursor: pointer;
         background-color: transparent;
         border: none;
         box-shadow: none;
-        margin-left: 0.5rem;
+        margin: 0;
         padding: 0.25rem 0.5rem;
-        
+        font-size: 12px;
+
         :deep(svg) {
             color: var(--ks-content-tertiary);
-            font-size: 18px; 
-            vertical-align: middle;
+            
+            width: 1.1rem; 
+            height: 1.1rem;
+
+            @media (min-width: 768px) {
+                width: 1em;
+                height: 1em;
+            }
         }
 
         &:hover {
             background-color: var(--ks-tag-background);
+        }
+
+        .refresh-text {
+            display: none;
+
+            @media (min-width: 768px) {
+                display: inline;
+                margin-left: 0.25rem;
+                white-space: nowrap;
+            }
         }
     }
 }

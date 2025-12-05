@@ -87,7 +87,7 @@
                             </el-form-item>
                             <div class="password-requirements mb-4">
                                 <el-text>     
-                                    Password must be at least 8 Character long and include 1 Uppercase letter and 1 Number
+                                    {{ t('setup.form.password_requirements') }}
                                 </el-text>
                             </div>
                         </el-form>

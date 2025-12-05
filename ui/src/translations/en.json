@@ -1477,7 +1477,8 @@
         "email": "Email",
         "firstName": "First Name",
         "lastName": "Last Name",
-        "password": "Password"
+        "password": "Password",
+        "password_requirements": "Password must be at least 8 characters long and include at least 1 uppercase letter and 1 number."
       },
       "validation": {
         "email_required": "Email is required",

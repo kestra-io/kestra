@@ -20,6 +20,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -31,11 +32,15 @@ public class MetadataMigrationService {
     protected TenantService tenantService;
     protected KvMetadataRepositoryInterface kvMetadataRepository;
     protected StorageInterface storageInterface;
+    protected NamespaceUtils namespaceUtils;
 
     @VisibleForTesting
     public Map<String, List<String>> namespacesPerTenant() {
         String tenantId = tenantService.resolveTenant();
-        return Map.of(tenantId, flowRepository.findDistinctNamespace(tenantId).stream().map(NamespaceUtils::asTree).flatMap(Collection::stream).distinct().toList());
+        return Map.of(tenantId, Stream.concat(
+            Stream.of(namespaceUtils.getSystemFlowNamespace()),
+            flowRepository.findDistinctNamespace(tenantId).stream()
+        ).map(NamespaceUtils::asTree).flatMap(Collection::stream).distinct().toList());
     }
 
     public void kvMigration() throws IOException {

@@ -51,9 +51,6 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     );
 
     @Inject
-    private FlowService flowService;
-
-    @Inject
     private NamespaceService namespaceService;
 
     @Override

@@ -3,23 +3,32 @@
         <template #additional-right>
             <ul class="header-actions-list">
                 <li>
-                    <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
-                        {{ t('export_csv') }}
-                    </el-button>
+                    <el-tooltip :content="t('export_csv')" :disabled="isLargeScreen" placement="bottom" effect="light">
+                        <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
+                            <span class="d-none d-xl-inline">{{ t('export_csv') }}</span>
+                        </el-button>
+                    </el-tooltip>
                 </li>
+
                 <li>
-                    <el-button :icon="Upload" @click="file?.click()">
-                        {{ t("import") }}
-                    </el-button>
+                    <el-tooltip :content="t('import')" :disabled="isLargeScreen" placement="bottom" effect="light">
+                        <el-button :icon="Upload" @click="file?.click()">
+                            <span class="d-none d-xl-inline">{{ t("import") }}</span>
+                        </el-button>
+                    </el-tooltip>
                     <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
                 </li>
+
                 <li>
                     <router-link :to="{name: 'flows/search'}">
-                        <el-button :icon="TextBoxSearch">
-                            {{ t("source search") }}
-                        </el-button>
+                        <el-tooltip :content="t('source search')" :disabled="isLargeScreen" placement="bottom" effect="light">
+                            <el-button :icon="TextBoxSearch">
+                                <span class="d-none d-xl-inline">{{ t("source search") }}</span>
+                            </el-button>
+                        </el-tooltip>
                     </router-link>
                 </li>
+
                 <li>
                     <router-link
                         :to="{
@@ -257,6 +266,7 @@
 <script setup lang="ts">
     import {ref, computed, useTemplateRef} from "vue";
     import {useRoute} from "vue-router";
+    import {useBreakpoints} from "@vueuse/core";
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
     import * as FILTERS from "../../utils/filters";
@@ -319,6 +329,9 @@
 
     const {t} = useI18n();
     const toast = useToast()
+
+    const breakpoints = useBreakpoints({xl: 1200});
+    const isLargeScreen = breakpoints.greaterOrEqual("xl");
 
     const flowFilter = useFlowFilter();
 
@@ -690,3 +703,4 @@
     }
 }
 </style>
+

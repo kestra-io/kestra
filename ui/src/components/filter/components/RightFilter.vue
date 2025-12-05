@@ -3,16 +3,17 @@
         class="filter-container"
         :class="{'filter-shrink': filter.searchInputFullWidth.value}"
     >
-        <el-button
-            v-if="filter.tableOptions.value?.refresh?.shown"
-            @click="filter.refreshData"
-            :icon="Refresh"
-            :size="'default'"
-            class="refresh-button"
-        >
-            {{ $t("filter.refresh") }}
-        </el-button>
-
+        <el-tooltip :content="$t('filter.refresh')" placement="top" effect="light">
+            <el-button
+                v-if="filter.tableOptions.value?.refresh?.shown"
+                @click="filter.refreshData"
+                :icon="Refresh"
+                :size="'default'"
+                class="refresh-button"
+            >
+                <span class="d-none">{{ $t("filter.refresh") }}</span>
+            </el-button>
+        </el-tooltip>
         <SaveFilters
             v-if="!filter.searchInputFullWidth.value"
             :disabled="
@@ -161,12 +162,13 @@
         background-color: transparent;
         border: none;
         box-shadow: none;
-        margin: 0;
+        margin-left: 0.5rem;
         padding: 0.25rem 0.5rem;
-        font-size: 12px;
-
+        
         :deep(svg) {
             color: var(--ks-content-tertiary);
+            font-size: 18px; 
+            vertical-align: middle;
         }
 
         &:hover {

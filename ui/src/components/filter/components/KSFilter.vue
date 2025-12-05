@@ -187,6 +187,7 @@
         display: flex;
         align-items: flex-start;
         flex-wrap: nowrap;
+        gap: 0.5rem;
         
         &.options {
             padding-bottom: 1rem;

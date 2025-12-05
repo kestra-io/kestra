@@ -389,7 +389,7 @@
                 modifiers: [
                     {
                         name: "offset",
-                        options: {offset: () => [10, offset.value]},
+                        options: {offset: () => [0, offset.value]},
                     },
                 ],
                 placement: "bottom",

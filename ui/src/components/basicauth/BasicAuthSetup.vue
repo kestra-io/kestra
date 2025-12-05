@@ -86,8 +86,8 @@
                                 </el-input>
                             </el-form-item>
                             <div class="password-requirements mb-4">
-                                <el-text>
-                                    8+ chars, 1 upper, 1 number
+                                <el-text>     
+                                    Password must be at least 8 Character long and include 1 Uppercase letter and 1 Number
                                 </el-text>
                             </div>
                         </el-form>

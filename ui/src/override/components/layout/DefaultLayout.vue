@@ -1,5 +1,5 @@
 <template>
-    <LeftMenu v-if="miscStore.configs && !layoutStore.sideMenuCollapsed" @menu-collapse="onMenuCollapse" />
+    <LeftMenu v-if="miscStore.configs && (!layoutStore.sideMenuCollapsed || isMobile)" @menu-collapse="onMenuCollapse" />
     <main>
         <Errors v-if="coreStore.error" :code="coreStore.error" />
         <slot v-else />
@@ -22,12 +22,14 @@
     import {useCoreStore} from "../../../stores/core"
     import {useMiscStore} from "override/stores/misc"
     import {useLayoutStore} from "../../../stores/layout"
+    import {useMediaQuery} from "@vueuse/core"
 
     const coreStore = useCoreStore()
     const miscStore = useMiscStore()
     const layoutStore = useLayoutStore()
     const {markSurveyDialogShown} = useSurveySkip()
     const showSurveyDialog = ref(false)
+    const isMobile = useMediaQuery("(max-width: 768px)")
 
     function onMenuCollapse(collapse: boolean) {
         layoutStore.setSideMenuCollapsed(collapse)

@@ -11,7 +11,7 @@
     >
         <template #header>
             <SidebarToggleButton
-                @toggle="collapsed = onToggleCollapse(!collapsed)"
+                @toggle="onToggleCollapse(!collapsed)"
             />
             <div class="logo">
                 <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onUpdated, ref, computed, h, watch} from "vue";
+    import {onUpdated, computed, h, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {useMediaQuery} from "@vueuse/core";
@@ -58,10 +58,8 @@
     const layoutStore = useLayoutStore();
 
     function onToggleCollapse(folded: boolean) {
-        collapsed.value = folded;
         layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
-
         return folded;
     }
 
@@ -118,9 +116,13 @@
         ];
     });
 
-    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
-
     const isSmallScreen = useMediaQuery("(max-width: 768px)")
+
+    if (isSmallScreen.value) {
+        layoutStore.setSideMenuCollapsed(true)
+    }
+
+    const collapsed = computed(() => layoutStore.sideMenuCollapsed)
 
     watch(() => $route.name, (newRoute, oldRoute) => {
         if (newRoute !== oldRoute && isSmallScreen.value && !collapsed.value) {
@@ -144,6 +146,21 @@
             background: none !important;
             color: var(--ks-content-link) !important;
         }
+    }
+}
+
+@media (max-width: 768px) {
+    #side-menu.vsm_collapsed {
+        display: none;
+    }
+
+    #side-menu:not(.vsm_collapsed) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        z-index: 1040;
+        width: 268px;
     }
 }
 

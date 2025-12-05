@@ -2,16 +2,12 @@ package io.kestra.core.services;
 
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.queues.QueueException;
@@ -19,25 +15,17 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
-import io.kestra.core.runners.RunContext;
+import io.kestra.core.scheduler.TriggerEventQueue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.trigger.Schedule;
-import io.kestra.scheduler.TriggerEventQueue;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import jakarta.validation.constraints.NotBlank;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 
@@ -186,67 +174,6 @@ class FlowServiceTest {
     }
 
     @Test
-    void warnings() {
-        FlowWithSource flow = create("test", "test", 1).toBuilder()
-            .namespace("system")
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("flow-trigger")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .build()
-            ))
-            .build();
-
-        List<String> warnings = flowService.warnings(flow, null);
-
-        assertThat(warnings.size()).isEqualTo(1);
-        assertThat(warnings).containsExactlyInAnyOrder("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger 'flow-trigger'.");
-    }
-
-    @Test
-    void aliases() {
-        List<FlowService.Relocation> warnings = flowService.relocations("""
-            id: hello-alias
-            namespace: myteam
-
-            tasks:
-              - id: log-alias
-                type: io.kestra.core.runners.test.task.Alias
-                message: Hello, Alias
-              - id: log-task
-                type: io.kestra.core.runners.test.TaskWithAlias
-                message: Hello, Task
-              - id: each
-                type: io.kestra.plugin.core.flow.ForEach
-                values:\s
-                  - 1
-                  - 2
-                  - 3
-                tasks:
-                  - id: log-alias-each
-                    type: io.kestra.core.runners.test.task.Alias
-                    message: Hello, {{taskrun.value}}""");
-
-        assertThat(warnings.size()).isEqualTo(2);
-        assertThat(warnings.getFirst().from()).isEqualTo("io.kestra.core.runners.test.task.Alias");
-        assertThat(warnings.getFirst().to()).isEqualTo("io.kestra.core.runners.test.TaskWithAlias");
-    }
-
-    @Test
-    void propertyRenamingDeprecation() {
-        FlowWithSource flow = FlowWithSource.builder()
-            .id("flowId")
-            .namespace(TEST_NAMESPACE)
-            .tasks(Collections.singletonList(DeprecatedTask.builder()
-                .id("taskId")
-                .type(DeprecatedTask.class.getName())
-                .build()))
-            .build();
-
-        assertThat(flowService.deprecationPaths(flow)).containsExactlyInAnyOrder("tasks[0]");
-    }
-
-    @Test
     void findByNamespacePrefix() {
         FlowWithSource flow = create(null, "some.namespace","findByTest", "test", 1);
         flowRepository.create(GenericFlow.of(flow));
@@ -258,46 +185,6 @@ class FlowServiceTest {
         FlowWithSource flow = create("findByIdTest", "test", 1);
         FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
         assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent()).isTrue();
-    }
-
-    @Test
-    void checkSubflowNotFound() {
-        FlowWithSource flow = create("mainFlow", "task", 1).toBuilder()
-            .tasks(List.of(
-                io.kestra.plugin.core.flow.Subflow.builder()
-                    .id("subflowTask")
-                    .type(io.kestra.plugin.core.flow.Subflow.class.getName())
-                    .namespace(TEST_NAMESPACE)
-                    .flowId("nonExistentSubflow")
-                    .build()
-            ))
-            .build();
-
-        List<String> exceptions = flowService.checkValidSubflows(flow, null);
-
-        assertThat(exceptions.size()).isEqualTo(1);
-        assertThat(exceptions.iterator().next()).isEqualTo("The subflow 'nonExistentSubflow' not found in namespace 'io.kestra.unittest'.");
-    }
-
-    @Test
-    void checkValidSubflow() {
-        FlowWithSource subflow = create("existingSubflow", "task", 1);
-        flowRepository.create(GenericFlow.of(subflow));
-
-        FlowWithSource flow = create("mainFlow", "task", 1).toBuilder()
-            .tasks(List.of(
-                io.kestra.plugin.core.flow.Subflow.builder()
-                    .id("subflowTask")
-                    .type(io.kestra.plugin.core.flow.Subflow.class.getName())
-                    .namespace(TEST_NAMESPACE)
-                    .flowId("existingSubflow")
-                    .build()
-            ))
-            .build();
-
-        List<String> exceptions = flowService.checkValidSubflows(flow, null);
-
-        assertThat(exceptions.size()).isZero();
     }
 
     @Test
@@ -644,23 +531,5 @@ class FlowServiceTest {
     @Replaces(TriggerEventQueue.class)
     TriggerEventQueue triggerEventQueue() {
         return mock(TriggerEventQueue.class);
-    }
-
-    @SuperBuilder
-    @ToString
-    @EqualsAndHashCode
-    @Getter
-    @NoArgsConstructor
-    @Deprecated
-    public static class DeprecatedTask extends Task implements RunnableTask<VoidOutput> {
-        @NotBlank
-        @PluginProperty(dynamic = true)
-        @Deprecated
-        private String additionalProperty;
-
-        @Override
-        public VoidOutput run(RunContext runContext) throws Exception {
-            return null;
-        }
     }
 }

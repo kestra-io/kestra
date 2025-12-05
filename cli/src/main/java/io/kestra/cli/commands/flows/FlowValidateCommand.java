@@ -4,7 +4,7 @@ import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.services.FlowService;
+import io.kestra.core.services.FlowValidationService;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 
@@ -21,7 +21,7 @@ public class FlowValidateCommand extends AbstractValidateCommand {
     private ModelValidator modelValidator;
 
     @Inject
-    private FlowService flowService;
+    private FlowValidationService flowValidationService;
 
     @Inject
     private TenantIdSelectorService tenantIdSelectorService;
@@ -39,13 +39,13 @@ public class FlowValidateCommand extends AbstractValidateCommand {
             (Object object) -> {
                 FlowWithSource flow = (FlowWithSource) object;
                 List<String> warnings = new ArrayList<>();
-                warnings.addAll(flowService.deprecationPaths(flow).stream().map(deprecation -> deprecation + " is deprecated").toList());
-                warnings.addAll(flowService.warnings(flow, tenantIdSelectorService.getTenantIdAndAllowEETenants(tenantId)));
+                warnings.addAll(flowValidationService.deprecationPaths(flow).stream().map(deprecation -> deprecation + " is deprecated").toList());
+                warnings.addAll(flowValidationService.warnings(flow, tenantIdSelectorService.getTenantIdAndAllowEETenants(tenantId)));
                 return warnings;
             },
             (Object object) -> {
                 FlowWithSource flow = (FlowWithSource) object;
-                return flowService.relocations(flow.sourceOrGenerateIfNull()).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList();
+                return flowValidationService.relocations(flow.sourceOrGenerateIfNull()).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList();
             }
         );
     }

@@ -353,6 +353,10 @@
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
             before: () => {
+                coreStore.guidedProperties = {
+                    ...coreStore.guidedProperties,
+                    glowExecuteButton: true
+                };
                 return wait();
             },
         },
@@ -369,6 +373,10 @@
                 placement: "bottom",
             },
             before: () => {
+                coreStore.guidedProperties = {
+                    ...coreStore.guidedProperties,
+                    glowExecuteButton: false
+                };
                 return wait()
             },
         },
@@ -381,7 +389,7 @@
                 modifiers: [
                     {
                         name: "offset",
-                        options: {offset: () => [0, offset.value]},
+                        options: {offset: () => [10, offset.value]},
                     },
                 ],
                 placement: "bottom",
@@ -414,6 +422,7 @@
         coreStore.guidedProperties = {
             ...coreStore.guidedProperties,
             tourStarted: false,
+            glowExecuteButton: false
         };
 
         TOURS[TOUR_NAME].stop();

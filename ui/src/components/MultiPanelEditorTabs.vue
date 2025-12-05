@@ -65,11 +65,11 @@
     }
     
     .tabs {
-        padding: 0.5rem 1rem;
+        padding: .5rem 1rem;
         display: flex;
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         align-items: center;
-        gap: 0.5rem;
+        gap: .5rem;
 
         > button { 
             background: transparent;
@@ -77,7 +77,6 @@
             border-radius: 6px;
             padding: 0.35rem 0.75rem;
             font-size: 0.85rem;
-            font-weight: 500;
             white-space: nowrap;
             color: var(--ks-color-text-primary);
             display: inline-flex;
@@ -85,33 +84,18 @@
             justify-content: center;
             transition: all 0.2s ease-in-out;
             gap: 0.4rem;
-            opacity: 0.7;
-            cursor: pointer; 
+            opacity: .7;
 
             &:hover {
-                background-color: rgba(0, 0, 0, 0.05);
+                background-color: var(--ks-background-body);
                 opacity: 1;
             }
 
             &.active {
-                background-color: rgba(0, 0, 0, 0.1);
-                border-color: rgba(0, 0, 0, 0.05);
+                background-color: var(--ks-background-body);
+                border-color: var(--ks-border-primary);
                 color: var(--ks-color-text-primary);
-                font-weight: 600;
                 opacity: 1;
-                box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            }
-
-            .dark & {
-                &:hover {
-                    background-color: rgba(255, 255, 255, 0.1);
-                }
-
-                &.active {
-                    background-color: rgba(255, 255, 255, 0.15);
-                    border-color: rgba(255, 255, 255, 0.1);
-                    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-                }
             }
         }
     }

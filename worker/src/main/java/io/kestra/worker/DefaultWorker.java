@@ -1094,7 +1094,7 @@ public class DefaultWorker implements Worker {
         );
 
         // wait for task completion
-        Await.untilWithSleepInterval(
+        Await.until(
             () -> {
                 ServiceState serviceState = shutdownState.get();
                 if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {

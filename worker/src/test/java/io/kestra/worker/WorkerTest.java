@@ -148,16 +148,21 @@ class WorkerTest {
         worker.run();
 
         List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
-        Flux<WorkerTaskResult> receiveWorkerTaskResults = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResult.add(either.getLeft()));
 
         WorkerTask workerTask = workerTask(999000);
-
-        workerTaskQueue.emit(workerTask);
-        workerTaskQueue.emit(workerTask);
-        workerTaskQueue.emit(workerTask);
-        workerTaskQueue.emit(workerTask);
-
         WorkerTask notKilled = workerTask(2000);
+
+        Flux<WorkerTaskResult> receiveWorkerTaskResults = TestsUtils.receive(workerTaskResultQueue, either -> {
+            if (List.of(workerTask.getTaskRun().getExecutionId(), notKilled.getTaskRun().getExecutionId()).contains(either.getLeft().getTaskRun().getExecutionId())) {
+                workerTaskResult.add(either.getLeft());
+            }
+        });
+
+        workerTaskQueue.emit(workerTask);
+        workerTaskQueue.emit(workerTask);
+        workerTaskQueue.emit(workerTask);
+        workerTaskQueue.emit(workerTask);
+
         workerTaskQueue.emit(notKilled);
 
         Thread.sleep(500);

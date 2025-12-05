@@ -30,16 +30,16 @@ public class VariableRenderer {
     public VariableRenderer(ApplicationContext applicationContext, @Nullable VariableConfiguration variableConfiguration) {
         this(applicationContext.getBean(PebbleEngineFactory.class), variableConfiguration);
     }
-    
+
     public VariableRenderer(PebbleEngineFactory pebbleEngineFactory, @Nullable VariableConfiguration variableConfiguration) {
         this.variableConfiguration = variableConfiguration != null ? variableConfiguration : new VariableConfiguration();
         this.pebbleEngine = pebbleEngineFactory.create();
     }
-    
+
     public void setPebbleEngine(final PebbleEngine pebbleEngine) {
         this.pebbleEngine = pebbleEngine;
     }
-    
+
     public static IllegalVariableEvaluationException properPebbleException(PebbleException initialExtension) {
         if (initialExtension instanceof AttributeNotFoundException current) {
             return new IllegalVariableEvaluationException(
@@ -93,6 +93,9 @@ public class VariableRenderer {
             Matcher rawMatcher = RAW_PATTERN.matcher(inlineStr);
             replacers = new HashMap<>((int) Math.ceil(rawMatcher.groupCount() / 0.75));
             result = replaceRawTags(rawMatcher, replacers);
+
+            // pre-process escape
+            result = preprocessYamlEscapes((String) result);
         }
 
         try {
@@ -146,6 +149,10 @@ public class VariableRenderer {
             replacers.put(uuid, matchResult.group(1));
             return uuid;
         });
+    }
+
+    private String preprocessYamlEscapes(String expression) {
+        return expression.replace("\\\\", "\\");
     }
 
     public Object renderRecursively(Object inline, Map<String, Object> variables, boolean stringify) throws IllegalVariableEvaluationException {

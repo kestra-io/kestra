@@ -74,6 +74,27 @@ class VariableRendererTest {
     }
 
     @Test
+    void shouldHandleDoubleBackslashExpression() throws IllegalVariableEvaluationException {
+        // Issue #11373: Debug should accept same escape pattern as Flow YAML
+        String result = variableRenderer.render(
+            "{{ ('first.second.last' | split('\\\\.')) | first }}",
+            Map.of()
+        );
+        assertThat(result).isEqualTo("first");
+    }
+
+    @Test
+    void shouldMaintainBackslashExpression() throws IllegalVariableEvaluationException {
+        // Single backslash should still work
+        String result = variableRenderer.render(
+            "{{ ('first.second.last' | split('\\.')) | first }}",
+            Map.of()
+        );
+        assertThat(result).isEqualTo("first");
+    }
+
+
+    @Test
     void shouldKeepKeyOrderWhenRenderingMap() throws IllegalVariableEvaluationException {
         final Map<String, Object> input = new LinkedHashMap<>();
         input.put("foo-1", "A");

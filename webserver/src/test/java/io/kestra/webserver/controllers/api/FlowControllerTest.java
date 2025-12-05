@@ -1070,11 +1070,11 @@ class FlowControllerTest {
         Flow f2 = generateFlow("flow_export_2", "io.kestra.export", "b");
 
         client.toBlocking().retrieve(
-            HttpRequest.POST(FLOW_PATH, f1),
+            HttpRequest.POST(FLOW_PATH, f1.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE),
             Flow.class
         );
         client.toBlocking().retrieve(
-            HttpRequest.POST(FLOW_PATH, f2),
+            HttpRequest.POST(FLOW_PATH, f2.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE),
             Flow.class
         );
 

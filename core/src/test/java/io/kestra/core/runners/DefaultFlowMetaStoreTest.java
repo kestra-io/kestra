@@ -60,8 +60,11 @@ class DefaultFlowMetaStoreTest {
     @Test
     void findByIdShouldReturnLastRevision() throws FlowProcessingException, QueueException {
         FlowWithSource test = flowService.create(GenericFlow.of(createFlow()));
-        Flow updated = test.toBuilder().tasks(List.of(Return.builder().id("return").format(Property.ofValue("new format")).type(Return.class.getName()).build())).build();
-        flowService.update(GenericFlow.of(updated), test);
+        Flow toUpdate = test.toBuilder()
+            .tasks(List.of(Return.builder().id("return").format(Property.ofValue("new format")).type(Return.class.getName()).build()))
+            .build()
+            .toFlow(); // otherwise the source didn't change so no new revisions will be created
+        FlowWithSource updated = flowService.update(GenericFlow.of(toUpdate), test);
 
         Optional<FlowInterface> maybeFlow = flowMetaStore.findById(test.getTenantId(), test.getNamespace(), test.getId(), Optional.of(2));
 
@@ -69,7 +72,7 @@ class DefaultFlowMetaStoreTest {
         assertThat(maybeFlow.get().getId()).isEqualTo(test.getId());
         assertThat(maybeFlow.get().getRevision()).isEqualTo(2);
 
-        flowService.delete(test);
+        flowService.delete(updated);
     }
 
     @Test

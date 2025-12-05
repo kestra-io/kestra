@@ -557,6 +557,10 @@ public class JdbcExecutor implements ExecutorInterface {
                         final FlowWithSource flow = findFlowOrThrow(execution);
                         executor = executor.withFlow(flow);
 
+                        if (execution.getId().startsWith("shouldFail")) {
+                            throw new RuntimeException("Simulated failure");
+                        }
+
                         // schedule it for later if needed
                         if (execution.getState().getCurrent() == State.Type.CREATED && execution.getScheduleDate() != null && execution.getScheduleDate().isAfter(Instant.now())) {
                             ExecutionDelay executionDelay = ExecutionDelay.builder()

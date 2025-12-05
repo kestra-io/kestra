@@ -157,6 +157,7 @@ class WorkerTest {
                 workerTaskResult.add(either.getLeft());
             }
         });
+        // toto
 
         workerTaskQueue.emit(workerTask);
         workerTaskQueue.emit(workerTask);

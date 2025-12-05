@@ -12,6 +12,7 @@
     import {useCoreStore} from "../../stores/core";
     import {useMiscStore} from "override/stores/misc";
     import {computed, onMounted} from "vue";
+    import {useLayoutStore} from "../../stores/layout";
 
     const coreStore = useCoreStore();
     const miscStore = useMiscStore();
@@ -22,7 +23,9 @@
         document.getElementsByTagName("html")[0].classList.remove(collapse ? "menu-not-collapsed" : "menu-collapsed");
     }
 
+    const layoutStore = useLayoutStore();
+
     onMounted(() => {
-        onMenuCollapse(localStorage.getItem("menuCollapsed") === "true")
+        onMenuCollapse(Boolean(layoutStore.sideMenuCollapsed))
     });
 </script>

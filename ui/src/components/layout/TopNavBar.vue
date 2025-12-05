@@ -1,13 +1,12 @@
 <template>
     <nav class="d-flex align-items-center w-100 gap-3 top-bar">
-        <div class="d-flex flex-column flex-lg-column flex-row-mobile flex-grow-1 flex-shrink-0 overflow-hidden top-title">
+        <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <div class="d-flex align-items-end gap-2">
-                <!-- Show toggle button when sidebar is collapsed OR on mobile devices -->
                 <SidebarToggleButton
-                    v-if="layoutStore.sideMenuCollapsed || isMobile()"
-                    @toggle="layoutStore.setSideMenuCollapsed(!layoutStore.sideMenuCollapsed)"
+                    v-if="layoutStore.sideMenuCollapsed"
+                    @toggle="layoutStore.setSideMenuCollapsed(false)"
                 />
-                <div class="d-none d-lg-flex flex-column gap-2">
+                <div class="d-flex flex-column gap-2">
                     <el-breadcrumb v-if="breadcrumb">
                         <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
                             <a v-if="item.disabled || !item.link">
@@ -87,12 +86,6 @@
     const flowStore = useFlowStore();
     const route = useRoute();
     const layoutStore = useLayoutStore();
-
-    // Check if current viewport is mobile-sized
-    // Used to conditionally show/hide elements on mobile devices
-    const isMobile = () => {
-        return window.innerWidth < 768;
-    };
 
 
     const shouldDisplayDeleteButton = computed(() => {
@@ -240,50 +233,21 @@
         }
 
         @media (max-width: 768px) {
-            padding: 0.75rem 0.75rem;
-
-            &.top-bar {
-                gap: 0.25rem !important;
-            }
-            
-            .top-title {
-                flex-direction: row !important;
-                align-items: center;
-                gap: 0.5rem !important;
-                flex-grow: 0 !important;
-                flex-shrink: 0 !important;
-                padding-left: 0.5rem !important;
-            }
-            
-            .top-title::after {
-                display: none;
-            }
-            
-            .sidebar-toggle {
-                padding: 0.2rem !important;
-                margin: 0 !important;
-            }
+            padding: 0.4rem 0.75rem;
 
             .mycontainer {
-                display: grid !important;
+                display: grid;
                 grid-template-columns: repeat(3, minmax(0, auto));
                 grid-template-rows: repeat(2, auto);
                 gap: 10px;
                 overflow: hidden;
-                
-                :deep(.el-dropdown), :deep(.el-button) {
-                    padding: 0.4rem 0.6rem !important;
-                    font-size: 12px !important;
-                }
             }
-            
             .icons {
                 grid-row: 2;
                 grid-column: 2;
                 display: contents;
+            }
         }
-}
-
         @media (max-width: 664px) {
             padding: 0.3rem 0.5rem;
             

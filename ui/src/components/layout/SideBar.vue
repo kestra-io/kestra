@@ -11,7 +11,7 @@
     >
         <template #header>
             <SidebarToggleButton
-                @toggle="onToggleCollapse(!collapsed)"
+                @toggle="collapsed = onToggleCollapse(!collapsed)"
             />
             <div class="logo">
                 <component :is="props.showLink ? 'router-link' : 'div'" :to="{name: 'home'}">
@@ -58,8 +58,10 @@
     const layoutStore = useLayoutStore();
 
     function onToggleCollapse(folded: boolean) {
+        collapsed.value = folded;
         layoutStore.setSideMenuCollapsed(folded);
         $emit("menu-collapse", folded);
+
         return folded;
     }
 
@@ -116,20 +118,12 @@
         ];
     });
 
-    // Detect if viewport is mobile-sized (≤768px)
+    const collapsed = computed({
+        get: () => layoutStore.sideMenuCollapsed,
+        set: (v: boolean) => layoutStore.setSideMenuCollapsed(v),
+    })
+
     const isSmallScreen = useMediaQuery("(max-width: 768px)")
-    
-    // On mobile devices, initialise sidebar as collapsed by default
-    // This ensures mobile users start with an unobstructed view
-    if (isSmallScreen.value) {
-        layoutStore.setSideMenuCollapsed(true)
-    } else {
-        // Desktop: check localStorage, default to expanded if no preference
-        const savedState = localStorage.getItem("sidebar-collapsed")
-        layoutStore.setSideMenuCollapsed(savedState === "true")
-    }
-    // Use computed property to reactively sync with layout store
-    const collapsed = computed(() => layoutStore.sideMenuCollapsed)
 
     watch(() => $route.name, (newRoute, oldRoute) => {
         if (newRoute !== oldRoute && isSmallScreen.value && !collapsed.value) {
@@ -155,28 +149,7 @@
         }
     }
 }
-// Mobile-specific styling: hide sidebar when collapsed, show as overlay when expanded
-@media (max-width: 768px) {
-    // Completely hide the sidebar when collapsed on mobile
-    #side-menu.vsm_collapsed {
-        display: none;
-    }
-    // Show sidebar as overlay when expanded
-    #side-menu:not(.vsm_collapsed) {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        z-index: 1040;
-        width: 268px;
-    }
-}
-// Desktop: completely hide sidebar when collapsed (no mini icon version)
-@media (min-width: 769px) {
-    #side-menu.vsm_collapsed {
-        display: none;
-    }
-}
+
 #side-menu {
     position: static;
     z-index: 1039;

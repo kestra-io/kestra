@@ -68,14 +68,6 @@
         async created() {
             this.setTitleEnvSuffix()
 
-            if (!this.isAnonymousRoute && BasicAuth.isLoggedIn()) {
-                try {
-                    await this.loadGeneralResources()
-                } catch (error) {
-                    console.warn("Failed to load general resources:", error)
-                }
-            }
-
             this.displayApp();
         },
         methods: {
@@ -121,6 +113,18 @@
         watch: {
             envName() {
                 this.setTitleEnvSuffix();
+            },
+            isAnonymousRoute: {
+                async handler(newVal) {
+                    if (!newVal && BasicAuth.isLoggedIn()) {
+                        try {
+                            await this.loadGeneralResources()
+                        } catch (error) {
+                            console.warn("Failed to load general resources:", error)
+                        }
+                    }
+                },
+                immediate: true
             }
         }
     };

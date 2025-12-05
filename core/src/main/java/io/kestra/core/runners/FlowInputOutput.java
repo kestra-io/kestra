@@ -504,14 +504,7 @@ public class FlowInputOutput {
                 }
                 case JSON -> JacksonMapper.toObject(current.toString());
                 case YAML -> {
-                    String yaml;
-                    if(current instanceof Collection<?> || current instanceof Map){
-                         yaml = YAML_MAPPER.writeValueAsString(current);
-                    }
-                    else {
-                        yaml = current.toString();
-                    }
-
+                    String yaml = YAML_MAPPER.writeValueAsString(current);
                     yield YAML_MAPPER.readValue(yaml, JacksonMapper.OBJECT_TYPE_REFERENCE);
                 }
                 case URI -> {

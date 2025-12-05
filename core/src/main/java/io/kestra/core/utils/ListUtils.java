@@ -65,10 +65,9 @@ public class ListUtils {
     }
 
     public static List<String> convertToListString(Object object){
-        if (object instanceof List<?> list && (list.isEmpty() || list.getFirst() instanceof String)) {
-            return (List<String>) list;
-        } else {
-            throw new IllegalArgumentException("%s in not an instance of List of String".formatted(object));
-        }
+        return convertToList(object)
+            .stream()
+            .map(Object::toString)
+            .toList();
     }
 }

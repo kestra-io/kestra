@@ -12,7 +12,7 @@ import {applyDefaultFilters} from "../components/filter/composables/useDefaultFi
 
 export default [
     //Initial
-    {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}}},
+    {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
 
     //Dashboards
@@ -32,7 +32,7 @@ export default [
             const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
             if (!to.params.dashboard) {
                 next({
-                    name: "home",
+                    ...to,
                     params: {
                         ...to.params,
                         dashboard: "default",
@@ -43,7 +43,7 @@ export default [
             }
             if(change) {
                 next({
-                    ...to,
+                    ...to, 
                     query,
                 });
                 return;
@@ -115,9 +115,9 @@ export default [
     {name: "admin/concurrency-limits", path: "/:tenant?/admin/concurrency-limits", component: () => import("../components/admin/ConcurrencyLimits.vue")},
 
     //Setup
-    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout}},
+    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
     //Login
-    {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout}},
+    {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
 
     //Errors
     {name: "errors/404-wildcard", path: "/:tenant?/:pathMatch(.*)", component: Errors, props: {code: 404}},

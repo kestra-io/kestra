@@ -46,6 +46,18 @@ public class InputsTest {
     @Inject
     private RunnerUtils runnerUtils;
 
+    private static final Map<String , Object> object = Map.of(
+        "people", List.of(
+            Map.of(
+                "first", "Mustafa",
+                "last", "Tarek"
+            ),
+            Map.of(
+                "first", "Ahmed",
+                "last", "Tarek"
+            )
+        )
+    );
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")
         .put("enum", "ENUM_VALUE")
@@ -57,7 +69,6 @@ public class InputsTest {
         .put("time", "18:27:49")
         .put("duration", "PT5M6S")
         .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("application-test.yml")).getPath())
-        .put("json", "{\"a\": \"b\"}")
         .put("uri", "https://www.google.com")
         .put("nested.string", "a string")
         .put("nested.more.int", "123")
@@ -71,11 +82,14 @@ public class InputsTest {
         .put("validatedTime", "11:27:49")
         .put("secret", "secret")
         .put("array", "[1, 2, 3]")
-        .put("yaml", """
+        .put("json1", "{\"a\": \"b\"}")
+        .put("json2", object)
+        .put("yaml1", """
             some: property
             alist:
             - of
             - values""")
+        .put("yaml2", object)
         .build();
 
     @Inject
@@ -144,7 +158,6 @@ public class InputsTest {
         assertThat(typeds.get("duration")).isEqualTo(Duration.parse("PT5M6S"));
         assertThat((URI) typeds.get("file")).isEqualTo(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, (URI) typeds.get("file"))))).isEqualTo(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))));
-        assertThat(typeds.get("json")).isEqualTo(Map.of("a", "b"));
         assertThat(typeds.get("uri")).isEqualTo("https://www.google.com");
         assertThat(((Map<String, Object>) typeds.get("nested")).get("string")).isEqualTo("a string");
         assertThat((Boolean) ((Map<String, Object>) typeds.get("nested")).get("bool")).isTrue();
@@ -160,9 +173,12 @@ public class InputsTest {
         assertThat(typeds.get("array")).isInstanceOf(List.class);
         assertThat((List<Integer>) typeds.get("array")).hasSize(3);
         assertThat((List<Integer>) typeds.get("array")).isEqualTo(List.of(1, 2, 3));
-        assertThat(typeds.get("yaml")).isEqualTo(Map.of(
+        assertThat(typeds.get("json1")).isEqualTo(Map.of("a", "b"));
+        assertThat(typeds.get("json2")).isEqualTo(object);
+        assertThat(typeds.get("yaml1")).isEqualTo(Map.of(
             "some", "property",
             "alist", List.of("of", "values")));
+        assertThat(typeds.get("yaml2")).isEqualTo(object);
     }
 
     @Test
@@ -191,7 +207,7 @@ public class InputsTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(14);
+        assertThat(execution.getTaskRunList()).hasSize(16);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat((String) execution.findTaskRunsByTaskId("file").getFirst().getOutputs().get("value")).matches("kestra:///io/kestra/tests/inputs/executions/.*/inputs/file/application-test.yml");
         // secret inputs are decrypted to be used as task properties
@@ -344,19 +360,19 @@ public class InputsTest {
     @LoadFlows({"flows/valids/inputs.yaml"})
     void inputEmptyJson() {
         HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("json", "{}");
+        map.put("json1", "{}");
 
         Map<String, Object> typeds = typedInputs(map);
 
-        assertThat(typeds.get("json")).isInstanceOf(Map.class);
-        assertThat(((Map<?, ?>) typeds.get("json")).size()).isZero();
+        assertThat(typeds.get("json1")).isInstanceOf(Map.class);
+        assertThat(((Map<?, ?>) typeds.get("json1")).size()).isZero();
     }
 
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
     void inputEmptyJsonFlow() throws TimeoutException, QueueException {
         HashMap<String, Object> map = new HashMap<>(inputs);
-        map.put("json", "{}");
+        map.put("json1", "{}");
 
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -366,11 +382,11 @@ public class InputsTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, map)
         );
 
-        assertThat(execution.getTaskRunList()).hasSize(14);
+        assertThat(execution.getTaskRunList()).hasSize(16);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        assertThat(execution.getInputs().get("json")).isInstanceOf(Map.class);
-        assertThat(((Map<?, ?>) execution.getInputs().get("json")).size()).isZero();
+        assertThat(execution.getInputs().get("json1")).isInstanceOf(Map.class);
+        assertThat(((Map<?, ?>) execution.getInputs().get("json1")).size()).isZero();
         assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").getFirst().getOutputs().get("value")).isEqualTo("{}");
     }
 

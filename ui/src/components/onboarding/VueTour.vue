@@ -500,7 +500,7 @@ $flow-image-size-container: 36px;
 
     &.last {
         position: fixed;
-        top: 50%;
+        top: 75%;
         left: 50%;
         transform: translate(-50%, -50%);
         max-width: $last-step-max-width;

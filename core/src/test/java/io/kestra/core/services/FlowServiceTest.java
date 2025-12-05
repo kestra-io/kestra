@@ -1,7 +1,6 @@
 package io.kestra.core.services;
 
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
@@ -25,7 +24,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -518,5 +516,22 @@ class FlowServiceTest {
             .anyMatch(c -> c.getMessage().contains("Failed to evaluate check condition") &&
                 c.getBehavior() == Check.Behavior.BLOCK_EXECUTION &&
                 c.getStyle() == Check.Style.ERROR);
+    }
+
+    @Test
+    void shouldAcceptExpressionWithFlowWhenRenderingChecks() {
+        // Given
+        Check passCheck = Check.builder().condition("{{ flow.id == 'test' }}").message("pass").build();
+
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(passCheck));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+
+        // When
+        List<Check> result = flowService.getFailedChecks(flow, Map.of());
+
+        // Then
+        assertThat(result).isEmpty();
     }
 }

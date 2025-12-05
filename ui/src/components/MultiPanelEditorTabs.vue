@@ -41,19 +41,18 @@
 <style scoped lang="scss">
     @use "@kestra-io/ui-libs/src/scss/color-palette.scss" as colorPalette;
     
-    .tabs-wrapper{
-        display:flex;
+    .tabs-wrapper {
+        display: flex;
         align-items: center;
         justify-content: space-between;
         border-bottom: 1px solid var(--ks-border-primary);
         background: var(--ks-background-card);
-        background-image: linear-gradient(
-                to right,
-                colorPalette.$base-blue-400 0%,
-                colorPalette.$base-blue-500 35%,
-                rgba(colorPalette.$base-blue-500, 0) 55%,
-                rgba(colorPalette.$base-blue-500, 0) 100%
-            );
+        background-size: 250% 100%;
+        background-position: 100% 0;
+        transition: background-position .2s;
+        overflow-x: auto;
+        scrollbar-width: none; 
+
         .dark & {
             background-image: linear-gradient(
                 to right,
@@ -63,15 +62,9 @@
                 rgba(colorPalette.$base-blue-700, 0) 100%
             );
         }
-        background-size: 250% 100%;
-        background-position: 100% 0;
-        transition: background-position .2s;
-        
-        overflow-x: auto;
-        scrollbar-width: none; 
     }
     
-    .tabs{
+    .tabs {
         padding: 0.5rem 1rem;
         display: flex;
         flex-wrap: nowrap;
@@ -95,18 +88,30 @@
             opacity: 0.7;
             cursor: pointer; 
 
-            &:hover{
-                background-color: rgba(255, 255, 255, 0.1);
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.05);
                 opacity: 1;
             }
 
-            &.active{
-                background-color: rgba(255, 255, 255, 0.15);
-                border-color: rgba(255, 255, 255, 0.1);
+            &.active {
+                background-color: rgba(0, 0, 0, 0.1);
+                border-color: rgba(0, 0, 0, 0.05);
                 color: var(--ks-color-text-primary);
                 font-weight: 600;
                 opacity: 1;
                 box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+
+            .dark & {
+                &:hover {
+                    background-color: rgba(255, 255, 255, 0.1);
+                }
+
+                &.active {
+                    background-color: rgba(255, 255, 255, 0.15);
+                    border-color: rgba(255, 255, 255, 0.1);
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+                }
             }
         }
     }

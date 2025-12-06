@@ -38,6 +38,12 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
             const configs = await miscStore.loadConfigs();
 
             if(!configs.isBasicAuthInitialized) {
+                const isSetupRoute = to.name === "setup";
+                const isLoginRoute = to.name === "login";
+
+                if (!isSetupRoute && !isLoginRoute) {
+                    return next({name: "setup"});
+                }
                 // Since, Configs takes preference
                 // we need to check if any regex validation error in BE.
                 const validationErrors = await miscStore.loadBasicAuthValidationErrors()

@@ -248,7 +248,7 @@ class ExecutionControllerRunnerTest {
         Execution result = triggerExecutionInputsFlowExecution(true);
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(result.getTaskRunList().size()).isEqualTo(14);
+        assertThat(result.getTaskRunList().size()).isEqualTo(15);
     }
 
     @Test
@@ -722,7 +722,7 @@ class ExecutionControllerRunnerTest {
     @LoadFlows({"flows/valids/inputs.yaml"})
     void downloadInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
-        assertThat(execution.getTaskRunList()).hasSize(14);
+        assertThat(execution.getTaskRunList()).hasSize(15);
 
         String path = (String) execution.getInputs().get("file");
 

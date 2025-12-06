@@ -77,11 +77,11 @@ class SubflowRunnerTest {
 
         assertThat(childExecution.getTaskRunList()).hasSize(2);
 
-        Map<?,?>outputs1= (Map<?,?>) childExecution.outputs().get("hello2");
-        assertThat( outputs1.get("value"))
+        Map<?,?> outputs1 = (Map<?,?>) childExecution.outputs().get("hello2");
+        assertThat(outputs1.get("value"))
             .isEqualTo("[{\"name1\":[{\"first1\":\"Mustafa\"},{\"last1\":\"Tarek\"}]},{\"name2\":[{\"first2\":\"Ahmed\"},{\"last2\":\"Tarek\"}]}]");
 
-        Map<?,?>outputs2= (Map<?,?>) childExecution.outputs().get("hello3");
+        Map<?,?> outputs2 = (Map<?,?>) childExecution.outputs().get("hello3");
         assertThat(outputs2.get("value")).isEqualTo("dummy");
 
     }

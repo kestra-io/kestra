@@ -26,7 +26,14 @@ public class ListOrMapOfLabelDeserializer extends JsonDeserializer<List<Label>> 
         else if (p.hasToken(JsonToken.START_ARRAY)) {
             // deserialize as list
             List<Map<String, String>> ret = ctxt.readValue(p, List.class);
-            return ret.stream().map(map -> new Label(map.get("key"), map.get("value"))).toList();
+            return ret.stream().map(map -> {
+                Object value = map.get("value");
+                if (isAllowedType(value)) {
+                    return new Label(map.get("key"), String.valueOf(value));
+                } else {
+                    throw new IllegalArgumentException("Unsupported type for key: " + map.get("key") + ", value: " + value);
+                }
+            }).toList();
         }
         else if (p.hasToken(JsonToken.START_OBJECT)) {
             // deserialize as map

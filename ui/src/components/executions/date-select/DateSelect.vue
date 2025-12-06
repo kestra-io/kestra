@@ -1,7 +1,6 @@
 <template>
     <el-tooltip :disabled="tooltip === undefined" :content="tooltip" effect="light">
         <el-select
-            data-test-id="time-selector"
             :modelValue="value"
             :placeholder="placeholder"
             @change="emit('change', $event)"

@@ -81,11 +81,28 @@ public class InputsTest {
         .put("validatedTime", "11:27:49")
         .put("secret", "secret")
         .put("array", "[1, 2, 3]")
-        .put("yaml", """
+        .put("yaml1", """
             some: property
             alist:
             - of
             - values""")
+        .put(
+            "yaml2",
+            Map.of(
+                "people",
+                Map.of(
+                    "name1", List.of(
+                        Map.of("first1", "Mustafa",
+                            "last1", "Tarek")
+                    ),
+                    "name2", List.of(
+                        Map.of("first2", "Ahmed",
+                            "last2", "Tarek")
+                    )
+                )
+            )
+        )
+
         .build();
 
     @Inject
@@ -170,9 +187,24 @@ public class InputsTest {
         assertThat(typeds.get("array")).isInstanceOf(List.class);
         assertThat((List<Integer>) typeds.get("array")).hasSize(3);
         assertThat((List<Integer>) typeds.get("array")).isEqualTo(List.of(1, 2, 3));
-        assertThat(typeds.get("yaml")).isEqualTo(Map.of(
+        assertThat(typeds.get("yaml1")).isEqualTo(Map.of(
             "some", "property",
             "alist", List.of("of", "values")));
+        assertThat(typeds.get("yaml2")).isEqualTo(Map.of(
+            "people",
+            Map.of(
+                "name1", List.of(
+                    Map.of("first1", "Mustafa",
+                        "last1", "Tarek")
+                ),
+                "name2", List.of(
+                    Map.of("first2", "Ahmed",
+                        "last2", "Tarek")
+                )
+            )
+        ));
+
+
     }
 
     @Test

@@ -65,26 +65,6 @@ class SubflowRunnerTest {
             new Label("parentFlowLabel2", "value2") // inherited from the parent flow
         );
     }
-    @Test
-    @LoadFlows({"flows/valids/subflow-serialized-yml-input-child.yaml", "flows/valids/subflow-serialized-yml-input-parent.yaml"})
-    void subflowInputTypeYmlSerialization() throws QueueException, TimeoutException {
-        Execution parentExecution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-serialized-yml-input-parent");
-        String childExecutionId = (String) parentExecution.findTaskRunsByTaskId("hello1").getFirst().getOutputs().get("executionId");
-
-        assertThat(childExecutionId).isNotBlank();
-
-        Execution childExecution = executionRepository.findById(MAIN_TENANT, childExecutionId).orElseThrow();
-
-        assertThat(childExecution.getTaskRunList()).hasSize(2);
-
-        Map<?,?> outputs1 = (Map<?,?>) childExecution.outputs().get("hello2");
-        assertThat(outputs1.get("value"))
-            .isEqualTo("[{\"name1\":[{\"first1\":\"Mustafa\"},{\"last1\":\"Tarek\"}]},{\"name2\":[{\"first2\":\"Ahmed\"},{\"last2\":\"Tarek\"}]}]");
-
-        Map<?,?> outputs2 = (Map<?,?>) childExecution.outputs().get("hello3");
-        assertThat(outputs2.get("value")).isEqualTo("dummy");
-
-    }
 
     @Test
     @LoadFlows({"flows/valids/subflow-parent-no-wait.yaml", "flows/valids/subflow-child-with-output.yaml"})

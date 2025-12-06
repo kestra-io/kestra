@@ -95,7 +95,7 @@ inputs:
 - name: array
   type: ARRAY
   itemType: INT
-- name: yaml
+- name: yaml1
   type: YAML
   defaults:
     property: something
@@ -104,6 +104,15 @@ inputs:
       value: value1
     - key: key2
       value: value2
+- name: yaml2
+  type: YAML
+  defaults:
+    property: something
+    list:
+      - key: key1
+        value: value1
+      - key: key2
+        value: value2
 # required true and an empty default value will only work if we correctly serialize default values which is what this input is about to test.
 - name: empty
   type: STRING
@@ -146,6 +155,9 @@ tasks:
 - id: jsonOutput
   type: io.kestra.plugin.core.debug.Return
   format: "{{outputs.json.value}}"
-- id: yamlOutput
+- id: yamlOutput1
   type: io.kestra.plugin.core.debug.Return
-  format: "{{inputs.yaml}}"
+  format: "{{inputs.yaml1}}"
+- id: yamlOutput2
+  type: io.kestra.plugin.core.debug.Return
+  format: "{{inputs.yaml2}}"

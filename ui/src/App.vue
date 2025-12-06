@@ -2,7 +2,7 @@
     <DocIdDisplay />
     <el-config-provider>
         <ErrorToast v-if="coreStore.message" :noAutoHide="true" :message="coreStore.message" />
-        <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
+        <component :is="route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp && route.name">
             <router-view />
         </component>
         <VueTour v-if="shouldRenderApp && route?.name && !route.meta?.anonymous" />

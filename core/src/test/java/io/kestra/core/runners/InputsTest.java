@@ -92,17 +92,17 @@ public class InputsTest {
                 "people",
                 Map.of(
                     "name1", List.of(
-                        Map.of("first1", "Mustafa",
-                            "last1", "Tarek")
-                    ),
+                        Map.of("first1", "Mustafa"),
+                        Map.of(    "last1", "Tarek")
+                    )
+                    ,
                     "name2", List.of(
-                        Map.of("first2", "Ahmed",
-                            "last2", "Tarek")
+                        Map.of("first2", "Ahmed"),
+                        Map.of("last2", "Tarek")
                     )
                 )
             )
         )
-
         .build();
 
     @Inject
@@ -190,19 +190,23 @@ public class InputsTest {
         assertThat(typeds.get("yaml1")).isEqualTo(Map.of(
             "some", "property",
             "alist", List.of("of", "values")));
-        assertThat(typeds.get("yaml2")).isEqualTo(Map.of(
-            "people",
-            Map.of(
-                "name1", List.of(
-                    Map.of("first1", "Mustafa",
-                        "last1", "Tarek")
-                ),
-                "name2", List.of(
-                    Map.of("first2", "Ahmed",
-                        "last2", "Tarek")
+        assertThat(typeds.get("yaml2"))
+            .isEqualTo(
+                Map.of(
+                    "people",
+                    Map.of(
+                        "name1", List.of(
+                            Map.of("first1", "Mustafa"),
+                            Map.of(    "last1", "Tarek")
+                        )
+                        ,
+                        "name2", List.of(
+                            Map.of("first2", "Ahmed"),
+                            Map.of("last2", "Tarek")
+                        )
+                    )
                 )
-            )
-        ));
+            );
 
 
     }

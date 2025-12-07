@@ -4,7 +4,7 @@
             <ul>
                 <li>
                     <el-button :icon="Plus" type="primary" @click="addSecretModalVisible = true">
-                        {{ $t('secret.add') }}
+                        {{ $t('create') }}
                     </el-button>
                 </li>
             </ul>

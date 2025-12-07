@@ -4,7 +4,7 @@
             {{ $t("playground.run_all_tasks") }}
         </el-button>
         <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
-            {{ $t("execute") }}
+            {{ $t("create") }}
         </el-button>
         <el-dialog
             id="execute-flow-dialog"

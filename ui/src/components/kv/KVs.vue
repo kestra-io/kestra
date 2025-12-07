@@ -4,7 +4,7 @@
             <ul>
                 <li>
                     <el-button :icon="Plus" type="primary" @click="namespacesStore.addKvModalVisible = true">
-                        {{ $t("kv.add") }}
+                        {{ $t("create") }}
                     </el-button>
                 </li>
             </ul>

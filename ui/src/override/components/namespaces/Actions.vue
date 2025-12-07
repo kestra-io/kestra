@@ -19,7 +19,7 @@
 
     <Action
         v-if="tab === 'kv'"
-        :label="t('kv.add')"
+        :label="t('create')"
         @click="namespacesStore.addKvModalVisible = true"
     />
 </template>

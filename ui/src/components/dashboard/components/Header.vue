@@ -26,9 +26,9 @@
                     </router-link>
                 </li>
                 <li>
-                    <router-link :to="{name: 'flows/create'}">
+                    <router-link :to="{name: 'dashboards/create'}">
                         <el-button :icon="Plus" type="primary">
-                            {{ t("create_flow") }}
+                            {{ t("create") }}
                         </el-button>
                     </router-link>
                 </li>

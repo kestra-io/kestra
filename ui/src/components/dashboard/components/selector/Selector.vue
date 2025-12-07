@@ -14,7 +14,6 @@
                         title: selected ?? t('dashboards.default')
                     }"
                     :edit="edit"
-                    class="mt-3"
                 />
 
                 <hr class="my-2">

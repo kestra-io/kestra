@@ -8,16 +8,6 @@
 
         <template #dropdown>
             <el-dropdown-menu class="p-3 dropdown">
-                <el-button
-                    type="primary"
-                    :icon="Plus"
-                    tag="router-link"
-                    :to="{name: 'dashboards/create', query}"
-                    class="w-100"
-                >
-                    <small>{{ t("dashboards.creation.label") }}</small>
-                </el-button>
-
                 <Item
                     :dashboard="{
                         id: filtered.filter(d => d.title === selected)?.[0]?.id ?? 'default',
@@ -76,17 +66,9 @@
     import Item from "./Item.vue";
 
     import Menu from "vue-material-design-icons/Menu.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
     const emits = defineEmits(["dashboard"]);
-
-    const query = computed(() => {
-        return {
-            name: ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home",
-            params: JSON.stringify({...route.params, dashboard: undefined}),
-        };
-    });
 
     const search = ref("");
     const dashboards = ref<{ id: string; title: string }[]>([]);

@@ -26,7 +26,7 @@
                     </router-link>
                 </li>
                 <li>
-                    <router-link :to="{name: 'dashboards/create'}">
+                    <router-link :to="{name: 'dashboards/create', query}">
                         <el-button :icon="Plus" type="primary">
                             {{ t("create") }}
                         </el-button>
@@ -64,6 +64,13 @@
 
     const user = computed(() => authStore.user);
     const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));
+
+    const query = computed(() => {
+        return {
+            name: (["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home") as string,
+            params: JSON.stringify({...route.params, dashboard: undefined}),
+        };
+    });
 
     const routeInfo = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 

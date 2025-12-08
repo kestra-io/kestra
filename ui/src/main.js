@@ -25,10 +25,6 @@ const handleAuthError = (error, to) => {
 
 initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
     router.beforeEach(async (to, from, next) => {
-        if (["login", "setup"].includes(to.name)) {
-            return next();
-        }
-
         if(to.path === from.path && to.query === from.query) {
             return next(); // Prevent navigation if the path and query are the same
         }
@@ -38,18 +34,33 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
             const configs = await miscStore.loadConfigs();
 
             if(!configs.isBasicAuthInitialized) {
-                // Since, Configs takes preference 
+                // Since, Configs takes preference
                 // we need to check if any regex validation error in BE.
                 const validationErrors = await miscStore.loadBasicAuthValidationErrors()
-                
+
                 if (validationErrors?.length > 0) {
                     // Creds exist in config but failed validation
                     // Route to login to show errors
+                    if (to.name === "login") {
+                        return next();
+                    }
+
                     return next({name: "login"})
                 } else {
                     // No creds in config - redirect to set it up
+                    if (to.name === "setup") {
+                        return next();
+                    }
+
                     return next({name: "setup"})
                 }
+            }
+
+            if (["login", "setup"].includes(to.name)) {
+                if (to.name === "setup") {
+                    return next({name: "login"});
+                }
+                return next();
             }
 
             const hasCredentials = BasicAuth.isLoggedIn()
@@ -88,6 +99,6 @@ initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
     app.config.globalProperties.$isOss = true; // Set to true for OSS version
 
     // mount
-    app.mount("#app")
+    router.isReady().then(() => app.mount("#app"))
 });
 

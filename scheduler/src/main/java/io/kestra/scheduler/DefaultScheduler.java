@@ -62,6 +62,8 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
     private final List<Disposable> consumerDisposables = new ArrayList<>();
 
     private final Set<Integer> currentVNodesAssignment = new HashSet<>();
+    
+    private Disposable rebalanceDisposable;
 
     @Inject
     public DefaultScheduler(final TriggerSchedulingLoopFactory schedulerEventLoopFactory,
@@ -127,9 +129,13 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         this.schedulingLoops = new ArrayList<>(maxThreads);
 
         // Subscribe to trigger vNodes assignment/revocation
-        vNodesAssigner.subscribe(this.getId(), new VNodesAssigner.VNodeAssignmentListener() {
+        this.rebalanceDisposable = vNodesAssigner.subscribe(this.getId(), new VNodesAssigner.VNodeAssignmentListener() {
             @Override
             public void onVNodesRevoked() {
+                if (!getState().isRunning()) {
+                    return; // scheduler is either terminating or already terminated.
+                }
+                
                 // Stop the WorkerTriggerResult/TriggerEvent Queues consumption
                 stopAllConsumers();
 
@@ -142,7 +148,10 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
             @Override
             public void onVNodesAssigned(Set<Integer> vNodes) {
-
+                if (!getState().isRunning()) {
+                    return; // scheduler is either terminating or already terminated.
+                }
+                
                 final int numSchedulingLoop = Math.min(maxThreads, vNodes.size());
 
                 // (Re)initialize trigger state store for assigned VNodes
@@ -251,6 +260,13 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         if (!this.started.compareAndSet(true, false)) {
             return ServiceState.TERMINATED_GRACEFULLY; // Already shut down or not started.
         }
+        
+        if (rebalanceDisposable != null) {
+            rebalanceDisposable.dispose();
+        }
+
+        // Stop all queues consumption
+        stopAllConsumers();
 
         // Stop all scheduling loops
         stopAllSchedulingLoop();

@@ -21,7 +21,7 @@
     </el-dropdown>
 </template>
 
-<script setup lang="ts">;
+<script setup lang="ts">
     import {usePlaygroundStore} from "../../stores/playground";
     import Play from "vue-material-design-icons/Play.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";

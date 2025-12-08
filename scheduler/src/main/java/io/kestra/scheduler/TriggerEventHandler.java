@@ -11,6 +11,7 @@ import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.scheduler.events.DeleteBackfillTrigger;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
@@ -87,8 +88,9 @@ public class TriggerEventHandler {
             case TriggerReceived evt -> onTriggerReceived(clock, evt);
             // Commands
             case CreateBackfillTrigger evt -> onCreateBackfill(clock, evt);
-            case SetPauseBackfillTrigger evt -> onSetTriggerDisable(clock, evt);
+            case SetPauseBackfillTrigger evt -> onSetPauseBackfillTrigger(clock, evt);
             case SetDisableTrigger evt -> onSetTriggerDisable(clock, evt);
+            case DeleteBackfillTrigger evt -> onDeleteBackfillTrigger(clock, evt);
             case ResetTrigger evt -> onResetTrigger(clock, evt);
             default -> throw new IllegalStateException("Unexpected value: " + event);
         }
@@ -131,13 +133,33 @@ public class TriggerEventHandler {
             triggerStateStore.save(state);
         });
     }
-    
+
     /**
      * Handler method for {@link SetDisableTrigger}.
      *
      * @param event the event.
      */
-    void onSetTriggerDisable(Clock clock, SetPauseBackfillTrigger event) {
+    void onDeleteBackfillTrigger(Clock clock, DeleteBackfillTrigger event) {
+        findTriggerState(event).ifPresent(state -> {
+            if (state.getBackfill() != null) {
+                ZonedDateTime nextEvaluationDate = state.getBackfill().getPreviousNextExecutionDate();
+                state = state
+                    .lastEventId(clock, event.eventId())
+                    // clear the backfill
+                    .backfill(clock, null)
+                    // restore the previous next-evaluation date.
+                    .updateForNextEvaluationDate(clock, nextEvaluationDate);
+                triggerStateStore.save(state);
+            }
+        });
+    }
+
+    /**
+     * Handler method for {@link SetPauseBackfillTrigger}.
+     *
+     * @param event the event.
+     */
+    void onSetPauseBackfillTrigger(Clock clock, SetPauseBackfillTrigger event) {
         findTriggerState(event).ifPresent(state -> {
             if (state.getBackfill() != null) {
                 state = state
@@ -147,7 +169,6 @@ public class TriggerEventHandler {
             }
         });
     }
-    
     
     /**
      * Handler method for {@link SetDisableTrigger}.

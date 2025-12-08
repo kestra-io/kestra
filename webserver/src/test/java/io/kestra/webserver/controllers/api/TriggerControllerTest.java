@@ -1,13 +1,16 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
@@ -55,7 +58,7 @@ class TriggerControllerTest {
     ReactorHttpClient client;
 
     @Inject
-    AbstractJdbcFlowRepository jdbcFlowRepository;
+    FlowService flowService;
 
     @Inject
     AbstractJdbcTriggerRepository jdbcTriggerRepository;
@@ -79,10 +82,10 @@ class TriggerControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldFindTriggersGivenQueryOnIdPrefix() {
+    void shouldFindTriggersGivenQueryOnIdPrefix() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        jdbcFlowRepository.create(GenericFlow.of(flow));
+        flowService.create(GenericFlow.of(flow));
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
         // WHEN
@@ -105,10 +108,10 @@ class TriggerControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldFindTriggersGivenQueryOnNamespace() {
+    void shouldFindTriggersGivenQueryOnNamespace() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        jdbcFlowRepository.create(GenericFlow.of(flow));
+        flowService.create(GenericFlow.of(flow));
         createTriggersFromFlow(flow).forEach(jdbcTriggerRepository::save);
 
         // WHEN
@@ -131,10 +134,10 @@ class TriggerControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldFindTriggersGivenFilterOnNamespace() {
+    void shouldFindTriggersGivenFilterOnNamespace() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        jdbcFlowRepository.create(GenericFlow.of(flow));
+        flowService.create(GenericFlow.of(flow));
         List<TriggerState> states = createTriggersFromFlow(flow);
         states.forEach(jdbcTriggerRepository::save);
 
@@ -211,10 +214,10 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldGetNoContentWhenRestartingTriggerGivenExist() {
+    void shouldGetNoContentWhenRestartingTriggerGivenExist() throws FlowProcessingException, QueueException {
         // GIVEN
         Flow flow = generateFlow();
-        jdbcFlowRepository.create(GenericFlow.of(flow));
+        flowService.create(GenericFlow.of(flow));
 
         TriggerState trigger = TriggerState.builder()
             .flowId(flow.getId())
@@ -340,14 +343,14 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldSetDisabledByTriggerIdsGivenFalse() {
+    void shouldSetDisabledByTriggerIdsGivenFalse() throws FlowProcessingException, QueueException {
         // GIVEN
-        String namespace = IdUtils.create();
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
         Flow flow1 = generateFlowWithTrigger(namespace);
         Flow flow2 = generateFlowWithTrigger(namespace);
 
-        jdbcFlowRepository.create(GenericFlow.of(flow1));
-        jdbcFlowRepository.create(GenericFlow.of(flow2));
+        flowService.create(GenericFlow.of(flow1));
+        flowService.create(GenericFlow.of(flow2));
 
         TriggerState triggerDisabled = jdbcTriggerRepository.save(createTriggerFromFlow(flow1, true));
         TriggerState triggerNotDisabled = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
@@ -370,14 +373,14 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldSetDisabledByTriggerIdsGivenTrue() {
+    void shouldSetDisabledByTriggerIdsGivenTrue() throws FlowProcessingException, QueueException {
         // GIVEN
-        String namespace = IdUtils.create();
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
         Flow flow1 = generateFlowWithTrigger(namespace);
         Flow flow2 = generateFlowWithTrigger(namespace);
 
-        jdbcFlowRepository.create(GenericFlow.of(flow1));
-        jdbcFlowRepository.create(GenericFlow.of(flow2));
+        flowService.create(GenericFlow.of(flow1));
+        flowService.create(GenericFlow.of(flow2));
 
         TriggerState triggerDisabled = jdbcTriggerRepository.save(createTriggerFromFlow(flow1, true));
         TriggerState triggerToDisable = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
@@ -401,14 +404,14 @@ class TriggerControllerTest {
     }
 
     @Test
-    void shouldSetDisabledByQueryGivenTrue() {
+    void shouldSetDisabledByQueryGivenTrue() throws FlowProcessingException, QueueException {
         // GIVEN
-        String namespace = IdUtils.create();
+        String namespace = "ns-" + IdUtils.create().toLowerCase();
         Flow flow1 = generateFlowWithTrigger(namespace);
         Flow flow2 = generateFlowWithTrigger(namespace);
 
-        jdbcFlowRepository.create(GenericFlow.of(flow1));
-        jdbcFlowRepository.create(GenericFlow.of(flow2));
+        flowService.create(GenericFlow.of(flow1));
+        flowService.create(GenericFlow.of(flow2));
 
         jdbcTriggerRepository.save(createTriggerFromFlow(flow1, true));
         TriggerState toDisable = jdbcTriggerRepository.save(createTriggerFromFlow(flow2, false));
@@ -439,7 +442,7 @@ class TriggerControllerTest {
     private Flow generateFlow() {
         return Flow.builder()
             .tenantId(TENANT_ID)
-            .namespace(IdUtils.create())
+            .namespace("ns-" + IdUtils.create().toLowerCase())
             .id(IdUtils.create())
             .tasks(Collections.singletonList(Return.builder()
                 .id("task")

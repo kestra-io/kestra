@@ -32,10 +32,12 @@ public class NamespaceFilesUtils {
     private ExecutorsUtils executorsUtils;
 
     private ExecutorService executorService;
+    private int maxThreads;
 
     @PostConstruct
     public void postConstruct() {
-        this.executorService = executorsUtils.maxCachedThreadPool(Math.max(Runtime.getRuntime().availableProcessors() * 4, 32), "namespace-file");
+        this.maxThreads = Math.max(Runtime.getRuntime().availableProcessors() * 4, 32);
+        this.executorService = executorsUtils.maxCachedThreadPool(maxThreads, "namespace-file");
     }
 
     public void loadNamespaceFiles(
@@ -63,7 +65,11 @@ public class NamespaceFilesUtils {
           matchedNamespaceFiles.addAll(files);
         }
 
+        // Use half of the available threads to avoid impacting concurrent tasks
+        int parallelism = maxThreads / 2;
         Flux.fromIterable(matchedNamespaceFiles)
+            .parallel(parallelism)
+            .runOn(Schedulers.fromExecutorService(executorService))
             .doOnNext(throwConsumer(nsFile -> {
                 InputStream content = runContext.storage().getFile(nsFile.uri());
                 Path path = folderPerNamespace ?
@@ -71,7 +77,7 @@ public class NamespaceFilesUtils {
                     Path.of(nsFile.path());
                 runContext.workingDir().putFile(path, content, fileExistComportment);
             }))
-            .publishOn(Schedulers.fromExecutorService(executorService))
+            .sequential()
             .blockLast();
 
         Duration duration = stopWatch.getDuration();

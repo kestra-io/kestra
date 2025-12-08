@@ -192,7 +192,7 @@ export function chartClick(moment: any, router: any, route: any, event: any, par
             params: {
                 tenant: route.params.tenant,
             },
-            query: {...query, ...filters}
+            query: {...query, ...filters, "filters[timeRange][EQUALS]": "P30D"},
         });
     }
 }

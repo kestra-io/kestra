@@ -36,7 +36,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
                 AbstractJdbcRepository.field("offset")
             )
             // force using the dedicated index, or it made a scan of the PK index
-            .from(this.table.useIndex("ix_type__consumers"))
+            .from(this.table.useIndex("ix_type__offset"))
             .where(AbstractJdbcRepository.field("type").eq(queueType()))
             .and(DSL.or(List.of(
                 AbstractJdbcRepository.field("consumers").isNull(),

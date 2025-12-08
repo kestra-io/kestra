@@ -56,6 +56,20 @@ public class InputsTest {
     @Inject
     private NamespaceFactory namespaceFactory;
 
+    private static final Map<String , Object>    yamlAndJsonObject = Map.of(
+        "people",
+        Map.of(
+            "name1", List.of(
+                Map.of("first1", "Mustafa"),
+                Map.of(    "last1", "Tarek")
+            )
+            ,
+            "name2", List.of(
+                Map.of("first2", "Ahmed"),
+                Map.of("last2", "Tarek")
+            )
+        )
+    );
     public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
         .put("string", "myString")
         .put("enum", "ENUM_VALUE")
@@ -83,20 +97,7 @@ public class InputsTest {
         .put("json1", "{\"a\": \"b\"}")
         .put(
             "json2",
-            Map.of(
-                "people",
-                Map.of(
-                    "name1", List.of(
-                        Map.of("first1", "Mustafa"),
-                        Map.of(    "last1", "Tarek")
-                    )
-                    ,
-                    "name2", List.of(
-                        Map.of("first2", "Ahmed"),
-                        Map.of("last2", "Tarek")
-                    )
-                )
-            )
+            yamlAndJsonObject
         )
         .put("yaml1", """
             some: property
@@ -105,20 +106,7 @@ public class InputsTest {
             - values""")
         .put(
             "yaml2",
-            Map.of(
-                "people",
-                Map.of(
-                    "name1", List.of(
-                        Map.of("first1", "Mustafa"),
-                        Map.of(    "last1", "Tarek")
-                    )
-                    ,
-                    "name2", List.of(
-                        Map.of("first2", "Ahmed"),
-                        Map.of("last2", "Tarek")
-                    )
-                )
-            )
+            yamlAndJsonObject
         )
         .build();
 
@@ -204,45 +192,11 @@ public class InputsTest {
         assertThat((List<Integer>) typeds.get("array")).hasSize(3);
         assertThat((List<Integer>) typeds.get("array")).isEqualTo(List.of(1, 2, 3));
         assertThat(typeds.get("json1")).isEqualTo(Map.of("a", "b"));
-        assertThat(typeds.get("json2"))
-            .isEqualTo(
-                Map.of(
-                    "people",
-                    Map.of(
-                        "name1", List.of(
-                            Map.of("first1", "Mustafa"),
-                            Map.of(    "last1", "Tarek")
-                        )
-                        ,
-                        "name2", List.of(
-                            Map.of("first2", "Ahmed"),
-                            Map.of("last2", "Tarek")
-                        )
-                    )
-                )
-            );
+        assertThat(typeds.get("json2")).isEqualTo(yamlAndJsonObject);
         assertThat(typeds.get("yaml1")).isEqualTo(Map.of(
             "some", "property",
             "alist", List.of("of", "values")));
-        assertThat(typeds.get("yaml2"))
-            .isEqualTo(
-                Map.of(
-                    "people",
-                    Map.of(
-                        "name1", List.of(
-                            Map.of("first1", "Mustafa"),
-                            Map.of(    "last1", "Tarek")
-                        )
-                        ,
-                        "name2", List.of(
-                            Map.of("first2", "Ahmed"),
-                            Map.of("last2", "Tarek")
-                        )
-                    )
-                )
-            );
-
-
+        assertThat(typeds.get("yaml2")).isEqualTo(yamlAndJsonObject);
     }
 
     @Test

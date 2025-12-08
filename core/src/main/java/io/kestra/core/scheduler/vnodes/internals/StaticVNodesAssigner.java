@@ -3,6 +3,7 @@ package io.kestra.core.scheduler.vnodes.internals;
 import io.kestra.core.scheduler.vnodes.VNodeConsistentHashRing;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.vnodes.VNodesAssigner;
+import io.kestra.core.utils.Disposable;
 import io.micronaut.context.annotation.Requires;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class StaticVNodesAssigner implements VNodesAssigner {
     
     /** {@inheritDoc} **/
     @Override
-    public void subscribe(String service, VNodeAssignmentListener listener) {
+    public Disposable subscribe(String service, VNodeAssignmentListener listener) {
         // Register the new listener
         listeners.put(service, new LoggerTriggerAssignmentListener(listener, LOG, service));
         
@@ -49,6 +50,8 @@ public class StaticVNodesAssigner implements VNodesAssigner {
         listeners.forEach((s, l) -> l.onVNodesRevoked());
         
         // Assign vNodes for all listeners
-        listeners.forEach((s, l) -> l.onVNodesAssigned(assignments.get(service)));  
+        listeners.forEach((s, l) -> l.onVNodesAssigned(assignments.get(service)));
+
+        return Disposable.of(() -> this.listeners.remove(service));
     }
 }

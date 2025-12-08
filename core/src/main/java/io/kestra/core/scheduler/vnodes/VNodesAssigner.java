@@ -1,5 +1,6 @@
 package io.kestra.core.scheduler.vnodes;
 
+import io.kestra.core.utils.Disposable;
 import org.slf4j.Logger;
 
 import java.util.Set;
@@ -27,8 +28,10 @@ public interface VNodesAssigner {
      * @param listener the listener that will receive trigger assignment notifications;
      *                 must not be {@code null}
      * @throws NullPointerException if {@code service} or {@code listener} is {@code null}
+     * 
+     * @return a {@link Disposable} to stop listening for VNode re-assignment.
      */
-    void subscribe(String service, VNodeAssignmentListener listener);
+    Disposable subscribe(String service, VNodeAssignmentListener listener);
     
     /**
      * Interface for listening on trigger vNodes assignment changes.

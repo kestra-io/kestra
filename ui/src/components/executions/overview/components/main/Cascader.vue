@@ -29,16 +29,7 @@
                         {{ data.label }}
                     </div>
                     <div v-if="data.value && data.children">
-                        <code>
-                            {{ data.children.length }}
-                            {{
-                                $t(
-                                    data.children.length === 1
-                                        ? "item"
-                                        : "items",
-                                )
-                            }}
-                        </code>
+                        <code>{{ itemsCount(data) }}</code>
                     </div>
                 </div>
             </template>
@@ -54,6 +45,9 @@
     import VarValue from "../../../VarValue.vue";
 
     import {Execution} from "../../../../../stores/executions";
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
@@ -113,6 +107,14 @@
             return matchesNode || matchesChildren;
         });
     });
+
+    const itemsCount = (item: Node) => {
+        const length = item.children?.length ?? 0;
+
+        if (!length) return undefined;
+
+        return `${length} ${length === 1 ? t("item") : t("items")}`;
+    };
 
     const cascader = ref<any>(null);
     onMounted(() => {

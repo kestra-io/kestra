@@ -7,14 +7,14 @@
         :disabled="!playgroundStore.readyToStart"
     >
         <el-icon><Play /></el-icon>
-        <span>{{ t('playground.run_task') }}</span>
+        <span>{{ $t('playground.run_task') }}</span>
         <template #dropdown>
             <el-dropdown-menu>
                 <el-dropdown-item :icon="Play" @click="playgroundStore.runUntilTask(taskId)">
-                    {{ t('playground.run_this_task') }}
+                    {{ $t('playground.run_this_task') }}
                 </el-dropdown-item>
                 <el-dropdown-item :icon="PlayBoxMultiple" @click="playgroundStore.runUntilTask(taskId, true)">
-                    {{ t('playground.run_task_and_downstream') }}
+                    {{ $t('playground.run_task_and_downstream') }}
                 </el-dropdown-item>
             </el-dropdown-menu>
         </template>
@@ -22,12 +22,10 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
     import {usePlaygroundStore} from "../../stores/playground";
     import Play from "vue-material-design-icons/Play.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
 
-    const {t} = useI18n();
     const playgroundStore = usePlaygroundStore();
 
     defineProps<{

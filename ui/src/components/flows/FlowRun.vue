@@ -190,6 +190,8 @@
             },
             onSubmit(formRef) {
                 if (formRef && this.flowCanBeExecuted) {
+                    this.checks = [];
+                    this.executeClicked = false;
                     formRef.validate((valid) => {
                         if (!valid) {
                             return false;
@@ -223,6 +225,7 @@
                                 nextStep: true,
                             });
                         }
+                        this.executeClicked = true;
                         this.$emit("executionTrigger");
                     });
                 }

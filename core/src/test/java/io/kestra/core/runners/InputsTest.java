@@ -57,16 +57,14 @@ public class InputsTest {
     private NamespaceFactory namespaceFactory;
 
     private static final Map<String , Object> object = Map.of(
-        "people",
-        Map.of(
-            "name1", List.of(
-                Map.of("first1", "Mustafa"),
-                Map.of("last1", "Tarek")
-            )
-            ,
-            "name2", List.of(
-                Map.of("first2", "Ahmed"),
-                Map.of("last2", "Tarek")
+        "people", List.of(
+            Map.of(
+                "first", "Mustafa",
+                "last", "Tarek"
+            ),
+            Map.of(
+                "first", "Ahmed",
+                "last", "Tarek"
             )
         )
     );

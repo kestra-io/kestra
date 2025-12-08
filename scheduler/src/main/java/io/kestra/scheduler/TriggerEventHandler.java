@@ -11,22 +11,22 @@ import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.scheduler.events.DeleteBackfillTrigger;
-import io.kestra.core.services.ConditionService;
-import io.kestra.core.utils.Logs;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
+import io.kestra.core.scheduler.events.DeleteBackfillTrigger;
 import io.kestra.core.scheduler.events.ResetTrigger;
 import io.kestra.core.scheduler.events.SetDisableTrigger;
 import io.kestra.core.scheduler.events.SetPauseBackfillTrigger;
-import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
-import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
+import io.kestra.core.scheduler.events.TriggerEvent;
+import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
-import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.services.ConditionService;
+import io.kestra.core.utils.Logs;
+import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.pubsub.TriggerExecutionPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.scheduler.stores.TriggerStateStore;
@@ -47,15 +47,15 @@ import java.util.Optional;
  */
 @Singleton
 public class TriggerEventHandler {
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(TriggerEventHandler.class);
-    
+
     private final TriggerStateStore triggerStateStore;
     private final FlowMetaStore flowStateStore;
     private final TriggerExecutionPublisher triggerExecutionPublisher;
     private final RunContextFactory runContextFactory;
     private final ConditionService conditionService;
-    
+
     @Inject
     public TriggerEventHandler(TriggerStateStore triggerStateStore,
                                FlowMetaStore flowStateStore,
@@ -68,7 +68,7 @@ public class TriggerEventHandler {
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
     }
-    
+
     /**
      * Handles the given {@link TriggerEvent}.
      *
@@ -95,7 +95,7 @@ public class TriggerEventHandler {
             default -> throw new IllegalStateException("Unexpected value: " + event);
         }
     }
-    
+
     /**
      * Handler method for {@link CreateBackfillTrigger}.
      *
@@ -113,23 +113,23 @@ public class TriggerEventHandler {
                     .labels(event.backfill().labels())
                     .build()
                 );
-            
+
             Pair<Flow, AbstractTrigger> pair = findTrigger(event, null);
             Flow flow = pair.getLeft();
             AbstractTrigger trigger = pair.getRight();
-            
+
             if (flow == null || trigger == null) {
                 return;
             }
-            
+
             RunContext runContext = runContextFactory.of(flow, trigger);
             ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-            
+
             if (trigger instanceof PollingTriggerInterface pollingTriggerInterface) {
                 ZonedDateTime nextEvaluationDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(state.context()));
                 state.updateForNextEvaluationDate(clock, nextEvaluationDate);
             }
-            
+
             triggerStateStore.save(state);
         });
     }
@@ -169,7 +169,7 @@ public class TriggerEventHandler {
             }
         });
     }
-    
+
     /**
      * Handler method for {@link SetDisableTrigger}.
      *
@@ -177,13 +177,22 @@ public class TriggerEventHandler {
      */
     void onSetTriggerDisable(Clock clock, SetDisableTrigger event) {
         findTriggerState(event).ifPresent(state -> {
+            boolean wasDisabled = state.isDisabled();
             state = state
                 .lastEventId(clock, event.eventId())
                 .disabled(clock, event.disabled());
+            // if the trigger is re-enabled, re-compute the next evaluation date
+            // this is required to not backfill all missed scheduling after re-enabling trigger.
+            if (wasDisabled && !event.disabled()) {
+                Pair<Flow, AbstractTrigger> data = findTrigger(event, null);
+                if (data.getRight() != null) {
+                    state = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
+                }
+            }
             triggerStateStore.save(state);
         });
     }
-    
+
     /**
      * Handler method for {@link TriggerExecutionTerminated}.
      *
@@ -198,7 +207,7 @@ public class TriggerEventHandler {
             );
         });
     }
-    
+
     /**
      * Handler method for {@link TriggerEvaluated}.
      *
@@ -215,21 +224,21 @@ public class TriggerEventHandler {
             if (data.getRight() != null) {
                 newState = state.updateForNextEvaluationDate(clock, NextEvaluationDate.get(clock, data.getRight()));
             }
-            
+
             if (event.execution() != null) {
                 newState.updateForExecution(clock, event.execution());
             }
-            
+
             newState = state.lastEventId(clock, event.eventId());
             triggerStateStore.save(newState);
-            
+
             if (event.execution() != null) {
                 Execution execution = event.execution().withTenantId(state.getTenantId());
                 triggerExecutionPublisher.send(execution);
             }
         });
     }
-    
+
     /**
      * Handler method for {@link ResetTrigger}.
      *
@@ -243,7 +252,7 @@ public class TriggerEventHandler {
             triggerStateStore.save(state);
         });
     }
-    
+
     /**
      * Handler method for {@link ResetTrigger}.
      *
@@ -257,7 +266,7 @@ public class TriggerEventHandler {
             triggerStateStore.save(state);
         });
     }
-    
+
     /**
      * Handler method for {@link TriggerUpdated}.
      *
@@ -274,7 +283,7 @@ public class TriggerEventHandler {
             }
         });
     }
-    
+
     /**
      * Handler method for {@link TriggerDeleted}.
      *
@@ -283,7 +292,7 @@ public class TriggerEventHandler {
     void onTriggerDeleted(TriggerDeleted event) {
         triggerStateStore.delete(event.id());
     }
-    
+
     /**
      * Handler method for {@link TriggerCreated}.
      *
@@ -298,25 +307,25 @@ public class TriggerEventHandler {
             triggerStateStore.save(state);
         }
     }
-    
+
     private Pair<Flow, AbstractTrigger> findTrigger(TriggerEvent event, Integer revision) {
         FlowWithSource flow = findFlow(event, revision);
         if (flow == null) {
             return Pair.of(null, null);
         }
-        
+
         AbstractTrigger trigger = flow.getTriggers().stream()
             .filter(it -> it.getId().equals(event.id().getTriggerId()))
             .findFirst()
             .orElse(null);
-        
+
         if (trigger == null) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event '{}'. Cause: Trigger not found", event.type());
         }
-        
+
         return Pair.of(flow, trigger);
     }
-    
+
     private FlowWithSource findFlow(TriggerEvent event, Integer revision) {
         FlowId flowId = FlowId.of(event.id().getTenantId(), event.id().getNamespace(), event.id().getFlowId(), revision);
         FlowWithSource flow = flowStateStore.find(flowId).orElse(null);
@@ -326,7 +335,7 @@ public class TriggerEventHandler {
         }
         return flow;
     }
-    
+
     private Optional<TriggerState> findTriggerState(final TriggerEvent event) {
         Optional<TriggerState> state = triggerStateStore.find(event.id());
         if (state.isEmpty()) {
@@ -340,7 +349,7 @@ public class TriggerEventHandler {
         if (lastEventId == null || event.eventId().isNewerThan(lastEventId)) {
             return state;
         }
-        
+
         // Ignore because it's an older or duplicate event
         Logs.logTrigger(event.id(), Level.WARN, "Skipping event {}. Cause: Event is older than last applied event.", event.type());
         return Optional.empty();

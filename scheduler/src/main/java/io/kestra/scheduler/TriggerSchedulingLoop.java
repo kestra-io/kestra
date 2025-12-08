@@ -26,39 +26,39 @@ import java.util.concurrent.locks.ReentrantLock;
  * (once every second) and for processing any queued trigger events.
  */
 public class TriggerSchedulingLoop implements Runnable {
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(TriggerSchedulingLoop.class);
-    
+
     private static final long SCHEDULE_INTERVAL_MILLIS = Duration.ofSeconds(1).toMillis();
-    
+
     private final int schedulingLoopId;
     private final TriggerScheduler triggerScheduler;
     private final Clock clock;
-    
+
     // Queue
     private final BlockingQueue<CompletableTriggerEvent> triggerEventQueue = new LinkedBlockingQueue<>();
     private final ReentrantLock triggerEventQueueLock = new ReentrantLock();
     private final Condition notEmptyTriggerEventQueue = triggerEventQueueLock.newCondition();
-    
+
     // Services
     private final TriggerEventHandler triggerEventHandler;
-    
+
     // Threading
     private volatile Thread thread;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
-    
+
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final CountDownLatch stopped = new CountDownLatch(1);
-    
+
     // Pause & Resume
     private final AtomicBoolean paused = new AtomicBoolean(false);
     private final ReentrantLock pauseLock = new ReentrantLock();
     private final Condition unpaused = pauseLock.newCondition();
-    
+
     private final BlockingQueue<Runnable> internalLoopCallables = new LinkedBlockingQueue<>();
-    
+
     private final Set<Integer> assignments = new HashSet<>();
-    
+
     /**
      * Creates a new {@link TriggerSchedulingLoop} instance.
      *
@@ -76,7 +76,7 @@ public class TriggerSchedulingLoop implements Runnable {
         this.triggerEventHandler = triggerEventHandler;
         this.clock = clock;
     }
-    
+
     /**
      * Gets the identifier of this event-loop.
      *
@@ -85,7 +85,7 @@ public class TriggerSchedulingLoop implements Runnable {
     public int id() {
         return this.schedulingLoopId;
     }
-    
+
     /**
      * {@inheritDoc}
      **/
@@ -94,7 +94,7 @@ public class TriggerSchedulingLoop implements Runnable {
         if (!this.running.compareAndSet(false, true)) {
             throw new IllegalStateException("Already running");
         }
-        
+
         this.thread = Thread.currentThread();
         Instant nextScheduleTime = clock.instant();
         Instant tick = clock.instant();
@@ -108,14 +108,14 @@ public class TriggerSchedulingLoop implements Runnable {
                         LOG.warn("Thread starvation, clock leap detected, or too many triggers to evaluate (elapsed since previous loop {}ms)", elapsed);
                     }
                     tick = clock.instant();
-                    
+
                     waitIfPaused();
-                    
+
                     // Check if the loop was stopped while being paused
                     if (!running.get()) {
                         continue;
                     }
-                    
+
                     // Check whether vNodes are available for this event-loop
                     // The list of vNodes assignments can be empty if:
                     // 1. This scheduler is starting
@@ -128,26 +128,26 @@ public class TriggerSchedulingLoop implements Runnable {
                         }
                         continue;
                     }
-                    
+
                     final Instant now = clock.instant();
-                    
+
                     if (!initialized.get()) {
                         triggerScheduler.onStart(clock, now, assignments);
                         initialized.set(true);
                     }
-                    
+
                     // Process all received triggers events for current assignments.
                     processTriggerEvents();
-                    
+
                     // Check whether triggers should be scheduled
                     if (now.isAfter(nextScheduleTime) || now.equals(nextScheduleTime)) {
                         triggerScheduler.onSchedule(clock, now, assignments);
                         nextScheduleTime = nextScheduleTime.plusMillis(SCHEDULE_INTERVAL_MILLIS);
                     }
-                    
+
                     // Execute end-loop actions
                     doOnEndLoop();
-                    
+
                     // May wait before next iteration
                     long waitMillis = Math.max(0, nextScheduleTime.toEpochMilli() - clock.instant().toEpochMilli());
                     if (waitMillis > 0) {
@@ -167,7 +167,7 @@ public class TriggerSchedulingLoop implements Runnable {
             LOG.info("[{}-{}] stopped", getClass().getSimpleName(), schedulingLoopId);
         }
     }
-    
+
     private void waitForNextIterationOrNewEvent(final Duration duration) throws InterruptedException {
         if (triggerEventQueue.isEmpty()) {
             triggerEventQueueLock.lock();
@@ -180,7 +180,7 @@ public class TriggerSchedulingLoop implements Runnable {
             }
         }
     }
-    
+
     /**
      * Stops this loop.
      * <p>
@@ -191,9 +191,9 @@ public class TriggerSchedulingLoop implements Runnable {
             LOG.debug("[{}] stop() called but not running", getClass().getSimpleName());
             return;
         }
-        
+
         resume(); // In case it's paused and blocked
-        
+
         if (this.thread != null) {
             this.thread.interrupt();
             try {
@@ -205,7 +205,7 @@ public class TriggerSchedulingLoop implements Runnable {
             }
         }
     }
-    
+
     private void waitIfPaused() throws InterruptedException {
         if (!paused.get()) {
             return; // return immediately
@@ -221,16 +221,16 @@ public class TriggerSchedulingLoop implements Runnable {
             pauseLock.unlock();
         }
     }
-    
+
     /**
      * Gets the current assignment for this event loop.
-     * 
+     *
      * @return  the assignments.
      */
     public Set<Integer> assignments() {
         return assignments;
     }
-    
+
     public void setAssignments(final Set<Integer> assignments) {
         this.assignments.clear();
         if (assignments != null) {
@@ -238,7 +238,7 @@ public class TriggerSchedulingLoop implements Runnable {
         }
         this.initialized.set(false);
     }
-    
+
     /**
      * Pauses this event-loop instance.
      */
@@ -250,7 +250,7 @@ public class TriggerSchedulingLoop implements Runnable {
             pauseLock.unlock();
         }
     }
-    
+
     /**
      * Registers an {@link Runnable action} that will be executed on next end loop.
      *
@@ -269,7 +269,7 @@ public class TriggerSchedulingLoop implements Runnable {
         });
         return future;
     }
-    
+
     /**
      * Resumes this event-loop instance if currently paused.
      */
@@ -283,7 +283,7 @@ public class TriggerSchedulingLoop implements Runnable {
             pauseLock.unlock();
         }
     }
-    
+
     /**
      *
      * @param events The trigger events.
@@ -292,7 +292,7 @@ public class TriggerSchedulingLoop implements Runnable {
         List<CompletableFuture<Void>> futures = events.stream().map(event -> addTriggerEvent(vNode, event)).toList();
         return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
-    
+
     /**
      *
      * @param event The trigger event.
@@ -308,7 +308,7 @@ public class TriggerSchedulingLoop implements Runnable {
         }
         return completable;
     }
-    
+
     /**
      * Processes all trigger events currently queued by this scheduling loop.
      *
@@ -329,31 +329,32 @@ public class TriggerSchedulingLoop implements Runnable {
         });
         return drained.size();
     }
-    
+
     private void doOnEndLoop() {
         List<Runnable> drained = new ArrayList<>();
         internalLoopCallables.drainTo(drained);
-        
+
         for (Runnable runnable : drained) {
             runnable.run();
         }
     }
-    
+
     /**
      * Wraps a {@link TriggerEvent} with the associated Virtual Node (vNodes).
      */
-    public static class CompletableTriggerEvent extends CompletableFuture<Void> {
-        
+    public static class
+    CompletableTriggerEvent extends CompletableFuture<Void> {
+
         private final TriggerEvent event;
         private final Integer vnode;
-        
+
         public CompletableTriggerEvent(TriggerEvent event, Integer vnode) {
             this.event = Objects.requireNonNull(event, "event must not be null");
             this.vnode = Objects.requireNonNull(vnode, "vnode must not be null");
         }
-        
+
         public TriggerEvent event() { return event; }
-        
+
         public Integer vnode() { return vnode; }
     }
 }

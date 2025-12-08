@@ -20,10 +20,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.InputsTest;
-import io.kestra.core.runners.LocalPath;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
@@ -97,6 +94,10 @@ class ExecutionControllerRunnerTest {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
+    protected QueueInterface<ExecutionEvent> executionEventQueue;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -1314,9 +1315,9 @@ class ExecutionControllerRunnerTest {
         // listen to the execution queue
         AtomicReference<Execution> killedExecution = new AtomicReference<>();
         CountDownLatch killedLatch = new CountDownLatch(1);
-        Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, e -> {
-            if (e.getLeft().getState().getCurrent() == State.Type.KILLED) {
-                killedExecution.set(e.getLeft());
+        Flux<ExecutionEvent> receiveExecutions = TestsUtils.receive(executionEventQueue, e -> {
+            if (e.getLeft().eventType() == ExecutionEventType.TERMINATED) {
+                killedExecution.set(executionRepositoryInterface.findById(e.getLeft().tenantId(), e.getLeft().executionId()).orElseThrow());
                 killedLatch.countDown();
             }
         });

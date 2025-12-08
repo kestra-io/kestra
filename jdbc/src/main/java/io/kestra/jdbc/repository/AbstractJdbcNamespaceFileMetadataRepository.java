@@ -179,4 +179,10 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
                 return nsFileMetadataToPersist;
             });
     }
+
+    @Override
+    public int saveBatch(List<NamespaceFileMetadata> items) {
+        // FIXME should not be needed as it is not indexed
+        return items.stream().map(it -> this.save(it)).toList().size();
+    }
 }

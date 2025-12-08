@@ -144,7 +144,7 @@ class ExecutionControllerRunnerTest {
         .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("data/hello.txt")).getPath())
         .put("secret", "secret")
         .put("array", "[1, 2, 3]")
-        .put("json", "{}")
+        .put("json1", "{}")
         .put("yaml1", """
             some: property
             alist:
@@ -248,7 +248,7 @@ class ExecutionControllerRunnerTest {
         Execution result = triggerExecutionInputsFlowExecution(true);
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(result.getTaskRunList().size()).isEqualTo(15);
+        assertThat(result.getTaskRunList().size()).isEqualTo(16);
     }
 
     @Test
@@ -722,7 +722,7 @@ class ExecutionControllerRunnerTest {
     @LoadFlows({"flows/valids/inputs.yaml"})
     void downloadInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
-        assertThat(execution.getTaskRunList()).hasSize(15);
+        assertThat(execution.getTaskRunList()).hasSize(16);
 
         String path = (String) execution.getInputs().get("file");
 
@@ -760,7 +760,7 @@ class ExecutionControllerRunnerTest {
     @LoadFlows({"flows/valids/inputs.yaml"})
     void previewInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         Execution defaultExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
-        assertThat(defaultExecution.getTaskRunList()).hasSize(15);
+        assertThat(defaultExecution.getTaskRunList()).hasSize(16);
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
 
@@ -781,12 +781,12 @@ class ExecutionControllerRunnerTest {
             .put("file", Objects.requireNonNull(ExecutionControllerTest.class.getClassLoader().getResource("data/iso88591.txt")).getPath())
             .put("secret", "secret")
             .put("array", "[1, 2, 3]")
-            .put("json", "{}")
-            .put("yaml", "{}")
+            .put("json1", "{}")
+            .put("yaml1", "{}")
             .build();
 
         Execution latin1Execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, latin1FileInputs));
-        assertThat(latin1Execution.getTaskRunList()).hasSize(15);
+        assertThat(latin1Execution.getTaskRunList()).hasSize(16);
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
 

@@ -1612,7 +1612,8 @@
         "email": "メール",
         "firstName": "名",
         "lastName": "姓",
-        "password": "パスワード"
+        "password": "パスワード",
+        "password_requirements": "パスワードは8文字以上で、少なくとも1つの大文字と1つの数字を含める必要があります。"
       },
       "login": "ログイン",
       "logout": "ログアウト",

@@ -104,15 +104,20 @@ public class SubflowExecutionResultMessageHandler implements ExecutorMessageHand
 
                         metricRegistry
                             .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
-                            .record(taskRun.getState().getDuration());
+                            .record(taskRun.getState().getDurationOrComputeIt());
 
                         log.trace("TaskRun terminated: {}", taskRun);
                     }
 
                     // join worker result
                     return current;
-                } catch (InternalException | FlowNotFoundException e) {
+                } catch (InternalException e) {
                     return executorService.handleFailedExecutionFromExecutor(current, e);
+                } catch (FlowNotFoundException e) {
+                    // avoid infinite for FlowNotFoundException
+                    if (!current.getExecution().getState().getCurrent().isFailed()) {
+                        return executorService.handleFailedExecutionFromExecutor(current, e);
+                    }
                 }
             }
 

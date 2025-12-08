@@ -252,15 +252,28 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                     }
 
                     return executor;
-                } catch (QueueException | FlowNotFoundException e) {
+                } catch (QueueException e) {
                     try {
                         Execution failedExecution = fail(execution, e);
                         this.executionQueue.emit(failedExecution);
                     } catch (QueueException ex) {
                         log.error("Unable to emit the execution {}", execution.getId(), ex);
                     }
-                    Span.current().recordException(e).setStatus(StatusCode.ERROR);
 
+                    Span.current().recordException(e).setStatus(StatusCode.ERROR);
+                    return null;
+                } catch (FlowNotFoundException e) {
+                    // avoid infinite for FlowNotFoundException
+                    if (!execution.getState().getCurrent().isFailed()) {
+                        try {
+                            Execution failedExecution = fail(execution, e);
+                            this.executionQueue.emit(failedExecution);
+                        } catch (QueueException ex) {
+                            log.error("Unable to emit the execution {}", execution.getId(), ex);
+                        }
+                    }
+
+                    Span.current().recordException(e).setStatus(StatusCode.ERROR);
                     return null;
                 }
             }

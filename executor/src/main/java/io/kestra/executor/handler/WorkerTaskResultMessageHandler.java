@@ -45,8 +45,13 @@ public class WorkerTaskResultMessageHandler implements ExecutorMessageHandler<Wo
                     );
                     // join worker result
                     return current;
-                } catch (InternalException | FlowNotFoundException e) {
+                } catch (InternalException e) {
                     return executorService.handleFailedExecutionFromExecutor(current, e);
+                } catch (FlowNotFoundException e) {
+                    // avoid infinite for FlowNotFoundException
+                    if (!current.getExecution().getState().getCurrent().isFailed()) {
+                        return executorService.handleFailedExecutionFromExecutor(current, e);
+                    }
                 }
             }
 

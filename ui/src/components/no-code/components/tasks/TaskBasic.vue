@@ -3,10 +3,10 @@
         <el-form-item
             :key="index"
             :required="isRequired(key)"
-            v-for="(schema, key, index) in properties"
+            v-for="(schema, key, properties, index) in properties"
         >
             <template #label>
-                <span v-if="required" class="me-1 text-danger">*</span>
+                <span v-if="isRequired(key)" class="me-1 text-danger asterisk">*</span>
                 <span v-if="getKey(key)" class="label">
                     {{
                         getKey(key)
@@ -95,12 +95,9 @@
                             return 1;
                         }
 
-                        const aRequired = (this.schema.required || []).includes(
-                            a[0],
-                        );
-                        const bRequired = (this.schema.required || []).includes(
-                            b[0],
-                        );
+                        const aRequired = properties[a[0]]?.$required === true;
+                        const bRequired = properties[b[0]]?.$required === true;
+
 
                         if (aRequired && !bRequired) {
                             return -1;
@@ -157,5 +154,12 @@
 .type-tag {
     background-color: var(--ks-tag-background);
     color: var(--ks-tag-content);
+}
+
+.asterisk {
+    color: var(--ks-content-alert);
+    font-size: 1.2em;
+    font-weight: bold;
+    line-height: 1;
 }
 </style>

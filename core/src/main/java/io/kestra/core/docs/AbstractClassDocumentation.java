@@ -89,7 +89,16 @@ public abstract class AbstractClassDocumentation<T> {
         }
 
         if (this.propertiesSchema.containsKey("properties")) {
-            this.inputs = flattenWithoutType(properties(this.propertiesSchema), required(this.propertiesSchema));
+            Map<String, Object> props = properties(this.propertiesSchema);
+            List<String> requiredList = required(this.propertiesSchema);
+            
+            for (String requiredKey : requiredList) {
+                if (props.containsKey(requiredKey)) {
+                    ((Map<String, Object>) props.get(requiredKey)).put("$required", true);
+                }
+            }
+            
+            this.inputs = flattenWithoutType(props, requiredList);
         }
     }
 

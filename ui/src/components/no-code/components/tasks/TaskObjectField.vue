@@ -89,8 +89,10 @@
     const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent");
 
     const isRequired = computed(() => {
-        return !props.disabled && props.required?.includes(props.fieldKey);// && props.schema.$required;
-    })
+        if (props.disabled) return false;
+        return props.schema?.$required === true || props.required?.includes(props.fieldKey);
+    });
+
 
     const hasSelectedASchema = ref(false)
 
@@ -198,5 +200,19 @@
         color: var(--ks-content-secondary);
         cursor: pointer;
     }
+}
+
+.field-label-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.required-asterisk {
+    color: var(--ks-content-alert);
+    font-size: 1.2em;
+    font-weight: bold;
+    line-height: 1;
 }
 </style>

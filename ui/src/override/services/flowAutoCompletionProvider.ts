@@ -97,8 +97,21 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         }
 
         const pluginDoc = await this.pluginsStore.load({cls: taskType, commit: false});
-
-        return Object.keys((pluginDoc?.schema as any)?.outputs?.properties ?? {});
+        const properties = (pluginDoc?.schema as any)?.outputs?.properties ?? {};
+        const required = (pluginDoc?.schema as any)?.outputs?.required ?? [];
+        
+        const sortedKeys = Object.keys(properties).sort((a, b) => {
+            const aRequired = required.includes(a) || properties[a]?.$required === true;
+            const bRequired = required.includes(b) || properties[b]?.$required === true;
+            if (aRequired && !bRequired) return -1;
+            if (!aRequired && bRequired) return 1;
+            return a.localeCompare(b);
+        });
+        
+        return sortedKeys.map(key => {
+            const isRequired = required.includes(key) || properties[key]?.$required === true;
+            return isRequired ? `${key} *` : key;
+        });
     }
 
     private async triggerVars(flowAsJs?: {triggers?: {type: string}[]}): Promise<string[]> {

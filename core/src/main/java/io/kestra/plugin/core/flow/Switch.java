@@ -123,7 +123,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     }
 
     private String rendererValue(RunContext runContext) throws IllegalVariableEvaluationException {
-        return runContext.render(this.value).as(String.class).orElseThrow();
+        return runContext.render(this.value).skipCache().as(String.class).orElseThrow();
     }
 
     @Override

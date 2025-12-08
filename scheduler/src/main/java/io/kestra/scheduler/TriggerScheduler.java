@@ -284,7 +284,7 @@ public class TriggerScheduler {
                 case PollingTriggerInterface pollingTrigger ->
                     processPollingTrigger(clock, triggerState, context, pollingTrigger);
                 case RealtimeTriggerInterface realtimeTrigger ->
-                    processWorkerTrigger(clock, triggerState, context);
+                    processWorkerTrigger(clock, triggerState, context, realtimeTrigger);
                 default -> {
                     logger.error("Unable to evaluate trigger '{}'. Cause: Unsupported type '{}'", trigger.getId(), trigger.getClass().getName());
                 }
@@ -331,7 +331,7 @@ public class TriggerScheduler {
             log(clock, triggerContext, maybeExecution.get());
             triggerState = triggerState
                 .updateForExecution(clock, maybeExecution.get())
-                .locked(clock, true);
+                .locked(clock, !((AbstractTrigger)trigger).isAllowConcurrent());
         }
         // Save the final trigger state
         triggerStateStore.save(triggerState);
@@ -356,14 +356,15 @@ public class TriggerScheduler {
             );
             return;
         }
-        processWorkerTrigger(clock, triggerState, triggerEvaluationContext);
+        processWorkerTrigger(clock, triggerState, triggerEvaluationContext, trigger);
     }
     
-    private void processWorkerTrigger(Clock clock, TriggerState triggerState, TriggerEvaluationContext triggerEvaluationContext) {
+    private void processWorkerTrigger(Clock clock, TriggerState triggerState, TriggerEvaluationContext triggerEvaluationContext, WorkerTriggerInterface trigger) {
+        final boolean mustBeLocked = trigger instanceof RealtimeTriggerInterface || !((AbstractTrigger)trigger).isAllowConcurrent();
         updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, triggerEvaluationContext).ifPresent(state -> {
             try {
                 this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext());
-                state = state.locked(clock, true);
+                state = state.locked(clock, mustBeLocked);
                 triggerStateStore.save(state);
             } catch (Exception e) {
                 Logs.logTrigger(

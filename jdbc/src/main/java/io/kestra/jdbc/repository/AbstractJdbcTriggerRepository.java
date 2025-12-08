@@ -78,9 +78,14 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Optional<TriggerState> findById(TriggerId trigger) {
-        return findOne(DSL.trueCondition(), field("key").eq(trigger.uid()));
+        return findByUid(trigger.uid());
     }
-    
+
+    @Override
+    public Optional<TriggerState> findByUid(String uid) {
+        return findOne(DSL.trueCondition(), field("key").eq(uid));
+    }
+
     @Override
     public List<TriggerState> findAll(String tenantId) {
         return this.jdbcRepository

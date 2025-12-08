@@ -115,7 +115,7 @@ export function extractState(value: any) {
     return value;
 }
 
-export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label") {
+export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label", filters: Record<string, any> = {}) {
     const query: Record<string, any> = {};
 
     if (elements && parsedData) {
@@ -192,7 +192,7 @@ export function chartClick(moment: any, router: any, route: any, event: any, par
             params: {
                 tenant: route.params.tenant,
             },
-            query: query,
+            query: {...query, ...filters}
         });
     }
 }

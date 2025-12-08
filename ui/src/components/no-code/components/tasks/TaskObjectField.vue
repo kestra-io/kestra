@@ -90,7 +90,7 @@
 
     const isRequired = computed(() => {
         if (props.disabled) return false;
-        return props.schema?.$required === true || props.required?.includes(props.fieldKey);
+        return props.schema?.$required === true || Array.isArray(props.required) && props.required.includes(props.fieldKey)
     });
 
 

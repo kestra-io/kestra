@@ -176,7 +176,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
-    
+
     @Inject
     private SLAMonitorStorage slaMonitorStorage;
 
@@ -658,21 +658,16 @@ public class JdbcExecutor implements ExecutorInterface {
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
-                                            /// flowable attempt state transition to running
+                                            // flowable attempt state transition to running
                                             if (workerTask.getTask().isFlowable()) {
-                                                List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
-                                                    .map(ArrayList::new)
-                                                    .orElseGet(ArrayList::new);
-
-
-                                                attempts.add(
-                                                    TaskRunAttempt.builder()
-                                                        .state(new State().withState(State.Type.RUNNING))
-                                                        .build()
-                                                );
-
                                                 TaskRun updatedTaskRun = workerTask.getTaskRun()
-                                                    .withAttempts(attempts)
+                                                    .withAttempts(
+                                                        List.of(
+                                                            TaskRunAttempt.builder()
+                                                                .state(new State().withState(State.Type.RUNNING))
+                                                                .build()
+                                                        )
+                                                    )
                                                     .withState(State.Type.RUNNING);
 
                                                 workerTaskResults.add(new WorkerTaskResult(updatedTaskRun));

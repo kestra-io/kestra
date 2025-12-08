@@ -93,7 +93,7 @@ public class Property<T> {
      * @return a new {@link Property} without a pre-rendered value
      */
     public Property<T> skipCache() {
-        return Property.ofExpression(expression);
+        return new Property<>(expression, true);
     }
 
     /**

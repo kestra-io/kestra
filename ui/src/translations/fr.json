@@ -1612,7 +1612,8 @@
         "email": "E-mail",
         "firstName": "Prénom",
         "lastName": "Nom de famille",
-        "password": "Mot de passe"
+        "password": "Mot de passe",
+        "password_requirements": "Le mot de passe doit comporter au moins 8 caractères, inclure au moins 1 lettre majuscule et 1 chiffre."
       },
       "login": "Connexion",
       "logout": "Déconnexion",

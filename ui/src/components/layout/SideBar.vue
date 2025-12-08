@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onUpdated, ref, computed, h, watch} from "vue";
+    import {onUpdated, computed, h, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
     import {useMediaQuery} from "@vueuse/core";
@@ -118,7 +118,10 @@
         ];
     });
 
-    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
+    const collapsed = computed({
+        get: () => layoutStore.sideMenuCollapsed,
+        set: (v: boolean) => layoutStore.setSideMenuCollapsed(v),
+    })
 
     const isSmallScreen = useMediaQuery("(max-width: 768px)")
 

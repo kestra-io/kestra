@@ -86,8 +86,8 @@
                                 </el-input>
                             </el-form-item>
                             <div class="password-requirements mb-4">
-                                <el-text>
-                                    8+ chars, 1 upper, 1 number
+                                <el-text>     
+                                    {{ t('setup.form.password_requirements') }}
                                 </el-text>
                             </div>
                         </el-form>

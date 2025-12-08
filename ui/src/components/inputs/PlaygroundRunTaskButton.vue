@@ -25,6 +25,7 @@
     import {usePlaygroundStore} from "../../stores/playground";
     import Play from "vue-material-design-icons/Play.vue";
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue";
+
     const playgroundStore = usePlaygroundStore();
 
     defineProps<{

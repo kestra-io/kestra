@@ -177,6 +177,27 @@ class TriggerEventHandlerTest {
     }
 
     @Test
+    void shouldUpdateNextEvaluationDateWhenReEnablingTrigger() {
+        // GIVEN
+        ZonedDateTime initialNextEvaluationDate = SchedulerClock.now().minusMinutes(30);
+        triggerStateStore.save(triggerState.updateForNextEvaluationDate(CLOCK, initialNextEvaluationDate).disabled(CLOCK, true));
+
+        handler = newTriggerEventHandler(List.of(Fixtures.defaultFlow()));
+        SetDisableTrigger event = new SetDisableTrigger(triggerId, false);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        Optional<TriggerState> updated = triggerStateStore.find(triggerId);
+        assertThat(updated).isPresent();
+        assertThat(updated.get().isDisabled()).isFalse();
+        assertThat(updated.get().getUpdatedAt()).isAfter(triggerState.getUpdatedAt());
+        assertThat(updated.get().getNextEvaluationDate()).isAfter(initialNextEvaluationDate.toInstant());
+        assertThat(updated.get().getLastEventId()).isEqualTo(event.eventId());
+    }
+
+    @Test
     void shouldPauseBackfillGivenBackfillExistsWhenPauseBackfillEventHandled() {
         // GIVEN
         Backfill backfill = Backfill.builder()

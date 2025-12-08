@@ -44,9 +44,9 @@
     const currentIdx = ref(-1);
 
     const prevDisabled = computed(
-        () => total.value && currentIdx.value + 1 === total.value,
+        () => !!(total.value && currentIdx.value + 1 === total.value),
     );
-    const nextDisabled = computed(() => total.value && currentIdx.value === 0);
+    const nextDisabled = computed(() => !!(total.value && currentIdx.value === 0));
 
     const loadExecutions = async () => {
         const params = {

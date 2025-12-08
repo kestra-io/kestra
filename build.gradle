@@ -223,13 +223,13 @@ subprojects {subProj ->
             t.environment 'ENV_TEST2', "Pass by env"
 
 
-            if (subProj.name == 'core' || subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
-                // JUnit 5 parallel settings
-                t.systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
-                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
-                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
-            }
+//            if (subProj.name == 'core' || subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
+//                // JUnit 5 parallel settings
+//                t.systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
+//                t.systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+//                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
+//                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
+//            }
         }
 
         tasks.register('flakyTest', Test) { Test t ->

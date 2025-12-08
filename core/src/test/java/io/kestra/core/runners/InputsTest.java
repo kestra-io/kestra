@@ -56,12 +56,12 @@ public class InputsTest {
     @Inject
     private NamespaceFactory namespaceFactory;
 
-    private static final Map<String , Object>    yamlAndJsonObject = Map.of(
+    private static final Map<String , Object> object = Map.of(
         "people",
         Map.of(
             "name1", List.of(
                 Map.of("first1", "Mustafa"),
-                Map.of(    "last1", "Tarek")
+                Map.of("last1", "Tarek")
             )
             ,
             "name2", List.of(
@@ -95,19 +95,13 @@ public class InputsTest {
         .put("secret", "secret")
         .put("array", "[1, 2, 3]")
         .put("json1", "{\"a\": \"b\"}")
-        .put(
-            "json2",
-            yamlAndJsonObject
-        )
+        .put("json2", object)
         .put("yaml1", """
             some: property
             alist:
             - of
             - values""")
-        .put(
-            "yaml2",
-            yamlAndJsonObject
-        )
+        .put("yaml2", object)
         .build();
 
     @Inject
@@ -192,11 +186,11 @@ public class InputsTest {
         assertThat((List<Integer>) typeds.get("array")).hasSize(3);
         assertThat((List<Integer>) typeds.get("array")).isEqualTo(List.of(1, 2, 3));
         assertThat(typeds.get("json1")).isEqualTo(Map.of("a", "b"));
-        assertThat(typeds.get("json2")).isEqualTo(yamlAndJsonObject);
+        assertThat(typeds.get("json2")).isEqualTo(object);
         assertThat(typeds.get("yaml1")).isEqualTo(Map.of(
             "some", "property",
             "alist", List.of("of", "values")));
-        assertThat(typeds.get("yaml2")).isEqualTo(yamlAndJsonObject);
+        assertThat(typeds.get("yaml2")).isEqualTo(object);
     }
 
     @Test

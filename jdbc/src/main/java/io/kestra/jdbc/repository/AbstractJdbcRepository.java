@@ -325,7 +325,7 @@ public abstract class AbstractJdbcRepository {
         }
 
         // Convert the field name to lowercase and quote it
-        Name columnName = DSL.quotedName(field.name().toLowerCase());
+        Name columnName = getColumnName(field);
 
         // Default handling for other fields
         return switch (operation) {
@@ -344,6 +344,10 @@ public abstract class AbstractJdbcRepository {
                     .or(DSL.field(columnName).eq(value));
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
+    }
+
+    protected Name getColumnName(QueryFilter.Field field){
+        return DSL.quotedName(field.name().toLowerCase());
     }
 
     protected Condition findQueryCondition(String query) {

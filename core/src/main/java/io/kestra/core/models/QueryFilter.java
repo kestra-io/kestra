@@ -226,7 +226,7 @@ public record QueryFilter(
         FLOW {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.LABELS, Field.NAMESPACE, Field.QUERY, Field.SCOPE);
+                return List.of(Field.LABELS, Field.NAMESPACE, Field.QUERY, Field.SCOPE, Field.FLOW_ID);
             }
         },
         NAMESPACE {

@@ -1612,7 +1612,8 @@
         "email": "Email",
         "firstName": "Nome",
         "lastName": "Cognome",
-        "password": "Password"
+        "password": "Password",
+        "password_requirements": "La password deve essere lunga almeno 8 caratteri e includere almeno 1 lettera maiuscola e 1 numero."
       },
       "login": "Accedi",
       "logout": "Logout",

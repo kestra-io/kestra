@@ -213,6 +213,8 @@
                                             :filters="chartFilters()"
                                             showDefault
                                             short
+                                            :flow="scope.row.id"
+                                            :namespace="scope.row.namespace"
                                         />
                                     </template>
                                 </el-table-column>

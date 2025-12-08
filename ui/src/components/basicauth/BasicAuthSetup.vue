@@ -502,9 +502,7 @@
         localStorage.removeItem("basicAuthUserCreated")
         localStorage.setItem("basicAuthSetupCompletedAt", new Date().toISOString())
 
-        sessionStorage.setItem("sessionActive", "true")
-
-        router.push({name: "home"})
+        router.push({name: "welcome"})
     }
 </script>
 

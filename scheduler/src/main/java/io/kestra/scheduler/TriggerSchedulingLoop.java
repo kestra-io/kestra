@@ -1,6 +1,10 @@
 package io.kestra.scheduler;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,22 +63,34 @@ public class TriggerSchedulingLoop implements Runnable {
 
     private final Set<Integer> assignments = new HashSet<>();
 
+    // Metrics
+    private final Timer metricEventLoopTickTimer;
+    private final Timer metricEventLoopProcessTimer;
+    private final Counter metricEventLoopEventCounter;
+
     /**
      * Creates a new {@link TriggerSchedulingLoop} instance.
      *
      * @param schedulingLoopId    the scheduling-loop identifier.
      * @param triggerScheduler    the {@link TriggerScheduler}.
      * @param triggerEventHandler the {@link TriggerEventHandler}.
+     * @param metricRegistry      the {@link MeterRegistry}.
      * @param clock               the {@link Clock}.
      */
     public TriggerSchedulingLoop(int schedulingLoopId,
                                  TriggerScheduler triggerScheduler,
                                  TriggerEventHandler triggerEventHandler,
+                                 MetricRegistry metricRegistry,
                                  Clock clock) {
         this.schedulingLoopId = schedulingLoopId;
         this.triggerScheduler = triggerScheduler;
         this.triggerEventHandler = triggerEventHandler;
         this.clock = clock;
+
+        String[] tags = {"thread-id", String.valueOf(schedulingLoopId)};
+        this.metricEventLoopTickTimer = metricRegistry.timer(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION_DESCRIPTION, tags);
+        this.metricEventLoopEventCounter = metricRegistry.counter(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT_DESCRIPTION, tags);
+        this.metricEventLoopProcessTimer = metricRegistry.timer(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION_DESCRIPTION, tags);
     }
 
     /**
@@ -99,8 +115,8 @@ public class TriggerSchedulingLoop implements Runnable {
         Instant nextScheduleTime = clock.instant();
         Instant tick = clock.instant();
         try {
-
             while (running.get()) {
+                long start = System.nanoTime();
                 try {
                     long elapsed = clock.instant().toEpochMilli() - tick.toEpochMilli();
                     if (elapsed > (SCHEDULE_INTERVAL_MILLIS + (SCHEDULE_INTERVAL_MILLIS / 10))) {
@@ -160,6 +176,9 @@ public class TriggerSchedulingLoop implements Runnable {
                     running.set(false);
                 } catch (Exception e) {
                     LOG.error("Error in scheduling loop", e);
+                } finally {
+                    long end = System.nanoTime();
+                    metricEventLoopTickTimer.record(end - start, TimeUnit.NANOSECONDS);
                 }
             }
         } finally {
@@ -225,7 +244,11 @@ public class TriggerSchedulingLoop implements Runnable {
     /**
      * Gets the current assignment for this event loop.
      *
+<<<<<<< HEAD
      * @return  the assignments.
+=======
+     * @return the assignments.
+>>>>>>> 5d130c954 (fix(scheduler): add metrics to trigger scheduling loop)
      */
     public Set<Integer> assignments() {
         return assignments;
@@ -299,6 +322,7 @@ public class TriggerSchedulingLoop implements Runnable {
      */
     public CompletableFuture<Void> addTriggerEvent(int vNode, TriggerEvent event) {
         CompletableTriggerEvent completable = new CompletableTriggerEvent(event, vNode);
+        this.metricEventLoopEventCounter.increment();
         this.triggerEventQueue.add(completable);
         this.triggerEventQueueLock.lock();
         try {
@@ -318,14 +342,16 @@ public class TriggerSchedulingLoop implements Runnable {
         List<CompletableTriggerEvent> drained = new ArrayList<>();
         triggerEventQueue.drainTo(drained);
         drained.forEach(item -> {
-            try {
-                triggerEventHandler.handle(clock, item.vnode(), item.event());
-            } catch (Exception e) {
-                LOG.warn("Error handling trigger event [uid={}, type={}]", item.event().uid(), item.event().type(), e);
-            } finally {
-                // always complete the future successfully
-                item.complete(null);
-            }
+            metricEventLoopProcessTimer.record(() -> {
+                try {
+                    triggerEventHandler.handle(clock, item.vnode(), item.event());
+                } catch (Exception e) {
+                    LOG.warn("Error handling trigger event [uid={}, type={}]", item.event().uid(), item.event().type(), e);
+                } finally {
+                    // always complete the future successfully
+                    item.complete(null);
+                }
+            });
         });
         return drained.size();
     }
@@ -342,8 +368,7 @@ public class TriggerSchedulingLoop implements Runnable {
     /**
      * Wraps a {@link TriggerEvent} with the associated Virtual Node (vNodes).
      */
-    public static class
-    CompletableTriggerEvent extends CompletableFuture<Void> {
+    public static class CompletableTriggerEvent extends CompletableFuture<Void> {
 
         private final TriggerEvent event;
         private final Integer vnode;
@@ -352,9 +377,13 @@ public class TriggerSchedulingLoop implements Runnable {
             this.event = Objects.requireNonNull(event, "event must not be null");
             this.vnode = Objects.requireNonNull(vnode, "vnode must not be null");
         }
+        
+        public TriggerEvent event() {
+            return event;
+        }
 
-        public TriggerEvent event() { return event; }
-
-        public Integer vnode() { return vnode; }
+        public Integer vnode() {
+            return vnode;
+        }
     }
 }

@@ -123,7 +123,7 @@ class DefaultSchedulerTest {
         
         this.vNodeController = createVNodeController();
         this.triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
-        this.triggerSchedulingLoopFactory = new TriggerSchedulingLoopFactory(newTriggerScheduler(), newTriggerEventHandler());
+        this.triggerSchedulingLoopFactory = new TriggerSchedulingLoopFactory(newTriggerScheduler(), newTriggerEventHandler(), metricRegistry);
        
     }
     
@@ -207,6 +207,7 @@ class DefaultSchedulerTest {
             triggerEventQueue,
             triggerWorkerJobResultSubscriber,
             triggerStateStore,
+            metricRegistry,
             SchedulerClock.getClock()
         );
     }

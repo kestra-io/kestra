@@ -1,8 +1,13 @@
 package io.kestra.scheduler;
 
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.scheduler.events.TriggerEvent;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.noop.NoopTimer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.time.Clock;
 import java.util.List;
@@ -12,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
@@ -34,7 +40,10 @@ class TriggerSchedulingLoopTest {
     }
     
     TriggerSchedulingLoop createLoop() {
-        return new TriggerSchedulingLoop(1, triggerScheduler, triggerEventHandler, clock);
+        MetricRegistry mkMetricRegistry = mock(MetricRegistry.class);
+        Mockito.when(mkMetricRegistry.timer(anyString(), anyString(), anyString(), anyString())).thenReturn(new NoopTimer(mock(Meter.Id.class)));
+        Mockito.when(mkMetricRegistry.counter(anyString(), anyString(), anyString(), anyString())).thenReturn(mock(Counter.class));
+        return new TriggerSchedulingLoop(1, triggerScheduler, triggerEventHandler, mkMetricRegistry, clock);
     }
     
     @Test

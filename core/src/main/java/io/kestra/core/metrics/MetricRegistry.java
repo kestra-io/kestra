@@ -124,6 +124,16 @@ public class MetricRegistry {
     public static final String METRIC_SCHEDULER_EXECUTION_MISSING_DURATION_DESCRIPTION = "Missing execution duration inside the Scheduler. A missing execution is an execution that was triggered by the Scheduler but not yet started by the Executor";
     public static final String METRIC_SCHEDULER_EVALUATION_LOOP_DURATION = "scheduler.evaluation.loop.duration";
     public static final String METRIC_SCHEDULER_EVALUATION_LOOP_DURATION_DESCRIPTION = "Trigger evaluation loop duration inside the Scheduler";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX = "scheduler.eventloop.thread.max";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX_DESCRIPTION = "The maximum number of event-loop threads.";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION = "scheduler.eventloop.tick.duration";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_TICK_DURATION_DESCRIPTION = "The duration of a single event-loop tick.";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT = "scheduler.eventloop.events.received.count";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_RECEIVED_COUNT_DESCRIPTION = "The total number of events received by the event-loop.";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION = "scheduler.eventloop.event.process.duration";
+    public static final String METRIC_SCHEDULER_EVENTLOOP_EVENT_PROCESS_DURATION_DESCRIPTION = "The duration spent processing individual events within the event-loop.";
+    public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT = "scheduler.assigned.vnodes.count";
+    public static final String METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT_DESCRIPTION = "The number of virtual nodes assigned to the scheduler";
 
     public static final String METRIC_STREAMS_STATE_COUNT = "stream.state.count";
     public static final String METRIC_STREAMS_STATE_COUNT_DESCRIPTION = "Number of Kafka Stream applications by state";

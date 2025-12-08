@@ -1,6 +1,7 @@
 package io.kestra.scheduler;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.TriggerEventQueue;
@@ -28,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -57,6 +59,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
 
     // Services
     private final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber;
+    private final MetricRegistry metricRegistry;
 
     // Consumers
     private final List<Disposable> consumerDisposables = new ArrayList<>();
@@ -72,8 +75,9 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                             final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
                             final TriggerEventQueue triggerEventQueue,
                             final TriggerStateStore triggerStateStore,
-                            final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber) {
-        this(schedulerEventLoopFactory, vNodesAssigner, executorsUtils, eventPublisher, triggerEventQueue, triggerWorkerJobResultSubscriber, triggerStateStore, SchedulerClock.getClock());
+                            final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber,
+                            final MetricRegistry metricRegistry) {
+        this(schedulerEventLoopFactory, vNodesAssigner, executorsUtils, eventPublisher, triggerEventQueue, triggerWorkerJobResultSubscriber, triggerStateStore, metricRegistry, SchedulerClock.getClock());
     }
 
     @VisibleForTesting
@@ -84,6 +88,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                             final TriggerEventQueue triggerEventQueue,
                             final TriggerWorkerJobResultSubscriber triggerWorkerJobResultSubscriber,
                             final TriggerStateStore triggerStateStore,
+                            final MetricRegistry metricRegistry,
                             final Clock clock) {
         super(ServiceType.SCHEDULER, eventPublisher);
         this.schedulerEventLoopFactory = schedulerEventLoopFactory;
@@ -92,6 +97,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         this.triggerEventQueue = triggerEventQueue;
         this.triggerWorkerJobResultSubscriber = triggerWorkerJobResultSubscriber;
         this.triggerStateStore = triggerStateStore;
+        this.metricRegistry = metricRegistry;
         this.clock = clock;
         this.setState(ServiceState.CREATED);
     }
@@ -122,11 +128,17 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         if (!this.started.compareAndSet(false, true)) {
             throw new IllegalStateException("Scheduler already started");
         }
+        this.metricRegistry.gauge(MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX, MetricRegistry.METRIC_SCHEDULER_EVENTLOOP_THREAD_MAX_DESCRIPTION, maxThreads);
 
         // Create the scheduling loops
         this.executorService = executorsUtils.maxCachedThreadPool(maxThreads, EXECUTOR_NAME);
 
         this.schedulingLoops = new ArrayList<>(maxThreads);
+
+       final AtomicInteger metricAssignedVNodesCount = this.metricRegistry.gauge(
+           MetricRegistry.METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT,
+           MetricRegistry.METRIC_SCHEDULER_ASSIGNED_VNODES_COUNT_DESCRIPTION, new AtomicInteger(0)
+       );
 
         // Subscribe to trigger vNodes assignment/revocation
         this.rebalanceDisposable = vNodesAssigner.subscribe(this.getId(), new VNodesAssigner.VNodeAssignmentListener() {
@@ -135,6 +147,8 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                 if (!getState().isRunning()) {
                     return; // scheduler is either terminating or already terminated.
                 }
+
+                metricAssignedVNodesCount.set(0);
                 
                 // Stop the WorkerTriggerResult/TriggerEvent Queues consumption
                 stopAllConsumers();
@@ -151,7 +165,9 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
                 if (!getState().isRunning()) {
                     return; // scheduler is either terminating or already terminated.
                 }
-                
+
+                metricAssignedVNodesCount.set(vNodes.size());
+
                 final int numSchedulingLoop = Math.min(maxThreads, vNodes.size());
 
                 // (Re)initialize trigger state store for assigned VNodes

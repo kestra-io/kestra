@@ -1,5 +1,7 @@
 package io.kestra.scheduler;
 
+import io.kestra.core.metrics.MetricRegistry;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -14,12 +16,15 @@ public class TriggerSchedulingLoopFactory {
     // Services
     private final TriggerScheduler triggerScheduler;
     private final TriggerEventHandler triggerEventHandler;
+    private final MetricRegistry metricRegistry;
     
     @Inject
     public TriggerSchedulingLoopFactory(TriggerScheduler triggerScheduler,
-                                        TriggerEventHandler triggerEventHandler) {
+                                        TriggerEventHandler triggerEventHandler,
+                                        MetricRegistry metricRegistry) {
         this.triggerScheduler = triggerScheduler;
         this.triggerEventHandler = triggerEventHandler;
+        this.metricRegistry = metricRegistry;
     }
     
     /**
@@ -34,6 +39,7 @@ public class TriggerSchedulingLoopFactory {
             schedulingLoopId,
             triggerScheduler,
             triggerEventHandler,
+            metricRegistry,
             clock
         );
     }

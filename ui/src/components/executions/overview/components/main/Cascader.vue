@@ -18,13 +18,7 @@
             :options="filteredOptions"
         >
             <template #default="{data}">
-                <VarValue
-                    v-if="isFile(data.value)"
-                    :value="data.value"
-                    :execution="props.execution"
-                    class="node"
-                />
-                <div v-else class="node">
+                <div class="node">
                     <div :title="data.label">
                         {{ data.label }}
                     </div>
@@ -42,8 +36,6 @@
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
 
-    import VarValue from "../../../VarValue.vue";
-
     import {Execution} from "../../../../../stores/executions";
 
     import {useI18n} from "vue-i18n";
@@ -51,25 +43,18 @@
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
+    interface Node {
+        label: string;
+        value: string;
+        children?: Node[];
+    }
+
     const props = defineProps<{
         title: string;
         empty: string;
         elements?: Record<string, any>;
         execution: Execution;
     }>();
-
-    const isFile = (data: any) => {
-        if (typeof data !== "string") return false;
-
-        const prefixes = ["kestra:///", "file://", "nsfile://"];
-        return prefixes.some((prefix) => data.startsWith(prefix));
-    };
-
-    interface Node {
-        label: string;
-        value: string;
-        children?: Node[];
-    }
 
     const formatted = ref<Node[]>([]);
     const format = (obj: Record<string, any>): Node[] => {

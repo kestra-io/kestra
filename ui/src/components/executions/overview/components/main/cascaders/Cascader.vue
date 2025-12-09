@@ -134,7 +134,7 @@
         overflow: auto;
 
         &.debug {
-            min-height: calc($spacer * 20);
+            min-height: -webkit-fill-available;
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
         }

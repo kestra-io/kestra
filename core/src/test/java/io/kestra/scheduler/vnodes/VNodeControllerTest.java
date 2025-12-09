@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -77,7 +78,7 @@ class VNodeControllerTest {
         
         ServiceInstance s1 = new ServiceInstance("scheduler-1", ServiceType.SCHEDULER, Service.ServiceState.RUNNING, null, Instant.now(), Instant.now(),null, null, null,null);
         ServiceInstance s2 = new ServiceInstance("scheduler-2", ServiceType.SCHEDULER, Service.ServiceState.RUNNING, null, Instant.now(), Instant.now(),null, null, null, null);
-        when(serviceLivenessStore.findAllInstancesInState(Service.ServiceState.RUNNING)).thenReturn(List.of(s1, s2));
+        when(serviceLivenessStore.findAllInstancesInStates(anySet())).thenReturn(List.of(s1, s2));
         
         DefaultVNodesAssigner assigner = new DefaultVNodesAssigner(eventQueue);
         try {
@@ -112,7 +113,7 @@ class VNodeControllerTest {
         
         ServiceInstance s1 = new ServiceInstance("scheduler-1", ServiceType.SCHEDULER, Service.ServiceState.RUNNING, null, Instant.now(), Instant.now(),null, null, null,null);
         ServiceInstance s2 = new ServiceInstance("scheduler-2", ServiceType.SCHEDULER, Service.ServiceState.RUNNING, null, Instant.now(), Instant.now(),null, null, null, null);
-        when(serviceLivenessStore.findAllInstancesInState(Service.ServiceState.RUNNING)).thenReturn(List.of(s1, s2));
+        when(serviceLivenessStore.findAllInstancesInStates(anySet())).thenReturn(List.of(s1, s2));
         
         // WHEN
         controller.checkServicesAndRebalanceVNodes();

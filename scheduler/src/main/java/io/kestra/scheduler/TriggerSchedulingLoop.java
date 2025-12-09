@@ -244,11 +244,7 @@ public class TriggerSchedulingLoop implements Runnable {
     /**
      * Gets the current assignment for this event loop.
      *
-<<<<<<< HEAD
-     * @return  the assignments.
-=======
      * @return the assignments.
->>>>>>> 5d130c954 (fix(scheduler): add metrics to trigger scheduling loop)
      */
     public Set<Integer> assignments() {
         return assignments;

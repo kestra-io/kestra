@@ -171,7 +171,7 @@ public class VNodeController implements AutoCloseable {
     }
 
     private List<ServiceInstance> fetchActiveSchedulerServices() {
-        return serviceLivenessStore.findAllInstancesInState(Service.ServiceState.RUNNING)
+        return serviceLivenessStore.findAllInstancesInStates(Set.of(Service.ServiceState.RUNNING, Service.ServiceState.MAINTENANCE))
             .stream()
             .filter(service -> service.is(ServiceType.SCHEDULER))
             .toList();

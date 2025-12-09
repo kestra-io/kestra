@@ -362,6 +362,15 @@ public class TriggerSchedulingLoop implements Runnable {
     }
 
     /**
+     * Checks whether this scheduling-loop is running.
+     *
+     * @return {@code true} if running.
+     */
+    public boolean isRunning() {
+        return this.running.get();
+    }
+
+    /**
      * Wraps a {@link TriggerEvent} with the associated Virtual Node (vNodes).
      */
     public static class CompletableTriggerEvent extends CompletableFuture<Void> {

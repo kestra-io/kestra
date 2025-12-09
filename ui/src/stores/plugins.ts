@@ -285,7 +285,7 @@ export const usePluginsStore = defineStore("plugins", () => {
 
     let currentlyLoading: {type?: string; version?: string} | undefined = undefined;
 
-    async function updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean} & Record<string, any>) | undefined) {
+    async function updateDocumentation(pluginElement?: ({type: string, version?: string, hash?: number, forceRefresh?: boolean}) | undefined) {
         if (!pluginElement?.type || !allTypes.value.includes(pluginElement.type)) {
             editorPlugin.value = undefined;
             currentlyLoading = undefined;
@@ -338,6 +338,11 @@ export const usePluginsStore = defineStore("plugins", () => {
         forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version" && k !== "forceRefresh");
     }
 
+    async function loadSchemaForPluginVersion(options: {type: string; version?: string}) {
+        const pluginData = await load({cls: options.type, version: options.version, all: true});
+        return pluginData.schema;
+    }
+
     const {icons, iconsLoaded, fetchIcons} = usePluginsIcons()
 
     function groupIcons() {
@@ -377,6 +382,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         loadInputsType,
         loadInputSchema,
         loadSchemaType,
+        loadSchemaForPluginVersion,
         lazyLoadSchemaType,
         updateDocumentation,
 

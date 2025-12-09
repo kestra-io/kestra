@@ -158,11 +158,7 @@ public class FlowInputOutput {
                             File tempFile = File.createTempFile(prefix, fileExtension);
                             try (var inputStream = fileUpload.getInputStream();
                                  var outputStream = new FileOutputStream(tempFile)) {
-                                long transferredBytes = inputStream.transferTo(outputStream);
-                                if (transferredBytes == 0) {
-                                    sink.error(new KestraRuntimeException("Can't upload file: " + fileUpload.getFilename()));
-                                    return;
-                                }
+                                inputStream.transferTo(outputStream);
                                 URI from = storageInterface.from(execution, inputId, fileName, tempFile);
                                 sink.next(Map.entry(inputId, from.toString()));
                             } finally {

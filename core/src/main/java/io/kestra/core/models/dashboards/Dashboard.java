@@ -6,7 +6,6 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
-import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -27,11 +26,9 @@ import java.util.Objects;
 @Introspected
 @ToString
 public class Dashboard implements HasUID, DeletedInterface {
-    @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     private String tenantId;
 
-    @Hidden
     @NotNull
     @NotBlank
     private String id;
@@ -49,15 +46,12 @@ public class Dashboard implements HasUID, DeletedInterface {
     @Valid
     private List<Chart<?>> charts;
 
-    @Hidden
     @NotNull
     @Builder.Default
     private boolean deleted = false;
 
-    @Hidden
     private Instant created;
 
-    @Hidden
     private Instant updated;
 
     private String sourceCode;

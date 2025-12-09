@@ -12,34 +12,71 @@
             />
         </div>
 
-        <el-cascader-panel
-            v-if="props.elements"
-            ref="cascader"
-            :options="filteredOptions"
-        >
-            <template #default="{data}">
-                <div class="node">
-                    <div :title="data.label">
-                        {{ data.label }}
-                    </div>
-                    <div v-if="data.value && data.children">
-                        <code>{{ itemsCount(data) }}</code>
-                    </div>
-                </div>
-            </template>
-        </el-cascader-panel>
+        <template v-if="props.includeDebug">
+            <el-splitter
+                v-if="props.elements"
+                :layout="verticalLayout ? 'vertical' : 'horizontal'"
+                lazy
+            >
+                <el-splitter-panel :size="verticalLayout ? '50%' : '70%'">
+                    <el-cascader-panel
+                        ref="cascader"
+                        :options="filteredOptions"
+                    >
+                        <template #default="{data}">
+                            <div class="node">
+                                <div :title="data.label">
+                                    {{ data.label }}
+                                </div>
+                                <div v-if="data.value && data.children">
+                                    <code>{{ itemsCount(data) }}</code>
+                                </div>
+                            </div>
+                        </template>
+                    </el-cascader-panel>
+                </el-splitter-panel>
+                <el-splitter-panel>
+                    <DebugPanel />
+                </el-splitter-panel>
+            </el-splitter>
 
-        <span v-else class="empty">{{ props.empty }}</span>
+            <span v-else class="empty">{{ props.empty }}</span>
+        </template>
+
+        <template v-else>
+            <el-cascader-panel
+                v-if="props.elements"
+                ref="cascader"
+                :options="filteredOptions"
+            >
+                <template #default="{data}">
+                    <div class="node">
+                        <div :title="data.label">
+                            {{ data.label }}
+                        </div>
+                        <div v-if="data.value && data.children">
+                            <code>{{ itemsCount(data) }}</code>
+                        </div>
+                    </div>
+                </template>
+            </el-cascader-panel>
+
+            <span v-else class="empty">{{ props.empty }}</span>
+        </template>
     </div>
 </template>
 
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
 
+    import DebugPanel from "./DebugPanel.vue";
+
     import {Execution} from "../../../../../stores/executions";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
+
+    import {verticalLayout} from "../../utils/layout";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
@@ -53,6 +90,7 @@
         title: string;
         empty: string;
         elements?: Record<string, any>;
+        includeDebug?: boolean;
         execution: Execution;
     }>();
 

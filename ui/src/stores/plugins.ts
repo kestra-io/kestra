@@ -345,11 +345,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version" && k !== "forceRefresh");
     }
 
-    async function loadSchemaForPluginVersion(options: {type: string; version?: string}) {
-        const pluginData = await load({cls: options.type, version: options.version, all: true});
-        return pluginData.schema;
-    }
-
     const {icons, iconsLoaded, fetchIcons} = usePluginsIcons()
 
     function groupIcons() {
@@ -389,7 +384,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         loadInputsType,
         loadInputSchema,
         loadSchemaType,
-        loadSchemaForPluginVersion,
         lazyLoadSchemaType,
         updateDocumentation,
 

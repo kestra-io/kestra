@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.chart
+name: "chart"
+title: "Chart"
+description: ""
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

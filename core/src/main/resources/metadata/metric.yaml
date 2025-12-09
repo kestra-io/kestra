@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.metric
+name: "metric"
+title: "Metric"
+description: ""
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.trigger
+name: "trigger"
+title: "Trigger"
+description: ""
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

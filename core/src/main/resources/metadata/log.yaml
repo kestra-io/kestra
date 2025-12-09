@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.log
+name: "log"
+title: "Log"
+description: ""
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

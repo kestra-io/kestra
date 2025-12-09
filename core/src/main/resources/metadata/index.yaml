@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core
+name: "core"
+title: "Core Plugins and tasks"
+description: ""
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

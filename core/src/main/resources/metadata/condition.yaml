@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.condition
+name: "condition"
+title: "Condition"
+description: ""
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

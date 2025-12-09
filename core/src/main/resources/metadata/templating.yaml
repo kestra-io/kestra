@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.templating
+name: "templating"
+title: "Templating"
+description: ""
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

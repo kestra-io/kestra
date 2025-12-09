@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.flow
+name: "flow"
+title: "Flow"
+description: ""
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

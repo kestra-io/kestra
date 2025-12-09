@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.http
+name: "http"
+title: "HTTP"
+description: "Tasks for making HTTP requests."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

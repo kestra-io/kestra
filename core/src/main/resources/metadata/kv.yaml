@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.kv
+name: "kv"
+title: "KV"
+description: "Tasks for interacting with the key-value (KV) store."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

@@ -176,13 +176,24 @@
                                     :label="t('last execution date')"
                                 >
                                     <template #default="scope">
-                                        <DateAgo
-                                            v-if="lastExecutionByFlowReady"
-                                            :inverted="true"
-                                            :date="getLastExecution(scope.row)
-                                                ?.startDate
-                                            "
-                                        />
+                                        <router-link
+                                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
+                                            :to="{
+                                                name: 'executions/update',
+                                                params: {
+                                                    namespace: scope.row.namespace,
+                                                    flowId: scope.row.id,
+                                                    id: getLastExecution(scope.row)?.id
+                                                }
+                                            }"
+                                        >
+                                            <DateAgo
+                                                :inverted="true"
+                                                :date="getLastExecution(scope.row)
+                                                    ?.startDate
+                                                "
+                                            />
+                                        </router-link>
                                     </template>
                                 </el-table-column>
 
@@ -196,7 +207,18 @@
                                             v-if="lastExecutionByFlowReady && getLastExecution(scope.row)?.status"
                                             class="d-flex justify-content-between align-items-center"
                                         >
-                                            <Status :status="getLastExecution(scope.row)?.status" size="small" />
+                                            <router-link
+                                                :to="{
+                                                    name: 'executions/update',
+                                                    params: {
+                                                        namespace: scope.row.namespace,
+                                                        flowId: scope.row.id,
+                                                        id: getLastExecution(scope.row)?.id
+                                                    }
+                                                }"
+                                            >
+                                                <Status :status="getLastExecution(scope.row)?.status" size="small" />
+                                            </router-link>
                                         </div>
                                     </template>
                                 </el-table-column>

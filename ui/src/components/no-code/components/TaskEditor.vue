@@ -216,7 +216,7 @@
         return typeMap.value[selectedTaskType.value ?? ""] || [];
     });
 
-    const versionedSchema = ref<{schema: {properties:Schemas}}|undefined>()
+    const versionedSchema = ref<{properties:Schemas}|undefined>()
     const isPluginSchemaLoading = ref(false)
 
     watch([selectedTaskType, resolvedTypes], async ([val, types]) => {
@@ -226,9 +226,7 @@
                 versionedSchema.value = await pluginsStore.loadSchemaForPluginVersion({
                     type: val,
                     version: taskModel.value?.version,
-                }).then((a) => {
-                    return a
-                });
+                })
             } finally {
                 isPluginSchemaLoading.value = false;
             }
@@ -280,7 +278,7 @@
     });
 
     const resolvedLocalSchema = computed(() => {
-        return versionedSchema.value?.schema.properties ?? (isTaskDefinitionBasedOnType.value
+        return versionedSchema.value?.properties ?? (isTaskDefinitionBasedOnType.value
             ? definitions.value?.[resolvedType.value] ?? {}
             : schemaAtBlockPath.value)
     });

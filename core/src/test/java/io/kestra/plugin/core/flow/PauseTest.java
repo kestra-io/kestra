@@ -301,13 +301,12 @@ public class PauseTest {
             FileUpload fileUpload = httpDataFactory.createFileUpload(null, "files", "data", MediaType.TEXT_PLAIN, null, Charset.defaultCharset(), data.length);
             fileUpload.addContent(Unpooled.copiedBuffer(data), true);
             CompletedPart part2 = new NettyCompletedFileUpload(fileUpload);
-            Execution restarted = executionService.resume(
+            Map<String, Object> resumeOutputs = executionService.readInputs(
                 execution,
                 flow,
-                State.Type.RUNNING,
-                Flux.just(part1, part2),
-                null
+                Flux.just(part1, part2)
             ).block();
+            Execution restarted = executionService.resume(execution, flow, State.Type.RUNNING, resumeOutputs, Pause.Resumed.now());
 
             execution = runnerUtils.emitAndAwaitExecution(
                 e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
@@ -330,7 +329,7 @@ public class PauseTest {
 
             ConstraintViolationException e = assertThrows(
                 ConstraintViolationException.class,
-                () -> executionService.resume(execution, flow, State.Type.RUNNING, Mono.empty(), Pause.Resumed.now()).block()
+                () -> executionService.readInputs(execution, flow, Mono.empty()).block()
             );
 
             assertThat(e.getMessage()).contains("Invalid input for `asked`, missing required input, but received `null`");

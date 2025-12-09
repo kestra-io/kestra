@@ -1,5 +1,6 @@
 package io.kestra.runner.h2;
 
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
@@ -37,6 +38,14 @@ public class H2QueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<ExecutionEvent> executionEvent() {
         return new H2Queue<>(ExecutionEvent.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.EXECUTION_COMMAND_NAMED)
+    @Bean(preDestroy = "close")
+    public QueueInterface<ExecutionCommand> executionCommand() {
+        return new H2Queue<>(ExecutionCommand.class, applicationContext);
     }
 
     @Override
@@ -102,7 +111,7 @@ public class H2QueueFactory implements QueueFactoryInterface {
     public QueueInterface<WorkerJobRunning> workerJobRunning() {
         return new H2Queue<>(WorkerJobRunning.class, applicationContext);
     }
-    
+
     @Override
     @Singleton
     @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)

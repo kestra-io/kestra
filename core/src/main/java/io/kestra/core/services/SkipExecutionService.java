@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.runners.ExecutionEvent;
@@ -54,6 +55,10 @@ public class SkipExecutionService {
 
     public boolean skipExecution(ExecutionEvent executionEvent) {
         return skipExecution(executionEvent.tenantId(), executionEvent.namespace(), executionEvent.flowId(), executionEvent.executionId());
+    }
+
+    public boolean skipExecution(ExecutionCommand executionCommand) {
+        return skipExecution(executionCommand.tenantId(), executionCommand.namespace(), executionCommand.flowId(), executionCommand.executionId());
     }
 
     public boolean skipExecution(TaskRun taskRun) {

@@ -3,6 +3,7 @@ package io.kestra.executor;
 import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.FlowNotFoundException;
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
@@ -58,6 +59,9 @@ public class DefaultExecutor implements Executor {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     private QueueInterface<Execution> executionQueue;
+    @Inject
+    @Named(QueueFactoryInterface.EXECUTION_COMMAND_NAMED)
+    private QueueInterface<ExecutionCommand> executionCommandQueue;
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
     private QueueInterface<ExecutionEvent> executionEventQueue;
@@ -122,6 +126,8 @@ public class DefaultExecutor implements Executor {
 
     @Inject
     private ExecutionMessageHandler executionMessageHandler;
+    @Inject
+    private ExecutionCommandMessageHandler executionCommandMessageHandler;
     @Inject
     private ExecutionEventMessageHandler executionEventMessageHandler;
     @Inject
@@ -194,6 +200,7 @@ public class DefaultExecutor implements Executor {
 
         // listen to executor related queues
         this.receiveCancellations.addFirst(this.executionQueue.receive(Executor.class, this::executionQueue));
+        this.receiveCancellations.addFirst(this.executionCommandQueue.receive(Executor.class, this::executionCommandQueue));
         this.receiveCancellations.addFirst(this.executionEventQueue.receiveBatch(
             Executor.class,
             executionEvents -> {
@@ -296,6 +303,22 @@ public class DefaultExecutor implements Executor {
         }
 
         Optional<ExecutorContext> maybeExecutor = executionMessageHandler.handle(message);
+        maybeExecutor.ifPresent(this::toExecution);
+    }
+
+    private void executionCommandQueue(Either<ExecutionCommand, DeserializationException> either) {
+        if (either.isRight()) {
+            log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
+            return;
+        }
+
+        ExecutionCommand message = either.getLeft();
+        if (skipExecutionService.skipExecution(message)) {
+            log.warn(SKIPPING_EXECUTION, message.executionId());
+            return;
+        }
+
+        Optional<ExecutorContext> maybeExecutor = executionCommandMessageHandler.handle(message);
         maybeExecutor.ifPresent(this::toExecution);
     }
 
@@ -478,7 +501,8 @@ public class DefaultExecutor implements Executor {
                     }
                     // Handle failed flow retries
                     else if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESTART_FAILED_FLOW)) {
-                        Execution newExecution = executionService.replay(executor.getExecution(), null, null);
+                        FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
+                        Execution newExecution = executionService.replay(executor.getExecution(), flow, null, null);
                         executor = executor.withExecution(newExecution, "retryFailedFlow");
                     }
                     // Handle WaitFor

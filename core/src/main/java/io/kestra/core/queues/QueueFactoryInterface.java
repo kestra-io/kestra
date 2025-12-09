@@ -1,5 +1,6 @@
 package io.kestra.core.queues;
 
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
@@ -22,10 +23,13 @@ public interface QueueFactoryInterface {
     String CLUSTER_EVENT_NAMED = "clusterEventQueue";
     String SUBFLOWEXECUTIONEND_NAMED = "subflowExecutionEndQueue";
     String MULTIPLE_CONDITION_EVENT_NAMED = "multipleConditionEventQueue";
+    String EXECUTION_COMMAND_NAMED = "executionCommandQueue";
 
     QueueInterface<Execution> execution();
 
     QueueInterface<ExecutionEvent> executionEvent();
+
+    QueueInterface<ExecutionCommand> executionCommand();
 
     WorkerJobQueueInterface workerJob();
 

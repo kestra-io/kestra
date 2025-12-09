@@ -1,12 +1,12 @@
 package io.kestra.cli.commands.sys;
 
 import io.kestra.cli.AbstractCommand;
-import io.kestra.core.models.executions.Execution;
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.executor.command.Unqueue;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.ExecutionQueued;
-import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.jdbc.runner.AbstractJdbcExecutionQueuedStateStore;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -28,8 +28,8 @@ public class SubmitQueuedCommand extends AbstractCommand {
     private ApplicationContext applicationContext;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
+    @Named(QueueFactoryInterface.EXECUTION_COMMAND_NAMED)
+    private QueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Override
     public Integer call() throws Exception {
@@ -48,11 +48,10 @@ public class SubmitQueuedCommand extends AbstractCommand {
         }
         else if (queueType.get().equals("postgres") || queueType.get().equals("mysql") || queueType.get().equals("h2")) {
             var executionQueuedStorage = applicationContext.getBean(AbstractJdbcExecutionQueuedStateStore.class);
-            var concurrencyLimitService = applicationContext.getBean(ConcurrencyLimitService.class);
 
             for (ExecutionQueued queued : executionQueuedStorage.getAllForAllTenants()) {
-                Execution restart = concurrencyLimitService.unqueue(queued.getExecution(), State.Type.RUNNING);
-                executionQueue.emit(restart);
+                var executionCommand = Unqueue.from(queued.getExecution(), State.Type.RUNNING);
+                executionCommandQueue.emit(executionCommand);
                 cpt++;
             }
         }

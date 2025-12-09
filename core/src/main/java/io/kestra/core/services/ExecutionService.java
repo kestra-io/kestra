@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.FlowProcessingException;
@@ -18,7 +19,6 @@ import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
@@ -58,10 +58,6 @@ import static io.kestra.core.utils.Rethrow.*;
 @Singleton
 @Slf4j
 public class ExecutionService {
-
-    @Inject
-    private FlowRepositoryInterface flowRepositoryInterface;
-
     @Inject
     private StorageInterface storageInterface;
 
@@ -176,14 +172,16 @@ public class ExecutionService {
         return execution.withTaskRun(updateFlowableTaskRun.withState(State.Type.PAUSED)).withState(State.Type.PAUSED);
     }
 
-    public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
+    public Execution restart(final Execution execution, Flow flow, @Nullable Integer revision) throws Exception {
+        return restart(execution, flow, revision, false);
+    }
+
+    public Execution restart(final Execution execution, Flow flow, @Nullable Integer revision, boolean emitEvent) throws Exception {
         if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
         }
-
-        final Flow flow = flowRepositoryInterface.findByExecutionWithoutAcl(execution);
 
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
@@ -238,7 +236,12 @@ public class ExecutionService {
         }
         newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels);
 
-        return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+        newExecution =  revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+
+        if (emitEvent) {
+            eventPublisher.publishEvent(CrudEvent.create(newExecution));
+        }
+        return newExecution;
     }
 
     private Set<String> taskRunToRestart(Execution execution, Predicate<TaskRun> predicate) {
@@ -260,12 +263,14 @@ public class ExecutionService {
         return finalTaskRunToRestart;
     }
 
-    public Execution replay(final Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws Exception {
+    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision) throws Exception {
+        return replay(execution, flow, taskRunId, revision, Optional.empty(), false);
+    }
+
+    public Execution replay(final Execution execution, Flow flow, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints, boolean emitEvent) throws Exception {
         final String newExecutionId = IdUtils.create();
         List<TaskRun> newTaskRuns = new ArrayList<>();
         if (taskRunId != null) {
-            final Flow flow = flowRepositoryInterface.findByExecutionWithoutAcl(execution);
-
             GraphCluster graphCluster = GraphUtils.of(flow, execution);
 
             Set<String> taskRunToRestart = this.taskRunToRestart(
@@ -319,13 +324,24 @@ public class ExecutionService {
         if (!newLabels.contains(new Label(Label.REPLAY, "true"))) {
             newLabels.add(new Label(Label.REPLAY, "true"));
         }
-        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels);
+        newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels)
+            .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));;
 
-        return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+        newExecution =  revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+        if (emitEvent) {
+            eventPublisher.publishEvent(CrudEvent.create(newExecution));
+        }
+        return newExecution;
     }
 
     public Execution changeTaskRunState(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {
         Execution newExecution = markAs(execution, flow, taskRunId, newState);
+
+        List<Label> newLabels = new ArrayList<>(newExecution.getLabels());
+        if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
+            newLabels.add(new Label(Label.RESTARTED, "true"));
+        }
+        newExecution = newExecution.withLabels(newLabels);
 
         // if the execution was terminated, it could have executed errors/finally/afterExecutions, we must remove them as the execution will be restarted
         if (execution.getState().isTerminated()) {
@@ -344,10 +360,11 @@ public class ExecutionService {
             ListUtils.emptyOnNull(flow.getAfterExecution())
                 .forEach(task -> newTaskRuns.removeIf(taskRun -> taskRun.getTaskId().equals(task.getId())));
 
-            return newExecution.withTaskRunList(newTaskRuns);
-        } else {
-            return newExecution;
-        }
+            newExecution =  newExecution.withTaskRunList(newTaskRuns);
+        };
+
+        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        return newExecution;
     }
 
     public Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState) throws Exception {
@@ -581,12 +598,11 @@ public class ExecutionService {
      * The execution must be paused or this call will be a no-op.
      *
      * @param execution the execution to resume
-     * @param newState  should be RUNNING or KILLING, other states may lead to undefined behavior
      * @param flow      the flow of the execution
      * @param inputs    the onResume inputs
      * @return the execution in the new state.
      */
-    public Mono<Execution> resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Publisher<CompletedPart> inputs, @Nullable Pause.Resumed resumed) {
+    public Mono<Map<String, Object>> readInputs(final Execution execution, FlowInterface flow, @Nullable Publisher<CompletedPart> inputs) {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
@@ -597,7 +613,7 @@ public class ExecutionService {
             })
             .handle((resumeInputs, sink) -> {
                 try {
-                    sink.next(resume(execution, flow, newState, resumeInputs, resumed));
+                    sink.next(resumeInputs);
                 } catch (Exception e) {
                     sink.error(e);
                 }
@@ -884,27 +900,29 @@ public class ExecutionService {
      * - PAUSED executions will be resumed
      * All other non-terminated states will be no-op.
      */
-    public Execution forceRun(Execution execution) throws Exception {
+    public Execution forceRun(Execution execution, Flow flow) throws Exception {
         if (execution.getState().isTerminated()) {
             throw new IllegalArgumentException("Only non terminated executions can be forced run.");
         }
 
+        Execution newExecution = execution;
         if (execution.getState().isCreated()) {
-            return execution.withState(State.Type.RUNNING);
+            newExecution = execution.withState(State.Type.RUNNING);
         }
 
         if (execution.getState().getCurrent() == State.Type.QUEUED) {
-            return concurrencyLimitService.unqueue(execution,State.Type.RUNNING);
+            newExecution = concurrencyLimitService.unqueue(execution,State.Type.RUNNING);
         }
 
         if (execution.getState().getCurrent() == State.Type.PAUSED) {
-            Flow flow = flowRepositoryInterface.findByExecution(execution);
+            // we return directly as resume already send an UPDATE event
             return resume(execution, flow, State.Type.RUNNING, null);
         }
 
         // for all other states, we just return the same execution,
         // it will be resent to the queue and forced re-processed.
-        return execution;
+        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        return newExecution;
     }
 
     /**
@@ -930,5 +948,56 @@ public class ExecutionService {
         return flow.getAfterExecution().stream()
             .map(ResolvedTask::of)
             .toList();
+    }
+
+    /**
+     * Resume an execution suspended at a breakpoint.
+     *
+     * @throws IllegalArgumentException if the execution is not suspended in a breakpoint
+     */
+    public Execution resumeFromBreakpoint(Execution execution, Optional<String> breakpoints) {
+        if (!execution.getState().isBreakpoint()) {
+            throw new IllegalArgumentException("Execution is not suspended");
+        }
+        if (ListUtils.isEmpty(execution.getBreakpoints())) {
+            throw new IllegalArgumentException("Execution has no breakpoint");
+        }
+
+        // continue the execution: SUSPENDED taskrun will go back to CREATED, so the executor will send them to the WORKER
+        List<TaskRun> newTaskRuns = execution.getTaskRunList().stream().map(
+            taskRun -> {
+                if (taskRun.getState().isBreakpoint()) {
+                    return taskRun.withState(State.Type.CREATED);
+                }
+                return taskRun;
+            }
+        ).toList();
+
+        Execution resumed =  execution.withState(State.Type.RUNNING)
+            .withTaskRunList(newTaskRuns)
+            .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
+
+        eventPublisher.publishEvent(new CrudEvent<>(resumed, execution, CrudEventType.UPDATE));
+        return resumed;
+    }
+
+    /**
+     * Change the state of an execution.
+     */
+    public Execution changeState(Execution execution, State.Type newState) {
+        Execution changed = execution.withState(newState);
+        eventPublisher.publishEvent(new CrudEvent<>(changed, execution, CrudEventType.UPDATE));
+        return changed;
+    }
+
+    /**
+     * Unqueue queued execution.
+     *
+     * @see ConcurrencyLimitService#unqueue(Execution, State.Type)
+     */
+    public Execution unqueue(Execution execution, State.Type newState) {
+        Execution unqueued = concurrencyLimitService.unqueue(execution, newState);
+        eventPublisher.publishEvent(new CrudEvent<>(unqueued, execution, CrudEventType.UPDATE));
+        return unqueued;
     }
 }

@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
@@ -62,7 +63,7 @@ public final class ExecutableUtils {
 
     public static <T extends Task & ExecutableTask<?>> Optional<SubflowExecution<?>> subflowExecution(
         RunContext runContext,
-        FlowMetaStoreInterface flowExecutorInterface,
+        FlowMetaStoreInterface flowMetaStore,
         Execution currentExecution,
         FlowInterface currentFlow,
         T currentTask,
@@ -119,7 +120,8 @@ public final class ExecutableUtils {
                     }
                     ExecutionService executionService = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionService.class);
                     try {
-                        Execution restarted = executionService.restart(subflowExecution, null);
+                        Flow flow = flowMetaStore.findByExecutionThenInjectDefaults(subflowExecution).orElseThrow(() -> new FlowNotFoundException(subflowExecution));
+                        Execution restarted = executionService.restart(subflowExecution, flow, null);
 
                         // inject the traceparent into the new execution
                         propagator.ifPresent(pg -> pg.inject(Context.current(), restarted, ExecutionTextMapSetter.INSTANCE));
@@ -139,7 +141,7 @@ public final class ExecutableUtils {
             String subflowId = runContext.render(currentTask.subflowId().flowId());
             Optional<Integer> subflowRevision = currentTask.subflowId().revision();
 
-            FlowInterface flow = flowExecutorInterface.findByIdFromTask(
+            FlowInterface flow = flowMetaStore.findByIdFromTask(
                     currentExecution.getTenantId(),
                     subflowNamespace,
                     subflowId,

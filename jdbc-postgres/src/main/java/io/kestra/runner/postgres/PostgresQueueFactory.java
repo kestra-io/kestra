@@ -1,5 +1,6 @@
 package io.kestra.runner.postgres;
 
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
@@ -36,6 +37,14 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<ExecutionEvent> executionEvent() {
         return new PostgresQueue<>(ExecutionEvent.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.EXECUTION_COMMAND_NAMED)
+    @Bean(preDestroy = "close")
+    public QueueInterface<ExecutionCommand> executionCommand() {
+        return new PostgresQueue<>(ExecutionCommand.class, applicationContext);
     }
 
     @Override
@@ -101,7 +110,7 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     public QueueInterface<WorkerJobRunning> workerJobRunning() {
         return new PostgresQueue<>(WorkerJobRunning.class, applicationContext);
     }
-    
+
     @Override
     @Singleton
     @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)

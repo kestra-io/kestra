@@ -21,7 +21,7 @@ public class ConcurrencyLimitService {
     /**
      * Unqueue a queued execution.
      *
-     * @throws IllegalArgumentException in case the execution is not queued or is transitionned to an unsupported state.
+     * @throws IllegalArgumentException in case the execution is not queued or is transitioned to an unsupported state.
      */
     public Execution unqueue(Execution execution, State.Type state) {
         if (execution.getState().getCurrent() != State.Type.QUEUED) {

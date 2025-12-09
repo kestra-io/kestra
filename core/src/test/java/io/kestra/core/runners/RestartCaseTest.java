@@ -40,7 +40,7 @@ public class RestartCaseTest {
         assertThat(firstExecution.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // wait
-        Execution restartedExec = executionService.restart(firstExecution, null);
+        Execution restartedExec = executionService.restart(firstExecution, flow, null);
         assertThat(restartedExec).isNotNull();
         assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
         assertThat(restartedExec.getParentId()).isNull();
@@ -75,7 +75,7 @@ public class RestartCaseTest {
         assertThat(firstExecution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // wait
-        Execution restartedExec = executionService.restart(firstExecution, null);
+        Execution restartedExec = executionService.restart(firstExecution, flow, null);
 
         assertThat(restartedExec).isNotNull();
         assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
@@ -107,7 +107,7 @@ public class RestartCaseTest {
         assertThat(firstExecution.getTaskRunList().get(3).getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // wait
-        Execution restartedExec = executionService.restart(firstExecution, null);
+        Execution restartedExec = executionService.restart(firstExecution, flow, null);
 
         assertThat(restartedExec).isNotNull();
         assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
@@ -139,7 +139,7 @@ public class RestartCaseTest {
         assertThat(firstExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // wait
-        Execution restartedExec = executionService.replay(firstExecution, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
+        Execution restartedExec = executionService.replay(firstExecution, flow, firstExecution.findTaskRunByTaskIdAndValue("2_end", List.of()).getId(), null);
 
         assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
         assertThat(restartedExec.getState().getHistories()).hasSize(4);
@@ -166,7 +166,8 @@ public class RestartCaseTest {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
-        Execution restart = executionService.restart(execution, null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restart = executionService.restart(execution, flow, null);
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
 
         Execution restartEnded = runnerUtils.restartExecution(
@@ -176,7 +177,7 @@ public class RestartCaseTest {
 
         assertThat(restartEnded.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
-        Execution newRestart = executionService.restart(restartEnded, null);
+        Execution newRestart = executionService.restart(restartEnded, flow, null);
 
         restartEnded = runnerUtils.restartExecution(
             e -> e.getState().getCurrent() == State.Type.FAILED,
@@ -195,17 +196,18 @@ public class RestartCaseTest {
         runnerUtils.awaitFlowExecution(e -> e.getState().getCurrent().isFailed(), MAIN_TENANT, "io.kestra.tests", "restart-child");
 
         // there is 3 values so we must restart it 3 times to end the 3 subflows
-        Execution restarted1 = executionService.restart(execution, null);
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution restarted1 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
             e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent"),
             restarted1
         );
-        Execution restarted2 = executionService.restart(execution, null);
+        Execution restarted2 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
             e -> e.getState().getCurrent() == State.Type.FAILED && e.getFlowId().equals("restart-parent"),
             restarted2
         );
-        Execution restarted3 = executionService.restart(execution, null);
+        Execution restarted3 = executionService.restart(execution, flow, null);
         execution = runnerUtils.restartExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-parent"),
             restarted3
@@ -228,7 +230,7 @@ public class RestartCaseTest {
         assertThat(firstExecution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // wait
-        Execution restartedExec = executionService.restart(firstExecution, null);
+        Execution restartedExec = executionService.restart(firstExecution, flow, null);
         assertThat(restartedExec).isNotNull();
         assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
         assertThat(restartedExec.getParentId()).isNull();
@@ -261,7 +263,7 @@ public class RestartCaseTest {
         assertThat(firstExecution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // wait
-        Execution restartedExec = executionService.restart(firstExecution, null);
+        Execution restartedExec = executionService.restart(firstExecution, flow, null);
         assertThat(restartedExec).isNotNull();
         assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
         assertThat(restartedExec.getParentId()).isNull();

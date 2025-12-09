@@ -30,6 +30,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.models.api.ApiAsyncEvent;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -381,7 +382,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("No task found");
+        assertThat(e.getResponse().getBody(String.class).get()).contains("Task run id 'unknownTaskId' not found in execution");
     }
 
     @Test
@@ -400,7 +401,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
-        assertThat(e.getResponse().getBody(String.class).get()).contains("No task found to restart");
+        assertThat(e.getResponse().getBody(String.class).get()).contains("Execution must be failed to be restarted, current state is 'SUCCESS'");
     }
 
     @Test
@@ -422,30 +423,24 @@ class ExecutionControllerRunnerTest {
             parentExecution, throwRunnable(() -> {
                 Thread.sleep(100);
 
-                Execution createdChidExec = client.toBlocking().retrieve(
+                ApiAsyncEvent eventId = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), ImmutableMap.of()),
-                    Execution.class
+                    ApiAsyncEvent.class
                 );
-
-            assertThat(createdChidExec).isNotNull();
-            assertThat(createdChidExec.getParentId()).isEqualTo(parentExecution.getId());
-            assertThat(createdChidExec.getTaskRunList().size()).isEqualTo(4);
-            assertThat(createdChidExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-
-                IntStream
-                    .range(0, 3)
-                    .mapToObj(value -> createdChidExec.getTaskRunList().get(value))
-                    .forEach(taskRun -> assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS));
-
-            assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-            assertThat(createdChidExec.getTaskRunList().get(3).getAttempts().size()).isEqualTo(1);
+                assertThat(eventId).isNotNull();
             }),
             Duration.ofSeconds(15));
 
         assertThat(finishedChildExecution).isNotNull();
         assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
         assertThat(finishedChildExecution.getTaskRunList().size()).isEqualTo(5);
+        assertThat(finishedChildExecution.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
+
+        IntStream
+            .range(0, 3)
+            .mapToObj(value -> finishedChildExecution.getTaskRunList().get(value))
+            .forEach(taskRun -> assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS));
 
         finishedChildExecution
             .getTaskRunList()
@@ -479,16 +474,13 @@ class ExecutionControllerRunnerTest {
                     .addPart("condition", "success")
                     .build();
 
-                Execution replay = client.toBlocking().retrieve(
+                ApiAsyncEvent eventId = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs", multipartBody)
                         .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-                    Execution.class
+                    ApiAsyncEvent.class
                 );
-
-                assertThat(replay).isNotNull();
-                assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
-                assertThat(replay.getState().getCurrent()).isEqualTo(Type.CREATED);
+                assertThat(eventId).isNotNull();
             }),
             Duration.ofSeconds(15));
 
@@ -529,23 +521,20 @@ class ExecutionControllerRunnerTest {
                     .addPart("condition", "success")
                     .build();
 
-                Execution replay = client.toBlocking().retrieve(
+                ApiAsyncEvent eventId = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay-with-inputs?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), multipartBody)
                         .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
-                    Execution.class
+                    ApiAsyncEvent.class
                 );
-
-                assertThat(replay).isNotNull();
-                assertThat(replay.getParentId()).isEqualTo(parentExecution.getId());
-                assertThat(replay.getTaskRunList().size()).isEqualTo(2);
-                assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+                assertThat(eventId).isNotNull();
             }),
             Duration.ofSeconds(15));
 
         assertThat(finishedChildExecution).isNotNull();
         assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
         assertThat(finishedChildExecution.getTaskRunList().size()).isEqualTo(2);
+        assertThat(finishedChildExecution.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
 
         finishedChildExecution
             .getTaskRunList()
@@ -568,24 +557,26 @@ class ExecutionControllerRunnerTest {
         assertThat(flow.isPresent()).isTrue();
 
         // Run child execution starting from a specific task and wait until it finishes
-        runnerUtils.awaitChildExecution(
+        Execution restarted = runnerUtils.awaitChildExecution(
             flow.get(),
-            parentExecution, throwRunnable(() -> {
+            parentExecution,
+            throwRunnable(() -> {
                 Thread.sleep(100);
 
-                Execution createdChidExec = client.toBlocking().retrieve(
+                ApiAsyncEvent eventId = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/main/executions/" + parentExecution.getId() + "/replay?taskRunId=" + parentExecution.findTaskRunByTaskIdAndValue(referenceTaskId, List.of()).getId(), ImmutableMap.of()),
-                    Execution.class
+                    ApiAsyncEvent.class
                 );
-
-            assertThat(createdChidExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-            assertThat(createdChidExec.getState().getHistories()).hasSize(4);
-            assertThat(createdChidExec.getTaskRunList()).hasSize(20);
-
-            assertThat(createdChidExec.getId()).isNotEqualTo(parentExecution.getId());
+                assertThat(eventId).isNotNull();
             }),
             Duration.ofSeconds(30));
+
+        assertThat(restarted.getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        assertThat(restarted.getState().getHistories()).hasSize(6);
+        assertThat(restarted.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
+        assertThat(restarted.getTaskRunList()).hasSize(20);
+        assertThat(restarted.getId()).isNotEqualTo(parentExecution.getId());
     }
 
     @Test
@@ -609,27 +600,12 @@ class ExecutionControllerRunnerTest {
                 execution.getTaskRunList().size() == 4 &&
                 execution.getState().isTerminated(),
             () -> {
-                Execution restartedExec = client.toBlocking().retrieve(
+                ApiAsyncEvent eventId = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/main/executions/" + firstExecution.getId() + "/restart", ImmutableMap.of()),
-                    Execution.class
+                    ApiAsyncEvent.class
                 );
-
-                assertThat(restartedExec).isNotNull();
-                assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
-                assertThat(restartedExec.getParentId()).isNull();
-                assertThat(restartedExec.getTaskRunList().size()).isEqualTo(3);
-                assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-
-                IntStream
-                    .range(0, 2)
-                    .mapToObj(value -> restartedExec.getTaskRunList().get(value)).forEach(taskRun -> {
-                    assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-                    assertThat(taskRun.getAttempts().size()).isEqualTo(1);
-
-                    assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-                    assertThat(restartedExec.getTaskRunList().get(2).getAttempts().size()).isEqualTo(1);
-                    });
+                assertThat(eventId).isNotNull();
             },
             Duration.ofSeconds(15)
         );
@@ -638,6 +614,15 @@ class ExecutionControllerRunnerTest {
         assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getParentId()).isNull();
         assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(4);
+        assertThat(finishedRestartedExecution.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
+
+        IntStream
+            .range(0, 2)
+            .mapToObj(value -> finishedRestartedExecution.getTaskRunList().get(value)).forEach(taskRun -> {
+                assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+                assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getHistories().stream().anyMatch(it -> it.getState() ==  Type.RESTARTED)).isTrue();
+            });
 
         assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(1);
         assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size()).isEqualTo(1);
@@ -672,29 +657,12 @@ class ExecutionControllerRunnerTest {
                 execution.getTaskRunList().size() == 5 &&
                 execution.getState().isTerminated(),
             () -> {
-                Execution restartedExec = client.toBlocking().retrieve(
+                ApiAsyncEvent eventId = client.toBlocking().retrieve(
                     HttpRequest
                         .POST("/api/v1/main/executions/" + firstExecution.getId() + "/restart", ImmutableMap.of()),
-                    Execution.class
+                    ApiAsyncEvent.class
                 );
-
-                assertThat(restartedExec).isNotNull();
-                assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
-                assertThat(restartedExec.getParentId()).isNull();
-                assertThat(restartedExec.getTaskRunList().size()).isEqualTo(4);
-                assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-
-                IntStream
-                    .range(0, 2)
-                    .mapToObj(value -> restartedExec.getTaskRunList().get(value)).forEach(taskRun -> {
-                    assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-                    assertThat(taskRun.getAttempts().size()).isEqualTo(1);
-
-                    assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
-                    assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-                    assertThat(restartedExec.getTaskRunList().get(2).getAttempts()).isNotNull();
-                    assertThat(restartedExec.getTaskRunList().get(3).getAttempts().size()).isEqualTo(1);
-                    });
+                assertThat(eventId).isNotNull();
             },
             Duration.ofSeconds(15)
         );
@@ -703,6 +671,16 @@ class ExecutionControllerRunnerTest {
         assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getParentId()).isNull();
         assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(5);
+        assertThat(finishedRestartedExecution.getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
+
+        IntStream
+            .range(0, 2)
+            .mapToObj(value -> finishedRestartedExecution.getTaskRunList().get(value)).forEach(taskRun -> {
+                assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+                assertThat(finishedRestartedExecution.getTaskRunList().get(3).getState().getHistories().stream().anyMatch(it -> it.getState() == Type.RESTARTED)).isTrue();
+                assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).isNotNull();
+            });
 
         assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(1);
         assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size()).isEqualTo(1);
@@ -1137,12 +1115,19 @@ class ExecutionControllerRunnerTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // replay executions
-        Execution changedStatus = client.toBlocking().retrieve(
+        ApiAsyncEvent eventId = client.toBlocking().retrieve(
             HttpRequest.POST(
                 "/api/v1/main/executions/" + execution.getId() + "/change-status?status=WARNING",
                 null
             ),
-            Execution.class
+            ApiAsyncEvent.class
+        );
+        assertThat(eventId).isNotNull();
+
+        Execution changedStatus = runnerUtils.awaitExecution(
+            e -> e.getId().equals(execution.getId()) && e.getState().getCurrent() == Type.WARNING,
+            () -> {},
+            Duration.ofSeconds(10)
         );
         assertThat(changedStatus.getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }
@@ -1172,11 +1157,11 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(changeStatus.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/search"), Argument.of(PagedResults.class, Execution.class)
-        );
-        assertThat(executions.getResults().getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
-        assertThat(executions.getResults().get(1).getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        // wait for all executions to have status changed
+        Execution warning1 = awaitExecution(execution1.getId(), exec -> exec.getState().getCurrent() == Type.WARNING);
+        assertThat(warning1.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        Execution warning2 = awaitExecution(execution2.getId(), exec -> exec.getState().getCurrent() == Type.WARNING);
+        assertThat(warning2.getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }
 
     @Test
@@ -1194,18 +1179,18 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(executions.getTotal()).isEqualTo(2L);
 
-        // change status of  executions
+        // change status of executions
         BulkResponse changeStatus = client.toBlocking().retrieve(
             HttpRequest.POST("/api/v1/main/executions/change-status/by-query?namespace=io.kestra.tests&newStatus=WARNING", null),
             BulkResponse.class
         );
         assertThat(changeStatus.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/search"), Argument.of(PagedResults.class, Execution.class)
-        );
-        assertThat(executions.getResults().getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
-        assertThat(executions.getResults().get(1).getState().getCurrent()).isEqualTo(State.Type.WARNING);;
+        // await for all executions to be in warning
+        Execution warning1 = awaitExecution(execution1.getId(), exec -> exec.getState().getCurrent() == Type.WARNING);
+        assertThat(warning1.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        Execution warning2 = awaitExecution(execution2.getId(), exec -> exec.getState().getCurrent() == Type.WARNING);
+        assertThat(warning2.getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }
 
     @Test
@@ -1216,14 +1201,21 @@ class ExecutionControllerRunnerTest {
         assertThat(execution.getState().isTerminated()).isTrue();
 
         // replay execution
-        Execution replay = client.toBlocking().retrieve(
+        ApiAsyncEvent eventid  = client.toBlocking().retrieve(
             HttpRequest.POST(
                 "/api/v1/main/executions/" + execution.getId() + "/replay",
                 null
             ),
-            Execution.class
+            ApiAsyncEvent.class
         );
-        assertThat(replay.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+        assertThat(eventid).isNotNull();
+
+        Execution replay = runnerUtils.awaitExecution(
+            e -> e.getOriginalId().equals(execution.getId()) && e.getState().isTerminated(),
+            () -> {},
+            Duration.ofSeconds(10)
+        );
+        assertThat(replay.getState().getCurrent()).isEqualTo(Type.SUCCESS);
         assertThat(replay.getOriginalId()).isEqualTo(execution.getId());
         assertThat(replay.getLabels()).contains(new Label(Label.REPLAY, "true"));
 
@@ -1670,11 +1662,17 @@ class ExecutionControllerRunnerTest {
     void shouldPauseExecutionARunningFlow() throws QueueException, TimeoutException {
         Execution result = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
 
-        var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/pause", null));
+        var response = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/pause", null),
+            ApiAsyncEvent.class
+        );
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         // resume it, it should then go to completion
-        response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/resume", null));
+        response = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/resume", null),
+            ApiAsyncEvent.class
+        );
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
 
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/notfound/pause", null)));
@@ -1786,9 +1784,12 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(cancelResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
-        Optional<Execution> cancelledExecution = executionRepositoryInterface.findById(TENANT_ID, result1.getId());
-        assertThat(cancelledExecution.isPresent()).isTrue();
-        assertThat(cancelledExecution.get().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        Execution cancelledExecution = runnerUtils.awaitExecution(
+            e -> e.getId().equals(result1.getId()) && e.getState().getCurrent() == Type.CANCELLED,
+            () -> {},
+            Duration.ofSeconds(10)
+        );;
+        assertThat(cancelledExecution.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }
 
     @Test
@@ -1816,9 +1817,12 @@ class ExecutionControllerRunnerTest {
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-        Optional<Execution> forcedRun = executionRepositoryInterface.findById(TENANT_ID, result.getId());
-        assertThat(forcedRun.isPresent()).isTrue();
-        assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.QUEUED);
+        Execution forcedRun = runnerUtils.awaitExecution(
+            e -> e.getId().equals(result.getId()) && e.getState().getCurrent() != Type.QUEUED,
+            () -> {},
+            Duration.ofSeconds(10)
+        );
+        assertThat(forcedRun.getState().getCurrent()).isNotEqualTo(State.Type.QUEUED);
 
         // waiting for the flow to complete successfully
         runnerUtils.awaitExecution(
@@ -1849,9 +1853,12 @@ class ExecutionControllerRunnerTest {
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-        Optional<Execution> forcedRun = executionRepositoryInterface.findById(TENANT_ID, result.getId());
-        assertThat(forcedRun.isPresent()).isTrue();
-        assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.CREATED);
+        Execution forcedRun = runnerUtils.awaitExecution(
+            e -> e.getId().equals(result.getId()) && e.getState().getCurrent() != Type.CREATED,
+            () -> {},
+            Duration.ofSeconds(10)
+        );
+        assertThat(forcedRun.getState().getCurrent()).isNotEqualTo(State.Type.CREATED);
     }
 
     @Test
@@ -1862,9 +1869,12 @@ class ExecutionControllerRunnerTest {
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
-        Optional<Execution> forcedRun = executionRepositoryInterface.findById(TENANT_ID, result.getId());
-        assertThat(forcedRun.isPresent()).isTrue();
-        assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.PAUSED);
+        Execution forcedRun = runnerUtils.awaitExecution(
+            e -> e.getId().equals(result.getId()) && e.getState().getCurrent() != Type.PAUSED,
+            () -> {},
+            Duration.ofSeconds(10)
+        );
+        assertThat(forcedRun.getState().getCurrent()).isNotEqualTo(State.Type.PAUSED);
     }
 
 
@@ -2105,11 +2115,12 @@ class ExecutionControllerRunnerTest {
         assertThat(suspended.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
 
         // resume the suspended execution
-        HttpResponse<Void> resume = client.toBlocking().exchange(
+        HttpResponse<ApiAsyncEvent> resume = client.toBlocking().exchange(
             HttpRequest.POST("/api/v1/main/executions/" + suspended.getId() + "/resume-from-breakpoint", null),
-            Void.class
+            ApiAsyncEvent.class
         );
         assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(resume.body()).isNotNull();
 
         // wait for the exec to be terminated
         Execution terminated = runnerUtils.awaitExecution(

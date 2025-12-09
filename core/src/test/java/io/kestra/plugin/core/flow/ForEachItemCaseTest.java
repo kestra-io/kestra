@@ -2,10 +2,12 @@ package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.services.ExecutionService;
@@ -56,6 +58,9 @@ public class ForEachItemCaseTest {
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     @SuppressWarnings("unchecked")
     public void forEachItem() throws TimeoutException, URISyntaxException, IOException, QueueException {
@@ -241,7 +246,8 @@ public class ForEachItemCaseTest {
         List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(6, tenantId, TEST_NAMESPACE, "restart-child");
         assertThat(triggeredExecs).extracting(e -> e.getState().getCurrent()).containsOnly(FAILED);
 
-        Execution restarted = executionService.restart(failedExecution, null);
+        Flow flow = flowRepository.findByExecution(failedExecution);
+        Execution restarted = executionService.restart(failedExecution, flow, null);
         final Execution successExecution = runnerUtils.restartExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-for-each-item"),
             restarted

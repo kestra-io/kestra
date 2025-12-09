@@ -1,10 +1,9 @@
 package io.kestra.plugin.core.execution;
 
+import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -12,10 +11,8 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.ExecutionService;
 import io.kestra.core.models.tasks.runners.PluginUtilsService;
 import io.kestra.plugin.core.flow.Pause;
 import io.micronaut.context.ApplicationContext;
@@ -27,7 +24,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @SuperBuilder
@@ -86,19 +82,16 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
         );
 
         ApplicationContext applicationContext = ((DefaultRunContext)runContext).getApplicationContext();
-        ExecutionService executionService = applicationContext.getBean(ExecutionService.class);
         ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
-        FlowMetaStoreInterface flowExecutor = applicationContext.getBean(FlowMetaStoreInterface.class);
-        QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
+        QueueInterface<ExecutionCommand> executionCommandQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_COMMAND_NAMED));
 
         Execution execution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id())
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));
-        FlowInterface flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution ID " + executionInfo.id()));
 
         Map<String, Object> renderedInputs = runContext.render(this.inputs).asMap(String.class, Object.class);
         renderedInputs = !renderedInputs.isEmpty() ? renderedInputs : null;
-        Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs, Pause.Resumed.now());
-        executionQueue.emit(resumed);
+        var executionCommand = io.kestra.core.executor.command.Resume.from(execution, Pause.Resumed.now(), renderedInputs);
+        executionCommandQueue.emit(executionCommand);
 
         return null;
     }

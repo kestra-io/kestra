@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 @KestraTest
-class ErrorControllerTest {
+class ApiAsyncEventErrorControllerTest {
     @Inject
     @Client("/")
     ReactorHttpClient client;

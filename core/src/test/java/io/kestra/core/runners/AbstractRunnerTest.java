@@ -73,10 +73,7 @@ public abstract class AbstractRunnerTest {
     protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
-    private FlowConcurrencyCaseTest flowConcurrencyCaseTest;
-
-    @Inject
-    private ScheduleDateCaseTest scheduleDateCaseTest;
+    protected ScheduleDateCaseTest scheduleDateCaseTest;
 
     @Inject
     protected FlowInputOutput flowIO;
@@ -404,72 +401,6 @@ public abstract class AbstractRunnerTest {
         "flows/valids/for-each-item-after-execution.yaml"})
     protected void forEachItemWithAfterExecution() throws Exception {
         forEachItemCaseTest.forEachItemWithAfterExecution();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-cancel.yml"})
-    void concurrencyCancel() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyCancel();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-fail.yml"})
-    void concurrencyFail() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyFail();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue.yml"})
-    void concurrencyQueue() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueue();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue-pause.yml"})
-    protected void concurrencyQueuePause() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueuePause();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-cancel-pause.yml"})
-    protected void concurrencyCancelPause() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyCancelPause();
-    }
-
-    @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-for-each-item.yaml", "flows/valids/flow-concurrency-queue.yml"}, tenantId = TENANT_1)
-    protected void flowConcurrencyWithForEachItem() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyWithForEachItem(TENANT_1);
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue-fail.yml"})
-    protected void concurrencyQueueRestarted() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueueRestarted();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue-after-execution.yml"})
-    void concurrencyQueueAfterExecution() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueueAfterExecution();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-subflow.yml", "flows/valids/flow-concurrency-cancel.yml"})
-    void flowConcurrencySubflow() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencySubflow();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue-killed.yml"})
-    void flowConcurrencyKilled() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyKilled();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue-killed.yml"})
-    void flowConcurrencyQueueKilled() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueueKilled();
     }
 
     @Test

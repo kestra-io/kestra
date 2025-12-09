@@ -30,7 +30,7 @@
             v-if="navigationStack.length === 0" 
             class="search-field" 
             :router="false" 
-            @search="value => searchQuery = value" 
+            @search="(value: string) => searchQuery = value" 
         />
     </div>
 
@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch} from "vue";
+    import {ref, computed, onMounted} from "vue";
     import {TaskIcon, isEntryAPluginElementPredicate} from "@kestra-io/ui-libs";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
@@ -256,55 +256,6 @@
     };
 
     const hasIcon = (cls: string) => !!icons.value?.[cls];
-
-    const navigateToEditorPlugin = async (editorPlugin: any) => {
-        if (!editorPlugin?.cls) return;
-
-        const pluginCls = editorPlugin.cls;
-        const matchingPlugin = props.plugins.find(plugin => getPluginElements(plugin).includes(pluginCls));
-
-        if (!matchingPlugin) {
-            currentDocumentationPlugin.value = editorPlugin;
-            currentView.value = "documentation";
-            return;
-        }
-
-        navigationStack.value = [];
-        currentGroup.value = matchingPlugin.group;
-        pushNavigationItem(formatPluginTitle(matchingPlugin.title) ?? capitalize(getSimpleType(matchingPlugin.group)), "group", matchingPlugin);
-
-        const subgroupName = findSubgroupForPlugin(matchingPlugin, pluginCls);
-        if (subgroupName) {
-            currentSubgroup.value = subgroupName;
-            pushNavigationItem(getSubgroupTitle(currentGroup.value, subgroupName), "subgroup", {subgroup: subgroupName});
-        } else {
-            currentSubgroup.value = undefined;
-        }
-
-        pushNavigationItem(getSimpleType(pluginCls), "element", {cls: pluginCls});
-        currentView.value = "documentation";
-        const pluginData = await pluginsStore.load({cls: pluginCls});
-        currentDocumentationPlugin.value = pluginData ? {cls: pluginCls, ...pluginData} : editorPlugin;
-    };
-
-    const findSubgroupForPlugin = (plugin: any, pluginCls: string) => {
-        if (plugin?.subGroup && plugin.subGroup !== plugin.group) return plugin.subGroup;
-        const parts = pluginCls.split(".");
-        const possibleSubgroup = parts[parts.length - 2];
-        return (parts.length >= 3 && possibleSubgroup && possibleSubgroup !== plugin?.group) ? possibleSubgroup : null;
-    };
-
-    watch(() => pluginsStore.editorPlugin, async (newPlugin) => {
-        if (newPlugin?.cls) {
-            await navigateToEditorPlugin(newPlugin);
-        } else {
-            currentDocumentationPlugin.value = null;
-            currentView.value = "documentation";
-            navigationStack.value = [];
-            currentGroup.value = "";
-            currentSubgroup.value = undefined;
-        }
-    }, {immediate: true, deep: true});
 
     onMounted(async () => {
         await loadPluginIcons();

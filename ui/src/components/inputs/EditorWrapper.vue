@@ -86,6 +86,7 @@
     import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount, watch, InjectionKey, inject} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {apiUrl} from "override/utils/route";
+    import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
@@ -279,34 +280,10 @@
         clearTimeout(timeout.value);
     });
 
-
-    function updatePluginDocumentation(event: any) {
-        const source = event.model.getValue();
-        const cursorOffset = event.model.getOffsetAt(event.position);
-
-        const isPlugin = (type: string) => pluginsStore.allTypes.includes(type);
-        const isInRange = (range: [number, number, number]) =>
-            cursorOffset >= range[0] && cursorOffset <= range[2];
-        const getRangeSize = (range: [number, number, number]) => range[2] - range[0];
-
-        const getElementFromRange = (typeElement: any) => {
-            const wrapper = YAML_UTILS.localizeElementAtIndex(source, typeElement.range[0]);
-            return wrapper?.value?.type && isPlugin(wrapper.value.type)
-                ? wrapper.value
-                : {type: typeElement.type};
-        };
-
-        const selectedElement = YAML_UTILS.extractFieldFromMaps(source, "type", () => true, isPlugin)
-            .filter(el => el.range && isInRange(el.range))
-            .reduce((closest, current) =>
-                        !closest || getRangeSize(current.range) < getRangeSize(closest.range)
-                            ? current
-                            : closest
-                    , null as any);
-
-        let result = selectedElement ? getElementFromRange(selectedElement) : undefined;
-        result = {...result, hash: hash.value, forceRefresh: true};
-        pluginsStore.updateDocumentation(result as Parameters<typeof pluginsStore.updateDocumentation>[0]);
+    function updatePluginDocumentation(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
+        const type = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes);
+        const version = YAML_UTILS.getVersionAtPosition(source.value, event.position);
+        pluginsStore.updateDocumentation({type, version});
     };
 
     const saveFlowYaml = async () => {

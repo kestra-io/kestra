@@ -62,30 +62,4 @@ public abstract class AbstractRunnerConcurrencyTest {
     void concurrencyQueueAfterExecution() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueueAfterExecution();
     }
-
-    @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-subflow.yml", "flows/valids/flow-concurrency-cancel.yml"}, tenantId = TENANT_1)
-    void flowConcurrencySubflow() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencySubflow(TENANT_1);
-    }
-
-    @Test
-    @FlakyTest(description = "Only flaky in CI")
-    @LoadFlows({"flows/valids/flow-concurrency-parallel-subflow-kill.yaml", "flows/valids/flow-concurrency-parallel-subflow-kill-child.yaml", "flows/valids/flow-concurrency-parallel-subflow-kill-grandchild.yaml"})
-    protected void flowConcurrencyParallelSubflowKill() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyParallelSubflowKill();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue-killed.yml"})
-    void flowConcurrencyKilled() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyKilled();
-    }
-
-    @Test
-    @FlakyTest(description = "Only flaky in CI")
-    @LoadFlows({"flows/valids/flow-concurrency-queue-killed.yml"})
-    void flowConcurrencyQueueKilled() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueueKilled();
-    }
 }

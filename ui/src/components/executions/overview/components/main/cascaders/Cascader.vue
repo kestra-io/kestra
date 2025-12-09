@@ -19,7 +19,7 @@
                 lazy
             >
                 <el-splitter-panel :size="verticalLayout ? '50%' : '70%'">
-                    <CascaderPanel :options="filteredOptions" />
+                    <CascaderPanel :options="filteredOptions" class="debug" />
                 </el-splitter-panel>
                 <el-splitter-panel>
                     <DebugPanel />
@@ -132,6 +132,11 @@
 
     .el-cascader-panel {
         overflow: auto;
+
+        &.debug {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
     }
 
     .empty {

@@ -19,21 +19,7 @@
                 lazy
             >
                 <el-splitter-panel :size="verticalLayout ? '50%' : '70%'">
-                    <el-cascader-panel
-                        ref="cascader"
-                        :options="filteredOptions"
-                    >
-                        <template #default="{data}">
-                            <div class="node">
-                                <div :title="data.label">
-                                    {{ data.label }}
-                                </div>
-                                <div v-if="data.value && data.children">
-                                    <code>{{ itemsCount(data) }}</code>
-                                </div>
-                            </div>
-                        </template>
-                    </el-cascader-panel>
+                    <CascaderPanel :options="filteredOptions" />
                 </el-splitter-panel>
                 <el-splitter-panel>
                     <DebugPanel />
@@ -44,23 +30,7 @@
         </template>
 
         <template v-else>
-            <el-cascader-panel
-                v-if="props.elements"
-                ref="cascader"
-                :options="filteredOptions"
-            >
-                <template #default="{data}">
-                    <div class="node">
-                        <div :title="data.label">
-                            {{ data.label }}
-                        </div>
-                        <div v-if="data.value && data.children">
-                            <code>{{ itemsCount(data) }}</code>
-                        </div>
-                    </div>
-                </template>
-            </el-cascader-panel>
-
+            <CascaderPanel v-if="props.elements" :options="filteredOptions" />
             <span v-else class="empty">{{ props.empty }}</span>
         </template>
     </div>
@@ -69,18 +39,16 @@
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
 
+    import CascaderPanel from "./CascaderPanel.vue";
     import DebugPanel from "./DebugPanel.vue";
 
-    import {Execution} from "../../../../../stores/executions";
+    import {Execution} from "../../../../../../stores/executions";
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
-    import {verticalLayout} from "../../utils/layout";
+    import {verticalLayout} from "../../../utils/layout";
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
-    interface Node {
+    export interface Node {
         label: string;
         value: string;
         children?: Node[];
@@ -131,23 +99,8 @@
         });
     });
 
-    const itemsCount = (item: Node) => {
-        const length = item.children?.length ?? 0;
-
-        if (!length) return undefined;
-
-        return `${length} ${length === 1 ? t("item") : t("items")}`;
-    };
-
-    const cascader = ref<any>(null);
     onMounted(() => {
         if (props.elements) formatted.value = format(props.elements);
-
-        // Open first node by default on page mount
-        if (cascader?.value) {
-            const nodes = cascader.value.$el.querySelectorAll(".el-cascader-node");
-            if (nodes.length > 0) (nodes[0] as HTMLElement).click();
-        }
     });
 </script>
 

@@ -1,6 +1,8 @@
 package io.kestra.core.events;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.impl.TimeBasedEpochGenerator;
 
@@ -12,7 +14,7 @@ import java.util.UUID;
  * UUIDv7 values are time-ordered, which allows lexicographic and unsigned
  * 128-bit comparison to reflect chronological ordering.
  */
-public record EventId(UUID value) implements Comparable<EventId> {
+public record EventId(@JsonValue UUID value) implements Comparable<EventId> {
 
     //  Generator that generates UUID using version 7 (Unix Epoch time+random based).
     private static final TimeBasedEpochGenerator GENERATOR = Generators.timeBasedEpochGenerator();

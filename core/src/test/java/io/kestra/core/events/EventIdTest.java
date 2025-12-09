@@ -1,5 +1,8 @@
 package io.kestra.core.events;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.jdbc.JdbcMapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -28,7 +31,7 @@ class EventIdTest {
     }
 
     @Test
-    void shouldDeserializeGivenValidUuidString() {
+    void shouldCreateGivenValidUuidString() {
         // Given
         String uuidStr = UUID.randomUUID().toString();
 
@@ -79,5 +82,19 @@ class EventIdTest {
 
         // Then
         assertThat(str).isEqualTo(uuid.toString());
+    }
+
+    @Test
+    void shouldSerdesToUUIDString() throws JsonProcessingException {
+        // Given
+        EventId id = EventId.create();
+
+        // When/Then
+        String serialized = JacksonMapper.ofJson().writeValueAsString(id);
+        assertThat(serialized).isEqualTo("\"" + id.value().toString() + "\"");
+
+        // When/Then
+        EventId deserialized = JacksonMapper.ofJson().readValue(serialized, EventId.class);
+        assertThat(deserialized).isEqualTo(id);
     }
 }

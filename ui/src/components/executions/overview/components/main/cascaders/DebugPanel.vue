@@ -29,6 +29,14 @@
             :lang="result.type"
             class="result"
         />
+
+        <el-alert
+            v-if="error"
+            type="error"
+            :title="error"
+            showIcon
+            :closable="false"
+        />
     </div>
 </template>
 
@@ -49,7 +57,7 @@
     }>();
 
     const result = ref<{ value: string; type: string } | undefined>(undefined);
-    const errors = ref<{ title?: string; stackTrace?: string }>({});
+    const error = ref<string | undefined>(undefined);
 
     const expression = ref<string>("");
     watch(
@@ -64,7 +72,8 @@
     const onRender = () => {
         if (!props.execution) return;
 
-        errors.value = {};
+        result.value = undefined;
+        error.value = undefined;
 
         const clean = expression.value
             .replace(/^\{\{\s*/, "")
@@ -79,7 +88,9 @@
         }
 
         if (!clean.startsWith("outputs.") && !clean.startsWith("trigger.")) {
-            errors.value.title = `Expression must start with "{{ ${props.property}. }}"`;
+            result.value = undefined;
+            error.value = `Expression must start with "{{ ${props.property}. }}"`;
+            return;
         }
 
         const parts = clean.substring(props.property.length + 1).split(".");
@@ -89,7 +100,9 @@
             if (target && typeof target === "object" && part in target) {
                 target = target[part];
             } else {
-                errors.value.title = `Property "${part}" does not exist on ${props.property}`;
+                result.value = undefined;
+                error.value = `Property "${part}" does not exist on ${props.property}`;
+                break;
             }
         }
 

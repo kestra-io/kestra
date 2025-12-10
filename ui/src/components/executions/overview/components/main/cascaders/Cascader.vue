@@ -1,5 +1,5 @@
 <template>
-    <div :id="`cascader-${props.title}`">
+    <div :id="cascaderID">
         <div class="header">
             <el-text truncated>
                 {{ props.title }}
@@ -45,7 +45,7 @@
                 </el-splitter-panel>
             </el-splitter>
 
-            <el-cascader-panel v-else ref="cascader" :options="filteredOptions">
+            <el-cascader-panel v-else :options="filteredOptions">
                 <template #default="{data}">
                     <div class="node">
                         <div :title="data.label">
@@ -64,14 +64,13 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, ref} from "vue";
+    import {onMounted, nextTick, computed, ref} from "vue";
 
     import DebugPanel from "./DebugPanel.vue";
 
     import {Execution} from "../../../../../../stores/executions";
 
     import {verticalLayout} from "../../../utils/layout";
-
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -139,15 +138,17 @@
         return `${length} ${length === 1 ? t("item") : t("items")}`;
     };
 
-    const cascader = ref<any>(null);
-    onMounted(() => {
+    const cascaderID = `cascader-${props.title.toLowerCase().replace(/\s+/g, "-")}`;
+    onMounted(async () => {
         if (props.elements) formatted.value = format(props.elements);
 
-        // Open first node by default on page mount
-        if (cascader?.value) {
-            const nodes = cascader.value.$el.querySelectorAll(".el-cascader-node");
+        await nextTick(() => {
+            // Open first node by default on page mount
+            const selector = `#${cascaderID} .el-cascader-node`;
+            const nodes = document.querySelectorAll(selector);
+
             if (nodes.length > 0) (nodes[0] as HTMLElement).click();
-        }
+        });
     });
 </script>
 
@@ -182,7 +183,6 @@
 
         &.debug {
             min-height: -webkit-fill-available;
-            max-height: calc($spacer * 20);
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
         }
@@ -194,8 +194,6 @@
     }
 
     :deep(.el-cascader-menu) {
-        height: -webkit-fill-available;
-        max-height: calc($spacer * 20);
         min-width: 300px;
         max-width: 300px;
 

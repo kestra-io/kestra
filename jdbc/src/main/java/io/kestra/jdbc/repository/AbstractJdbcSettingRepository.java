@@ -51,13 +51,6 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
         return setting;
     }
 
-    public Setting internalSave(Setting setting) {
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(setting);
-        this.jdbcRepository.persist(setting, fields);
-
-        return setting;
-    }
-
     @SneakyThrows
     @Override
     public Setting delete(Setting setting) {

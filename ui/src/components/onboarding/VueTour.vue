@@ -60,7 +60,7 @@
                                 @click="activeFlow = flowIndex"
                             >
                                 <p class="title mb-2">
-                                    {{ flow.description }}
+                                    {{ flow.labels?.find(l => l.key === 'name')?.value ?? flow.id }}
                                 </p>
                                 <div>
                                     <div

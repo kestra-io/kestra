@@ -1612,7 +1612,8 @@
         "email": "电子邮件",
         "firstName": "名字",
         "lastName": "姓氏",
-        "password": "密码"
+        "password": "密码",
+        "password_requirements": "密码必须至少包含8个字符，并且至少包含1个大写字母和1个数字。"
       },
       "login": "登录",
       "logout": "注销",

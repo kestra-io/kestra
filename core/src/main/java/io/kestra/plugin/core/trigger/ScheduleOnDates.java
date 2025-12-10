@@ -51,11 +51,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     )
     @PluginProperty(dynamic = true)
     private Map<String, Object> inputs;
-
-    @TimezoneId
-    @Schema(
-        title = "The [time zone identifier](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (i.e. the second column in [the Wikipedia table](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List)) to use for evaluating the cron expression. Default value is the server default zone ID."
-    )
+    
     @PluginProperty(dynamic = true)
     @Builder.Default
     private String timezone = ZoneId.systemDefault().toString();

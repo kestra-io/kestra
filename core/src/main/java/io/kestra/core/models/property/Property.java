@@ -308,7 +308,6 @@ public class Property<T> {
         @Override
         public Property<?> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             String s;
-            boolean skipCache = false;
             if (p.isExpectedStartArrayToken()) {
                 List<Object> list = p.readValueAs(JacksonMapper.LIST_TYPE_REFERENCE);
                 s = MAPPER.writeValueAsString(list);
@@ -317,11 +316,8 @@ public class Property<T> {
                 s = MAPPER.writeValueAsString(list);
             } else {
                 s = p.getValueAsString();
-                if (s.contains("{")) {
-                    skipCache = true;
-                }
             }
-            return new Property<>(s, skipCache);
+            return new Property<>(s);
         }
     }
 

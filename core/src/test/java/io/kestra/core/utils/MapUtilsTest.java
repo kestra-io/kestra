@@ -216,4 +216,23 @@ class MapUtilsTest {
             "k1.k4", "v2"
         ));
     }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void mergeShouldNotDuplicateListElements() {
+        Map<String, Object> first = Map.of(
+            "key1", "value1",
+            "key2", List.of("something", "else")
+        );
+        Map<String, Object> second = Map.of(
+            "key2", List.of("something", "other"),
+            "key3", "value3"
+        );
+
+        Map<String, Object> results = MapUtils.merge(first, second);
+
+        assertThat(results).hasSize(3);
+        List<String> list = (List<String>) results.get("key2");
+        assertThat(list).hasSize(3);
+    }
 }

@@ -225,7 +225,7 @@ public class DefaultScheduler extends AbstractService implements Scheduler {
         } else {
             setState(ServiceState.RUNNING);
         }
-        log.info("Scheduler started with {} thread(s)", maxThreads);
+        log.info("Scheduler started with {} thread(s) [timezone={}]", maxThreads, SchedulerClock.getClock().getZone());
     }
     
     private void startScheduling() {

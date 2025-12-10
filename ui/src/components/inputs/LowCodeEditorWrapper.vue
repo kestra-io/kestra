@@ -89,8 +89,8 @@
         flowStore.flowYaml = source
         const result = await flowStore.onEdit({
             source,
-            currentIsFlow,
             editorViewType: "YAML",
+            topologyVisible: true,
         })
         
         if (currentIsFlow && source) {

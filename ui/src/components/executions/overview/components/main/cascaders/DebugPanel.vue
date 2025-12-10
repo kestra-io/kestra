@@ -13,25 +13,29 @@
                 {{ $t("eval.render") }}
             </el-button>
             <el-button
-                :disabled="!result"
+                :disabled="!result && !error"
                 :icon="CloseCircleOutline"
-                @click="result = undefined"
+                @click="clearAll"
             />
         </div>
 
-        <Editor
-            v-if="result"
-            v-model="result.value"
-            :shouldFocus="false"
-            :navbar="false"
-            input
-            readOnly
-            :lang="result.type"
-            class="result"
-        />
+        <template v-if="result">
+            <VarValue v-if="isFile" :value="result.value" :execution />
+
+            <Editor
+                v-else
+                v-model="result.value"
+                :shouldFocus="false"
+                :navbar="false"
+                input
+                readOnly
+                :lang="result.type"
+                class="result"
+            />
+        </template>
 
         <el-alert
-            v-if="error"
+            v-else-if="error"
             type="error"
             :title="error"
             showIcon
@@ -41,9 +45,10 @@
 </template>
 
 <script setup lang="ts">
-    import {watch, ref} from "vue";
+    import {watch, ref, computed} from "vue";
 
     import Editor from "../../../../../inputs/Editor.vue";
+    import VarValue from "../../../../VarValue.vue";
 
     import {Execution} from "../../../../../../stores/executions";
 
@@ -58,6 +63,18 @@
 
     const result = ref<{ value: string; type: string } | undefined>(undefined);
     const error = ref<string | undefined>(undefined);
+
+    const clearAll = () => {
+        result.value = undefined;
+        error.value = undefined;
+    };
+
+    const isFile = computed(() => {
+        if (!result.value || typeof result.value.value !== "string") return false;
+
+        const prefixes = ["kestra:///", "file://", "nsfile://"];
+        return prefixes.some((prefix) => result.value!.value.startsWith(prefix));
+    });
 
     const expression = ref<string>("");
     watch(
@@ -102,7 +119,7 @@
             } else {
                 result.value = undefined;
                 error.value = `Property "${part}" does not exist on ${props.property}`;
-                break;
+                return;
             }
         }
 

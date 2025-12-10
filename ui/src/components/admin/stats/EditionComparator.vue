@@ -1,6 +1,6 @@
 <template>
     <el-row :gutter="32">
-        <el-col :span="8" v-for="characteristics in editionCharacteristics" :key="characteristics.name">
+        <el-col :xs="24" :md="8" v-for="characteristics in editionCharacteristics" :key="characteristics.name" class="edition-col">
             <EditionCharacteristics
                 class="h-100"
                 :name="characteristics.name"
@@ -115,3 +115,17 @@
         }
     ]
 </script>
+
+<style scoped lang="scss">
+.edition-col {
+    margin-bottom: 2rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    @media (min-width: 992px) {
+        margin-bottom: 0;
+    }
+}
+</style>

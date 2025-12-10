@@ -49,6 +49,8 @@
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
         execution: {type: Boolean, default: false},
+        flow: {type: String, default: undefined},
+        namespace: {type: String, default: undefined},
     });
 
 
@@ -153,7 +155,10 @@
                 if (data.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) {
                     return;
                 }
-                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
+                chartClick(moment, router, route, {}, parsedData.value, elements, "label", {
+                    ...(props.namespace ? {"filters[namespace][IN]": props.namespace} : {}),
+                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {})              
+                });
             },
         }, theme.value);
     });

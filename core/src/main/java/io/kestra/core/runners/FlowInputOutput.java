@@ -158,11 +158,7 @@ public class FlowInputOutput {
                             File tempFile = File.createTempFile(prefix, fileExtension);
                             try (var inputStream = fileUpload.getInputStream();
                                  var outputStream = new FileOutputStream(tempFile)) {
-                                long transferredBytes = inputStream.transferTo(outputStream);
-                                if (transferredBytes == 0) {
-                                    sink.error(new KestraRuntimeException("Can't upload file: " + fileUpload.getFilename()));
-                                    return;
-                                }
+                                inputStream.transferTo(outputStream);
                                 URI from = storageInterface.from(execution, inputId, fileName, tempFile);
                                 sink.next(Map.entry(inputId, from.toString()));
                             } finally {
@@ -382,11 +378,11 @@ public class FlowInputOutput {
 
     @SuppressWarnings("unchecked")
     private static <T> Object resolveDefaultPropertyAs(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return Property.as((Property<T>) input.getDefaults(), renderer, clazz);
+        return Property.as((Property<T>) input.getDefaults().skipCache(), renderer, clazz);
     }
     @SuppressWarnings("unchecked")
     private static <T> Object resolveDefaultPropertyAsList(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return Property.asList((Property<List<T>>) input.getDefaults(), renderer, clazz);
+        return Property.asList((Property<List<T>>) input.getDefaults().skipCache(), renderer, clazz);
     }
 
     private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies, final boolean decryptSecrets) {
@@ -502,8 +498,8 @@ public class FlowInputOutput {
                         yield storageInterface.from(execution, id, current.toString().substring(current.toString().lastIndexOf("/") + 1), new File(current.toString()));
                     }
                 }
-                case JSON -> JacksonMapper.toObject(current.toString());
-                case YAML -> YAML_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
+                case JSON -> (current instanceof Map || current instanceof Collection<?>) ? current :  JacksonMapper.toObject(current.toString());
+                case YAML -> (current instanceof Map || current instanceof Collection<?>) ? current : YAML_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case URI -> {
                     Matcher matcher = URI_PATTERN.matcher(current.toString());
                     if (matcher.matches()) {

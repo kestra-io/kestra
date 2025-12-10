@@ -20,7 +20,6 @@ export interface PluginComponent {
         properties: Schemas;
         outputs: Schemas;
     };
-    examples?: any[];
     markdown?: string;
 }
 

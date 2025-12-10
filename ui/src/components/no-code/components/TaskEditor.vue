@@ -51,6 +51,7 @@
     import {getValueAtJsonPath, resolve$ref} from "../../../utils/utils";
     import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue";
     import isEqual from "lodash/isEqual";
+    import {useMiscStore} from "../../../override/stores/misc";
 
     const {t} = useI18n();
 
@@ -370,10 +371,12 @@
         onTaskInput(value);
     }
 
+    const miscStore = useMiscStore();
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
+
     const onTaskEditorClick = inject(ON_TASK_EDITOR_CLICK_INJECTION_KEY, (elt?: PartialNoCodeElement) => {
-        const type = elt?.type;
-        if(isPlugin.value && type){
-            pluginsStore.updateDocumentation({type});
+        if(isPlugin.value && elt?.type){
+            pluginsStore.updateDocumentation({cls: elt.type, version: elt.version, hash: hash.value});
         }else{
             pluginsStore.updateDocumentation(); 
         }

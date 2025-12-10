@@ -166,7 +166,6 @@
             pluginsStore.lazyLoadSchemaType({type: "flow"});
         }
         loadFile();
-        loadPluginsHash();
         window.addEventListener("keydown", handleGlobalSave);
         window.addEventListener("keydown", toggleAiShortcut);
         if(route.query.ai === "open") {
@@ -216,15 +215,15 @@
     const isCreating = computed(() => flowStore.isCreating);
 
     const timeout = ref<any>(null);
-    const hash = ref<any>(null);
-
+        
     const editorContent = computed(() => {
         return draftSource.value ?? source.value;
     });
-
+        
     const pluginsStore = usePluginsStore();
     const namespacesStore = useNamespacesStore();
     const miscStore = useMiscStore();
+    const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0);
 
     const editorScrollKey = computed(() => {
         if (props.flow) {
@@ -239,11 +238,6 @@
         return undefined;
     });
 
-    function loadPluginsHash() {
-        miscStore.loadConfigs().then(config => {
-            hash.value = config.pluginsHash;
-        });
-    }
 
     const updateContent = inject(FILES_UPDATE_CONTENT_INJECTION_KEY);
 
@@ -281,9 +275,9 @@
     });
 
     function updatePluginDocumentation(event: {position: monaco.Position, model: monaco.editor.ITextModel}) {
-        const type = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes);
+        const cls = YAML_UTILS.getTypeAtPosition(source.value, event.position, pluginsStore.allTypes);
         const version = YAML_UTILS.getVersionAtPosition(source.value, event.position);
-        pluginsStore.updateDocumentation({type, version});
+        pluginsStore.updateDocumentation({cls, version, hash: hash.value});
     };
 
     const saveFlowYaml = async () => {

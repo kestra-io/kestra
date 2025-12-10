@@ -1293,7 +1293,6 @@ class ExecutionControllerRunnerTest {
         assertThat(executions.getTotal()).isEqualTo(4L);
     }
 
-    @FlakyTest
     @Test
     @LoadFlows({"flows/valids/pause-test.yaml"})
     void killExecutionPaused() throws TimeoutException, QueueException {
@@ -1311,8 +1310,7 @@ class ExecutionControllerRunnerTest {
         assertThat(killedExecution.getTaskRunList()).hasSize(1);
     }
 
-    // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/sleep-long.yml"})
     void killExecution() throws TimeoutException, InterruptedException, QueueException {
         // listen to the execution queue

@@ -171,16 +171,16 @@ public class TriggerScheduler {
 
                         // Create a TriggerState
                         TriggerState newTriggerState = TriggerState.of(flow, trigger, vNode);
-                        
-                        // new worker triggers will be evaluated immediately except schedule that will be evaluated at the next cron schedule
-                        if (trigger instanceof WorkerTriggerInterface) {
+
+                        if (trigger instanceof Schedulable schedulableTrigger) {
+                            ZonedDateTime nextEvaluationDate = schedulableTrigger.nextEvaluationDate(conditionContext, Optional.empty());
+                            // schedule are evaluated at the next cron schedule
+                            newTriggerState = newTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
+                        } else if (trigger instanceof WorkerTriggerInterface) {
+                            // worker triggers are evaluated immediately
                             newTriggerState = newTriggerState.updateForNextEvaluationDate(clock, ZonedDateTime.now(clock));
                         }
                         
-                        if (trigger instanceof Schedulable schedulableTrigger) {
-                            ZonedDateTime nextEvaluationDate = schedulableTrigger.nextEvaluationDate(conditionContext, Optional.empty());
-                            newTriggerState = newTriggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
-                        }
                         triggerStateStore.save(newTriggerState);
                         Logs.logTrigger(newTriggerState, log, Level.INFO, "New state initialized");
                         

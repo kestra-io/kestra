@@ -6,12 +6,13 @@ import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.SchedulableTriggerFetcher;
-import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.scheduler.stores.TriggerStateStore;
@@ -21,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
 import java.time.Clock;
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -31,17 +34,17 @@ import java.util.Set;
 
 @Singleton
 public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetcher {
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultSchedulableTriggerFetcher.class);
-    
+
     // Services
     private final RunContextFactory runContextFactory;
-    
+
     // Stores
     private final TriggerStateStore triggerStateStore;
     private final FlowMetaStore flowMetaStore;
     private final PluginDefaultService pluginDefaultService;
-    
+
     public DefaultSchedulableTriggerFetcher(RunContextFactory runContextFactory,
                                             TriggerStateStore triggerStateStore,
                                             FlowMetaStore flowMetaStore,
@@ -51,12 +54,14 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
         this.flowMetaStore = flowMetaStore;
         this.pluginDefaultService = pluginDefaultService;
     }
-    
-    /** {@inheritDoc} **/
+
+    /**
+     * {@inheritDoc}
+     **/
     @Override
     public List<TriggerEvaluationContext> getSchedulableTriggers(final Clock clock, final ZonedDateTime now, final Set<Integer> assignments) {
         List<TriggerState> triggers = this.triggerStateStore.findTriggersEligibleForScheduling(now, assignments, false);
-        
+
         return triggers.stream()
             .filter(triggerState -> !triggerState.isDisabled())
             .map(triggerState -> {
@@ -66,15 +71,15 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                     triggerState.getFlowId(),
                     null
                 ));
-                
+
                 // Check whether the Flow still exists
                 if (maybeFlowTrigger.isEmpty()) {
                     triggerStateStore.delete(triggerState); // Delete triggerState state
                     return null;
                 }
-                
+
                 final FlowWithSource flow = pluginDefaultService.injectAllDefaults(maybeFlowTrigger.get(), LOG);
-                
+
                 // Validate that the trigger still exists and is enabled before processing. This check covers several cases:
                 // 1. The overall Flow might be disabled 
                 // 2. The specific trigger may have been removed.
@@ -88,44 +93,53 @@ public class DefaultSchedulableTriggerFetcher implements SchedulableTriggerFetch
                     // Skip processing this trigger to avoid acting on stale or invalid trigger.
                     return null;
                 }
-                
+
                 final AbstractTrigger trigger = maybeTrigger.get();
-                
+
                 RunContext runContext = runContextFactory.of(flow, trigger);
                 ConditionContext conditionContext = ConditionContext.builder().flow(flow).runContext(runContext).build();
-                
-                if (triggerState.getNextEvaluationDate() == null) {
-                    try {
+
+                try {
+                    if (triggerState.getNextEvaluationDate() == null) {
                         ZonedDateTime nextEvaluationDate = NextEvaluationDate.get(clock, trigger, triggerState.context(), conditionContext);
                         triggerState = triggerState.updateForNextEvaluationDate(clock, nextEvaluationDate);
-                    } catch (Exception e) {
-                        logError(now, conditionContext, flow, trigger, e);
-                        if (e instanceof InvalidTriggerConfigurationException) {
-                            triggerStateStore.save(triggerState.disabled(clock, true));
-                        }
-                        return null;
                     }
+
+                    return new TriggerEvaluationContext(
+                        flow,
+                        trigger,
+                        triggerState,
+                        conditionContext.withVariables(Map.of("trigger", Map.of("date", getTriggerDateForConditionContext(clock, now, triggerState, trigger))))
+                    );
+                } catch (Exception e) {
+                    logError(now, conditionContext, flow, trigger, e);
+                    if (e instanceof InvalidTriggerConfigurationException) {
+                        triggerStateStore.save(triggerState.disabled(clock, true));
+                    }
+                    return null;
                 }
-                ZonedDateTime contextualDate = Optional.ofNullable(triggerState.getNextEvaluationDate())
-                    .map(instant -> instant.atZone(clock.getZone()))
-                    .orElseGet(() ->  now.truncatedTo(ChronoUnit.SECONDS));
-                return new TriggerEvaluationContext(
-                    flow,
-                    trigger,
-                    triggerState,
-                    conditionContext.withVariables(
-                        Map.of("trigger", Map.of("date", contextualDate))
-                    )
-                );
             })
             .filter(Objects::nonNull)
             .toList();
     }
-    
-    
+
+    /**
+     * Returns the {@code trigger.date} to be injected into the {@link ConditionContext}.
+     */
+    private static ZonedDateTime getTriggerDateForConditionContext(Clock clock, ZonedDateTime now, TriggerState state, AbstractTrigger trigger) {
+        try {
+            ZoneId tz = trigger instanceof Schedulable schedulable ? ZoneId.of(schedulable.getTimezone()) : clock.getZone();
+            return Optional.ofNullable(state.getNextEvaluationDate())
+                .map(instant -> instant.atZone(tz))
+                .orElseGet(() -> now.truncatedTo(ChronoUnit.SECONDS));
+        } catch (DateTimeException e) {
+            throw new InvalidTriggerConfigurationException();
+        }
+    }
+
     private void logError(final ZonedDateTime now, ConditionContext conditionContext, FlowInterface flow, AbstractTrigger trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
-        
+
         Logs.logExecution(
             flow,
             logger,

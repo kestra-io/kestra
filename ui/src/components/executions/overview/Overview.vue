@@ -421,13 +421,13 @@
             title: t("flow_outputs"),
             empty: t("no_flow_outputs"),
             elements: execution.value?.outputs,
-            // TODO: Check if this is possible to have includeDebug: true for this one
+            includeDebug: "outputs",
         },
         {
             title: t("trigger"),
             empty: t("no_trigger"),
             elements: execution.value?.trigger,
-            includeDebug: true,
+            includeDebug: "trigger",
         },
     ];
 

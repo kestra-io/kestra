@@ -22,7 +22,7 @@
                     <CascaderPanel :options="filteredOptions" class="debug" />
                 </el-splitter-panel>
                 <el-splitter-panel>
-                    <DebugPanel />
+                    <DebugPanel :property="props.includeDebug" :execution />
                 </el-splitter-panel>
             </el-splitter>
 
@@ -58,7 +58,7 @@
         title: string;
         empty: string;
         elements?: Record<string, any>;
-        includeDebug?: boolean;
+        includeDebug?: "outputs" | "trigger";
         execution: Execution;
     }>();
 
@@ -135,6 +135,7 @@
 
         &.debug {
             min-height: -webkit-fill-available;
+            max-height: calc($spacer * 20);
             border-top-right-radius: 0;
             border-bottom-right-radius: 0;
         }
@@ -146,6 +147,8 @@
     }
 
     :deep(.el-cascader-menu) {
+        height: -webkit-fill-available;
+        max-height: calc($spacer * 20);
         min-width: 300px;
         max-width: 300px;
 

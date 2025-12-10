@@ -317,7 +317,7 @@ public class Property<T> {
             } else {
                 s = p.getValueAsString();
             }
-            return new Property<>(s);
+            return new Property<>(s, true);
         }
     }
 

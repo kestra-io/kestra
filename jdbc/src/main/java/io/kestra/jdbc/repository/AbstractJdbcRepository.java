@@ -361,7 +361,7 @@ public abstract class AbstractJdbcRepository {
             return o;
         }
 
-        return Objects.toString(o);
+        return o.toString();
     }
 
     protected Name getColumnName(QueryFilter.Field field){

@@ -1612,7 +1612,8 @@
         "email": "이메일",
         "firstName": "이름",
         "lastName": "성씨",
-        "password": "비밀번호"
+        "password": "비밀번호",
+        "password_requirements": "비밀번호는 최소 8자 이상이어야 하며, 최소 1개의 대문자와 1개의 숫자를 포함해야 합니다."
       },
       "login": "로그인",
       "logout": "로그아웃",

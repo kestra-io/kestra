@@ -1612,7 +1612,8 @@
         "email": "Correo electrónico",
         "firstName": "Nombre",
         "lastName": "Apellido",
-        "password": "Contraseña"
+        "password": "Contraseña",
+        "password_requirements": "La contraseña debe tener al menos 8 caracteres y contener al menos 1 letra mayúscula y 1 número."
       },
       "login": "Iniciar sesión",
       "logout": "Cerrar sesión",

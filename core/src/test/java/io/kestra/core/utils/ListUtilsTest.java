@@ -48,8 +48,8 @@ class ListUtilsTest {
     void convertToListString(){
         assertThat(ListUtils.convertToListString(List.of("string1", "string2"))).isEqualTo(List.of("string1", "string2"));
         assertThat(ListUtils.convertToListString(List.of())).isEqualTo(List.of());
+        assertThat(ListUtils.convertToListString(List.of(1, 2, 3))).isEqualTo(List.of("1", "2", "3"));
 
         assertThrows(IllegalArgumentException.class, () -> ListUtils.convertToListString("not a list"));
-        assertThrows(IllegalArgumentException.class, () -> ListUtils.convertToListString(List.of(1, 2, 3)));
     }
 }

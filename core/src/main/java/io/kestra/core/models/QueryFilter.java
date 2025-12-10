@@ -94,7 +94,7 @@ public record QueryFilter(
         KIND("kind") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS,Op.NOT_EQUALS);
+                return List.of(Op.EQUALS,Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
             }
         },
         LABELS("labels") {
@@ -106,7 +106,7 @@ public record QueryFilter(
         FLOW_ID("flowId") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
             }
         },
         UPDATED("updated") {
@@ -226,7 +226,7 @@ public record QueryFilter(
         FLOW {
             @Override
             public List<Field> supportedField() {
-                return List.of(Field.LABELS, Field.NAMESPACE, Field.QUERY, Field.SCOPE);
+                return List.of(Field.LABELS, Field.NAMESPACE, Field.QUERY, Field.SCOPE, Field.FLOW_ID);
             }
         },
         NAMESPACE {
@@ -241,7 +241,7 @@ public record QueryFilter(
                 return List.of(
                     Field.QUERY, Field.SCOPE, Field.FLOW_ID, Field.START_DATE, Field.END_DATE,
                     Field.STATE, Field.LABELS, Field.TRIGGER_EXECUTION_ID, Field.CHILD_FILTER,
-                    Field.NAMESPACE,Field.KIND
+                    Field.NAMESPACE, Field.KIND
                 );
             }
         },

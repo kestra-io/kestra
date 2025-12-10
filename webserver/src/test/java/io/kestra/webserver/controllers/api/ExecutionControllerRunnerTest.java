@@ -242,7 +242,7 @@ class ExecutionControllerRunnerTest {
         String response = e.getResponse().getBody(String.class).orElseThrow();
 
         assertThat(response).contains("Invalid entity");
-        assertThat(response).contains("Invalid input for `validatedString`");
+        assertThat(response).contains("Invalid value for input `validatedString`");
     }
 
     @Test
@@ -1071,7 +1071,7 @@ class ExecutionControllerRunnerTest {
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         ));
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
-        assertThat(exception.getMessage()).isEqualTo("Invalid entity: asked: Invalid input for `asked`, missing required input, but received `null`");
+        assertThat(exception.getMessage()).isEqualTo("Invalid entity: Missing required input:asked");
     }
 
     @Test

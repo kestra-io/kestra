@@ -36,6 +36,10 @@ public class ErrorController {
     public HttpResponse<JsonError> error(HttpRequest<?> request, JsonParseException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
     }
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, InputOutputValidationException e) {
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
+    }
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, ConversionErrorException e) {

@@ -12,39 +12,68 @@
             />
         </div>
 
-        <template v-if="props.includeDebug">
+        <template v-if="props.elements">
             <el-splitter
-                v-if="props.elements"
+                v-if="props.includeDebug"
                 :layout="verticalLayout ? 'vertical' : 'horizontal'"
                 lazy
             >
                 <el-splitter-panel :size="verticalLayout ? '50%' : '70%'">
-                    <CascaderPanel :options="filteredOptions" class="debug" />
+                    <el-cascader-panel
+                        :options="filteredOptions"
+                        @expand-change="(p: string[]) => (path = p.join('.'))"
+                        class="debug"
+                    >
+                        <template #default="{data}">
+                            <div class="node">
+                                <div :title="data.label">
+                                    {{ data.label }}
+                                </div>
+                                <div v-if="data.value && data.children">
+                                    <code>{{ itemsCount(data) }}</code>
+                                </div>
+                            </div>
+                        </template>
+                    </el-cascader-panel>
                 </el-splitter-panel>
                 <el-splitter-panel>
-                    <DebugPanel :property="props.includeDebug" :execution />
+                    <DebugPanel
+                        :property="props.includeDebug"
+                        :execution
+                        :path
+                    />
                 </el-splitter-panel>
             </el-splitter>
 
-            <span v-else class="empty">{{ props.empty }}</span>
+            <el-cascader-panel v-else ref="cascader" :options="filteredOptions">
+                <template #default="{data}">
+                    <div class="node">
+                        <div :title="data.label">
+                            {{ data.label }}
+                        </div>
+                        <div v-if="data.value && data.children">
+                            <code>{{ itemsCount(data) }}</code>
+                        </div>
+                    </div>
+                </template>
+            </el-cascader-panel>
         </template>
 
-        <template v-else>
-            <CascaderPanel v-if="props.elements" :options="filteredOptions" />
-            <span v-else class="empty">{{ props.empty }}</span>
-        </template>
+        <span v-else class="empty">{{ props.empty }}</span>
     </div>
 </template>
 
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
 
-    import CascaderPanel from "./CascaderPanel.vue";
     import DebugPanel from "./DebugPanel.vue";
 
     import {Execution} from "../../../../../../stores/executions";
 
     import {verticalLayout} from "../../../utils/layout";
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
 
@@ -61,6 +90,8 @@
         includeDebug?: "outputs" | "trigger";
         execution: Execution;
     }>();
+
+    const path = ref<string>("");
 
     const formatted = ref<Node[]>([]);
     const format = (obj: Record<string, any>): Node[] => {
@@ -99,8 +130,23 @@
         });
     });
 
+    const itemsCount = (item: Node) => {
+        const length = item.children?.length ?? 0;
+
+        if (!length) return undefined;
+
+        return `${length} ${length === 1 ? t("item") : t("items")}`;
+    };
+
+    const cascader = ref<any>(null);
     onMounted(() => {
         if (props.elements) formatted.value = format(props.elements);
+
+        // Open first node by default on page mount
+        if (cascader?.value) {
+            const nodes = cascader.value.$el.querySelectorAll(".el-cascader-node");
+            if (nodes.length > 0) (nodes[0] as HTMLElement).click();
+        }
     });
 </script>
 

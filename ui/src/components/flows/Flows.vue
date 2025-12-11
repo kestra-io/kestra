@@ -183,16 +183,11 @@
                                                 params: {
                                                     namespace: scope.row.namespace,
                                                     flowId: scope.row.id,
-                                                    id: getLastExecution(scope.row)?.id
+                                                    id: getLastExecution(scope.row).id
                                                 }
                                             }"
                                         >
-                                            <DateAgo
-                                                :inverted="true"
-                                                :date="getLastExecution(scope.row)
-                                                    ?.startDate
-                                                "
-                                            />
+                                            <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
                                         </router-link>
                                     </template>
                                 </el-table-column>
@@ -204,7 +199,7 @@
                                 >
                                     <template #default="scope">
                                         <div
-                                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)?.status"
+                                            v-if="lastExecutionByFlowReady && getLastExecution(scope.row)"
                                             class="d-flex justify-content-between align-items-center"
                                         >
                                             <router-link
@@ -213,11 +208,11 @@
                                                     params: {
                                                         namespace: scope.row.namespace,
                                                         flowId: scope.row.id,
-                                                        id: getLastExecution(scope.row)?.id
+                                                        id: getLastExecution(scope.row).id
                                                     }
                                                 }"
                                             >
-                                                <Status :status="getLastExecution(scope.row)?.status" size="small" />
+                                                <Status :status="getLastExecution(scope.row).status" size="small" />
                                             </router-link>
                                         </div>
                                     </template>

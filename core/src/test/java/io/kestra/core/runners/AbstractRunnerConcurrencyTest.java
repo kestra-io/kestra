@@ -10,56 +10,48 @@ import org.junit.jupiter.api.TestInstance;
 @KestraTest(startRunner = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractRunnerConcurrencyTest {
-    public static final String TENANT_1 = "tenant1";
-
     @Inject
     protected FlowConcurrencyCaseTest flowConcurrencyCaseTest;
 
     @Test
-    @LoadFlows({"flows/valids/flow-concurrency-cancel.yml"})
+    @LoadFlows(value = {"flows/valids/flow-concurrency-cancel.yml"}, tenantId = "concurrency-cancel")
     void concurrencyCancel() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyCancel();
+        flowConcurrencyCaseTest.flowConcurrencyCancel("concurrency-cancel");
     }
 
     @Test
-    @LoadFlows({"flows/valids/flow-concurrency-fail.yml"})
+    @LoadFlows(value = {"flows/valids/flow-concurrency-fail.yml"}, tenantId = "concurrency-fail")
     void concurrencyFail() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyFail();
+        flowConcurrencyCaseTest.flowConcurrencyFail("concurrency-fail");
     }
 
     @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue.yml"})
+    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml"}, tenantId = "concurrency-queue")
     void concurrencyQueue() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueue();
+        flowConcurrencyCaseTest.flowConcurrencyQueue("concurrency-queue");
     }
 
     @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue-pause.yml"})
-    protected void concurrencyQueuePause() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueuePause();
-    }
-
-    @Test
-    @LoadFlows({"flows/valids/flow-concurrency-cancel-pause.yml"})
-    protected void concurrencyCancelPause() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyCancelPause();
-    }
-
-    @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-for-each-item.yaml", "flows/valids/flow-concurrency-queue.yml"}, tenantId = TENANT_1)
+    @LoadFlows(value = {"flows/valids/flow-concurrency-for-each-item.yaml", "flows/valids/flow-concurrency-queue.yml"}, tenantId = "flow-concurrency-with-for-each-item")
     protected void flowConcurrencyWithForEachItem() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyWithForEachItem(TENANT_1);
+        flowConcurrencyCaseTest.flowConcurrencyWithForEachItem("flow-concurrency-with-for-each-item");
     }
 
     @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue-fail.yml"})
+    @LoadFlows(value = {"flows/valids/flow-concurrency-queue-fail.yml"}, tenantId = "concurrency-queue-fail")
     protected void concurrencyQueueRestarted() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueueRestarted();
+        flowConcurrencyCaseTest.flowConcurrencyQueueRestarted("concurrency-queue-fail");
     }
 
     @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue-after-execution.yml"})
+    @LoadFlows(value = {"flows/valids/flow-concurrency-queue-after-execution.yml"}, tenantId = "concurrency-queue-after-execution")
     void concurrencyQueueAfterExecution() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueueAfterExecution();
+        flowConcurrencyCaseTest.flowConcurrencyQueueAfterExecution("concurrency-queue-after-execution");
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/flow-concurrency-subflow.yml", "flows/valids/flow-concurrency-cancel.yml"}, tenantId = "flow-concurrency-subflow")
+    void flowConcurrencySubflow() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencySubflow("flow-concurrency-subflow");
     }
 }

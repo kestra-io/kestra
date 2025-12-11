@@ -208,7 +208,7 @@ class FlowControllerTest {
 
         assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[namespace][PREFIX]=io.kestra.tests"), Argument.of(PagedResults.class, Flow.class))
             .getTotal())
-            .isEqualTo(Helpers.FLOWS_COUNT - 1);
+            .isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
@@ -643,7 +643,7 @@ class FlowControllerTest {
             assertThat(zipFile.stream().count())
                 .describedAs("by default /by-query endpoints should use specific PREFIX in legacy filter mapping, " +
                     "in this test, we should get all Flow when querying with namespace=io.kestra.tests, io.kestra.tests.subnamespace are accepted, but not io.kestra.tests2")
-                .isEqualTo(Helpers.FLOWS_COUNT - 1);
+                .isEqualTo(Helpers.FLOWS_COUNT);
         }
 
         file.delete();

@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.namespace
+name: "namespace"
+title: "Namespace"
+description: "Tasks that manage namespace files and versions."
+body: "Upload, download, delete, purge, or version files stored in a namespace—useful for shipping assets or configs with flows; set the target namespace, paths or glob patterns, and purge behavior to control stored artifacts."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

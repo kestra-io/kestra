@@ -121,7 +121,8 @@ public abstract class AbstractFlowRepositoryTest {
             QueryFilter.builder().field(Field.QUERY).value("filterFlowId").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.NAMESPACE).value(SYSTEM_FLOWS_DEFAULT_NAMESPACE).operation(Op.EQUALS).build(),
-            QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build()
+            QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value("filterFlowId").operation(Op.EQUALS).build()
         );
     }
 
@@ -145,7 +146,6 @@ public abstract class AbstractFlowRepositoryTest {
 
     static Stream<QueryFilter> errorFilterCombinations() {
         return Stream.of(
-            QueryFilter.builder().field(Field.FLOW_ID).value("sleep").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(),
             QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(),
             QueryFilter.builder().field(Field.STATE).value(State.Type.RUNNING).operation(Op.EQUALS).build(),

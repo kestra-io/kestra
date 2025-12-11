@@ -108,6 +108,8 @@ export function useFilters(
         const query = {...route.query};
         clearFilterQueryParams(query);
 
+        delete query.page;
+
         if (legacyQuery) {
             clearLegacyParams(query);
             buildLegacyQuery(query);

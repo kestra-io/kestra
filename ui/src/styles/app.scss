@@ -1,3 +1,4 @@
+@use "fonts";
 @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
 
@@ -17,13 +18,14 @@
 // components
 @use "layout/charts";
 @use "components/vue-material-design-icon";
-@use "components/vue-nprogress" with (
-    $indigo: global-var.$indigo
-);
+@use "components/vue-nprogress" with ($indigo: global-var.$indigo);
 
 @use "components/sidebar-menu";
 
-html, body, #app, #app-container {
+html,
+body,
+#app,
+#app-container {
     height: 100%;
 }
 
@@ -31,7 +33,8 @@ html {
     scroll-padding-top: 80px;
     transition: padding-left 0.3s ease;
 
-    code[class*="language-"], pre[class*="language-"]  {
+    code[class*="language-"],
+    pre[class*="language-"] {
         white-space: pre-wrap !important;
     }
 
@@ -41,13 +44,14 @@ html {
 
     &.menu-not-collapsed {
         #{--offset-from-menu}: 1rem;
+
         @include mixin.res(lg) {
             #{--offset-from-menu}: 4rem;
         }
     }
 }
 
-* > {
+*> {
     ::-webkit-scrollbar {
         width: 15px !important;
 
@@ -81,7 +85,7 @@ main {
         max-height: 100%;
     }
 
-    > section.container {
+    >section.container {
         margin: 24px 0;
         min-width: 100%;
         transition: padding 0.3s ease;
@@ -91,19 +95,20 @@ main {
             flex: 1;
             display: flex;
             min-height: 0;
-            > * {
+
+            >* {
                 flex: 1;
             }
         }
     }
 
-    > section.full-container {
+    >section.full-container {
         flex: 1;
         display: flex;
         flex-direction: column;
         min-height: 0;
 
-        > * {
+        >* {
             flex: 1;
         }
     }
@@ -139,6 +144,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:focus {
     transition: background-color 600000s 0s, color 600000s 0s;
 }
+
 input[data-autocompleted] {
     background-color: transparent !important;
 }
@@ -155,6 +161,7 @@ html.full-screen {
     #app {
 
         height: 100%;
+
         main {
             transition: none;
             display: flex;
@@ -166,7 +173,7 @@ html.full-screen {
 }
 
 // setup non color CSS variables
-:root{
+:root {
     --el-box-shadow: $box-shadow;
     --el-box-shadow-light: $box-shadow-sm;
     --el-box-shadow-lighter: $box-shadow-sm;
@@ -185,11 +192,11 @@ html.full-screen {
     #{--font-size-lg}: global-var.$font-size-lg;
 }
 
-body{
+body {
     background-color: var(--ks-background-body);
 }
 
-.no-code-skeleton{
+.no-code-skeleton {
     color: var(--ks-content-secondary);
     background-color: var(--ks-background-card);
     width: 100%;
@@ -198,7 +205,8 @@ body{
     // slowly appearing grey background animation
     animation: skeleton-loading 6s 1;
     position: relative;
-    &:before{
+
+    &:before {
         content: "";
         position: absolute;
         top: 0;
@@ -219,6 +227,7 @@ body{
     0% {
         background-position: -55% -30%;
     }
+
     100% {
         background-position: 185% 100%;
     }
@@ -226,18 +235,20 @@ body{
 
 @keyframes skeleton-loading {
     0% {
-        opacity:0;
+        opacity: 0;
     }
+
     40% {
-        opacity:0;
+        opacity: 0;
     }
+
     100% {
-        opacity:.7;
+        opacity: .7;
     }
 }
 
 @media (max-width: 768px) {
-    main > section.container:has(.empty-template) {
+    main>section.container:has(.empty-template) {
         padding: 0 0;
     }
 }
@@ -247,6 +258,7 @@ body{
     height: 100vh;
     overflow: hidden;
 }
+
 #app main {
     flex: 1;
     overflow: auto;

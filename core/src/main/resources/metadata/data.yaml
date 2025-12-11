@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.data
+name: "data"
+title: "Data"
+description: "Tasks that fetch Kestra executions, flows, logs, metrics, and triggers as datasets for dashboards."
+body: "These data providers query Kestra repositories with filters and aggregations to feed dashboard charts; configure columns and fields (such as namespace, state, timestamp, or labels) plus any filters to shape the returned dataset for visualization."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

@@ -19,7 +19,7 @@
     </el-form>
     <div @click="() => onTaskEditorClick(taskModel)">
         <TaskObject
-            v-loading="isLoading"
+            v-loading="isLoading || isPluginSchemaLoading"
             v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
             name="root"
             :modelValue="taskModel"
@@ -165,7 +165,7 @@
     // when tab is opened, load the documentation
     onActivated(() => {
         if(selectedTaskType.value && parentPath !== "inputs"){
-            pluginsStore.updateDocumentation(taskModel.value as Parameters<typeof pluginsStore.updateDocumentation>[0]);
+            pluginsStore.updateDocumentation({type: selectedTaskType.value, ...taskModel.value});
         }
     });
 
@@ -217,6 +217,24 @@
         return typeMap.value[selectedTaskType.value ?? ""] || [];
     });
 
+    const versionedSchema = ref<Schemas|undefined>()
+    const isPluginSchemaLoading = ref(false)
+
+    watch([selectedTaskType, resolvedTypes], async ([val, types]) => {
+        if(types.length > 1 && val){
+            isPluginSchemaLoading.value = true;
+            try{
+                const {schema} = await pluginsStore.load({
+                    cls: val,
+                    version: taskModel.value?.version,
+                })
+                versionedSchema.value = schema?.properties
+            } finally {
+                isPluginSchemaLoading.value = false;
+            }
+        }
+    }, {immediate: true}); 
+
     const resolvedType = computed<string>(() => {
         if(resolvedTypes.value.length > 1 && selectedTaskType.value){
             // find the resolvedType that match the current dataType
@@ -262,9 +280,9 @@
     });
 
     const resolvedLocalSchema = computed(() => {
-        return isTaskDefinitionBasedOnType.value
+        return versionedSchema.value ?? (isTaskDefinitionBasedOnType.value
             ? definitions.value?.[resolvedType.value] ?? {}
-            : schemaAtBlockPath.value
+            : schemaAtBlockPath.value)
     });
 
     const resolvedProperties = computed<Schemas["properties"] | undefined>(() => {

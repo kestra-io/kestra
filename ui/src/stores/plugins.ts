@@ -16,7 +16,10 @@ export interface PluginComponent {
     version?: string;
     description?: string;
     properties?: Record<string, any>;
-    schema: Schemas;
+    schema: {
+        properties: Schemas;
+        outputs: Schemas;
+    };
     markdown?: string;
 }
 
@@ -217,13 +220,16 @@ export const usePluginsStore = defineStore("plugins", () => {
             return cachedPluginDoc;
         }
 
-        const baseUrl = options.version ?
+        const url = options.version ?
             `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
             `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
 
-        const url = options.hash ? `${baseUrl}?hash=${options.hash}` : baseUrl;
-
-        const response = await axios.get<PluginComponent>(url);
+        const response = await axios.get<PluginComponent>(url, options.all ? {
+            params: {
+                all: options.all,
+                hash: options.hash,
+            }
+        } : {});
 
         if (options.commit !== false) {
             if (options.all === true) {

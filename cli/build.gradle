@@ -38,6 +38,7 @@ dependencies {
     implementation project(":scheduler")
     implementation project(":webserver")
     implementation project(":worker")
+    implementation project(":indexer")
 
     //test
     testImplementation project(':tests')

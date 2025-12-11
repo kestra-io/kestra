@@ -1,4 +1,4 @@
-package io.kestra.core.runners;
+package io.kestra.indexer;
 
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
@@ -8,7 +8,9 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
-import io.kestra.core.repositories.SaveRepositoryInterface;
+import io.kestra.core.runners.IndexingRepository;
+import io.kestra.core.runners.Indexer;
+import io.kestra.core.runners.QueueIndexer;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
@@ -28,9 +30,8 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-// FIXME move that to a new indexer module
 /**
- * This class is responsible to batch-indexed asynchronously queue messages.<p>
+ * This class is responsible for batch-indexing asynchronously queue messages.<p>
  * Some queue messages are indexed synchronously via the {@link QueueIndexer}.
  */
 @SuppressWarnings("this-escape")
@@ -90,7 +91,7 @@ public class DefaultIndexer implements Indexer {
         this.sendBatch(metricQueue, metricRepository);
     }
 
-    protected <T> void sendBatch(QueueInterface<T> queueInterface, SaveRepositoryInterface<T> saveRepositoryInterface) {
+    protected <T> void sendBatch(QueueInterface<T> queueInterface, IndexingRepository<T> indexingRepository) {
         this.receiveCancellations.addFirst(queueInterface.receiveBatch(Indexer.class, eithers -> {
             // first, log all deserialization issues
             eithers.stream().filter(either -> either.isRight()).forEach(either -> log.error("unable to deserialize an item: {}", either.getRight().getMessage()));
@@ -114,7 +115,7 @@ public class DefaultIndexer implements Indexer {
                 this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT_DESCRIPTION, "type", itemClassName).increment(items.size());
 
                 this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, MetricRegistry.METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION, "type", itemClassName).record(() -> {
-                    int saved = saveRepositoryInterface.saveBatch(items);
+                    int saved = indexingRepository.saveBatch(items);
                     this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT_DESCRIPTION, "type", itemClassName).increment(saved);
                 });
             }

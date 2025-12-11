@@ -17,6 +17,7 @@ dependencies {
     testImplementation project(':executor').sourceSets.test.output
     testImplementation project(':scheduler').sourceSets.test.output
     testImplementation project(':storage-local')
+    testImplementation project(':indexer')
     testImplementation project(':tests')
     testImplementation("io.micronaut.validation:micronaut-validation") // MysqlServiceLivenessCoordinatorTest fail to init without that
 }

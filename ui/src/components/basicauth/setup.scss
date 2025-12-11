@@ -23,12 +23,18 @@ $checkbox-checked-color: #8405FF;
   max-width: 920px;
   width: 100%;
   margin: 0 auto;
-  padding-top: 2rem;
 
   @media screen and (min-width: 992px) {
     gap: 3rem;
   }
+
+  @media screen and (max-width: 992px) {
+    padding-top: 2rem;
+  }
+
+
 }
+
 
 .setup-sidebar {
   @extend %flexcol;
@@ -82,7 +88,7 @@ $checkbox-checked-color: #8405FF;
     font-weight: 400;
     transition: color 0.2s;
     background-color: var(--ks-button-background-secondary);
-    
+
     &:hover {
       background-color: var(--ks-button-background-secondary-hover);
     }
@@ -115,9 +121,9 @@ $checkbox-checked-color: #8405FF;
     left: $step-line-offset;
   }
 
-  
-    
-    :deep(.el-step__title) {
+
+
+  :deep(.el-step__title) {
     vertical-align: middle;
     line-height: $step-icon-size;
     color: var(--ks-content-inactive);
@@ -129,9 +135,9 @@ $checkbox-checked-color: #8405FF;
     }
   }
 
-      &.is-vertical {
-      gap: 2rem;
-    }
+  &.is-vertical {
+    gap: 2rem;
+  }
 }
 
 .primary-icon :deep(.el-step__icon-inner) {

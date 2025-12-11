@@ -51,7 +51,7 @@ updates:
 
       storybook:
         applies-to: version-updates
-        patterns: ["storybook*", "@storybook/*"]
+        patterns: ["storybook*", "@storybook/*", "eslint-plugin-storybook"]
 
       vitest:
         applies-to: version-updates
@@ -67,10 +67,10 @@ updates:
             "@types/*",
             "storybook*",
             "@storybook/*",
+            "eslint-plugin-storybook",
             "vitest",
             "@vitest/*",
             # Temporary exclusion of these packages from major updates
-            "eslint-plugin-storybook",
             "eslint-plugin-vue",
           ]
 
@@ -84,6 +84,7 @@ updates:
             "@types/*",
             "storybook*",
             "@storybook/*",
+            "eslint-plugin-storybook",
             "vitest",
             "@vitest/*",
             # Temporary exclusion of these packages from minor updates
@@ -102,6 +103,7 @@ updates:
             "@types/*",
             "storybook*",
             "@storybook/*",
+            "eslint-plugin-storybook",
             "vitest",
             "@vitest/*",
           ]

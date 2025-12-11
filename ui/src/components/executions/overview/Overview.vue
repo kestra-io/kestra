@@ -431,7 +431,7 @@
         },
     ];
 
-    const options = useValues("executions").VALUES.RELATIVE_DATE.slice(0, -1); // Remove last 365 days option
+    const options = useValues("executions").VALUES.RELATIVE_DATE;
     const timerange = ref<string>("PT168H"); // Default to last 7 days
 
     const chartRef = ref<InstanceType<typeof TimeSeries> | null>(null);

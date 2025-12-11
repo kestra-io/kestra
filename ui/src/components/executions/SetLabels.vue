@@ -146,7 +146,7 @@
 
             // deep clone so child edits never mutate the original
             executionLabels.value = JSON.parse(JSON.stringify(source || []))
-                    .filter((label: Label) => !toIgnore.some((prefix: string) => label.key?.startsWith(prefix)));
+                .filter((label: Label) => !toIgnore.some((prefix: string) => label.key?.startsWith(prefix)));
 
         } else {
             // when dialog closed, clear temp state (safe-guard)
@@ -154,4 +154,3 @@
         }
     });
 </script>
-a

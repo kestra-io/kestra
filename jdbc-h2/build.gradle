@@ -15,5 +15,6 @@ dependencies {
     testImplementation project(':jdbc').sourceSets.test.output
     testImplementation project(':executor').sourceSets.test.output
     testImplementation project(':storage-local')
+    testImplementation project(':indexer')
     testImplementation project(':tests')
 }

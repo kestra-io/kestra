@@ -37,6 +37,7 @@ dependencies {
     testImplementation project(':core').sourceSets.test.output
     testImplementation project(':storage-local')
     testImplementation project(':worker')
+    testImplementation project(':indexer')
     testImplementation "org.wiremock:wiremock-jetty12"
     testImplementation "org.awaitility:awaitility"
     testImplementation "io.opentelemetry:opentelemetry-sdk-testing"

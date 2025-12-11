@@ -6,7 +6,6 @@ import io.kestra.core.models.TenantAndNamespace;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
-import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import org.jooq.*;
@@ -178,11 +177,5 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
 
                 return nsFileMetadataToPersist;
             });
-    }
-
-    @Override
-    public int saveBatch(List<NamespaceFileMetadata> items) {
-        // FIXME should not be needed as it is not indexed
-        return items.stream().map(it -> this.save(it)).toList().size();
     }
 }

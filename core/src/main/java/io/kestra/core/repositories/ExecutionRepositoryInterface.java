@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.runners.IndexingRepository;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.micronaut.data.model.Pageable;
@@ -23,7 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution>, QueryBuilderInterface<Executions.Fields> {
+public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Executions.Fields> {
     default Optional<Execution> findById(String tenantId, String id) {
         return findById(tenantId, id, false);
     }
@@ -35,7 +36,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     ArrayListTotal<Execution> findByFlowId(String tenantId, String namespace, String id, Pageable pageable);
 
     /**
-     * Finds all the executions that was triggered by the given execution id.
+     * Finds all the executions that were triggered by the given execution id.
      *
      * @param tenantId           the tenant id.
      * @param triggerExecutionId the id of the execution trigger.

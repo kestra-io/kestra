@@ -16,12 +16,12 @@
         />
         <div v-else-if="invalidGraph">
             <el-alert
-                :title="t('topology-graph.invalid')"
+                :title="$t('topology-graph.invalid')"
                 type="error"
                 class="invalid-graph"
                 :closable="false"
             >
-                {{ t('topology-graph.invalid_description') }}
+                {{ $t('topology-graph.invalid_description') }}
             </el-alert>
         </div>
     </div>
@@ -29,14 +29,11 @@
 
 <script setup lang="ts">
     import {computed, ref} from "vue";
-    import {useI18n} from "vue-i18n";
     import {Utils} from "@kestra-io/ui-libs";
     import LowCodeEditor from "./LowCodeEditor.vue";
     import {useFlowStore} from "../../stores/flow";
 
     const flowStore = useFlowStore();
-
-    const {t} = useI18n();
 
     const flowYaml = computed(() => flowStore.flowYaml);
     const flowGraph = computed(() => flowStore.flowGraph);

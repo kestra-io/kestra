@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.debug
+name: "debug"
+title: "Debug"
+description: "Tasks that emit debug output while you develop a flow."
+body: "Echo and Return help inspect variables and payloads or short-circuit execution during testing; provide the message or value to output so downstream tasks can see exactly what is being passed around."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

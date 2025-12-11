@@ -41,7 +41,10 @@ inputs:
 - id: instantDefaults
   type: DATETIME
   defaults: "2013-08-09T14:19:00Z"
-- id: json
+- id: json1
+  type: JSON
+  required: false
+- id: json2
   type: JSON
   required: false
 - id: uri
@@ -95,7 +98,7 @@ inputs:
 - name: array
   type: ARRAY
   itemType: INT
-- name: yaml
+- name: yaml1
   type: YAML
   defaults:
     property: something
@@ -104,6 +107,15 @@ inputs:
       value: value1
     - key: key2
       value: value2
+- name: yaml2
+  type: YAML
+  defaults:
+    property: something
+    list:
+      - key: key1
+        value: value1
+      - key: key2
+        value: value2
 # required true and an empty default value will only work if we correctly serialize default values which is what this input is about to test.
 - name: empty
   type: STRING
@@ -140,12 +152,18 @@ tasks:
       type: io.kestra.plugin.core.debug.Return
       format: "{{taskrun.value}}"
 
-- id: json
+- id: json1
   type: io.kestra.plugin.core.debug.Return
-  format: "{{inputs.json}}"
+  format: "{{inputs.json1}}"
+- id: json2
+  type: io.kestra.plugin.core.debug.Return
+  format: "{{inputs.json2}}"
 - id: jsonOutput
   type: io.kestra.plugin.core.debug.Return
-  format: "{{outputs.json.value}}"
-- id: yamlOutput
+  format: "{{outputs.json1.value}}"
+- id: yamlOutput1
   type: io.kestra.plugin.core.debug.Return
-  format: "{{inputs.yaml}}"
+  format: "{{inputs.yaml1}}"
+- id: yamlOutput2
+  type: io.kestra.plugin.core.debug.Return
+  format: "{{inputs.yaml2}}"

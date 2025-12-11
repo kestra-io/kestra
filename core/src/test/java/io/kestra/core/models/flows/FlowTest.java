@@ -185,4 +185,21 @@ class FlowTest {
 
         return YamlParser.parse(file, Flow.class);
     }
+    @Test
+    void illegalNamespaceUpdate() {
+        Flow original = Flow.builder()
+            .id("my-flow")
+            .namespace("io.kestra.prod")
+            .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("hello").build()))
+            .build();
+
+        Flow updated = original.toBuilder()
+            .namespace("io.kestra.dev")
+            .build();
+
+        Optional<ConstraintViolationException> validate = original.validateUpdate(updated);
+
+        assertThat(validate.isPresent()).isTrue();
+        assertThat(validate.get().getMessage()).contains("Illegal namespace update");
+    }
 }

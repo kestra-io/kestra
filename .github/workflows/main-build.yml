@@ -64,6 +64,7 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      GH_PERSONAL_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
 
 
   publish-develop-maven:

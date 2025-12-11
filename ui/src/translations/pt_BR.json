@@ -1612,7 +1612,8 @@
         "email": "Email",
         "firstName": "Nome",
         "lastName": "Sobrenome",
-        "password": "Senha"
+        "password": "Senha",
+        "password_requirements": "A senha deve ter pelo menos 8 caracteres e incluir pelo menos 1 letra maiúscula e 1 número."
       },
       "login": "Login",
       "logout": "Sair",

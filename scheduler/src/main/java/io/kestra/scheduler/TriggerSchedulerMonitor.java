@@ -1,15 +1,14 @@
 package io.kestra.scheduler;
 
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.utils.Logs;
+import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.stores.TriggerStateStore;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.model.Pageable;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -24,17 +23,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Singleton
+@Requires(property = "kestra.server-type", pattern = "(SCHEDULER|STANDALONE)")
 public class TriggerSchedulerMonitor implements Runnable {
-    
+
     private static final Logger LOG = LoggerFactory.getLogger(TriggerSchedulerMonitor.class);
-    
+
     private final MetricRegistry metricRegistry;
     private final ExecutionRepositoryInterface executionRepository;
     private final TriggerStateStore triggerStateStore;
     private final DefaultScheduler defaultScheduler;
-    
+
     @Inject
-    public TriggerSchedulerMonitor(MetricRegistry metricRegistry, 
+    public TriggerSchedulerMonitor(MetricRegistry metricRegistry,
                                    ExecutionRepositoryInterface executionRepository,
                                    TriggerStateStore triggerStateStore,
                                    DefaultScheduler defaultScheduler) {
@@ -43,21 +43,20 @@ public class TriggerSchedulerMonitor implements Runnable {
         this.triggerStateStore = triggerStateStore;
         this.defaultScheduler = defaultScheduler;
     }
-    
+
     @Scheduled(fixedDelay = "PT10S", initialDelay = "PT30S")
     @Override
     public void run() {
         try {
-            // Retrieve triggers with non-null execution_id from all corresponding virtual nodes
-            ZonedDateTime now = ZonedDateTime.now();
+            // Retrieve all locked triggers from all corresponding virtual nodes
+            ZonedDateTime now = SchedulerClock.now();
             List<TriggerState> triggers = this.triggerStateStore.findTriggersEligibleForScheduling(now, defaultScheduler.currentVNodesAssignment(), true);
             if (CollectionUtils.isEmpty(triggers)) {
                 LOG.debug("No locked triggers. Skip trigger monitoring.");
                 return;
             }
             triggers.forEach(state -> {
-                Optional<Execution> execution = findExecutionForTrigger(state.getTenantId(), state.getTriggerId());
-                // executionState hasn't received the execution, we skip
+                Optional<Execution> execution = this.executionRepository.findAllByTrigger(state).next().blockOptional();
                 if (execution.isEmpty()) {
                     if (state.getUpdatedAt() != null) {
                         metricRegistry
@@ -93,16 +92,5 @@ public class TriggerSchedulerMonitor implements Runnable {
         } catch (Exception e) {
             LOG.error("Unexpected error while monitoring locked triggers", e);
         }
-    }
-    
-    private Optional<Execution> findExecutionForTrigger(final String tenant, String triggerId) {
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.UNPAGED, tenant, List.of(QueryFilter
-            .builder()
-            .field(QueryFilter.Field.TRIGGER_ID)
-            .operation(QueryFilter.Op.EQUALS)
-            .value(triggerId)
-            .build()
-        ));
-        return executions.isEmpty() ? Optional.empty() : Optional.of(executions.getFirst());
     }
 }

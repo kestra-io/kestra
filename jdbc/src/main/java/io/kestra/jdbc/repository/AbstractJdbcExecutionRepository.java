@@ -16,6 +16,7 @@ import io.kestra.core.models.executions.statistics.ExecutionStatistics;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.QueueService;
@@ -131,6 +132,15 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
                                                        String triggerExecutionId) {
         var condition = field("trigger_execution_id").eq(triggerExecutionId);
         return findAsync(tenantId, condition);
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public Flux<Execution> findAllByTrigger(TriggerId trigger) {
+        var condition = field("trigger_id").eq(trigger.uid());
+        return findAsync(trigger.getTenantId(), condition);
     }
 
     /**

@@ -1,7 +1,6 @@
 package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -23,8 +22,8 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -40,12 +39,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -53,7 +50,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
-import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -1116,5 +1112,29 @@ inject(tenant);
             executionRepository.delete(savedB);
         }
     }
+    
+    @Test
+    protected void shouldFindExecutionByTrigger() {
+        // GIVEN
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Execution execution = ExecutionFixture.EXECUTION_1(tenant);
 
+        TriggerId trigger = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), "trigger");
+        
+        execution = execution
+            .toBuilder()
+            .trigger(ExecutionTrigger
+                .builder()
+                .id(trigger.uid())
+                .build()
+            )
+            .build();
+        executionRepository.save(execution);
+
+        // WHEN
+        Flux<Execution> flux = executionRepository.findAllByTrigger(trigger);
+
+        // THEN
+        assertThat(flux.collectList().block()).map(Execution::getId).isEqualTo(List.of(execution.getId()));
+    }
 }

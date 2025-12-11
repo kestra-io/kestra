@@ -7,7 +7,7 @@ import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.runners.IndexingRepository;
+import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.micronaut.data.model.Pageable;
@@ -43,6 +43,14 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
      * @return a {@link Flux} of one or more executions.
      */
     Flux<Execution> findAllByTriggerExecutionId(String tenantId, String triggerExecutionId);
+
+    /**
+     * Finds all the executions that was triggered by the given trigger.
+     *
+     * @param triggerId          the trigger id.
+     * @return a {@link Flux} of one or more executions.
+     */
+    Flux<Execution> findAllByTrigger(TriggerId triggerId);
 
     /**
      * Finds the latest execution for the given flow and s.

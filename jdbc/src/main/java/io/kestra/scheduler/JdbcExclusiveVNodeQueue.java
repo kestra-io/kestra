@@ -81,7 +81,7 @@ public class JdbcExclusiveVNodeQueue<T> extends AbstractJdbcQueue<T> {
                     Result<Record> result = ctx.select(KEY_FIELD, VALUE_FIELD, VNODE_FIELD, OFFSET_FIELD)
                         .from(table)
                         .where(VNODE_FIELD.eq(vNode))
-                        .and(OFFSET_FIELD.gt(lastOffsetsForVNodes.get(vNode)))
+                        .and(OFFSET_FIELD.ge(lastOffsetsForVNodes.get(vNode)))
                         .orderBy(OFFSET_FIELD.asc())
                         .limit(jdbcQueueConfiguration.pollSize())
                         .forUpdate()

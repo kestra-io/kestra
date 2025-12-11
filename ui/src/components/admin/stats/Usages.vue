@@ -184,7 +184,9 @@
         display: flex;
         align-items: center;
         gap: 1rem;
-        height: 2rem;
+        min-height: 2rem;
+        padding-top: 0.25rem;
+        padding-bottom: 0.25rem;
 
         .usage-icon {
             display: flex;
@@ -192,6 +194,7 @@
             justify-content: center;
             width: 24px;
             height: 24px;
+            flex-shrink: 0;
 
             :deep(.material-design-icon__svg) {
                 font-size: 24px;
@@ -201,11 +204,9 @@
         }
 
         .usage-label {
-            line-height: 1;
-            display: flex;
-            align-items: center;
             font-size: 14px;
             color: var(--ks-content-primary);
+            line-height: 1.2;
         }
 
         .usage-divider {
@@ -215,15 +216,16 @@
         }
 
         .usage-value {
-            line-height: 1;
-            display: flex;
-            align-items: center;
+            font-size: 14px;
+            line-height: 1.2;
+            white-space: nowrap;
         }
 
         .el-button {
             color: var(--ks-content-primary);
             display: flex;
             align-items: center;
+            flex-shrink: 0;
         }
     }
 }

@@ -656,6 +656,65 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(data).first().hasFieldOrPropertyWithValue("id", execution.getId());
     }
 
+    @Test
+    void dashboard_fetchData_365Days_verifiesDateGrouping() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var executionDuration = Duration.ofMinutes(220);
+        var executionCreateDate = Instant.now();
+
+        // Create an execution within the 365-day range
+        Execution execution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .build();
+
+        execution = executionRepository.save(execution);
+
+        // Create an execution BEYOND 365 days (400 days ago) - should be filtered out
+        var executionCreateDateOld = Instant.now().minus(Duration.ofDays(400));
+        Execution executionOld = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution-old")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "US")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDateOld), new State.History(Type.SUCCESS, executionCreateDateOld.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .build();
+
+        executionRepository.save(executionOld);
+
+        var now = ZonedDateTime.now();
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(tenantId, Executions.builder()
+                .type(Executions.class.getName())
+                .columns(Map.of(
+                    "count", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
+                    "id", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.ID).build(),
+                    "date", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.START_DATE).build(),
+                    "duration", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.DURATION).build()
+                )).build(),
+            now.minusDays(365),
+            now,
+            null
+        );
+
+        // Should only return 1 execution (the recent one), not the 400-day-old execution
+        assertThat(data.getTotal()).isGreaterThanOrEqualTo(1L);
+        assertThat(data).isNotEmpty();
+        assertThat(data).first().hasFieldOrProperty("count");
+    }
+
+
+
     private static Execution buildWithCreatedDate(String tenant, Instant instant) {
         return Execution.builder()
             .id(IdUtils.create())

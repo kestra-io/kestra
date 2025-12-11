@@ -94,6 +94,10 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
     private List<String> hiddenLabelsPrefixes;
 
+    @io.micronaut.context.annotation.Value("${kestra.queue.type}")
+    @Nullable
+    protected String queueType;
+
     @Inject
     private PluginRegistry pluginRegistry;
 
@@ -127,7 +131,9 @@ public class MiscController {
             .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
-            .pluginsHash(pluginRegistry.hash());
+            .pluginsHash(pluginRegistry.hash())
+            .isConcurrencyViewEnabled(!this.queueType.equals("kafka"))
+            ;
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -218,6 +224,8 @@ public class MiscController {
         Boolean isBasicAuthInitialized;
 
         Long pluginsHash;
+
+        Boolean isConcurrencyViewEnabled;
     }
 
     @Value

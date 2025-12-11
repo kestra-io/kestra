@@ -29,6 +29,7 @@
                                 filter=""
                                 :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
                                 :log="log"
+                                :style="{borderTop: i===0 ? 'none' : '1px solid var(--ks-border-primary)'}"
                             />
                         </div>
 

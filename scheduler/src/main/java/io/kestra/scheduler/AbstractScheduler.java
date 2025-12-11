@@ -984,6 +984,7 @@ public abstract class AbstractScheduler implements Scheduler {
         }
 
         var trigger = flowWithTrigger.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
+        trigger = trigger.checkBackfill();
         this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handle/save/on-error"));
 
     }

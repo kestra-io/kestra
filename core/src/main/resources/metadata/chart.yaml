@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.chart
+name: "chart"
+title: "Chart"
+description: "Tasks that render dashboard charts from Kestra data sources."
+body: "Use these chart widgets to visualize metrics, executions, or flow trends in dashboards; pair them with dashboard data queries and configure aggregations, groupings, and chart options for Bar, Pie, Time Series, KPI, or Table outputs."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

@@ -1200,16 +1200,17 @@ public class JdbcExecutor implements ExecutorInterface {
 
                 // check if there exist a queued execution and submit it to the execution queue
                 if (executor.getFlow().getConcurrency() != null) {
-
-                    // decrement execution concurrency limit
                     // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
-                    // this could only happen for KILLED execution.
                     boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
                         && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
-                        && execution.getState().getHistories().stream().noneMatch(h -> h.getState().isRunning());
+                        && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
+                    // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
                     boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
                         && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
-                    if (!queuedThenKilled && !concurrencyShortCircuitState) {
+                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitionned from KILLING to KILLED
+                    boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
+                    if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
+                        // decrement execution concurrency limit and pop a new queued execution if needed
                         concurrencyLimitStorage.decrement(executor.getFlow());
 
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
@@ -1245,7 +1246,8 @@ public class JdbcExecutor implements ExecutorInterface {
                 // IMPORTANT: this is safe as only the executor is listening to WorkerTaskResult,
                 // and we are sure at this stage that all WorkerJob has been listened and processed by the Worker.
                 // If any of these assumptions changed, this code would not be safe anymore.
-                if (cleanWorkerJobQueue && !ListUtils.isEmpty(executor.getExecution().getTaskRunList())) {
+                // One notable exception is for killed flow as the KILLED worker task result may arrive late so removing them is a racy as we may remove them before they are processed
+                if (cleanWorkerJobQueue && !ListUtils.isEmpty(executor.getExecution().getTaskRunList()) && !execution.getState().getCurrent().isKilled()) {
                     List<String> taskRunKeys = executor.getExecution().getTaskRunList().stream()
                         .map(taskRun -> taskRun.getId())
                         .toList();

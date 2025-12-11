@@ -1612,7 +1612,8 @@
         "email": "Email",
         "firstName": "Imię",
         "lastName": "Nazwisko",
-        "password": "Hasło"
+        "password": "Hasło",
+        "password_requirements": "Hasło musi mieć co najmniej 8 znaków i zawierać co najmniej 1 wielką literę oraz 1 cyfrę."
       },
       "login": "Zaloguj się",
       "logout": "Wyloguj się",

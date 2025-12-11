@@ -21,6 +21,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions");
                         return VALUES.EXECUTION_STATES;
                     },
+                    searchable: true,
                     visibleByDefault: true
                 },
                 {

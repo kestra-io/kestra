@@ -1,0 +1,23 @@
+id: switch-in-concurrent-loop
+namespace: io.kestra.tests
+
+tasks:
+  - id: iterate_and_check_name
+    type: io.kestra.plugin.core.flow.ForEach
+    tasks:
+      - id: switch
+        type: io.kestra.plugin.core.flow.Switch
+        value: "{{ taskrun.value }}"
+        cases:
+          "Alice":
+            - id: OOMCRM_EB_DD_000
+              type: io.kestra.plugin.core.log.Log
+              message: Alice
+          "Bob":
+            - id: OOMCRM_EB_DD_001
+              type: io.kestra.plugin.core.log.Log
+              message: Bob
+
+    values: ["Alice", "Bob"]
+
+    concurrencyLimit: 0

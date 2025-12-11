@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-public interface KvMetadataRepositoryInterface extends SaveRepositoryInterface<PersistedKvMetadata> {
+public interface KvMetadataRepositoryInterface {
     Optional<PersistedKvMetadata> findByName(
         String tenantId,
         String namespace,
@@ -34,6 +34,8 @@ public interface KvMetadataRepositoryInterface extends SaveRepositoryInterface<P
         boolean allowExpired,
         FetchVersion fetchBehavior
     );
+
+    PersistedKvMetadata save(PersistedKvMetadata item);
 
     default PersistedKvMetadata delete(PersistedKvMetadata persistedKvMetadata) throws IOException {
         return this.save(persistedKvMetadata.toBuilder().deleted(true).build());

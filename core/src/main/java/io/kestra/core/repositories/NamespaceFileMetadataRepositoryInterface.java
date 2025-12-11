@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-public interface NamespaceFileMetadataRepositoryInterface extends SaveRepositoryInterface<NamespaceFileMetadata> {
+public interface NamespaceFileMetadataRepositoryInterface {
     Optional<NamespaceFileMetadata> findByPath(
         String tenantId,
         String namespace,
@@ -36,6 +36,8 @@ public interface NamespaceFileMetadataRepositoryInterface extends SaveRepository
     default NamespaceFileMetadata delete(NamespaceFileMetadata namespaceFileMetadata) throws IOException {
         return this.save(namespaceFileMetadata.toBuilder().deleted(true).build());
     }
+
+    NamespaceFileMetadata save(NamespaceFileMetadata namespaceFileMetadata);
 
     /**
      * Purge (hard delete) a list of namespace files metadata. If no version is specified, all versions are purged.

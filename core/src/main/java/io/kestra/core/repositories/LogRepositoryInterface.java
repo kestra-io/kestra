@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.runners.IndexingRepository;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
@@ -12,7 +13,7 @@ import reactor.core.publisher.Flux;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry>, QueryBuilderInterface<Logs.Fields> {
+public interface LogRepositoryInterface extends IndexingRepository<LogEntry>, QueryBuilderInterface<Logs.Fields> {
     /**
      * Finds all the log entries for the given tenant, execution and min log-level.
      * <p>

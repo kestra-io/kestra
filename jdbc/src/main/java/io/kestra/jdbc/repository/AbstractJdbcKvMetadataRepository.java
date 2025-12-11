@@ -7,7 +7,6 @@ import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
-import io.kestra.core.utils.ListUtils;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import org.jooq.*;
@@ -140,22 +139,5 @@ public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudR
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(kvMetadataToPersist);
         this.jdbcRepository.persist(kvMetadataToPersist, context, fields);
         return kvMetadataToPersist;
-    }
-
-    @Override
-    public int saveBatch(List<PersistedKvMetadata> items) {
-        if (ListUtils.isEmpty(items)) {
-            return 0;
-        }
-
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                items.forEach(kvMetadata -> saveKvMetadata(context, kvMetadata));
-
-                return items.size();
-            });
     }
 }

@@ -186,6 +186,7 @@
                                                     id: getLastExecution(scope.row).id
                                                 }
                                             }"
+                                            class="table-link"
                                         >
                                             <DateAgo :date="getLastExecution(scope.row)?.startDate" inverted />
                                         </router-link>
@@ -211,6 +212,7 @@
                                                         id: getLastExecution(scope.row).id
                                                     }
                                                 }"
+                                                class="table-link"
                                             >
                                                 <Status :status="getLastExecution(scope.row).status" size="small" />
                                             </router-link>
@@ -706,6 +708,18 @@
     @media (max-width: 570px) {
         flex-direction: column;
         align-items: flex-end;
+    }
+}
+
+.table-link {
+    cursor: pointer;
+
+    & :deep(button) {
+        cursor: pointer !important;
+    }
+
+    &:hover {
+        text-decoration: none;
     }
 }
 </style>

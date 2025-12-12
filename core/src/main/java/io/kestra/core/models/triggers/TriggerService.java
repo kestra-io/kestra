@@ -82,23 +82,14 @@ public abstract class TriggerService {
             .build();
 
         Map<String, Object> allInputs = new HashMap<>();
-        // add flow inputs with default value
-        var flow = conditionContext.getFlow();
-        if (flow.getInputs() != null) {
-            flow.getInputs().stream()
-                .filter(input -> input.getDefaults() != null)
-                .forEach(input -> allInputs.put(input.getId(), input.getDefaults()));
-        }
 
         if (inputs != null) {
             allInputs.putAll(inputs);
         }
 
-        // add inputs and inject defaults
-        if (!allInputs.isEmpty()) {
-            FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
-            execution = execution.withInputs(flowInputOutput.readExecutionInputs(conditionContext.getFlow(), execution, allInputs));
-        }
+        // add inputs and inject defaults (FlowInputOutput handles defaults internally)
+        FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
+        execution = execution.withInputs(flowInputOutput.readExecutionInputs(conditionContext.getFlow(), execution, allInputs));
 
         return execution;
     }

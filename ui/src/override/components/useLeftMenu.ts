@@ -254,6 +254,7 @@ export function useLeftMenu() {
                         href: {name: "admin/concurrency-limits"},
                         routes: routeStartWith("admin/concurrency-limits"),
                         title: t("concurrency limits"),
+                        hidden: !miscStore.configs?.isConcurrencyViewEnabled,
                     },
                     {
                         href: {name: "admin/stats"},

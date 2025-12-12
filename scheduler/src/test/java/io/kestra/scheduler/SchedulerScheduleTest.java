@@ -489,7 +489,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             Await.until(() -> this.triggerState.findLast(trigger).map(t -> t.getDisabled()).orElse(false).booleanValue(), Duration.ofMillis(100), Duration.ofSeconds(10));
         }
     }
-
+// covers trigger evaluation failures from failed conditions at scheduled triggers
     @Test
     void failedEvaluation1() {
         // mock flow listeners
@@ -545,6 +545,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             throw new RuntimeException(e);
         }
     }
+    // covers trigger evaluation failures propagated to evaluateScheduleTrigger() such as invalid expressions, input resolving issues at scheduled triggers...etc
     @Test
     void failedEvaluation2() {
         // mock flow listeners

@@ -29,6 +29,7 @@
                                 filter=""
                                 :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
                                 :log="log"
+                                :class="{'log-0': i === 0}"
                             />
                         </div>
 

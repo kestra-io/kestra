@@ -100,6 +100,10 @@ private String chartDefaultDuration;
     @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
     private List<String> hiddenLabelsPrefixes;
 
+    @io.micronaut.context.annotation.Value("${kestra.queue.type}")
+    @Nullable
+    protected String queueType;
+
     @Inject
     private PluginRegistry pluginRegistry;
 
@@ -133,6 +137,7 @@ private String chartDefaultDuration;
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())
             .chartDefaultDuration(this.chartDefaultDuration)
+            .isConcurrencyViewEnabled(!this.queueType.equals("kafka"))
             ;
 
         if (this.environmentName != null || this.environmentColor != null) {
@@ -225,6 +230,8 @@ private String chartDefaultDuration;
         Boolean isBasicAuthInitialized;
 
         Long pluginsHash;
+
+        Boolean isConcurrencyViewEnabled;
     }
 
     @Value

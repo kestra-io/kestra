@@ -74,15 +74,19 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
      * Decrement the concurrency limit counter.
      * Must only be called when a flow having concurrency limit ends.
      */
-    public void decrement(FlowInterface flow) {
-        this.jdbcRepository
+    public int decrement(FlowInterface flow) {
+        return this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transactionResult(configuration -> {
                 var dslContext = DSL.using(configuration);
 
-                fetchOne(dslContext, flow).ifPresent(
-                    concurrencyLimit -> update(dslContext, concurrencyLimit.withRunning(concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1))
-                );
+                return fetchOne(dslContext, flow).map(
+                    concurrencyLimit -> {
+                        int newLimit = concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1;
+                        update(dslContext, concurrencyLimit.withRunning(newLimit));
+                        return newLimit;
+                    }
+                ).orElse(0);
             });
     }
 

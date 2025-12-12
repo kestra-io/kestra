@@ -32,6 +32,8 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.exceptions.HttpStatusException;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,11 +48,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
-import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -78,6 +81,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .tenantId(tenantId)
             .flowId(flowId == null ? FLOW : flowId)
             .flowRevision(1)
+            .kind(ExecutionKind.NORMAL)
             .state(finalState);
 
 
@@ -158,6 +162,16 @@ public abstract class AbstractExecutionRepositoryTest {
             ).trigger(executionTrigger).build());
         }
 
+        // add a NORMAL kind execution, it should be fetched correctly
+        executionRepository.save(builder(
+            tenantId,
+            State.Type.SUCCESS,
+            null
+        )
+            .trigger(executionTrigger)
+            .kind(ExecutionKind.NORMAL)
+            .build());
+
         // add a test execution, this should be ignored in search & statistics
         executionRepository.save(builder(
             tenantId,
@@ -182,16 +196,50 @@ public abstract class AbstractExecutionRepositoryTest {
 
     static Stream<Arguments> filterCombinations() {
         return Stream.of(
-            Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unittest").operation(Op.EQUALS).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unittest").operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unused").operation(Op.NOT_EQUALS).build(), 29),
+
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.NOT_EQUALS).build(), 29),
+
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("not.this.one").operation(Op.NOT_EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("o.kestra.unittes").operation(Op.CONTAINS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.uni").operation(Op.STARTS_WITH).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("o.kestra.unittest").operation(Op.ENDS_WITH).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io\\.kestra\\.unittest").operation(Op.REGEX).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value(List.of("io.kestra.unittest", "unused")).operation(Op.IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value(List.of("unused.first", "unused.second")).operation(Op.NOT_IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra").operation(Op.PREFIX).build(), 29),
+
+            Arguments.of(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.NORMAL).operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.TEST).operation(Op.NOT_EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.NORMAL, ExecutionKind.PLAYGROUND)).operation(Op.IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.PLAYGROUND, ExecutionKind.TEST)).operation(Op.NOT_IN).build(), 29),
+
             Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(), 1),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build(), 15),
-            Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 28),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "unknown")).operation(Op.NOT_EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value", "key2", "value2")).operation(Op.IN).build(), 1),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key1", "value1")).operation(Op.NOT_IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).value("value").operation(Op.CONTAINS).build(), 1),
+
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.NOT_EQUALS).build(), 13),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ul").operation(Op.CONTAINS).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ful").operation(Op.STARTS_WITH).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ull").operation(Op.ENDS_WITH).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("[ful]{4}").operation(Op.REGEX).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(List.of(FLOW, "other")).operation(Op.IN).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(List.of(FLOW, "other2")).operation(Op.NOT_IN).build(), 13),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ful").operation(Op.PREFIX).build(), 16),
+
+            Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.STATE).value(Type.RUNNING).operation(Op.EQUALS).build(), 5),
-            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 28),
-            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 28)
+            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 29),
+
+            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.NOT_EQUALS).build(), 0)
         );
     }
 
@@ -219,7 +267,7 @@ public abstract class AbstractExecutionRepositoryTest {
         inject(tenant);
 
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  tenant, null);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
 
         List<QueryFilter> filters = List.of(QueryFilter.builder()
@@ -283,7 +331,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value("io.kestra")
             .build());
         executions = executionRepository.find(Pageable.from(1, 10),  tenant, filters);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
     }
 
     @Test
@@ -300,7 +348,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value(executionTriggerId)
             .build());
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10), tenant, filters);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
         filters = List.of(QueryFilter.builder()
@@ -310,7 +358,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .build());
 
         executions = executionRepository.find(Pageable.from(1, 10),  tenant, filters);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
 
@@ -321,12 +369,12 @@ public abstract class AbstractExecutionRepositoryTest {
             .build());
 
         executions = executionRepository.find(Pageable.from(1, 10),  tenant, filters );
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
         assertThat(executions.getFirst().getTrigger()).isNull();
 
         executions = executionRepository.find(Pageable.from(1, 10),  tenant, null);
-        assertThat(executions.getTotal()).isEqualTo(56L);
+        assertThat(executions.getTotal()).isEqualTo(58L);
     }
 
     @Test
@@ -335,7 +383,7 @@ public abstract class AbstractExecutionRepositoryTest {
         inject(tenant);
 
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  tenant, null);
-        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.getTotal()).isEqualTo(29L);
         assertThat(executions.size()).isEqualTo(10);
 
         var filters = List.of(QueryFilter.builder()
@@ -638,9 +686,69 @@ public abstract class AbstractExecutionRepositoryTest {
         );
 
         assertThat(data.getTotal()).isEqualTo(1L);
-        assertThat(data).first().hasFieldOrPropertyWithValue("count", 1);
+        assertThat(data).first().hasFieldOrProperty("count");
+        assertThat(data).first().extracting("count").hasToString("1");
         assertThat(data).first().hasFieldOrPropertyWithValue("id", execution.getId());
     }
+
+    @Test
+    void dashboard_fetchData_365Days_verifiesDateGrouping() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var executionDuration = Duration.ofMinutes(220);
+        var executionCreateDate = Instant.now();
+
+        // Create an execution within the 365-day range
+        Execution execution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .build();
+
+        execution = executionRepository.save(execution);
+
+        // Create an execution BEYOND 365 days (400 days ago) - should be filtered out
+        var executionCreateDateOld = Instant.now().minus(Duration.ofDays(400));
+        Execution executionOld = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution-old")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "US")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDateOld), new State.History(Type.SUCCESS, executionCreateDateOld.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .build();
+
+        executionRepository.save(executionOld);
+
+        var now = ZonedDateTime.now();
+        ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(tenantId, Executions.builder()
+                .type(Executions.class.getName())
+                .columns(Map.of(
+                    "count", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.ID).agg(AggregationType.COUNT).build(),
+                    "id", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.ID).build(),
+                    "date", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.START_DATE).build(),
+                    "duration", ColumnDescriptor.<Executions.Fields>builder().field(Executions.Fields.DURATION).build()
+                )).build(),
+            now.minusDays(365),
+            now,
+            null
+        );
+
+        // Should only return 1 execution (the recent one), not the 400-day-old execution
+        assertThat(data.getTotal()).isGreaterThanOrEqualTo(1L);
+        assertThat(data).isNotEmpty();
+        assertThat(data).first().hasFieldOrProperty("count");
+    }
+
+
 
     private static Execution buildWithCreatedDate(String tenant, Instant instant) {
         return Execution.builder()
@@ -661,7 +769,7 @@ public abstract class AbstractExecutionRepositoryTest {
 inject(tenant);
 
         List<Execution> executions = executionRepository.findAllAsync(tenant).collectList().block();
-        assertThat(executions).hasSize(29); // used by the backup so it contains TEST executions
+        assertThat(executions).hasSize(30); // used by the backup so it contains TEST executions
     }
 
     @Test
@@ -821,12 +929,7 @@ inject(tenant);
                         )
                     )
                 ).build();
-            try {
-                var res= JacksonMapper.ofJson().writeValueAsString(successExecution);
-                System.out.println(res);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
-            }
+
             assertThat(successExecution.getState().getDuration().get()).isCloseTo(Duration.ofSeconds(20), Duration.ofMillis(3));
             executionRepository.save(successExecution);
 
@@ -878,7 +981,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.asc("state_duration"));
+        var sort = createSortLikeInControllers(List.of("state.duration:asc"), executionRepository.sortMapping());
         var sortedByShortestDuration = executionRepository.find(Pageable.from(sort), tenant, emptyFilters);
 
         // then
@@ -906,7 +1009,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.desc("state_duration"));
+        var sort = createSortLikeInControllers(List.of("state.duration:desc"), executionRepository.sortMapping());
         var sortedByLongestDuration = executionRepository.find(Pageable.from(sort), tenant, emptyFilters);
 
         // then
@@ -935,7 +1038,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.asc("start_date"));
+        var sort = createSortLikeInControllers(List.of("state.startDate:asc"), executionRepository.sortMapping());
         var page = Pageable.from(1, 1, sort);
         var findByMoreRecentStartDate = executionRepository.find(
             page,
@@ -958,7 +1061,7 @@ inject(tenant);
 
         // when
         List<QueryFilter> emptyFilters = null;
-        var sort = Sort.of(Sort.Order.desc("start_date"));
+        var sort = createSortLikeInControllers(List.of("state.startDate:desc"), executionRepository.sortMapping());
         var page = Pageable.from(1, 1, sort);
         var findByMoreRecentStartDate = executionRepository.find(
             page,
@@ -971,6 +1074,28 @@ inject(tenant);
             .as("assert order when finding by last start date")
             .map(Execution::getId)
             .containsExactly(testData.failedExecution().getId());
+    }
+
+    // duplicated from PageableUtils, because mapping is different between PG and ES
+    private Sort createSortLikeInControllers(List<String> sort, Function<String, String> sortMapper) {
+        return sort == null ? null :
+            Sort.of(sort
+                .stream()
+                .map(s -> {
+                    String[] split = s.split(":");
+                    if (split.length != 2) {
+                        throw new HttpStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid sort parameter");
+                    }
+                    String col = split[0];
+
+                    if (sortMapper != null) {
+                        col = sortMapper.apply(col);
+                    }
+
+                    return split[1].equals("asc") ? Sort.Order.asc(col) : Sort.Order.desc(col);
+                })
+                .toList()
+            );
     }
 
     @Test

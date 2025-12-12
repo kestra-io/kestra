@@ -23,7 +23,6 @@
     import type {Histories} from "../../../../../stores/executions";
 
     import {getSchemeValue} from "../../../../../utils/scheme";
-    import {storageKeys} from "../../../../../utils/constants";
 
     import moment from "moment";
 
@@ -31,8 +30,9 @@
 
     const props = defineProps<{ histories: Histories[] }>();
 
-    const F = localStorage.getItem(storageKeys.DATE_FORMAT_STORAGE_KEY) ?? "llll";
-    const formatDate = (date: string) => moment(date)?.format(F) ?? date;
+    const formatDate = (date: string) => {
+        return moment(date)?.format("YYYY-MM-DD HH:mm:ss.SSS") ?? date;
+    };
 </script>
 
 <style scoped lang="scss">
@@ -67,24 +67,37 @@
 }
 
 .el-timeline {
+    padding-left: 50%;
+    margin-top: $spacer;
+
     & :deep(.el-timeline-item) {
         padding-bottom: $spacer;
+
+        & * {
+            line-height: 1.5;
+            font-size: $font-size-sm;
+        }
     }
 
     & :deep(.el-timeline-item__content) {
-        font-size: $font-size-sm;
         color: var(--ks-content-primary);
     }
 
     & :deep(.el-timeline-item__timestamp) {
-        margin-top: calc($spacer / 4);
+        position: absolute;
+        top: 0;
+        left: -210px;
+        width: 190px;
+        margin-top: 0;
+        text-align: right;
         color: var(--ks-content-tertiary);
     }
 
     & :deep(.el-timeline-item__tail) {
         height: inherit;
-        top: 30%;
+        top: 40%;
         bottom: 10%;
+        left: 4.5px;
         border-left-width: 1px;
     }
 }

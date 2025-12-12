@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.output
+name: "output"
+title: "Output"
+description: "Tasks that expose outputs from a flow."
+body: "Use OutputValues to publish key-value outputs for downstream tasks or subflows; declare the output map and data types that consuming tasks should read."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

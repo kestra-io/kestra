@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -65,7 +64,7 @@ public interface HasSource {
 
             if (isYAML(fileName)) {
                 byte[] bytes = inputStream.readAllBytes();
-                List<String> sources = List.of(new String(bytes).split("---"));
+                List<String> sources = List.of(new String(bytes).split("(?m)^---\\s*$"));
                 for (int i = 0; i < sources.size(); i++) {
                     String source = sources.get(i);
                     reader.accept(source, String.valueOf(i));

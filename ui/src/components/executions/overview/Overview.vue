@@ -77,18 +77,13 @@
                             <div>
                                 {{ $t("execution replay") }}
                                 <router-link
-                                    :to="{
-                                        name: 'executions/update',
-                                        params: {
-                                            ...(execution.tenantId
-                                                ? {tenant: execution.tenantId}
-                                                : {}),
-                                            namespace: execution.namespace,
-                                            flowId: execution.flowId,
-                                            id: execution.originalId,
-                                            tab: 'overview',
-                                        },
-                                    }"
+                                    :to="
+                                        createLink(
+                                            'executions',
+                                            execution,
+                                            execution.originalId,
+                                        )
+                                    "
                                 >
                                     <Id
                                         :value="execution.originalId"
@@ -125,14 +120,6 @@
                     :execution
                 />
 
-                <!-- TODO: To be reworked and integrated into the Cascader component -->
-                <TriggerCascader
-                    :title="t('trigger')"
-                    :empty="t('no_trigger')"
-                    :elements="execution.trigger"
-                    :execution
-                />
-
                 <div id="chart">
                     <div>
                         <section>
@@ -156,7 +143,7 @@
                         </section>
                         <TimeSeries
                             ref="chartRef"
-                            :chart="{...chart, content: YAML_CHART}"
+                            :chart
                             :filters
                             showDefault
                             execution
@@ -164,20 +151,7 @@
                     </div>
                 </div>
 
-                <div id="buttons">
-                    <el-button @click="navigateToExecution('previous')">
-                        <el-icon class="el-icon--left">
-                            <ChevronLeft />
-                        </el-icon>
-                        {{ $t("prev_execution") }}
-                    </el-button>
-                    <el-button @click="navigateToExecution('next')">
-                        {{ $t("next_execution") }}
-                        <el-icon class="el-icon--right">
-                            <ChevronRight />
-                        </el-icon>
-                    </el-button>
-                </div>
+                <PrevNext :execution />
             </div>
         </el-splitter-panel>
     </el-splitter>
@@ -191,11 +165,10 @@
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
 
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
+    import {useRoute} from "vue-router";
     const route = useRoute();
 
-    import {Execution, useExecutionsStore} from "../../../stores/executions";
+    import {useExecutionsStore} from "../../../stores/executions";
     const store = useExecutionsStore();
 
     import {useMiscStore} from "override/stores/misc";
@@ -204,11 +177,10 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("md");
-
     import moment from "moment";
 
+    import {verticalLayout} from "./utils/layout";
+    import {createLink} from "./utils/links";
     import Utils from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
@@ -220,9 +192,9 @@
 
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
-    import Cascader from "./components/main/Cascader.vue";
-    import TriggerCascader from "./components/main/TriggerCascader.vue";
+    import Cascader from "./components/main/cascaders/Cascader.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
+    import PrevNext from "./components/main/PrevNext.vue";
 
     import NoData from "../../layout/NoData.vue";
 
@@ -256,8 +228,6 @@
     import History from "vue-material-design-icons/History.vue";
     import SortVariant from "vue-material-design-icons/SortVariant.vue";
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
-    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
 
     const emits = defineEmits(["follow"]);
 
@@ -270,32 +240,13 @@
                 icon: DotsSquare,
                 label: t("namespace"),
                 value: execution.value.namespace,
-                to: {
-                    name: "namespaces/update",
-                    params: {
-                        ...(execution.value.tenantId
-                            ? {tenant: execution.value.tenantId}
-                            : {}),
-                        id: execution.value.namespace,
-                        tab: "overview",
-                    },
-                },
+                to: createLink("namespaces", execution.value),
             },
             {
                 icon: FileTreeOutline,
                 label: t("flow"),
                 value: execution.value.flowId,
-                to: {
-                    name: "flows/update",
-                    params: {
-                        ...(execution.value.tenantId
-                            ? {tenant: execution.value.tenantId}
-                            : {}),
-                        namespace: execution.value.namespace,
-                        id: execution.value.flowId,
-                        tab: "overview",
-                    },
-                },
+                to: createLink("flows", execution.value),
             },
             {
                 icon: LayersTripleOutline,
@@ -397,18 +348,11 @@
                         icon: History,
                         label: t("parent execution"),
                         value: execution.value.trigger.variables.executionId,
-                        to: {
-                            name: "executions/update",
-                            params: {
-                                ...(execution.value.tenantId
-                                    ? {tenant: execution.value.tenantId}
-                                    : {}),
-                                namespace: execution.value.namespace,
-                                flowId: execution.value.flowId,
-                                id: execution.value.trigger.variables.executionId,
-                                tab: "overview",
-                            },
-                        },
+                        to: createLink(
+                            "executions",
+                            execution.value,
+                            execution.value.trigger.variables.executionId,
+                        ),
                     },
                 ]
                 : []),
@@ -419,18 +363,11 @@
                         icon: History,
                         label: t("original execution"),
                         value: execution.value.originalId,
-                        to: {
-                            name: "executions/update",
-                            params: {
-                                ...(execution.value.tenantId
-                                    ? {tenant: execution.value.tenantId}
-                                    : {}),
-                                namespace: execution.value.namespace,
-                                flowId: execution.value.flowId,
-                                id: execution.value.originalId,
-                                tab: "overview",
-                            },
-                        },
+                        to: createLink(
+                            "executions",
+                            execution.value,
+                            execution.value.originalId,
+                        ),
                     },
                 ]
                 : []),
@@ -484,14 +421,21 @@
             title: t("flow_outputs"),
             empty: t("no_flow_outputs"),
             elements: execution.value?.outputs,
+            includeDebug: "outputs",
+        },
+        {
+            title: t("trigger"),
+            empty: t("no_trigger"),
+            elements: execution.value?.trigger,
+            includeDebug: "trigger",
         },
     ];
 
-    const options = useValues("executions").VALUES.RELATIVE_DATE.slice(0, -1); // Remove last 365 days option
+    const options = useValues("executions").VALUES.RELATIVE_DATE;
     const timerange = ref<string>("PT168H"); // Default to last 7 days
 
     const chartRef = ref<InstanceType<typeof TimeSeries> | null>(null);
-    const chart = yaml.parse(YAML_CHART);
+    const chart = {...yaml.parse(YAML_CHART), content: YAML_CHART};
     const filters = computed((): FilterObject[] => {
         if (!execution.value) return [];
 
@@ -523,51 +467,6 @@
         ];
     });
 
-    const navigateToExecution = async (direction: "previous" | "next") => {
-        if (!execution.value) return;
-
-        try {
-            const params = {
-                namespace: execution.value.namespace,
-                flowId: execution.value.flowId,
-                pageSize: 100,
-                sort: "state.startDate:desc",
-            };
-
-            const response = await store.findExecutions(params);
-            const result = response?.results ?? [];
-
-            if (!result.length) return;
-
-            const currentIdx = result.findIndex(
-                (e: Execution) => e.id === execution.value!.id,
-            );
-
-            if (currentIdx === -1) return;
-
-            // next = newer (-1), previous = older (+1)
-            const targetIdx =
-                direction === "previous" ? currentIdx + 1 : currentIdx - 1;
-
-            if (targetIdx < 0 || targetIdx >= result.length) return;
-
-            const target = result[targetIdx];
-
-            router.push({
-                name: "executions/update",
-                params: {
-                    ...(target.tenantId ? {tenant: target.tenantId} : {}),
-                    namespace: target.namespace,
-                    flowId: target.flowId,
-                    id: target.id,
-                    tab: "overview",
-                },
-            });
-        } catch (error) {
-            console.error("Failed to navigate executions:", error);
-        }
-    };
-
     onMounted(() => {
         if (!route.params.id) return;
         loadExecution(route.params.id as string);
@@ -578,8 +477,6 @@
 
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
-
-$font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of ui-libs
 
 #overview {
     :deep(.el-splitter-panel:has(> .sidebar:first-child)) {
@@ -710,15 +607,15 @@ $font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of 
             }
         }
 
-        #buttons {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: $spacer;
+        & :deep(.el-empty) {
+            padding: 0;
 
-            .el-button {
-                width: calc($spacer * 12);
-                font-size: $font-size-sm;
+            & .el-empty__image {
+                width: calc($spacer * 8) !important;
+            }
+
+            & .el-empty__description {
+                margin-top: calc($spacer / 2);
             }
         }
     }

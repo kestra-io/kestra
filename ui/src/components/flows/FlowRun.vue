@@ -59,7 +59,6 @@
                 <div class="right-align">
                     <el-form-item class="submit">
                         <el-button
-                            :data-test-id="buttonTestId"
                             :icon="buttonIcon"
                             :disabled="!flowCanBeExecuted || hasBlockingChecks()"
                             :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"
@@ -191,6 +190,8 @@
             },
             onSubmit(formRef) {
                 if (formRef && this.flowCanBeExecuted) {
+                    this.checks = [];
+                    this.executeClicked = false;
                     formRef.validate((valid) => {
                         if (!valid) {
                             return false;
@@ -224,6 +225,7 @@
                                 nextStep: true,
                             });
                         }
+                        this.executeClicked = true;
                         this.$emit("executionTrigger");
                     });
                 }

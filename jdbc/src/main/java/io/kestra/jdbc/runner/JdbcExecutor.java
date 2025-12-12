@@ -176,7 +176,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
-    
+
     @Inject
     private SLAMonitorStorage slaMonitorStorage;
 
@@ -658,21 +658,16 @@ public class JdbcExecutor implements ExecutorInterface {
                                                     workerTaskResults.add(new WorkerTaskResult(taskRun));
                                                 }
                                             }
-                                            /// flowable attempt state transition to running
+                                            // flowable attempt state transition to running
                                             if (workerTask.getTask().isFlowable()) {
-                                                List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
-                                                    .map(ArrayList::new)
-                                                    .orElseGet(ArrayList::new);
-
-
-                                                attempts.add(
-                                                    TaskRunAttempt.builder()
-                                                        .state(new State().withState(State.Type.RUNNING))
-                                                        .build()
-                                                );
-
                                                 TaskRun updatedTaskRun = workerTask.getTaskRun()
-                                                    .withAttempts(attempts)
+                                                    .withAttempts(
+                                                        List.of(
+                                                            TaskRunAttempt.builder()
+                                                                .state(new State().withState(State.Type.RUNNING))
+                                                                .build()
+                                                        )
+                                                    )
                                                     .withState(State.Type.RUNNING);
 
                                                 workerTaskResults.add(new WorkerTaskResult(updatedTaskRun));
@@ -1135,11 +1130,18 @@ public class JdbcExecutor implements ExecutorInterface {
                 // We need to detect that and reset them as they will never reach the reset code later on this method.
                 if (execution.getTrigger() != null && execution.getState().isFailed() && ListUtils.isEmpty(execution.getTaskRunList())) {
                     FlowWithSource flow = executor.getFlow();
-                    triggerRepository
-                        .findByExecution(execution)
-                        .ifPresent(trigger -> {
-                            this.triggerState.update(executionService.resetExecution(flow, execution, trigger));
-                        });
+
+                    if (flow == null) {
+                        log.error("Couldn't reset trigger for execution {} as flow {} is missing. Trigger {} might stay stuck.",
+                            execution.getId(),
+                            execution.getTenantId() + "/" + execution.getNamespace() + "/" + execution.getFlowId(),
+                            execution.getTrigger().getId()
+                        );
+                    } else {
+                        triggerRepository
+                            .findByExecution(execution)
+                            .ifPresent(trigger -> this.triggerState.update(executionService.resetExecution(flow, execution, trigger)));
+                    }
                 }
 
                 return;
@@ -1198,33 +1200,40 @@ public class JdbcExecutor implements ExecutorInterface {
 
                 // check if there exist a queued execution and submit it to the execution queue
                 if (executor.getFlow().getConcurrency() != null) {
-
-                    // decrement execution concurrency limit
                     // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
-                    // this could only happen for KILLED execution.
                     boolean queuedThenKilled = execution.getState().getCurrent() == State.Type.KILLED
                         && execution.getState().getHistories().stream().anyMatch(h -> h.getState().isQueued())
-                        && execution.getState().getHistories().stream().noneMatch(h -> h.getState().isRunning());
+                        && execution.getState().getHistories().stream().noneMatch(h -> h.getState().onlyRunning());
+                    // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
                     boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
                         && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
-                    if (!queuedThenKilled && !concurrencyShortCircuitState) {
-                        concurrencyLimitStorage.decrement(executor.getFlow());
+                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitionned from KILLING to KILLED
+                    boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
+                    if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
+                        int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());
 
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                             var finalFlow = executor.getFlow();
-                            executionQueuedStorage.pop(executor.getFlow().getTenantId(),
-                                executor.getFlow().getNamespace(),
-                                executor.getFlow().getId(),
-                                throwBiConsumer((dslContext, queued) -> {
-                                    var newExecution = queued.withState(State.Type.RUNNING);
-                                    concurrencyLimitStorage.increment(dslContext, finalFlow);
-                                    executionQueue.emit(newExecution);
-                                    metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
 
-                                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                                    processFlowTriggers(newExecution);
-                                })
-                            );
+                            if (newLimit < finalFlow.getConcurrency().getLimit()) {
+                                executionQueuedStorage.pop(executor.getFlow().getTenantId(),
+                                    executor.getFlow().getNamespace(),
+                                    executor.getFlow().getId(),
+                                    throwBiConsumer((dslContext, queued) -> {
+                                        var newExecution = queued.withState(State.Type.RUNNING);
+                                        concurrencyLimitStorage.increment(dslContext, finalFlow);
+                                        executionQueue.emit(newExecution);
+                                        metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+
+                                        // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                                        processFlowTriggers(newExecution);
+                                    })
+                                );
+                            } else {
+                                log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. No new executions will be dequeued.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
+                            }
+                        } else if (newLimit >= executor.getFlow().getConcurrency().getLimit()) {
+                            log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
                         }
                     }
                 }
@@ -1243,7 +1252,8 @@ public class JdbcExecutor implements ExecutorInterface {
                 // IMPORTANT: this is safe as only the executor is listening to WorkerTaskResult,
                 // and we are sure at this stage that all WorkerJob has been listened and processed by the Worker.
                 // If any of these assumptions changed, this code would not be safe anymore.
-                if (cleanWorkerJobQueue && !ListUtils.isEmpty(executor.getExecution().getTaskRunList())) {
+                // One notable exception is for killed flow as the KILLED worker task result may arrive late so removing them is a racy as we may remove them before they are processed
+                if (cleanWorkerJobQueue && !ListUtils.isEmpty(executor.getExecution().getTaskRunList()) && !execution.getState().getCurrent().isKilled()) {
                     List<String> taskRunKeys = executor.getExecution().getTaskRunList().stream()
                         .map(taskRun -> taskRun.getId())
                         .toList();

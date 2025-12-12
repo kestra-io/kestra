@@ -2,6 +2,7 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -291,7 +292,7 @@ public abstract class AbstractJdbcRepository {
         }
         // Handle Field.CHILD_FILTER
         if (field.equals(QueryFilter.Field.CHILD_FILTER)) {
-            return handleChildFilter(value);
+            return handleChildFilter(value, operation);
         }
         // Handling for Field.MIN_LEVEL
         if (field.equals(QueryFilter.Field.MIN_LEVEL)) {
@@ -322,30 +323,49 @@ public abstract class AbstractJdbcRepository {
                 throw new InvalidQueryFiltersException("Label field value must be instance of Map or String");
             }
         }
-        if (field == QueryFilter.Field.KIND) {
-            return applyKindCondition(value,operation);
-        }
 
         // Convert the field name to lowercase and quote it
-        Name columnName = DSL.quotedName(field.name().toLowerCase());
+        Name columnName = getColumnName(field);
 
         // Default handling for other fields
         return switch (operation) {
-            case EQUALS -> DSL.field(columnName).eq(value);
-            case NOT_EQUALS -> DSL.field(columnName).ne(value);
+            case EQUALS -> DSL.field(columnName).eq(primitiveOrToString(value));
+            case NOT_EQUALS -> DSL.field(columnName).ne(primitiveOrToString(value));
             case GREATER_THAN -> DSL.field(columnName).greaterThan(value);
             case LESS_THAN -> DSL.field(columnName).lessThan(value);
-            case IN -> DSL.field(columnName).in(ListUtils.convertToList(value));
-            case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToList(value));
+            case IN -> DSL.field(columnName).in(ListUtils.convertToListString(value));
+            case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToListString(value));
             case STARTS_WITH -> DSL.field(columnName).like(value + "%");
 
             case ENDS_WITH -> DSL.field(columnName).like("%" + value);
             case CONTAINS -> DSL.field(columnName).like("%" + value + "%");
             case REGEX -> DSL.field(columnName).likeRegex((String) value);
-            case PREFIX -> DSL.field(columnName).like(value + ".%")
+            case PREFIX -> DSL.field(columnName).like(value + "%")
                     .or(DSL.field(columnName).eq(value));
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
+    }
+
+    private static Object primitiveOrToString(Object o) {
+        if (o == null) return null;
+
+        if (o instanceof Boolean
+            || o instanceof Byte
+            || o instanceof Short
+            || o instanceof Integer
+            || o instanceof Long
+            || o instanceof Float
+            || o instanceof Double
+            || o instanceof Character
+            || o instanceof String) {
+            return o;
+        }
+
+        return o.toString();
+    }
+
+    protected Name getColumnName(QueryFilter.Field field){
+        return DSL.quotedName(field.name().toLowerCase());
     }
 
     protected Condition findQueryCondition(String query) {
@@ -391,12 +411,13 @@ public abstract class AbstractJdbcRepository {
     }
 
     // Handle CHILD_FILTER field logic
-    private Condition handleChildFilter(Object value) {
+    private Condition handleChildFilter(Object value, Op operation) {
         ChildFilter childFilter = (value instanceof String val) ? ChildFilter.valueOf(val) : (ChildFilter) value;
 
-        return switch (childFilter) {
-            case CHILD -> field("trigger_execution_id").isNotNull();
-            case MAIN -> field("trigger_execution_id").isNull();
+        return switch (operation) {
+            case EQUALS -> childFilter.equals(ChildFilter.CHILD) ? field("trigger_execution_id").isNotNull() : field("trigger_execution_id").isNull();
+            case NOT_EQUALS -> childFilter.equals(ChildFilter.CHILD) ? field("trigger_execution_id").isNull() : field("trigger_execution_id").isNotNull();
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for child filter field: " + operation);
         };
     }
 
@@ -447,15 +468,6 @@ public abstract class AbstractJdbcRepository {
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
         };
     }
-    private Condition applyKindCondition(Object value, QueryFilter.Op operation) {
-        String kind =  value.toString();
-        return switch (operation) {
-            case EQUALS -> field("kind").eq(kind);
-            case NOT_EQUALS -> field("kind").ne(kind);
-            default -> throw new InvalidQueryFiltersException("Unsupported operation for KIND: " + operation);
-        };
-    }
-
 
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
         throw new UnsupportedOperationException("formatDateField() not implemented");

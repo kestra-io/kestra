@@ -200,7 +200,7 @@
 
                         <el-table-column
                             v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
-                            columnKey="action"
+                            columnKey="unlock"
                             className="row-action"
                         >
                             <template #default="scope">
@@ -213,6 +213,14 @@
                                         <LockOff />
                                     </Kicon>
                                 </el-button>
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                            v-if="authStore.user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                            columnKey="delete"
+                            className="row-action"
+                        >
+                            <template #default="scope">
                                 <el-button>
                                     <Kicon
                                         :tooltip="$t('delete trigger')"

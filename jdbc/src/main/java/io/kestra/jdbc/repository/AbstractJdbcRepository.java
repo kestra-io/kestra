@@ -329,8 +329,8 @@ public abstract class AbstractJdbcRepository {
 
         // Default handling for other fields
         return switch (operation) {
-            case EQUALS -> DSL.field(columnName).eq(value.toString());
-            case NOT_EQUALS -> DSL.field(columnName).ne(value.toString());
+            case EQUALS -> DSL.field(columnName).eq(primitiveOrToString(value));
+            case NOT_EQUALS -> DSL.field(columnName).ne(primitiveOrToString(value));
             case GREATER_THAN -> DSL.field(columnName).greaterThan(value);
             case LESS_THAN -> DSL.field(columnName).lessThan(value);
             case IN -> DSL.field(columnName).in(ListUtils.convertToListString(value));
@@ -344,6 +344,24 @@ public abstract class AbstractJdbcRepository {
                     .or(DSL.field(columnName).eq(value));
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
+    }
+
+    private static Object primitiveOrToString(Object o) {
+        if (o == null) return null;
+
+        if (o instanceof Boolean
+            || o instanceof Byte
+            || o instanceof Short
+            || o instanceof Integer
+            || o instanceof Long
+            || o instanceof Float
+            || o instanceof Double
+            || o instanceof Character
+            || o instanceof String) {
+            return o;
+        }
+
+        return o.toString();
     }
 
     protected Name getColumnName(QueryFilter.Field field){

@@ -23,6 +23,17 @@
 @font-face {
   font-family: 'Public Sans';
   font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src:
+    local('Public Sans SemiBold'),
+    local('PublicSans-SemiBold'),
+    url('../../src/assets/fonts/public-sans/public-sans-v21-latin-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
   font-weight: 700;
   font-display: swap;
   src:

@@ -1,14 +1,12 @@
 package io.kestra.core.utils;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.tasks.FileExistComportment;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.NamespaceFile;
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Inject;
-import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -19,28 +17,27 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.*;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
-@Singleton
-public class NamespaceFilesUtils {
-    @Inject
-    private ExecutorsUtils executorsUtils;
+public final class NamespaceFilesUtils {
+    private static final int maxThreads = Math.max(Runtime.getRuntime().availableProcessors() * 4, 32);
+    private static final ExecutorService EXECUTOR_SERVICE = new ThreadPoolExecutor(
+        0,
+        maxThreads,
+        60L,
+        TimeUnit.SECONDS,
+        new SynchronousQueue<>(),
+        new ThreadFactoryBuilder().setNameFormat("namespace-files").build()
+    );;
 
-    private ExecutorService executorService;
-    private int maxThreads;
-
-    @PostConstruct
-    public void postConstruct() {
-        this.maxThreads = Math.max(Runtime.getRuntime().availableProcessors() * 4, 32);
-        this.executorService = executorsUtils.maxCachedThreadPool(maxThreads, "namespace-file");
+    private NamespaceFilesUtils() {
+        // utility class pattern
     }
 
-    public void loadNamespaceFiles(
+    public static void loadNamespaceFiles(
         RunContext runContext,
         NamespaceFiles namespaceFiles
     )
@@ -69,7 +66,7 @@ public class NamespaceFilesUtils {
         int parallelism = maxThreads / 2;
         Flux.fromIterable(matchedNamespaceFiles)
             .parallel(parallelism)
-            .runOn(Schedulers.fromExecutorService(executorService))
+            .runOn(Schedulers.fromExecutorService(EXECUTOR_SERVICE))
             .doOnNext(throwConsumer(nsFile -> {
                 InputStream content = runContext.storage().getFile(nsFile.uri());
                 Path path = folderPerNamespace ?

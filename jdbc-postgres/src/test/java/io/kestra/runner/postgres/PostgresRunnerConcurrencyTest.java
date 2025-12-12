@@ -1,6 +1,6 @@
 package io.kestra.runner.postgres;
 
-import io.kestra.core.runners.AbstractRunnerConcurrencyTest;
+import io.kestra.jdbc.runner.JdbcConcurrencyRunnerTest;
 
-public class PostgresRunnerConcurrencyTest extends AbstractRunnerConcurrencyTest {
+public class PostgresRunnerConcurrencyTest extends JdbcConcurrencyRunnerTest {
 }

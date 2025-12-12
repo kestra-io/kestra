@@ -271,7 +271,9 @@
         width: 100%;
         max-width: 400px;
         padding: 1rem;
-
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
         .logo {
             width: 250px;
             margin-bottom: 40px;

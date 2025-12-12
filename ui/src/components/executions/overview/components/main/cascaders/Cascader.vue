@@ -1,5 +1,5 @@
 <template>
-    <div :id="`cascader-${props.title}`">
+    <div :id="cascaderID">
         <div class="header">
             <el-text truncated>
                 {{ props.title }}
@@ -12,70 +12,86 @@
             />
         </div>
 
-        <el-cascader-panel
-            v-if="props.elements"
-            ref="cascader"
-            :options="filteredOptions"
-        >
-            <template #default="{data}">
-                <VarValue
-                    v-if="isFile(data.value)"
-                    :value="data.value"
-                    :execution="props.execution"
-                    class="node"
-                />
-                <div v-else class="node">
-                    <div :title="data.label">
-                        {{ data.label }}
+        <template v-if="props.elements">
+            <el-splitter
+                v-if="props.includeDebug"
+                :layout="verticalLayout ? 'vertical' : 'horizontal'"
+                lazy
+            >
+                <el-splitter-panel :size="verticalLayout ? '50%' : '70%'">
+                    <el-cascader-panel
+                        :options="filteredOptions"
+                        @expand-change="(p: string[]) => (path = p.join('.'))"
+                        class="debug"
+                    >
+                        <template #default="{data}">
+                            <div class="node">
+                                <div :title="data.label">
+                                    {{ data.label }}
+                                </div>
+                                <div v-if="data.value && data.children">
+                                    <code>{{ itemsCount(data) }}</code>
+                                </div>
+                            </div>
+                        </template>
+                    </el-cascader-panel>
+                </el-splitter-panel>
+                <el-splitter-panel>
+                    <DebugPanel
+                        :property="props.includeDebug"
+                        :execution
+                        :path
+                    />
+                </el-splitter-panel>
+            </el-splitter>
+
+            <el-cascader-panel v-else :options="filteredOptions">
+                <template #default="{data}">
+                    <div class="node">
+                        <div :title="data.label">
+                            {{ data.label }}
+                        </div>
+                        <div v-if="data.value && data.children">
+                            <code>{{ itemsCount(data) }}</code>
+                        </div>
                     </div>
-                    <div v-if="data.value && data.children">
-                        <code>
-                            {{ data.children.length }}
-                            {{
-                                $t(
-                                    data.children.length === 1
-                                        ? "item"
-                                        : "items",
-                                )
-                            }}
-                        </code>
-                    </div>
-                </div>
-            </template>
-        </el-cascader-panel>
+                </template>
+            </el-cascader-panel>
+        </template>
 
         <span v-else class="empty">{{ props.empty }}</span>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, ref} from "vue";
+    import {onMounted, nextTick, computed, ref} from "vue";
 
-    import VarValue from "../../../VarValue.vue";
+    import DebugPanel from "./DebugPanel.vue";
 
-    import {Execution} from "../../../../../stores/executions";
+    import {Execution} from "../../../../../../stores/executions";
+
+    import {verticalLayout} from "../../../utils/layout";
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
 
     import Magnify from "vue-material-design-icons/Magnify.vue";
+
+    export interface Node {
+        label: string;
+        value: string;
+        children?: Node[];
+    }
 
     const props = defineProps<{
         title: string;
         empty: string;
         elements?: Record<string, any>;
+        includeDebug?: "outputs" | "trigger";
         execution: Execution;
     }>();
 
-    const isFile = (data: any) => {
-        if (typeof data !== "string") return false;
-
-        const prefixes = ["kestra:///", "file://", "nsfile://"];
-        return prefixes.some((prefix) => data.startsWith(prefix));
-    };
-
-    interface Node {
-        label: string;
-        value: string;
-        children?: Node[];
-    }
+    const path = ref<string>("");
 
     const formatted = ref<Node[]>([]);
     const format = (obj: Record<string, any>): Node[] => {
@@ -114,15 +130,25 @@
         });
     });
 
-    const cascader = ref<any>(null);
-    onMounted(() => {
+    const itemsCount = (item: Node) => {
+        const length = item.children?.length ?? 0;
+
+        if (!length) return undefined;
+
+        return `${length} ${length === 1 ? t("item") : t("items")}`;
+    };
+
+    const cascaderID = `cascader-${props.title.toLowerCase().replace(/\s+/g, "-")}`;
+    onMounted(async () => {
         if (props.elements) formatted.value = format(props.elements);
 
-        // Open first node by default on page mount
-        if (cascader?.value) {
-            const nodes = cascader.value.$el.querySelectorAll(".el-cascader-node");
+        await nextTick(() => {
+            // Open first node by default on page mount
+            const selector = `#${cascaderID} .el-cascader-node`;
+            const nodes = document.querySelectorAll(selector);
+
             if (nodes.length > 0) (nodes[0] as HTMLElement).click();
-        }
+        });
     });
 </script>
 
@@ -154,6 +180,12 @@
 
     .el-cascader-panel {
         overflow: auto;
+
+        &.debug {
+            min-height: -webkit-fill-available;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
     }
 
     .empty {

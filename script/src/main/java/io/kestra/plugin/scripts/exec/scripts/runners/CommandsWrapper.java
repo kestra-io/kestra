@@ -149,8 +149,7 @@ public class CommandsWrapper implements TaskCommands {
 
     public <T extends TaskRunnerDetailResult> ScriptOutput run() throws Exception {
         if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
-            NamespaceFilesUtils namespaceFilesUtils = ((DefaultRunContext) runContext).getApplicationContext().getBean(NamespaceFilesUtils.class);
-            namespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
+            NamespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
         }
 
         TaskRunner<T> realTaskRunner = this.getTaskRunner();

@@ -639,6 +639,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return (SelectConditionStep<R>) select;
     }
 
+    protected Name getColumnName(QueryFilter.Field field){
+        if (QueryFilter.Field.FLOW_ID.equals(field)) {
+            return DSL.quotedName("id");
+        } else {
+            return DSL.quotedName(field.name().toLowerCase());
+        }
+    }
+
     abstract protected Condition findSourceCodeCondition(String query);
 
     @Override

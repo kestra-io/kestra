@@ -13,6 +13,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -475,6 +476,81 @@ class ScheduleTest {
         assertThat(result.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
     }
 
+    @Test
+    void successWithMultiselectInputDefaults() throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 1 * *").build();
+
+        ZonedDateTime date = ZonedDateTime.now()
+            .withDayOfMonth(1)
+            .withHour(0)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minusMonths(1);
+
+        Optional<Execution> evaluate = trigger.evaluate(
+            conditionContextWithMultiselectInput(trigger),
+            triggerContext(date, trigger));
+
+        assertThat(evaluate.isPresent()).isTrue();
+        var inputs = evaluate.get().getInputs();
+
+        // Verify MULTISELECT input with explicit defaults works correctly
+        assertThat(inputs.get("multiselectInput")).isEqualTo(List.of("option1", "option2"));
+    }
+
+    @Test
+    void successWithMultiselectInputAutoSelectFirst() throws Exception {
+        Schedule trigger = Schedule.builder().id("schedule").type(Schedule.class.getName()).cron("0 0 1 * *").build();
+
+        ZonedDateTime date = ZonedDateTime.now()
+            .withDayOfMonth(1)
+            .withHour(0)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minusMonths(1);
+
+        Optional<Execution> evaluate = trigger.evaluate(
+            conditionContextWithMultiselectAutoSelectFirst(trigger),
+            triggerContext(date, trigger));
+
+        assertThat(evaluate.isPresent()).isTrue();
+        var inputs = evaluate.get().getInputs();
+
+        // Verify MULTISELECT input with autoSelectFirst defaults to first option
+        assertThat(inputs.get("multiselectAutoSelect")).isEqualTo(List.of("first"));
+    }
+
+    @Test
+    void successWithMultiselectInputProvidedValue() throws Exception {
+        // Test that provided values override defaults for MULTISELECT
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .type(Schedule.class.getName())
+            .cron("0 0 1 * *")
+            .inputs(Map.of("multiselectInput", List.of("option3")))
+            .build();
+
+        ZonedDateTime date = ZonedDateTime.now()
+            .withDayOfMonth(1)
+            .withHour(0)
+            .withMinute(0)
+            .withSecond(0)
+            .truncatedTo(ChronoUnit.SECONDS)
+            .minusMonths(1);
+
+        Optional<Execution> evaluate = trigger.evaluate(
+            conditionContextWithMultiselectInput(trigger),
+            triggerContext(date, trigger));
+
+        assertThat(evaluate.isPresent()).isTrue();
+        var inputs = evaluate.get().getInputs();
+
+        // Verify provided value overrides defaults
+        assertThat(inputs.get("multiselectInput")).isEqualTo(List.of("option3"));
+    }
+
     private ConditionContext conditionContext(AbstractTrigger trigger) {
         Flow flow = Flow.builder()
             .id(IdUtils.create())
@@ -500,6 +576,68 @@ class ScheduleTest {
 
         return ConditionContext.builder()
             .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
+            .flow(flow)
+            .build();
+    }
+
+    private ConditionContext conditionContextWithMultiselectInput(AbstractTrigger trigger) {
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.tests")
+            .labels(
+                    List.of(
+                            new Label("flow-label-1", "flow-label-1"),
+                            new Label("flow-label-2", "flow-label-2")))
+            .variables(Map.of("custom_var", "VARIABLE VALUE"))
+            .inputs(List.of(
+                    MultiselectInput.builder()
+                        .id("multiselectInput")
+                        .type(Type.MULTISELECT)
+                        .values(List.of("option1", "option2", "option3"))
+                        .defaults(Property.ofValue(List.of("option1", "option2")))
+                        .build()))
+            .build();
+
+        TriggerContext triggerContext = TriggerContext.builder()
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .triggerId(trigger.getId())
+            .build();
+
+        return ConditionContext.builder()
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(),
+                    triggerContext, trigger))
+            .flow(flow)
+            .build();
+    }
+
+    private ConditionContext conditionContextWithMultiselectAutoSelectFirst(AbstractTrigger trigger) {
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace("io.kestra.tests")
+            .labels(
+                    List.of(
+                        new Label("flow-label-1", "flow-label-1"),
+                        new Label("flow-label-2", "flow-label-2")))
+            .variables(Map.of("custom_var", "VARIABLE VALUE"))
+            .inputs(List.of(
+                    MultiselectInput.builder()
+                        .id("multiselectAutoSelect")
+                        .type(Type.MULTISELECT)
+                        .values(List.of("first", "second", "third"))
+                        .autoSelectFirst(true)
+                        .build()))
+            .build();
+
+        TriggerContext triggerContext = TriggerContext.builder()
+            .namespace(flow.getNamespace())
+            .flowId(flow.getId())
+            .triggerId(trigger.getId())
+            .build();
+
+        return ConditionContext.builder()
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(),
+                    triggerContext, trigger))
             .flow(flow)
             .build();
     }

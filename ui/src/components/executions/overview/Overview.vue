@@ -120,14 +120,6 @@
                     :execution
                 />
 
-                <!-- TODO: To be reworked and integrated into the Cascader component -->
-                <TriggerCascader
-                    :title="t('trigger')"
-                    :empty="t('no_trigger')"
-                    :elements="execution.trigger"
-                    :execution
-                />
-
                 <div id="chart">
                     <div>
                         <section>
@@ -151,7 +143,7 @@
                         </section>
                         <TimeSeries
                             ref="chartRef"
-                            :chart="{...chart, content: YAML_CHART}"
+                            :chart
                             :filters
                             showDefault
                             execution
@@ -185,11 +177,9 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
-    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("md");
-
     import moment from "moment";
 
+    import {verticalLayout} from "./utils/layout";
     import {createLink} from "./utils/links";
     import Utils from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
@@ -202,8 +192,7 @@
 
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
-    import Cascader from "./components/main/Cascader.vue";
-    import TriggerCascader from "./components/main/TriggerCascader.vue";
+    import Cascader from "./components/main/cascaders/Cascader.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
     import PrevNext from "./components/main/PrevNext.vue";
 
@@ -432,14 +421,21 @@
             title: t("flow_outputs"),
             empty: t("no_flow_outputs"),
             elements: execution.value?.outputs,
+            includeDebug: "outputs",
+        },
+        {
+            title: t("trigger"),
+            empty: t("no_trigger"),
+            elements: execution.value?.trigger,
+            includeDebug: "trigger",
         },
     ];
 
-    const options = useValues("executions").VALUES.RELATIVE_DATE.slice(0, -1); // Remove last 365 days option
+    const options = useValues("executions").VALUES.RELATIVE_DATE;
     const timerange = ref<string>("PT168H"); // Default to last 7 days
 
     const chartRef = ref<InstanceType<typeof TimeSeries> | null>(null);
-    const chart = yaml.parse(YAML_CHART);
+    const chart = {...yaml.parse(YAML_CHART), content: YAML_CHART};
     const filters = computed((): FilterObject[] => {
         if (!execution.value) return [];
 
@@ -481,8 +477,6 @@
 
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
-
-$font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of ui-libs
 
 #overview {
     :deep(.el-splitter-panel:has(> .sidebar:first-child)) {

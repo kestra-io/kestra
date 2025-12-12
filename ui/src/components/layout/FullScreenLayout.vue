@@ -20,7 +20,7 @@
     overflow-y: auto;
 
     @media screen and (max-width: 992px) {
-        align-items:stretch;
+        align-items: stretch;
     }
 }
 </style>

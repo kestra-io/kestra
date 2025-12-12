@@ -153,7 +153,7 @@
             version.value = route.params.version as string;
         }
 
-        const clsParam = route.params.version as string | undefined;
+        const clsParam = route.params.cls as string | undefined;
         if (!clsParam) {
             return;
         }

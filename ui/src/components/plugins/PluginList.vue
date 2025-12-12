@@ -81,6 +81,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useScrollMemory} from "../../composables/useScrollMemory";
     import {capitalize, formatPluginTitle} from "../../utils/global";
+    import {useMiscStore} from "../../override/stores/misc";
 
     interface Props {
         plugins: any[];
@@ -257,10 +258,14 @@
 
     const hasIcon = (cls: string) => !!icons.value?.[cls];
 
-    const navigateToEditorPlugin = async (editorPlugin: any) => {
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
+    const miscStore = useMiscStore();
+
+    const navigateToEditorPlugin = async (editorPlugin: {cls: string, version?: string}) => {
         if (!editorPlugin?.cls) return;
 
         const pluginCls = editorPlugin.cls;
+        const pluginVersion = editorPlugin.version;
         const matchingPlugin = props.plugins.find(plugin => getPluginElements(plugin).includes(pluginCls));
 
         if (!matchingPlugin) {
@@ -283,7 +288,7 @@
 
         pushNavigationItem(getSimpleType(pluginCls), "element", {cls: pluginCls});
         currentView.value = "documentation";
-        const pluginData = await pluginsStore.load({cls: pluginCls});
+        const pluginData = await pluginsStore.load({cls: pluginCls, version: pluginVersion, hash: hash.value});
         currentDocumentationPlugin.value = pluginData ? {cls: pluginCls, ...pluginData} : editorPlugin;
     };
 

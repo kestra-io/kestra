@@ -11,7 +11,6 @@
     } from "../../../../injectionKeys";
     import {Plus} from "../../../../utils/icons";
 
-
     const props = defineProps<{
         parentPathComplete: string;
         blockSchemaPath: string;

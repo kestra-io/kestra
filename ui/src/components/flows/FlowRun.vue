@@ -10,15 +10,15 @@
             </el-alert>
         </div>
         <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <InputsForm 
-                :initialInputs="flow.inputs" 
-                :selectedTrigger="selectedTrigger" 
-                :flow="flow" 
+            <InputsForm
+                :initialInputs="flow.inputs"
+                :selectedTrigger="selectedTrigger"
+                :flow="flow"
                 v-model="inputs"
                 :executeClicked="executeClicked"
                 @confirm="onSubmit($refs.form)"
-                @update:model-value-no-default="values => inputsNoDefaults=values" 
-                @update:checks="values => checks=values" 
+                @update:model-value-no-default="values => inputsNoDefaults=values"
+                @update:checks="values => checks=values"
             />
 
             <el-collapse v-model="collapseName">
@@ -208,7 +208,7 @@
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
-                                )],
+                                ), "system.from:ui"],
                                 scheduleDate: this.scheduleDate
                             });
                         } else {
@@ -221,7 +221,7 @@
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
-                                )],
+                                ), "system.from:ui"],
                                 scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
                                 nextStep: true,
                             });

@@ -56,6 +56,7 @@ public abstract class TriggerService {
         ConditionContext conditionContext
     ) {
         List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(trigger.getLabels()));
+        executionLabels.add(new Label(Label.FROM, "trigger"));
         if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
             // add a correlation ID if none exist
             executionLabels.add(new Label(Label.CORRELATION_ID, id));

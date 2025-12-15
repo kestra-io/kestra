@@ -80,7 +80,7 @@ public final class Logs {
 
     private static Logger logger(TriggerId trigger) {
         return LoggerFactory.getLogger(
-            "scheduler." + triggerContext.getTenantId() + "." + triggerContext.getNamespace() + "." + triggerContext.getFlowId() + "." + triggerContext.getTriggerId()
+            "scheduler." + trigger.getTenantId() + "." + trigger.getNamespace() + "." + trigger.getFlowId() + "." + trigger.getTriggerId()
         );
     }
 

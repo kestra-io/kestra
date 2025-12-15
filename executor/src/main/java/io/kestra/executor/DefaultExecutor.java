@@ -670,18 +670,18 @@ public class DefaultExecutor implements Executor {
                     // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitionned from KILLING to KILLED
                     boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
                     if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
-                        int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());
+                        int newLimit = concurrencyLimitStateStore.decrement(executor.getFlow());
 
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                             var finalFlow = executor.getFlow();
 
                             if (newLimit < finalFlow.getConcurrency().getLimit()) {
-                                executionQueuedStorage.pop(executor.getFlow().getTenantId(),
+                                executionQueuedStateStore.pop(executor.getFlow().getTenantId(),
                                     executor.getFlow().getNamespace(),
                                     executor.getFlow().getId(),
                                     throwBiConsumer((dslContext, queued) -> {
                                         var newExecution = queued.withState(State.Type.RUNNING);
-                                        concurrencyLimitStorage.increment(dslContext, finalFlow);
+                                        concurrencyLimitStateStore.increment(dslContext, finalFlow);
                                         executionQueue.emit(newExecution);
                                         metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
 

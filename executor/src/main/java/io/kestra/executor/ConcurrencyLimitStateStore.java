@@ -22,8 +22,10 @@ public interface ConcurrencyLimitStateStore {
 
     /**
      * Decrement a flow concurrency limit.
+     *
+     * @return the new concurrency limit value.
      */
-    void decrement(FlowInterface flow);
+    int decrement(FlowInterface flow);
 
     /**
      * Increment a flow concurrency limit.

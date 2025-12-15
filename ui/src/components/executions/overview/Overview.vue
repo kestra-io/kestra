@@ -431,7 +431,7 @@
         },
     ];
 
-    const options = useValues("executions").VALUES.RELATIVE_DATE.slice(0, -1); // Remove last 365 days option
+    const options = useValues("executions").VALUES.RELATIVE_DATE;
     const timerange = ref<string>("PT168H"); // Default to last 7 days
 
     const chartRef = ref<InstanceType<typeof TimeSeries> | null>(null);
@@ -477,8 +477,6 @@
 
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
-
-$font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of ui-libs
 
 #overview {
     :deep(.el-splitter-panel:has(> .sidebar:first-child)) {

@@ -73,7 +73,7 @@ public class DockerOptions {
     @Schema(
         title = "List of volumes to mount.",
         description = "Must be a valid mount expression as string, example : `/home/user:/app`.\n\n" +
-            "Volumes mount are disabled by default for security reasons; you must enable them on server configuration by setting `kestra.tasks.scripts.docker.volume-enabled` to `true`."
+            "Volumes mount are disabled by default for security reasons; you must enable them on server configuration by setting the `volume-enabled` plugin configuration to `true`."
     )
     @PluginProperty(dynamic = true)
     protected List<String> volumes;

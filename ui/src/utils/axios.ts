@@ -1,6 +1,6 @@
 import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
 import NProgress from "nprogress"
-import {Router, useRouter} from "vue-router"
+import {Router, useRoute, useRouter} from "vue-router"
 import {storageKeys} from "./constants"
 import {useLayoutStore} from "../stores/layout"
 import {useCoreStore} from "../stores/core"
@@ -9,8 +9,8 @@ import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc";
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 import {client} from "../generated/kestra-api/client.gen"
-import * as sdk from "../generated/kestra-api/sdk.gen"
 import {Client} from "../generated/kestra-api/client"
+import wrappedSdk, {setTenantProvider} from "./sdkWrapper"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -323,7 +323,17 @@ export function useAxios(){
 };
 
 export function useSDK(){
+    const route = useRoute();
     useClient();
     
-    return sdk;
+    // Set up the tenant provider to get tenant from route params
+    setTenantProvider(() => {
+        try {
+            return (route.params.tenant as string) || "main";
+        } catch {
+            return "main";
+        }
+    });
+    
+    return wrappedSdk;
 }

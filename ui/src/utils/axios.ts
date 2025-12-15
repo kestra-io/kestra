@@ -1,4 +1,4 @@
-import axios, {AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
+import axios, {AxiosRequestConfig, AxiosResponse, AxiosError, AxiosProgressEvent} from "axios"
 import NProgress from "nprogress"
 import {Router, useRouter} from "vue-router"
 import {storageKeys} from "./constants"
@@ -8,6 +8,9 @@ import * as BasicAuth from "../utils/basicAuth"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc";
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
+import {client} from "../generated/kestra-api/client.gen"
+import * as sdk from "../generated/kestra-api/sdk.gen"
+import {Client} from "../generated/kestra-api/client"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -283,28 +286,44 @@ export const createAxios = (
         }
     })
 
-    return instance;
+    client.setConfig({
+        axios: instance
+    })
+
+    return client;
 };
 
 export default (
-    callback: (instance: AxiosInstance) => void,
+    callback: (clientInstance: Client) => void,
     _store: any,
     ...args: Parameters<typeof createAxios>
 ) => {
     callback(createAxios(...args));
 }
 
-let axiosInstance: AxiosInstance | null = null;
+let clientInstance: Client | null = null;
 
-export const useAxios = () => {
+export function useClient(){
     const router = useRouter();
 
     const miscStore = useMiscStore();
     const {edition} = miscStore.configs || {};
         
-    if (!axiosInstance) {
-        axiosInstance = createAxios(router, edition === "OSS");
+    if (!clientInstance) {
+        clientInstance = createAxios(router, edition === "OSS");
     }
 
-    return axiosInstance;
+    return clientInstance;
 };
+
+export function useAxios(){
+    const clientInstance = useClient();
+
+    return clientInstance.instance;
+};
+
+export function useSDK(){
+    useClient();
+    
+    return sdk;
+}

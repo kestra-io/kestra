@@ -10,10 +10,6 @@ export default defineConfig({
     build: {
         outDir: "../webserver/src/main/resources/ui",
         rollupOptions: {
-            external: [
-                "https://fonts.googleapis.com",
-                "https://fonts.gstatic.com"
-            ],
             output: {
                 advancedChunks: {
                     groups: [

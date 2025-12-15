@@ -5,29 +5,32 @@ import {useMiscStore} from "override/stores/misc";
 
 import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 
+import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
+import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
+import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
+import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
+import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
+import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
+import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue";
+import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
+import OfficeBuildingOutline from "vue-material-design-icons/OfficeBuildingOutline.vue";
+import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue";
+
+// TO REMOVE AFTER TESTING
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
-import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
-import BallotOutline from "vue-material-design-icons/BallotOutline.vue";
-import ShieldAccountVariantOutline from "vue-material-design-icons/ShieldAccountVariantOutline.vue";
-import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
-import Connection from "vue-material-design-icons/Connection.vue";
-import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
-import FormatListGroupPlus from "vue-material-design-icons/FormatListGroupPlus.vue";
 import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
 import ShieldKeyOutline from "vue-material-design-icons/ShieldKeyOutline.vue";
-import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
 
 export type MenuItem = {
     href?: {
-        path?: string,
-        name: string,
-        params?: Record<string, any>,
-        query?: Record<string, any>
-    },
-    child?: MenuItem[],
-    disabled?: boolean,
+        path?: string;
+        name: string;
+        params?: Record<string, any>;
+        query?: Record<string, any>;
+    };
+    child?: MenuItem[];
+    disabled?: boolean;
 };
 
 export function useLeftMenu() {
@@ -51,8 +54,10 @@ export function useLeftMenu() {
     }
 
     const flatMenuItems = (items: MenuItem[]): MenuItem[] => {
-        return items.flatMap(item => item.child ? [item, ...flatMenuItems(item.child)] : [item])
-    }
+        return items.flatMap((item) =>
+            item.child ? [item, ...flatMenuItems(item.child)] : [item],
+        );
+    };
 
     const menu = computed(() => {
         const generatedMenu = [
@@ -63,7 +68,7 @@ export function useLeftMenu() {
                 },
                 title: t("dashboards.labels.plural"),
                 icon: {
-                    element: ViewDashboardVariantOutline,
+                    element: ChartLineVariant,
                     class: "menu-icon",
                 },
             },
@@ -82,7 +87,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("apps"),
                 title: t("apps"),
                 icon: {
-                    element: FormatListGroupPlus,
+                    element: LayersTripleOutline,
                     class: "menu-icon",
                 },
                 attributes: {
@@ -94,7 +99,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("templates"),
                 title: t("templates"),
                 icon: {
-                    element: ContentCopy,
+                    element: ContentCopy, // TODO: maybe change icon
                     class: "menu-icon",
                 },
                 hidden: !miscStore.configs?.isTemplateEnabled,
@@ -104,7 +109,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("executions"),
                 title: t("executions"),
                 icon: {
-                    element: TimelineClockOutline,
+                    element: PlayOutline,
                     class: "menu-icon",
                 },
             },
@@ -113,7 +118,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("logs"),
                 title: t("logs"),
                 icon: {
-                    element: TimelineTextOutline,
+                    element: FileDocumentOutline,
                     class: "menu-icon",
                 },
             },
@@ -123,7 +128,7 @@ export function useLeftMenu() {
                 title: t("demos.tests.label"),
                 icon: {
                     element: FlaskOutline,
-                    class: "menu-icon"
+                    class: "menu-icon",
                 },
                 attributes: {
                     locked: true,
@@ -134,42 +139,30 @@ export function useLeftMenu() {
                 routes: routeStartWith("namespaces"),
                 title: t("namespaces"),
                 icon: {
-                    element: DotsSquare,
+                    element: FolderOpenOutline,
                     class: "menu-icon",
                 },
             },
             {
-                href: {name: "kv/list"},
-                routes: routeStartWith("kv"),
-                title: t("kv.name"),
+                href: {name: "plugins/list"},
+                routes: routeStartWith("plugins"),
+                title: t("plugins.names"),
                 icon: {
-                    element: DatabaseOutline,
+                    element: PuzzleOutline,
                     class: "menu-icon",
-                },
-            },
-            {
-                href: {name: "secrets/list"},
-                routes: routeStartWith("secrets"),
-                title: t("secret.names"),
-                icon: {
-                    element: ShieldKeyOutline,
-                    class: "menu-icon",
-                },
-                attributes: {
-                    locked: true,
                 },
             },
             {
                 routes: routeStartWith("blueprints"),
                 title: t("blueprints.title"),
                 icon: {
-                    element: BallotOutline,
+                    element: ShapePlusOutline,
                     class: "menu-icon",
                 },
                 child: [
                     {
                         title: t("blueprints.custom"),
-                        routes: routeStartWith("blueprints/flow"),
+                        routes: routeStartWith("blueprints/flow/custom"),
                         attributes: {
                             locked: true,
                         },
@@ -187,6 +180,18 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        title: t("blueprints.apps"),
+                        routes: routeStartWith("blueprints/flow/app"),
+                        attributes: {
+                            locked: true,
+                        },
+                        href: {
+                            // TODO: napravi da ide na demo page
+                            name: "blueprints",
+                            params: {kind: "flow", tab: "app"},
+                        },
+                    },
+                    {
                         title: t("blueprints.dashboards"),
                         routes: routeStartWith("blueprints/dashboard"),
                         href: {
@@ -197,29 +202,44 @@ export function useLeftMenu() {
                 ],
             },
             {
-                href: {name: "plugins/list"},
-                routes: routeStartWith("plugins"),
-                title: t("plugins.names"),
+                routes: routeStartWith("blueprints"), // TODO: change route
+                title: t("tenant_administration"),
                 icon: {
-                    element: Connection,
-                    class: "menu-icon",
-                },
-            },
-            {
-                title: t("administration"),
-                routes: routeStartWith("admin"),
-                icon: {
-                    element: ShieldAccountVariantOutline,
+                    element: OfficeBuildingOutline,
                     class: "menu-icon",
                 },
                 child: [
                     {
-                        href: {name: "admin/iam"},
-                        routes: routeStartWith("admin/iam"),
-                        title: t("iam"),
+                        href: {name: "admin/stats"},
+                        routes: routeStartWith("admin/stats"),
+                        title: t("system overview"),
+                    },
+                    {
+                        href: {name: "kv/list"},
+                        routes: routeStartWith("kv"),
+                        title: t("kv.name"),
+                        icon: {
+                            element: DatabaseOutline,
+                            class: "menu-icon",
+                        },
+                    },
+                    {
+                        href: {name: "secrets/list"},
+                        routes: routeStartWith("secrets"),
+                        title: t("secret.names"),
+                        icon: {
+                            element: ShieldKeyOutline,
+                            class: "menu-icon",
+                        },
                         attributes: {
                             locked: true,
                         },
+                    },
+
+                    {
+                        href: {name: "admin/triggers"},
+                        routes: routeStartWith("admin/triggers"),
+                        title: t("triggers"),
                     },
                     {
                         href: {name: "admin/auditlogs/list"},
@@ -230,10 +250,23 @@ export function useLeftMenu() {
                         },
                     },
                     {
-                        href: {name: "admin/triggers"},
-                        routes: routeStartWith("admin/triggers"),
-                        title: t("triggers"),
+                        href: {name: "admin/iam"},
+                        routes: routeStartWith("admin/iam"),
+                        title: t("iam"),
+                        attributes: {
+                            locked: true,
+                        },
                     },
+                ],
+            },
+            {
+                title: t("instance_administration"),
+                routes: routeStartWith("admin"),
+                icon: {
+                    element: ServerNetworkOutline,
+                    class: "menu-icon",
+                },
+                child: [
                     {
                         href: {name: "admin/instance"},
                         routes: routeStartWith("admin/instance"),
@@ -256,18 +289,19 @@ export function useLeftMenu() {
                         title: t("concurrency limits"),
                         hidden: !miscStore.configs?.isConcurrencyViewEnabled,
                     },
-                    {
-                        href: {name: "admin/stats"},
-                        routes: routeStartWith("admin/stats"),
-                        title: t("system overview"),
-                    },
                 ],
-            }
+            },
         ];
 
-        flatMenuItems(generatedMenu).forEach(menuItem => {
-            if (menuItem.href !== undefined && menuItem.href?.name === $route.name) {
-                menuItem.href.query = {...$route.query, ...menuItem.href?.query};
+        flatMenuItems(generatedMenu).forEach((menuItem) => {
+            if (
+                menuItem.href !== undefined &&
+                menuItem.href?.name === $route.name
+            ) {
+                menuItem.href.query = {
+                    ...$route.query,
+                    ...menuItem.href?.query,
+                };
             }
         });
 
@@ -276,6 +310,6 @@ export function useLeftMenu() {
 
     return {
         routeStartWith,
-        menu
+        menu,
     };
 }

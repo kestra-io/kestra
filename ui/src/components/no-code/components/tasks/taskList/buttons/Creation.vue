@@ -1,6 +1,6 @@
 <template>
     <el-button @click.prevent.stop="handleClick()" type="primary" :icon="Plus">
-        {{ t("add") }}
+        {{ $t("add") }}
     </el-button>
 </template>
 
@@ -10,10 +10,6 @@
         CREATE_TASK_FUNCTION_INJECTION_KEY,
     } from "../../../../injectionKeys";
     import {Plus} from "../../../../utils/icons";
-
-
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
 
     const props = defineProps<{
         parentPathComplete: string;

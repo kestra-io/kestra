@@ -1,10 +1,8 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.Lists;
-import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
@@ -52,20 +50,6 @@ public class RunContextInitializer {
 
     @Value("${kestra.encryption.secret-key}")
     protected Optional<String> secretKey;
-
-    /**
-     * Initializes the given {@link RunContext} for the given {@link Plugin}.
-     *
-     * @param runContext The {@link RunContext} to initialize.
-     * @param plugin The {@link TaskRunner} used for initialization.
-     * @return The {@link RunContext} to initialize
-     */
-    public DefaultRunContext forPlugin(final DefaultRunContext runContext,
-                                       final Plugin plugin) {
-        runContext.init(applicationContext);
-        runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(plugin.getType(), plugin.getClass()));
-        return runContext;
-    }
 
     /**
      * Initializes the given {@link RunContext} for the given {@link WorkerTask} for executor.

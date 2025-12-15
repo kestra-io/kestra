@@ -192,6 +192,7 @@
                 if (formRef && this.flowCanBeExecuted) {
                     this.checks = [];
                     this.executeClicked = false;
+                    this.coreStore.message = null;
                     formRef.validate((valid) => {
                         if (!valid) {
                             return false;

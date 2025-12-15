@@ -150,7 +150,6 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     private static final ReadableBytesTypeConverter READABLE_BYTES_TYPE_CONVERTER = new ReadableBytesTypeConverter();
     private static final Pattern NEWLINE_PATTERN = Pattern.compile("([^\\r\\n]+)[\\r\\n]+");
 
-    private static final String LEGACY_VOLUME_ENABLED_CONFIG = "kestra.tasks.scripts.docker.volume-enabled";
     private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";
 
     @Schema(
@@ -736,23 +735,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     }
 
     private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars) throws IllegalVariableEvaluationException, IOException {
-        Optional<Boolean> volumeEnabledConfig = runContext.pluginConfiguration(VOLUME_ENABLED_CONFIG);
-        if (volumeEnabledConfig.isEmpty()) {
-            // check the legacy property and emit a warning if used
-            Optional<Boolean> property = ((DefaultRunContext)runContext).getApplicationContext().getProperty(
-                LEGACY_VOLUME_ENABLED_CONFIG,
-                Boolean.class
-            );
-            if (property.isPresent()) {
-                runContext.logger().warn(
-                    "`{}` is deprecated, please use the plugin configuration `{}` instead",
-                    LEGACY_VOLUME_ENABLED_CONFIG,
-                    VOLUME_ENABLED_CONFIG
-                );
-                volumeEnabledConfig = property;
-            }
-        }
-        boolean volumesEnabled = volumeEnabledConfig.orElse(Boolean.FALSE);
+        boolean volumesEnabled = runContext.<Boolean>pluginConfiguration(VOLUME_ENABLED_CONFIG).orElse(false);
 
         Path workingDirectory = taskCommands.getWorkingDirectory();
         String image = runContext.render(this.image, additionalVars);

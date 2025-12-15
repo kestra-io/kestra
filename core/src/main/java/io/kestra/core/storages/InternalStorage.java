@@ -1,6 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
 import io.kestra.core.services.NamespaceService;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
@@ -272,7 +271,13 @@ public class InternalStorage implements Storage {
         return this.storage.put(context.getTenantId(), context.getNamespace(), resolve, new BufferedInputStream(inputStream));
     }
 
+    @Override
     public Optional<StorageContext.Task> getTaskStorageContext() {
         return Optional.ofNullable((context instanceof StorageContext.Task task) ? task : null);
+    }
+
+    @Override
+    public List<FileAttributes> list(URI uri) throws IOException {
+        return this.storage.list(context.getTenantId(), context.getNamespace(), uri);
     }
 }

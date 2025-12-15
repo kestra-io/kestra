@@ -81,7 +81,17 @@ public final class YamlParser {
             throw toConstraintViolationException(input, resource, e);
         }
     }
-
+    private static String formatYamlErrorMessage(String originalMessage) {
+        if (originalMessage.contains("Expected a field name")) {
+            return "YAML syntax error: Invalid structure. Check indentation and ensure all fields are properly formatted.";
+        } else if (originalMessage.contains("MappingStartEvent")) {
+            return "YAML syntax error: Unexpected mapping start. Verify that scalar values are properly quoted if needed.";
+        } else if (originalMessage.contains("Scalar value")) {
+            return "YAML syntax error: Expected a simple value but found complex structure. Check for unquoted special characters.";
+        }
+        // Return a generic but cleaner message for other YAML errors
+        return "YAML parsing error: " + originalMessage.replaceAll("org\\.yaml\\.snakeyaml.*", "").trim();
+    }
     @SuppressWarnings("unchecked")
     public static <T> ConstraintViolationException toConstraintViolationException(T target, String resource, JsonProcessingException e) {
         if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
@@ -121,11 +131,12 @@ public final class YamlParser {
                     )
                 ));
         } else {
+            String userFriendlyMessage = formatYamlErrorMessage(e.getMessage());
             return new ConstraintViolationException(
-                "Illegal " + resource + " source: " + e.getMessage(),
+                "Illegal " + resource + " source: " + userFriendlyMessage,
                 Collections.singleton(
                     ManualConstraintViolation.of(
-                        e.getCause() == null ? e.getMessage() : e.getMessage() + "\nCaused by: " + e.getCause().getMessage(),
+                        userFriendlyMessage,
                         target,
                         (Class<T>) target.getClass(),
                         "yaml",
@@ -136,4 +147,3 @@ public final class YamlParser {
         }
     }
 }
-

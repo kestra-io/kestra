@@ -128,9 +128,11 @@ $placeholder-font-size: 12px;
         font-size: $input-font-size;
         background-color: transparent;
         width: 100%;
+        height: 100%;
         padding-inline: 0.5em;
-        padding-block: 0.7em;
+        padding-block: 0;
         border: none;
+        line-height: $form-height;
 
         &:focus {
             outline: none;

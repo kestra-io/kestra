@@ -9,9 +9,11 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-
+import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.services.FlowService;
 import jakarta.validation.ConstraintViolationException;
 
+import java.util.List;
 import java.io.File;
 import java.net.URL;
 import java.util.Optional;
@@ -22,6 +24,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FlowValidationTest {
     @Inject
     private ModelValidator modelValidator;
+
+    @Inject
+    private FlowService flowService;
+
+    @Test
+    void testValidateFlowWithYamlSyntaxError() {
+        String invalidYaml = """
+            id: test-flow
+            namespace: io.kestra.unittest
+            tasks:
+              - id:hello
+                type: io.kestra.plugin.core.log.Log
+                message: {{ abc }}
+
+            """;
+            List<ValidateConstraintViolation> results = flowService.validate("my-tenant", invalidYaml);
+
+            assertThat(results).hasSize(1);
+            assertThat(results.getFirst().getConstraints()).contains("YAML parsing error").contains("at line");
+    }
+
+    @Test
+    void testValidateFlowWithUndefinedVariable() {
+        String yamlWithUndefinedVar = """
+            id: test-flow
+            namespace: io.kestra.unittest
+            tasks:
+              - id: hello
+                type: io.kestra.plugin.core.log.Log
+                message: {{ undefinedVar }}
+            """;
+
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", yamlWithUndefinedVar);
+
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().getConstraints()).contains("Validation error");
+    }
 
     @Test
     void invalidRecursiveFlow() {

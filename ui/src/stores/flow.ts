@@ -10,13 +10,13 @@ import {useUnsavedChangesStore} from "./unsavedChanges";
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {makeToast} from "../utils/toast";
-import {InputType} from "../utils/inputs";
 import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
-import {useAxios} from "../utils/axios";
+import {useSDK, useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
+import {Flow, FlowWithSource} from "../generated/kestra-api";
 
 const textYamlHeader = {
     headers: {
@@ -39,13 +39,6 @@ interface Task {
     type: string
 }
 
-interface Input {
-    id: string;
-    type: InputType;
-    required?: boolean;
-    defaults?: any;
-}
-
 interface FlowValidations {
     constraints?: string;
     outdated?: boolean;
@@ -54,26 +47,9 @@ interface FlowValidations {
     deprecationPaths?: string[];
 }
 
-export interface Flow {
-    id: string;
-    namespace: string;
-    source: string;
-    revision?: number;
-    deleted?: boolean;
-    disabled?: boolean;
-    labels?: Record<string, string | boolean>;
-    triggers?: Trigger[];
-    inputs?: Input[];
-    errors?: { message: string; code?: string, id?: string }[];
-    concurrency?: {
-        limit: number;
-        behavior: string;
-    };
-}
-
 export const useFlowStore = defineStore("flow", () => {
     const flows = ref<Flow[]>()
-    const flow = ref<Flow>()
+    const flow = ref<FlowWithSource>()
     const task = ref<Task>()
     const search = ref<any[]>()
     const total = ref<number>(0)
@@ -98,6 +74,7 @@ export const useFlowStore = defineStore("flow", () => {
     const creationId = ref<string>();
 
     const axios = useAxios();
+    const sdk = useSDK();
 
     const coreStore = useCoreStore();
     const unsavedChangesStore = useUnsavedChangesStore();
@@ -302,18 +279,17 @@ export const useFlowStore = defineStore("flow", () => {
         return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
     }
 
-    function findFlows(options: { [key: string]: any }) {
-        const sortString = options.sort ? `?sort=${options.sort}` : ""
-        delete options.sort
-        return axios.get(`${apiUrl()}/flows/search${sortString}`, {
-            params: options
-        }).then(response => {
+    function findFlows(options: Parameters<typeof sdk.Flows.searchFlows>[0] & { onlyTotal?: boolean }) {
+        return sdk.Flows.searchFlows(options).then(response => {
+            if(!response.data){
+                return undefined
+            }
             if (options.onlyTotal) {
                 return response.data.total;
             }
 
             else {
-                flows.value = response.data.results
+                flows.value = response.data?.results
                 total.value = response.data.total
                 overallTotal.value = response.data.results.filter((f: any) => f.namespace !== "tutorial").length
 
@@ -340,20 +316,22 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
-        const httpClient = options.httpClient ?? axios
-        return httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
-            {
-                params: {
+    function loadFlow(options: { namespace: string, id: string, revision?: number, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
+        const httpClient = options.httpClient
+        return sdk.Flows.getFlow({
+                    id: options.id,
+                    namespace: options.namespace,
                     revision: options.revision,
-                    allowDeleted: options.allowDeleted,
-                    source: options.source === undefined ? true : undefined
-                },
-                validateStatus: (status: number) => {
-                    return options.deleted ? status === 200 || status === 404 : status === 200;
+                    allowDeleted: options.allowDeleted ?? false,
+                    source: options.source === undefined ? true : false
                 }
+            , {
+                client: httpClient
             })
-            .then((response: any) => {
+            .then((response) => {
+                if(!response.data){
+                    return Promise.reject("Flow not found");
+                }
                 if (response.data.exception) {
                     coreStore.message = {
                         title: "Invalid source code",

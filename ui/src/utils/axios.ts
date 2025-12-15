@@ -75,7 +75,7 @@ interface QueueItem {
     resolve: (value: AxiosResponse | Promise<AxiosResponse>) => void
 }
 
-export const createAxios = (
+const createAxios = (
     router: Router | undefined,
     oss: boolean
 ) => {

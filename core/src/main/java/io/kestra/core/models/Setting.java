@@ -16,6 +16,7 @@ import jakarta.validation.constraints.NotNull;
 public class Setting {
     public static final String INSTANCE_UUID = "instance.uuid";
     public static final String INSTANCE_VERSION = "instance.version";
+    public static final String INSTANCE_EDITION = "instance.edition";
 
     @NotNull
     private String key;

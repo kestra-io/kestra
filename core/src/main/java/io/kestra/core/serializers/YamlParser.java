@@ -81,16 +81,23 @@ public final class YamlParser {
             throw toConstraintViolationException(input, resource, e);
         }
     }
-    private static String formatYamlErrorMessage(String originalMessage) {
+    private static String formatYamlErrorMessage(String originalMessage, JsonProcessingException e) {
+        StringBuilder friendlyMessage = new StringBuilder();
         if (originalMessage.contains("Expected a field name")) {
-            return "YAML syntax error: Invalid structure. Check indentation and ensure all fields are properly formatted.";
+            friendlyMessage.append("YAML syntax error: Invalid structure. Check indentation and ensure all fields are properly formatted.");
         } else if (originalMessage.contains("MappingStartEvent")) {
-            return "YAML syntax error: Unexpected mapping start. Verify that scalar values are properly quoted if needed.";
+            friendlyMessage.append("YAML syntax error: Unexpected mapping start. Verify that scalar values are properly quoted if needed.");
         } else if (originalMessage.contains("Scalar value")) {
-            return "YAML syntax error: Expected a simple value but found complex structure. Check for unquoted special characters.";
+            friendlyMessage.append("YAML syntax error: Expected a simple value but found complex structure. Check for unquoted special characters.");
+        } else {
+            friendlyMessage.append("YAML parsing error: ").append(originalMessage.replaceAll("org\\.yaml\\.snakeyaml.*", "").trim());
+        }
+        if (e.getLocation() != null) {
+            int line = e.getLocation().getLineNr();
+            friendlyMessage.append(String.format(" (at line %d)", line));
         }
         // Return a generic but cleaner message for other YAML errors
-        return "YAML parsing error: " + originalMessage.replaceAll("org\\.yaml\\.snakeyaml.*", "").trim();
+        return friendlyMessage.toString();
     }
     @SuppressWarnings("unchecked")
     public static <T> ConstraintViolationException toConstraintViolationException(T target, String resource, JsonProcessingException e) {
@@ -131,7 +138,7 @@ public final class YamlParser {
                     )
                 ));
         } else {
-            String userFriendlyMessage = formatYamlErrorMessage(e.getMessage());
+            String userFriendlyMessage = formatYamlErrorMessage(e.getMessage(), e);
             return new ConstraintViolationException(
                 "Illegal " + resource + " source: " + userFriendlyMessage,
                 Collections.singleton(

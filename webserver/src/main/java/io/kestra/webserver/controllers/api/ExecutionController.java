@@ -38,6 +38,9 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.controllers.api.ExecutionController.ApiValidateExecutionInputsResponse;
+import io.kestra.webserver.controllers.api.ExecutionController.ApiValidateExecutionInputsResponse.ApiCheckFailure;
+import io.kestra.webserver.controllers.api.ExecutionController.ExecutionResponse;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -554,7 +557,6 @@ public class ExecutionController {
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute a disabled flow");
         }
-
         if (flow instanceof FlowWithException fwe) {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
@@ -591,6 +593,17 @@ public class ExecutionController {
         var result = execution.get();
         if (flow.getLabels() != null) {
             result = result.withLabels(LabelService.labelsExcludingSystem(flow));
+        }
+
+        List<Label> labels = ListUtils.emptyOnNull(result.getLabels());
+
+        boolean hasCorrelationId = labels.stream()
+            .anyMatch(label -> label.key().equals(CORRELATION_ID));
+
+        if (!hasCorrelationId) {
+            List<Label> newLabels = new ArrayList<>(labels);
+            newLabels.add(new Label(CORRELATION_ID, result.getId()));
+            result = result.withLabels(newLabels);
         }
 
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext

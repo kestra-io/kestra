@@ -11,7 +11,7 @@
         remote
         remoteShowSuffix
         :remoteMethod="onSearch"
-        :placeholder="t('namespaces')"
+        :placeholder="$t('namespaces')"
         :suffixIcon="readOnly ? Lock : undefined"
     >
         <template #tag>
@@ -37,13 +37,10 @@
 
 <script setup lang="ts">
     import {computed, onMounted} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useNamespacesStore} from "override/stores/namespaces"
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue"
     import Lock from "vue-material-design-icons/Lock.vue";
     import {defaultNamespace} from "../../../composables/useNamespaces";
-
-    const {t} = useI18n();
 
     withDefaults(defineProps<{
         multiple?: boolean,

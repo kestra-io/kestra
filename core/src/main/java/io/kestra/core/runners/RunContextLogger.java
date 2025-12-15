@@ -55,17 +55,21 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
     public RunContextLogger(QueueInterface<LogEntry> logQueue, LogEntry logEntry, org.slf4j.event.Level loglevel, boolean logToFile) {
         if (logEntry.getTaskId() != null) {
-            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getTaskId();
+            this.loggerName = baseLoggerName(logEntry) + "." + logEntry.getTaskId();
         } else if (logEntry.getTriggerId() != null) {
-            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getTriggerId();
+            this.loggerName = baseLoggerName(logEntry) + "." + logEntry.getTriggerId();
         } else {
-            this.loggerName = "flow." + logEntry.getFlowId();
+            this.loggerName = baseLoggerName(logEntry);
         }
 
         this.logQueue = logQueue;
         this.logEntry = logEntry;
         this.loglevel = loglevel == null ? Level.TRACE : Level.toLevel(loglevel.toString());
         this.logToFile = logToFile;
+    }
+
+    private String baseLoggerName(LogEntry logEntry) {
+        return "flow." + logEntry.getTenantId() + "." + logEntry.getNamespace() + "." + logEntry.getFlowId();
     }
 
     private static List<LogEntry> logEntry(ILoggingEvent event, String message, org.slf4j.event.Level level, LogEntry logEntry) {

@@ -54,11 +54,12 @@
     import {useI18n} from "vue-i18n";
     import TopNavBar from "../layout/TopNavBar.vue";
     import useRouteContext from "../../composables/useRouteContext";
-    import {useAxios} from "../../utils/axios";
+    import {useAxios, useSDK} from "../../utils/axios";
     import IconEdit from "vue-material-design-icons/Pencil.vue";
-    import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
+    import {apiUrlWithoutTenants} from "override/utils/route";
     import DataTable from "../layout/DataTable.vue";
     import NoData from "../layout/NoData.vue";
+    import {PagedResultsConcurrencyLimit} from "../../generated/kestra-api";
 
     const {t} = useI18n();
 
@@ -78,15 +79,13 @@
     const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"];
 
     const axios = useAxios();
-    const data = ref<{ 
-        total: number; 
-        results: ConcurrencyLimit[] 
-    }>();
+    const sdk = useSDK();
+    const data = ref<PagedResultsConcurrencyLimit>();
 
     async function loadData(){
-        const response = await axios.get(`${apiUrl()}/concurrency-limit/search`);
-        if(response?.status !== 200){
-            throw new Error(`Failed to load concurrency limits: ${response?.statusText}`);
+        const response = await sdk.Executions.searchConcurrencyLimits();
+        if(response?.status !== 200 && response?.error){
+            throw new Error(`Failed to load concurrency limits: ${response.error ?? "unknown error"}`);
         }
         data.value = response.data;
     }

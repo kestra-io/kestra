@@ -752,7 +752,8 @@ function deleteFlowAndDependencies() {
             return false;
         }
 
-        return authStore.user.isAllowed(
+        return (isCreating.value && authStore.user.hasAnyAction(permission.FLOW, action.UPDATE))
+         || authStore.user.isAllowed(
             permission.FLOW,
             action.UPDATE,
             flow.value?.namespace,

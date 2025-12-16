@@ -20,8 +20,8 @@
         "storybook": "storybook dev -p 6006",
         "build-storybook": "storybook build",
         "prepare": "cd .. && husky ui/.husky && rimraf .git/hooks",
-        "postinstall": "patch-package",
-        "generate:openapi": "openapi-ts"
+        "generate:openapi": "openapi-ts",
+        "postinstall": "patch-package && openapi-ts"
     },
     "dependencies": {
         "@js-joda/core": "^5.6.5",

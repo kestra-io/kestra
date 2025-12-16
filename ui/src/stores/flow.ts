@@ -654,7 +654,7 @@ function deleteFlowAndDependencies() {
     }
 
     function validateFlow(options: { flow: string }) {
-        const flowValidationIssues:FlowValidations = {};
+        const flowValidationIssues: FlowValidations = {};
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata(options.flow);
             if(authStore.user && !authStore.user.isAllowed(
@@ -667,7 +667,10 @@ function deleteFlowAndDependencies() {
         }
         return axios.post(`${apiUrl()}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
             .then(response => {
-                flowValidation.value = {constraints: [response?.data[0]?.constraints, flowValidationIssues.constraints].filter(Boolean).join(", ")};
+                const constraintsArray = [response?.data[0]?.constraints, flowValidationIssues.constraints].filter(Boolean)
+                flowValidation.value = constraintsArray.length === 0 ? {} : {
+                    constraints: constraintsArray.join(", ")
+                };
                 return flowValidation.value
             })
     }
@@ -793,9 +796,10 @@ function deleteFlowAndDependencies() {
     })
 
     const flowErrors = computed((): string[] | undefined => {
+        const key = baseOutdatedTranslationKey.value;
         const flowExistsError =
             flowValidation.value?.outdated && isCreating.value
-                ? [`>>>>${baseOutdatedTranslationKey.value}`] // because translating is impossible here
+                ? [`${t(key + ".description")} ${t(key + ".details")}`]
                 : [];
 
         const constraintsError =

@@ -34,12 +34,10 @@ export type MenuItem = {
         class?: any;
     };
     child?: MenuItem[];
-    disabled?: boolean;
     attributes?: {
         locked?: boolean;
     };
     hidden?: boolean;
-    exact?: boolean;
 };
 
 export function useLeftMenu() {
@@ -103,7 +101,6 @@ export function useLeftMenu() {
                 icon: {
                     element: FileTreeOutline,
                 },
-                exact: false,
             },
             {
                 title: t("apps"),
@@ -346,7 +343,7 @@ export function useLeftMenu() {
 
         flatMenuItems(generatedMenu).forEach((menuItem) => {
             if (menuItem.icon?.element) {
-                menuItem.icon.class = "menu-icon";
+                menuItem.icon.class = "menu-icon"; // Add default class to all menu icons
             }
 
             if (menuItem.href && menuItem.href?.name === $route.name) {

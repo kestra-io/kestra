@@ -1,4 +1,3 @@
-
 <template>
     <el-form labelPosition="top" class="w-100">
         <template v-if="sortedProperties">
@@ -11,7 +10,7 @@
             </template>
 
             <el-collapse v-model="activeNames" v-if="requiredProperties.length && (optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length)" class="collapse">
-                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="t('no_code.sections.connection')">
+                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
                     <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -20,7 +19,7 @@
                         </Wrapper>
                     </template>
                 </el-collapse-item>
-                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="t('no_code.sections.optional')">
+                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
                     <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -30,7 +29,7 @@
                     </template>
                 </el-collapse-item>
 
-                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="t('no_code.sections.deprecated')">
+                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -58,7 +57,6 @@
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
-    import {useI18n} from "vue-i18n";
     import TaskDict from "./TaskDict.vue";
     import Wrapper from "./Wrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
@@ -85,8 +83,6 @@
     const emit = defineEmits<{
         (e: "update:modelValue", value: Model): void;
     }>();
-
-    const {t} = useI18n();
 
     const activeNames = ref<string[]>([]);
 

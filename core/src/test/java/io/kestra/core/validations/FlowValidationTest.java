@@ -13,6 +13,10 @@ import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.services.FlowService;
 import jakarta.validation.ConstraintViolationException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
 import java.io.File;
 import java.net.URL;
@@ -27,6 +31,70 @@ class FlowValidationTest {
 
     @Inject
     private FlowService flowService;
+
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+    // Helper class to create JsonProcessingException with location
+    private static class TestJsonProcessingException extends JsonProcessingException {
+        public TestJsonProcessingException(String msg, JsonLocation location) {
+            super(msg, location);
+        }
+        public TestJsonProcessingException(String msg) {
+            super(msg);
+        }
+    }
+
+
+    @Test
+    void testFormatYamlErrorMessage_WithExpectedFieldName() throws JsonProcessingException {
+        JsonProcessingException e = new TestJsonProcessingException("Expected a field name", new JsonLocation(null, 100, 5, 10));
+        Object dummyTarget = new Object();  // Dummy target for toConstraintViolationException
+
+        ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
+
+        assertThat(result.getMessage()).contains("YAML syntax error: Invalid structure").contains("(at line 5)");
+    }
+
+    @Test
+    void testFormatYamlErrorMessage_WithMappingStartEvent() throws JsonProcessingException {
+        JsonProcessingException e = new TestJsonProcessingException("MappingStartEvent", new JsonLocation(null, 200, 3, 5));
+        Object dummyTarget = new Object();
+
+        ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
+
+        assertThat(result.getMessage()).contains("YAML syntax error: Unexpected mapping start").contains("(at line 3)");
+    }
+
+    @Test
+    void testFormatYamlErrorMessage_WithScalarValue() throws JsonProcessingException {
+        JsonProcessingException e = new TestJsonProcessingException("Scalar value", new JsonLocation(null, 150, 7, 12));
+        Object dummyTarget = new Object();
+
+        ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
+
+        assertThat(result.getMessage()).contains("YAML syntax error: Expected a simple value").contains("(at line 7)");
+    }
+
+    @Test
+    void testFormatYamlErrorMessage_GenericError() throws JsonProcessingException {
+        JsonProcessingException e = new TestJsonProcessingException("Some other error", new JsonLocation(null, 50, 2, 8));
+        Object dummyTarget = new Object();
+
+        ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
+
+        assertThat(result.getMessage()).contains("YAML parsing error: Some other error").contains("(at line 2)");
+    }
+
+    @Test
+    void testFormatYamlErrorMessage_NoLocation() throws JsonProcessingException {
+        JsonProcessingException e = new TestJsonProcessingException("Expected a field name");
+        Object dummyTarget = new Object();
+
+        ConstraintViolationException result = YamlParser.toConstraintViolationException(dummyTarget, "test resource", e);
+
+        assertThat(result.getMessage()).contains("YAML syntax error: Invalid structure").doesNotContain("at line");
+    }
+
 
     @Test
     void testValidateFlowWithYamlSyntaxError() {

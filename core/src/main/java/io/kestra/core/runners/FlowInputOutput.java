@@ -3,13 +3,11 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
@@ -537,30 +535,6 @@ public class FlowInputOutput {
         } catch (Throwable e) {
             throw new Exception("Expected `" + type + "` but received `" + current + "` with errors:\n```\n" + e.getMessage() + "\n```");
         }
-    }
-
-    public static Map<String, Object> renderFlowOutputs(List<Output> outputs, RunContext runContext) throws IllegalVariableEvaluationException {
-        if (outputs == null) return Map.of();
-
-        // render required outputs
-        Map<String, Object> outputsById = outputs
-            .stream()
-            .filter(output -> output.getRequired() == null || output.getRequired())
-            .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
-        outputsById = runContext.render(outputsById);
-
-        // render optional outputs one by one to catch, log, and skip any error.
-        for (io.kestra.core.models.flows.Output output : outputs) {
-            if (Boolean.FALSE.equals(output.getRequired())) {
-                try {
-                    outputsById.putAll(runContext.render(Map.of(output.getId(), output.getValue())));
-                } catch (Exception e) {
-                    runContext.logger().warn("Failed to render optional flow output '{}'. Output is ignored.", output.getId(), e);
-                    outputsById.put(output.getId(), null);
-                }
-            }
-        }
-        return outputsById;
     }
 
     /**

@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.queues.QueueException;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -88,5 +89,11 @@ public abstract class AbstractRunnerConcurrencyTest {
     @LoadFlows(value = {"flows/valids/flow-concurrency-queue-killed.yml"}, tenantId = "flow-concurrency-queue-killed")
     void flowConcurrencyQueueKilled() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueueKilled("flow-concurrency-queue-killed");
+    }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml"}, tenantId = "flow-concurrency-queued-protection")
+    void flowConcurrencyQueuedProtection() throws QueueException, InterruptedException {
+        flowConcurrencyCaseTest.flowConcurrencyQueuedProtection("flow-concurrency-queued-protection");
     }
 }

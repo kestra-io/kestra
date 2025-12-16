@@ -10,9 +10,11 @@ import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.executor.ConcurrencyLimitStateStore;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -51,6 +53,9 @@ public class FlowConcurrencyCaseTest {
 
     @Inject
     private ExecutionService executionService;
+
+    @Inject
+    private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -327,6 +332,33 @@ public class FlowConcurrencyCaseTest {
             // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do
             runnerUtils.awaitFlowExecutionNumber(3, tenantId, NAMESPACE, "flow-concurrency-queue-killed");
         }
+    }
+
+    public void flowConcurrencyQueuedProtection(String tenantId) throws QueueException, InterruptedException {
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
+        assertThat(execution1.getState().isRunning()).isTrue();
+
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-queue", Optional.empty())
+            .orElseThrow();
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().isQueued(), Execution.newExecution(flow, null, null, Optional.empty()));
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.QUEUED);
+
+        // manually update the concurrency count so that queued protection kicks in and no new execution would be popped
+        ConcurrencyLimit concurrencyLimit = concurrencyLimitRepository.findById(tenantId, NAMESPACE, "flow-concurrency-queue").orElseThrow();
+        concurrencyLimit = concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1);
+        concurrencyLimitRepository.update(concurrencyLimit);
+
+        Execution executionResult1 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(State.Type.SUCCESS), execution1);
+        assertThat(executionResult1.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // we wait for a few ms and checked that the second execution is still queued
+        Thread.sleep(500);
+        Execution executionResult2 = runnerUtils.awaitExecution(e -> e.getState().isQueued(), execution2);
+        assertThat(executionResult2.getState().getCurrent()).isEqualTo(State.Type.QUEUED);
+
+        // we manually reset the concurrency count to avoid messing with any other tests
+        concurrencyLimitRepository.update(concurrencyLimit.withRunning(concurrencyLimit.getRunning() - 1));
     }
 
     private URI storageUpload(String tenantId) throws URISyntaxException, IOException {

@@ -377,6 +377,10 @@ export const useFlowStore = defineStore("flow", () => {
                 flowYamlOrigin.value = response.data.source;
                 overallTotal.value = 1;
 
+                validateFlow({
+                    flow: `revision: ${(response.data.revision ?? 0) + 1}\n${response.data.source}`
+                });
+
                 return response.data;
             })
     }

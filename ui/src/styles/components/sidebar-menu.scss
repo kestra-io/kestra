@@ -32,13 +32,12 @@
             padding: 0;
 
             .vsm--title {
-                padding-left: 10px;
+                font-size: $font-size-xs;
             }
         }
     }
 
     .vsm--link {
-        width: 100%;
         height: 30px;
         padding: 0.3rem 0.5rem;
         margin-bottom: 0.3rem;
@@ -91,11 +90,9 @@
     .vsm--child .vsm--link {
         padding: 0 0.2rem;
         position: relative !important;
-        font-size: 14px;
         margin-left: 1.8rem;
 
         .vsm--icon {
-            margin-right: 4px;
             color: var(--ks-content-secondary);
         }
 
@@ -107,10 +104,7 @@
             content: "";
             position: absolute;
             left: -.8rem;
-            top: -2.5rem;
-            border-radius: 8px;
-            width: 1.6rem;
-            height: 170%;
+            height: 150%;
             border: 2px solid var(--ks-border-primary);
             border-top: 0;
             border-right: 0;

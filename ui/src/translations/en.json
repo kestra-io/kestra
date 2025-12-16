@@ -195,7 +195,7 @@
     "replay latest revision": "Replay using latest revision",
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
-    "replay with inputs": "Replay with inputs",
+    "Replay with New inputs": "Replay with New inputs",
     "replay the execution": "Replay the execution <code>{executionId}</code> for the flow <code>{flowId}</code>",
     "prefill inputs": "Prefill",
     "current": "current",

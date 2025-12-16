@@ -402,10 +402,11 @@ public class ExecutorService {
 
         if (flow.getOutputs() != null) {
             RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+            var inputAndOutput = runContext.inputAndOutput();
 
             try {
-                Map<String, Object> outputs = FlowInputOutput.renderFlowOutputs(flow.getOutputs(), runContext);
-                outputs = flowInputOutput.typedOutputs(flow, executor.getExecution(), outputs);
+                Map<String, Object> outputs = inputAndOutput.renderOutputs(flow.getOutputs());
+                outputs = inputAndOutput.typedOutputs(flow, executor.getExecution(), outputs);
                 newExecution = newExecution.withOutputs(outputs);
             } catch (Exception e) {
                 Logs.logExecution(

@@ -6,8 +6,6 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.runners.DefaultRunContext;
-import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
@@ -88,8 +86,7 @@ public abstract class TriggerService {
         }
 
         // add inputs and inject defaults (FlowInputOutput handles defaults internally)
-        FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
-        execution = execution.withInputs(flowInputOutput.readExecutionInputs(conditionContext.getFlow(), execution, allInputs));
+        execution = execution.withInputs(runContext.inputAndOutput().readInputs(conditionContext.getFlow(), execution, allInputs));
 
         return execution;
     }

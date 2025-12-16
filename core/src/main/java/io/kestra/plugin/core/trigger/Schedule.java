@@ -18,9 +18,7 @@ import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.ScheduleValidation;
@@ -39,6 +37,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Stream;
+
+import static io.kestra.core.utils.Rethrow.throwPredicate;
 
 @Slf4j
 @SuperBuilder
@@ -549,9 +549,9 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     Optional<ZonedDateTime> truePreviousNextDateWithCondition(ExecutionTime executionTime, ConditionContext conditionContext, ZonedDateTime toTestDate, boolean next) throws InternalException {
         int upperYearBound = ZonedDateTime.now().getYear() + 10;
         int lowerYearBound = ZonedDateTime.now().getYear() - 10;
-        
+
         while ((next && toTestDate.getYear() < upperYearBound) || (!next && toTestDate.getYear() > lowerYearBound)) {
-            
+
             Optional<ZonedDateTime> currentDate = next ?
                 executionTime.nextExecution(toTestDate) :
                 executionTime.lastExecution(toTestDate);
@@ -607,14 +607,19 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
 
     private boolean validateScheduleCondition(ConditionContext conditionContext) throws InternalException {
         if (conditions != null) {
-            ConditionService conditionService = ((DefaultRunContext)conditionContext.getRunContext()).getApplicationContext().getBean(ConditionService.class);
-            return conditionService.isValid(
-                conditions.stream().filter(c -> c instanceof ScheduleCondition).map(c -> (ScheduleCondition) c).toList(),
-                conditionContext
-            );
+            return conditions.stream()
+                .filter(c -> c instanceof ScheduleCondition)
+                .map(c -> (ScheduleCondition) c)
+                .allMatch(throwPredicate(condition -> condition.test(conditionContext)));
         }
 
         return true;
+    }
+
+    private boolean isValid(List<ScheduleCondition> conditions, ConditionContext conditionContext) throws InternalException {
+        return conditions
+            .stream()
+            .allMatch(throwPredicate(condition -> condition.test(conditionContext)));
     }
 
     @SuperBuilder

@@ -72,12 +72,12 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Optional<Trigger> findLast(TriggerContext trigger) {
-        return findOne(DSL.trueCondition(), field("key").eq(trigger.uid()));
+        return findByUid(trigger.uid());
     }
 
     @Override
-    public Optional<Trigger> findByExecution(Execution execution) {
-        return findOne(execution.getTenantId(), field("execution_id").eq(execution.getId()));
+    public Optional<Trigger> findByUid(String uid) {
+        return findOne(DSL.trueCondition(), field("key").eq(uid));
     }
 
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {

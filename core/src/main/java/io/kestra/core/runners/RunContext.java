@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
@@ -204,4 +205,15 @@ public abstract class RunContext implements PropertyContext {
      * when Namespace ACLs are used (EE).
      */
     public abstract AclChecker acl();
+
+    /**
+     * Clone this run context for a specific plugin.
+     * @return a new run context with the plugin configuration of the given plugin.
+     */
+    public abstract RunContext cloneForPlugin(Plugin plugin);
+
+    /**
+     * @return an InputAndOutput that can be used to work with inputs and outputs.
+     */
+    public abstract InputAndOutput inputAndOutput();
 }

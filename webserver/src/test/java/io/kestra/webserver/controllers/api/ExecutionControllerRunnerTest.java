@@ -79,6 +79,7 @@ import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
@@ -1251,8 +1252,10 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(replayResponse.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/search"), PagedResults.class
+        // replay is async so we need to await for them
+        executions = await().atMost(Duration.ofSeconds(10)).until(
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/search"), PagedResults.class),
+            it -> it.getResults().size() == 4
         );
         assertThat(executions.getTotal()).isEqualTo(4L);
     }
@@ -2359,7 +2362,7 @@ class ExecutionControllerRunnerTest {
     }
 
     private Execution awaitExecution(String executionId) {
-        return Awaitility.await()
+        return await()
             .atMost(Duration.ofSeconds(10))
             .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
             .until(
@@ -2369,7 +2372,7 @@ class ExecutionControllerRunnerTest {
     }
 
     private Execution awaitExecution(String executionId, State.Type state) {
-        return Awaitility.await()
+        return await()
             .atMost(Duration.ofSeconds(10))
             .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
             .until(
@@ -2379,7 +2382,7 @@ class ExecutionControllerRunnerTest {
     }
 
     private Execution awaitExecution(String executionId, Predicate<Execution> predicate) {
-        return Awaitility.await()
+        return await()
             .atMost(Duration.ofSeconds(10))
             .with().pollDelay(Duration.ofMillis(100)).pollInterval(Duration.ofMillis(250))
             .until(

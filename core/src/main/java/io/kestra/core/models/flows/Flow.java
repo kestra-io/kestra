@@ -1,6 +1,5 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -346,7 +345,7 @@ public class Flow extends AbstractFlow implements HasUID {
      * To be conservative a flow MUST not return any source.
      */
     @Override
-    @JsonIgnore
+    @Schema(hidden = true)
     public String getSource() {
         return null;
     }

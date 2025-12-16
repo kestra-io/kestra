@@ -195,7 +195,7 @@ export const useFlowStore = defineStore("flow", () => {
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
         })
-            .then((value: {constraints?: any}) => {
+            .then((value: {constraints?: string}) => {
                 if (
                     topologyVisible &&
                     flowHaveTasks.value &&
@@ -566,7 +566,7 @@ function deleteFlowAndDependencies() {
                     coreStore.message = {
                         title: "Couldn't expand subflow",
                         message: error.response.data.message,
-                        variant: "danger"
+                        variant: "error"
                     };
                 }
 
@@ -667,7 +667,7 @@ function deleteFlowAndDependencies() {
         }
         return axios.post(`${apiUrl()}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
             .then(response => {
-                flowValidation.value = {...response.data[0], ...flowValidationIssues}
+                flowValidation.value = {constraints: [response?.data[0]?.constraints, flowValidationIssues.constraints].filter(Boolean).join(", ")};
                 return flowValidation.value
             })
     }

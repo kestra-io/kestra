@@ -288,7 +288,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         disableInvalidTrigger(workerTriggerResult.getTriggerContext(), e);
                         return;
                     }
-                    this.handleEvaluateWorkerTriggerResult(triggerExecution, nextExecutionDate);
+                    this.handleEvaluateWorkerTriggerResult(triggerExecution, nextExecutionDate, workerTriggerResult.getTrigger());
                 } else {
                     ZonedDateTime nextExecutionDate;
                     try {
@@ -768,7 +768,7 @@ public abstract class AbstractScheduler implements Scheduler {
     }
 
     private void handleEvaluateWorkerTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime
-        nextExecutionDate) {
+        nextExecutionDate, AbstractTrigger abstractTrigger) {
         Optional.ofNullable(result)
             .ifPresent(executionWithTrigger -> {
                     log(executionWithTrigger);
@@ -779,6 +779,12 @@ public abstract class AbstractScheduler implements Scheduler {
                         nextExecutionDate
                     );
 
+                    // if the trigger is allowed to run concurrently we do not attached the executio-id to the trigger state
+                    // i.e., the trigger will not be locked
+                    if (abstractTrigger.isAllowConcurrent()) {
+                        trigger = trigger.toBuilder().executionId(null).build();
+                    }
+                
                     // Worker triggers result is evaluated in another thread with the workerTriggerResultQueue.
                     // We can then update the trigger directly.
                     this.saveLastTriggerAndEmitExecution(executionWithTrigger.getExecution(), trigger, triggerToSave -> this.triggerState.update(triggerToSave));
@@ -799,6 +805,12 @@ public abstract class AbstractScheduler implements Scheduler {
         // if the execution is already failed due to failed execution, we reset the trigger now
         if (result.getExecution().getState().getCurrent() == State.Type.FAILED) {
             trigger = trigger.resetExecution(State.Type.FAILED);
+        }
+        
+        // if the trigger is allowed to run concurrently we do not attached the executio-id to the trigger state
+        // i.e., the trigger will not be locked
+        if (((AbstractTrigger)schedule).isAllowConcurrent()) {
+            trigger = trigger.toBuilder().executionId(null).build();
         }
 
         // Schedule triggers are being executed directly from the handle method within the context where triggers are locked.

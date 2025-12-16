@@ -3,6 +3,7 @@ package io.kestra.scheduler;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
@@ -38,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -293,7 +295,8 @@ class DefaultSchedulerTest {
             flowMetaStore,
             triggerExecutionPublisher,
             runContextFactory,
-            conditionService
+            conditionService,
+            Mockito.mock(QueueInterface.class)
         );
     }
 

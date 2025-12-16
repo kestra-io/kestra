@@ -42,16 +42,17 @@ public final class TriggerState implements TriggerId {
     private final int vnode;
     private final boolean locked;
     private final String workerId;
+    private final TriggerType type;
     // the last-event id that mutate this state. 
     private final EventId lastEventId;
-    
+
     @JsonProperty
     public Long getNextEvaluationEpoch() {
         return Optional.ofNullable(nextEvaluationDate)
             .map(Instant::toEpochMilli)
             .orElse(null);
     }
-    
+
     public TriggerContext context() {
         return TriggerContext.builder()
             .tenantId(tenantId)
@@ -64,22 +65,22 @@ public final class TriggerState implements TriggerId {
             .disabled(disabled)
             .build();
     }
-    
+
     /**
      * Factory method for constructing a new {@link TriggerState}.
      *
      * @return a new {@link TriggerState}
      */
     public static TriggerState of(FlowId flowId, AbstractTrigger trigger, Integer vnode) {
-        return of(TriggerId.of(flowId, trigger), trigger.getStopAfter(), trigger.isDisabled(), vnode);
+        return of(TriggerId.of(flowId, trigger), TriggerType.from(trigger), trigger.getStopAfter(), trigger.isDisabled(), vnode);
     }
-    
+
     /**
      * Factory method for constructing a new {@link TriggerState}.
      *
      * @return a new {@link TriggerState}
      */
-    public static TriggerState of(TriggerId id, List<State.Type> stopAfter, Boolean disabled, Integer vnode) {
+    public static TriggerState of(TriggerId id, TriggerType type, List<State.Type> stopAfter, Boolean disabled, Integer vnode) {
         return new TriggerState(
             id.getTenantId(),
             id.getNamespace(),
@@ -94,10 +95,11 @@ public final class TriggerState implements TriggerId {
             vnode,
             false,
             null,
+            type,
             null
         );
     }
-    
+
     /**
      * Updates this trigger state based on the trigger.
      *
@@ -105,9 +107,13 @@ public final class TriggerState implements TriggerId {
      * @return a new {@link TriggerState}
      */
     public TriggerState update(Clock clock, AbstractTrigger trigger) {
-        return update(clock).stopAfter(trigger.getStopAfter()).disabled(trigger.isDisabled()).build();
+        return update(clock)
+            .stopAfter(trigger.getStopAfter())
+            .disabled(trigger.isDisabled())
+            .type(TriggerType.from(trigger))
+            .build();
     }
-    
+
     /**
      * Updates the vNode of this trigger state.
      *
@@ -127,7 +133,7 @@ public final class TriggerState implements TriggerId {
     public TriggerState evaluatedAt(final Clock clock, final ZonedDateTime evaluatedAt) {
         return evaluatedAt(clock, evaluatedAt.toInstant());
     }
-    
+
     /**
      * Updates this trigger state with the given {@literal evaluatedAt}.
      *
@@ -137,7 +143,7 @@ public final class TriggerState implements TriggerId {
     public TriggerState evaluatedAt(final Clock clock, final Instant evaluatedAt) {
         return update(clock).evaluatedAt(evaluatedAt).build();
     }
-    
+
     /**
      * Disabled this trigger state.
      *
@@ -147,7 +153,7 @@ public final class TriggerState implements TriggerId {
     public TriggerState disabled(final Clock clock, boolean disabled) {
         return update(clock).disabled(disabled).build();
     }
-    
+
     /**
      * Attaches a worker-id to this trigger state.
      *
@@ -157,7 +163,7 @@ public final class TriggerState implements TriggerId {
     public TriggerState workerId(final Clock clock, String workerId) {
         return update(clock).workerId(workerId).build();
     }
-    
+
     /**
      * Locks this trigger state.
      *
@@ -178,7 +184,7 @@ public final class TriggerState implements TriggerId {
     public TriggerState updateForNextEvaluationDate(final Clock clock, final ZonedDateTime nextEvaluationDate) {
         return updateForNextEvaluationDate(clock, nextEvaluationDate.toInstant());
     }
-    
+
     /**
      * Updates this trigger state for the given  {@code nextEvaluationDate}.
      *
@@ -192,12 +198,12 @@ public final class TriggerState implements TriggerId {
             .backfill(getBackFillForNextEvaluationDate(nextEvaluationDate))
             .build();
     }
-    
+
     /**
      * Updates this trigger state for the given {@link Backfill}.
      *
-     * @param clock     the scheduler clock.
-     * @param backfill  the backfill.
+     * @param clock    the scheduler clock.
+     * @param backfill the backfill.
      * @return a new {@link TriggerState}
      */
     public TriggerState backfill(final Clock clock, Backfill backfill) {
@@ -211,7 +217,7 @@ public final class TriggerState implements TriggerId {
         }
         return update(clock).backfill(backfill).build();
     }
-    
+
     /**
      * Updates this trigger state for the given {@link Execution}.
      *
@@ -222,18 +228,18 @@ public final class TriggerState implements TriggerId {
     public TriggerState updateForExecution(final Clock clock, final Execution execution) {
         return updateForExecutionState(clock, execution.getState().getCurrent());
     }
-    
+
     /**
      * Updates this trigger state for the given executions.
      *
-     * @param clock       the scheduler clock.
-     * @param state       the execution state.
+     * @param clock the scheduler clock.
+     * @param state the execution state.
      * @return a new {@link TriggerState}
      */
     public TriggerState updateForExecutionState(final Clock clock, final State.Type state) {
         // switch disabled automatically if the executionEndState is one of the stopAfter states
         boolean disabled = getStopAfter() != null ? getStopAfter().contains(state) : isDisabled();
-        
+
         return update(clock).disabled(disabled).build();
     }
     
@@ -250,7 +256,7 @@ public final class TriggerState implements TriggerId {
             .workerId(null)
             .build();
     }
-    
+
     /**
      * Sets the tenant of this trigger state.
      *
@@ -261,6 +267,7 @@ public final class TriggerState implements TriggerId {
             .tenantId(tenantId)
             .build();
     }
+
     /**
      * Sets the tenant of this trigger state.
      *
@@ -271,7 +278,7 @@ public final class TriggerState implements TriggerId {
             .lastEventId(eventId)
             .build();
     }
-    
+
     private Backfill getBackFillForNextEvaluationDate(final Instant nextEvaluationDate) {
         final ZonedDateTime localNextEvaluationDate = toZonedDateTime(nextEvaluationDate);
         if (backfill != null && !backfill.getPaused()) {
@@ -284,11 +291,10 @@ public final class TriggerState implements TriggerId {
         return backfill;
     }
 
-
     private static ZonedDateTime toZonedDateTime(Instant instant) {
         return Optional.ofNullable(instant).map(it -> it.atZone(SchedulerClock.getClock().getZone())).orElse(null);
     }
-    
+
     private TriggerStateBuilder update(final Clock clock) {
         return TriggerState.builder()
             .tenantId(tenantId)
@@ -304,6 +310,7 @@ public final class TriggerState implements TriggerId {
             .workerId(workerId)
             .vnode(vnode)
             .disabled(disabled)
+            .type(type)
             .lastEventId(lastEventId);
     }
 

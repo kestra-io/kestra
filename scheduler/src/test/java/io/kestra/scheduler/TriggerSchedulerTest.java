@@ -19,6 +19,7 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.plugin.core.condition.DayWeekInMonth;
@@ -311,7 +312,7 @@ class TriggerSchedulerTest {
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
             .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusMinutes(15))
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
@@ -371,7 +372,7 @@ class TriggerSchedulerTest {
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
             .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusMinutes(15))
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);
@@ -433,7 +434,7 @@ class TriggerSchedulerTest {
         );
         // Create an initial state with a prior evaluation date
         TriggerState initialState = TriggerState
-            .of(Fixtures.triggerId(), List.of(), false, 0)
+            .of(Fixtures.triggerId(), TriggerType.SCHEDULE, List.of(), false, 0)
             .evaluatedAt(SchedulerClock.getClock(), SchedulerClock.now().minusMinutes(15))
             .updateForNextEvaluationDate(SchedulerClock.getClock(), SchedulerClock.now());
         triggerStateStore.save(initialState);

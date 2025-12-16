@@ -281,7 +281,6 @@ public class FlowConcurrencyCaseTest {
             assertThat(queued.getState().getCurrent()).isEqualTo(Type.QUEUED);
         } finally {
             // kill everything to avoid dangling executions
-            runnerUtils.killExecution(execution1);
             runnerUtils.killExecution(execution2);
             runnerUtils.killExecution(execution3);
 
@@ -324,7 +323,6 @@ public class FlowConcurrencyCaseTest {
         } finally {
             // kill everything to avoid dangling executions
             runnerUtils.killExecution(execution1);
-            runnerUtils.killExecution(execution2);
             runnerUtils.killExecution(execution3);
 
             // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do

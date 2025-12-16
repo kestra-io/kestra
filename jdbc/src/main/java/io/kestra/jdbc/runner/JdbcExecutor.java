@@ -13,6 +13,7 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.topologies.FlowTopology;
+import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueException;
@@ -1138,9 +1139,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             execution.getTrigger().getId()
                         );
                     } else {
-                        triggerRepository
-                            .findByExecution(execution)
-                            .ifPresent(trigger -> this.triggerState.update(executionService.resetExecution(flow, execution, trigger)));
+                        triggerRepository.findByUid(Trigger.uid(execution)).ifPresent(trigger -> this.triggerState.update(executionService.resetExecution(flow, execution, trigger)));
                     }
                 }
 
@@ -1241,11 +1240,7 @@ public class JdbcExecutor implements ExecutorInterface {
                 // purge the trigger: reset scheduler trigger at end
                 if (execution.getTrigger() != null) {
                     FlowWithSource flow = executor.getFlow();
-                    triggerRepository
-                        .findByExecution(execution)
-                        .ifPresent(trigger -> {
-                            this.triggerState.update(executionService.resetExecution(flow, execution, trigger));
-                        });
+                    triggerRepository.findByUid(Trigger.uid(execution)).ifPresent(trigger -> this.triggerState.update(executionService.resetExecution(flow, execution, trigger)));
                 }
 
                 // Purge the workerTaskResultQueue and the workerJobQueue

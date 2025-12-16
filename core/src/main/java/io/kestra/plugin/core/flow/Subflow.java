@@ -18,7 +18,6 @@ import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.ExecutableUtils;
-import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
@@ -38,7 +37,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.event.Level;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -246,11 +244,11 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
             if (subflowOutputs != null && !subflowOutputs.isEmpty()) {
                 try {
-                    Map<String, Object> rOutputs = FlowInputOutput.renderFlowOutputs(subflowOutputs, runContext);
+                    var inputAndOutput = runContext.inputAndOutput();
+                    Map<String, Object> rOutputs = inputAndOutput.renderOutputs(subflowOutputs);
 
-                    FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class); // this is hacking
-                    if (flow.getOutputs() != null && flowInputOutput != null) {
-                        rOutputs = flowInputOutput.typedOutputs(flow, execution, rOutputs);
+                    if (flow.getOutputs() != null) {
+                        rOutputs = inputAndOutput.typedOutputs(flow, execution, rOutputs);
                     }
                     builder.outputs(rOutputs);
                 } catch (Exception e) {

@@ -204,7 +204,7 @@
                             className="row-action"
                         >
                             <template #default="scope">
-                                <div style="display: flex; align-items: center; gap: 5px;">
+                                <div class="action-container">
                                     <el-button v-if="scope.row.executionId || scope.row.evaluateRunningDate">
                                         <Kicon
                                             :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
@@ -855,6 +855,12 @@
     .backfillContainer {
         display: flex;
         align-items: center;
+    }
+
+    .action-container {
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
 
     .statusIcon {

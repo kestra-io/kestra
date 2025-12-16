@@ -294,11 +294,11 @@ const createAxios = (
 };
 
 export default (
-    callback: (clientInstance: Client) => void,
+    callback: (clientInstance: Client["instance"]) => void,
     _store: any,
     ...args: Parameters<typeof createAxios>
 ) => {
-    callback(createAxios(...args));
+    callback(createAxios(...args).instance);
 }
 
 let clientInstance: Client | null = null;

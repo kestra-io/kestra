@@ -157,6 +157,7 @@
         }
 
         &.success {
+            cursor: default;
             border-color: var(--ks-border-success);
         }
 

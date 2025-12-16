@@ -157,9 +157,7 @@ public class CommandsWrapper implements TaskCommands {
             FilesService.inputFiles(runContext, realTaskRunner.additionalVars(runContext, this), this.inputFiles);
         }
 
-        RunContextInitializer initializer = ((DefaultRunContext) runContext).getApplicationContext().getBean(RunContextInitializer.class);
-
-        RunContext taskRunnerRunContext = initializer.forPlugin(((DefaultRunContext) runContext).clone(), realTaskRunner);
+        RunContext taskRunnerRunContext = runContext.cloneForPlugin(realTaskRunner);
 
         List<String> renderedCommands = this.renderCommands(runContext, commands);
         List<String> renderedBeforeCommands = this.renderCommands(runContext, beforeCommands);

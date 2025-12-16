@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
-    <template v-if="!pluginIsSelected">
+    <template v-if="isPluginList">
         <PluginHome v-if="filteredPlugins" :plugins="filteredPlugins" />
     </template>
     <DocsLayout v-else>
@@ -121,8 +121,9 @@
 
     const releaseNotesUrl = computed(() => getPluginReleaseUrl(pluginType.value));
 
-    const pluginIsSelected = computed(
-        () => pluginType.value !== undefined && pluginsStore.plugin !== undefined
+
+    const isPluginList = computed(
+        () => typeof route.name === "string" && route.name === "plugins/list"
     );
 
     function loadToc() {

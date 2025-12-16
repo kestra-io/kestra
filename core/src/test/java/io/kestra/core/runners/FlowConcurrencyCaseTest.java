@@ -178,7 +178,10 @@ public class FlowConcurrencyCaseTest {
         // we restart the first one, it should be queued then fail again.
         Execution failedExecution = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.FAILED), execution1);
         Execution restarted = executionService.restart(failedExecution, null);
-        Execution executionResult1 = runnerUtils.restartExecution(e -> e.getState().getCurrent().equals(Type.FAILED), restarted);
+        Execution executionResult1 = runnerUtils.restartExecution(
+            e -> e.getState().getHistories().stream().anyMatch(history -> history.getState() == Type.RESTARTED) && e.getState().getCurrent().equals(Type.FAILED),
+            restarted
+        );
         Execution executionResult2 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.FAILED), execution2);
 
         assertThat(executionResult1.getState().getCurrent()).isEqualTo(Type.FAILED);
@@ -215,7 +218,7 @@ public class FlowConcurrencyCaseTest {
         List<Execution> subFlowExecs = runnerUtils.awaitFlowExecutionNumber(2, tenantId, NAMESPACE, "flow-concurrency-cancel");
         assertThat(subFlowExecs).extracting(e -> e.getState().getCurrent()).containsExactlyInAnyOrder(Type.SUCCESS, Type.CANCELLED);
 
-        // run another execution to be sure that everything work (purge is correctly done)
+        // run another execution to be sure that everything works (purge is correctly done)
         Execution execution3 = runnerUtils.runOne(tenantId, NAMESPACE, "flow-concurrency-subflow");
         assertThat(execution3.getState().getCurrent()).isEqualTo(Type.SUCCESS);
         runnerUtils.awaitFlowExecution(e -> e.getState().getCurrent().equals(Type.SUCCESS), tenantId, NAMESPACE, "flow-concurrency-cancel");
@@ -278,7 +281,6 @@ public class FlowConcurrencyCaseTest {
             assertThat(queued.getState().getCurrent()).isEqualTo(Type.QUEUED);
         } finally {
             // kill everything to avoid dangling executions
-            runnerUtils.killExecution(execution1);
             runnerUtils.killExecution(execution2);
             runnerUtils.killExecution(execution3);
 
@@ -321,7 +323,6 @@ public class FlowConcurrencyCaseTest {
         } finally {
             // kill everything to avoid dangling executions
             runnerUtils.killExecution(execution1);
-            runnerUtils.killExecution(execution2);
             runnerUtils.killExecution(execution3);
 
             // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do

@@ -61,6 +61,15 @@ class SystemInformationReportTest {
         }
 
         @Override
+        public Setting internalSave(Setting setting) throws ConstraintViolationException {
+            if (setting.getKey().equals(Setting.INSTANCE_UUID)) {
+                UUID = setting.getValue();
+            }
+
+            return setting;
+        }
+
+        @Override
         public Setting delete(Setting setting) {
             return setting;
         }

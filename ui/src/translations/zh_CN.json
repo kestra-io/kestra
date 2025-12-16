@@ -958,6 +958,7 @@
     "flow": "流程",
     "flow already exists": "流程已存在",
     "flow creation": "流程创建",
+    "flow creation denied in namespace": "您没有权限在namespace `{namespace}`中创建flows。",
     "flow delete": "确定要删除 <code>{flowCount}</code> 个流程吗？",
     "flow deleted, you can restore it": "流程已删除，这是只读视图。你仍然可以恢复它。",
     "flow disable": "确定要禁用 <code>{flowCount}</code> 个流程吗？",

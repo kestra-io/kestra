@@ -599,6 +599,11 @@ public class DefaultRunContext extends RunContext {
         return localPath;
     }
 
+    @Override
+    public InputAndOutput inputAndOutput() {
+        return new InputAndOutputImpl(this.applicationContext, this);
+    }
+
     /**
      * Builder class for constructing new {@link DefaultRunContext} objects.
      */

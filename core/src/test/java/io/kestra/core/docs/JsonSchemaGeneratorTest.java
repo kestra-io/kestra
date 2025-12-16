@@ -170,10 +170,11 @@ class JsonSchemaGeneratorTest {
 
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
             assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
-                Matchers.aMapWithSize(3),
+                Matchers.aMapWithSize(4),
                 hasKey("conditions"),
                 hasKey("stopAfter"),
-                hasKey("type")
+                hasKey("type"),
+                hasKey("allowConcurrent")
             ));
         });
     }

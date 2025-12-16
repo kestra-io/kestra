@@ -644,19 +644,34 @@ function deleteFlowAndDependencies() {
     function enableFlowByQuery(options: { namespace: string, id: string }) {
         return axios.post(`${apiUrl()}/flows/enable/by-query`, options, {params: options})
     }
+
     function deleteFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
         return axios.delete(`${apiUrl()}/flows/delete/by-ids`, {data: options.ids})
     }
+
     function deleteFlowByQuery(options: { namespace: string, id: string }) {
         return axios.delete(`${apiUrl()}/flows/delete/by-query`, {params: options})
     }
+
     function validateFlow(options: { flow: string }) {
+        const flowValidationIssues:FlowValidations = {};
+        if(isCreating.value) {
+            const {namespace} = YAML_UTILS.getMetadata(options.flow);
+            if(authStore.user && !authStore.user.isAllowed(
+                permission.FLOW,
+                action.CREATE,
+                namespace,
+            )) {
+                flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
+            }
+        }
         return axios.post(`${apiUrl()}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
             .then(response => {
-                flowValidation.value = response.data[0]
-                return response.data[0]
+                flowValidation.value = {...response.data[0], ...flowValidationIssues}
+                return flowValidation.value
             })
     }
+
     function validateTask(options: { task: string, section: string }) {
         return axios.post(`${apiUrl()}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
             .then(response => {
@@ -795,8 +810,6 @@ function deleteFlowAndDependencies() {
         const infos = flowValidation.value?.infos ?? [];
 
         return infos.length === 0 ? undefined : infos;
-
-        return undefined;
     })
 
     const flowHaveTasks = computed((): boolean => {

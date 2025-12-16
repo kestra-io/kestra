@@ -1,15 +1,24 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
     <Layout
-        :title="t(`demos.blueprints.title`)"
-        :image="{source: sourceImg, alt: t(`demos.blueprints.title`)}"
-        :video="{
-            source: 'https://www.youtube.com/embed/qbGfK-FJi6s?si=UTeK3V5Cj8FRHH91',
+        :title="t(`demos.blueprints-${props.type}.title`)"
+        :image="{
+            source: sourceImg,
+            alt: t(`demos.blueprints-${props.type}.title`),
         }"
+        v-bind="
+            props.type === 'flow'
+                ? {
+                    video: {
+                        source: 'https://www.youtube.com/embed/qbGfK-FJi6s?si=UTeK3V5Cj8FRHH91',
+                    },
+                }
+                : {}
+        "
         :embed="props.embed"
     >
         <template #message>
-            {{ $t(`demos.blueprints.message`) }}
+            {{ $t(`demos.blueprints-${props.type}.message`) }}
         </template>
     </Layout>
 </template>
@@ -26,9 +35,14 @@
 
     const {t} = useI18n();
 
-    const routeInfo = computed(() => ({title: t("demos.blueprints.title")}));
+    const props = defineProps({
+        embed: {type: Boolean, default: false},
+        type: {type: String, required: true},
+    });
+
+    const routeInfo = computed(() => ({
+        title: t(`demos.blueprints-${props.type}.title`),
+    }));
 
     useRouteContext(routeInfo);
-
-    const props = defineProps({embed: {type: Boolean, default: false}});
 </script>

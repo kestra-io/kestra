@@ -1,6 +1,8 @@
 import {computed} from "vue";
-import {useRoute, useRouter} from "vue-router";
+
+import {useRoute, useRouter, type RouteRecordNameGeneric} from "vue-router";
 import {useI18n} from "vue-i18n";
+
 import {useMiscStore} from "override/stores/misc";
 
 import {getDashboard} from "../../components/dashboard/composables/useDashboards";
@@ -8,6 +10,7 @@ import {getDashboard} from "../../components/dashboard/composables/useDashboards
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
+import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
 import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
 import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
@@ -16,33 +19,42 @@ import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue";
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
 import OfficeBuildingOutline from "vue-material-design-icons/OfficeBuildingOutline.vue";
 import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue";
-
-// TO REMOVE AFTER TESTING
-import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
-import ShieldKeyOutline from "vue-material-design-icons/ShieldKeyOutline.vue";
+import Wrench from "vue-material-design-icons/Wrench.vue";
 
 export type MenuItem = {
+    title: string;
+    routes?: RouteRecordNameGeneric[];
     href?: {
-        path?: string;
         name: string;
         params?: Record<string, any>;
         query?: Record<string, any>;
     };
+    icon?: {
+        element?: any;
+        class?: any;
+    };
     child?: MenuItem[];
     disabled?: boolean;
+    attributes?: {
+        locked?: boolean;
+    };
+    hidden?: boolean;
+    exact?: boolean;
 };
 
 export function useLeftMenu() {
-    const {t} = useI18n({useScope: "global"});
     const $route = useRoute();
     const $router = useRouter();
+
+    const {t} = useI18n({useScope: "global"});
+
     const miscStore = useMiscStore();
 
     /**
-     * Returns all route names that start with the given route
-     * @param route
-     * @returns
+     * Returns the names of all registered routes whose name starts with the given prefix.
+     *
+     * @param route - The route name prefix to match against.
+     * @returns An array of route names starting with the provided prefix.
      */
     function routeStartWith(route: string) {
         return $router
@@ -53,6 +65,15 @@ export function useLeftMenu() {
             .map((r) => r.name);
     }
 
+    /**
+     * Flattens a hierarchical menu structure into a single-level array.
+     *
+     * Each menu item is included, followed by all of its children (recursively),
+     * preserving the original order.
+     *
+     * @param items - An array of menu items that may contain nested children.
+     * @returns A flat array containing all menu items and their descendants.
+     */
     const flatMenuItems = (items: MenuItem[]): MenuItem[] => {
         return items.flatMap((item) =>
             item.child ? [item, ...flatMenuItems(item.child)] : [item],
@@ -62,133 +83,159 @@ export function useLeftMenu() {
     const menu = computed(() => {
         const generatedMenu = [
             {
+                title: t("dashboards.labels.plural"),
                 href: {
                     name: "home",
-                    params: {dashboard: getDashboard($route, "id")},
+                    params: {
+                        dashboard: getDashboard($route, "id"),
+                    },
                 },
-                title: t("dashboards.labels.plural"),
                 icon: {
                     element: ChartLineVariant,
-                    class: "menu-icon",
                 },
             },
             {
-                href: {name: "flows/list"},
-                routes: routeStartWith("flows"),
                 title: t("flows"),
+                routes: routeStartWith("flows"),
+                href: {
+                    name: "flows/list",
+                },
                 icon: {
                     element: FileTreeOutline,
-                    class: "menu-icon",
                 },
                 exact: false,
             },
             {
-                href: {name: "apps/list"},
-                routes: routeStartWith("apps"),
                 title: t("apps"),
+                routes: routeStartWith("apps"),
+                href: {
+                    name: "apps/list",
+                },
                 icon: {
                     element: LayersTripleOutline,
-                    class: "menu-icon",
                 },
                 attributes: {
                     locked: true,
                 },
             },
             {
-                href: {name: "templates/list"},
-                routes: routeStartWith("templates"),
                 title: t("templates"),
+                routes: routeStartWith("templates"),
+                href: {
+                    name: "templates/list",
+                },
                 icon: {
-                    element: ContentCopy, // TODO: maybe change icon
-                    class: "menu-icon",
+                    element: ContentCopy, // TODO: Consider changing the icon for this
                 },
                 hidden: !miscStore.configs?.isTemplateEnabled,
             },
             {
-                href: {name: "executions/list"},
-                routes: routeStartWith("executions"),
                 title: t("executions"),
+                routes: routeStartWith("executions"),
+                href: {
+                    name: "executions/list",
+                },
                 icon: {
                     element: PlayOutline,
-                    class: "menu-icon",
                 },
             },
             {
-                href: {name: "logs/list"},
-                routes: routeStartWith("logs"),
                 title: t("logs"),
+                routes: routeStartWith("logs"),
+                href: {
+                    name: "logs/list",
+                },
                 icon: {
                     element: FileDocumentOutline,
-                    class: "menu-icon",
                 },
             },
             {
-                href: {name: "tests/list"},
-                routes: routeStartWith("tests"),
                 title: t("demos.tests.label"),
+                routes: routeStartWith("tests"),
+                href: {
+                    name: "tests/list",
+                },
                 icon: {
                     element: FlaskOutline,
-                    class: "menu-icon",
                 },
                 attributes: {
                     locked: true,
                 },
             },
+            // TODO: To add Assets entry here in future release
             {
-                href: {name: "namespaces/list"},
-                routes: routeStartWith("namespaces"),
                 title: t("namespaces"),
+                routes: routeStartWith("namespaces"),
+                href: {
+                    name: "namespaces/list",
+                },
                 icon: {
                     element: FolderOpenOutline,
-                    class: "menu-icon",
                 },
             },
             {
-                href: {name: "plugins/list"},
-                routes: routeStartWith("plugins"),
                 title: t("plugins.names"),
+                routes: routeStartWith("plugins"),
+                href: {
+                    name: "plugins/list",
+                },
                 icon: {
                     element: PuzzleOutline,
-                    class: "menu-icon",
                 },
             },
             {
-                routes: routeStartWith("blueprints"),
                 title: t("blueprints.title"),
+                routes: routeStartWith("blueprints"),
                 icon: {
                     element: ShapePlusOutline,
-                    class: "menu-icon",
                 },
                 child: [
                     {
                         title: t("blueprints.custom"),
                         routes: routeStartWith("blueprints/flow/custom"),
-                        attributes: {
-                            locked: true,
-                        },
                         href: {
                             name: "blueprints",
-                            params: {kind: "flow", tab: "custom"},
+                            params: {
+                                kind: "flow",
+                                tab: "custom",
+                            },
+                        },
+                        icon: {
+                            element: Wrench,
+                        },
+                        attributes: {
+                            locked: true,
                         },
                     },
                     {
                         title: t("blueprints.flows"),
-                        routes: routeStartWith("blueprints/flow"),
+                        routes: routeStartWith("blueprints/flow/community"),
                         href: {
                             name: "blueprints",
-                            params: {kind: "flow", tab: "community"},
+                            params: {
+                                kind: "flow",
+                                tab: "community",
+                            },
+                        },
+                        icon: {
+                            element: FileTreeOutline,
                         },
                     },
                     {
                         title: t("blueprints.apps"),
-                        routes: routeStartWith("blueprints/flow/app"),
+                        routes: routeStartWith("blueprints/app"),
+                        href: {
+                            name: "blueprints",
+                            params: {
+                                kind: "app",
+                                tab: "community",
+                            },
+                        },
+                        icon: {
+                            element: LayersTripleOutline,
+                        },
                         attributes: {
                             locked: true,
-                        },
-                        href: {
-                            // TODO: napravi da ide na demo page
-                            name: "blueprints",
-                            params: {kind: "flow", tab: "app"},
                         },
                     },
                     {
@@ -196,17 +243,22 @@ export function useLeftMenu() {
                         routes: routeStartWith("blueprints/dashboard"),
                         href: {
                             name: "blueprints",
-                            params: {kind: "dashboard", tab: "community"},
+                            params: {
+                                kind: "dashboard",
+                                tab: "community",
+                            },
+                        },
+                        icon: {
+                            element: ChartLineVariant,
                         },
                     },
                 ],
             },
             {
-                routes: routeStartWith("blueprints"), // TODO: change route
                 title: t("tenant_administration"),
+                // routes: routeStartWith("blueprints"), // TODO: change route
                 icon: {
                     element: OfficeBuildingOutline,
-                    class: "menu-icon",
                 },
                 child: [
                     {
@@ -218,18 +270,18 @@ export function useLeftMenu() {
                         href: {name: "kv/list"},
                         routes: routeStartWith("kv"),
                         title: t("kv.name"),
-                        icon: {
-                            element: DatabaseOutline,
-                            class: "menu-icon",
-                        },
+                        // icon: {
+                        //     element: DatabaseOutline,
+                        //
+                        // },
                     },
                     {
                         href: {name: "secrets/list"},
                         routes: routeStartWith("secrets"),
                         title: t("secret.names"),
                         icon: {
-                            element: ShieldKeyOutline,
-                            class: "menu-icon",
+                            // element: ShieldKeyOutline,
+                            //
                         },
                         attributes: {
                             locked: true,
@@ -261,10 +313,9 @@ export function useLeftMenu() {
             },
             {
                 title: t("instance_administration"),
-                routes: routeStartWith("admin"),
+                // routes: routeStartWith("admin"),
                 icon: {
                     element: ServerNetworkOutline,
-                    class: "menu-icon",
                 },
                 child: [
                     {
@@ -294,10 +345,11 @@ export function useLeftMenu() {
         ];
 
         flatMenuItems(generatedMenu).forEach((menuItem) => {
-            if (
-                menuItem.href !== undefined &&
-                menuItem.href?.name === $route.name
-            ) {
+            if (menuItem.icon?.element) {
+                menuItem.icon.class = "menu-icon";
+            }
+
+            if (menuItem.href && menuItem.href?.name === $route.name) {
                 menuItem.href.query = {
                     ...$route.query,
                     ...menuItem.href?.query,
@@ -308,8 +360,5 @@ export function useLeftMenu() {
         return generatedMenu;
     });
 
-    return {
-        routeStartWith,
-        menu,
-    };
+    return {menu};
 }

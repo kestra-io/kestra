@@ -1,5 +1,5 @@
 <template>
-    <DemoBlueprints v-if="props.tab === 'custom'" />
+    <DemoBlueprints v-if="props.tab === 'custom' || props.kind === 'app'" :type="props.kind" />
     <template v-else>
         <TopNavBar v-if="!props.embed" :title="routeInfo.title" />
         <DottedLayout

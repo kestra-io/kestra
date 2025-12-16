@@ -715,7 +715,8 @@ public abstract class AbstractScheduler implements Scheduler {
                                 Optional<SchedulerExecutionWithTrigger> schedulerExecutionWithTrigger = evaluateScheduleTrigger(f);
                                 if (schedulerExecutionWithTrigger.isPresent()) {
                                     this.handleEvaluateSchedulingTriggerResult(schedule, schedulerExecutionWithTrigger.get(), f.getConditionContext(), scheduleContext);
-                                } else {
+                                }
+                                else{
                                     // compute next date and save the trigger to avoid evaluating it each second
                                     Trigger trigger = Trigger.fromEvaluateFailed(
                                         f.getTriggerContext(),
@@ -750,26 +751,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         // validate schedule condition can fail to render variables
                         // in this case, we send a failed execution so the trigger is not evaluated each second.
                         logger.error("Unable to evaluate the trigger '{}'", f.getAbstractTrigger().getId(), ie);
-                        Execution execution = Execution.builder()
-                            .id(IdUtils.create())
-                            .tenantId(f.getTriggerContext().getTenantId())
-                            .namespace(f.getTriggerContext().getNamespace())
-                            .flowId(f.getTriggerContext().getFlowId())
-                            .flowRevision(f.getFlow().getRevision())
-                            .labels(LabelService.labelsExcludingSystem(f.getFlow()))
-                            .state(new State().withState(State.Type.FAILED))
-                            .build();
-                        ZonedDateTime nextExecutionDate;
-                        try {
-                            nextExecutionDate = this.nextEvaluationDate(f.getAbstractTrigger());
-                        } catch (InvalidTriggerConfigurationException e2) {
-                            logError(f, e2);
-                            disableInvalidTrigger(f, e2);
-                            return;
-                        }
-
-                        var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
-                        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handle/save/on-error"));
+                       handleFailedEvaluatedTrigger(f, scheduleContext, ie);
                     }
                 });
         });
@@ -983,11 +965,43 @@ public abstract class AbstractScheduler implements Scheduler {
                     ));
                 } catch (Exception e) {
                     logError(flowWithTrigger, e);
+                    Execution failedExecution =  createFailedExecution( flowWithTrigger, e);
+                    this.emitExecution(failedExecution, flowWithTrigger.getTriggerContext());
                     return Optional.empty();
                 }
             });
     }
+    private Execution createFailedExecution(FlowWithWorkerTrigger flowWithTrigger, Throwable e){
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(flowWithTrigger.getTriggerContext().getTenantId())
+            .namespace(flowWithTrigger.getTriggerContext().getNamespace())
+            .flowId(flowWithTrigger.getTriggerContext().getFlowId())
+            .flowRevision(flowWithTrigger.getFlow().getRevision())
+            .labels(LabelService.labelsExcludingSystem(flowWithTrigger.getFlow()))
+            .state(new State().withState(State.Type.FAILED))
+            .build();
+        Logger logger = runContextFactory.of(flowWithTrigger.getFlow(), execution).logger();
+        logger.error("[trigger: {}] [date: {}] Evaluate Failed with error '{}'" , flowWithTrigger.getAbstractTrigger().getId(), now(), e.getMessage());
+        return execution;
+    }
+   private void handleFailedEvaluatedTrigger(FlowWithWorkerTrigger flowWithTrigger, ScheduleContextInterface scheduleContext, Throwable e ){
 
+        Execution execution = createFailedExecution(flowWithTrigger, e);
+        ZonedDateTime nextExecutionDate;
+        try {
+            nextExecutionDate = this.nextEvaluationDate(flowWithTrigger.getAbstractTrigger());
+        } catch (InvalidTriggerConfigurationException e2) {
+            logError(flowWithTrigger, e2);
+            disableInvalidTrigger(flowWithTrigger, e2);
+            return;
+        }
+
+        var trigger = flowWithTrigger.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
+        trigger = trigger.checkBackfill();
+        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handle/save/on-error"));
+
+    }
     private void logError(FlowWithWorkerTrigger flowWithWorkerTriggerNextDate, Throwable e) {
         Logger logger = flowWithWorkerTriggerNextDate.getConditionContext().getRunContext().logger();
 

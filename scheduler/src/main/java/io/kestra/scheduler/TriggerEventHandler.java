@@ -3,12 +3,17 @@ package io.kestra.scheduler;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
@@ -24,6 +29,7 @@ import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.NextEvaluationDate;
@@ -31,6 +37,7 @@ import io.kestra.scheduler.pubsub.TriggerExecutionPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
 import io.kestra.scheduler.stores.TriggerStateStore;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
@@ -55,18 +62,21 @@ public class TriggerEventHandler {
     private final TriggerExecutionPublisher triggerExecutionPublisher;
     private final RunContextFactory runContextFactory;
     private final ConditionService conditionService;
+    private final QueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject
     public TriggerEventHandler(TriggerStateStore triggerStateStore,
                                FlowMetaStore flowStateStore,
                                TriggerExecutionPublisher triggerExecutionPublisher,
                                RunContextFactory runContextFactory,
-                               ConditionService conditionService) {
+                               ConditionService conditionService,
+                               @Named(QueueFactoryInterface.KILL_NAMED) QueueInterface<ExecutionKilled> executionKilledQueue) {
         this.triggerStateStore = triggerStateStore;
         this.flowStateStore = flowStateStore;
         this.triggerExecutionPublisher = triggerExecutionPublisher;
         this.conditionService = conditionService;
         this.runContextFactory = runContextFactory;
+        this.executionKilledQueue = executionKilledQueue;
     }
 
     /**
@@ -290,7 +300,27 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerDeleted(TriggerDeleted event) {
-        triggerStateStore.delete(event.id());
+        triggerStateStore.find(event.id()).ifPresent(state -> {
+            triggerStateStore.delete(event.id());
+            maySendExecutionKilled(event, state);
+        });
+    }
+
+    private void maySendExecutionKilled(TriggerDeleted event, TriggerState state) {
+        if (TriggerType.REALTIME.equals(state.getType())) {
+            try {
+                this.executionKilledQueue.emit(ExecutionKilledTrigger
+                    .builder()
+                    .tenantId(state.getTenantId())
+                    .namespace(state.getNamespace())
+                    .flowId(state.getFlowId())
+                    .triggerId(state.getTriggerId())
+                    .build()
+                );
+            } catch (QueueException e) {
+                Logs.logTrigger(event.id(), Level.WARN, "Cannot kill a real-time trigger, it will continue processing until Kestra is restarted. Cause: {}", e.getMessage(), e);
+            }
+        }
     }
 
     /**
@@ -302,7 +332,7 @@ public class TriggerEventHandler {
         Pair<Flow, AbstractTrigger> data = findTrigger(event, event.revision());
         if (data.getRight() != null) {
             TriggerState state = TriggerState
-                .of(event.id(), data.getRight().getStopAfter(), data.getRight().isDisabled(), vNode)
+                .of(event.id(), TriggerType.from(data.getRight()), data.getRight().getStopAfter(), data.getRight().isDisabled(), vNode)
                 .lastEventId(clock, event.eventId());
             triggerStateStore.save(state);
         }

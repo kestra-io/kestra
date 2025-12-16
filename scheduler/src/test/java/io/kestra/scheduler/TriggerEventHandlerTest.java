@@ -2,10 +2,13 @@ package io.kestra.scheduler;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
@@ -19,6 +22,7 @@ import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.scheduler.events.TriggerUpdated;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
@@ -27,6 +31,7 @@ import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -56,13 +61,15 @@ class TriggerEventHandlerTest {
 
     private InMemoryTriggerStateStore triggerStateStore;
     private CollectorTriggerExecutionPublisher triggerExecutionPublisher;
+    private QueueInterface<ExecutionKilled> executionKilledQueue;
 
     @BeforeEach
     void setUp() {
         triggerExecutionPublisher = new CollectorTriggerExecutionPublisher();
         triggerStateStore = new InMemoryTriggerStateStore();
         triggerId = Fixtures.triggerId();
-        triggerState = TriggerState.of(triggerId, null, false, 0);
+        triggerState = TriggerState.of(triggerId, TriggerType.SCHEDULE, null, false, 0);
+        executionKilledQueue = Mockito.mock(QueueInterface.class);
     }
 
     TriggerEventHandler newTriggerEventHandler(List<FlowWithSource> flows) {
@@ -71,7 +78,8 @@ class TriggerEventHandlerTest {
             new InMemoryFlowMetaStore(TEST_VNODE_COUNT, flows),
             triggerExecutionPublisher,
             runContextFactory,
-            conditionService
+            conditionService,
+            executionKilledQueue
         );
     }
 
@@ -106,7 +114,7 @@ class TriggerEventHandlerTest {
     }
 
     @Test
-    void shouldDeleteTriggerGivenTriggerDeletedEventWhenHandled() {
+    void shouldDeleteTriggerGivenTriggerDeletedEventWhenHandled() throws QueueException {
         // GIVEN
         triggerStateStore.save(triggerState);
         handler = newTriggerEventHandler(List.of());
@@ -117,7 +125,24 @@ class TriggerEventHandlerTest {
 
         // THEN
         assertThat(triggerStateStore.find(triggerId)).isEmpty();
+        Mockito.verify(executionKilledQueue, Mockito.never()).emit(Mockito.any(ExecutionKilled.class));
     }
+
+    @Test
+    void shouldSendKillGivenTriggerDeletedEventForRealTimeTriggerWhenHandled() throws QueueException {
+        // GIVEN
+        triggerStateStore.save(TriggerState.of(triggerId, TriggerType.REALTIME, null, false, 0));
+        handler = newTriggerEventHandler(List.of());
+        TriggerDeleted event = new TriggerDeleted(triggerId);
+
+        // WHEN
+        handler.handle(CLOCK, TEST_VNODE, event);
+
+        // THEN
+        assertThat(triggerStateStore.find(triggerId)).isEmpty();
+        Mockito.verify(executionKilledQueue, Mockito.only()).emit(Mockito.any(ExecutionKilled.class));
+    }
+
 
     @Test
     void shouldUpdateTriggerGivenExistingFlowWhenTriggerUpdated() {

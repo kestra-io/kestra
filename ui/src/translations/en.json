@@ -912,13 +912,9 @@
         "title": "Manage Infrastructure Across Your Instance",
         "message": "Kestra Enterprise Edition provides an operational dashboard to help you observe the health of your platform and track the uptime metrics of all services such as a.o. Workers, Schedulers, and Executors. From the same page, you can also create Announcements to notify your users about planned downtime, and you can enter a maintenance mode which temporarily puts all services and workflow executions into a paused state to perform an upgrade."
       },
-      "blueprints-flow": {
+      "blueprints": {
         "title": "Add Custom Blueprints",
         "message": "In Kestra Enterprise Edition, you can create custom Blueprints only available to your organization. You can use them as best-practices templates to share, centralize, and document commonly used workflows in your team."
-      },
-      "blueprints-app": {
-        "title": "Add Apps Blueprints",
-        "message": "In Kestra Enterprise Edition, you can create Apps Blueprints only available to your organization. You can use them as best-practices templates to share, centralize, and document commonly used workflows in your team."
       },
       "namespace": {
         "edit": {

@@ -15,6 +15,8 @@ import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
 import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
 import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
+// TODO: Uncomment when Assets feature is ready
+// import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue";
 import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
 import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue";
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";

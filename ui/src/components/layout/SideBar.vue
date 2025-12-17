@@ -8,7 +8,6 @@
         :collapsed="collapsed"
         linkComponentName="LeftMenuLink"
         hideToggle
-        showOneChild
     >
         <template #header>
             <SidebarToggleButton

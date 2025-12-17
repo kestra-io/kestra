@@ -93,6 +93,7 @@
         margin-left: 1.8rem;
 
         .vsm--icon {
+            margin-left: calc($spacer / 2);
             color: var(--ks-content-secondary);
         }
 

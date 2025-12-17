@@ -7,6 +7,7 @@ import {useMiscStore} from "override/stores/misc";
 
 import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 
+// Main icons
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
@@ -19,7 +20,16 @@ import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue";
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
 import OfficeBuildingOutline from "vue-material-design-icons/OfficeBuildingOutline.vue";
 import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue";
+
+// Blueprints icons
 import Wrench from "vue-material-design-icons/Wrench.vue";
+
+// Tenant Administration icons
+import Monitor from "vue-material-design-icons/Monitor.vue";
+import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
+import LockOutline from "vue-material-design-icons/LockOutline.vue";
+import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
+import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue";
 
 export type MenuItem = {
     title: string;
@@ -116,17 +126,6 @@ export function useLeftMenu() {
                 },
             },
             {
-                title: t("templates"),
-                routes: routeStartWith("templates"),
-                href: {
-                    name: "templates/list",
-                },
-                icon: {
-                    element: ContentCopy, // TODO: Consider changing the icon for this
-                },
-                hidden: !miscStore.configs?.isTemplateEnabled,
-            },
-            {
                 title: t("executions"),
                 routes: routeStartWith("executions"),
                 href: {
@@ -169,6 +168,17 @@ export function useLeftMenu() {
                 icon: {
                     element: FolderOpenOutline,
                 },
+            },
+            {
+                title: t("templates"),
+                routes: routeStartWith("templates"),
+                href: {
+                    name: "templates/list",
+                },
+                icon: {
+                    element: ContentCopy, // TODO: Consider changing the icon for this
+                },
+                hidden: !miscStore.configs?.isTemplateEnabled,
             },
             {
                 title: t("plugins.names"),
@@ -219,23 +229,6 @@ export function useLeftMenu() {
                         },
                     },
                     {
-                        title: t("blueprints.apps"),
-                        routes: routeStartWith("blueprints/app"),
-                        href: {
-                            name: "blueprints",
-                            params: {
-                                kind: "app",
-                                tab: "community",
-                            },
-                        },
-                        icon: {
-                            element: LayersTripleOutline,
-                        },
-                        attributes: {
-                            locked: true,
-                        },
-                    },
-                    {
                         title: t("blueprints.dashboards"),
                         routes: routeStartWith("blueprints/dashboard"),
                         href: {
@@ -253,32 +246,48 @@ export function useLeftMenu() {
             },
             {
                 title: t("tenant_administration"),
-                // routes: routeStartWith("blueprints"), // TODO: change route
+                routes: [
+                    "admin/stats",
+                    "admin/triggers",
+                    "admin/auditlogs",
+                    "admin/iam",
+                    "kv",
+                    "secrets",
+                ]
+                    .map(routeStartWith)
+                    .find((routes) => routes.length > 0),
                 icon: {
                     element: OfficeBuildingOutline,
                 },
                 child: [
                     {
-                        href: {name: "admin/stats"},
-                        routes: routeStartWith("admin/stats"),
                         title: t("system overview"),
-                    },
-                    {
-                        href: {name: "kv/list"},
-                        routes: routeStartWith("kv"),
-                        title: t("kv.name"),
-                        // icon: {
-                        //     element: DatabaseOutline,
-                        //
-                        // },
-                    },
-                    {
-                        href: {name: "secrets/list"},
-                        routes: routeStartWith("secrets"),
-                        title: t("secret.names"),
+                        routes: routeStartWith("admin/stats"),
+                        href: {
+                            name: "admin/stats",
+                        },
                         icon: {
-                            // element: ShieldKeyOutline,
-                            //
+                            element: Monitor,
+                        },
+                    },
+                    {
+                        title: t("kv.name"),
+                        routes: routeStartWith("kv"),
+                        href: {
+                            name: "kv/list",
+                        },
+                        icon: {
+                            element: DatabaseOutline,
+                        },
+                    },
+                    {
+                        title: t("secret.names"),
+                        routes: routeStartWith("secrets"),
+                        href: {
+                            name: "secrets/list",
+                        },
+                        icon: {
+                            element: LockOutline,
                         },
                         attributes: {
                             locked: true,
@@ -286,22 +295,37 @@ export function useLeftMenu() {
                     },
 
                     {
-                        href: {name: "admin/triggers"},
-                        routes: routeStartWith("admin/triggers"),
                         title: t("triggers"),
+                        routes: routeStartWith("admin/triggers"),
+                        href: {
+                            name: "admin/triggers",
+                        },
+                        icon: {
+                            element: LightningBolt,
+                        },
                     },
                     {
-                        href: {name: "admin/auditlogs/list"},
-                        routes: routeStartWith("admin/auditlogs"),
                         title: t("auditlogs"),
+                        routes: routeStartWith("admin/auditlogs"),
+                        href: {
+                            name: "admin/auditlogs/list",
+                        },
+                        icon: {
+                            element: FileDocumentOutline,
+                        },
                         attributes: {
                             locked: true,
                         },
                     },
                     {
-                        href: {name: "admin/iam"},
-                        routes: routeStartWith("admin/iam"),
                         title: t("iam"),
+                        routes: routeStartWith("admin/iam"),
+                        href: {
+                            name: "admin/iam",
+                        },
+                        icon: {
+                            element: ShieldAccount,
+                        },
                         attributes: {
                             locked: true,
                         },
@@ -310,34 +334,16 @@ export function useLeftMenu() {
             },
             {
                 title: t("instance_administration"),
-                // routes: routeStartWith("admin"),
+                routes: routeStartWith("admin/instance"),
+                href: {
+                    name: "admin/instance",
+                },
                 icon: {
                     element: ServerNetworkOutline,
                 },
-                child: [
-                    {
-                        href: {name: "admin/instance"},
-                        routes: routeStartWith("admin/instance"),
-                        title: t("instance"),
-                        attributes: {
-                            locked: true,
-                        },
-                    },
-                    {
-                        href: {name: "admin/tenants/list"},
-                        routes: routeStartWith("admin/tenants"),
-                        title: t("tenant.names"),
-                        attributes: {
-                            locked: true,
-                        },
-                    },
-                    {
-                        href: {name: "admin/concurrency-limits"},
-                        routes: routeStartWith("admin/concurrency-limits"),
-                        title: t("concurrency limits"),
-                        hidden: !miscStore.configs?.isConcurrencyViewEnabled,
-                    },
-                ],
+                attributes: {
+                    locked: true,
+                },
             },
         ];
 

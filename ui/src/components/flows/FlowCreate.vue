@@ -20,6 +20,9 @@
     import {useVueTour} from "../../composables/useVueTour";
 
     import type {BlueprintType} from "../../stores/blueprints"
+    import {useAuthStore} from "../../override/stores/auth";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
     const route = useRoute();
     const {t} = useI18n();
@@ -29,13 +32,21 @@
     const blueprintsStore = useBlueprintsStore();
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();
+    const authStore = useAuthStore();
 
     const setupFlow = async () => {
         const blueprintId = route.query.blueprintId as string;
         const blueprintSource = route.query.blueprintSource as BlueprintType;
+        const implicitDefaultNamespace = authStore.user.getNamespacesForAction(
+            permission.FLOW,
+            action.CREATE,
+        )[0];
         let flowYaml = "";
         const id = getRandomID();
-        const selectedNamespace = (route.query.namespace as string) || defaultNamespace() || "company.team";
+        const selectedNamespace = (route.query.namespace as string) 
+            ?? defaultNamespace() 
+            ?? implicitDefaultNamespace 
+            ?? "company.team";
 
         if (route.query.copy && flowStore.flow) {
             flowYaml = flowStore.flow.source;

@@ -958,6 +958,7 @@
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",
     "flow creation": "Flow作成",
+    "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "flow delete": "<code>{flowCount}</code>件のflowを削除してもよろしいですか？",
     "flow deleted, you can restore it": "Flowは削除されており、これは読み取り専用ビューです。復元することは可能です。",
     "flow disable": "<code>{flowCount}</code>件のflowを無効化してもよろしいですか？",

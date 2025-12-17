@@ -1,7 +1,7 @@
 <template>
     <span ref="rootContainer">
         <!-- Valid -->
-        <el-button v-if="!errors && !warnings &&!infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
+        <el-button v-if="!errors && !warnings && !infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success square" disabled>
             <CheckBoldIcon class="text-success" />
         </el-button>
 
@@ -157,6 +157,7 @@
         }
 
         &.success {
+            cursor: default;
             border-color: var(--ks-border-success);
         }
 

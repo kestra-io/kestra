@@ -958,6 +958,7 @@
     "flow": "Flow",
     "flow already exists": "Flow già esistente",
     "flow creation": "Creazione del flow",
+    "flow creation denied in namespace": "Non hai il permesso di creare flow nel namespace `{namespace}`.",
     "flow delete": "Sei sicuro di voler eliminare <code>{flowCount}</code> flow?",
     "flow deleted, you can restore it": "Il flow è stato eliminato e questa è una vista di sola lettura. Puoi ancora ripristinarlo.",
     "flow disable": "Sei sicuro di voler disabilitare <code>{flowCount}</code> flow?",

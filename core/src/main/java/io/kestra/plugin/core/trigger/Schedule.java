@@ -6,9 +6,7 @@ import com.cronutils.model.time.ExecutionTime;
 import com.cronutils.parser.CronParser;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -16,10 +14,8 @@ import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.ScheduleValidation;
 import io.kestra.core.validations.TimezoneId;
@@ -27,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
+import lombok.AccessLevel;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
@@ -224,11 +221,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @PluginProperty
     @Deprecated
     private List<ScheduleCondition> scheduleConditions;
-
-    @Schema(
-        title = "The inputs to pass to the scheduled flow"
-    )
-    @PluginProperty(dynamic = true)
+    
     private Map<String, Object> inputs;
 
     @Schema(
@@ -248,13 +241,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
     @PluginProperty
     @Deprecated
     private Map<String, Object> backfill;
-
-    @Schema(
-        title = "Action to take in the case of missed schedules",
-        description = "`ALL` will recover all missed schedules, `LAST`  will only recovered the last missing one, `NONE` will not recover any missing schedule.\n" +
-            "The default is `ALL` unless a different value is configured using the global plugin configuration."
-    )
-    @PluginProperty
+    
     private RecoverMissedSchedules recoverMissedSchedules;
 
     @Override
@@ -403,20 +390,11 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
                 if (!conditionResults) {
                     return Optional.empty();
                 }
-            } catch(InternalException ie) {
+            } catch (InternalException ie) {
                 // validate schedule condition can fail to render variables
                 // in this case, we return a failed execution so the trigger is not evaluated each second
                 runContext.logger().error("Unable to evaluate the Schedule trigger '{}'", this.getId(), ie);
-                Execution execution = Execution.builder()
-                    .id(runContext.getTriggerExecutionId())
-                    .tenantId(triggerContext.getTenantId())
-                    .namespace(triggerContext.getNamespace())
-                    .flowId(triggerContext.getFlowId())
-                    .flowRevision(conditionContext.getFlow().getRevision())
-                    .labels(generateLabels(runContext, conditionContext, backfill))
-                    .state(new State().withState(State.Type.FAILED))
-                    .build();
-                return Optional.of(execution);
+                return Optional.of(SchedulableExecutionFactory.createFailedExecution(this, conditionContext, triggerContext));
             }
 
             // recalculate true output for previous and next based on conditions
@@ -430,14 +408,12 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             variables = scheduleDates.toMap();
         }
 
-        Execution execution = TriggerService.generateScheduledExecution(
+        Execution execution = SchedulableExecutionFactory.createExecution(
             this,
             conditionContext,
             triggerContext,
-            generateLabels(runContext, conditionContext, backfill),
-            generateInputs(runContext, backfill),
             variables,
-            Optional.empty()
+            null
         );
 
        return Optional.of(execution);
@@ -448,34 +424,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         return parser.parse(this.cron);
     }
 
-    private List<Label> generateLabels(RunContext runContext, ConditionContext conditionContext, Backfill backfill) throws IllegalVariableEvaluationException {
-        List<Label> labels = LabelService.fromTrigger(runContext, conditionContext.getFlow(), this);
-
-        if (backfill != null && backfill.getLabels() != null) {
-            for (Label label : backfill.getLabels()) {
-                final var value = runContext.render(label.value());
-                if (value != null) {
-                    labels.add(new Label(label.key(), value));
-                }
-            }
-        }
-
-        return labels;
-    }
-
-    private Map<String, Object> generateInputs(RunContext runContext, Backfill backfill) throws IllegalVariableEvaluationException {
-        Map<String, Object> inputs = new HashMap<>();
-
-        if (this.inputs != null) {
-            inputs.putAll(runContext.render(this.inputs));
-        }
-
-        if (backfill != null && backfill.getInputs() != null) {
-            inputs.putAll(runContext.render(backfill.getInputs()));
-        }
-
-        return inputs;
-    }
     private Optional<Output> scheduleDates(ExecutionTime executionTime, ZonedDateTime date) {
         Optional<ZonedDateTime> next = executionTime.nextExecution(date.minus(Duration.ofSeconds(1)));
 
@@ -614,12 +562,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
         }
 
         return true;
-    }
-
-    private boolean isValid(List<ScheduleCondition> conditions, ConditionContext conditionContext) throws InternalException {
-        return conditions
-            .stream()
-            .allMatch(throwPredicate(condition -> condition.test(conditionContext)));
     }
 
     @SuperBuilder

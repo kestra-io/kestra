@@ -958,6 +958,7 @@
     "flow": "Flow",
     "flow already exists": "Flow가 이미 존재합니다",
     "flow creation": "Flow 생성",
+    "flow creation denied in namespace": "`{namespace}` namespace에서 flow를 생성할 권한이 없습니다.",
     "flow delete": "<code>{flowCount}</code> 개의 flow를 삭제하시겠습니까?",
     "flow deleted, you can restore it": "Flow가 삭제되었으며 읽기 전용 보기입니다. 여전히 복원할 수 있습니다.",
     "flow disable": "<code>{flowCount}</code> 개의 flow를 비활성화하시겠습니까?",

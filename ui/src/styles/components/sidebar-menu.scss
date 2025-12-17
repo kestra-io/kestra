@@ -7,13 +7,15 @@
     }
 
     .vsm--icon {
+        width: 20px !important;
+        margin-right: calc($spacer / 2);
         transition: left 0.2s ease;
         background-color: transparent !important;
         padding-bottom: 15px;
-        width: 20px !important;
-        margin-right: calc($spacer / 2);
 
         svg {
+            height: 20px !important;
+            width: 20px !important;
             position: relative;
             margin-top: 13px;
         }
@@ -39,7 +41,7 @@
 
     .vsm--link {
         height: 30px;
-        padding: 0.3rem 0.5rem;
+        padding: 0.25rem 0.5rem;
         margin-bottom: 0.3rem;
         border-radius: .25rem;
         transition: padding 0.2s ease;
@@ -138,8 +140,6 @@
             top: 3px;
         }
     }
-
-
 
     a.vsm--link_active[href="#"] {
         cursor: initial !important;

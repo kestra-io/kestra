@@ -73,23 +73,8 @@ export function useLeftMenu() {
             .map((r) => r.name);
     }
 
-    /**
-     * Flattens a hierarchical menu structure into a single-level array.
-     *
-     * Each menu item is included, followed by all of its children (recursively),
-     * preserving the original order.
-     *
-     * @param items - An array of menu items that may contain nested children.
-     * @returns A flat array containing all menu items and their descendants.
-     */
-    const flatMenuItems = (items: MenuItem[]): MenuItem[] => {
-        return items.flatMap((item) =>
-            item.child ? [item, ...flatMenuItems(item.child)] : [item],
-        );
-    };
-
     const menu = computed<MenuItem[]>(() => {
-        const generatedMenu = [
+        return [
             {
                 title: t("dashboards.labels.plural"),
                 href: {
@@ -345,9 +330,7 @@ export function useLeftMenu() {
                     locked: true,
                 },
             },
-        ];
-
-        flatMenuItems(generatedMenu).forEach((item: MenuItem) => {
+        ].map((item: MenuItem) => {
             if (item.icon?.element) {
                 item.icon.class = "menu-icon"; // Add default class to all menu icons
             }
@@ -358,9 +341,9 @@ export function useLeftMenu() {
                     ...item.href?.query,
                 };
             }
-        });
 
-        return generatedMenu;
+            return item;
+        });
     });
 
     return {menu};

@@ -19,6 +19,10 @@ dependencies {
     implementation "io.micronaut:micronaut-management"
     implementation "io.micronaut:micronaut-http-client"
     implementation "io.micronaut:micronaut-http-server-netty"
+    // See https://github.com/netty-contrib/codec-multipart/pull/25
+    // See https://github.com/kestra-io/kestra/issues/9743
+    // There is an issue on Netty multipart content decoding that is fixed in 5.x, this library will bring the same fix for 4.x
+    implementation("io.netty.contrib:netty-codec-multipart-vintage:1.0.0.Alpha1")
     implementation "io.micronaut.cache:micronaut-cache-core"
     implementation "io.micronaut.cache:micronaut-cache-caffeine"
 

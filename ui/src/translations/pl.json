@@ -319,7 +319,7 @@
         "title": "Śledź zmiany za pomocą Audit Logs"
       },
       "blueprints": {
-        "message": "W Kestra Enterprise Edition możesz tworzyć niestandardowe Blueprints dostępne tylko dla Twojej organizacji. Możesz ich używać jako szablonów najlepszych praktyk do udostępniania, centralizowania i dokumentowania często używanych workflow w Twoim zespole.",
+        "message": "W Kestra Enterprise Edition możesz tworzyć niestandardowe Blueprints dostępne tylko dla Twojej organizacji. Możesz ich używać jako szablonów najlepszych praktyk do udostępniania, centralizowania i dokumentowania często używanych przepływów pracy w Twoim zespole.",
         "title": "Dodaj niestandardowe Blueprints"
       },
       "enterprise_edition": "Enterprise Edition",

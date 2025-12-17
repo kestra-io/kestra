@@ -319,7 +319,7 @@
         "title": "Suivre les modifications avec les Audit Logs"
       },
       "blueprints": {
-        "message": "Dans l'édition Kestra Enterprise, vous pouvez créer des Blueprints personnalisés uniquement disponibles pour votre organisation. Vous pouvez les utiliser comme modèles de bonnes pratiques pour partager, centraliser et documenter les workflows couramment utilisés dans votre équipe.",
+        "message": "Dans Kestra Enterprise Edition, vous pouvez créer des Blueprints personnalisés uniquement disponibles pour votre organisation. Vous pouvez les utiliser comme modèles de bonnes pratiques pour partager, centraliser et documenter les workflows couramment utilisés dans votre équipe.",
         "title": "Ajouter des Blueprints Personnalisés"
       },
       "enterprise_edition": "Édition Enterprise",

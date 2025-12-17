@@ -319,7 +319,7 @@
         "title": "監査Logで変更を追跡"
       },
       "blueprints": {
-        "message": "Kestra Enterprise Editionでは、組織専用のカスタムBlueprintを作成できます。これらをベストプラクティスのテンプレートとして使用し、チーム内で一般的に使用されるworkflowを共有、集中化、文書化することができます。",
+        "message": "Kestra Enterprise Editionでは、組織専用のカスタムBlueprintを作成できます。これらをベストプラクティスのテンプレートとして使用し、チーム内で一般的に使用されるワークフローを共有、集中化、文書化することができます。",
         "title": "カスタムBlueprintの追加"
       },
       "enterprise_edition": "エンタープライズエディション",

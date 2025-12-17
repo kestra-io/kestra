@@ -319,7 +319,7 @@
         "title": "Traccia le modifiche con i Log di Audit"
       },
       "blueprints": {
-        "message": "Nella Kestra Enterprise Edition, puoi creare blueprint personalizzati disponibili solo per la tua organizzazione. Puoi usarli come modelli di best-practice per condividere, centralizzare e documentare i flussi di lavoro comunemente utilizzati nel tuo team.",
+        "message": "Nella Kestra Enterprise Edition, puoi creare Blueprint personalizzati disponibili solo per la tua organizzazione. Puoi usarli come modelli di best-practice per condividere, centralizzare e documentare i flussi di lavoro comunemente utilizzati nel tuo team.",
         "title": "Aggiungi Blueprint Personalizzati"
       },
       "enterprise_edition": "Edizione Enterprise",

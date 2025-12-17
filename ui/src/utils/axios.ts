@@ -10,7 +10,8 @@ import {useMiscStore} from "override/stores/misc";
 import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 import {client} from "../generated/kestra-api/client.gen"
 import {Client} from "../generated/kestra-api/client"
-import wrappedSdk, {setTenantProvider} from "./sdkWrapper"
+import {setTenantProvider} from "./sdkWrapper"
+export * as sdk from "../generated/kestra-api/sdk.gen"
 
 let pendingRoute = false
 let requestsTotal = 0

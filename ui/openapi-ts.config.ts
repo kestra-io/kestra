@@ -1,4 +1,5 @@
 import {defineConfig} from "@hey-api/openapi-ts";
+import {defineKestraHeyConfig} from "./heyapi-sdk-plugin";
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const deCapitalize = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -10,7 +11,8 @@ export default defineConfig({
     lint: "eslint"
   },
 
-  plugins: [{
+  plugins: [
+    {
         name: "@hey-api/client-axios",
     },
     {
@@ -19,6 +21,9 @@ export default defineConfig({
         methodNameBuilder(operation) {
             return `${deCapitalize(operation.tags?.[0] ?? "")}${capitalize(operation.operationId ?? "")}`;
         }
-    }
+    },
+    defineKestraHeyConfig({
+        output: "./src/generated/kestra-heyapi-sdk",
+    })
   ],
 });

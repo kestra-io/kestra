@@ -276,11 +276,13 @@ export const useFlowStore = defineStore("flow", () => {
         }
 
         // validate flow on first load
-        return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
+        return validateFlow({
+            flow: isCreating.value ? source : yamlWithNextRevision.value
+        })
     }
 
-    function findFlows(options: Parameters<typeof sdk.Flows.searchFlows>[0] & { onlyTotal?: boolean }) {
-        return sdk.Flows.searchFlows(options).then(response => {
+    function findFlows(options: Parameters<typeof sdk.flowsSearchFlows>[0] & { onlyTotal?: boolean }) {
+        return sdk.flowsSearchFlows(options).then(response => {
             if(!response.data){
                 return undefined
             }
@@ -318,7 +320,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     function loadFlow(options: { namespace: string, id: string, revision?: number, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
         const httpClient = options.httpClient
-        return sdk.Flows.getFlow({
+        return sdk.flowsGetFlow({
                     id: options.id,
                     namespace: options.namespace,
                     revision: options.revision,
@@ -631,7 +633,12 @@ function deleteFlowAndDependencies() {
         return axios.delete(`${apiUrl()}/flows/delete/by-query`, {params: options})
     }
 
-    function validateFlow(options: { flow: string }) {
+    function validateFlow(options: { flow?: string }) {
+        if(!options.flow) {
+            return Promise.resolve({
+                constraints: t("flow must not be empty")
+            });
+        }
         const flowValidationIssues: FlowValidations = {};
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata(options.flow);

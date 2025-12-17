@@ -13,6 +13,6 @@ export const defaultConfig: KestraSdkPlugin["Config"] = {
 };
 
 /**
- * Type helper for `my-plugin` plugin, returns {@link Plugin.Config} object
+ * Type helper for `@kestra-io/sdk-plugin` plugin, returns {@link Plugin.Config} object
  */
 export const defineKestraHeyConfig = definePluginConfig(defaultConfig);

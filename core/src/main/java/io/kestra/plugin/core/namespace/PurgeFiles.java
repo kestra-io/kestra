@@ -47,7 +47,6 @@ import java.util.concurrent.atomic.AtomicLong;
                     filePattern: "**/*.sql"
                     behavior:
                       type: version
-                      keepAmount: 3
                       before: "2025-01-01T00:00:00Z"
                 """
         )

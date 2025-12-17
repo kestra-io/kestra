@@ -347,15 +347,15 @@ export function useLeftMenu() {
             },
         ];
 
-        flatMenuItems(generatedMenu).forEach((menuItem) => {
-            if (menuItem.icon?.element) {
-                menuItem.icon.class = "menu-icon"; // Add default class to all menu icons
+        flatMenuItems(generatedMenu).forEach((item: MenuItem) => {
+            if (item.icon?.element) {
+                item.icon.class = "menu-icon"; // Add default class to all menu icons
             }
 
-            if (menuItem.href && menuItem.href?.name === $route.name) {
-                menuItem.href.query = {
+            if (item.href && item.href?.name === $route.name) {
+                item.href.query = {
                     ...$route.query,
-                    ...menuItem.href?.query,
+                    ...item.href?.query,
                 };
             }
         });

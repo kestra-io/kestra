@@ -88,7 +88,7 @@ export function useLeftMenu() {
         );
     };
 
-    const menu = computed(() => {
+    const menu = computed<MenuItem[]>(() => {
         const generatedMenu = [
             {
                 title: t("dashboards.labels.plural"),

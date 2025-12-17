@@ -238,6 +238,7 @@ export function useLeftMenu() {
                     "admin/triggers",
                     "admin/auditlogs",
                     "admin/iam",
+                    "admin/concurrency-limits",
                 ]
                     .map(routeStartWith)
                     .find((routes) => routes.length > 0),
@@ -313,6 +314,17 @@ export function useLeftMenu() {
                         attributes: {
                             locked: true,
                         },
+                    },
+                    {
+                        title: t("concurrency limits"),
+                        routes: routeStartWith("admin/concurrency-limits"),
+                        href: {
+                            name: "admin/concurrency-limits",
+                        },
+                        icon: {
+                            element: ShieldAccount, // TODO: Consider changing the icon for this
+                        },
+                        hidden: !configs?.isConcurrencyViewEnabled,
                     },
                 ],
             },

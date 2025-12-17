@@ -6,20 +6,20 @@
 
     <Action
         v-if="tab === 'flows'"
-        :label="t('create_flow')"
+        :label="$t('create_flow')"
         :to="{name: 'flows/create', query: {namespace}}"
     />
 
     <Action
         v-if="tab === 'kv'"
-        :label="t('kv.inherited')"
+        :label="$t('kv.inherited')"
         :icon="FamilyTree"
         @click="namespacesStore.inheritedKVModalVisible = true"
     />
 
     <Action
         v-if="tab === 'kv'"
-        :label="t('kv.add')"
+        :label="$t('kv.add')"
         @click="namespacesStore.addKvModalVisible = true"
     />
 </template>
@@ -27,7 +27,6 @@
 <script setup lang="ts">
     import {computed, Ref} from "vue";
     import {useRoute, useRouter} from "vue-router";
-    import {useI18n} from "vue-i18n";
     import {useNamespacesStore} from "override/stores/namespaces";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
     import Dashboards from "../../../components/dashboard/components/selector/Selector.vue";
@@ -36,7 +35,6 @@
 
     const route = useRoute();
     const router = useRouter();
-    const {t} = useI18n({useScope: "global"});
     const namespacesStore = useNamespacesStore();
 
     const onSelectDashboard = (value: any) => {

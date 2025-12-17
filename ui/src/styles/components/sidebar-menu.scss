@@ -94,6 +94,14 @@
         position: relative !important;
         margin-left: 1.8rem;
 
+        &.vsm--link_level-3 {
+            margin-left: 3.6rem;
+
+            & span {
+                margin-left: calc($spacer / 4);
+            }
+        }
+
         .vsm--icon {
             margin-left: calc($spacer / 2);
             color: var(--ks-content-secondary);

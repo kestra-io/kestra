@@ -53,7 +53,6 @@ import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayInputStream;
@@ -170,12 +169,15 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
         assertThat(result.getInputs().containsKey("bool")).isTrue();
         assertThat(result.getInputs().get("bool")).isNull();
-        assertThat(result.getLabels().size()).isEqualTo(6);
-        assertThat(result.getLabels().getFirst()).isEqualTo(new Label("flow-label-1", "flow-label-1"));
-        assertThat(result.getLabels().get(1)).isEqualTo(new Label("flow-label-2", "flow-label-2"));
-        assertThat(result.getLabels().get(2)).isEqualTo(new Label("a", "label-1"));
-        assertThat(result.getLabels().get(3)).isEqualTo(new Label("b", "label-2"));
-        assertThat(result.getLabels().get(4)).isEqualTo(new Label("url", URL_LABEL_VALUE));
+        assertThat(result.getLabels()).containsExactlyInAnyOrder(
+            new Label("flow-label-1", "flow-label-1"),
+            new Label("flow-label-2", "flow-label-2"),
+            new Label("a", "label-1"),
+            new Label("b", "label-2"),
+            new Label("url", URL_LABEL_VALUE),
+            new Label(Label.CORRELATION_ID, result.getId()),
+            new Label(Label.FROM, "api")
+        );
 
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
             HttpRequest
@@ -203,6 +205,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(execution.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label(Label.FROM, "api"),
             new Label("existing", "fromExecution")
         );
     }
@@ -908,8 +911,12 @@ class ExecutionControllerRunnerTest {
         assertThat((Boolean) ((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b")).isTrue();
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters")).get("name")).isEqualTo(List.of("john"));
         assertThat(((Map<String, List<String>>) execution.getTrigger().getVariables().get("parameters")).get("age")).containsExactlyInAnyOrder("12", "13");
-        assertThat(execution.getLabels().getFirst()).isEqualTo(new Label("flow-label-1", "flow-label-1"));
-        assertThat(execution.getLabels().get(1)).isEqualTo(new Label("flow-label-2", "flow-label-2"));
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label(Label.FROM, "trigger"),
+            new Label("flow-label-1", "flow-label-1"),
+            new Label("flow-label-2", "flow-label-2")
+        );
 
         execution = client.toBlocking().retrieve(
             HttpRequest

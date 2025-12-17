@@ -233,11 +233,11 @@ export function useLeftMenu() {
                 title: t("tenant_administration"),
                 routes: [
                     "admin/stats",
+                    "kv",
+                    "secrets",
                     "admin/triggers",
                     "admin/auditlogs",
                     "admin/iam",
-                    "kv",
-                    "secrets",
                 ]
                     .map(routeStartWith)
                     .find((routes) => routes.length > 0),
@@ -278,7 +278,6 @@ export function useLeftMenu() {
                             locked: true,
                         },
                     },
-
                     {
                         title: t("triggers"),
                         routes: routeStartWith("admin/triggers"),

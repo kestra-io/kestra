@@ -303,6 +303,17 @@ export function useLeftMenu() {
                         },
                     },
                     {
+                        title: t("concurrency limits"),
+                        routes: routeStartWith("admin/concurrency-limits"),
+                        href: {
+                            name: "admin/concurrency-limits",
+                        },
+                        icon: {
+                            element: ShieldAccount, // TODO: Consider changing the icon for this
+                        },
+                        hidden: !configs?.isConcurrencyViewEnabled,
+                    },
+                    {
                         title: t("iam"),
                         routes: routeStartWith("admin/iam"),
                         href: {
@@ -314,17 +325,6 @@ export function useLeftMenu() {
                         attributes: {
                             locked: true,
                         },
-                    },
-                    {
-                        title: t("concurrency limits"),
-                        routes: routeStartWith("admin/concurrency-limits"),
-                        href: {
-                            name: "admin/concurrency-limits",
-                        },
-                        icon: {
-                            element: ShieldAccount, // TODO: Consider changing the icon for this
-                        },
-                        hidden: !configs?.isConcurrencyViewEnabled,
                     },
                 ],
             },

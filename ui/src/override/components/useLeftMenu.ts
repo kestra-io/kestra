@@ -56,7 +56,7 @@ export function useLeftMenu() {
 
     const {t} = useI18n({useScope: "global"});
 
-    const miscStore = useMiscStore();
+    const configs = useMiscStore().configs;
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -178,7 +178,7 @@ export function useLeftMenu() {
                 icon: {
                     element: ContentCopy, // TODO: Consider changing the icon for this
                 },
-                hidden: !miscStore.configs?.isTemplateEnabled,
+                hidden: !configs?.isTemplateEnabled,
             },
             {
                 title: t("plugins.names"),

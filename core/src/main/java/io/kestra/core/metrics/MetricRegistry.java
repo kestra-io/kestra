@@ -1,5 +1,6 @@
 package io.kestra.core.metrics;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.tasks.Task;
@@ -13,6 +14,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
@@ -145,6 +151,8 @@ public class MetricRegistry {
     public static final String TAG_QUEUE_CONSUMER = "consumer";
     public static final String TAG_QUEUE_CONSUMER_GROUP = "consumer_group";
     public static final String TAG_QUEUE_TYPE = "queue_type";
+    public static final String TAG_LABEL_PREFIX = "label";
+    public static final String TAG_LABEL_PLACEHOLDER = "__none__";
 
     @Inject
     private MeterRegistry meterRegistry;
@@ -360,9 +368,11 @@ public class MetricRegistry {
      * @return tags to apply to metrics
      */
     public String[] tags(AbstractTrigger trigger) {
-        return new String[]{
+        var baseTags = new String[]{
             TAG_TRIGGER_TYPE, trigger.getType(),
         };
+        var labelTags = getLabelTags(trigger.getLabels());
+        return ArrayUtils.addAll(baseTags, labelTags);
     }
 
     /**
@@ -377,7 +387,9 @@ public class MetricRegistry {
             TAG_NAMESPACE_ID, execution.getNamespace(),
             TAG_STATE, execution.getState().getCurrent().name(),
         };
-        return execution.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, execution.getTenantId());
+        var labelTags = getLabelTags(execution.getLabels());
+        var tenantTag = getTenantTag(execution.getTenantId());
+        return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }
 
     /**
@@ -428,6 +440,25 @@ public class MetricRegistry {
         } catch (Exception e) {
             log.warn("Error on metrics", e);
         }
+    }
+
+    private String[] getTenantTag(@Nullable String tenantId) {
+        return tenantId == null ? null : new String[]{TAG_TENANT_ID, tenantId};
+    }
+
+    private String[] getLabelTags(@NonNull List<Label> labels) {
+        return metricConfig.getLabels() == null ? null :
+            metricConfig.getLabels().stream()
+                .flatMap(labelKey -> Stream.of(
+                        "%s_%s".formatted(TAG_LABEL_PREFIX, labelKey),
+                        labels.stream()
+                            .filter(label -> labelKey.equals(label.key()))
+                            .map(Label::value)
+                            .findFirst()
+                            .orElse(TAG_LABEL_PLACEHOLDER)
+                    )
+                )
+                .toArray(String[]::new);
     }
 }
 

@@ -3,13 +3,19 @@ import {definePluginConfig} from "@hey-api/openapi-ts";
 import {handler} from "./plugin";
 import type {KestraSdkPlugin} from "./types";
 
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const deCapitalize = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+
 export const defaultConfig: KestraSdkPlugin["Config"] = {
   config: {
     output: "kestra-sdk",
+    methodNameBuilder(operation) {
+            return `${deCapitalize(operation.tags?.[0] ?? "")}${capitalize(operation.operationId ?? "")}`;
+        }
   },
   dependencies: ["@hey-api/typescript", "@hey-api/client-axios", "@hey-api/sdk"],
   handler,
-  name: "@kestra-io/sdk-plugin",
+  name: "ks-sdk",
 };
 
 /**

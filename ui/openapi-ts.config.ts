@@ -1,8 +1,14 @@
 import {defineConfig} from "@hey-api/openapi-ts";
 import {defineKestraHeyConfig} from "./heyapi-sdk-plugin";
 
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-const deCapitalize = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const generateHash = (str: string) => {
+  let hash = 0;
+  for (const char of str) {
+    hash = (hash << 5) - hash + char.charCodeAt(0);
+    hash |= 0; // Constrain to 32bit integer
+  }
+  return hash.toString(16).replace("-", "0");
+};
 
 export default defineConfig({
   input: "../webserver/build/classes/java/main/META-INF/swagger/kestra.yml",
@@ -19,7 +25,7 @@ export default defineConfig({
         name: "@hey-api/sdk",
         paramsStructure: "flat",
         methodNameBuilder(operation) {
-            return `${deCapitalize(operation.tags?.[0] ?? "")}${capitalize(operation.operationId ?? "")}`;
+            return generateHash(operation.id)
         }
     },
     defineKestraHeyConfig({

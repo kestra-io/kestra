@@ -14,9 +14,10 @@ import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
-import {useSDK, useAxios} from "../utils/axios";
+import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
 import {Flow, FlowWithSource} from "../generated/kestra-api";
+import * as sdk from "../generated/kestra-api/ks-sdk.gen";
 
 const textYamlHeader = {
     headers: {
@@ -74,7 +75,6 @@ export const useFlowStore = defineStore("flow", () => {
     const creationId = ref<string>();
 
     const axios = useAxios();
-    const sdk = useSDK();
 
     const coreStore = useCoreStore();
     const unsavedChangesStore = useUnsavedChangesStore();
@@ -231,7 +231,10 @@ export const useFlowStore = defineStore("flow", () => {
         const isCreatingBackup = isCreating.value;
         if (isCreating.value && !overrideFlow) {
             await createFlow({flow: flowSource ?? ""})
-                .then((response: Flow) => {
+                .then((response) => {
+                    if(!response){
+                        return;
+                    }
                     toast.saved(response.id);
                     isCreating.value = false;
                 });
@@ -268,7 +271,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function initYamlSource() {
         if (!flow.value) return;
-        const {source} = flow.value;
+        const {source = ""} = flow.value;
         flowYaml.value = source;
         flowYamlOrigin.value = source;
         if (flowHaveTasks.value) {
@@ -353,8 +356,8 @@ export const useFlowStore = defineStore("flow", () => {
                 }
 
                 flow.value = response.data;
-                flowYaml.value = response.data.source;
-                flowYamlOrigin.value = response.data.source;
+                flowYaml.value = response.data.source ?? "";
+                flowYamlOrigin.value = response.data.source ?? "";
                 overallTotal.value = 1;
 
                 return response.data;
@@ -410,11 +413,11 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     function createFlow(options: { flow: string }) {
-        return axios.post(`${apiUrl()}/flows`, options.flow, {
+        return sdk.flowsCreateFlow({body: options.flow}, {
             ...textYamlHeader,
             ...VALIDATE
         }).then(response => {
-            if (response.status >= 300) {
+            if (!response?.status || response.status >= 300) {
                 return Promise.reject(response)
             }
 

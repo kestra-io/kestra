@@ -56,6 +56,10 @@ export function useBaseNamespacesStore() {
         return response.data;
     }
 
+    async function update(this: any, _: {route: any, payload: any}) {
+        // NOOP IN OSS
+    }
+
     async function loadDependencies(this: any, options: {namespace: string}) {
         return await this.$http.get(`${apiUrl(this.vuexStore)}/namespaces/${options.namespace}/dependencies`);
     }
@@ -241,6 +245,7 @@ export function useBaseNamespacesStore() {
         search,
         total,
         load,
+        update,
         loadDependencies,
         existing,
         namespace,

@@ -34,12 +34,26 @@ jobs:
         shell: bash
         run: docker compose -f docker-compose-ci.yml up -d
 
-      # Gradle check
-      - name: Gradle - Build
+      - name: unitTest
+        shell: bash
+        run: |
+          ./gradlew unitTest --parallel
+
+      - name: check
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         shell: bash
         run: |
-          ./gradlew check javadoc
+          ./gradlew check
+
+      - name: flakyTest
+        shell: bash
+        run: |
+          ./gradlew flakyTest
+
+      - name: javadoc
+        shell: bash
+        run: |
+          ./gradlew javadoc --parallel
 
       - name: comment PR with test report
         if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository}}

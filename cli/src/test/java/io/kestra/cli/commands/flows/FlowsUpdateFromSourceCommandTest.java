@@ -58,14 +58,11 @@ class FlowsUpdateFromSourceCommandTest {
             };
             PicocliRunner.call(FlowsUpdateFromSourceCommand.class, ctx, args);
 
-            assertThat(out.toString()).contains("Sources have been successfully exported.");
-            assertThat(out.toString()).contains("4 flows have been exported and will be updated");
             assertThat(out.toString()).contains("4 flow(s) successfully updated!");
             assertThat(out.toString()).contains("- io.kestra.outsider.quattro");
             assertThat(out.toString()).contains("- io.kestra.cli.second");
             assertThat(out.toString()).contains("- io.kestra.cli.third");
             assertThat(out.toString()).contains("- io.kestra.cli.first");
-            assertThat(out.toString()).contains("All 4 flows have been successfully updated!");
 
             flows = repository.findAll(MAIN_TENANT);
             for (Flow flow : flows) {

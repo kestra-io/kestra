@@ -1,7 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.storages.Namespace;
@@ -9,6 +8,7 @@ import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -27,7 +27,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@KestraTest(rebuildContext = true)
+@MicronautTest(rebuildContext = true)
 @Execution(ExecutionMode.SAME_THREAD)
 class IsFileEmptyFunctionTest {
 

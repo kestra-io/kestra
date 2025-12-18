@@ -4,8 +4,8 @@ import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -18,7 +18,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 public abstract class AbstractKvMetadataRepositoryTest {
     @Inject
     protected KvMetadataRepositoryInterface kvMetadataRepositoryInterface;

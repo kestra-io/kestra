@@ -1,7 +1,6 @@
 package io.kestra.core.repositories;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
@@ -14,9 +13,9 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,7 +36,7 @@ import static io.kestra.core.models.flows.FlowScope.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest(transactional = false)
 public abstract class AbstractLogRepositoryTest {
     @Inject
     protected LogRepositoryInterface logRepository;

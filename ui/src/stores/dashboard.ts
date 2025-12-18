@@ -17,13 +17,15 @@ import {apiUrl} from "override/utils/route";
 
 import Utils from "../utils/utils";
 
-import type {Dashboard, Chart, Request, Parameters} from "../components/dashboard/composables/useDashboards";
+import type {Chart, Request, Parameters} from "../components/dashboard/composables/useDashboards";
 import {useAxios} from "../utils/axios";
 import {removeRefPrefix, usePluginsStore} from "./plugins";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import _throttle from "lodash/throttle";
 import {useCoreStore} from "./core";
 import {useI18n} from "vue-i18n";
+import {Dashboards} from "../generated/kestra-api/ks-sdk.gen";
+import {Dashboard} from "../generated/kestra-api";
 
 
 
@@ -46,17 +48,25 @@ export const useDashboardStore = defineStore("dashboard", () => {
 
     async function list(options: Record<string, any>) {
         const {sort, ...params} = options;
-        const response = await axios.get(`${apiUrl()}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params});
+        const response = await Dashboards.searchDashboards({
+            size: 100,
+            sort,
+            page: 1,
+            ...params
+        })
 
         return response.data;
     }
 
-    async function load(id: Dashboard["id"]) {
-        const response = await axios.get(`${apiUrl()}/dashboards/${id}`, {validateStatus});
-        let dashboardLoaded: Dashboard;
+    async function load(id: string) {
+        const response = await Dashboards.getDashboard({id}, {validateStatus});
+        let dashboardLoaded: Dashboard & {id: string};
 
-        if (response.status === 200) dashboardLoaded = response.data;
-        else dashboardLoaded = {title: "Default", id, charts: [], sourceCode: ""};
+        if (response.status === 200 && response.data) {
+            dashboardLoaded = {...response.data, id};
+        } else {
+            dashboardLoaded = {title: "Default", id, charts: [], sourceCode: ""};
+        }
 
         dashboard.value = dashboardLoaded;
         sourceCode.value = dashboardLoaded.sourceCode ?? ""

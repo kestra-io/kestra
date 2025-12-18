@@ -25,7 +25,7 @@ export default defineConfig({
         name: "@hey-api/sdk",
         paramsStructure: "flat",
         methodNameBuilder(operation) {
-            return generateHash(operation.id)
+            return `__${generateHash(operation.id)}__`
         }
     },
     defineKestraHeyConfig({

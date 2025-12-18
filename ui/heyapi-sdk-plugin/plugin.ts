@@ -8,8 +8,11 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
         external: "vue-router"
     });   
   
-  const addTenantToParametersSymbol = plugin.symbol("addTenantToParameters");
-  addTenantToParametersSymbol.setNode($.func("addTenantToParameters").generic("TParams")
+  const addTenantToParametersSymbol = plugin.symbol("addTenantToParameters",{
+        getFilePath: () => "sdk/ks-shared",
+  });
+
+  const functionNode = $.func().generic("TParams")
     .params(
       $.param("parameters").type($.type("TParams"))
     ).returns($.type.and($.type("TParams"), $.type.object().prop("tenant", (p) => p.type("string"))))
@@ -22,9 +25,12 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
         .spread($.id("parameters"))
         .prop("tenant", "tenant")
       )
-    ))
+    )
 
-  plugin.addNode(addTenantToParametersSymbol.node ?? null);
+  const exportedFunctionNode = $.const(addTenantToParametersSymbol).export().assign(functionNode);
+  plugin.addNode(exportedFunctionNode);
+
+  const operationsDict: Record<string, {symbol:ReturnType<typeof plugin.symbol>, methodName: string}[]> = {}
   
   plugin.forEach(
     "operation",
@@ -43,18 +49,26 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
           resourceId: operation.id,
         }));
 
+        const funcSymbol = plugin.symbol(methodName, {
+            getFilePath: () => `sdk/ks-${operation.tags?.[0] ?? "default"}`,
+        })
+
+        if (!operationsDict[operation.tags?.[0] ?? "default"]) {
+            operationsDict[operation.tags?.[0] ?? "default"] = [];
+        }
+        operationsDict[operation.tags?.[0] ?? "default"].push({symbol:funcSymbol, methodName});
+
         if(!pathParams || !("tenant" in pathParams)) {
             // if there is no path parameter named "tenant", 
             // we export this method as is
             plugin.addNode(
-                $.const(plugin.symbol(methodName))
+                $.const(funcSymbol)
                 .assign(originalOperationSymbol)
                 .export()
             );
             return;
         }
 
-        
         const optionsId = "options"
 
         if((Object.keys(pathParams).length 
@@ -76,7 +90,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
                         optionsId,
                     ))
                 )
-            const funcSymbol = plugin.symbol(methodName)
+            
             const exportedFunctionNode = $.const(funcSymbol).export().assign(functionNode);
 
             plugin.addNode(exportedFunctionNode);
@@ -118,7 +132,6 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
                 ))
             )
 
-        const funcSymbol = plugin.symbol(methodName)
         const exportedFunctionNode = $.const(funcSymbol).export().assign(functionNode);
 
         plugin.addNode(exportedFunctionNode);
@@ -127,4 +140,20 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
       order: "declarations",
     },
   );
+
+  for (const tag in operationsDict) {
+    const operations = operationsDict[tag];
+    const symbol = plugin.symbol(tag, {
+      getFilePath: () => "ks-sdk",
+    });
+
+    plugin.addNode(
+      $.const(symbol)
+        .export()
+        .assign($.object().props(...operations.map(op => $.prop({
+            kind: "prop",
+            name: op.methodName
+        }).value(op.symbol)))) 
+    );
+  }
 };

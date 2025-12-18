@@ -15,7 +15,7 @@ import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.SchedulableTriggerFetcher;
 import io.kestra.scheduler.models.TriggerEvaluationContext;
 import io.kestra.scheduler.stores.FlowMetaStore;
-import io.kestra.scheduler.stores.TriggerStateStore;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -35,7 +35,7 @@ import io.kestra.core.utils.Logs;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.pubsub.TriggerExecutionPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
-import io.kestra.scheduler.stores.TriggerStateStore;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -300,7 +300,7 @@ public class TriggerEventHandler {
      * @param event the event.
      */
     void onTriggerDeleted(TriggerDeleted event) {
-        triggerStateStore.find(event.id()).ifPresent(state -> {
+        triggerStateStore.findById(event.id()).ifPresent(state -> {
             triggerStateStore.delete(event.id());
             maySendExecutionKilled(event, state);
         });
@@ -367,7 +367,7 @@ public class TriggerEventHandler {
     }
 
     private Optional<TriggerState> findTriggerState(final TriggerEvent event) {
-        Optional<TriggerState> state = triggerStateStore.find(event.id());
+        Optional<TriggerState> state = triggerStateStore.findById(event.id());
         if (state.isEmpty()) {
             Logs.logTrigger(event.id(), Level.WARN, "Cannot process event {}. Cause: Trigger state not found.", event.type());
             return Optional.empty();

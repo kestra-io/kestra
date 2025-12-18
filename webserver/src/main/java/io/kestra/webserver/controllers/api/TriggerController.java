@@ -356,16 +356,13 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "/{namespace}/{flowId}/{triggerId}")
     @Operation(tags = {"Triggers"}, summary = "Delete a trigger")
-    public MutableHttpResponse<?> deleteTrigger(
+    public HttpResponse<Void> deleteTrigger(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId,
         @Parameter(description = "The trigger id") @PathVariable String triggerId
     ) throws HttpStatusException {
-        return triggerRepository.findById(TriggerId.of(tenantService.resolveTenant(), namespace, flowId, triggerId))
-            .map(it -> {
-                triggerRepository.delete(it);
-                return HttpResponse.noContent();
-            }).orElseGet(HttpResponse::noContent);
+        triggerStateService.deleteById(TriggerId.of(tenantService.resolveTenant(), namespace, flowId, triggerId));
+        return HttpResponse.noContent();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -374,17 +371,8 @@ public class TriggerController {
     public MutableHttpResponse<?> deleteTriggersByIds(
         @Parameter(description = "The triggers to delete") @Body List<ApiTriggerId> triggers
     ) {
-        Integer count = triggers.stream().map(it -> it.toTriggerId(tenantService.resolveTenant()))
-            .map(trigger -> {
-                Optional<TriggerState> maybe = triggerRepository.findById(trigger);
-                if (maybe.isPresent()) {
-                    triggerRepository.delete(maybe.get());
-                    return 1;
-                }
-                return 0;
-            })
-            .reduce(Integer::sum)
-            .orElse(0);
+        List<TriggerId> ids = triggers.stream().map(it -> it.toTriggerId(tenantService.resolveTenant())).toList();
+        int count = triggerStateService.deleteByIdyIds(ids);
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
@@ -394,19 +382,7 @@ public class TriggerController {
     public MutableHttpResponse<?> deleteTriggersByQuery(
         @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
     ) {
-        Integer count = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
-            .map(trigger -> {
-                try {
-                    triggerRepository.delete(trigger);
-                    return 1;
-                } catch (Exception ignored) {
-                    return 0;
-                }
-            })
-            .reduce(Integer::sum)
-            .block();
-
+        int count = triggerStateService.deleteAllTriggersMatching(tenantService.resolveTenant(), filters);
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
     // region [Disabled APIs]

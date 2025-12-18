@@ -7,6 +7,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
@@ -37,6 +38,7 @@ public class V2TriggerMigrationCommand extends AbstractCommand {
         
         Log.info("🔁 Starting trigger states migration...");
         TriggerRepositoryInterface repository = applicationContext.getBean(TriggerRepositoryInterface.class);
+        TriggerStateStore store = applicationContext.getBean(TriggerStateStore.class);
         SchedulerConfiguration configuration = applicationContext.getBean(SchedulerConfiguration.class);
         List<Trigger> triggers = repository.findAllForAllTenantsV1();
         Log.info("Found [{}] triggers to migrate.");
@@ -44,7 +46,7 @@ public class V2TriggerMigrationCommand extends AbstractCommand {
             try {
                 TriggerState migrated = trigger.toTriggerState(configuration.vnodes());
                 if (!dryRun) {
-                    repository.save(migrated);
+                    store.save(migrated);
                 }
                 System.out.println("✅ Migration complete for: " + TriggerId.of(trigger));
             } catch (Exception e) {

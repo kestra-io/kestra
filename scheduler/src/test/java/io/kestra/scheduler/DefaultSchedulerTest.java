@@ -27,7 +27,7 @@ import io.kestra.scheduler.pubsub.TriggerWorkerJobResultSubscriber;
 import io.kestra.scheduler.stores.CachedFlowMetaStore;
 import io.kestra.scheduler.stores.CachedTriggerStateStore;
 import io.kestra.scheduler.stores.FlowMetaStore;
-import io.kestra.scheduler.stores.TriggerStateStore;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemorySchedulerEventQueue;

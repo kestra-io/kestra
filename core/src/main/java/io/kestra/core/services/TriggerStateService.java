@@ -19,6 +19,7 @@ import io.kestra.core.scheduler.events.DeleteBackfillTrigger;
 import io.kestra.core.scheduler.events.ResetTrigger;
 import io.kestra.core.scheduler.events.SetDisableTrigger;
 import io.kestra.core.scheduler.events.SetPauseBackfillTrigger;
+import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.model.TriggerState;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -50,6 +51,51 @@ public class TriggerStateService {
         this.executionKilledQueue = executionKilledQueue;
         this.flowRepository = flowRepository;
     }
+
+    /**
+     * Deletes the trigger for the identifier.
+     * 
+     * @param trigger the trigger identifier.
+     * @throws NotFoundException if trigger can be found.
+     */
+    public void deleteById(TriggerId trigger) throws NotFoundException {
+        getTriggerState(trigger);  // check if state exists.
+        triggerEventQueue.send(new TriggerDeleted(trigger));
+    }
+
+    /**
+     * Deletes all triggers for the given identifiers.
+     *
+     * @param triggers the trigger identifiers.
+     * @return the number of deleted triggers.
+     * @throws NotFoundException if trigger can be found.
+     */
+    public int deleteByIdyIds(List<TriggerId> triggers) throws NotFoundException {
+        return triggers.stream()
+            .map(trigger -> {
+                deleteById(trigger);
+                return 1;
+            }).reduce(Integer::sum).orElse(0);
+    }
+
+    /**
+     * Deletes all triggers matching the given filters.
+     *
+     * @param tenant  the tenant identifier.
+     * @param filters the filters to match triggers.
+     * @return the number of deleted triggers.
+     * @throws NotFoundException if trigger can be found.
+     */
+    public int deleteAllTriggersMatching(String tenant, List<QueryFilter> filters) throws NotFoundException {
+        return triggerRepository.find(tenant, filters).map(throwFunction(trigger -> {
+                deleteById(trigger);
+                return 1;
+            }))
+            .reduce(Integer::sum)
+            .blockOptional()
+            .orElse(0);
+    }
+
 
     /**
      * Toggles all triggers matching the given filters.

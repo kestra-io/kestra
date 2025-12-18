@@ -6,7 +6,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.utils.Logs;
-import io.kestra.scheduler.stores.TriggerStateStore;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.scheduling.annotation.Scheduled;

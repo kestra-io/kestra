@@ -14,6 +14,8 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.QueueIndexerRepository;
 import io.kestra.core.runners.TransactionContext;
+import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JdbcMapper;
@@ -21,11 +23,9 @@ import io.kestra.jdbc.runner.JdbcTransactionContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.ITriggers;
 import io.kestra.plugin.core.dashboard.data.Triggers;
-import io.kestra.core.scheduler.model.TriggerState;
 import io.micronaut.data.model.Pageable;
 import lombok.Getter;
 import org.jooq.*;
-import org.jooq.Record;
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 
@@ -35,7 +35,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepository<TriggerState> implements TriggerRepositoryInterface, QueueIndexerRepository<TriggerState> {
+public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepository<TriggerState> implements TriggerRepositoryInterface, QueueIndexerRepository<TriggerState>, TriggerStateStore {
 
     private static final Field<Object> NAMESPACE_FIELD = field("namespace");
     private static final Field<Long> NEXT_EVALUATION_EPOCH_FIELD = field("next_evaluation_epoch", Long.class);
@@ -45,12 +45,12 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     private static final Field<Object> WORKER_ID_FIELD = field("worker_id");
     private static final Field<Object> VALUE_FIELD = field("value");
     private static final String NEXT_EVALUATION_DATE_COLUMN = "next_evaluation_date";
-
+    private static final Field<Object> KEY_FIELD = DSL.field(DSL.quotedName("key"));
     private final JdbcFilterService filterService;
 
     @Getter
     private final Map<Triggers.Fields, String> fieldsMapping = Map.of(
-        Triggers.Fields.ID, "key",
+        Triggers.Fields.ID, KEY_FIELD.getName(),
         Triggers.Fields.NAMESPACE, NAMESPACE_FIELD.getName(),
         Triggers.Fields.FLOW_ID, FLOW_ID_FIELD.getName(),
         Triggers.Fields.TRIGGER_ID, "trigger_id",
@@ -78,12 +78,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Optional<TriggerState> findById(TriggerId trigger) {
-        return findByUid(trigger.uid());
-    }
-
-    @Override
-    public Optional<TriggerState> findByUid(String uid) {
-        return findOne(DSL.trueCondition(), field("key").eq(uid));
+        return findOne(DSL.trueCondition(), KEY_FIELD.eq(trigger.uid()));
     }
 
     @Override
@@ -137,7 +132,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             .transactionResult(configuration -> {
                 DSL.using(configuration)
                     .insertInto(this.jdbcRepository.getTable())
-                    .set(AbstractJdbcRepository.field("key"), this.jdbcRepository.key(trigger))
+                    .set(KEY_FIELD, trigger.uid())
                     .set(this.jdbcRepository.persistFields(trigger))
                     .execute();
 
@@ -146,8 +141,15 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
     
     @Override
-    public void delete(TriggerState trigger) {
-        this.jdbcRepository.delete(trigger);
+    public void delete(TriggerId trigger) {
+        this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                DSL.using(configuration)
+                    .delete(this.jdbcRepository.getTable())
+                    .where(KEY_FIELD.eq(trigger.uid()))
+                    .execute();
+            });
     }
 
     @Override
@@ -161,7 +163,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         var condition = this.fullTextCondition(query).and(this.defaultFilter());
 
         if (namespace != null) {
-            condition = condition.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
+            condition = condition.and(org.jooq.impl.DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
         }
 
         if (flowId != null) {
@@ -303,6 +305,22 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
                 return null;
             }
         });
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
+    public List<TriggerState> findAllForVNodes(Set<Integer> vNodes) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> DSL.using(configuration)
+                .select(VALUE_FIELD)
+                .from(this.jdbcRepository.getTable())
+                .where(VNODE_FIELD.in(vNodes))
+                .fetch()
+            )
+            .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
     }
 
     /**

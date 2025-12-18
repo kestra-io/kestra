@@ -13,7 +13,7 @@ import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobResultSubscriber;
-import io.kestra.scheduler.stores.TriggerStateStore;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;

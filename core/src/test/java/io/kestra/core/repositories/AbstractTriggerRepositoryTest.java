@@ -8,6 +8,7 @@ import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.scheduler.model.TriggerState;
@@ -43,7 +44,7 @@ public abstract class AbstractTriggerRepositoryTest {
     private static final Pageable TEST_DEFAULT_PAGED = Pageable.from(1, 100, Sort.of(Sort.Order.asc("namespace")));
 
     @Inject
-    protected TriggerRepositoryInterface triggerRepository;
+    protected TriggerStateStore triggerStateStore;
 
     private static TriggerState.TriggerStateBuilder trigger(String tenantId) {
         return TriggerState.builder()
@@ -70,9 +71,9 @@ public abstract class AbstractTriggerRepositoryTest {
     @MethodSource("filterCombinations")
     void should_find_all(QueryFilter filter){
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        triggerRepository.save(generateDefaultTrigger(tenant));
+        triggerStateStore.save(generateDefaultTrigger(tenant));
 
-        ArrayListTotal<TriggerState> entries = triggerRepository.find(Pageable.UNPAGED, tenant, List.of(filter));
+        ArrayListTotal<TriggerState> entries = triggerStateStore.find(Pageable.UNPAGED, tenant, List.of(filter));
 
         assertThat(entries).hasSize(1);
     }
@@ -81,9 +82,9 @@ public abstract class AbstractTriggerRepositoryTest {
     @MethodSource("filterCombinations")
     void should_find_all_async(QueryFilter filter){
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        triggerRepository.save(generateDefaultTrigger(tenant));
+        triggerStateStore.save(generateDefaultTrigger(tenant));
 
-        List<TriggerState> entries = triggerRepository.find(tenant, List.of(filter)).collectList().block();
+        List<TriggerState> entries = triggerStateStore.find(tenant, List.of(filter)).collectList().block();
 
         assertThat(entries).withFailMessage(filter.toString()).hasSize(1);
     }
@@ -104,7 +105,7 @@ public abstract class AbstractTriggerRepositoryTest {
     @ParameterizedTest
     @MethodSource("errorFilterCombinations")
     void should_fail_to_find_all(QueryFilter filter){
-        assertThrows(InvalidQueryFiltersException.class, () -> triggerRepository.find(Pageable.UNPAGED, TestsUtils.randomTenant(this.getClass().getSimpleName()), List.of(filter)));
+        assertThrows(InvalidQueryFiltersException.class, () -> triggerStateStore.find(Pageable.UNPAGED, TestsUtils.randomTenant(this.getClass().getSimpleName()), List.of(filter)));
     }
 
     static Stream<QueryFilter> errorFilterCombinations() {
@@ -127,7 +128,7 @@ public abstract class AbstractTriggerRepositoryTest {
         TriggerState.TriggerStateBuilder builder = trigger(tenant);
 
         // WHEN
-        Optional<TriggerState> result = triggerRepository.findById(builder.build());
+        Optional<TriggerState> result = triggerStateStore.findById(builder.build());
 
         // THEN
         assertThat(result).isEmpty();
@@ -138,10 +139,10 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         TriggerState state = trigger(tenant).build();
-        triggerRepository.save(state);
+        triggerStateStore.save(state);
 
         // WHEN
-        Optional<TriggerState> result = triggerRepository.findById(state);
+        Optional<TriggerState> result = triggerStateStore.findById(state);
 
         // THEN
         assertThat(result).isNotEmpty();
@@ -154,15 +155,15 @@ public abstract class AbstractTriggerRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         TriggerState.TriggerStateBuilder builder = trigger(tenant);
 
-        triggerRepository.save(builder.build());
+        triggerStateStore.save(builder.build());
 
         // WHEN
         Instant updatedAt = Instant.now().truncatedTo(ChronoUnit.MILLIS);
         TriggerState updated = builder.updatedAt(updatedAt).build();
-        triggerRepository.save(updated);
+        triggerStateStore.save(updated);
 
         // THEN
-        Optional<TriggerState> result = triggerRepository.findById(updated);
+        Optional<TriggerState> result = triggerStateStore.findById(updated);
         assertThat(result).isNotEmpty();
         assertThat(TriggerId.of(result.get())).isEqualTo(TriggerId.of(updated));
         assertThat(result.get().getUpdatedAt()).isEqualTo(updatedAt);
@@ -175,12 +176,12 @@ public abstract class AbstractTriggerRepositoryTest {
         String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String tenant3 = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
-        triggerRepository.save(trigger(tenant1).build());
-        triggerRepository.save(trigger(tenant2).build());
-        triggerRepository.save(trigger(tenant3).build());
+        triggerStateStore.save(trigger(tenant1).build());
+        triggerStateStore.save(trigger(tenant2).build());
+        triggerStateStore.save(trigger(tenant3).build());
 
         // WHEN
-        List<TriggerState> all = triggerRepository.findAllForAllTenants()
+        List<TriggerState> all = triggerStateStore.findAllForAllTenants()
             .stream().filter(it -> Set.of(tenant1, tenant2, tenant3).contains(it.getTenantId())).toList();
 
         // THEN
@@ -194,12 +195,12 @@ public abstract class AbstractTriggerRepositoryTest {
         String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String tenant3 = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
-        triggerRepository.save(trigger(tenant1).build());
-        triggerRepository.save(trigger(tenant2).build());
-        triggerRepository.save(trigger(tenant3).build());
+        triggerStateStore.save(trigger(tenant1).build());
+        triggerStateStore.save(trigger(tenant2).build());
+        triggerStateStore.save(trigger(tenant3).build());
 
         // WHEN
-        List<TriggerState> all = triggerRepository.findAll(tenant1)
+        List<TriggerState> all = triggerStateStore.findAll(tenant1)
             .stream().filter(it -> Set.of(tenant1, tenant2, tenant3).contains(it.getTenantId())).toList();
 
         // THEN
@@ -211,13 +212,13 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
-        triggerRepository.save(trigger(tenant).triggerId("trigger1").build());
-        triggerRepository.save(trigger(tenant).triggerId("trigger2").build());
-        triggerRepository.save(trigger(tenant).triggerId("trigger3").build());
-        triggerRepository.save(trigger(tenant).triggerId("trigger4").build());
+        triggerStateStore.save(trigger(tenant).triggerId("trigger1").build());
+        triggerStateStore.save(trigger(tenant).triggerId("trigger2").build());
+        triggerStateStore.save(trigger(tenant).triggerId("trigger3").build());
+        triggerStateStore.save(trigger(tenant).triggerId("trigger4").build());
 
         // WHEN
-        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, null, tenant, null, null, null);
+        List<TriggerState> find = triggerStateStore.find(TEST_DEFAULT_PAGED, null, tenant, null, null, null);
 
         // THEN
         assertThat(find.size()).isEqualTo(4);
@@ -228,11 +229,11 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
-        triggerRepository.save(trigger(tenant).namespace("io.kestra.unittest.1").flowId("my-flow1").triggerId("trigger1").build());
-        triggerRepository.save(trigger(tenant).namespace("io.kestra.unittest.2").flowId("my-flow1").triggerId("trigger1").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.unittest.1").flowId("my-flow1").triggerId("trigger1").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.unittest.2").flowId("my-flow1").triggerId("trigger1").build());
 
         // WHEN
-        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, null, tenant, null, "my-flow1", null);
+        List<TriggerState> find = triggerStateStore.find(TEST_DEFAULT_PAGED, null, tenant, null, "my-flow1", null);
 
         // THEN
         assertThat(find.size()).isEqualTo(2);
@@ -243,11 +244,11 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
-        triggerRepository.save(trigger(tenant).namespace("io.kestra.unittest.1").flowId("my-flow1").triggerId("trigger1").build());
-        triggerRepository.save(trigger(tenant).namespace("io.kestra.unittest.2").flowId("my-flow1").triggerId("trigger1").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.unittest.1").flowId("my-flow1").triggerId("trigger1").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.unittest.2").flowId("my-flow1").triggerId("trigger1").build());
 
         // WHEN
-        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, null, tenant, "io.kestra.unittest.1", null, null);
+        List<TriggerState> find = triggerStateStore.find(TEST_DEFAULT_PAGED, null, tenant, "io.kestra.unittest.1", null, null);
 
         // THEN
         assertThat(find.size()).isEqualTo(1);
@@ -259,12 +260,12 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
-        triggerRepository.save(trigger(tenant).namespace("io.kestra.unittest.1").flowId(ANY_VALUE).triggerId(ANY_VALUE).build());
-        triggerRepository.save(trigger(tenant).namespace("io.kestra.unittest.2").flowId(ANY_VALUE).triggerId(ANY_VALUE).build());
-        triggerRepository.save(trigger(tenant).namespace(ANY_VALUE).flowId(ANY_VALUE).triggerId(ANY_VALUE).build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.unittest.1").flowId(ANY_VALUE).triggerId(ANY_VALUE).build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.unittest.2").flowId(ANY_VALUE).triggerId(ANY_VALUE).build());
+        triggerStateStore.save(trigger(tenant).namespace(ANY_VALUE).flowId(ANY_VALUE).triggerId(ANY_VALUE).build());
 
         // WHEN
-        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, null, tenant, "io.kestra", null, null);
+        List<TriggerState> find = triggerStateStore.find(TEST_DEFAULT_PAGED, null, tenant, "io.kestra", null, null);
 
         // THEN
         assertThat(find.size()).isEqualTo(2);
@@ -277,12 +278,12 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
-        triggerRepository.save(trigger(tenant).namespace(ANY_VALUE).flowId(ANY_VALUE).workerId("worker1").build());
-        triggerRepository.save(trigger(tenant).namespace(ANY_VALUE).flowId(ANY_VALUE).workerId("worker2").build());
-        triggerRepository.save(trigger(tenant).namespace(ANY_VALUE).flowId(ANY_VALUE).triggerId(ANY_VALUE).build());
+        triggerStateStore.save(trigger(tenant).namespace(ANY_VALUE).flowId(ANY_VALUE).workerId("worker1").build());
+        triggerStateStore.save(trigger(tenant).namespace(ANY_VALUE).flowId(ANY_VALUE).workerId("worker2").build());
+        triggerStateStore.save(trigger(tenant).namespace(ANY_VALUE).flowId(ANY_VALUE).triggerId(ANY_VALUE).build());
 
         // WHEN
-        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, null, tenant, null, null, "worker1");
+        List<TriggerState> find = triggerStateStore.find(TEST_DEFAULT_PAGED, null, tenant, null, null, "worker1");
 
         // THEN
         assertThat(find.size()).isEqualTo(1);
@@ -295,11 +296,11 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
 
-        triggerRepository.save(trigger(tenant).namespace("io.kestra.unittest1").flowId("myflow1").triggerId("mytrigger1").build());
-        triggerRepository.save(trigger(tenant).namespace("io.kestra.unittest2").flowId("myflow2").triggerId("mytrigger2").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.unittest1").flowId("myflow1").triggerId("mytrigger1").build());
+        triggerStateStore.save(trigger(tenant).namespace("io.kestra.unittest2").flowId("myflow2").triggerId("mytrigger2").build());
 
         // WHEN
-        List<TriggerState> find = triggerRepository.find(TEST_DEFAULT_PAGED, query, tenant, null, null, null);
+        List<TriggerState> find = triggerStateStore.find(TEST_DEFAULT_PAGED, query, tenant, null, null, null);
 
         // THEN
         assertThat(find.size()).isEqualTo(1);
@@ -309,7 +310,7 @@ public abstract class AbstractTriggerRepositoryTest {
     void shouldCountForNullTenant() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        triggerRepository.save(TriggerState
+        triggerStateStore.save(TriggerState
             .builder()
             .tenantId(tenant)
             .triggerId(IdUtils.create())
@@ -318,7 +319,7 @@ public abstract class AbstractTriggerRepositoryTest {
             .build()
         );
         // When
-        long count = triggerRepository.countAll(tenant);
+        long count = triggerStateStore.countAll(tenant);
         // Then
         assertThat(count).isEqualTo(1);
     }
@@ -330,11 +331,11 @@ public abstract class AbstractTriggerRepositoryTest {
         TriggerState.TriggerStateBuilder builderA = trigger(tenant).flowId("flowA").triggerId("tA");
         TriggerState.TriggerStateBuilder builderB = trigger(tenant).flowId("flowB").triggerId("tB");
 
-        TriggerState savedA = triggerRepository.save(builderA.build());
-        TriggerState savedB = triggerRepository.save(builderB.build());
+        TriggerState savedA = triggerStateStore.save(builderA.build());
+        TriggerState savedB = triggerStateStore.save(builderB.build());
 
         try {
-            List<TriggerState> all = triggerRepository.find(tenant, null).collectList().block();
+            List<TriggerState> all = triggerStateStore.find(tenant, null).collectList().block();
             assertThat(all).isNotNull();
             assertThat(all.stream().map(TriggerState::getTriggerId).toList())
                 .containsExactlyInAnyOrder(savedA.getTriggerId(), savedB.getTriggerId());
@@ -345,12 +346,12 @@ public abstract class AbstractTriggerRepositoryTest {
                 .value("flowA")
                 .build());
 
-            List<TriggerState> filtered = triggerRepository.find(tenant, filters).collectList().block();
+            List<TriggerState> filtered = triggerStateStore.find(tenant, filters).collectList().block();
             assertThat(filtered).hasSize(1);
             assertThat(filtered.get(0).getFlowId()).isEqualTo("flowA");
         } finally {
-            triggerRepository.delete(savedA);
-            triggerRepository.delete(savedB);
+            triggerStateStore.delete(savedA);
+            triggerStateStore.delete(savedB);
         }
     }
 
@@ -359,11 +360,11 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        triggerRepository.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextEvaluationDate(null).build());
-        triggerRepository.save(trigger(tenant1).triggerId("B").locked(false).vnode(1).nextEvaluationDate(null).build());
-        triggerRepository.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant1).triggerId("B").locked(false).vnode(1).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextEvaluationDate(null).build());
         // WHEN
-        List<TriggerState> results = triggerRepository.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(0, 1), false)
+        List<TriggerState> results = triggerStateStore.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(0, 1), false)
             .stream().filter(it -> Set.of(tenant1, tenant2).contains(it.getTenantId())).toList();
 
         // THEN
@@ -376,11 +377,11 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        triggerRepository.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextEvaluationDate(null).build());
-        triggerRepository.save(trigger(tenant2).triggerId("B").locked(false).vnode(1).nextEvaluationDate(null).build());
-        triggerRepository.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant2).triggerId("B").locked(false).vnode(1).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextEvaluationDate(null).build());
         // WHEN
-        List<TriggerState> results = triggerRepository.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(3), false)
+        List<TriggerState> results = triggerStateStore.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(3), false)
             .stream().filter(it -> Set.of(tenant1, tenant2).contains(it.getTenantId())).toList();
 
         // THEN
@@ -392,11 +393,11 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        triggerRepository.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextEvaluationDate(null).build());
-        triggerRepository.save(trigger(tenant1).triggerId("B").locked(true).vnode(1).nextEvaluationDate(null).build());
-        triggerRepository.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant1).triggerId("B").locked(true).vnode(1).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextEvaluationDate(null).build());
         // WHEN
-        List<TriggerState> results = triggerRepository.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(1), true)
+        List<TriggerState> results = triggerStateStore.findTriggersEligibleForScheduling(ZonedDateTime.now(), Set.of(1), true)
             .stream().filter(it -> Set.of(tenant1, tenant2).contains(it.getTenantId())).toList();
 
         // THEN
@@ -410,13 +411,13 @@ public abstract class AbstractTriggerRepositoryTest {
         // GIVEN
         String tenant1 = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String tenant2 = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        triggerRepository.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextEvaluationDate(now).build());
-        triggerRepository.save(trigger(tenant1).triggerId("B").locked(false).vnode(1).nextEvaluationDate(now.plus(Duration.ofMinutes(5))).build());
-        triggerRepository.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextEvaluationDate(now.minus(Duration.ofMinutes(5))).build());
-        triggerRepository.save(trigger(tenant2).triggerId("D").locked(false).vnode(3).nextEvaluationDate(null).build());
+        triggerStateStore.save(trigger(tenant1).triggerId("A").locked(false).vnode(0).nextEvaluationDate(now).build());
+        triggerStateStore.save(trigger(tenant1).triggerId("B").locked(false).vnode(1).nextEvaluationDate(now.plus(Duration.ofMinutes(5))).build());
+        triggerStateStore.save(trigger(tenant2).triggerId("C").locked(false).vnode(2).nextEvaluationDate(now.minus(Duration.ofMinutes(5))).build());
+        triggerStateStore.save(trigger(tenant2).triggerId("D").locked(false).vnode(3).nextEvaluationDate(null).build());
 
         // WHEN
-        List<TriggerState> results = triggerRepository.findTriggersEligibleForScheduling(now.atZone(ZoneId.systemDefault()), Set.of(0, 1, 2, 3), false)
+        List<TriggerState> results = triggerStateStore.findTriggersEligibleForScheduling(now.atZone(ZoneId.systemDefault()), Set.of(0, 1, 2, 3), false)
             .stream().filter(it -> Set.of(tenant1, tenant2).contains(it.getTenantId())).toList();
 
         // THEN

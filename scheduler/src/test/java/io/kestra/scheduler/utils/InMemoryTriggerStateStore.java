@@ -2,7 +2,7 @@ package io.kestra.scheduler.utils;
 
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.scheduler.model.TriggerState;
-import io.kestra.scheduler.stores.TriggerStateStore;
+import io.kestra.core.scheduler.store.TriggerStateStore;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -44,7 +44,7 @@ public class InMemoryTriggerStateStore implements TriggerStateStore {
     }
     
     @Override
-    public Optional<TriggerState> find(TriggerId triggerId) {
+    public Optional<TriggerState> findById(TriggerId triggerId) {
         return Optional.ofNullable(store.get(triggerId));
     }
     

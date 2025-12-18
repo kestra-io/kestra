@@ -2,7 +2,11 @@ name: Pull Request Workflow
 
 on:
   pull_request:
-
+permissions:
+  contents: write
+  checks: write
+  actions: read
+  pull-requests: write
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-pr
   cancel-in-progress: true
@@ -56,13 +60,13 @@ jobs:
           ./gradlew javadoc --parallel
 
       - name: comment PR with test report
-        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository}}
+        if: ${{ !cancelled()}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
         run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors --ci $(pwd)
 
       - name: generate PR test report in logs on fork or not in PRs
-        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository)}}
+        if: ${{ !cancelled() }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
         run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors $(pwd)

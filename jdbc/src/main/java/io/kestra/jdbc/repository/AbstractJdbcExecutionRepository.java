@@ -829,21 +829,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         return Execution.class;
     }
 
-    @Override
-    public Execution update(Execution execution) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSL.using(configuration)
-                    .update(this.jdbcRepository.getTable())
-                    .set(this.jdbcRepository.persistFields((execution)))
-                    .where(field("key").eq(execution.getId()))
-                    .execute();
-
-                return execution;
-            });
-    }
-
     @SneakyThrows
     @Override
     public Execution delete(Execution execution) {

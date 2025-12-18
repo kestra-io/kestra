@@ -6,96 +6,56 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}-pr
   cancel-in-progress: true
-
+# FIXME revert this file once debugging is done
 jobs:
-  # When an OSS ci start, we trigger an EE one
-  trigger-ee:
-    runs-on: ubuntu-latest
-    steps:
-    # PR pre-check: skip if PR from a fork OR EE already has a branch with same name
-    - name: Check EE repo for branch with same name
-      if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false }}
-      id: check-ee-branch
-      uses: actions/github-script@v8
-      with:
-        github-token: ${{ secrets.GH_PERSONAL_TOKEN }}
-        script: |
-          const pr = context.payload.pull_request;
-          if (!pr) {
-            core.setOutput('exists', 'false');
-            return;
-          }
-          const branch = pr.head.ref;
-          const [owner, repo] = 'kestra-io/kestra-ee'.split('/');
-          try {
-            await github.rest.repos.getBranch({ owner, repo, branch });
-            core.setOutput('exists', 'true');
-          } catch (e) {
-            if (e.status === 404) {
-              core.setOutput('exists', 'false');
-            } else {
-              core.setFailed(e.message);
-            }
-          }
-
-      # Targeting pull request (only if not from a fork and EE has no branch with same name)
-    - name: Trigger EE Workflow (pull request, with payload)
-      uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697
-      if: ${{ github.event_name == 'pull_request'
-        && github.event.pull_request.number != ''
-        && github.event.pull_request.head.repo.fork == false
-        && steps.check-ee-branch.outputs.exists == 'false' }}
-      with:
-        token: ${{ secrets.GH_PERSONAL_TOKEN }}
-        repository: kestra-io/kestra-ee
-        event-type: "oss-updated"
-        client-payload: >-
-          {"commit_sha":"${{ github.event.pull_request.head.sha }}","pr_repo":"${{ github.repository }}"}
-
-  file-changes:
-    if: ${{ github.event.pull_request.draft == false }}
-    name: File changes detection
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    outputs:
-      ui: ${{ steps.changes.outputs.ui }}
-      translations: ${{ steps.changes.outputs.translations }}
-      backend: ${{ steps.changes.outputs.backend }}
-    steps:
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            ui:
-              - 'ui/**'
-            backend:
-              - '!{ui,.github}/**'
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  frontend:
-    name: Frontend - Tests
-    needs: [file-changes]
-    if: "needs.file-changes.outputs.ui == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-  backend:
+  test:
     name: Backend - Tests
-    needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    runs-on: ubuntu-latest
+    env:
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        name: Checkout - Current ref
+        with:
+          fetch-depth: 0
 
-  e2e-tests:
-    name: E2E - Tests
-    uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+      # Setup build
+      - uses: kestra-io/actions/composite/setup-build@main
+        name: Setup - Build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
 
-  generate-pull-request-docker-image:
-    name: Generate PR docker image
-    uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
+      # Services
+      - name: Setup - Start docker compose
+        shell: bash
+        run: docker compose -f docker-compose-ci.yml up -d
+
+      # Gradle check
+      - name: Gradle - Build
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+        shell: bash
+        run: |
+          ./gradlew check javadoc
+
+      - name: comment PR with test report
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+        run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors --ci $(pwd)
+
+      - name: generate PR test report in logs on fork or not in PRs
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository)}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+        run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors $(pwd)
+
+      # Report Java
+      - name: Report - Java
+        uses: kestra-io/actions/composite/report-java@main
+        if: ${{ !cancelled() }}
+        with:
+          secrets: ${{ toJSON(secrets) }}

@@ -2,6 +2,7 @@ package io.kestra.core.docs;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.HierarchicType;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,6 +23,8 @@ import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.CustomAsset;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -63,7 +66,7 @@ import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 @Singleton
 @Slf4j
 public class JsonSchemaGenerator {
-    
+
     private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
     private static final List<Class<?>> SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA = List.of(Task.class, AbstractTrigger.class);
 
@@ -276,10 +279,10 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
             .with(Option.ALLOF_CLEANUP_AT_THE_END);
-            
+
         // HACK: Registered a custom JsonUnwrappedDefinitionProvider prior to the JacksonModule 
         // to be able to return an CustomDefinition with an empty node when the ResolvedType can't be found.
-        builder.forTypesInGeneral().withCustomDefinitionProvider(new JsonUnwrappedDefinitionProvider(){
+        builder.forTypesInGeneral().withCustomDefinitionProvider(new JsonUnwrappedDefinitionProvider() {
             @Override
             public CustomDefinition provideCustomSchemaDefinition(ResolvedType javaType, SchemaGenerationContext context) {
                 try {
@@ -321,7 +324,7 @@ public class JsonSchemaGenerator {
         // inline some type
         builder.forTypesInGeneral()
             .withCustomDefinitionProvider(new CustomDefinitionProviderV2() {
-                
+
                 @Override
                 public CustomDefinition provideCustomSchemaDefinition(ResolvedType javaType, SchemaGenerationContext context) {
                     if (javaType.isInstanceOf(Map.class) || javaType.isInstanceOf(Enum.class)) {
@@ -589,11 +592,31 @@ public class JsonSchemaGenerator {
         // The `const` property is used by editors for auto-completion based on that schema.
         builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
             final Class<?> pluginType = scope.getType().getErasedType();
-            if (pluginType.getAnnotation(Plugin.class) != null) {
+            Plugin pluginAnnotation = pluginType.getAnnotation(Plugin.class);
+            if (pluginAnnotation != null) {
                 ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
                 if (properties != null) {
+                    String typeConst = pluginType.getName();
+                    // This is needed so that assets can have arbitrary types while still being able to be identified as assets.
+                    if (pluginType == CustomAsset.class) {
+                        properties.set("type", context.getGeneratorConfig().createObjectNode()
+                            .put("type", "string")
+                        );
+                        return;
+                    }
+
+                    if (Asset.class.isAssignableFrom(pluginType)) {
+                        // For Asset types, we want to be able to use a simple-string type. Convention is that first alias is that string type.
+                        typeConst = pluginAnnotation.aliases().length > 0 ? pluginAnnotation.aliases()[0] : pluginType.getName();
+                        Arrays.stream(pluginType.getDeclaredMethods())
+                            .filter(m -> m.isAnnotationPresent(JsonProperty.class))
+                            .forEach(m -> properties.set(m.getAnnotation(JsonProperty.class).value(), context.getGeneratorConfig().createObjectNode()
+                                .put("type", "string")
+                            ));
+                    }
+
                     properties.set("type", context.getGeneratorConfig().createObjectNode()
-                        .put("const", pluginType.getName())
+                        .put("const", typeConst)
                     );
                 }
             }
@@ -764,6 +787,14 @@ public class JsonSchemaGenerator {
                         consumer.accept(typeContext.resolve(clz));
                     }
                 }).toList();
+        } else if (declaredType.getErasedType() == Asset.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getAssets().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .map(typeContext::resolve)
+                .toList();
         }
 
         return null;

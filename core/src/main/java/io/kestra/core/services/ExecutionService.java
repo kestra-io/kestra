@@ -768,6 +768,15 @@ public class ExecutionService {
         return newExecution;
     }
 
+    /**
+     * Update the labels of an execution.
+     */
+    public Execution updateLabels(Execution execution, List<Label> labels) {
+        Execution newExecution = execution.withLabels(labels);
+        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        return newExecution;
+    }
+
     @Getter
     @SuperBuilder(toBuilder = true)
     public static class PurgeResult {

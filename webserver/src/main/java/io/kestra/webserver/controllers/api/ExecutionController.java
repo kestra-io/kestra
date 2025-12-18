@@ -5,6 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.events.EventId;
 import io.kestra.core.executor.command.*;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -1203,9 +1204,8 @@ public class ExecutionController {
         if (!newLabels.contains(new Label(Label.REPLAYED, "true"))) {
             newLabels.add(new Label(Label.REPLAYED, "true"));
         }
-        Execution newExecution = execution.withLabels(newLabels);
-        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
-        executionRepository.save(newExecution);
+        var updateLabelsCommand = UpdateLabels.from(execution, newLabels);
+        executionCommandQueue.emit(updateLabelsCommand);
 
         return ApiAsyncEvent.from(executionReplayCommand.eventId());
     }
@@ -2050,7 +2050,7 @@ public class ExecutionController {
     public HttpResponse<?> setLabelsOnTerminatedExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> labels
-    ) {
+    ) throws QueueException {
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
             return HttpResponse.notFound();
@@ -2061,12 +2061,12 @@ public class ExecutionController {
             return HttpResponse.badRequest("The execution is not terminated");
         }
 
-        Execution newExecution = setLabelsOnTerminatedExecution(execution, labels);
+        ApiAsyncEvent event = setLabelsOnTerminatedExecution(execution, labels);
 
-        return HttpResponse.ok(newExecution);
+        return HttpResponse.ok(event);
     }
 
-    private Execution setLabelsOnTerminatedExecution(Execution execution, List<Label> labels) {
+    private ApiAsyncEvent setLabelsOnTerminatedExecution(Execution execution, List<Label> labels) throws QueueException {
         // check for system labels: none can be passed at runtime
         // as all existing labels will be passed here, we compare existing system label with the new one and fail if they are different
 
@@ -2076,21 +2076,20 @@ public class ExecutionController {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
 
-        Map<String, String> newLabels = labels.stream().collect(Collectors.toMap(Label::key, Label::value));
+        List<Label> newLabels = new ArrayList<>(labels);
         existingSystemLabels.forEach(
             label -> {
                 // only add system labels
-                if (!newLabels.containsKey(label.key())) {
-                    newLabels.put(label.key(), label.value());
+                if (!newLabels.contains(label)) {
+                    newLabels.add(label);
                 }
             }
         );
 
-        Execution newExecution = execution
-            .withLabels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).filter(label -> !label.key().isEmpty() || !label.value().isEmpty()).toList());
-        eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
+        var updateLabelsCommand = UpdateLabels.from(execution, newLabels);
+        executionCommandQueue.emit(updateLabelsCommand);
 
-        return executionRepository.save(newExecution);
+        return ApiAsyncEvent.from(updateLabelsCommand.eventId());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2100,7 +2099,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "422", description = "Killed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> setLabelsOnTerminatedExecutionsByIds(
         @RequestBody(description = "The request containing a list of labels and a list of executions") @Body SetLabelsByIdsRequest setLabelsByIds
-    ) {
+    ) throws QueueException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
 
@@ -2136,10 +2135,10 @@ public class ExecutionController {
             );
         }
 
-        executions.forEach(execution -> setLabelsOnTerminatedExecution(
+        executions.forEach(throwConsumer(execution -> setLabelsOnTerminatedExecution(
             execution,
             Label.deduplicate(ListUtils.concat(execution.getLabels(), setLabelsByIds.executionLabels())))
-        );
+        ));
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
@@ -2168,7 +2167,7 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
 
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels
-    ) {
+    ) throws QueueException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
             query,

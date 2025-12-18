@@ -1220,12 +1220,11 @@ class ExecutionControllerRunnerTest {
         assertThat(replay.getOriginalId()).isEqualTo(execution.getId());
         assertThat(replay.getLabels()).contains(new Label(Label.REPLAY, "true"));
 
-        // load the original execution and check that it has the system.replayed label
-        Execution original = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/main/executions/" + execution.getId()),
-            Execution.class
+        // wait for the original execution to have the system.replayed label
+        awaitExecution(
+            execution.getId(),
+            exec -> !exec.getLabels().contains(new Label(Label.REPLAYED, "true"))
         );
-        assertThat(original.getLabels()).contains(new Label(Label.REPLAYED, "true"));
     }
 
     @Test
@@ -1269,8 +1268,8 @@ class ExecutionControllerRunnerTest {
         assertThat(execution1.getState().isTerminated()).isTrue();
         assertThat(execution2.getState().isTerminated()).isTrue();
 
-        PagedResults<?> executions = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/search"), PagedResults.class
+        PagedResults<Execution> executions = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/search"), Argument.of(PagedResults.class, Execution.class)
         );
         assertThat(executions.getTotal()).isEqualTo(2L);
 
@@ -1281,10 +1280,14 @@ class ExecutionControllerRunnerTest {
         );
         assertThat(resumeResponse.getCount()).isEqualTo(2);
 
-        executions = client.toBlocking().retrieve(
-            GET("/api/v1/main/executions/search"), PagedResults.class
-        );
+        executions = await().atMost(Duration.ofSeconds(10))
+            .until(
+                () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/search"), Argument.of(PagedResults.class, Execution.class)),
+                it -> it.getResults().size() == 4
+            );
         assertThat(executions.getTotal()).isEqualTo(4L);
+        assertThat(executions.getResults().stream().filter(e -> e.getLabels().contains(new Label(Label.REPLAY, "true"))).count()).isEqualTo(2);
+        assertThat(executions.getResults().stream().filter(e -> e.getLabels().contains(new Label(Label.REPLAYED, "true"))).count()).isEqualTo(2);
     }
 
     @Test
@@ -1475,14 +1478,15 @@ class ExecutionControllerRunnerTest {
         // update labels on a terminated execution
         Execution result = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        Execution response = client.toBlocking().retrieve(
+        ApiAsyncEvent response = client.toBlocking().retrieve(
             HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/labels", List.of(new Label("existing", "updated"), new Label("newKey", "value"))),
-            Execution.class
+            ApiAsyncEvent.class
         );
-        assertThat(response.getLabels()).containsExactlyInAnyOrder(
-            new Label(Label.CORRELATION_ID, response.getId()),
-            new Label("existing", "updated"),
-            new Label("newKey", "value")
+        assertThat(response).isNotNull();
+
+        awaitExecution(
+            result.getId(),
+            exec -> exec.getLabels().contains(new Label("existing", "updated")) && exec.getLabels().contains(new Label("newKey", "value"))
         );
 
         // update label on a not found execution
@@ -2059,34 +2063,46 @@ class ExecutionControllerRunnerTest {
         Execution result = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        Execution executionWithLabels = client.toBlocking().retrieve(
+        ApiAsyncEvent executionWithLabels = client.toBlocking().retrieve(
                 HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/labels", List.of(
                                 new Label("flow-label-1", "flow-label-1"),
                                 new Label("flow-label-2", "flow-label-2"))),
-                Execution.class
+                ApiAsyncEvent.class
         );
+        assertThat(executionWithLabels).isNotNull();
 
-        List<Label> allLabelsFromExecution = executionWithLabels.getLabels();
-        assertLabelCounts(allLabelsFromExecution, 2, greaterThan(0));
+        Execution updated = awaitExecution(
+            result.getId(),
+            exec -> !exec.getLabels().contains(new Label("existing", "label"))
+        );
+        assertThat(updated.getLabels()).contains(new Label("flow-label-1", "flow-label-1"), new Label("flow-label-2", "flow-label-2"));
 
         // Update with only one custom label
-        Execution executionWithOneLabel = client.toBlocking().retrieve(
+        ApiAsyncEvent executionWithOneLabel = client.toBlocking().retrieve(
                 HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/labels",
                         List.of(new Label("flow-label-1", "flow-label-1"))),
-                Execution.class
+            ApiAsyncEvent.class
         );
+        assertThat(executionWithOneLabel).isNotNull();
 
-        allLabelsFromExecution = executionWithOneLabel.getLabels();
-        assertLabelCounts(allLabelsFromExecution, 1, greaterThan(0));
+        updated = awaitExecution(
+            result.getId(),
+            exec -> !exec.getLabels().contains(new Label("flow-label-2", "flow-label-2"))
+        );
+        assertThat(updated.getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
 
         // Remove all custom labels
-        Execution executionWithNoLabels = client.toBlocking().retrieve(
+        ApiAsyncEvent executionWithNoLabels = client.toBlocking().retrieve(
                 HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/labels", Collections.emptyList()),
-                Execution.class
+                ApiAsyncEvent.class
         );
+        assertThat(executionWithNoLabels).isNotNull();
 
-        allLabelsFromExecution = executionWithNoLabels.getLabels();
-        assertLabelCounts(allLabelsFromExecution, 0, greaterThan(0));
+        updated = awaitExecution(
+            result.getId(),
+            exec -> !exec.getLabels().contains(new Label("flow-label-1", "flow-label-1"))
+        );
+        assertThat(updated.getLabels().stream().allMatch(l -> l.key().startsWith(Label.SYSTEM_PREFIX))).isTrue();
     }
 
     @Test

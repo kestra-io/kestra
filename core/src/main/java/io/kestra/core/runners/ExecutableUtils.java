@@ -189,12 +189,11 @@ public final class ExecutableUtils {
                 variables.put("taskRunIteration", currentTaskRun.getIteration());
             }
 
-            FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
             Instant scheduleOnDate = runContext.render(scheduleDate).as(ZonedDateTime.class).map(date -> date.toInstant()).orElse(null);
             Execution execution = Execution
                 .newExecution(
                     flow,
-                    (f, e) -> flowInputOutput.readExecutionInputs(f, e, inputs),
+                    (f, e) -> runContext.inputAndOutput().readInputs(f, e, inputs),
                     newLabels,
                     Optional.empty())
                 .withTrigger(ExecutionTrigger.builder()

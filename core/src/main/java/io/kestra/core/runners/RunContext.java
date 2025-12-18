@@ -211,4 +211,9 @@ public abstract class RunContext implements PropertyContext {
      * @return a new run context with the plugin configuration of the given plugin.
      */
     public abstract RunContext cloneForPlugin(Plugin plugin);
+
+    /**
+     * @return an InputAndOutput that can be used to work with inputs and outputs.
+     */
+    public abstract InputAndOutput inputAndOutput();
 }

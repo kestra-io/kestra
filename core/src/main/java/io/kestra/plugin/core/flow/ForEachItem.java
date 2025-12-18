@@ -23,7 +23,6 @@ import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
-import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.NoSystemLabelValidation;
@@ -540,7 +539,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                     .numberOfBatches((Integer) taskRun.getOutputs().get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES));
 
                 try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-                    FileSerde.write(bos, FlowInputOutput.renderFlowOutputs(flow.getOutputs(), runContext));
+                    FileSerde.write(bos, runContext.inputAndOutput().renderOutputs(flow.getOutputs()));
                     URI uri = runContext.storage().putFile(
                         new ByteArrayInputStream(bos.toByteArray()),
                         URI.create((String) taskRun.getOutputs().get("uri"))

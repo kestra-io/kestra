@@ -172,7 +172,7 @@ public class Trigger extends TriggerContext implements HasUID {
 
         if (abstractTrigger instanceof PollingTriggerInterface pollingTriggerInterface) {
             try {
-                nextDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.empty());
+                nextDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, lastTrigger);
             } catch (InvalidTriggerConfigurationException e) {
                 disabled = true;
             }

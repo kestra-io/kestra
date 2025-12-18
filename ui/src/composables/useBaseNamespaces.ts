@@ -61,6 +61,10 @@ export const useBaseNamespacesStore = () => {
         return response.data;
     }
 
+    async function update(this: any, _: {route: any, payload: any}) {
+        // NOOP IN OSS
+    }
+
     async function loadDependencies(this: any, options: {namespace: string}) {
         return await axios.get(`${apiUrl()}/namespaces/${options.namespace}/dependencies`);
     }
@@ -283,6 +287,7 @@ export const useBaseNamespacesStore = () => {
         search,
         total,
         load,
+        update,
         loadDependencies,
         existing,
         namespace,

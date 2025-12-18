@@ -195,7 +195,7 @@ export const useFlowStore = defineStore("flow", () => {
         return validateFlow({
             flow: (isCreating.value ? flowYaml.value : yamlWithNextRevision.value) ?? ""
         })
-            .then((value: {constraints?: any}) => {
+            .then((value: {constraints?: string}) => {
                 if (
                     topologyVisible &&
                     flowHaveTasks.value &&
@@ -566,7 +566,7 @@ function deleteFlowAndDependencies() {
                     coreStore.message = {
                         title: "Couldn't expand subflow",
                         message: error.response.data.message,
-                        variant: "danger"
+                        variant: "error"
                     };
                 }
 
@@ -644,19 +644,37 @@ function deleteFlowAndDependencies() {
     function enableFlowByQuery(options: { namespace: string, id: string }) {
         return axios.post(`${apiUrl()}/flows/enable/by-query`, options, {params: options})
     }
+
     function deleteFlowByIds(options: { ids: {id: string, namespace: string}[] }) {
         return axios.delete(`${apiUrl()}/flows/delete/by-ids`, {data: options.ids})
     }
+
     function deleteFlowByQuery(options: { namespace: string, id: string }) {
         return axios.delete(`${apiUrl()}/flows/delete/by-query`, {params: options})
     }
+
     function validateFlow(options: { flow: string }) {
+        const flowValidationIssues: FlowValidations = {};
+        if(isCreating.value) {
+            const {namespace} = YAML_UTILS.getMetadata(options.flow);
+            if(authStore.user && !authStore.user.isAllowed(
+                permission.FLOW,
+                action.CREATE,
+                namespace,
+            )) {
+                flowValidationIssues.constraints = t("flow creation denied in namespace", {namespace});
+            }
+        }
         return axios.post(`${apiUrl()}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
             .then(response => {
-                flowValidation.value = response.data[0]
-                return response.data[0]
+                const constraintsArray = [response?.data[0]?.constraints, flowValidationIssues.constraints].filter(Boolean)
+                flowValidation.value = constraintsArray.length === 0 ? {} : {
+                    constraints: constraintsArray.join(", ")
+                };
+                return flowValidation.value
             })
     }
+
     function validateTask(options: { task: string, section: string }) {
         return axios.post(`${apiUrl()}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
             .then(response => {
@@ -752,7 +770,8 @@ function deleteFlowAndDependencies() {
             return false;
         }
 
-        return authStore.user.isAllowed(
+        return (isCreating.value && authStore.user.hasAnyAction(permission.FLOW, action.UPDATE))
+         || authStore.user.isAllowed(
             permission.FLOW,
             action.UPDATE,
             flow.value?.namespace,
@@ -777,9 +796,10 @@ function deleteFlowAndDependencies() {
     })
 
     const flowErrors = computed((): string[] | undefined => {
+        const key = baseOutdatedTranslationKey.value;
         const flowExistsError =
             flowValidation.value?.outdated && isCreating.value
-                ? [`>>>>${baseOutdatedTranslationKey.value}`] // because translating is impossible here
+                ? [`${t(key + ".description")} ${t(key + ".details")}`]
                 : [];
 
         const constraintsError =
@@ -794,8 +814,6 @@ function deleteFlowAndDependencies() {
         const infos = flowValidation.value?.infos ?? [];
 
         return infos.length === 0 ? undefined : infos;
-
-        return undefined;
     })
 
     const flowHaveTasks = computed((): boolean => {

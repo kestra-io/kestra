@@ -7,6 +7,7 @@ import {apiUrl} from "override/utils/route";
 import {useMiscStore} from "override/stores/misc";
 
 import {trackBlueprintSelection} from "../utils/tabTracking";
+import {Input} from "./flow.ts";
 
 export type BlueprintType = "community" | "custom";
 type BlueprintKind = "flow" | "dashboard" | "app";
@@ -24,18 +25,9 @@ interface Blueprint {
     [key: string]: any;
 }
 
-export interface TemplateArgument {
-    id: string,
-    displayName: string,
-    type: string,
-    itemType?: string,
-    required: boolean,
-    defaults?: any
-}
-
 export interface BlueprintTemplate {
     source: string;
-    templateArguments: Record<string, TemplateArgument>;
+    templateArguments: Record<string, Input>;
 }
 
 export interface FlowBlueprint {

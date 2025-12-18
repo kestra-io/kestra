@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -328,12 +329,12 @@ public class PauseTest {
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
 
-            ConstraintViolationException e = assertThrows(
-                ConstraintViolationException.class,
+            InputOutputValidationException e = assertThrows(
+                InputOutputValidationException.class,
                 () -> executionService.resume(execution, flow, State.Type.RUNNING, Mono.empty(), Pause.Resumed.now()).block()
             );
 
-            assertThat(e.getMessage()).contains("Invalid input for `asked`, missing required input, but received `null`");
+            assertThat(e.getMessage()).contains(  "Missing required input:asked");
         }
 
         @SuppressWarnings("unchecked")

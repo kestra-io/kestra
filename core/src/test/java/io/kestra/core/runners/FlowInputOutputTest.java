@@ -239,7 +239,7 @@ class FlowInputOutputTest {
         // Then
         Assertions.assertEquals(2, values.size());
         Assertions.assertFalse(values.get(1).enabled());
-        Assertions.assertNotNull(values.get(1).exception());
+        Assertions.assertNotNull(values.get(1).exceptions());
     }
 
     @Test
@@ -257,7 +257,7 @@ class FlowInputOutputTest {
         List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, data).block();
 
         // Then
-        Assertions.assertNull(values.getFirst().exception());
+        Assertions.assertNull(values.getFirst().exceptions());
         Assertions.assertFalse(storageInterface.exists(MAIN_TENANT, null, URI.create(values.getFirst().value().toString())));
     }
 

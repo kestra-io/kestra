@@ -1,24 +1,36 @@
 package io.kestra.core.models.property;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.serializers.FileSerde;
+import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.plugin.core.namespace.Version;
+import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static java.util.Map.entry;
@@ -361,6 +373,39 @@ class PropertyTest {
         assertThat(output.getMessages().getFirst().getKey()).isEqualTo("key1");
         assertThat(output.getMessages().getFirst().getValue()).isEqualTo("value1");
     }
+
+    @Test
+    void jsonSubtype() throws JsonProcessingException, IllegalVariableEvaluationException {
+        Optional<WithSubtype> rendered = runContextFactory.of().render(
+            Property.<WithSubtype>ofExpression(JacksonMapper.ofJson().writeValueAsString(new MySubtype()))
+        ).as(WithSubtype.class);
+
+        assertThat(rendered).isPresent();
+        assertThat(rendered.get()).isInstanceOf(MySubtype.class);
+
+        List<WithSubtype> renderedList = runContextFactory.of().render(
+            Property.<List<WithSubtype>>ofExpression(JacksonMapper.ofJson().writeValueAsString(List.of(new MySubtype())))
+        ).asList(WithSubtype.class);
+        assertThat(renderedList).hasSize(1);
+        assertThat(renderedList.get(0)).isInstanceOf(MySubtype.class);
+    }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
+    @JsonSubTypes({
+        @JsonSubTypes.Type(value = MySubtype.class, name = "mySubtype")
+    })
+    @Getter
+    @NoArgsConstructor
+    @Introspected
+    public abstract static class WithSubtype {
+        abstract public String getType();
+    }
+
+    @Getter
+    public static class MySubtype extends WithSubtype {
+        private final String type = "mySubtype";
+    }
+
 
     @Builder
     @Getter

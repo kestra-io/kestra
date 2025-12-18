@@ -107,14 +107,13 @@
             lazy
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
-            :highlightCurrent="false"
             :allowDrop="
                 (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
             "
             draggable
             nodeKey="id"
             v-loading="filesStore.fileTree === undefined"
-            :props="{class: nodeClass, isLeaf: 'leaf', key: 'id'}"
+            :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
             @node-drag-start="
                 nodeBeforeDrag = {
@@ -153,7 +152,7 @@
                                     v-if="selectionMode"
                                     class="me-2"
                                     :modelValue="selectedNodes.includes(data.id)"
-                                    @update-model-value="checked => toggleCheckboxSelection(checked, data, node)"
+                                    @update-model-value="checked => toggleCheckboxSelection(checked, node)"
                                     @mousedown.stop
                                     @click.stop
                                 />
@@ -521,7 +520,7 @@
         return result.filter(i => i.path);
     }
 
-    function handleNodeClick(data: any, node: ElTreeNode, event: MouseEvent | null = null, forceToggle = false) {
+    function handleNodeClick(data: any, node: ElTreeNode, event: MouseEvent | null = null) {
         const path = filesStore.getPath(node.data.id) ?? "";
         const flatList = flatTree.value;
         const currentIndex = flatList.findIndex(item => item.path === path);
@@ -568,19 +567,6 @@
             }
             lastClickedIndex.value = currentIndex;
 
-            if (selectedNodes.value.length === 1) lastClickedIndex.value = currentIndex;
-
-            syncTreeCurrentKey();
-            return;
-        }
-
-        if (selectionMode.value || forceToggle) {
-            const isSelected = selectedNodes.value.includes(node.data.id);
-            if (isSelected) {
-                selectedNodes.value = selectedNodes.value.filter(id => id !== node.data.id);
-            } else {
-                selectedNodes.value.push(node.data.id);
-            }
             syncTreeCurrentKey();
             return;
         }
@@ -610,7 +596,24 @@
         const isShift = event.shiftKey;
         
         if (selectionMode.value && !isShift && !isCtrl) {
-            handleNodeClick(data, node, event, true);
+            selectedNodes.value = [node.data.id];
+
+            const flatList = flatTree.value;
+            lastClickedIndex.value = flatList.findIndex(
+                i => i.id === node.data.id
+            );
+
+            syncTreeCurrentKey();
+
+            if (data.leaf) {
+                openTab?.({
+                    name: data.fileName,
+                    path: filesStore.getPath(node.data.id) ?? "",
+                    extension: data.fileName.split(".").pop()!,
+                    flow: false,
+                    dirty: false,
+                });
+            }
             return;
         }
         handleNodeClick(data, node, event);
@@ -634,11 +637,10 @@
             treeRef.setCurrentKey(selectedNodes.value[0]);
         } else {
             treeRef.setCurrentKey(null);
-            treeRef.setCurrentNode(null);
         }
     }
 
-    function toggleCheckboxSelection(checked: boolean, data: any, node: ElTreeNode) {
+    function toggleCheckboxSelection(checked: boolean, node: ElTreeNode) {
         const path = filesStore.getPath(node.data.id) ?? "";
         const nodeId = node.data.id;
         if (checked) {
@@ -1036,13 +1038,12 @@
         }
 
         .node {
-            /* --el-tree-node-content-height: fit-content; */
             --el-tree-node-hover-bg-color: transparent;
         }
 
         .el-tree-node__content {
             display: flex;
-            align-items: stretch;
+            align-items: center;
             margin-bottom: 2px !important;
             padding-left: 0 !important;
             border: 1px solid transparent;

@@ -79,12 +79,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return response.data;
     }
 
-    async function update({id, source}: {id: Dashboard["id"]; source: Dashboard["sourceCode"];}) {
+    async function update({id, source}: {id: string; source: Dashboard["sourceCode"];}) {
         const response = await axios.put(`${apiUrl()}/dashboards/${id}`, source, header);
         return response.data;
     }
 
-    async function deleteDashboard(id: Dashboard["id"]) {
+    async function deleteDashboard(id: string) {
         const response = await axios.delete(`${apiUrl()}/dashboards/${id}`);
         return response.data;
     }
@@ -94,7 +94,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return response.data;
     }
 
-    async function generate(id: Dashboard["id"], chartId: Chart["id"], parameters: Parameters) {
+    async function generate(id: string, chartId: Chart["id"], parameters: Parameters) {
         const response = await axios.post(`${apiUrl()}/dashboards/${id}/charts/${chartId}`, parameters, {validateStatus});
         return response.data;
     }

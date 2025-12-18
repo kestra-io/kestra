@@ -151,8 +151,6 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
 
     Execution save(Execution execution);
 
-    Execution update(Execution execution);
-
     default Function<String, String> sortMapping() throws IllegalArgumentException {
         return s -> s;
     }

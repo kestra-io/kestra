@@ -620,22 +620,6 @@ public abstract class AbstractExecutionRepositoryTest {
     }
 
     @Test
-    protected void update() {
-        var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        Execution execution = ExecutionFixture.EXECUTION_1(tenant);
-        executionRepository.save(execution);
-
-        Label label = new Label("key", "value");
-        Execution updated = execution.toBuilder().labels(List.of(label)).build();
-        executionRepository.update(updated);
-
-        Optional<Execution> validation = executionRepository.findById(tenant, updated.getId());
-        assertThat(validation.isPresent()).isTrue();
-        assertThat(validation.get().getLabels().size()).isEqualTo(1);
-        assertThat(validation.get().getLabels().getFirst()).isEqualTo(label);
-    }
-
-    @Test
     void shouldFindLatestExecutionGivenState() {
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         Execution earliest = buildWithCreatedDate(tenant, Instant.now().minus(Duration.ofMinutes(10)));
@@ -1207,7 +1191,7 @@ inject(tenant);
             executionRepository.delete(savedB);
         }
     }
-    
+
     @Test
     protected void shouldFindExecutionByTrigger() {
         // GIVEN
@@ -1215,7 +1199,7 @@ inject(tenant);
         Execution execution = ExecutionFixture.EXECUTION_1(tenant);
 
         TriggerId trigger = TriggerId.of(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), "trigger");
-        
+
         execution = execution
             .toBuilder()
             .trigger(ExecutionTrigger

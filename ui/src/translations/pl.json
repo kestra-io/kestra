@@ -1027,8 +1027,8 @@
     "kestra": "Kestra",
     "key": "Klucz",
     "kill": "Zakończ",
-    "kill only parents": "Zakończ tylko rodziców",
-    "kill parents and subflow": "Zakończ rodziców i subflows",
+    "kill only parents": "Zabij tylko bieżący",
+    "kill parents and subflow": "Zatrzymaj bieżący flow i subflow",
     "killed confirm": "Czy na pewno chcesz zakończyć wykonanie <code>{id}</code>?",
     "killed done": "Wykonanie jest w kolejce do zakończenia",
     "kv": {

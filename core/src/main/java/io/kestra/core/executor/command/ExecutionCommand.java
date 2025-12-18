@@ -21,6 +21,7 @@ import java.util.Map;
     @JsonSubTypes.Type(value = Resume.class, name = "RESUME"),
     @JsonSubTypes.Type(value = ResumeFromBreakpoint.class, name = "RESUME_FROM_BREAKPOINT"),
     @JsonSubTypes.Type(value = Unqueue.class, name = "UNQUEUE"),
+    @JsonSubTypes.Type(value = UpdateLabels.class, name = "UPDATE_LABELS"),
     @JsonSubTypes.Type(value = UpdateStatus.class, name = "UPDATE_STATUS"),
     @JsonSubTypes.Type(value = ExecutionCommand.Invalid.class, name = "INVALID"),
 })

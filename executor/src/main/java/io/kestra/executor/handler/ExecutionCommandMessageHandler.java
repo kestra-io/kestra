@@ -41,11 +41,16 @@ public class ExecutionCommandMessageHandler implements ExecutorMessageHandler<Ex
                         executionService.restart(execution, executorContext.getFlow(), restartCommand.revision(), true);
                     case Replay replayCommand ->
                         executionService.replay(execution, executorContext.getFlow(), replayCommand.taskRunId(), replayCommand.revision(), replayCommand.breakpoints(), true);
-                    case Pause ignored -> executionService.pause(execution);
-                    case Unqueue unqueueCommand -> executionService.unqueue(execution, unqueueCommand.state());
-                    case ForceRun ignored -> executionService.forceRun(execution, executorContext.getFlow());
+                    case Pause ignored ->
+                        executionService.pause(execution);
+                    case Unqueue unqueueCommand ->
+                        executionService.unqueue(execution, unqueueCommand.state());
+                    case ForceRun ignored ->
+                        executionService.forceRun(execution, executorContext.getFlow());
                     case ChangeTaskRunState changeTaskRunStateCommand ->
                         executionService.changeTaskRunState(execution, flow, changeTaskRunStateCommand.taskRunId(), changeTaskRunStateCommand.state());
+                    case UpdateLabels updateLabels ->
+                        executionService.updateLabels(execution, updateLabels.labels());
                     case UpdateStatus updateStatusCommand ->
                         executionService.changeState(execution, updateStatusCommand.state());
                     case ResumeFromBreakpoint resumeFromBreakpointCommand ->

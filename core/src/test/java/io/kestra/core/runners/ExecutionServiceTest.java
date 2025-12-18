@@ -556,4 +556,17 @@ class ExecutionServiceTest {
         Execution newExecution = executionService.unqueue(execution, State.Type.RUNNING);
         assertThat(newExecution.getState().getCurrent()).isEqualTo(State.Type.RUNNING);
     }
+
+    @Test
+    @LoadFlows("flows/valids/minimal.yaml")
+    void updateLabels() throws Exception {
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "minimal").orElseThrow();
+        Execution execution = Execution.newExecution(flow, Collections.emptyList())
+            .withState(State.Type.QUEUED);
+
+        List<Label> labels = execution.getLabels();
+        labels.add(new Label("test", "test"));
+        Execution newExecution = executionService.updateLabels(execution, labels);
+        assertThat(newExecution.getLabels()).contains(new Label("test", "test"));
+    }
 }

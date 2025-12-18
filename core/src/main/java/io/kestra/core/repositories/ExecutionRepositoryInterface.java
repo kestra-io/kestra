@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
@@ -104,6 +105,10 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
 
     Flux<Execution> findAsync(String tenantId, List<QueryFilter> filters);
 
+    /**
+     * WARNING: this method is only intended to be used in tests.
+     */
+    @VisibleForTesting
     Execution delete(Execution execution);
 
     Integer purge(Execution execution);
@@ -149,6 +154,9 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         @Nullable ZonedDateTime endDate,
         @Nullable List<String> namespaces);
 
+    /**
+     * WARNING: this method is only intended to be used in tests or inside the BackupService.
+     */
     Execution save(Execution execution);
 
     default Function<String, String> sortMapping() throws IllegalArgumentException {

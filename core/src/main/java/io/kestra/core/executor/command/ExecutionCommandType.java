@@ -12,6 +12,7 @@ public enum ExecutionCommandType {
     RESUME,
     RESUME_FROM_BREAKPOINT,
     UNQUEUE,
+    UPDATE_LABELS,
     UPDATE_STATUS,
     // ERROR
     INVALID;

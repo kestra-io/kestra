@@ -328,6 +328,10 @@ public abstract class AbstractJdbcRepository {
             return applyTriggerStateCondition(value, operation);
         }
 
+        if (field.equals(QueryFilter.Field.METADATA)) {
+            return findMetadataCondition((Map<?, ?>) value, operation);
+        }
+
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -377,6 +381,10 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition findMetadataCondition(Map<?, ?> metadata, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 

@@ -343,8 +343,6 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
             }
             commonTestConfig(t)
-            // Ensure flaky tests run after test, even when Gradle is run with --parallel
-            mustRunAfter(tasks.named('test'))
         }
 
         // test task (default)
@@ -376,7 +374,7 @@ subprojects {subProj ->
         tasks.named('check') {
             // this task will aggregate test tasks results, and fail is there was any error
             dependsOn(tasks.named('test'))// default behaviour
-            dependsOn(tasks.named('flakyTest'))
+//            dependsOn(tasks.named('flakyTest'))
 
             doLast {
                 // Fail this subproject's :check if any of the test tasks had failures

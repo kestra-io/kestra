@@ -19,7 +19,7 @@ import picocli.CommandLine;
         FlowExportCommand.class,
         FlowUpdateCommand.class,
         FlowUpdatesCommand.class,
-        FlowsUpdateFromSourceCommand.class
+        FlowsSyncFromSourceCommand.class
     }
 )
 @Slf4j

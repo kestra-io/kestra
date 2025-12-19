@@ -11,12 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 @CommandLine.Command(
-    name = "updateFromSource",
+    name = "syncFromSource",
     description = "Update a single flow",
     mixinStandardHelpOptions = true
 )
 @Slf4j
-public class FlowsUpdateFromSourceCommand extends AbstractApiCommand {
+public class FlowsSyncFromSourceCommand extends AbstractApiCommand {
 
     @Inject
     private TenantIdSelectorService tenantService;

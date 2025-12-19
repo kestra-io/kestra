@@ -15,7 +15,7 @@ import java.net.URL;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class FlowsUpdateFromSourceCommandTest {
+class FlowsSyncFromSourceCommandTest {
     @Test
     void updateAllFlowsFromSource()  {
         URL directory = FlowUpdatesCommandTest.class.getClassLoader().getResource("flows");
@@ -56,7 +56,7 @@ class FlowsUpdateFromSourceCommandTest {
                 "myuser:pass:word"
 
             };
-            PicocliRunner.call(FlowsUpdateFromSourceCommand.class, ctx, args);
+            PicocliRunner.call(FlowsSyncFromSourceCommand.class, ctx, args);
 
             assertThat(out.toString()).contains("4 flow(s) successfully updated!");
             assertThat(out.toString()).contains("- io.kestra.outsider.quattro");

@@ -42,7 +42,7 @@ import picocli.CommandLine.Option;
 @Introspected
 abstract public class AbstractCommand implements Callable<Integer> {
     @Inject
-    private ApplicationContext applicationContext;
+    protected ApplicationContext applicationContext;
 
     @Inject
     private EndpointDefaultConfiguration endpointConfiguration;

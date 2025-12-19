@@ -4,7 +4,7 @@ import {useMiscStore} from "override/stores/misc";
 import {defaultNamespace} from "../../../composables/useNamespaces";
 
 interface DefaultFilterOptions {
-    namespace?: string;
+    namespace?: string | null;
     includeTimeRange?: boolean;
     includeScope?: boolean;
     legacyQuery?: boolean;
@@ -29,7 +29,8 @@ export function applyDefaultFilters(
     const query = {...currentQuery};
     let change = false;
    
-    if (namespace === undefined && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
+
+    if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
         query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
         change = true;
     }

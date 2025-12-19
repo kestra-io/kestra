@@ -38,37 +38,37 @@ jobs:
         shell: bash
         run: docker compose -f docker-compose-ci.yml up -d
 
+      - name: javadoc
+        shell: bash
+        run: |
+          ./gradlew javadoc --parallel
+
       - name: unitTest
         shell: bash
         run: |
           ./gradlew unitTest --parallel
-
-      - name: check
-        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-        shell: bash
-        run: |
-          ./gradlew check
 
       - name: flakyTest
         shell: bash
         run: |
           ./gradlew flakyTest
 
-      - name: javadoc
+      - name: check
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         shell: bash
         run: |
-          ./gradlew javadoc --parallel
+          ./gradlew check --parallel
 
       - name: comment PR with test report
         if: ${{ !cancelled()}}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors --ci $(pwd)
 
       - name: generate PR test report in logs on fork or not in PRs
         if: ${{ !cancelled() }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors $(pwd)
 
       # Report Java

@@ -754,7 +754,7 @@ public class ExecutionService {
         var parentTaskRun = execution.findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
         Execution newExecution = execution;
         if (parentTaskRun.getState().getCurrent() != State.Type.KILLED) {
-            newExecution = newExecution.withTaskRun(parentTaskRun.withState(State.Type.KILLED));
+            newExecution = newExecution.withTaskRun(parentTaskRun.withStateAndAttempt(State.Type.KILLED));
         }
         if (parentTaskRun.getParentTaskRunId() != null) {
             return killParentTaskruns(parentTaskRun, newExecution);

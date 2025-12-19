@@ -204,24 +204,26 @@
                             className="row-action"
                         >
                             <template #default="scope">
-                                <el-button v-if="scope.row.executionId || scope.row.evaluateRunningDate">
-                                    <Kicon
-                                        :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
-                                        placement="left"
-                                        @click="triggerToUnlock = scope.row"
-                                    >
-                                        <LockOff />
-                                    </Kicon>
-                                </el-button>
-                                <el-button>
-                                    <Kicon
-                                        :tooltip="$t('delete trigger')"
-                                        placement="left"
-                                        @click="confirmDeleteTrigger(scope.row)"
-                                    >
-                                        <Delete />
-                                    </Kicon>
-                                </el-button>
+                                <div class="action-container">
+                                    <el-button v-if="scope.row.executionId || scope.row.evaluateRunningDate">
+                                        <Kicon
+                                            :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
+                                            placement="left"
+                                            @click="triggerToUnlock = scope.row"
+                                        >
+                                            <LockOff />
+                                        </Kicon>
+                                    </el-button>
+                                    <el-button>
+                                        <Kicon
+                                            :tooltip="$t('delete trigger')"
+                                            placement="left"
+                                            @click="confirmDeleteTrigger(scope.row)"
+                                        >
+                                            <Delete />
+                                        </Kicon>
+                                    </el-button>
+                                </div>
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('backfill')" columnKey="backfill">
@@ -853,6 +855,12 @@
     .backfillContainer {
         display: flex;
         align-items: center;
+    }
+
+    .action-container {
+        display: flex;
+        align-items: center;
+        gap: 5px;
     }
 
     .statusIcon {

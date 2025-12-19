@@ -37,6 +37,7 @@ export const storageKeys = {
     SAVED_FILTERS_PREFIX: "saved_filters",
     FILTER_DATA_OPTIONS_PREFIX: "filterDataOptions",
     FILTER_ORDER_PREFIX: "filter-order",
+    LOGS_VIEW_TYPE: "logsViewType",
     SCROLL_MEMORY_PREFIX: "scroll",
 } as const;
 

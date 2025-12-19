@@ -173,4 +173,6 @@ public interface Storage {
      * @return the task storage context
      */
     Optional<StorageContext.Task> getTaskStorageContext();
+
+    List<FileAttributes> list(URI uri) throws IOException;
 }

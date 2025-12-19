@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Optional;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class JdbcConcurrencyRunnerTest extends AbstractRunnerConcurrencyTest {
@@ -35,19 +34,19 @@ public abstract class JdbcConcurrencyRunnerTest extends AbstractRunnerConcurrenc
     private TestRunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows({"flows/valids/flow-concurrency-queue.yml"})
+    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml"}, tenantId = "flow-concurrency-queued-protection")
     void flowConcurrencyQueuedProtection() throws QueueException, InterruptedException {
-        Execution execution1 = runnerUtils.runOneUntilRunning(MAIN_TENANT, NAMESPACE, "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
+        Execution execution1 = runnerUtils.runOneUntilRunning("flow-concurrency-queued-protection", NAMESPACE, "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
         assertThat(execution1.getState().isRunning()).isTrue();
 
         Flow flow = flowRepository
-            .findById(MAIN_TENANT, NAMESPACE, "flow-concurrency-queue", Optional.empty())
+            .findById("flow-concurrency-queued-protection", NAMESPACE, "flow-concurrency-queue", Optional.empty())
             .orElseThrow();
         Execution execution2 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(State.Type.QUEUED), Execution.newExecution(flow, null, null, Optional.empty()));
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.QUEUED);
 
         // manually update the concurrency count so that queued protection kicks in and no new execution would be popped
-        ConcurrencyLimit concurrencyLimit = concurrencyLimitStorage.findById(MAIN_TENANT, NAMESPACE, "flow-concurrency-queue").orElseThrow();
+        ConcurrencyLimit concurrencyLimit = concurrencyLimitStorage.findById("flow-concurrency-queued-protection", NAMESPACE, "flow-concurrency-queue").orElseThrow();
         concurrencyLimit = concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1);
         concurrencyLimitStorage.update(concurrencyLimit);
 
@@ -56,7 +55,7 @@ public abstract class JdbcConcurrencyRunnerTest extends AbstractRunnerConcurrenc
 
         // we wait for a few ms and checked that the second execution is still queued
         Thread.sleep(500);
-        Execution executionResult2 = executionRepository.findById(MAIN_TENANT, execution2.getId()).orElseThrow();
+        Execution executionResult2 = executionRepository.findById("flow-concurrency-queued-protection", execution2.getId()).orElseThrow();
         assertThat(executionResult2.getState().getCurrent()).isEqualTo(State.Type.QUEUED);
 
         // we manually reset the concurrency count to avoid messing with any other tests

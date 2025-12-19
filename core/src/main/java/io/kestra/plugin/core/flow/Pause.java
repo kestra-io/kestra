@@ -63,7 +63,8 @@ import java.util.*;
 
                   - id: run_post_approval
                     type: io.kestra.plugin.scripts.shell.Commands
-                    runner: PROCESS
+                    taskRunner:
+                      type: io.kestra.plugin.core.runner.Process
                     commands:
                       - echo "Manual approval received! Continuing the execution..."
 

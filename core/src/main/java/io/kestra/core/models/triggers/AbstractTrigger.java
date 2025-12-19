@@ -82,6 +82,12 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private boolean failOnTriggerError = false;
 
+    @PluginProperty(group = PluginProperty.CORE_GROUP)
+    @Schema(
+        title = "Specifies whether a trigger is allowed to start a new execution even if a previous run is still in progress."
+    )
+    private boolean allowConcurrent = false;
+
     /**
      * For backward compatibility: we rename minLogLevel to logLevel.
      * @deprecated use {@link #logLevel} instead

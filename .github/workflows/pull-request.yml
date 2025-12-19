@@ -41,7 +41,7 @@ jobs:
       - name: javadoc
         shell: bash
         run: |
-          ./gradlew javadoc --parallel
+          ./gradlew clean --no-build-cache javadoc --parallel
 
       - name: unitTest
         shell: bash

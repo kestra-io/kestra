@@ -50,20 +50,6 @@ export const useTriggerFilter = (): ComputedRef<FilterConfiguration> => {
                         searchable: true
                     },
                 ] : []) as any,
-                {
-                    key: "triggerState",
-                    label: t("filter.triggerState.label"),
-                    description: t("filter.triggerState.description"),
-                    comparators: [
-                        Comparators.EQUALS,
-                        Comparators.NOT_EQUALS
-                    ],
-                    valueType: "text",
-                    valueProvider: async () => {
-                        const {VALUES} = useValues("triggers");
-                        return VALUES.TRIGGER_STATES;
-                    }
-                },
                 ...(route.name !== "flows/update" ? [{
                     key: "flowId",
                     label: t("filter.flowId.label"),

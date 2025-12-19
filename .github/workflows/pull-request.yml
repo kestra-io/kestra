@@ -57,7 +57,7 @@ jobs:
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         shell: bash
         run: |
-          ./gradlew check --parallel
+          ./gradlew core:check --parallel
 
       - name: comment PR with test report
         if: ${{ !cancelled()}}

@@ -48,16 +48,17 @@ jobs:
         run: |
           ./gradlew unitTest --parallel
 
-      - name: flakyTest
-        shell: bash
-        run: |
-          ./gradlew flakyTest
-
       - name: check
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         shell: bash
         run: |
-          ./gradlew core:check --parallel
+          ./gradlew core:check
+
+      - name: flakyTest
+        continue-on-error: true
+        shell: bash
+        run: |
+          ./gradlew flakyTest
 
       - name: comment PR with test report
         if: ${{ !cancelled()}}

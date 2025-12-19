@@ -297,7 +297,7 @@ subprojects {subProj ->
                 junitXml.outputPerTestCase = true
                 junitXml.mergeReruns = true
                 junitXml.includeSystemErrLog = true
-                junitXml.outputLocation = layout.buildDirectory.dir("test-results/integrationTest")
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
 
             // Integration tests typically not parallel (but you can enable)
@@ -348,7 +348,7 @@ subprojects {subProj ->
         // test task (default)
         tasks.named('test', Test) { Test t ->
             group = 'verification'
-            description = 'Runs unit tests.'
+            description = 'Runs all non-flaky tests.'
 
             useJUnitPlatform {
                 excludeTags 'flaky'
@@ -362,13 +362,6 @@ subprojects {subProj ->
             }
             commonTestConfig(t)
             jvmArgs = ["-javaagent:${configurations.agent.singleFile}"]
-
-            // JUnit 5 parallel settings - CLI module does assertions on stout (mostly).
-            if (subProj.name != 'cli') {
-                systemProperty("junit.jupiter.execution.parallel.enabled", "true")
-                systemProperty("junit.jupiter.execution.parallel.mode.default", "concurrent")
-                systemProperty("junit.jupiter.execution.parallel.mode.classes.default", "concurrent")
-            }
         }
 
         tasks.named('check') {

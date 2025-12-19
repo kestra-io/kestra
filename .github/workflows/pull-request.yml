@@ -71,6 +71,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx --yes @kestra-io/kestra-devtools generateTestReportSummary --only-errors $(pwd)
 
+      - name: actions/upload-artifact@v4
+        if: ${{ !cancelled()}}
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-problems-report.html
+          path: ./build/reports/problems/problems-report.html
+
       # Report Java
       - name: Report - Java
         uses: kestra-io/actions/composite/report-java@main

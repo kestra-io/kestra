@@ -78,6 +78,7 @@
         required?: boolean;
         schema?: Schema;
         root?: string;
+        typeBased?: boolean;
     }>();
 
     const emit = defineEmits<{
@@ -127,11 +128,10 @@
 
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties);
-        const isOutputsContext = props.root?.startsWith("outputs[") || false;
         return propertiesProc
             ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => {
                 // Allow "type" field for outputs context, filter it out for other contexts
-                const shouldFilterType = key === "type" && !isOutputsContext;
+                const shouldFilterType = key === "type" && props.typeBased;
                 return !shouldFilterType && !Array.isArray(value);
             })
             : [];

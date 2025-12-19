@@ -26,6 +26,7 @@
             @update:model-value="onTaskInput"
             :schema
             :properties
+            :typeBased="isTaskDefinitionBasedOnType"
         />
     </div>
 </template>
@@ -165,7 +166,10 @@
     // when tab is opened, load the documentation
     onActivated(() => {
         if(selectedTaskType.value && parentPath !== "inputs"){
-            pluginsStore.updateDocumentation({type: selectedTaskType.value, ...taskModel.value});
+            pluginsStore.updateDocumentation({
+                cls: selectedTaskType.value, 
+                ...taskModel.value
+            });
         }
     });
 

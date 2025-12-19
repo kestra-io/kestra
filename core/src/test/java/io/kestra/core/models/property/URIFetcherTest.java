@@ -1,12 +1,11 @@
 package io.kestra.core.models.property;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.*;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
-import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -28,7 +27,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest
 class URIFetcherTest {
     @Inject
     private StorageInterface storage;

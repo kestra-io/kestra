@@ -296,6 +296,19 @@
             return resolvedLocalSchema.value.properties
         }
 
+        if(resolvedLocalSchema.value?.allOf){
+            // merge allOf properties
+            return resolvedLocalSchema.value.allOf.reduce((acc: Record<string, any>, item: any) => {
+                const resolvedItem = item.$ref
+                    ? getValueAtJsonPath(fullSchema.value, item.$ref)
+                    : item;
+                if(resolvedItem?.properties){
+                    Object.assign(acc, resolvedItem.properties);
+                }
+                return acc;
+            }, {});
+        }
+
         // if there is more than one schema valid, try to find common properties
         // to all the schemas to help user narrow down the schema they want
         if(resolvedTypes.value.length > 1){

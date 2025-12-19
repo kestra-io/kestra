@@ -52,7 +52,7 @@ jobs:
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         shell: bash
         run: |
-          ./gradlew core:check
+          ./gradlew check --parallel
 
       - name: flakyTest
         continue-on-error: true

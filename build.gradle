@@ -221,41 +221,6 @@ subprojects {subProj ->
         }
 
         def commonTestConfig = { Test t ->
-            // BEGIN test failure configuration
-            // what is configured:
-            // - each test task will be marked as success all the time (except in case of gradle unhandled error or JVM crash)
-            // - a test task with failed tests will output a file in test-failures directory, so we can use that output later to check if any tests failed
-            t.ignoreFailures(true)
-            t.ext.testFailures = 0
-
-            // Persist failure state across runs so a previously-failing Test task can't be UP-TO-DATE and let :check pass.
-            def testFailureFileForThisProject = t.project.layout.buildDirectory.file("test-failures/${t.name}.failed").get().asFile
-            t.outputs.file(testFailureFileForThisProject)
-            t.outputs.upToDateWhen { !testFailureFileForThisProject.exists() }
-
-            t.afterSuite { desc, result ->
-                if (desc.getParent() == null) {
-                    def failed = (int) result.getFailedTestCount()
-                    t.ext.testFailures += failed
-
-                    // Persist failure state for next runs
-                    if (failed > 0) {
-                        testFailureFileForThisProject.parentFile.mkdirs()
-                        testFailureFileForThisProject.text = String.valueOf(failed)
-                    } else {
-                        if (testFailureFileForThisProject.exists()) {
-                            testFailureFileForThisProject.delete()
-                        }
-                    }
-                }
-            }
-            t.doLast() {
-                if(t.ext.testFailures > 0){
-                    logger.error(" ${t.getProject()} ${t.getName()} had ${t.ext.testFailures} failed tests")
-                }
-            }
-            // END test failure configuration
-
             // set Xmx for test workers
             t.maxHeapSize = '4g'
 
@@ -279,6 +244,7 @@ subprojects {subProj ->
 //                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
 //                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
 //            }
+            t.finalizedBy jacocoTestReport
         }
 
         tasks.register('integrationTest', Test) { Test t ->
@@ -365,25 +331,7 @@ subprojects {subProj ->
         }
 
         tasks.named('check') {
-            // this task will aggregate test tasks results, and fail is there was any error
             dependsOn(tasks.named('test'))// default behaviour
-//            dependsOn(tasks.named('flakyTest'))
-
-            doLast {
-                // Fail this subproject's :check if any of the test tasks had failures
-                // a test task with failed tests will be marked as SUCCESS in gradle, but will output a file in test-failures to indicate there is failed tests
-                def testFailuresDir = layout.buildDirectory.dir('test-failures').get().asFile
-                def testFailureFiles = null
-                if(testFailuresDir.exists()){
-                    testFailureFiles = testFailuresDir.listFiles({ f -> f.name.endsWith('.failed') && !f.name.contains('flakyTest')} as FileFilter)
-                }
-
-                if (testFailureFiles != null && testFailureFiles.length > 0) {
-                    def details = testFailureFiles.collect { m -> "${m.name.replace('.failed','')}: ${m.text.trim()}" }.join(', ')
-                    throw new GradleException("marking ${project.path}:check as failed because tests failed (${details})")
-                }
-            }
-            finalizedBy jacocoTestReport
         }
 
         testlogger {
@@ -400,6 +348,21 @@ subprojects {subProj ->
 }
 
 tasks.named('check') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    finalizedBy jacocoTestReport
+}
+
+tasks.register('unitTest') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    finalizedBy jacocoTestReport
+}
+
+tasks.register('integrationTest') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    finalizedBy jacocoTestReport
+}
+
+tasks.register('flakyTest') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
     finalizedBy jacocoTestReport
 }

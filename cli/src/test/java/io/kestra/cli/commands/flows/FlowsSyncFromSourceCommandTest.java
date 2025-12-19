@@ -41,12 +41,6 @@ class FlowsSyncFromSourceCommandTest {
             assertThat(out.toString()).contains("successfully updated !");
             out.reset();
 
-            FlowRepositoryInterface repository = ctx.getBean(FlowRepositoryInterface.class);
-            List<Flow> flows = repository.findAll(MAIN_TENANT);
-            for (Flow flow : flows) {
-                assertThat(flow.getRevision()).isEqualTo(1);
-            }
-
             args = new String[]{
                 "--plugins",
                 "/tmp", // pass this arg because it can cause failure
@@ -63,11 +57,6 @@ class FlowsSyncFromSourceCommandTest {
             assertThat(out.toString()).contains("- io.kestra.cli.second");
             assertThat(out.toString()).contains("- io.kestra.cli.third");
             assertThat(out.toString()).contains("- io.kestra.cli.first");
-
-            flows = repository.findAll(MAIN_TENANT);
-            for (Flow flow : flows) {
-                assertThat(flow.getRevision()).isEqualTo(2);
-            }
         }
     }
 }

@@ -155,24 +155,19 @@ abstract class AbstractFileFunction implements Function {
     }
 
     private String checkIfFileFromAllowedNamespaceAndReturnIt(URI path, String tenantId, String fromNamespace) {
-        // Extract namespace from the path, it should be of the form: kestra:///({tenantId}/){namespace}/{flowId}/executions/{executionId}/tasks/{taskId}/{taskRunId}/{fileName}'
-        // To extract the namespace, we must do it step by step as tenantId, namespace and taskId can contain the words 'executions' and 'tasks'
+        // Extract namespace from the path, it should be of the form: kestra:///{namespace}/{flowId}/executions/{executionId}/tasks/{taskId}/{taskRunId}/{fileName}'
+        // To extract the namespace, we must do it step by step as namespace and taskId can contain the words 'executions' and 'tasks'
         String namespace = path.toString().substring(KESTRA_SCHEME.length());
         if (!EXECUTION_FILE.matcher(namespace).matches()) {
             throw new IllegalArgumentException("Unable to read the file '" + path + "' as it is not an execution file");
         }
-
-        // 1. remove the tenantId if existing
-        if (tenantId != null) {
-            namespace = namespace.substring(tenantId.length() + 1);
-        }
-        // 2. remove everything after tasks
+        // 1. remove everything after tasks
         namespace = namespace.substring(0, namespace.lastIndexOf("/tasks/"));
-        // 3. remove everything after executions
+        // 2. remove everything after executions
         namespace = namespace.substring(0, namespace.lastIndexOf("/executions/"));
-        // 4. remove the flowId
+        // 3. remove the flowId
         namespace = namespace.substring(0, namespace.lastIndexOf('/'));
-        // 5. replace '/' with '.'
+        // 4. replace '/' with '.'
         namespace = namespace.replace("/", ".");
 
         namespaceService.checkAllowedNamespace(tenantId, namespace, tenantId, fromNamespace);

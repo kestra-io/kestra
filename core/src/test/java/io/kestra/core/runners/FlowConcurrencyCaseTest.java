@@ -330,6 +330,61 @@ public class FlowConcurrencyCaseTest {
         }
     }
 
+    public void flowConcurrencyTwoQueue(String tenantId) throws QueueException, InterruptedException {
+        Flow flow = flowRepository
+            .findById(tenantId, NAMESPACE, "flow-concurrency-2-queue", Optional.empty())
+            .orElseThrow();
+        Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-2-queue", null, null, Duration.ofSeconds(30));
+        Execution execution2 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-2-queue", null, null, Duration.ofSeconds(30));
+        Execution execution3 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.QUEUED), Execution.newExecution(flow, null, null, Optional.empty()));
+        Execution execution4 = runnerUtils.emitAndAwaitExecution(e -> e.getState().getCurrent().equals(Type.QUEUED), Execution.newExecution(flow, null, null, Optional.empty()));
+
+        try {
+            assertThat(execution1.getState().isRunning()).isTrue();
+            assertThat(execution2.getState().isRunning()).isTrue();
+            assertThat(execution3.getState().getCurrent()).isEqualTo(Type.QUEUED);
+            assertThat(execution4.getState().getCurrent()).isEqualTo(Type.QUEUED);
+
+            // we kill execution 1 & 2
+            killQueue.emit(ExecutionKilledExecution
+                .builder()
+                .state(ExecutionKilled.State.REQUESTED)
+                .executionId(execution1.getId())
+                .isOnKillCascade(true)
+                .tenantId(tenantId)
+                .build()
+            );
+            killQueue.emit(ExecutionKilledExecution
+                .builder()
+                .state(ExecutionKilled.State.REQUESTED)
+                .executionId(execution2.getId())
+                .isOnKillCascade(true)
+                .tenantId(tenantId)
+                .build()
+            );
+
+            Execution killed1 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.KILLED), execution1);
+            Execution killed2 = runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(Type.KILLED), execution2);
+
+            assertThat(killed1.getState().getCurrent()).isEqualTo(Type.KILLED);
+            assertThat(killed2.getState().getCurrent()).isEqualTo(Type.KILLED);
+
+            // we now check that execution 3 & 4 go to RUNNING state
+            Thread.sleep(100); // wait a little to be 100% sure
+            Execution queued3 = runnerUtils.awaitExecution(e -> e.getState().isRunning(), execution3);
+            assertThat(queued3.getState().getCurrent()).isEqualTo(Type.RUNNING);
+            Execution queued4 = runnerUtils.awaitExecution(e -> e.getState().isRunning(), execution4);
+            assertThat(queued4.getState().getCurrent()).isEqualTo(Type.RUNNING);
+        } finally {
+            // kill everything to avoid dangling executions
+            runnerUtils.killExecution(execution3);
+            runnerUtils.killExecution(execution4);
+
+            // await that they are all terminated, note that as KILLED is received twice, some messages would still be pending, but this is the best we can do
+            runnerUtils.awaitFlowExecutionNumber(4, tenantId, NAMESPACE, "flow-concurrency-2-queue");
+        }
+    }
+
     private URI storageUpload(String tenantId) throws URISyntaxException, IOException {
         File tempFile = File.createTempFile("file", ".txt");
 

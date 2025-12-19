@@ -1,0 +1,11 @@
+id: flow-concurrency-2-queue
+namespace: io.kestra.tests
+
+concurrency:
+  behavior: QUEUE
+  limit: 2
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT1M

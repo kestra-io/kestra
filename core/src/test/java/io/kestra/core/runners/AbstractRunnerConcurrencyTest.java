@@ -89,4 +89,10 @@ public abstract class AbstractRunnerConcurrencyTest {
     void flowConcurrencyQueueKilled() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueueKilled("flow-concurrency-queue-killed");
     }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/flow-concurrency-2-queue.yml"}, tenantId = "flow-concurrency-2-queue")
+    void flowConcurrencyTwoQueue() throws Exception {
+        flowConcurrencyCaseTest.flowConcurrencyTwoQueue("flow-concurrency-2-queue");
+    }
 }

@@ -12,6 +12,7 @@ import java.util.Optional;
 @SuppressWarnings({"rawtypes", "unchecked"})
 @Prototype
 public class PluginDefaultConverter implements TypeConverter<Map, PluginDefault> {
+    // trigger
     @Override
     public Optional<PluginDefault> convert(Map map, Class<PluginDefault> targetType, ConversionContext context) {
         return Optional.of(PluginDefault.builder()

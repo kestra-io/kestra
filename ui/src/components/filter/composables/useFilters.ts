@@ -399,6 +399,7 @@ export function useFilters(
 
     const {resetDefaultFilter} = useDefaultFilter({
         legacyQuery,
+        namespace: configuration.keys?.some((k) => k.key === "namespace") ? undefined : null,
         includeScope: defaultScope ?? configuration.keys?.some((k) => k.key === "scope"),
         includeTimeRange: defaultTimeRange ?? configuration.keys?.some((k) => k.key === "timeRange"),
     });

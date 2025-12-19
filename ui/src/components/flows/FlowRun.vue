@@ -80,7 +80,7 @@
 
 <script setup>
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Flash from "vue-material-design-icons/Flash.vue";
+    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
 </script>
 
 <script>
@@ -111,7 +111,7 @@
             replaySubmit: {type: Function, default: null},
             selectedTrigger: {type: Object, default: undefined},
             buttonText: {type: String, default: "launch execution"},
-            buttonIcon: {type: [Object, Function], default: () => Flash},
+            buttonIcon: {type: [Object, Function], default: () => LightningBolt},
             buttonTestId: {type: String, default: "execute-dialog-button"},
         },
         data() {

@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -10,7 +11,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.responses.BulkResponse;
@@ -22,10 +22,8 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 
@@ -67,15 +65,6 @@ class ExecutionControllerTest {
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TESTS_WEBHOOK_KEY = "a-secret-key";
-
-    @SneakyThrows
-    @BeforeEach
-    protected void setup() {
-        jdbcTestUtils.drop();
-        jdbcTestUtils.migrate();
-
-        TestsUtils.loads(MAIN_TENANT, repositoryLoader);
-    }
 
     @Test
     void getExecutionNotFound() {
@@ -177,6 +166,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/webhook-dynamic-key.yaml"})
     void webhookDynamicKey() {
         Execution execution = client.toBlocking().retrieve(
             GET(
@@ -190,6 +180,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/webhook-secret-key.yaml"})
     @EnabledIfEnvironmentVariable(named = "SECRET_WEBHOOK_KEY", matches = ".*")
     void webhookDynamicKeyFromASecret() {
         Execution execution = client.toBlocking().retrieve(
@@ -204,6 +195,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/webhook-with-condition.yaml"})
     void webhookWithCondition() {
         record Hello(String hello) {}
 
@@ -232,6 +224,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/webhook-inputs.yaml"})
     void webhookWithInputs() {
         record Hello(String hello) {}
 
@@ -289,6 +282,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
+    @LoadFlows(value = {"flows/valids/full.yaml"})
     void getExecutionFlowForExecution() {
         FlowForExecution result = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/flows/io.kestra.tests/full"),
@@ -301,6 +295,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/full.yaml"})
     void getExecutionFlowForExecutionWithOldUrl() {
         FlowForExecution result = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/flows/io.kestra.tests/full"),
@@ -314,6 +309,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
+    @LoadFlows(value = {"flows/valids/webhook.yaml"})
     void getExecutionFlowForExecutionById() {
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
@@ -336,24 +332,26 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    @LoadFlows(value = {"flows/valids/minimal.yaml"})
     void getExecutionDistinctNamespaceExecutables() {
         List<String> result = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/namespaces"),
             Argument.of(List.class, String.class)
         );
 
-        assertThat(result.size()).isGreaterThanOrEqualTo(5);
+        assertThat(result.size()).isGreaterThanOrEqualTo(1);
     }
 
     @SuppressWarnings("unchecked")
     @Test
+    @LoadFlows(value = {"flows/valids/webhook.yaml", "flows/valids/minimal.yaml"})
     void getExecutionFlowFromNamespace() {
         List<FlowForExecution> result = client.toBlocking().retrieve(
             GET("/api/v1/main/executions/namespaces/io.kestra.tests/flows"),
             Argument.of(List.class, FlowForExecution.class)
         );
 
-        assertThat(result.size()).isGreaterThan(100);
+        assertThat(result.size()).isGreaterThanOrEqualTo(2);
     }
 
     @Test
@@ -378,6 +376,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/inputs.yaml"})
     void commaInSingleLabelsValue() {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
 
@@ -448,6 +447,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/minimal.yaml"})
     void scheduleDate() {
         // given
         ZonedDateTime now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS).plusSeconds(1);
@@ -489,6 +489,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/minimal.yaml"})
     void shouldHaveAnUrlWhenCreated() {
         // ExecutionController.ExecutionResponse cannot be deserialized because it didn't have any default constructor.
         // adding it would mean updating the Execution itself, which is too annoying, so for the test we just deserialize to a Map.
@@ -504,6 +505,7 @@ class ExecutionControllerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/minimal.yaml"})
     void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
         var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest

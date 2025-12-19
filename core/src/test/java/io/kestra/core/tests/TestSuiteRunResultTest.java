@@ -1,8 +1,8 @@
-package io.kestra.core.test;
+package io.kestra.core.tests;
 
-import io.kestra.core.test.flow.AssertionResult;
-import io.kestra.core.test.flow.AssertionRunError;
-import io.kestra.core.test.flow.UnitTestResult;
+import io.kestra.core.tests.flow.AssertionResult;
+import io.kestra.core.tests.flow.AssertionRunError;
+import io.kestra.core.tests.flow.UnitTestResult;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;

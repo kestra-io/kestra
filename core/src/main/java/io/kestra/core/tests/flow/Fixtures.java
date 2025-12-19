@@ -1,4 +1,4 @@
-package io.kestra.core.test.flow;
+package io.kestra.core.tests.flow;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;

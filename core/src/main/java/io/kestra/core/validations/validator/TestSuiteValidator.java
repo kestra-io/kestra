@@ -1,7 +1,7 @@
 package io.kestra.core.validations.validator;
 
 import io.kestra.core.services.FlowService;
-import io.kestra.core.test.TestSuite;
+import io.kestra.core.tests.TestSuite;
 import io.kestra.core.validations.TestSuiteValidation;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;

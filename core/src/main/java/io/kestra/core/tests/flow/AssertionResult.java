@@ -1,4 +1,4 @@
-package io.kestra.core.test.flow;
+package io.kestra.core.tests.flow;
 
 import jakarta.validation.constraints.NotNull;
 

@@ -1,4 +1,4 @@
-package io.kestra.core.test;
+package io.kestra.core.tests;
 
 public enum TestState {
     ERROR,

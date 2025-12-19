@@ -1,4 +1,4 @@
-package io.kestra.core.test.flow;
+package io.kestra.core.tests.flow;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.Valid;

@@ -305,7 +305,13 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .orderBy(REVISION_FIELD.asc());
 
                 return select.fetch()
-                    .map(record -> FlowWithSource.of((Flow) jdbcRepository.map(record), record.get(SOURCE_FIELD)));
+                    .map(record -> {
+                        Flow flow = (Flow) jdbcRepository.map(record);
+                        String source = record.get(SOURCE_FIELD);
+                        java.time.OffsetDateTime updatedDateTime = record.get(field("updated", java.time.OffsetDateTime.class));
+                        java.time.Instant updatedDate = updatedDateTime != null ? updatedDateTime.toInstant() : null;
+                        return FlowWithSource.of(flow, source, updatedDate);
+                    });
             });
     }
 

@@ -24,6 +24,7 @@
                             >
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <span class="revision-timestamp">{{ item.timestamp }}</span>
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
@@ -59,6 +60,7 @@
                             >
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span> {{ $t("revision") + " " + item.text }}</span>
+                                    <span class="revision-timestamp">{{ item.timestamp }}</span>
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
@@ -120,6 +122,7 @@
 
     export interface Revision {
         revision: number;
+        updatedDate?: string;  // ISO datetime string
         source?: string;
     }
 
@@ -219,13 +222,47 @@
         }
     }
 
+    function formatTimestamp(updatedDate?: string): string {
+        if (!updatedDate) return "";
+
+        const date = new Date(updatedDate);
+        // Format: YYYY-MM-DD HH:mm (matching GitHub issue example)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+    }
+
+    function formatRevisionText(revision: number, updatedDate?: string): string {
+        let text = revision.toString();
+
+        if (currentRevisionWithSource.value.revision === revision) {
+            text += ` (${t("current")})`;
+        }
+
+        if (updatedDate) {
+            text += ` - ${formatTimestamp(updatedDate)}`;
+        }
+
+        return text;
+    }
+
     function options(excludeRevisionIndex: number | undefined) {
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
-            .map(({revision}) => ({
-                value: revisionIndex(revision.toString()),
-                text: revision + (currentRevisionWithSource.value.revision === revision ? ` (${t("current")})` : "")
-            }));
+            .map(({revision, updatedDate}) => {
+                const isCurrent = currentRevisionWithSource.value.revision === revision;
+                return {
+                    value: revisionIndex(revision.toString()),
+                    revision: revision,
+                    timestamp: formatTimestamp(updatedDate),
+                    isCurrent: isCurrent,
+                    text: formatRevisionText(revision, updatedDate)
+                };
+            });
     }
 
     const leftOptions = computed(() => {
@@ -358,6 +395,13 @@
 
     .display-select {
         width: 10%;
+    }
+
+    .revision-timestamp {
+        color: #888;
+        font-size: 0.85em;
+        text-align: right;
+        flex-shrink: 0;
     }
 
 </style>

@@ -148,24 +148,10 @@ public record NamespaceFile(
         );
     }
 
-    public static Path normalize(String pathStr, boolean withLeadingSlash) {
-        return normalize(Path.of(pathStr), withLeadingSlash);
-    }
+    public static Path normalize(Path path) {
 
-    public static Path normalize(Path path, boolean withLeadingSlash) {
-        if (path == null) {
-            return Path.of("/");
-        }
-
-        if (withLeadingSlash && !path.toString().startsWith("/")) {
-            return Path.of("/" + path);
-        }
-
-        if (!withLeadingSlash && path.toString().startsWith("/")) {
-            return Path.of(path.toString().substring(1));
-        }
-
-        return path;
+        String compatiblePath = WindowsUtils.windowsToUnixPath(path.toString());
+        return Path.of(compatiblePath);
     }
 
     /**
@@ -181,7 +167,7 @@ public record NamespaceFile(
             strPath = matcher.group(1);
         }
 
-        return normalize(Path.of(strPath), withLeadingSlash);
+        return normalize(Path.of(strPath));
     }
 
     /**

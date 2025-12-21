@@ -152,10 +152,7 @@ public record NamespaceFile(
         if(path == null){
             return Path.of("/");
         }
-        String compatiblePath = path.toString().replace("\\", "/");
-        if(!compatiblePath.startsWith("/")) {
-            compatiblePath = "/" + compatiblePath;
-        }
+        String compatiblePath = WindowsUtils.windowsToUnixPath(path.toString());
         return Path.of(compatiblePath);
     }
 

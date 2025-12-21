@@ -150,7 +150,10 @@ public record NamespaceFile(
 
     public static Path normalize(Path path) {
 
-        String compatiblePath = WindowsUtils.windowsToUnixPath(path.toString());
+        String compatiblePath = path.toString().replace("\\", "/");
+        if(!compatiblePath.startsWith("/")) {
+            compatiblePath = "/" + compatiblePath;
+        }
         return Path.of(compatiblePath);
     }
 

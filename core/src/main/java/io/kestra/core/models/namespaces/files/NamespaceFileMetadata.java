@@ -94,7 +94,7 @@ public class NamespaceFileMetadata implements DeletedInterface, TenantInterface,
         return NamespaceFileMetadata.builder()
             .tenantId(tenantId)
             .namespace(namespaceFile.namespace())
-            .path(namespaceFile.path().toString())
+            .path(namespaceFile.path(true).toString())
             .version(namespaceFile.version())
             .build();
     }

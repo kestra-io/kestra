@@ -59,5 +59,3 @@ core/src/main/resources/gradle.properties
 **/allure-results/*
 
 /jmh-benchmarks/src/main/resources/gradle.properties
-
-CLAUDE.md

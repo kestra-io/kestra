@@ -149,7 +149,9 @@ public record NamespaceFile(
     }
 
     public static Path normalize(Path path) {
-
+        if(path == null){
+            return Path.of("/");
+        }
         String compatiblePath = path.toString().replace("\\", "/");
         if(!compatiblePath.startsWith("/")) {
             compatiblePath = "/" + compatiblePath;
@@ -159,11 +161,9 @@ public record NamespaceFile(
 
     /**
      * Returns the path of file relative to the namespace.
-     *
-     * @param withLeadingSlash specify whether to remove leading slash from the returned path.
      * @return The path.
      */
-    public Path path(boolean withLeadingSlash) {
+    public Path filePath() {
         String strPath = path;
         Matcher matcher = capturePathWithoutVersion.matcher(strPath);
         if (matcher.matches()) {

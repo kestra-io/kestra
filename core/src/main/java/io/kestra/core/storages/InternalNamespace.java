@@ -209,7 +209,7 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFile> findAllFilesMatching(final Predicate<Path> predicate) throws IOException {
-        return all().stream().filter(it -> predicate.test(it.path(true))).toList();
+        return all().stream().filter(it -> predicate.test(it.filePath())).toList();
     }
 
     /**

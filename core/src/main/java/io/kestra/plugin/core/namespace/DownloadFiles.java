@@ -118,7 +118,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
                 try (InputStream is = runContext.storage().getFile(file.uri())) {
                     URI uri = runContext.storage().putFile(is, renderedDestination + file.path());
                     logger.debug(String.format("Downloaded %s", uri));
-                    return new AbstractMap.SimpleEntry<>(file.path(true).toString(), uri);
+                    return new AbstractMap.SimpleEntry<>(file.filePath().toString(), uri);
                 }
             }))
             .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));

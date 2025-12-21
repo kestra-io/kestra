@@ -202,4 +202,29 @@ public record NamespaceFile(
     public boolean isRootDirectory() {
         return equals(NamespaceFile.of(namespace));
     }
+
+    /**
+     * Converts a {@link Path} to a canonical **logical path** string.
+     * <p>
+     * Logical paths use forward slashes ('/') as separators regardless of the OS.
+     * This is useful for namespace storage, URI construction, or any cross-platform
+     * path handling where OS-dependent separators should be avoided.
+     *
+     * @param path the {@link Path} to convert
+     * @return a String representing the logical path with forward slashes
+     */
+    public static String toLogicalPath(Path path){ return toLogicalPath(path.toString());}
+
+    /**
+     * Converts a path string to a canonical **logical path**.
+     * <p>
+     * Replaces all backslashes ('\') with forward slashes ('/') to ensure
+     * cross-platform consistency.
+     *
+     * @param path the path string to convert
+     * @return a String representing the logical path with forward slashes
+     */
+    public static String toLogicalPath(String path) {
+        return path.replace("\\", "/");
+    }
 }

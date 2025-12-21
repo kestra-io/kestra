@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.net.URI;
 import java.nio.file.Path;
 
+import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class NamespaceFileTest {
@@ -140,7 +141,4 @@ class NamespaceFileTest {
         assertThat(toLogicalPath(unixPath2)).isEqualTo("/folder/file.txt");
     }
 
-    private static String toLogicalPath(Path path) {
-        return path.toString().replace("\\", "/");
-    }
 }

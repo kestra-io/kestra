@@ -125,7 +125,7 @@ public class SelectInput extends Input<String> implements RenderableInput {
 
         String type = Optional.ofNullable(result).map(Object::getClass).map(Class::getSimpleName).orElse("<null>");
         throw ManualConstraintViolation.toConstraintViolationException(
-            "Invalid expression result. Expected a list of strings, but received " + type,
+            "Invalid expression result. Expected a list of strings",
             this,
             SelectInput.class,
             getId(),

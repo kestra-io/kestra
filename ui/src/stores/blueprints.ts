@@ -7,6 +7,7 @@ import {apiUrl} from "override/utils/route";
 import {useMiscStore} from "override/stores/misc";
 
 import {trackBlueprintSelection} from "../utils/tabTracking";
+import {Input} from "./flow.ts";
 
 export type BlueprintType = "community" | "custom";
 type BlueprintKind = "flow" | "dashboard" | "app";
@@ -22,6 +23,22 @@ interface Options {
 interface Blueprint {
     id: string;
     [key: string]: any;
+}
+
+export interface BlueprintTemplate {
+    source: string;
+    templateArguments: Record<string, Input>;
+}
+
+export interface FlowBlueprint {
+    id: string,
+    title: string,
+    description: string,
+    includedTasks?: string[],
+    tags?: string[],
+    source: string,
+    publishedAt?: string,
+    template?: BlueprintTemplate
 }
 
 const API_URL = "https://api.kestra.io/v1";
@@ -95,6 +112,54 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         return response.data;
     };
 
+    const getFlowBlueprint = async (id: string): Promise<FlowBlueprint> => {
+        const url = `${apiUrl()}/blueprints/flow/${id}`;
+
+        const response = await axios.get(url);
+
+        if (response.data?.id) {
+            trackBlueprintSelection(response.data.id);
+        }
+
+        blueprint.value = response.data;
+        return response.data;
+    };
+
+    const createFlowBlueprint = async (toCreate: {source: string, title: string, description: string, tags: string[]}): Promise<FlowBlueprint> => {
+        const url = `${apiUrl()}/blueprints/flows`;
+        const body = {
+            ...toCreate
+        }
+        const response = await axios.post(url, body);
+
+        return response.data;
+    };
+
+    const updateFlowBlueprint = async (id: string, toUpdate: {source: string, title: string, description: string, tags: string[]}) :Promise<FlowBlueprint> => {
+        const url = `${apiUrl()}/blueprints/flows/${id}`;
+        const body = {
+            ...toUpdate
+        }
+        const response = await axios.put(url, body);
+
+        return response.data;
+    };
+
+    const deleteFlowBlueprint = async (idToDelete: string) => {
+        const url = `${apiUrl()}/blueprints/flows/${idToDelete}`;
+        await axios.delete(url);
+    };
+
+    const useFlowBlueprintTemplate = async (id: string, inputs: Record<string, object>): Promise<{generatedFlowSource: string}> => {
+        const url = `${apiUrl()}/blueprints/flows/${id}/use-template`;
+        const body = {
+            templateArgumentsInputs: inputs
+        }
+        const response = await axios.post(url, body);
+
+        return response.data;
+    }
+
     return {
         blueprint,
         blueprints,
@@ -106,5 +171,10 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         getBlueprintSource,
         getBlueprintGraph,
         getBlueprintTags,
+        useFlowBlueprintTemplate,
+        getFlowBlueprint,
+        createFlowBlueprint,
+        updateFlowBlueprint,
+        deleteFlowBlueprint,
     };
 });

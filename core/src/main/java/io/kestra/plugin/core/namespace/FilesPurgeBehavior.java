@@ -2,10 +2,8 @@ package io.kestra.plugin.core.namespace;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFile;
-import io.kestra.plugin.core.kv.Version;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

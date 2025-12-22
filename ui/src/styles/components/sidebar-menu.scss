@@ -7,7 +7,7 @@
     }
 
     .vsm--icon {
-        width: 20px !important;
+        width: 20px;
         margin-right: calc($spacer / 2);
         transition: left 0.2s ease;
         background-color: transparent !important;
@@ -35,6 +35,15 @@
 
             .vsm--title {
                 font-size: $font-size-xs;
+            }
+        }
+
+        .vsm--icon {
+            width: 1rem;
+
+            svg {
+                height: 1rem !important;
+                width: 1rem !important;
             }
         }
     }

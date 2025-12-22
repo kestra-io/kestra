@@ -171,11 +171,20 @@ allprojects {
 subprojects {subProj ->
 
     if (subProj.name != 'platform' && subProj.name != 'jmh-benchmarks') {
+
         apply plugin: "com.adarshr.test-logger"
+        apply plugin: 'jacoco'
 
         java {
             sourceCompatibility = targetJavaVersion
             targetCompatibility = targetJavaVersion
+        }
+
+        configurations {
+            agent {
+                canBeResolved = true
+                canBeConsumed = true
+            }
         }
 
         dependencies {
@@ -204,9 +213,16 @@ subprojects {subProj ->
 
             //assertj
             testImplementation 'org.assertj:assertj-core'
+
+            agent "org.aspectj:aspectjweaver:1.9.25.1"
+
+            testImplementation platform("io.qameta.allure:allure-bom")
+            testImplementation "io.qameta.allure:allure-junit5"
         }
 
         def commonTestConfig = { Test t ->
+            t.ignoreFailures = true
+
             // set Xmx for test workers
             t.maxHeapSize = '4g'
 
@@ -230,6 +246,53 @@ subprojects {subProj ->
 //                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
 //                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
 //            }
+            t.finalizedBy jacocoTestReport
+        }
+
+        tasks.register('integrationTest', Test) { Test t ->
+            description = 'Runs integration tests'
+            group = 'verification'
+
+            useJUnitPlatform {
+                includeTags 'integration'
+            }
+
+            testClassesDirs = sourceSets.test.output.classesDirs
+            classpath = sourceSets.test.runtimeClasspath
+
+            reports {
+                junitXml.required = true
+                junitXml.outputPerTestCase = true
+                junitXml.mergeReruns = true
+                junitXml.includeSystemErrLog = true
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
+            }
+
+            // Integration tests typically not parallel (but you can enable)
+            maxParallelForks = 1
+            commonTestConfig(t)
+        }
+
+        tasks.register('unitTest', Test) { Test t ->
+            description = 'Runs unit tests'
+            group = 'verification'
+
+            useJUnitPlatform {
+                excludeTags 'flaky', 'integration'
+            }
+
+            testClassesDirs = sourceSets.test.output.classesDirs
+            classpath = sourceSets.test.runtimeClasspath
+
+            reports {
+                junitXml.required = true
+                junitXml.outputPerTestCase = true
+                junitXml.mergeReruns = true
+                junitXml.includeSystemErrLog = true
+                junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
+            }
+
+            commonTestConfig(t)
         }
 
         tasks.register('flakyTest', Test) { Test t ->
@@ -239,7 +302,6 @@ subprojects {subProj ->
             useJUnitPlatform {
                 includeTags 'flaky'
             }
-            ignoreFailures = true
 
             reports {
                 junitXml.required = true
@@ -249,10 +311,13 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
             }
             commonTestConfig(t)
-
         }
 
-        test {
+        // test task (default)
+        tasks.named('test', Test) { Test t ->
+            group = 'verification'
+            description = 'Runs all non-flaky tests.'
+
             useJUnitPlatform {
                 excludeTags 'flaky'
             }
@@ -263,10 +328,12 @@ subprojects {subProj ->
                 junitXml.includeSystemErrLog = true
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/test")
             }
-            commonTestConfig(it)
+            commonTestConfig(t)
+            jvmArgs = ["-javaagent:${configurations.agent.singleFile}"]
+        }
 
-
-            finalizedBy(tasks.named('flakyTest'))
+        tasks.named('check') {
+            dependsOn(tasks.named('test'))// default behaviour
         }
 
         testlogger {
@@ -282,83 +349,24 @@ subprojects {subProj ->
     }
 }
 
-/**********************************************************************************************************************\
- * End-to-End Tests
- **********************************************************************************************************************/
-def e2eTestsCheck = tasks.register('e2eTestsCheck') {
-    group = 'verification'
-    description = "Runs the 'check' task for all e2e-tests modules"
-    doFirst {
-        project.ext.set("e2e-tests", true)
-    }
-}
-
-subprojects {
-    // Add e2e-tests modules check tasks to e2eTestsCheck
-    if (project.name.startsWith("e2e-tests")) {
-        test {
-            onlyIf {
-                project.hasProperty("e2e-tests")
-            }
-        }
-    }
-
-    afterEvaluate {
-        // Add e2e-tests modules check tasks to e2eTestsCheck
-        if (project.name.startsWith("e2e-tests")) {
-            e2eTestsCheck.configure {
-                finalizedBy(check)
-            }
-        }
-    }
-}
-
-/**********************************************************************************************************************\
- * Allure Reports
- **********************************************************************************************************************/
-subprojects {
-    if (it.name != 'platform' && it.name != 'jmh-benchmarks') {
-        dependencies {
-            testImplementation platform("io.qameta.allure:allure-bom")
-            testImplementation "io.qameta.allure:allure-junit5"
-        }
-
-        configurations {
-            agent {
-                canBeResolved = true
-                canBeConsumed = true
-            }
-        }
-
-        dependencies {
-            agent "org.aspectj:aspectjweaver:1.9.25.1"
-        }
-
-        test {
-            jvmArgs = ["-javaagent:${configurations.agent.singleFile}"]
-        }
-    }
-}
-
-/**********************************************************************************************************************\
- * Jacoco
- **********************************************************************************************************************/
-subprojects {
-    if (it.name != 'platform' && it.name != 'jmh-benchmarks') {
-        apply plugin: 'jacoco'
-
-        test {
-            finalizedBy jacocoTestReport
-        }
-
-        jacocoTestReport {
-            dependsOn test
-        }
-    }
-}
-
 tasks.named('check') {
     dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    finalizedBy jacocoTestReport
+}
+
+tasks.register('unitTest') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    finalizedBy jacocoTestReport
+}
+
+tasks.register('integrationTest') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    finalizedBy jacocoTestReport
+}
+
+tasks.register('flakyTest') {
+    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
+    finalizedBy jacocoTestReport
 }
 
 tasks.named('testCodeCoverageReport') {

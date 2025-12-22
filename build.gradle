@@ -246,7 +246,6 @@ subprojects {subProj ->
 //                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
 //                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
 //            }
-            t.finalizedBy jacocoTestReport
         }
 
         tasks.register('integrationTest', Test) { Test t ->
@@ -355,8 +354,9 @@ tasks.named('check') {
 }
 
 tasks.register('unitTest') {
-    dependsOn tasks.named('testCodeCoverageReport', JacocoReport)
-    finalizedBy jacocoTestReport
+    // No jacocoTestReport here, because it depends by default on :test,
+    // and that would make :test being run twice in our CI.
+    // In practice the report will be generated later in the CI by :check.
 }
 
 tasks.register('integrationTest') {

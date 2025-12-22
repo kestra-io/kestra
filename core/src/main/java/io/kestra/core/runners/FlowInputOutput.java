@@ -306,14 +306,20 @@ public class FlowInputOutput {
                 return resolvable.get();
             }
 
+            boolean isRenderEnabled = (dependencies.isEmpty() ||
+                dependencies.values().stream().allMatch(item -> (item.input() != null) &&
+                    (!item.input().getRequired() || item.value() != null)));
+
             // render input
-            input = RenderableInput.mayRenderInput(input, expression -> {
-                try {
-                    return runContext.renderTyped(expression);
-                } catch (IllegalVariableEvaluationException e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
-            });
+            if (isRenderEnabled) {
+                input = RenderableInput.mayRenderInput(input, expression -> {
+                    try {
+                        return runContext.renderTyped(expression);
+                    } catch (IllegalVariableEvaluationException e) {
+                        throw new RuntimeException(e.getMessage(), e);
+                    }
+                });
+            }
             resolvable.setInput(input);
 
             Object value = resolvable.get().value();

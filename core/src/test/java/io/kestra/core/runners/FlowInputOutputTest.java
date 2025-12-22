@@ -7,6 +7,7 @@ import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.IntInput;
 import io.kestra.core.models.flows.input.MultiselectInput;
+import io.kestra.core.models.flows.input.SelectInput;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
@@ -360,6 +361,56 @@ class FlowInputOutputTest {
 
         // Then
         Assertions.assertEquals(TEST_SECRET_VALUE, ((MultiselectInput)results.getFirst().input()).getValues().getFirst());
+    }
+
+    private InputAndValue setupRenderSelectInputTest(Map<String, Object> data) {
+        StringInput valueInput = StringInput.builder()
+            .id("value")
+            .type(Type.STRING)
+            .required(true)
+            .build();
+
+        SelectInput selectInput = SelectInput.builder()
+            .id("select")
+            .type(Type.SELECT)
+            .dependsOn(new DependsOn(
+                List.of("value"), null))
+            .expression("{{ [inputs.value] }}")
+            .required(true)
+            .build();
+
+        List<Input<?>> inputs = List.of(valueInput, selectInput);
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
+
+        return values.stream()
+            .filter(r -> r.input().getId().equals("select"))
+            .findFirst()
+            .orElseThrow();
+    }
+
+    @Test
+    void shouldNotRenderSelectInputWhenDependenciesHaveNoValues() {
+        // Given
+        Map<String, Object> data = Map.of();
+
+        // When
+        InputAndValue selectInputResult = setupRenderSelectInputTest(data);
+
+        // Then
+        assertThat(((SelectInput) selectInputResult.input()).getValues()).isNull();
+    }
+
+    @Test
+    void shouldRenderSelectInputWhenDependenciesHaveValues() {
+        // Given
+        Map<String, Object> data = Map.of("value", "value1");
+
+        // When
+        InputAndValue selectInputResult = setupRenderSelectInputTest(data);
+
+        // Then
+        assertThat(((SelectInput) selectInputResult.input()).getValues()).isEqualTo(
+            List.of("value1"));
     }
 
     @Test

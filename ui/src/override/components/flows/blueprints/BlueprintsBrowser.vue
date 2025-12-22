@@ -66,7 +66,7 @@
                                         <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
                                     </div>
 
-                                    <div class="action-button">
+                                    <div class="d-flex align-items-center gap-2">
                                         <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                             <el-button
                                                 type="primary"

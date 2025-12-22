@@ -1027,8 +1027,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "종료",
-    "kill only parents": "부모만 종료",
-    "kill parents and subflow": "부모 및 subflows 종료",
+    "kill only parents": "현재 것만 종료",
+    "kill parents and subflow": "현재 및 subflow 종료",
     "killed confirm": "실행 <code>{id}</code>을(를) 종료하시겠습니까?",
     "killed done": "종료 중입니다.",
     "kv": {

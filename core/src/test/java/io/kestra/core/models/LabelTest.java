@@ -2,6 +2,7 @@ package io.kestra.core.models;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.validations.ModelValidator;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class LabelTest {
     @Inject
     private ModelValidator modelValidator;

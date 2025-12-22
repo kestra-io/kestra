@@ -1027,8 +1027,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "Matar",
-    "kill only parents": "Matar apenas pais",
-    "kill parents and subflow": "Matar pais e subflows",
+    "kill only parents": "Matar apenas o atual",
+    "kill parents and subflow": "Matar o flow atual e subflows",
     "killed confirm": "Tem certeza de que deseja matar a execução <code>{id}</code>?",
     "killed done": "Execução está na fila para ser morta",
     "kv": {

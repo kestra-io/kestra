@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableSet;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.utils.Rethrow;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZonedDateTime;
@@ -18,7 +18,7 @@ import jakarta.inject.Inject;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest
 class PebbleVariableRendererTest {
     @Inject
     VariableRenderer variableRenderer;

@@ -1005,6 +1005,7 @@
     "input_custom_duration": "またはカスタム期間を入力してください:",
     "inputs": "Inputs",
     "instance": "インスタンス",
+    "instance_administration": "インスタンス管理",
     "invalid bulk delete": "実行を削除できませんでした",
     "invalid bulk force run": "実行を強制的に開始できませんでした",
     "invalid bulk kill": "実行をkillできませんでした",
@@ -1737,6 +1738,7 @@
       "names": "テナント"
     },
     "tenantId": "テナントID",
+    "tenant_administration": "テナント管理",
     "test-badge-text": "テスト",
     "test-badge-tooltip": "この実行はテストによって作成されました",
     "theme": "テーマ",

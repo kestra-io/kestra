@@ -1005,6 +1005,7 @@
     "input_custom_duration": "или введите пользовательскую продолжительность:",
     "inputs": "Входные данные",
     "instance": "Экземпляр",
+    "instance_administration": "Администрирование экземпляра",
     "invalid bulk delete": "Не удалось удалить выполнения",
     "invalid bulk force run": "Не удалось принудительно запустить executions",
     "invalid bulk kill": "Не удалось убить выполнения",
@@ -1737,6 +1738,7 @@
       "names": "Арендаторы"
     },
     "tenantId": "ID арендатора",
+    "tenant_administration": "Администрирование Манданта",
     "test-badge-text": "Тест",
     "test-badge-tooltip": "Это выполнение было создано тестом",
     "theme": "Тема",

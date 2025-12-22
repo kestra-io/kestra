@@ -92,7 +92,14 @@ public class FlowService {
         return flowRepository
             .orElseThrow(() -> new IllegalStateException("Cannot perform operation on flow. Cause: No FlowRepository"));
     }
-
+    private static String formatValidationError(String message) {
+        if (message.startsWith("Illegal flow source:")) {
+            // Already formatted by YamlParser, return as-is
+            return message;
+        }
+        // For other validation errors, provide context
+        return "Validation error: " + message;
+    }
     /**
      * Evaluates all checks defined in the given flow using the provided inputs.
      * <p>
@@ -174,10 +181,12 @@ public class FlowService {
                     modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
 
                 } catch (ConstraintViolationException e) {
-                    validateConstraintViolationBuilder.constraints(e.getMessage());
+                    String friendlyMessage = formatValidationError(e.getMessage());
+                    validateConstraintViolationBuilder.constraints(friendlyMessage);
                 } catch (FlowProcessingException e) {
-                    if (e.getCause() instanceof ConstraintViolationException) {
-                        validateConstraintViolationBuilder.constraints(e.getMessage());
+                    if (e.getCause() instanceof ConstraintViolationException cve) {
+                        String friendlyMessage = formatValidationError(cve.getMessage());
+                        validateConstraintViolationBuilder.constraints(friendlyMessage);
                     } else {
                         Throwable cause = e.getCause() != null ? e.getCause() : e;
                         validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + cause.getMessage());

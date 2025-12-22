@@ -958,6 +958,7 @@
     "flow": "Flow",
     "flow already exists": "Flow уже существует",
     "flow creation": "Создание flow",
+    "flow creation denied in namespace": "У вас нет разрешения на создание flows в namespace `{namespace}`.",
     "flow delete": "Вы уверены, что хотите удалить <code>{flowCount}</code> flow(ы)?",
     "flow deleted, you can restore it": "Flow был удален, и это представление только для чтения. Вы все еще можете его восстановить.",
     "flow disable": "Вы уверены, что хотите отключить <code>{flowCount}</code> flow(ы)?",
@@ -1026,8 +1027,8 @@
     "kestra": "Kestra",
     "key": "Ключ",
     "kill": "Убить",
-    "kill only parents": "Убить только родителей",
-    "kill parents and subflow": "Убить родителей и подпроцессы",
+    "kill only parents": "Убить только текущий",
+    "kill parents and subflow": "Прервать текущий и subflows",
     "killed confirm": "Вы уверены, что хотите убить выполнение <code>{id}</code>?",
     "killed done": "Выполнение поставлено в очередь на убийство",
     "kv": {

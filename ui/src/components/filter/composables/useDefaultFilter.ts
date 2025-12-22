@@ -4,7 +4,7 @@ import {useMiscStore} from "override/stores/misc";
 import {defaultNamespace} from "../../../composables/useNamespaces";
 
 interface DefaultFilterOptions {
-    namespace?: string;
+    namespace?: string | null;
     includeTimeRange?: boolean;
     includeScope?: boolean;
     legacyQuery?: boolean;
@@ -25,22 +25,19 @@ export function applyDefaultFilters(
         includeScope, 
         legacyQuery,
     }: DefaultFilterOptions = {}): { query: LocationQuery, change: boolean } {
-
-    if(currentQuery && Object.keys(currentQuery).length > 0) {
-        return {
-            query: currentQuery,
-            change: false,
-        }
-    }
         
     const query = {...currentQuery};
+    let change = false;
    
-    if (namespace === undefined && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
+
+    if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
         query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
+        change = true;
     }
 
     if (includeScope && !hasFilterKey(query, SCOPE_FILTER_PREFIX)) {
         query[legacyQuery ? "scope" : `${SCOPE_FILTER_PREFIX}[EQUALS]`] = "USER";
+        change = true;
     }
 
     const TIME_FILTER_KEYS = /startDate|endDate|timeRange/;
@@ -48,9 +45,10 @@ export function applyDefaultFilters(
     if (includeTimeRange && !Object.keys(query).some(key => TIME_FILTER_KEYS.test(key))) {
         const defaultDuration = useMiscStore().configs?.chartDefaultDuration ?? "P30D";
         query[legacyQuery ? "timeRange" : `${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = defaultDuration;
+        change = true;
     }
 
-    return {query, change: true};
+    return {query, change};
 }
 
 export function useDefaultFilter(

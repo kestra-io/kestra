@@ -43,7 +43,7 @@ jobs:
 
         # Upload dependency check report
       - name: Upload dependency check report
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: ${{ always() }}
         with:
           name: dependency-check-report

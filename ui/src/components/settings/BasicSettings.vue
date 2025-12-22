@@ -648,6 +648,7 @@
             },
             async saveAllSettings() {
                 let refreshWhenSaved = false
+                const previousDefaultNamespace = localStorage.getItem("defaultNamespace")
                 for (const key in this.pendingSettings){
                     const storedKey = this.settingsKeyMapping[key]
                     switch(key) {
@@ -706,10 +707,35 @@
                 this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
                 this.hasUnsavedChanges = false;
                 this.checkDefaultStates();
+
+                // Clear namespace filters from sessionStorage if default namespace changed/cleared
+                if (previousDefaultNamespace !== this.pendingSettings.defaultNamespace) {
+                    this.clearNamespaceFilters();
+                }
+
                 if(refreshWhenSaved){
                     document.location.assign(document.location.href)
                 }
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
+            },
+            clearNamespaceFilters() {
+                Object.keys(sessionStorage)
+                    .filter(key => key.includes("_restore_url"))
+                    .forEach(key => {
+                        const value = sessionStorage.getItem(key);
+                        if (!value) return;
+
+                        const filters = JSON.parse(value);
+                        const updated = Object.fromEntries(
+                            Object.entries(filters).filter(([k]) => k !== "namespace" && !k.startsWith("filters[namespace]"))
+                        );
+
+                        if (Object.keys(updated).length) {
+                            sessionStorage.setItem(key, JSON.stringify(updated));
+                        } else {
+                            sessionStorage.removeItem(key);
+                        }
+                    });
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {

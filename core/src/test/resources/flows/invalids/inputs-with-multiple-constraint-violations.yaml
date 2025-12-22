@@ -1,0 +1,18 @@
+id: inputs-with-multiple-constraint-violations
+namespace: io.kestra.tests
+inputs:
+  - id: multi
+    type: MULTISELECT
+    values:
+      - A
+      - B
+      - C
+    options:
+      - X
+      - Y
+      - Z
+
+tasks:
+  - id: validMultiSelect
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{inputs.multi}}"

@@ -6,7 +6,7 @@ import com.google.common.collect.ImmutableSet;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
 import io.micronaut.context.annotation.Property;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ import java.util.Collections;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest
 @Property(name = "kestra.variables.recursive-rendering", value = "true")
 class RecursivePebbleVariableRendererTest {
     @Inject

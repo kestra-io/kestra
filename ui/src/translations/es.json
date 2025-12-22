@@ -958,6 +958,7 @@
     "flow": "Flujo",
     "flow already exists": "Flow ya existe",
     "flow creation": "Creación de flujo",
+    "flow creation denied in namespace": "No tienes permiso para crear flows en el namespace `{namespace}`.",
     "flow delete": "¿Estás seguro de que quieres eliminar <code>{flowCount}</code> flow(s)?",
     "flow deleted, you can restore it": "El flow ha sido eliminado y esta es una vista de solo lectura. Aún puedes restaurarlo.",
     "flow disable": "¿Estás seguro de que quieres deshabilitar <code>{flowCount}</code> flow(s)?",
@@ -1026,8 +1027,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "Terminar",
-    "kill only parents": "Terminar solo padres",
-    "kill parents and subflow": "Terminar padres y subflows",
+    "kill only parents": "Matar solo el actual",
+    "kill parents and subflow": "Terminar el flujo actual y los subflows",
     "killed confirm": "¿Estás seguro de terminar la ejecución <code>{id}</code>?",
     "killed done": "La ejecución está en cola para ser terminada",
     "kv": {

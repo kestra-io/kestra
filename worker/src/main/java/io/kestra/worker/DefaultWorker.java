@@ -402,7 +402,7 @@ public class DefaultWorker implements Worker {
                     WorkerTask currentWorkerTask = workingDirectory.workerTask(
                         workerTask.getTaskRun(),
                         currentTask,
-                        runContextInitializer.forPlugin(runContext, currentTask)
+                        runContext.cloneForPlugin(currentTask)
                     );
 
                     // all tasks will be handled immediately by the worker

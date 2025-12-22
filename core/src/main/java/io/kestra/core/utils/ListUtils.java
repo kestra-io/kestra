@@ -70,4 +70,12 @@ public class ListUtils {
             .map(Object::toString)
             .toList();
     }
+
+    public static <T> List<List<T>> partition(List<T> list, int size) {
+        List<List<T>> parts = new ArrayList<>();
+        for (int i = 0; i < list.size(); i += size) {
+            parts.add(list.subList(i, Math.min(i + size, list.size())));
+        }
+        return parts;
+    }
 }

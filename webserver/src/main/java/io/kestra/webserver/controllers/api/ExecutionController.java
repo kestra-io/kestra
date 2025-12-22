@@ -554,7 +554,6 @@ public class ExecutionController {
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute a disabled flow");
         }
-
         if (flow instanceof FlowWithException fwe) {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
@@ -588,10 +587,16 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
         }
 
-        var result = execution.get();
+        List<Label> labels = new ArrayList<>();
+        labels.add(new Label(Label.FROM, "trigger"));
         if (flow.getLabels() != null) {
-            result = result.withLabels(LabelService.labelsExcludingSystem(flow));
+            labels.addAll(LabelService.labelsExcludingSystem(flow));
         }
+        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
+            labels.add(new Label(CORRELATION_ID, execution.get().getId()));
+        }
+
+        var result = execution.get().withLabels(labels);
 
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
         var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
@@ -623,7 +628,7 @@ public class ExecutionController {
             }
 
             executionQueue.emit(result);
-            eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
+            eventPublisher.publishEvent(CrudEvent.create(result));
 
             if (webhook.getWait()) {
                 var subscriberId = UUID.randomUUID().toString();
@@ -851,15 +856,22 @@ public class ExecutionController {
     }
 
     protected List<Label> parseLabels(List<String> labels) {
-        List<Label> parsedLabels = labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
+        List<Label> parsedLabels = labels == null ? new ArrayList<>() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
-            .toList();
+            .collect(Collectors.toList());
 
-        // check for system labels: none can be passed at execution creation time except system.correlationId
-        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        // check for system labels: none can be passed at execution creation time except system.correlationId and system.from
+        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && !label.key().equals(Label.FROM) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
+
+        // from can be passed by the UI so we only add it if it didn't exist anymore
+        // if we want to be more restrictive, we may want to restrict it to only have the `ui` value
+        if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {
+            parsedLabels.add(new Label(Label.FROM, "api"));
+        }
+
         return parsedLabels;
     }
 
@@ -2658,7 +2670,12 @@ public class ExecutionController {
         ) {
         }
 
-        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<Check> checks, List<InputAndValue> inputs) {
+        public static ApiValidateExecutionInputsResponse of(
+            String id,
+            String namespace,
+            List<Check> checks,
+            List<InputAndValue> inputs
+        ) {
             return new ApiValidateExecutionInputsResponse(
                 id,
                 namespace,
@@ -2667,14 +2684,21 @@ public class ExecutionController {
                     it.value(),
                     it.enabled(),
                     it.isDefault(),
-                    Optional.ofNullable(it.exception()).map(exception ->
-                        exception.getConstraintViolations()
-                            .stream()
-                            .map(cv -> new ApiInputError(cv.getMessage()))
+                    // Map the Set<InputOutputValidationException> to ApiInputError
+                    Optional.ofNullable(it.exceptions())
+                        .map(exSet -> exSet.stream()
+                            .map(e -> new ApiInputError(e.getMessage()))
                             .toList()
-                    ).orElse(List.of())
+                        )
+                        .orElse(List.of())
                 )).toList(),
-                checks.stream().map(check -> new ApiCheckFailure(check.getMessage(), check.getStyle(), check.getBehavior())).toList()
+                checks.stream()
+                    .map(check -> new ApiCheckFailure(
+                        check.getMessage(),
+                        check.getStyle(),
+                        check.getBehavior()
+                    ))
+                    .toList()
             );
         }
     }

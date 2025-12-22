@@ -3,9 +3,7 @@ package io.kestra.core.models.executions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -95,8 +93,16 @@ public class TaskRun implements TenantInterface {
             this.forceExecution
         );
     }
+    public TaskRun withStateAndAttempt(State.Type state) {
+        List<TaskRunAttempt> newAttempts = new ArrayList<>(this.attempts != null ? this.attempts : List.of());
 
-    public TaskRun replaceState(State newState) {
+        if (newAttempts.isEmpty()) {
+            newAttempts.add(TaskRunAttempt.builder().state(new State(state)).build());
+        } else {
+            TaskRunAttempt updatedLast = newAttempts.getLast().withState(state);
+            newAttempts.set(newAttempts.size() - 1, updatedLast);
+        }
+
         return new TaskRun(
             this.tenantId,
             this.id,
@@ -106,9 +112,9 @@ public class TaskRun implements TenantInterface {
             this.taskId,
             this.parentTaskRunId,
             this.value,
-            this.attempts,
+            newAttempts,
             this.outputs,
-            newState,
+            this.state.withState(state),
             this.iteration,
             this.dynamic,
             this.forceExecution

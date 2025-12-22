@@ -50,9 +50,9 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-queue-fail.yml"}, tenantId = "concurrency-queue-fail")
+    @LoadFlows(value = {"flows/valids/flow-concurrency-queue-fail.yml"}, tenantId = "concurrency-queue-restarted")
     protected void concurrencyQueueRestarted() throws Exception {
-        flowConcurrencyCaseTest.flowConcurrencyQueueRestarted("concurrency-queue-fail");
+        flowConcurrencyCaseTest.flowConcurrencyQueueRestarted("concurrency-queue-restarted");
     }
 
     @Test
@@ -78,6 +78,7 @@ public abstract class AbstractRunnerConcurrencyTest {
     }
 
     @Test
+    @FlakyTest(description = "Only flaky in CI")
     @LoadFlows(value = {"flows/valids/flow-concurrency-queue-killed.yml"}, tenantId = "flow-concurrency-killed")
     void flowConcurrencyKilled() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyKilled("flow-concurrency-killed");

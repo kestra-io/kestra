@@ -1,6 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;

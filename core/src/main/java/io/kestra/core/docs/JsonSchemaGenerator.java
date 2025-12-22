@@ -42,13 +42,12 @@ import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.*;
 import java.time.*;
@@ -299,7 +298,9 @@ public class JsonSchemaGenerator {
         }
 
         // default value
-        builder.forFields().withDefaultResolver(this::defaults);
+        builder.forFields()
+            .withIgnoreCheck(fieldScope -> fieldScope.getAnnotation(Hidden.class) != null)
+            .withDefaultResolver(this::defaults);
 
         // def name
         builder.forTypesInGeneral()
@@ -809,9 +810,9 @@ public class JsonSchemaGenerator {
         // we don't return base properties unless specified with @PluginProperty and hidden is false
         builder
             .forFields()
-            .withIgnoreCheck(fieldScope -> base != null &&
+            .withIgnoreCheck(fieldScope -> (base != null &&
                 (fieldScope.getAnnotation(PluginProperty.class) == null || fieldScope.getAnnotation(PluginProperty.class).hidden()) &&
-                fieldScope.getDeclaringType().getTypeName().equals(base.getName())
+                fieldScope.getDeclaringType().getTypeName().equals(base.getName())) || fieldScope.getAnnotation(Hidden.class) != null
             );
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();

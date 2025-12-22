@@ -128,11 +128,9 @@ $placeholder-font-size: 12px;
         font-size: $input-font-size;
         background-color: transparent;
         width: 100%;
-        height: 100%;
-        padding-inline: 0.5em;
-        padding-block: 0;
         border: none;
-        line-height: $form-height;
+        display: flex;
+        align-items: center;
 
         &:focus {
             outline: none;
@@ -141,6 +139,7 @@ $placeholder-font-size: 12px;
         &::placeholder {
             color: $placeholder-color;
             font-size: $placeholder-font-size;
+            line-height: 1;
         }
 
         &:not(:placeholder-shown)~.reset {

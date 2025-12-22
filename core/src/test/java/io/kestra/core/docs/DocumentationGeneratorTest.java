@@ -10,7 +10,7 @@ import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.state.Set;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -26,7 +26,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 @Execution(ExecutionMode.SAME_THREAD)
 class DocumentationGeneratorTest {
     @Inject

@@ -37,25 +37,31 @@
     const setupFlow = async () => {
         const blueprintId = route.query.blueprintId as string;
         const blueprintSource = route.query.blueprintSource as BlueprintType;
+        const blueprintSourceYaml = route.query.blueprintSourceYaml as string;
         const implicitDefaultNamespace = authStore.user.getNamespacesForAction(
             permission.FLOW,
             action.CREATE,
         )[0];
         let flowYaml = "";
         const id = getRandomID();
-        const selectedNamespace = (route.query.namespace as string) 
-            ?? defaultNamespace() 
-            ?? implicitDefaultNamespace 
+        const selectedNamespace = (route.query.namespace as string)
+            ?? defaultNamespace()
+            ?? implicitDefaultNamespace
             ?? "company.team";
 
         if (route.query.copy && flowStore.flow) {
             flowYaml = flowStore.flow.source;
-        } else if (blueprintId && blueprintSource) {
+        } else if (blueprintId && blueprintSourceYaml) {
+            flowYaml = blueprintSourceYaml;
+        } else if(blueprintId && blueprintSource === "community"){
             flowYaml = await blueprintsStore.getBlueprintSource({
                 type: blueprintSource,
                 kind: "flow",
                 id: blueprintId
             });
+        } else if (blueprintId) {
+            const flowBlueprint = await blueprintsStore.getFlowBlueprint(blueprintId);
+            flowYaml = flowBlueprint.source;
         } else {
             flowYaml = `
 id: ${id}

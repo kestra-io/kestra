@@ -6,8 +6,8 @@ import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.serializers.JacksonMapper;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.pebbletemplates.pebble.error.PebbleException;
 import jakarta.inject.Inject;
 import org.apache.hc.client5.http.utils.Base64;
@@ -25,7 +25,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 
-@KestraTest
+@MicronautTest
 @WireMockTest(httpPort = 28182)
 @Execution(ExecutionMode.SAME_THREAD)
 class HttpFunctionTest {

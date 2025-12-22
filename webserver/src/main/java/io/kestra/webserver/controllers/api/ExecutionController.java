@@ -2670,7 +2670,12 @@ public class ExecutionController {
         ) {
         }
 
-        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<Check> checks, List<InputAndValue> inputs) {
+        public static ApiValidateExecutionInputsResponse of(
+            String id,
+            String namespace,
+            List<Check> checks,
+            List<InputAndValue> inputs
+        ) {
             return new ApiValidateExecutionInputsResponse(
                 id,
                 namespace,
@@ -2679,14 +2684,21 @@ public class ExecutionController {
                     it.value(),
                     it.enabled(),
                     it.isDefault(),
-                    Optional.ofNullable(it.exception()).map(exception ->
-                        exception.getConstraintViolations()
-                            .stream()
-                            .map(cv -> new ApiInputError(cv.getMessage()))
+                    // Map the Set<InputOutputValidationException> to ApiInputError
+                    Optional.ofNullable(it.exceptions())
+                        .map(exSet -> exSet.stream()
+                            .map(e -> new ApiInputError(e.getMessage()))
                             .toList()
-                    ).orElse(List.of())
+                        )
+                        .orElse(List.of())
                 )).toList(),
-                checks.stream().map(check -> new ApiCheckFailure(check.getMessage(), check.getStyle(), check.getBehavior())).toList()
+                checks.stream()
+                    .map(check -> new ApiCheckFailure(
+                        check.getMessage(),
+                        check.getStyle(),
+                        check.getBehavior()
+                    ))
+                    .toList()
             );
         }
     }

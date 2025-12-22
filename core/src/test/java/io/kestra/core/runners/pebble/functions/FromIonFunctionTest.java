@@ -2,11 +2,11 @@ package io.kestra.core.runners.pebble.functions;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +21,7 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest
 class FromIonFunctionTest {
     @Inject
     VariableRenderer variableRenderer;

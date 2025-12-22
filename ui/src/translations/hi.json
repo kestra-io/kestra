@@ -1027,8 +1027,8 @@
     "kestra": "केस्ट्रा",
     "key": "Key",
     "kill": "समाप्त करें",
-    "kill only parents": "केवल parents समाप्त करें",
-    "kill parents and subflow": "parents और subflows समाप्त करें",
+    "kill only parents": "केवल वर्तमान को समाप्त करें",
+    "kill parents and subflow": "वर्तमान और subflows को समाप्त करें",
     "killed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को समाप्त करना चाहते हैं?",
     "killed done": "निष्पादन समाप्त करने के लिए कतारबद्ध है",
     "kv": {

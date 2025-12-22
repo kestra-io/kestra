@@ -35,6 +35,10 @@ public final class YamlParser {
         return read(input, cls, type(cls));
     }
 
+    public static <T> T parse(String input, Class<T> cls, Boolean strict) {
+        return strict ? read(input, cls, type(cls)) : readNonStrict(input, cls, type(cls));
+    }
+
     public static  <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
         ObjectMapper currentMapper = strict ? STRICT_MAPPER : NON_STRICT_MAPPER;
 
@@ -77,6 +81,13 @@ public final class YamlParser {
     private static <T> T read(String input, Class<T> objectClass, String resource) {
         try {
             return STRICT_MAPPER.readValue(input, objectClass);
+        } catch (JsonProcessingException e) {
+            throw toConstraintViolationException(input, resource, e);
+        }
+    }
+    private static <T> T readNonStrict(String input, Class<T> objectClass, String resource) {
+        try {
+            return NON_STRICT_MAPPER.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
             throw toConstraintViolationException(input, resource, e);
         }

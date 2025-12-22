@@ -90,16 +90,16 @@
 
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
 
-    import Editor from "../../inputs/Editor.vue";
-    import Markdown from "../../layout/Markdown.vue";
-    import TopNavBar from "../../layout/TopNavBar.vue";
-    import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
-    import CopyToClipboard from "../../layout/CopyToClipboard.vue";
+    import Editor from "../../../../components/inputs/Editor.vue";
+    import Markdown from "../../../../components/layout/Markdown.vue";
+    import TopNavBar from "../../../../components/layout/TopNavBar.vue";
+    import LowCodeEditor from "../../../../components/inputs/LowCodeEditor.vue";
+    import CopyToClipboard from "../../../../components/layout/CopyToClipboard.vue";
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
-    import {useFlowStore} from "../../../stores/flow";
-    import {usePluginsStore} from "../../../stores/plugins";
-    import {useBlueprintsStore} from "../../../stores/blueprints";
+    import {useFlowStore} from "../../../../stores/flow";
+    import {usePluginsStore} from "../../../../stores/plugins";
+    import {useBlueprintsStore} from "../../../../stores/blueprints";
 
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {parse as parseFlow} from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -170,8 +170,8 @@
         } else if (props.kind === "dashboard") {
             additionalQuery = {
                 name: "home",
-                params: route.params?.tenant === undefined 
-                    ? undefined 
+                params: route.params?.tenant === undefined
+                    ? undefined
                     : JSON.stringify({tenant: route.params.tenant}),
             };
         }

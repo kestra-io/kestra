@@ -1,18 +1,15 @@
 package io.kestra.core.topologies;
 
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.plugin.core.execution.AssertTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
-import jakarta.validation.constraints.AssertTrue;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -20,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 public class FlowTopologyTest {
     @Inject
     private FlowService flowService;

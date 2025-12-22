@@ -39,7 +39,7 @@ interface Task {
     type: string
 }
 
-interface Input {
+export interface Input {
     id: string;
     type: InputType;
     required?: boolean;

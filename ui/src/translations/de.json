@@ -1027,8 +1027,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "Beenden",
-    "kill only parents": "Nur Eltern beenden",
-    "kill parents and subflow": "Eltern und Subflows beenden",
+    "kill only parents": "Nur aktuellen beenden",
+    "kill parents and subflow": "Aktuelle und Subflows beenden",
     "killed confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> beenden möchten?",
     "killed done": "Ausführung ist zum Beenden eingereiht",
     "kv": {

@@ -1,14 +1,11 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.PathMatcherPredicate;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.storage.local.LocalStorage;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +14,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class InternalNamespaceTest {
 
     private static final Logger logger = LoggerFactory.getLogger(InternalNamespaceTest.class);
@@ -34,9 +30,6 @@ class InternalNamespaceTest {
 
     @Inject
     private NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository;
-    
-    @Inject
-    private NamespaceFactory namespaceFactory;
 
     @Test
     void shouldGetAllNamespaceFiles() throws IOException, URISyntaxException {

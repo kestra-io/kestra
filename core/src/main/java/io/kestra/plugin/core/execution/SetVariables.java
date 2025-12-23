@@ -13,9 +13,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 @SuperBuilder
 @ToString
@@ -61,14 +61,11 @@ public class SetVariables extends Task implements ExecutionUpdatableTask {
 
     @Override
     public Execution update(Execution execution, RunContext runContext) throws Exception {
-        Map<String, Object> renderedVars =
-            runContext.render(this.variables).asMap(String.class, Object.class);
-
-        boolean renderedOverwrite =
-            runContext.render(overwrite).as(Boolean.class).orElseThrow();
+        Map<String, Object> renderedVars = runContext.render(this.variables).asMap(String.class, Object.class);
+        boolean renderedOverwrite = runContext.render(overwrite).as(Boolean.class).orElseThrow();
 
         Map<String, Object> currentVariables =
-            execution.getVariables() == null ? new HashMap<>() : execution.getVariables();
+            execution.getVariables() == null ? Collections.emptyMap() : execution.getVariables();
 
         if (!renderedOverwrite) {
             // check that none of the new variables already exist
@@ -84,8 +81,6 @@ public class SetVariables extends Task implements ExecutionUpdatableTask {
             }
         }
 
-        return execution.withVariables(
-            MapUtils.deepMerge(currentVariables, renderedVars)
-        );
+        return execution.withVariables(MapUtils.deepMerge(currentVariables, renderedVars));
     }
 }

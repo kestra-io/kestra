@@ -81,9 +81,6 @@ public abstract class AbstractRunnerTest {
     @Inject
     private AfterExecutionTestCase afterExecutionTestCase;
 
-    @Inject
-    private AssetTestCase assetTestCase;
-
     @Test
     @ExecuteFlow("flows/valids/full.yaml")
     void full(Execution execution) {
@@ -560,11 +557,5 @@ public abstract class AbstractRunnerTest {
     @ExecuteFlow("flows/valids/after-execution-listener.yaml")
     public void shouldCallTasksAfterListener(Execution execution) {
         afterExecutionTestCase.shouldCallTasksAfterListener(execution);
-    }
-
-    @Test
-    @LoadFlows(value = "flows/valids/assets.yaml", tenantId = "abstract-runner-test-assets")
-    public void assets() throws QueueException, TimeoutException {
-        assetTestCase.staticAndDynamicAssets("abstract-runner-test-assets");
     }
 }

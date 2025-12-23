@@ -2,7 +2,6 @@ package io.kestra.core.docs;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.HierarchicType;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,7 +23,6 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.assets.Asset;
-import io.kestra.core.models.assets.CustomAsset;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -280,7 +278,7 @@ public class JsonSchemaGenerator {
             .with(Option.PLAIN_DEFINITION_KEYS)
             .with(Option.ALLOF_CLEANUP_AT_THE_END);
 
-        // HACK: Registered a custom JsonUnwrappedDefinitionProvider prior to the JacksonModule 
+        // HACK: Registered a custom JsonUnwrappedDefinitionProvider prior to the JacksonModule
         // to be able to return an CustomDefinition with an empty node when the ResolvedType can't be found.
         builder.forTypesInGeneral().withCustomDefinitionProvider(new JsonUnwrappedDefinitionProvider() {
             @Override
@@ -596,27 +594,8 @@ public class JsonSchemaGenerator {
             if (pluginAnnotation != null) {
                 ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
                 if (properties != null) {
-                    String typeConst = pluginType.getName();
-                    // This is needed so that assets can have arbitrary types while still being able to be identified as assets.
-                    if (pluginType == CustomAsset.class) {
-                        properties.set("type", context.getGeneratorConfig().createObjectNode()
-                            .put("type", "string")
-                        );
-                        return;
-                    }
-
-                    if (Asset.class.isAssignableFrom(pluginType)) {
-                        // For Asset types, we want to be able to use a simple-string type. Convention is that first alias is that string type.
-                        typeConst = pluginAnnotation.aliases().length > 0 ? pluginAnnotation.aliases()[0] : pluginType.getName();
-                        Arrays.stream(pluginType.getDeclaredMethods())
-                            .filter(m -> m.isAnnotationPresent(JsonProperty.class))
-                            .forEach(m -> properties.set(m.getAnnotation(JsonProperty.class).value(), context.getGeneratorConfig().createObjectNode()
-                                .put("type", "string")
-                            ));
-                    }
-
                     properties.set("type", context.getGeneratorConfig().createObjectNode()
-                        .put("const", typeConst)
+                        .put("const", pluginType.getName())
                     );
                 }
             }

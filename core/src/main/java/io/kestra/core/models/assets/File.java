@@ -11,13 +11,13 @@ import java.util.Map;
 import java.util.Optional;
 
 @NoArgsConstructor
-@Plugin(aliases = FileAsset.ASSET_TYPE)
-public class FileAsset extends Asset {
-    public static final String ASSET_TYPE = "FILE";
+@Plugin
+public class File extends Asset {
+    public static final String ASSET_TYPE = File.class.getName();
 
     @Builder
     @JsonCreator
-    public FileAsset(
+    public File(
         String tenantId,
         String namespace,
         String id,

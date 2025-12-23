@@ -11,13 +11,13 @@ import java.util.Map;
 import java.util.Optional;
 
 @NoArgsConstructor
-@Plugin(aliases = VmAsset.ASSET_TYPE)
-public class VmAsset extends Asset {
-    public static final String ASSET_TYPE = "VM";
+@Plugin
+public class VM extends Asset {
+    public static final String ASSET_TYPE = VM.class.getName();
 
     @Builder
     @JsonCreator
-    public VmAsset(
+    public VM(
         String tenantId,
         String namespace,
         String id,

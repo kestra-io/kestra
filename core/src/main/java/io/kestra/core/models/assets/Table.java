@@ -11,21 +11,22 @@ import java.util.Map;
 import java.util.Optional;
 
 @NoArgsConstructor
-@Plugin(aliases = DatasetAsset.ASSET_TYPE)
-public class DatasetAsset extends Asset {
-    public static final String ASSET_TYPE = "DATASET";
+@Plugin
+public class Table extends Asset {
+    public static final String ASSET_TYPE = Table.class.getName();
 
     @Builder
     @JsonCreator
-    public DatasetAsset(
+    public Table(
         String tenantId,
         String namespace,
         String id,
         String displayName,
         String description,
         String system,
-        String location,
-        String format,
+        String database,
+        String schema,
+        String name,
         Map<String, Object> metadata,
         Instant created,
         Instant updated,
@@ -34,8 +35,9 @@ public class DatasetAsset extends Asset {
         super(tenantId, namespace, id, ASSET_TYPE, displayName, description, metadata, created, updated, deleted);
 
         this.setSystem(system);
-        this.setLocation(location);
-        this.setFormat(format);
+        this.setDatabase(database);
+        this.setSchema(schema);
+        this.setName(name);
     }
 
     @JsonProperty("system")
@@ -43,14 +45,19 @@ public class DatasetAsset extends Asset {
         return Optional.ofNullable(metadata.get("system")).map(Object::toString).orElse(null);
     }
 
-    @JsonProperty("location")
-    public String getLocation() {
-        return Optional.ofNullable(metadata.get("location")).map(Object::toString).orElse(null);
+    @JsonProperty("database")
+    public String getDatabase() {
+        return Optional.ofNullable(metadata.get("database")).map(Object::toString).orElse(null);
     }
 
-    @JsonProperty("format")
-    public String getFormat() {
-        return Optional.ofNullable(metadata.get("format")).map(Object::toString).orElse(null);
+    @JsonProperty("schema")
+    public String getSchema() {
+        return Optional.ofNullable(metadata.get("schema")).map(Object::toString).orElse(null);
+    }
+
+    @JsonProperty("name")
+    public String getName() {
+        return Optional.ofNullable(metadata.get("name")).map(Object::toString).orElse(null);
     }
 
     public void setSystem(String system) {
@@ -59,15 +66,21 @@ public class DatasetAsset extends Asset {
         }
     }
 
-    public void setLocation(String location) {
-        if (location != null) {
-            metadata.put("location", location);
+    public void setDatabase(String database) {
+        if (database != null) {
+            metadata.put("database", database);
         }
     }
 
-    public void setFormat(String format) {
-        if (format != null) {
-            metadata.put("format", format);
+    public void setSchema(String schema) {
+        if (schema != null) {
+            metadata.put("schema", schema);
+        }
+    }
+
+    public void setName(String name) {
+        if (name != null) {
+            metadata.put("name", name);
         }
     }
 }

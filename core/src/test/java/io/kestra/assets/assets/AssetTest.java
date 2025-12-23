@@ -1,7 +1,6 @@
 package io.kestra.assets.assets;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.assets.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.TestsUtils;
@@ -38,7 +37,7 @@ public class AssetTest {
             metadataValue
         ), Asset.class);
 
-        assertThat(asset).isInstanceOf(CustomAsset.class);
+        assertThat(asset).isInstanceOf(Custom.class);
         assertThat(asset.getNamespace()).isEqualTo(namespace);
         assertThat(asset.getId()).isEqualTo(id);
         assertThat(asset.getType()).isEqualTo(type);
@@ -51,7 +50,7 @@ public class AssetTest {
     void external() throws JsonProcessingException {
         String namespace = TestsUtils.randomNamespace();
         String id = TestsUtils.randomString();
-        String type = "EXTERNAL";
+        String type = External.ASSET_TYPE;
         String displayName = "External asset";
         String description = "This is an external asset";
         String metadataKey = "owner";
@@ -73,7 +72,7 @@ public class AssetTest {
             metadataValue
         ), Asset.class);
 
-        assertThat(asset).isInstanceOf(ExternalAsset.class);
+        assertThat(asset).isInstanceOf(External.class);
         assertThat(asset.getNamespace()).isEqualTo(namespace);
         assertThat(asset.getId()).isEqualTo(id);
         assertThat(asset.getType()).isEqualTo(type);
@@ -106,7 +105,7 @@ public class AssetTest {
                 %s: %s""".formatted(
             namespace,
             id,
-            DatasetAsset.ASSET_TYPE,
+            Dataset.ASSET_TYPE,
             displayName,
             description,
             system,
@@ -116,16 +115,16 @@ public class AssetTest {
             metadataValue
         ), Asset.class);
 
-        assertThat(asset).isInstanceOf(DatasetAsset.class);
-        DatasetAsset datasetAsset = (DatasetAsset) asset;
-        assertThat(datasetAsset.getNamespace()).isEqualTo(namespace);
-        assertThat(datasetAsset.getId()).isEqualTo(id);
-        assertThat(datasetAsset.getDisplayName()).isEqualTo(displayName);
-        assertThat(datasetAsset.getDescription()).isEqualTo(description);
-        assertThat(datasetAsset.getSystem()).isEqualTo(system);
-        assertThat(datasetAsset.getLocation()).isEqualTo(location);
-        assertThat(datasetAsset.getFormat()).isEqualTo(format);
-        assertThat(datasetAsset.getMetadata().get(metadataKey)).isEqualTo(metadataValue);
+        assertThat(asset).isInstanceOf(Dataset.class);
+        Dataset dataset = (Dataset) asset;
+        assertThat(dataset.getNamespace()).isEqualTo(namespace);
+        assertThat(dataset.getId()).isEqualTo(id);
+        assertThat(dataset.getDisplayName()).isEqualTo(displayName);
+        assertThat(dataset.getDescription()).isEqualTo(description);
+        assertThat(dataset.getSystem()).isEqualTo(system);
+        assertThat(dataset.getLocation()).isEqualTo(location);
+        assertThat(dataset.getFormat()).isEqualTo(format);
+        assertThat(dataset.getMetadata().get(metadataKey)).isEqualTo(metadataValue);
     }
 
     @Test
@@ -150,7 +149,7 @@ public class AssetTest {
                 %s: %s""".formatted(
             namespace,
             id,
-            FileAsset.ASSET_TYPE,
+            File.ASSET_TYPE,
             displayName,
             description,
             system,
@@ -159,15 +158,15 @@ public class AssetTest {
             metadataValue
         ), Asset.class);
 
-        assertThat(asset).isInstanceOf(FileAsset.class);
-        FileAsset fileAsset = (FileAsset) asset;
-        assertThat(fileAsset.getNamespace()).isEqualTo(namespace);
-        assertThat(fileAsset.getId()).isEqualTo(id);
-        assertThat(fileAsset.getDisplayName()).isEqualTo(displayName);
-        assertThat(fileAsset.getDescription()).isEqualTo(description);
-        assertThat(fileAsset.getSystem()).isEqualTo(system);
-        assertThat(fileAsset.getPath()).isEqualTo(path);
-        assertThat(fileAsset.getMetadata().get(metadataKey)).isEqualTo(metadataValue);
+        assertThat(asset).isInstanceOf(File.class);
+        File file = (File) asset;
+        assertThat(file.getNamespace()).isEqualTo(namespace);
+        assertThat(file.getId()).isEqualTo(id);
+        assertThat(file.getDisplayName()).isEqualTo(displayName);
+        assertThat(file.getDescription()).isEqualTo(description);
+        assertThat(file.getSystem()).isEqualTo(system);
+        assertThat(file.getPath()).isEqualTo(path);
+        assertThat(file.getMetadata().get(metadataKey)).isEqualTo(metadataValue);
     }
 
     @Test
@@ -196,7 +195,7 @@ public class AssetTest {
                 %s: %s""".formatted(
             namespace,
             id,
-            TableAsset.ASSET_TYPE,
+            Table.ASSET_TYPE,
             displayName,
             description,
             system,
@@ -207,17 +206,17 @@ public class AssetTest {
             metadataValue
         ), Asset.class);
 
-        assertThat(asset).isInstanceOf(TableAsset.class);
-        TableAsset tableAsset = (TableAsset) asset;
-        assertThat(tableAsset.getNamespace()).isEqualTo(namespace);
-        assertThat(tableAsset.getId()).isEqualTo(id);
-        assertThat(tableAsset.getDisplayName()).isEqualTo(displayName);
-        assertThat(tableAsset.getDescription()).isEqualTo(description);
-        assertThat(tableAsset.getSystem()).isEqualTo(system);
-        assertThat(tableAsset.getDatabase()).isEqualTo(database);
-        assertThat(tableAsset.getSchema()).isEqualTo(schema);
-        assertThat(tableAsset.getName()).isEqualTo(name);
-        assertThat(tableAsset.getMetadata().get(metadataKey)).isEqualTo(metadataValue);
+        assertThat(asset).isInstanceOf(Table.class);
+        Table table = (Table) asset;
+        assertThat(table.getNamespace()).isEqualTo(namespace);
+        assertThat(table.getId()).isEqualTo(id);
+        assertThat(table.getDisplayName()).isEqualTo(displayName);
+        assertThat(table.getDescription()).isEqualTo(description);
+        assertThat(table.getSystem()).isEqualTo(system);
+        assertThat(table.getDatabase()).isEqualTo(database);
+        assertThat(table.getSchema()).isEqualTo(schema);
+        assertThat(table.getName()).isEqualTo(name);
+        assertThat(table.getMetadata().get(metadataKey)).isEqualTo(metadataValue);
     }
 
     @Test
@@ -244,7 +243,7 @@ public class AssetTest {
                 %s: %s""".formatted(
             namespace,
             id,
-            VmAsset.ASSET_TYPE,
+            VM.ASSET_TYPE,
             displayName,
             description,
             provider,
@@ -254,15 +253,15 @@ public class AssetTest {
             metadataValue
         ), Asset.class);
 
-        assertThat(asset).isInstanceOf(VmAsset.class);
-        VmAsset vmAsset = (VmAsset) asset;
-        assertThat(vmAsset.getNamespace()).isEqualTo(namespace);
-        assertThat(vmAsset.getId()).isEqualTo(id);
-        assertThat(vmAsset.getDisplayName()).isEqualTo(displayName);
-        assertThat(vmAsset.getDescription()).isEqualTo(description);
-        assertThat(vmAsset.getProvider()).isEqualTo(provider);
-        assertThat(vmAsset.getRegion()).isEqualTo(region);
-        assertThat(vmAsset.getState()).isEqualTo(state);
-        assertThat(vmAsset.getMetadata().get(metadataKey)).isEqualTo(metadataValue);
+        assertThat(asset).isInstanceOf(VM.class);
+        VM VM = (VM) asset;
+        assertThat(VM.getNamespace()).isEqualTo(namespace);
+        assertThat(VM.getId()).isEqualTo(id);
+        assertThat(VM.getDisplayName()).isEqualTo(displayName);
+        assertThat(VM.getDescription()).isEqualTo(description);
+        assertThat(VM.getProvider()).isEqualTo(provider);
+        assertThat(VM.getRegion()).isEqualTo(region);
+        assertThat(VM.getState()).isEqualTo(state);
+        assertThat(VM.getMetadata().get(metadataKey)).isEqualTo(metadataValue);
     }
 }

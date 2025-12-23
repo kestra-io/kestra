@@ -957,13 +957,16 @@ public class DefaultWorker implements Worker {
 
         try {
             Variables variables = variablesService.of(StorageContext.forTask(taskRun), workerTaskCallable.getTaskOutput());
-            List<Asset> outputAssets = runContext.assets().outputs();
-            Optional<AssetsDeclaration> renderedAssetsDeclaration = runContext.render(workerTask.getTask().getAssets()).as(AssetsDeclaration.class);
-            renderedAssetsDeclaration.map(AssetsDeclaration::getOutputs).ifPresent(outputAssets::addAll);
-            taskRun = taskRun.withOutputs(variables).withAssets(new AssetsInOut(
-                renderedAssetsDeclaration.map(AssetsDeclaration::getInputs).orElse(null),
-                outputAssets
-            ));
+            taskRun = taskRun.withOutputs(variables);
+            if (workerTask.getTask().getAssets() != null) {
+                List<Asset> outputAssets = runContext.assets().outputs();
+                Optional<AssetsDeclaration> renderedAssetsDeclaration = runContext.render(workerTask.getTask().getAssets()).as(AssetsDeclaration.class);
+                renderedAssetsDeclaration.map(AssetsDeclaration::getOutputs).ifPresent(outputAssets::addAll);
+                taskRun = taskRun.withAssets(new AssetsInOut(
+                    renderedAssetsDeclaration.map(AssetsDeclaration::getInputs).orElse(null),
+                    outputAssets
+                ));
+            }
         } catch (Exception e) {
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
         }

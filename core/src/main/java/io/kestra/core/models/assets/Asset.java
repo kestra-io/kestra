@@ -85,6 +85,11 @@ public abstract class Asset implements HasUID, DeletedInterface, Plugin {
         return (T) this;
     }
 
+    public Asset toDeleted() {
+        this.deleted = true;
+        return this;
+    }
+
     @JsonAnySetter
     public void setMetadata(String name, Object value) {
         metadata.put(name, value);

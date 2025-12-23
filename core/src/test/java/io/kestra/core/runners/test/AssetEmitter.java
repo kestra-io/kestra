@@ -3,7 +3,6 @@ package io.kestra.core.runners.test;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.assets.Asset;
-import io.kestra.core.models.assets.TableAsset;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.RunContext;
 import jakarta.validation.constraints.NotNull;

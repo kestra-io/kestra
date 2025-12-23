@@ -1314,7 +1314,7 @@
       "next": "Następny",
       "no_flows": "Brak flowów w namespace o nazwie tutorial.",
       "previous": "Poprzedni",
-      "skip": "Pomiń samouczek",
+      "skip": "Pomiń Przewodnik po Produkcie",
       "steps": {
         "0": {
           "content": "Jesteśmy zachwyceni, że jesteś tutaj.<br />Stwórzmy twój pierwszy flow.",
@@ -1863,7 +1863,7 @@
     },
     "welcome aboard": "🚀 Witamy w Kestra!",
     "welcome aboard content": "Skorzystaj z naszego Przewodnika, aby stworzyć swój pierwszy flow i sprawdź Blueprints, aby znaleźć więcej przykładów.",
-    "welcome button create": "Stwórz mój pierwszy flow",
+    "welcome button create": "Rozpocznij Przewodnik po Produkcie",
     "welcome display require": "Uruchom swój <strong>pierwszy flow</strong>, aby rozpocząć",
     "welcome_page": {
       "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",

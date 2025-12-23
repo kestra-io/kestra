@@ -8,7 +8,6 @@
     import {usePlaygroundStore} from "../../stores/playground";
 
     const playgroundStore = usePlaygroundStore();
-
 </script>
 
 <style scoped lang="scss">

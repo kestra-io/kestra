@@ -1314,7 +1314,7 @@
       "next": "次へ",
       "no_flows": "チュートリアルnamespaceに利用可能なflowはありません。",
       "previous": "前へ",
-      "skip": "チュートリアルをスキップ",
+      "skip": "プロダクトツアーをスキップ",
       "steps": {
         "0": {
           "content": "ここに来てくれてとても嬉しいです。<br />最初のflowを作成しましょう。",
@@ -1863,7 +1863,7 @@
     },
     "welcome aboard": "🚀 Kestraへようこそ！",
     "welcome aboard content": "ガイド付きツアーを利用して最初のflowを作成し、Blueprintsでさらに多くの例を見つけてください。",
-    "welcome button create": "最初のflowを作成",
+    "welcome button create": "プロダクトツアーを開始",
     "welcome display require": "<strong>最初のflow</strong>を実行して始めましょう",
     "welcome_page": {
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？",

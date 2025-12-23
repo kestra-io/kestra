@@ -883,6 +883,12 @@
         "description": "트리거 ID로 필터링",
         "label": "트리거 ID"
       },
+      "triggerState": {
+        "description": "트리거 상태별 필터링",
+        "disabled": "비활성화됨",
+        "enabled": "사용 가능",
+        "label": "트리거 상태"
+      },
       "update": "업데이트",
       "value": "값",
       "workerId": {

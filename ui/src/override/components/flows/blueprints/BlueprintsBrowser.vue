@@ -56,34 +56,35 @@
                                 <div v-if="!system && blueprint.tags?.length > 0" class="tags-section">
                                     <span v-for="tag in processedTags(blueprint.tags)" :key="tag.original" class="tag-item">{{ tag.display }}</span>
                                 </div>
-                                <div class="text-section">
+                                <div v-if="blueprint.template" class="tags-section">
+                                    <span class="tag-item">{{ $t('template.label') }}</span>
+                                </div>
+                                <div class="text-section">                                        
                                     <h3 class="title">
                                         {{ blueprint.title ?? blueprint.id }}
-                                        <Badge v-if="blueprint.template" :label="$t('template.label')" :tooltip="$t('template.description')" />
                                     </h3>
                                 </div>
                                 <div class="bottom-section">
-                                    <div class="task-icons justify-content-end">
+                                    <div class="task-icons">
                                         <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
                                     </div>
 
-                                    <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
-                                        <el-button
-                                            type="primary"
-                                            size="default"
-                                            :icon="icon.ContentCopy"
-                                            @click.prevent.stop="copy(blueprint.id)"
-                                            class="p-2"
-                                        />
-                                    </el-tooltip>
-                                </div>
-                                
-                                <div class="d-flex align-items-center justify-content-end gap-2 mt-3">
-                                    <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
-                                        <el-button v-if="!embed && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
-                                            {{ $t('use') }}
-                                        </el-button>
-                                    </slot>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
+                                            <el-button
+                                                type="primary"
+                                                size="default"
+                                                :icon="icon.ContentCopy"
+                                                @click.prevent.stop="copy(blueprint.id)"
+                                                class="p-2"
+                                            />
+                                        </el-tooltip>
+                                        <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
+                                            <el-button v-if="!embed && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                                {{ $t('use') }}
+                                            </el-button>
+                                        </slot>
+                                    </div>
                                 </div>
                             </div>
                         </el-card>
@@ -112,7 +113,6 @@
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {useDataTableActions} from "../../../../composables/useDataTableActions";
     import {useBlueprintFilter} from "../../../../components/filter/configurations";
-    import Badge from "../../../../components/global/Badge.vue";
 
     const blueprintFilter = useBlueprintFilter();
 

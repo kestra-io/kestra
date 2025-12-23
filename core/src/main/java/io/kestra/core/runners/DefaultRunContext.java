@@ -12,7 +12,7 @@ import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.services.AssetManagerFactory;
+import io.kestra.core.assets.AssetManagerFactory;
 import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
@@ -622,7 +622,7 @@ public class DefaultRunContext extends RunContext {
                             .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets))
                             .flatMap(throwFunction(asset -> this.render(asset).as(AssetsDeclaration.class)))
                             .map(AssetsDeclaration::isEnableAuto)
-                            .orElse(true)
+                            .orElse(false)
                     );
                 }
             }

@@ -2,6 +2,7 @@ package io.kestra.core.models.assets;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.kestra.core.models.annotations.Plugin;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
@@ -10,10 +11,11 @@ import java.util.Map;
 
 @NoArgsConstructor
 @Plugin
-public class CustomAsset extends Asset {
+@Hidden
+public class Custom extends Asset {
     @Builder
     @JsonCreator
-    public CustomAsset(
+    public Custom(
         String tenantId,
         String namespace,
         String id,

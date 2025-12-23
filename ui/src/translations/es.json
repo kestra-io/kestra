@@ -1314,7 +1314,7 @@
       "next": "Siguiente",
       "no_flows": "No hay flows disponibles bajo el namespace del tutorial.",
       "previous": "Anterior",
-      "skip": "Saltar Tutorial",
+      "skip": "Omitir recorrido del producto",
       "steps": {
         "0": {
           "content": "Estamos encantados de tenerte aquí.<br />Vamos a crear tu primer flow.",
@@ -1863,7 +1863,7 @@
     },
     "welcome aboard": "🚀 ¡Bienvenido a Kestra!",
     "welcome aboard content": "Usa nuestro Tour Guiado para crear tu primer flow y revisa los Blueprints para encontrar más ejemplos.",
-    "welcome button create": "Crear mi primer flow",
+    "welcome button create": "Iniciar Tour del Producto",
     "welcome display require": "Ejecuta tu <strong>primer flow</strong> para comenzar",
     "welcome_page": {
       "guide": "¿Necesitas orientación para ejecutar tu primer flow?",

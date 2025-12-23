@@ -1314,7 +1314,7 @@
       "next": "Suivant",
       "no_flows": "Aucun flux disponible dans l'espace de noms du tutoriel.",
       "previous": "Précédent",
-      "skip": "Passer le tutoriel",
+      "skip": "Passer la visite guidée du produit",
       "steps": {
         "0": {
           "content": "Nous sommes ravis de vous avoir ici.<br />Créons votre premier flux.",
@@ -1863,7 +1863,7 @@
     },
     "welcome aboard": "🚀 Bienvenue à bord !",
     "welcome aboard content": "Tout est prêt pour Kestra, commencez la création de votre flow et admirez la magie !",
-    "welcome button create": "Créer mon premier flow",
+    "welcome button create": "Démarrer la visite guidée du produit",
     "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flow</strong> !",
     "welcome_page": {
       "guide": "Besoin d'aide pour exécuter votre premier flow ?",

@@ -12,6 +12,7 @@ import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
+import io.micronaut.context.exceptions.NoSuchBeanException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +73,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
                 // By default, if no plugin-registry is configured retrieve
                 // the one configured from the static Kestra's context.
                 pluginRegistry = KestraContext.getContext().getPluginRegistry();
-            } catch (IllegalStateException ignore) {
+            } catch (IllegalStateException | NoSuchBeanException ignore) {
                 // This error can only happen if the KestraContext is not initialized (i.e. in unit tests).
                 log.error("No plugin registry was initialized. Use default implementation.");
                 pluginRegistry = DefaultPluginRegistry.getOrCreate();

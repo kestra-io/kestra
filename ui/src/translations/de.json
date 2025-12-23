@@ -1005,6 +1005,7 @@
     "input_custom_duration": "oder benutzerdefinierte Dauer eingeben:",
     "inputs": "Inputs",
     "instance": "Instanz",
+    "instance_administration": "Instanzverwaltung",
     "invalid bulk delete": "Ausführungen konnten nicht gelöscht werden",
     "invalid bulk force run": "Konnte Ausführungen nicht erzwingen",
     "invalid bulk kill": "Ausführungen konnten nicht beendet werden",
@@ -1027,8 +1028,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "Beenden",
-    "kill only parents": "Nur Eltern beenden",
-    "kill parents and subflow": "Eltern und Subflows beenden",
+    "kill only parents": "Nur aktuellen beenden",
+    "kill parents and subflow": "Aktuelle und Subflows beenden",
     "killed confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> beenden möchten?",
     "killed done": "Ausführung ist zum Beenden eingereiht",
     "kv": {
@@ -1737,6 +1738,7 @@
       "names": "Mandanten"
     },
     "tenantId": "Mandanten-ID",
+    "tenant_administration": "Mandantenverwaltung",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Diese Ausführung wurde durch einen Test erstellt",
     "theme": "Modus",

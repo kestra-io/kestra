@@ -18,6 +18,7 @@ import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
 import {Flow, FlowWithSource} from "../generated/kestra-api";
 import * as sdk from "../generated/kestra-api/ks-sdk.gen";
+import {InputType} from "../utils/inputs";
 
 const textYamlHeader = {
     headers: {
@@ -38,6 +39,13 @@ interface Trigger {
 interface Task {
     id: string,
     type: string
+}
+
+export interface Input {
+    id: string;
+    type: InputType;
+    required?: boolean;
+    defaults?: any;
 }
 
 interface FlowValidations {

@@ -1005,6 +1005,7 @@
     "input_custom_duration": "ou saisir une durée personnalisée :",
     "inputs": "Entrées",
     "instance": "Instance",
+    "instance_administration": "Administration de l'Instance",
     "invalid bulk delete": "Impossible de supprimer les exécutions",
     "invalid bulk force run": "Impossible de forcer l'exécution des exécutions",
     "invalid bulk kill": "Impossible d'arrêter les exécutions",
@@ -1027,8 +1028,8 @@
     "kestra": "Kestra",
     "key": "Clé",
     "kill": "Arrêter",
-    "kill only parents": "Arrêter uniquement les exécutions parents",
-    "kill parents and subflow": "Arrêter les exécutions parents et enfants",
+    "kill only parents": "Tuer uniquement le courant",
+    "kill parents and subflow": "Tuer le flow actuel et les subflows",
     "killed confirm": "Êtes-vous sur de vouloir arrêter l'exécution <code>{id}</code> ?",
     "killed done": "L'exécution est en attente d'arrêt",
     "kv": {
@@ -1737,6 +1738,7 @@
       "names": "Mandants"
     },
     "tenantId": "ID du mandant",
+    "tenant_administration": "Administration des Mandants",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Cette exécution a été créée par un Test",
     "theme": "Thème",

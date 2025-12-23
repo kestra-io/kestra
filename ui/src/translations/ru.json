@@ -1005,6 +1005,7 @@
     "input_custom_duration": "или введите пользовательскую продолжительность:",
     "inputs": "Входные данные",
     "instance": "Экземпляр",
+    "instance_administration": "Администрирование экземпляра",
     "invalid bulk delete": "Не удалось удалить выполнения",
     "invalid bulk force run": "Не удалось принудительно запустить executions",
     "invalid bulk kill": "Не удалось убить выполнения",
@@ -1027,8 +1028,8 @@
     "kestra": "Kestra",
     "key": "Ключ",
     "kill": "Убить",
-    "kill only parents": "Убить только родителей",
-    "kill parents and subflow": "Убить родителей и подпроцессы",
+    "kill only parents": "Убить только текущий",
+    "kill parents and subflow": "Прервать текущий и subflows",
     "killed confirm": "Вы уверены, что хотите убить выполнение <code>{id}</code>?",
     "killed done": "Выполнение поставлено в очередь на убийство",
     "kv": {
@@ -1737,6 +1738,7 @@
       "names": "Арендаторы"
     },
     "tenantId": "ID арендатора",
+    "tenant_administration": "Администрирование Манданта",
     "test-badge-text": "Тест",
     "test-badge-tooltip": "Это выполнение было создано тестом",
     "theme": "Тема",

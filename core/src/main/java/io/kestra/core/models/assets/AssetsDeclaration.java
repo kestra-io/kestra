@@ -17,6 +17,6 @@ public class AssetsDeclaration extends AssetsInOut {
     public AssetsDeclaration(Boolean enableAuto, List<AssetIdentifier> inputs, List<Asset> outputs) {
         super(inputs, outputs);
 
-        this.enableAuto = Optional.ofNullable(enableAuto).orElse(true);
+        this.enableAuto = Optional.ofNullable(enableAuto).orElse(false);
     }
 }

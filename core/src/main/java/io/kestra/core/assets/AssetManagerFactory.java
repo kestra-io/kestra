@@ -1,4 +1,4 @@
-package io.kestra.core.services;
+package io.kestra.core.assets;
 
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.runners.AssetEmitter;

@@ -2,6 +2,7 @@ package io.kestra.core.models.assets;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.kestra.core.models.annotations.Plugin;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
@@ -9,16 +10,16 @@ import java.time.Instant;
 import java.util.Map;
 
 @NoArgsConstructor
-@Plugin(aliases = ExternalAsset.ASSET_TYPE)
-public class ExternalAsset extends Asset {
-    public static final String ASSET_TYPE = "EXTERNAL";
-
+@Plugin
+@Hidden
+public class Custom extends Asset {
     @Builder
     @JsonCreator
-    public ExternalAsset(
+    public Custom(
         String tenantId,
         String namespace,
         String id,
+        String type,
         String displayName,
         String description,
         Map<String, Object> metadata,
@@ -26,6 +27,6 @@ public class ExternalAsset extends Asset {
         Instant updated,
         boolean deleted
     ) {
-        super(tenantId, namespace, id, ASSET_TYPE, displayName, description, metadata, created, updated, deleted);
+        super(tenantId, namespace, id, type, displayName, description, metadata, created, updated, deleted);
     }
 }

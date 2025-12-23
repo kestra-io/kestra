@@ -2,7 +2,7 @@ import {definePluginConfig} from "@hey-api/openapi-ts";
 import {handler} from "./plugin";
 import type {KestraSdkPlugin} from "./types";
 
-export const defaultConfig: KestraSdkPlugin["Config"] = {
+const defaultConfig: KestraSdkPlugin["Config"] = {
   config: {
     output: "kestra-sdk",
     methodNameBuilder(operation) {

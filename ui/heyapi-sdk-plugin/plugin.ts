@@ -1,6 +1,7 @@
 import {$} from "@hey-api/openapi-ts";
 import type {KestraSdkPlugin} from "./types";
 
+
 export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
   const useRouteSymbol = plugin.symbol(
     "useRoute", 
@@ -28,7 +29,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
     )
 
   const exportedFunctionNode = $.const(addTenantToParametersSymbol).export().assign(functionNode);
-  plugin.addNode(exportedFunctionNode);
+  plugin.node(exportedFunctionNode);
 
   const operationsDict: Record<string, {symbol:ReturnType<typeof plugin.symbol>, methodName: string}[]> = {}
   
@@ -43,11 +44,17 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
 
         const pathParams = operation.parameters?.path || {};
 
-        const originalOperationSymbol = $(plugin.querySymbol({
+        const sym = plugin.querySymbol({
           category: "sdk",
           resource: "operation",
           resourceId: operation.id,
-        }));
+        })
+
+        if(!sym) {
+            return;
+        }
+
+        const originalOperationSymbol = $(sym);
 
         const funcSymbol = plugin.symbol(methodName, {
             getFilePath: () => `sdk/ks-${operation.tags?.[0] ?? "default"}`,
@@ -61,7 +68,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
         if(!pathParams || !("tenant" in pathParams)) {
             // if there is no path parameter named "tenant", 
             // we export this method as is
-            plugin.addNode(
+            plugin.node(
                 $.const(funcSymbol)
                 .assign(originalOperationSymbol)
                 .export()
@@ -71,18 +78,20 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
 
         const optionsId = "options"
 
-        if((Object.keys(pathParams).length 
-            + Object.keys(operation.parameters?.query || {}).length)
-            < 2 && !operation.body) {
+        // find a cleaner way to do that (expose parameters symbol from operation ?)
+        const parametersWithoutTenant = sym.node?.value._params[0]._type._exprInput["~ref"].props.filter((p: any) => p.name !== "tenant") as any
+
+        if(parametersWithoutTenant.length === 0) {
             
             // if the only path parameter is "tenant", we can simplify the function
             const functionNode = $.func()
                 .params($.param(optionsId)
+                    .required(false)
                     .type(
                         $.type("Parameters")
                             .generic($.type.query(originalOperationSymbol))
                             .idx(1)
-                        )
+                    )
                 )
                 .do(
                     $.return(originalOperationSymbol.call(
@@ -93,25 +102,26 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
             
             const exportedFunctionNode = $.const(funcSymbol).export().assign(functionNode);
 
-            plugin.addNode(exportedFunctionNode);
+            plugin.node(exportedFunctionNode);
             return;
         }
 
         const isTenantOnlyRequiredParam = Object.values(pathParams).filter(p => p.name !== "tenant" && p.required).length === 0;
+
+        const parameterObj = $.type.object()
+
+        for (const param in parametersWithoutTenant) {
+            const paramDef = parametersWithoutTenant[param];
+            parameterObj.prop(paramDef.name, (p) => p.required(!paramDef._optional).type(paramDef._type["~ref"]));
+        }
 
         const paramId = "parameters"
         const functionNode = $.func()
             .params(
                 $.param(paramId)
                     .required(!isTenantOnlyRequiredParam)
-                    .type(
-                        $.type("Omit").generics(
-                            $.type("Parameters")
-                                .generic($.type.query(originalOperationSymbol))
-                                .idx(0),
-                            $.type.literal("tenant")
-                        )
-                    ),
+                    .type(parameterObj)
+                    ,
                 $.param(optionsId)
                     .required(false)
                     .type(
@@ -134,7 +144,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
 
         const exportedFunctionNode = $.const(funcSymbol).export().assign(functionNode);
 
-        plugin.addNode(exportedFunctionNode);
+        plugin.node(exportedFunctionNode);
     },
     {
       order: "declarations",
@@ -147,7 +157,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
       getFilePath: () => "ks-sdk",
     });
 
-    plugin.addNode(
+    plugin.node(
       $.const(symbol)
         .export()
         .assign($.object().props(...operations.map(op => $.prop({

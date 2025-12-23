@@ -59,6 +59,7 @@
                                 <div class="text-section">
                                     <h3 class="title">
                                         {{ blueprint.title ?? blueprint.id }}
+                                        <Badge v-if="blueprint.template" :label="$t('template.label')" :tooltip="$t('template.description')" />
                                     </h3>
                                 </div>
                                 <div class="bottom-section">
@@ -110,6 +111,7 @@
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {useDataTableActions} from "../../../../composables/useDataTableActions";
     import {useBlueprintFilter} from "../../../../components/filter/configurations";
+    import Badge from "../../../../components/global/Badge.vue";
 
     const blueprintFilter = useBlueprintFilter();
 
@@ -151,6 +153,7 @@
         id: string;
         tags: string[];
         title?: string;
+        template?: Record<string, any>;
     }[] | undefined>(undefined);
     const error = ref(false);
     const icon = {ContentCopy};

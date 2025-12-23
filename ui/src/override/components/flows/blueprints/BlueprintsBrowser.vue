@@ -57,7 +57,7 @@
                                     <span v-for="tag in processedTags(blueprint.tags)" :key="tag.original" class="tag-item">{{ tag.display }}</span>
                                 </div>
                                 <div v-if="blueprint.template" class="tags-section">
-                                    <span class="tag-item">{{ $t('template.label') }}</span>
+                                    <span class="tag-item">{{ $t('template') }}</span>
                                 </div>
                                 <div class="text-section">                                        
                                     <h3 class="title">

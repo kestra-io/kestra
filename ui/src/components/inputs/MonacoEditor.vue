@@ -125,7 +125,7 @@
     import uniqBy from "lodash/uniqBy";
     import {useI18n} from "vue-i18n";
     import {ElDatePicker} from "element-plus";
-    import {Moment} from "moment";
+    import moment from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget";
     import Utils from "../../utils/utils";
     import {hashCode} from "../../utils/global";
@@ -369,7 +369,7 @@
         }
     }, {deep: true});
 
-    const nowMoment: Moment = moment().startOf("day");
+    const nowMoment = moment().startOf("day");
     function addedSuggestRows(mutations: MutationRecord[]) {
         return mutations.flatMap(({addedNodes}) => {
             const nodes = [...addedNodes];

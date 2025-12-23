@@ -24,6 +24,7 @@ export const POSITION_INJECTION_KEY = Symbol("position-injection-key") as Inject
  * NOTE: different from the `isCreating` flag coming from the store. `isCreating` refers to the Complete flow being in creation
  */
 export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<boolean>
+export const CREATING_FLOW_INJECTION_KEY = Symbol("creating-flow-injection-key") as InjectionKey<boolean>
 /**
  * When creating anew task, allows to specify a field where the new task should be injected.
  * @example
@@ -93,3 +94,5 @@ export const SCHEMA_DEFINITIONS_INJECTION_KEY = Symbol("schema-definitions-injec
 export const DATA_TYPES_MAP_INJECTION_KEY = Symbol("data-types-injection-key") as InjectionKey<ComputedRef<Record<string, string[] | undefined>>>
 
 export const ON_TASK_EDITOR_CLICK_INJECTION_KEY = Symbol("on-task-editor-click-injection-key") as InjectionKey<(elt?: Partial<NoCodeElement>) => void>;
+
+export const DEFAULT_NAMESPACE_INJECTION_KEY = Symbol("default-namespace-injection-key") as InjectionKey<ComputedRef<string>>;

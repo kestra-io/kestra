@@ -540,7 +540,7 @@
     "welcome aboard": "\uD83D\uDE80 Welcome to Kestra!",
     "welcome aboard content": "Use our Guided Tour to create your first flow and check Blueprints to find more examples.",
     "welcome display require": "Run your <strong>first flow</strong> to get started",
-    "welcome button create": "Create my first flow",
+    "welcome button create": "Start Product Tour",
     "live help": "Live help",
     "show task documentation": "Show task documentation",
     "hide task documentation": "Hide task documentation",
@@ -947,7 +947,7 @@
       "next": "Next",
       "previous": "Previous",
       "finish": "Finish",
-      "skip": "Skip Tutorial",
+      "skip": "Skip Product Tour",
       "no_flows": "No flows available under tutorial namespace.",
       "steps": {
         "0": {

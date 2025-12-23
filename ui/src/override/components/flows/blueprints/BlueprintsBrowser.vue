@@ -63,26 +63,27 @@
                                     </h3>
                                 </div>
                                 <div class="bottom-section">
-                                    <div class="task-icons">
+                                    <div class="task-icons justify-content-end">
                                         <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
                                     </div>
 
-                                    <div class="d-flex align-items-center gap-2">
-                                        <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
-                                            <el-button
-                                                type="primary"
-                                                size="default"
-                                                :icon="icon.ContentCopy"
-                                                @click.prevent.stop="copy(blueprint.id)"
-                                                class="p-2"
-                                            />
-                                        </el-tooltip>
-                                        <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
-                                            <el-button v-if="!embed && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
-                                                {{ $t('use') }}
-                                            </el-button>
-                                        </slot>
-                                    </div>
+                                    <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
+                                        <el-button
+                                            type="primary"
+                                            size="default"
+                                            :icon="icon.ContentCopy"
+                                            @click.prevent.stop="copy(blueprint.id)"
+                                            class="p-2"
+                                        />
+                                    </el-tooltip>
+                                </div>
+                                
+                                <div class="d-flex align-items-center justify-content-end gap-2 mt-3">
+                                    <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
+                                        <el-button v-if="!embed && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                            {{ $t('use') }}
+                                        </el-button>
+                                    </slot>
                                 </div>
                             </div>
                         </el-card>

@@ -883,6 +883,12 @@
         "description": "按 trigger ID 筛选",
         "label": "触发器 ID"
       },
+      "triggerState": {
+        "description": "按触发器状态筛选",
+        "disabled": "禁用",
+        "enabled": "启用",
+        "label": "触发状态"
+      },
       "update": "更新",
       "value": "值",
       "workerId": {

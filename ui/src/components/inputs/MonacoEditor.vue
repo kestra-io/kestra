@@ -97,7 +97,6 @@
 <script setup lang="ts">
     import {
         computed,
-        getCurrentInstance,
         h,
         inject,
         onBeforeUnmount,
@@ -126,7 +125,7 @@
     import uniqBy from "lodash/uniqBy";
     import {useI18n} from "vue-i18n";
     import {ElDatePicker} from "element-plus";
-    import {Moment} from "moment";
+    import moment, {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget";
     import Utils from "../../utils/utils";
     import {hashCode} from "../../utils/global";
@@ -137,7 +136,6 @@
     import EditorType = editor.EditorType;
     import {useRoute} from "vue-router";
 
-    const currentInstance = getCurrentInstance()!;
     const {t} = useI18n();
 
     const textAreaValue = computed({
@@ -371,8 +369,7 @@
         }
     }, {deep: true});
 
-    const nowMoment: Moment = currentInstance.appContext.config.globalProperties.$moment().startOf("day");
-
+    const nowMoment: Moment = moment().startOf("day");
     function addedSuggestRows(mutations: MutationRecord[]) {
         return mutations.flatMap(({addedNodes}) => {
             const nodes = [...addedNodes];
@@ -461,7 +458,7 @@
                     endColumn: wordAtPosition?.endColumn ?? position?.column
                 },
                 // We don't use the selectedDate directly because if user modifies the input value directly it doesn't work otherwise
-                text: `${currentInstance.appContext.config.globalProperties.$moment(
+                text: `${moment(
                     datePicker.value!.$el.nextElementSibling.querySelector("input").value
                 ).toISOString(true)} `,
                 forceMoveMarkers: true

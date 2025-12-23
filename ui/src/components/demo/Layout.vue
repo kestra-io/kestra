@@ -19,6 +19,7 @@
             </div>
             <p><slot name="message" /></p>
             <DemoButtons />
+            <div style="height: 2rem;" />
         </div>
     </EmptyTemplate>
 </template>

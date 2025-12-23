@@ -883,6 +883,12 @@
         "description": "ट्रिगर ID द्वारा फ़िल्टर करें",
         "label": "ट्रिगर ID"
       },
+      "triggerState": {
+        "description": "ट्रिगर स्थिति द्वारा फ़िल्टर करें",
+        "disabled": "अक्षम",
+        "enabled": "सक्रिय",
+        "label": "ट्रिगर स्थिति"
+      },
       "update": "अपडेट",
       "value": "मान",
       "workerId": {

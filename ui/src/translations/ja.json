@@ -883,6 +883,12 @@
         "description": "トリガーIDでフィルター",
         "label": "トリガーID"
       },
+      "triggerState": {
+        "description": "トリガー状態でフィルター",
+        "disabled": "無効",
+        "enabled": "有効",
+        "label": "トリガー状態"
+      },
       "update": "更新",
       "value": "値",
       "workerId": {

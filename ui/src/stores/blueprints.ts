@@ -25,6 +25,8 @@ interface Blueprint {
     [key: string]: any;
 }
 
+export type TemplateArgument = Record<string, Input>;
+
 export interface BlueprintTemplate {
     source: string;
     templateArguments: Record<string, Input>;

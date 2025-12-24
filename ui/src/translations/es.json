@@ -883,6 +883,12 @@
         "description": "Filtrar por trigger ID",
         "label": "ID de Trigger"
       },
+      "triggerState": {
+        "description": "Filtrar por estado del trigger",
+        "disabled": "Desactivado",
+        "enabled": "Habilitado",
+        "label": "Estado del Trigger"
+      },
       "update": "Actualizar",
       "value": "Valor",
       "workerId": {
@@ -1005,6 +1011,7 @@
     "input_custom_duration": "o ingrese duración personalizada:",
     "inputs": "Entradas",
     "instance": "Instancia",
+    "instance_administration": "Administración de Instancia",
     "invalid bulk delete": "No se pudieron eliminar las ejecuciones",
     "invalid bulk force run": "No se pudo forzar la ejecución de ejecuciones",
     "invalid bulk kill": "No se pudieron matar las ejecuciones",
@@ -1307,7 +1314,7 @@
       "next": "Siguiente",
       "no_flows": "No hay flows disponibles bajo el namespace del tutorial.",
       "previous": "Anterior",
-      "skip": "Saltar Tutorial",
+      "skip": "Omitir recorrido del producto",
       "steps": {
         "0": {
           "content": "Estamos encantados de tenerte aquí.<br />Vamos a crear tu primer flow.",
@@ -1737,6 +1744,7 @@
       "names": "Arrendatarios"
     },
     "tenantId": "ID de Mandante",
+    "tenant_administration": "Administración de Mandantes",
     "test-badge-text": "Prueba",
     "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "theme": "Tema",
@@ -1855,7 +1863,7 @@
     },
     "welcome aboard": "🚀 ¡Bienvenido a Kestra!",
     "welcome aboard content": "Usa nuestro Tour Guiado para crear tu primer flow y revisa los Blueprints para encontrar más ejemplos.",
-    "welcome button create": "Crear mi primer flow",
+    "welcome button create": "Iniciar Tour del Producto",
     "welcome display require": "Ejecuta tu <strong>primer flow</strong> para comenzar",
     "welcome_page": {
       "guide": "¿Necesitas orientación para ejecutar tu primer flow?",

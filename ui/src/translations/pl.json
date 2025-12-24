@@ -883,6 +883,12 @@
         "description": "Filtruj według trigger ID",
         "label": "Identyfikator Trigger"
       },
+      "triggerState": {
+        "description": "Filtruj według stanu triggera",
+        "disabled": "Wyłączone",
+        "enabled": "Włączone",
+        "label": "Stan Trigger"
+      },
       "update": "Aktualizuj",
       "value": "Wartość",
       "workerId": {
@@ -1005,6 +1011,7 @@
     "input_custom_duration": "lub wprowadź niestandardowy czas trwania:",
     "inputs": "Inputs",
     "instance": "Instancja",
+    "instance_administration": "Administracja Instancji",
     "invalid bulk delete": "Nie można usunąć wykonań",
     "invalid bulk force run": "Nie można wymusić uruchomienia wykonania",
     "invalid bulk kill": "Nie można zabić wykonań",
@@ -1307,7 +1314,7 @@
       "next": "Następny",
       "no_flows": "Brak flowów w namespace o nazwie tutorial.",
       "previous": "Poprzedni",
-      "skip": "Pomiń samouczek",
+      "skip": "Pomiń Przewodnik po Produkcie",
       "steps": {
         "0": {
           "content": "Jesteśmy zachwyceni, że jesteś tutaj.<br />Stwórzmy twój pierwszy flow.",
@@ -1737,6 +1744,7 @@
       "names": "Najemcy"
     },
     "tenantId": "Identyfikator Mandanta",
+    "tenant_administration": "Administracja Mandanta",
     "test-badge-text": "Test",
     "test-badge-tooltip": "To wykonanie zostało utworzone przez Test.",
     "theme": "Motyw",
@@ -1855,7 +1863,7 @@
     },
     "welcome aboard": "🚀 Witamy w Kestra!",
     "welcome aboard content": "Skorzystaj z naszego Przewodnika, aby stworzyć swój pierwszy flow i sprawdź Blueprints, aby znaleźć więcej przykładów.",
-    "welcome button create": "Stwórz mój pierwszy flow",
+    "welcome button create": "Rozpocznij Przewodnik po Produkcie",
     "welcome display require": "Uruchom swój <strong>pierwszy flow</strong>, aby rozpocząć",
     "welcome_page": {
       "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",

@@ -324,6 +324,10 @@ public abstract class AbstractJdbcRepository {
             }
         }
 
+        if(field == QueryFilter.Field.TRIGGER_STATE){
+            return applyTriggerStateCondition(value, operation);
+        }
+
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -341,7 +345,7 @@ public abstract class AbstractJdbcRepository {
             case CONTAINS -> DSL.field(columnName).like("%" + value + "%");
             case REGEX -> DSL.field(columnName).likeRegex((String) value);
             case PREFIX -> DSL.field(columnName).like(value + "%")
-                    .or(DSL.field(columnName).eq(value));
+                .or(DSL.field(columnName).eq(value));
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
     }
@@ -466,6 +470,23 @@ public abstract class AbstractJdbcRepository {
             case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
             case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
+        };
+    }
+
+    private Condition applyTriggerStateCondition(Object value, QueryFilter.Op operation) {
+        String triggerState =  value.toString();
+        Boolean isDisabled = switch (triggerState) {
+            case "disabled" -> true;
+            case "enabled" -> false;
+            default -> null;
+        };
+        if (isDisabled == null) {
+            return DSL.noCondition();
+        }
+        return switch (operation) {
+            case EQUALS -> field("disabled").eq(isDisabled);
+            case NOT_EQUALS -> field("disabled").ne(isDisabled);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for Trigger State: " + operation);
         };
     }
 

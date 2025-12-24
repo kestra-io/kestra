@@ -55,6 +55,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const source = ref<string | undefined>(undefined);
     const graph = ref<any | undefined>(undefined);
 
+    const validateYAML = ref<boolean>(true); // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
+
     const getBlueprints = async (options: Options) => {
         const PARAMS = {params: options.params, ...VALIDATE};
 
@@ -165,6 +167,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         blueprints,
         source,
         graph,
+
+        validateYAML,
 
         getBlueprints,
         getBlueprint,

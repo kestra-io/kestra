@@ -123,7 +123,7 @@
         "rolldown-vite": "^7.2.11",
         "rollup-plugin-copy": "^3.5.0",
         "sass": "^1.97.0",
-        "storybook": "^9.1.16",
+        "storybook": "^9.1.17",
         "storybook-vue3-router": "^6.0.2",
         "ts-node": "^10.9.2",
         "typescript": "^5.9.3",

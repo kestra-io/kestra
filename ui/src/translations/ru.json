@@ -883,6 +883,12 @@
         "description": "Фильтр по trigger ID",
         "label": "ID триггера"
       },
+      "triggerState": {
+        "description": "Фильтр по состоянию trigger",
+        "disabled": "Отключено",
+        "enabled": "Включено",
+        "label": "Состояние Trigger"
+      },
       "update": "Обновить",
       "value": "Значение",
       "workerId": {
@@ -1005,6 +1011,7 @@
     "input_custom_duration": "или введите пользовательскую продолжительность:",
     "inputs": "Входные данные",
     "instance": "Экземпляр",
+    "instance_administration": "Администрирование экземпляра",
     "invalid bulk delete": "Не удалось удалить выполнения",
     "invalid bulk force run": "Не удалось принудительно запустить executions",
     "invalid bulk kill": "Не удалось убить выполнения",
@@ -1307,7 +1314,7 @@
       "next": "Далее",
       "no_flows": "Нет доступных flows в namespace учебника.",
       "previous": "Назад",
-      "skip": "Пропустить учебник",
+      "skip": "Пропустить ознакомительный тур с продуктом",
       "steps": {
         "0": {
           "content": "Мы рады видеть вас здесь.<br />Давайте создадим ваш первый flow.",
@@ -1737,6 +1744,7 @@
       "names": "Арендаторы"
     },
     "tenantId": "ID арендатора",
+    "tenant_administration": "Администрирование Манданта",
     "test-badge-text": "Тест",
     "test-badge-tooltip": "Это выполнение было создано тестом",
     "theme": "Тема",
@@ -1855,7 +1863,7 @@
     },
     "welcome aboard": "🚀 Добро пожаловать в Kestra!",
     "welcome aboard content": "Используйте наше Руководство, чтобы создать ваш первый flow и ознакомьтесь с Blueprints для поиска дополнительных примеров.",
-    "welcome button create": "Создать мой первый flow",
+    "welcome button create": "Начать ознакомительный тур с продуктом",
     "welcome display require": "Запустите ваш <strong>первый flow</strong>, чтобы начать",
     "welcome_page": {
       "guide": "Нужна помощь в выполнении вашего первого flow?",

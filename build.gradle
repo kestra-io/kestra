@@ -222,6 +222,7 @@ subprojects {subProj ->
 
         def commonTestConfig = { Test t ->
             t.ignoreFailures = true
+            t.finalizedBy jacocoTestReport
 
             // set Xmx for test workers
             t.maxHeapSize = '4g'

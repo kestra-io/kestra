@@ -57,7 +57,7 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-        UPDATE_TASK_FUNCTION_INJECTION_KEY,
+        UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys";
     import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
     import debounce from "lodash/debounce";
@@ -189,7 +189,7 @@
         emit("closeTask")
     })
 
-    provide(UPDATE_TASK_FUNCTION_INJECTION_KEY, (yaml) => {
+    provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml) => {
         editorUpdate(yaml)
     })
 

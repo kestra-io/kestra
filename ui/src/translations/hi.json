@@ -1314,7 +1314,7 @@
       "next": "अगला",
       "no_flows": "ट्यूटोरियल namespace के अंतर्गत कोई flows उपलब्ध नहीं हैं।",
       "previous": "पिछला",
-      "skip": "ट्यूटोरियल छोड़ें",
+      "skip": "उत्पाद टूर छोड़ें",
       "steps": {
         "0": {
           "content": "हमें खुशी है कि आप यहाँ हैं।<br />आइए अपना पहला flow बनाएं।",
@@ -1863,7 +1863,7 @@
     },
     "welcome aboard": "🚀 केस्ट्रा में आपका स्वागत है!",
     "welcome aboard content": "अपना पहला flow बनाने के लिए हमारे Guided Tour का उपयोग करें और अधिक उदाहरण खोजने के लिए Blueprints देखें।",
-    "welcome button create": "मेरा पहला flow बनाएं",
+    "welcome button create": "उत्पाद यात्रा शुरू करें",
     "welcome display require": "शुरू करने के लिए अपना <strong>पहला flow</strong> चलाएँ",
     "welcome_page": {
       "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",

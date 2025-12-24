@@ -1314,7 +1314,7 @@
       "next": "下一步",
       "no_flows": "教程命名空间下没有可用的流程。",
       "previous": "上一步",
-      "skip": "跳过教程",
+      "skip": "跳过产品指南",
       "steps": {
         "0": {
           "content": "我们很高兴你在这里。<br />让我们创建你的第一个流程。",
@@ -1863,7 +1863,7 @@
     },
     "welcome aboard": "🚀 欢迎使用 Kestra!",
     "welcome aboard content": "使用我们的引导游览来创建你的第一个流程，并查看蓝图以找到更多示例。",
-    "welcome button create": "创建我的第一个流程",
+    "welcome button create": "开始产品导览",
     "welcome display require": "运行你的 <strong>第一个流程</strong> 以开始",
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",

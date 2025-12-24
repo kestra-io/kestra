@@ -355,7 +355,7 @@
                     autoRefreshInterval: 10
                 },
                 defaultPreferences: {
-                    theme: "light",
+                    theme: "syncWithSystem",
                     logsFontSize: 12,
                     editorFontFamily: "'Source Code Pro', monospace",
                     editorFontSize: 12,

@@ -12,7 +12,7 @@ _Example: Replaces legacy scroll directive with the new API._
 ### 🔗 Related Issue
 
 Which issue does this PR resolve? Use [GitHub Keywords](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/using-keywords-in-issues-and-pull-requests#linking-a-pull-request-to-an-issue) to automatically link the pull request to the issue.  
-_Example: Closes https://github.com/kestra-io/kestra/issues/12345._
+_Example: Closes https://github.com/kestra-io/kestra/issues/ISSUE_NUMBER._
 
 ### 🎨 Frontend Checklist
 

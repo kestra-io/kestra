@@ -6,7 +6,7 @@
                     <Keyboard />
                 </el-icon>
                 <span class="fs-6">
-                    {{ t("editor_shortcuts.label") }}
+                    {{ $t("editor_shortcuts.label") }}
                 </span>
             </div>
         </template>
@@ -27,7 +27,7 @@
                     </template>
                 </div>
                 <div class="text-break">
-                    {{ t(command.description) }}
+                    {{ $t(command.description) }}
                 </div>
             </div>
         </div>
@@ -35,11 +35,9 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
     import {useKeyShortcuts} from "../../utils/useKeyShortcuts";
 
-    const {t} = useI18n();
     const {isKeyShortcutsDialogShown} = useKeyShortcuts();
 
     const commands = [

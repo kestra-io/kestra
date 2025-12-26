@@ -73,4 +73,18 @@ class ForEachTest {
         assertThat(seconds.get(0).getIteration()).isEqualTo(0);
         assertThat(seconds.get(1).getIteration()).isEqualTo(1);
     }
+    @Test
+    @ExecuteFlow("flows/valids/foreach-duplication.yaml")
+    void duplication(Execution execution){
+        List<TaskRun> allTasks = execution.findTaskRunsByTaskId("log_task");
+        assertThat(allTasks).hasSize(7);
+        assertThat(allTasks.getFirst().getValue()).isEqualTo("1");
+        assertThat(allTasks.get(1).getValue()).isEqualTo("2");
+        assertThat(allTasks.get(2).getValue()).isEqualTo("1");
+        assertThat(allTasks.get(3).getValue()).isEqualTo("2");
+        assertThat(allTasks.get(4).getValue()).isEqualTo("5");
+        assertThat(allTasks.get(5).getValue()).isEqualTo("5");
+        assertThat(allTasks.getLast().getValue()).isEqualTo("5");
+    }
+
 }

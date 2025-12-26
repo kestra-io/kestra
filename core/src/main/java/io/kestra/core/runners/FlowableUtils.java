@@ -523,12 +523,7 @@ public class FlowableUtils {
             throw new IllegalVariableEvaluationException("Unknown value type: " + value.getClass());
         }
 
-        List<Object> distinctValue = values
-            .stream()
-            .distinct()
-            .toList();
-
-        long nullCount = distinctValue
+        long nullCount = values
             .stream()
             .filter(Objects::isNull)
             .count();
@@ -542,7 +537,7 @@ public class FlowableUtils {
         ArrayList<ResolvedTask> result = new ArrayList<>();
 
         int iteration = 0;
-        for (Object current : distinctValue) {
+        for (Object current : values) {
             try {
                 String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
                 for (Task task : tasks) {

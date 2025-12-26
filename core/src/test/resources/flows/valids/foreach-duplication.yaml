@@ -1,0 +1,11 @@
+id: foreach-duplication
+namespace: io.kestra.tests
+
+tasks:
+  - id: foreach
+    type: io.kestra.plugin.core.flow.ForEach
+    values:  [1,2,1,2,5,5,5]
+    tasks:
+      - id: log_task
+        type: io.kestra.plugin.core.log.Log
+        message: "{{taskrun.value}}"

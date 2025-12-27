@@ -72,6 +72,7 @@
 <script lang="ts">
     export const FILES_SET_DIRTY_INJECTION_KEY = Symbol("files-set-dirty-injection-key") as InjectionKey<(payload: { path: string; dirty: boolean }) => void>;
     export const FILES_UPDATE_CONTENT_INJECTION_KEY = Symbol("files-update-content-injection-key") as InjectionKey<(payload: { path: string; content: string }) => void>;
+    export const FILES_CHECK_EXISTS_INJECTION_KEY = Symbol("files-check-exists-injection-key") as InjectionKey<(path: string) => boolean>;
 
     export interface EditorTabProps {
         name: string;
@@ -104,10 +105,10 @@
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
     import Utils from "../../utils/utils";
+    import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
 
     const route = useRoute();
     const router = useRouter();
-
     const flowStore = useFlowStore();
 
     const cursor = ref();
@@ -129,21 +130,48 @@
     const props = defineProps<EditorTabProps>();
 
     provide(EDITOR_WRAPPER_INJECTION_KEY, props.flow);
-
+    const checkFileExists = inject(FILES_CHECK_EXISTS_INJECTION_KEY);
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY);
     const sourceNS = ref("")
     const savedSourceNS = ref("")
 
     const source = computed(() => props.flow ? flowStore.flowYaml : sourceNS.value);
     const savedSource = computed(() => props.flow ? flowStore.flowYamlOrigin : savedSourceNS.value);
 
+
+    // Watch for file existence - close tab if file is deleted
+    watch(() => props.path, async (newPath) => {
+        if (!newPath || props.flow) return;
+
+        // Check if file still exists in the file tree
+        const exists = checkFileExists?.(newPath);
+
+        if (exists === false) {
+            
+            closeTab?.({path: newPath});
+        }
+    }, {immediate: false});
+
+    // Periodic check for file existence (every 2 seconds)
+    let fileExistenceInterval: ReturnType<typeof setInterval> | null = null;
+
+
     async function loadFile() {
         if (props.dirty || props.flow) return;
 
         const fileNamespace = namespace.value ?? route.params?.namespace;
         if (!fileNamespace) return;
-        sourceNS.value = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
-
-        savedSourceNS.value = source.value;
+        
+        try {
+            sourceNS.value = await namespacesStore.readFile({
+                namespace: fileNamespace.toString(), 
+                path: props.path ?? ""
+            });
+            savedSourceNS.value = source.value;
+        } catch (error) {
+            // File doesn't exist anymore, close the tab
+            closeTab?.({path: props.path});
+        }
     }
 
     const isDirty = computed(() => source.value !== savedSource.value);
@@ -161,6 +189,7 @@
         }
     });
 
+
     onMounted(() => {
         if(props.flow){
             pluginsStore.lazyLoadSchemaType({type: "flow"});
@@ -172,7 +201,16 @@
             draftSource.value = undefined;
             aiCopilotOpened.value = true;
         }
+        if (!props.flow && props.path) {
+            fileExistenceInterval = setInterval(() => {
+                const exists = checkFileExists?.(props.path);
+                if (exists === false) {
+                    closeTab?.({path: props.path});
+                }
+            }, 500); 
+        }
     });
+
 
     const LANGS_WITH_WORKERS_MAP = {
         yaml: "yaml",
@@ -207,6 +245,12 @@
         window.removeEventListener("keydown", handleGlobalSave);
         window.removeEventListener("keydown", toggleAiShortcut);
         pluginsStore.editorPlugin = undefined;
+
+
+        if (fileExistenceInterval) {
+            clearInterval(fileExistenceInterval);
+        }
+
     });
 
     const editorRefElement = ref<InstanceType<typeof Editor>>();

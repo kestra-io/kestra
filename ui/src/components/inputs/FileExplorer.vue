@@ -416,7 +416,7 @@
     }>();
 
     const openTab = inject(FILES_OPEN_TAB_INJECTION_KEY);
-
+  
     const route = useRoute();
     const namespacesStore = useNamespacesStore();
     const filesStore = useFileExplorerStore();
@@ -593,7 +593,7 @@
         }
 
         for(const dd in dropdowns.value){
-            if(dd !== id){
+            if(dd !== id && dropdowns.value[dd]){
                 dropdowns.value[dd].handleClose();
             }
         };

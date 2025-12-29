@@ -123,7 +123,8 @@
                     },
                     position: "bottom",
                     ...DEFAULTS,
-                    display: props.short ? false : true,},
+                    display: props.short ? false : true,
+                },
                 y: {
                     title: {
                         display: props.short || props.execution ? false : true,

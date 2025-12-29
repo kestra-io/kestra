@@ -56,7 +56,10 @@
                                 <div v-if="!system && blueprint.tags?.length > 0" class="tags-section">
                                     <span v-for="tag in processedTags(blueprint.tags)" :key="tag.original" class="tag-item">{{ tag.display }}</span>
                                 </div>
-                                <div class="text-section">
+                                <div v-if="blueprint.template" class="tags-section">
+                                    <span class="tag-item">{{ $t('template') }}</span>
+                                </div>
+                                <div class="text-section">                                        
                                     <h3 class="title">
                                         {{ blueprint.title ?? blueprint.id }}
                                     </h3>
@@ -151,6 +154,7 @@
         id: string;
         tags: string[];
         title?: string;
+        template?: Record<string, any>;
     }[] | undefined>(undefined);
     const error = ref(false);
     const icon = {ContentCopy};

@@ -1,11 +1,11 @@
 <template>
     <nav class="d-flex align-items-center w-100 gap-3 top-bar">
+        <SidebarToggleButton
+            v-if="layoutStore.sideMenuCollapsed"
+            @toggle="layoutStore.setSideMenuCollapsed(false)"
+        />
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <div class="d-flex align-items-end gap-2">
-                <SidebarToggleButton
-                    v-if="layoutStore.sideMenuCollapsed"
-                    @toggle="layoutStore.setSideMenuCollapsed(false)"
-                />
                 <div class="d-flex flex-column gap-2">
                     <el-breadcrumb v-if="breadcrumb">
                         <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">

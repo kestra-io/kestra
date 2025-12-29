@@ -7,6 +7,7 @@ import {useCoreStore} from "../stores/core"
 import * as BasicAuth from "../utils/basicAuth"
 import {useAuthStore} from "override/stores/auth"
 import {useMiscStore} from "override/stores/misc";
+import {useUnsavedChangesStore} from "../stores/unsavedChanges"
 
 let pendingRoute = false
 let requestsTotal = 0
@@ -97,7 +98,7 @@ export const createAxios = (
                 const coreStore = useCoreStore()
                 coreStore.message = {
                     variant: "error",
-                    response: errorResponse,
+                    response: errorResponse.response,
                     content: errorResponse,
                 }
                 return Promise.reject(errorResponse)
@@ -149,7 +150,7 @@ export const createAxios = (
                     toRefreshQueue = []
 
                     document.body.classList.add("login")
-                    useCoreStore().unsavedChange = false
+                    useUnsavedChangesStore().unsavedChange = false
                     useLayoutStore().setTopNavbar(undefined)
                     BasicAuth.logout()
                     delete instance.defaults.headers.common["Authorization"]
@@ -211,7 +212,7 @@ export const createAxios = (
                         toRefreshQueue = []
 
                         document.body.classList.add("login")
-                        useCoreStore().unsavedChange = false
+                        useUnsavedChangesStore().unsavedChange = false
                         useLayoutStore().setTopNavbar(undefined)
                         BasicAuth.logout()
                         delete instance.defaults.headers.common["Authorization"]

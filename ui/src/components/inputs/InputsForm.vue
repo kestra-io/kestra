@@ -263,7 +263,7 @@
 <script lang="ts">
     import {ElMessage} from "element-plus";
     import ValidationError from "../flows/ValidationError.vue";
-    import {toRaw} from "vue";
+    import {markRaw, toRaw} from "vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
@@ -336,10 +336,10 @@
                 editingArrayId: null,
                 editableItems: {},
                 // expose icon components to the template so linters and the template can resolve them
-                DeleteOutline,
-                Pencil,
-                Plus,
-                ContentSave
+                DeleteOutline: markRaw(DeleteOutline),
+                Pencil:markRaw(Pencil),
+                Plus:markRaw(Plus),
+                ContentSave:markRaw(ContentSave)
             };
         },
         emits: ["update:modelValue", "update:modelValueNoDefault", "update:checks", "confirm", "validation"],
@@ -566,6 +566,7 @@
                 } else {
                     this.$emit("validation", {
                         formData: formData,
+                        inputsMetaData: this.inputsMetaData,
                         callback: (response) => {
                             metadataCallback(response);
                         }

@@ -7,6 +7,8 @@ import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -20,6 +22,9 @@ public abstract class AbstractJdbcExecutionDelayStorage extends AbstractJdbcRepo
 
     public void get(Consumer<ExecutionDelay> consumer) {
         ZonedDateTime now = ZonedDateTime.now();
+        // 'date' column in the table is in UTC
+        // convert 'now' to UTC LocalDateTime to avoid any timezone/offset interpretation by the database.
+        LocalDateTime localDateTimeNow = now.withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
 
         this.jdbcRepository
             .getDslContextWrapper()
@@ -28,9 +33,7 @@ public abstract class AbstractJdbcExecutionDelayStorage extends AbstractJdbcRepo
                     .using(configuration)
                     .select(AbstractJdbcRepository.field("value"))
                     .from(this.jdbcRepository.getTable())
-                    .where(
-                        AbstractJdbcRepository.field("date").lessOrEqual(now.toOffsetDateTime())
-                    )
+                    .where(AbstractJdbcRepository.field("date").lessOrEqual(localDateTimeNow))
                     .forUpdate()
                     .skipLocked();
 

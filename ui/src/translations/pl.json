@@ -883,6 +883,12 @@
         "description": "Filtruj według trigger ID",
         "label": "Identyfikator Trigger"
       },
+      "triggerState": {
+        "description": "Filtruj według stanu triggera",
+        "disabled": "Wyłączone",
+        "enabled": "Włączone",
+        "label": "Stan Trigger"
+      },
       "update": "Aktualizuj",
       "value": "Wartość",
       "workerId": {
@@ -958,6 +964,7 @@
     "flow": "Flow",
     "flow already exists": "Flow już istnieje",
     "flow creation": "Utworzenie flow",
+    "flow creation denied in namespace": "Nie masz uprawnień do tworzenia flow w namespace `{namespace}`.",
     "flow delete": "Czy na pewno chcesz usunąć <code>{flowCount}</code> flow(s)?",
     "flow deleted, you can restore it": "Flow został usunięty i jest to widok tylko do odczytu. Nadal możesz go przywrócić.",
     "flow disable": "Czy na pewno chcesz wyłączyć <code>{flowCount}</code> flow(s)?",
@@ -1004,6 +1011,7 @@
     "input_custom_duration": "lub wprowadź niestandardowy czas trwania:",
     "inputs": "Inputs",
     "instance": "Instancja",
+    "instance_administration": "Administracja Instancji",
     "invalid bulk delete": "Nie można usunąć wykonań",
     "invalid bulk force run": "Nie można wymusić uruchomienia wykonania",
     "invalid bulk kill": "Nie można zabić wykonań",
@@ -1026,8 +1034,8 @@
     "kestra": "Kestra",
     "key": "Klucz",
     "kill": "Zakończ",
-    "kill only parents": "Zakończ tylko rodziców",
-    "kill parents and subflow": "Zakończ rodziców i subflows",
+    "kill only parents": "Zabij tylko bieżący",
+    "kill parents and subflow": "Zatrzymaj bieżący flow i subflow",
     "killed confirm": "Czy na pewno chcesz zakończyć wykonanie <code>{id}</code>?",
     "killed done": "Wykonanie jest w kolejce do zakończenia",
     "kv": {
@@ -1080,6 +1088,7 @@
     "min": "Min",
     "minutes": "Minuty",
     "missingSource": "Brak źródła",
+    "modify_inputs": "Modyfikuj inputy",
     "monogram": "Monogram",
     "months": "Miesiące",
     "more_actions": "Więcej akcji",
@@ -1306,7 +1315,7 @@
       "next": "Następny",
       "no_flows": "Brak flowów w namespace o nazwie tutorial.",
       "previous": "Poprzedni",
-      "skip": "Pomiń samouczek",
+      "skip": "Pomiń Przewodnik po Produkcie",
       "steps": {
         "0": {
           "content": "Jesteśmy zachwyceni, że jesteś tutaj.<br />Stwórzmy twój pierwszy flow.",
@@ -1466,6 +1475,7 @@
     "resumed confirm": "Czy na pewno chcesz wznowić wykonanie <code>{id}</code>?",
     "resumed done": "Wykonanie zostało wznowione",
     "resumed title": "Wznów wykonanie <code>{id}</code>",
+    "reuse_original_inputs": "Ponownie użyj oryginalnych inputów",
     "revision": "Wersja",
     "revisions": "Wersje",
     "row count": "Liczba wierszy",
@@ -1736,6 +1746,7 @@
       "names": "Najemcy"
     },
     "tenantId": "Identyfikator Mandanta",
+    "tenant_administration": "Administracja Mandanta",
     "test-badge-text": "Test",
     "test-badge-tooltip": "To wykonanie zostało utworzone przez Test.",
     "theme": "Motyw",
@@ -1854,7 +1865,7 @@
     },
     "welcome aboard": "🚀 Witamy w Kestra!",
     "welcome aboard content": "Skorzystaj z naszego Przewodnika, aby stworzyć swój pierwszy flow i sprawdź Blueprints, aby znaleźć więcej przykładów.",
-    "welcome button create": "Stwórz mój pierwszy flow",
+    "welcome button create": "Rozpocznij Przewodnik po Produkcie",
     "welcome display require": "Uruchom swój <strong>pierwszy flow</strong>, aby rozpocząć",
     "welcome_page": {
       "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",

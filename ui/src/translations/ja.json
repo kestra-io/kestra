@@ -883,6 +883,12 @@
         "description": "トリガーIDでフィルター",
         "label": "トリガーID"
       },
+      "triggerState": {
+        "description": "トリガー状態でフィルター",
+        "disabled": "無効",
+        "enabled": "有効",
+        "label": "トリガー状態"
+      },
       "update": "更新",
       "value": "値",
       "workerId": {
@@ -958,6 +964,7 @@
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",
     "flow creation": "Flow作成",
+    "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "flow delete": "<code>{flowCount}</code>件のflowを削除してもよろしいですか？",
     "flow deleted, you can restore it": "Flowは削除されており、これは読み取り専用ビューです。復元することは可能です。",
     "flow disable": "<code>{flowCount}</code>件のflowを無効化してもよろしいですか？",
@@ -1004,6 +1011,7 @@
     "input_custom_duration": "またはカスタム期間を入力してください:",
     "inputs": "Inputs",
     "instance": "インスタンス",
+    "instance_administration": "インスタンス管理",
     "invalid bulk delete": "実行を削除できませんでした",
     "invalid bulk force run": "実行を強制的に開始できませんでした",
     "invalid bulk kill": "実行をkillできませんでした",
@@ -1026,8 +1034,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "キル",
-    "kill only parents": "親のみをキル",
-    "kill parents and subflow": "親とsubflowsをキル",
+    "kill only parents": "現在のもののみを終了",
+    "kill parents and subflow": "現在のflowとsubflowを終了",
     "killed confirm": "実行<code>{id}</code>をキルしてもよろしいですか？",
     "killed done": "実行はキルのためにキューに入れられました",
     "kv": {
@@ -1080,6 +1088,7 @@
     "min": "Min",
     "minutes": "分",
     "missingSource": "ソースが見つかりません",
+    "modify_inputs": "入力を変更",
     "monogram": "モノグラム",
     "months": "月",
     "more_actions": "その他のアクション",
@@ -1306,7 +1315,7 @@
       "next": "次へ",
       "no_flows": "チュートリアルnamespaceに利用可能なflowはありません。",
       "previous": "前へ",
-      "skip": "チュートリアルをスキップ",
+      "skip": "プロダクトツアーをスキップ",
       "steps": {
         "0": {
           "content": "ここに来てくれてとても嬉しいです。<br />最初のflowを作成しましょう。",
@@ -1466,6 +1475,7 @@
     "resumed confirm": "実行<code>{id}</code>を再開してもよろしいですか？",
     "resumed done": "実行が再開されました",
     "resumed title": "実行<code>{id}</code>を再開",
+    "reuse_original_inputs": "元のinputを再利用",
     "revision": "リビジョン",
     "revisions": "リビジョン",
     "row count": "行数",
@@ -1736,6 +1746,7 @@
       "names": "テナント"
     },
     "tenantId": "テナントID",
+    "tenant_administration": "テナント管理",
     "test-badge-text": "テスト",
     "test-badge-tooltip": "この実行はテストによって作成されました",
     "theme": "テーマ",
@@ -1854,7 +1865,7 @@
     },
     "welcome aboard": "🚀 Kestraへようこそ！",
     "welcome aboard content": "ガイド付きツアーを利用して最初のflowを作成し、Blueprintsでさらに多くの例を見つけてください。",
-    "welcome button create": "最初のflowを作成",
+    "welcome button create": "プロダクトツアーを開始",
     "welcome display require": "<strong>最初のflow</strong>を実行して始めましょう",
     "welcome_page": {
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？",

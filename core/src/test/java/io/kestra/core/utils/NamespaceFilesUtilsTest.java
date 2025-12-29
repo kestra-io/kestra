@@ -12,6 +12,7 @@ import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.plugin.core.log.Log;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -20,7 +21,6 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayInputStream;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 @Execution(ExecutionMode.SAME_THREAD)
 class NamespaceFilesUtilsTest {
     @Inject
@@ -44,9 +44,6 @@ class NamespaceFilesUtilsTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;
-
-    @Inject
-    NamespaceFilesUtils namespaceFilesUtils;
 
     @Inject
     NamespaceFactory namespaceFactory;
@@ -66,7 +63,7 @@ class NamespaceFilesUtilsTest {
             namespaceStorage.putFile(Path.of("/" + i + ".txt"), data);
         }
 
-        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().build());
+        NamespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().build());
 
         List<LogEntry> logEntry = TestsUtils.awaitLogs(logs, 1);
         receive.blockLast();
@@ -91,7 +88,7 @@ class NamespaceFilesUtilsTest {
             namespaceStorage.putFile(Path.of("/" + i + ".txt"), data);
         }
 
-        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.ofValue(List.of(namespace))).build());
+        NamespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.ofValue(List.of(namespace))).build());
 
         List<LogEntry> logEntry = TestsUtils.awaitLogs(logs, 1);
         receive.blockLast();
@@ -116,7 +113,7 @@ class NamespaceFilesUtilsTest {
         namespaceStorage.putFile(Path.of("/folder2/test.txt"), data);
         namespaceStorage.putFile(Path.of("/test.txt"), data);
 
-        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.ofValue(List.of(namespace))).build());
+        NamespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.ofValue(List.of(namespace))).build());
 
         List<LogEntry> logEntry = TestsUtils.awaitLogs(logs, 1);
         receive.blockLast();
@@ -141,7 +138,7 @@ class NamespaceFilesUtilsTest {
         namespaceFactory.of(MAIN_TENANT, ns1, storageInterface).putFile(Path.of("/test.txt"), data);
         namespaceFactory.of(MAIN_TENANT, ns2, storageInterface).putFile(Path.of("/test.txt"), data);
 
-        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder()
+        NamespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder()
             .namespaces(Property.ofValue(List.of(ns1, ns2)))
             .folderPerNamespace(Property.ofValue(true))
             .build());

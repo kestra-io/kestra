@@ -81,7 +81,7 @@ public class MetadataMigrationService {
             }));
     }
 
-    public void nsFilesMigration() throws IOException {
+    public void nsFilesMigration(boolean verbose) throws IOException {
         this.namespacesPerTenant().entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
             .flatMap(throwFunction(namespaceForTenant -> {
@@ -92,6 +92,9 @@ public class MetadataMigrationService {
             .forEach(throwConsumer(nsFileMetadata -> {
                 if (namespaceFileMetadataRepository.findByPath(nsFileMetadata.getTenantId(), nsFileMetadata.getNamespace(), nsFileMetadata.getPath()).isEmpty()) {
                     namespaceFileMetadataRepository.save(nsFileMetadata);
+                    if (verbose) {
+                        System.out.println("Migrated namespace file metadata: " + nsFileMetadata.getNamespace() + " - " + nsFileMetadata.getPath());
+                    }
                 }
             }));
     }

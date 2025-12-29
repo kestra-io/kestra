@@ -883,6 +883,12 @@
         "description": "按 trigger ID 筛选",
         "label": "触发器 ID"
       },
+      "triggerState": {
+        "description": "按触发器状态筛选",
+        "disabled": "禁用",
+        "enabled": "启用",
+        "label": "触发状态"
+      },
       "update": "更新",
       "value": "值",
       "workerId": {
@@ -958,6 +964,7 @@
     "flow": "流程",
     "flow already exists": "流程已存在",
     "flow creation": "流程创建",
+    "flow creation denied in namespace": "您没有权限在namespace `{namespace}`中创建flows。",
     "flow delete": "确定要删除 <code>{flowCount}</code> 个流程吗？",
     "flow deleted, you can restore it": "流程已删除，这是只读视图。你仍然可以恢复它。",
     "flow disable": "确定要禁用 <code>{flowCount}</code> 个流程吗？",
@@ -1004,6 +1011,7 @@
     "input_custom_duration": "或输入自定义持续时间：",
     "inputs": "输入",
     "instance": "实例",
+    "instance_administration": "实例管理",
     "invalid bulk delete": "无法删除执行",
     "invalid bulk force run": "无法强制运行执行",
     "invalid bulk kill": "无法终止执行",
@@ -1026,8 +1034,8 @@
     "kestra": "Kestra",
     "key": "键",
     "kill": "终止",
-    "kill only parents": "仅终止父流程",
-    "kill parents and subflow": "终止父流程和子流程",
+    "kill only parents": "仅终止当前",
+    "kill parents and subflow": "终止当前和subflows",
     "killed confirm": "确定要终止执行 <code>{id}</code> 吗？",
     "killed done": "执行已排队终止",
     "kv": {
@@ -1080,6 +1088,7 @@
     "min": "最小",
     "minutes": "分钟",
     "missingSource": "缺少源",
+    "modify_inputs": "修改输入",
     "monogram": "字母组合",
     "months": "月份",
     "more_actions": "更多操作",
@@ -1306,7 +1315,7 @@
       "next": "下一步",
       "no_flows": "教程命名空间下没有可用的流程。",
       "previous": "上一步",
-      "skip": "跳过教程",
+      "skip": "跳过产品指南",
       "steps": {
         "0": {
           "content": "我们很高兴你在这里。<br />让我们创建你的第一个流程。",
@@ -1466,6 +1475,7 @@
     "resumed confirm": "确定要恢复执行 <code>{id}</code> 吗？",
     "resumed done": "执行已恢复",
     "resumed title": "恢复执行 <code>{id}</code>",
+    "reuse_original_inputs": "重用原始input",
     "revision": "修订版",
     "revisions": "修订版",
     "row count": "行数",
@@ -1736,6 +1746,7 @@
       "names": "租户"
     },
     "tenantId": "租户 ID",
+    "tenant_administration": "租户管理",
     "test-badge-text": "测试",
     "test-badge-tooltip": "此执行由测试创建",
     "theme": "主题",
@@ -1854,7 +1865,7 @@
     },
     "welcome aboard": "🚀 欢迎使用 Kestra!",
     "welcome aboard content": "使用我们的引导游览来创建你的第一个流程，并查看蓝图以找到更多示例。",
-    "welcome button create": "创建我的第一个流程",
+    "welcome button create": "开始产品导览",
     "welcome display require": "运行你的 <strong>第一个流程</strong> 以开始",
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",

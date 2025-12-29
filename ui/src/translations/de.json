@@ -883,6 +883,12 @@
         "description": "Nach Trigger-ID filtern",
         "label": "Trigger-ID"
       },
+      "triggerState": {
+        "description": "Nach Trigger-Zustand filtern",
+        "disabled": "Deaktiviert",
+        "enabled": "Aktiviert",
+        "label": "Trigger-Zustand"
+      },
       "update": "Aktualisieren",
       "value": "Wert",
       "workerId": {
@@ -958,6 +964,7 @@
     "flow": "Flow",
     "flow already exists": "Flow existiert bereits",
     "flow creation": "Flow-Erstellung",
+    "flow creation denied in namespace": "Sie haben keine Berechtigung, Flows im Namespace `{namespace}` zu erstellen.",
     "flow delete": "Sind Sie sicher, dass Sie <code>{flowCount}</code> Flow(s) löschen möchten?",
     "flow deleted, you can restore it": "Der Flow wurde gelöscht und dies ist eine schreibgeschützte Ansicht. Sie können ihn dennoch wiederherstellen.",
     "flow disable": "Sind Sie sicher, dass Sie <code>{flowCount}</code> Flow(s) deaktivieren möchten?",
@@ -1004,6 +1011,7 @@
     "input_custom_duration": "oder benutzerdefinierte Dauer eingeben:",
     "inputs": "Inputs",
     "instance": "Instanz",
+    "instance_administration": "Instanzverwaltung",
     "invalid bulk delete": "Ausführungen konnten nicht gelöscht werden",
     "invalid bulk force run": "Konnte Ausführungen nicht erzwingen",
     "invalid bulk kill": "Ausführungen konnten nicht beendet werden",
@@ -1026,8 +1034,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "Beenden",
-    "kill only parents": "Nur Eltern beenden",
-    "kill parents and subflow": "Eltern und Subflows beenden",
+    "kill only parents": "Nur aktuellen beenden",
+    "kill parents and subflow": "Aktuelle und Subflows beenden",
     "killed confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> beenden möchten?",
     "killed done": "Ausführung ist zum Beenden eingereiht",
     "kv": {
@@ -1080,6 +1088,7 @@
     "min": "Min",
     "minutes": "Minuten",
     "missingSource": "Fehlende Quelle",
+    "modify_inputs": "Eingaben ändern",
     "monogram": "Monogramm",
     "months": "Monate",
     "more_actions": "Weitere Aktionen",
@@ -1306,7 +1315,7 @@
       "next": "Weiter",
       "no_flows": "Keine Flows unter der tutorial Namespace verfügbar.",
       "previous": "Zurück",
-      "skip": "Tutorial überspringen",
+      "skip": "Produkt-Tour überspringen",
       "steps": {
         "0": {
           "content": "Wir freuen uns, dass Sie hier sind.<br />Lassen Sie uns Ihren ersten Flow erstellen.",
@@ -1466,6 +1475,7 @@
     "resumed confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> fortsetzen möchten?",
     "resumed done": "Ausführung ist fortgesetzt",
     "resumed title": "Ausführung <code>{id}</code> fortsetzen",
+    "reuse_original_inputs": "Ursprüngliche Inputs wiederverwenden",
     "revision": "Revision",
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
@@ -1736,6 +1746,7 @@
       "names": "Mandanten"
     },
     "tenantId": "Mandanten-ID",
+    "tenant_administration": "Mandantenverwaltung",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Diese Ausführung wurde durch einen Test erstellt",
     "theme": "Modus",
@@ -1854,7 +1865,7 @@
     },
     "welcome aboard": "🚀 Willkommen bei Kestra!",
     "welcome aboard content": "Nutzen Sie unsere geführte Tour, um Ihren ersten Flow zu erstellen, und schauen Sie sich Blueprints an, um weitere Beispiele zu finden.",
-    "welcome button create": "Meinen ersten Flow erstellen",
+    "welcome button create": "Produkt-Tour starten",
     "welcome display require": "Führen Sie Ihren <strong>ersten Flow</strong> aus, um loszulegen",
     "welcome_page": {
       "guide": "Benötigen Sie Unterstützung, um Ihren ersten flow auszuführen?",

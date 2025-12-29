@@ -478,8 +478,6 @@
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
-$font-size-sm: $font-size-base * 0.875; // TODO: Move it into varaibles file of ui-libs
-
 #overview {
     :deep(.el-splitter-panel:has(> .sidebar:first-child)) {
         background-color: var(--ks-background-table-row);

@@ -883,6 +883,12 @@
         "description": "ट्रिगर ID द्वारा फ़िल्टर करें",
         "label": "ट्रिगर ID"
       },
+      "triggerState": {
+        "description": "ट्रिगर स्थिति द्वारा फ़िल्टर करें",
+        "disabled": "अक्षम",
+        "enabled": "सक्रिय",
+        "label": "ट्रिगर स्थिति"
+      },
       "update": "अपडेट",
       "value": "मान",
       "workerId": {
@@ -958,6 +964,7 @@
     "flow": "Flow",
     "flow already exists": "Flow पहले से मौजूद है",
     "flow creation": "Flow निर्माण",
+    "flow creation denied in namespace": "आपके पास namespace `{namespace}` में flows बनाने की अनुमति नहीं है।",
     "flow delete": "क्या आप वाकई <code>{flowCount}</code> flow(s) को हटाना चाहते हैं?",
     "flow deleted, you can restore it": "Flow हटा दिया गया है और यह एक केवल-पढ़ने का दृश्य है। आप इसे अभी भी पुनर्स्थापित कर सकते हैं।",
     "flow disable": "क्या आप वाकई <code>{flowCount}</code> flow(s) को अक्षम करना चाहते हैं?",
@@ -1004,6 +1011,7 @@
     "input_custom_duration": "या कस्टम अवधि दर्ज करें:",
     "inputs": "इनपुट्स",
     "instance": "इंस्टेंस",
+    "instance_administration": "इंस्टेंस प्रशासन",
     "invalid bulk delete": "निष्पादन हटाने में असमर्थ",
     "invalid bulk force run": "निष्पादन को जबरन चलाने में असमर्थ",
     "invalid bulk kill": "निष्पादन kill करने में असमर्थ",
@@ -1026,8 +1034,8 @@
     "kestra": "केस्ट्रा",
     "key": "Key",
     "kill": "समाप्त करें",
-    "kill only parents": "केवल parents समाप्त करें",
-    "kill parents and subflow": "parents और subflows समाप्त करें",
+    "kill only parents": "केवल वर्तमान को समाप्त करें",
+    "kill parents and subflow": "वर्तमान और subflows को समाप्त करें",
     "killed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को समाप्त करना चाहते हैं?",
     "killed done": "निष्पादन समाप्त करने के लिए कतारबद्ध है",
     "kv": {
@@ -1080,6 +1088,7 @@
     "min": "न्यूनतम",
     "minutes": "मिनट्स",
     "missingSource": "स्रोत अनुपलब्ध",
+    "modify_inputs": "इनपुट्स संशोधित करें",
     "monogram": "मोनोग्राम",
     "months": "महीने",
     "more_actions": "अधिक क्रियाएँ",
@@ -1306,7 +1315,7 @@
       "next": "अगला",
       "no_flows": "ट्यूटोरियल namespace के अंतर्गत कोई flows उपलब्ध नहीं हैं।",
       "previous": "पिछला",
-      "skip": "ट्यूटोरियल छोड़ें",
+      "skip": "उत्पाद टूर छोड़ें",
       "steps": {
         "0": {
           "content": "हमें खुशी है कि आप यहाँ हैं।<br />आइए अपना पहला flow बनाएं।",
@@ -1466,6 +1475,7 @@
     "resumed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः आरंभ करना चाहते हैं?",
     "resumed done": "निष्पादन पुनः आरंभ किया गया है",
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
+    "reuse_original_inputs": "मूल inputs का पुनः उपयोग करें",
     "revision": "संशोधन",
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
@@ -1736,6 +1746,7 @@
       "names": "मंडल"
     },
     "tenantId": "टेनेंट ID",
+    "tenant_administration": "किरायेदार प्रशासन",
     "test-badge-text": "परीक्षण",
     "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
     "theme": "थीम",
@@ -1854,7 +1865,7 @@
     },
     "welcome aboard": "🚀 केस्ट्रा में आपका स्वागत है!",
     "welcome aboard content": "अपना पहला flow बनाने के लिए हमारे Guided Tour का उपयोग करें और अधिक उदाहरण खोजने के लिए Blueprints देखें।",
-    "welcome button create": "मेरा पहला flow बनाएं",
+    "welcome button create": "उत्पाद यात्रा शुरू करें",
     "welcome display require": "शुरू करने के लिए अपना <strong>पहला flow</strong> चलाएँ",
     "welcome_page": {
       "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",

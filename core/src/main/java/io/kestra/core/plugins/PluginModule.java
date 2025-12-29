@@ -3,6 +3,7 @@ package io.kestra.core.plugins;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -48,5 +49,6 @@ public class PluginModule extends SimpleModule {
         addDeserializer(AppPluginInterface.class, new PluginDeserializer<>());
         addDeserializer(LogExporter.class, new PluginDeserializer<>());
         addDeserializer(Asset.class, new AssetDeserializer());
+        addDeserializer(AssetExporter.class, new PluginDeserializer<>());
     }
 }

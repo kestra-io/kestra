@@ -1453,8 +1453,6 @@
     "replay from task tooltip": "Eine ähnliche Ausführung ab Task <code>{taskId}</code> erstellen",
     "replay latest revision": "Wiederholen mit neuester Revision",
     "replay the execution": "Führen Sie die Ausführung <code>{executionId}</code> für den flow <code>{flowId}</code> erneut aus.",
-    "Replay with New inputs
-": "Wiedergabe mit Inputs",
     "replayed": "Ausführung ist wiederholt",
     "required field": "Erforderliches Feld",
     "reset": "Neustarten",

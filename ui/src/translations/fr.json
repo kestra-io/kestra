@@ -1453,8 +1453,6 @@
     "replay from task tooltip": "Créer une nouvelle exécution similaire démarrant de la tâche <code>{taskId}</code>",
     "replay latest revision": "Rejouer avec la dernière révision",
     "replay the execution": "Rejouer l'exécution <code>{executionId}</code> pour le flow <code>{flowId}</code>",
-    "Replay with New inputs
-": "Rejouer avec inputs",
     "replayed": "Exécution rejouée",
     "required field": "Champ requis",
     "reset": "Recommencer",

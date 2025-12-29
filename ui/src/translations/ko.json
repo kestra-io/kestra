@@ -883,6 +883,12 @@
         "description": "트리거 ID로 필터링",
         "label": "트리거 ID"
       },
+      "triggerState": {
+        "description": "트리거 상태별 필터링",
+        "disabled": "비활성화됨",
+        "enabled": "사용 가능",
+        "label": "트리거 상태"
+      },
       "update": "업데이트",
       "value": "값",
       "workerId": {
@@ -1005,6 +1011,7 @@
     "input_custom_duration": "또는 사용자 지정 기간 입력:",
     "inputs": "Inputs",
     "instance": "인스턴스",
+    "instance_administration": "인스턴스 관리",
     "invalid bulk delete": "실행을 삭제할 수 없습니다",
     "invalid bulk force run": "실행을 강제로 실행할 수 없습니다.",
     "invalid bulk kill": "실행을 강제 종료할 수 없습니다",
@@ -1081,6 +1088,7 @@
     "min": "Min",
     "minutes": "분",
     "missingSource": "소스 누락",
+    "modify_inputs": "입력 수정",
     "monogram": "모노그램",
     "months": "개월",
     "more_actions": "추가 작업",
@@ -1307,7 +1315,7 @@
       "next": "다음",
       "no_flows": "튜토리얼 namespace에 사용할 수 있는 flow가 없습니다.",
       "previous": "이전",
-      "skip": "튜토리얼 건너뛰기",
+      "skip": "제품 투어 건너뛰기",
       "steps": {
         "0": {
           "content": "여기 오신 것을 환영합니다.<br />첫 번째 flow를 만들어 봅시다.",
@@ -1467,6 +1475,7 @@
     "resumed confirm": "실행 <code>{id}</code>을(를) 재개하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
     "resumed title": "실행 <code>{id}</code> 재개",
+    "reuse_original_inputs": "원래 input 재사용",
     "revision": "수정본",
     "revisions": "수정본들",
     "row count": "행 수",
@@ -1737,6 +1746,7 @@
       "names": "테넌트"
     },
     "tenantId": "테넌트 ID",
+    "tenant_administration": "테넌트 관리",
     "test-badge-text": "테스트",
     "test-badge-tooltip": "이 실행은 테스트에 의해 생성되었습니다.",
     "theme": "테마",
@@ -1855,7 +1865,7 @@
     },
     "welcome aboard": "🚀 Kestra에 오신 것을 환영합니다!",
     "welcome aboard content": "가이드 투어를 사용하여 첫 번째 flow를 만들고 Blueprints에서 더 많은 예제를 확인하세요.",
-    "welcome button create": "첫 번째 flow 만들기",
+    "welcome button create": "제품 투어 시작",
     "welcome display require": "<strong>첫 번째 flow</strong>를 실행하여 시작하세요",
     "welcome_page": {
       "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?",

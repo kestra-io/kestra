@@ -196,6 +196,8 @@
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
     "replay with inputs": "Replay with inputs",
+    "reuse_original_inputs": "Reuse original inputs",
+    "modify_inputs": "Modify inputs",
     "replay the execution": "Replay the execution <code>{executionId}</code> for the flow <code>{flowId}</code>",
     "prefill inputs": "Prefill",
     "current": "current",
@@ -391,6 +393,8 @@
     "conditions": "Conditions",
     "triggerId": "Trigger ID",
     "tenantId": "Tenant ID",
+    "tenant_administration": "Tenant Administration",
+    "instance_administration": "Instance Administration",
     "codeDisabled": "Disabled in Flow",
     "paused": "Paused",
     "Fold auto": "Editor: automatic fold of multi-lines",
@@ -538,7 +542,7 @@
     "welcome aboard": "\uD83D\uDE80 Welcome to Kestra!",
     "welcome aboard content": "Use our Guided Tour to create your first flow and check Blueprints to find more examples.",
     "welcome display require": "Run your <strong>first flow</strong> to get started",
-    "welcome button create": "Create my first flow",
+    "welcome button create": "Start Product Tour",
     "live help": "Live help",
     "show task documentation": "Show task documentation",
     "hide task documentation": "Hide task documentation",
@@ -945,7 +949,7 @@
       "next": "Next",
       "previous": "Previous",
       "finish": "Finish",
-      "skip": "Skip Tutorial",
+      "skip": "Skip Product Tour",
       "no_flows": "No flows available under tutorial namespace.",
       "steps": {
         "0": {
@@ -1726,6 +1730,12 @@
         "triggerExecutionId": {
             "label": "Trigger Execution ID",
             "description": "Filter by trigger execution ID"
+        },
+        "triggerState":{
+          "label": " Trigger State",
+          "description": "Filter by trigger state",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
         },
         "scope_flow": {
             "label": "Scope",

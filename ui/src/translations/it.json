@@ -883,6 +883,12 @@
         "description": "Filtra per trigger ID",
         "label": "ID del trigger"
       },
+      "triggerState": {
+        "description": "Filtra per stato del trigger",
+        "disabled": "Disabilitato",
+        "enabled": "Abilitato",
+        "label": "Stato del Trigger"
+      },
       "update": "Aggiorna",
       "value": "Valore",
       "workerId": {
@@ -1005,6 +1011,7 @@
     "input_custom_duration": "oppure inserisci durata personalizzata:",
     "inputs": "Inputs",
     "instance": "Istanza",
+    "instance_administration": "Amministrazione dell'istanza",
     "invalid bulk delete": "Impossibile eliminare le esecuzioni",
     "invalid bulk force run": "Impossibile forzare l'esecuzione delle esecuzioni",
     "invalid bulk kill": "Impossibile kill le esecuzioni",
@@ -1081,6 +1088,7 @@
     "min": "Min",
     "minutes": "Minuti",
     "missingSource": "Sorgente mancante",
+    "modify_inputs": "Modifica input",
     "monogram": "Monogramma",
     "months": "Mesi",
     "more_actions": "Altre azioni",
@@ -1307,7 +1315,7 @@
       "next": "Successivo",
       "no_flows": "Nessun flow disponibile sotto il namespace del tutorial.",
       "previous": "Precedente",
-      "skip": "Salta Tutorial",
+      "skip": "Salta il Tour del Prodotto",
       "steps": {
         "0": {
           "content": "Siamo entusiasti di averti qui.<br />Creiamo il tuo primo flow.",
@@ -1467,6 +1475,7 @@
     "resumed confirm": "Sei sicuro di voler riprendere l'esecuzione <code>{id}</code>?",
     "resumed done": "L'esecuzione è stata ripresa",
     "resumed title": "Riprendi esecuzione <code>{id}</code>",
+    "reuse_original_inputs": "Riutilizza gli input originali",
     "revision": "Revisione",
     "revisions": "Revisions",
     "row count": "Conteggio righe",
@@ -1737,6 +1746,7 @@
       "names": "Mandanti"
     },
     "tenantId": "ID del Mandante",
+    "tenant_administration": "Amministrazione del Mandante",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Questa esecuzione è stata creata da un Test",
     "theme": "Tema",
@@ -1855,7 +1865,7 @@
     },
     "welcome aboard": "🚀 Benvenuto su Kestra!",
     "welcome aboard content": "Usa il nostro Tour Guidato per creare il tuo primo flow e controlla i Blueprints per trovare altri esempi.",
-    "welcome button create": "Crea il mio primo flow",
+    "welcome button create": "Inizia il Tour del Prodotto",
     "welcome display require": "Esegui il tuo <strong>primo flow</strong> per iniziare",
     "welcome_page": {
       "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?",

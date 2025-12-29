@@ -185,15 +185,11 @@ public class TaskRun implements TenantInterface {
     }
 
     public TaskRunAttempt lastAttempt() {
-        if (this.attempts == null) {
+        if (this.attempts == null || this.attempts.isEmpty()) {
             return null;
         }
 
-        return this
-            .attempts
-            .stream()
-            .reduce((a, b) -> b)
-            .orElse(null);
+        return this.attempts.getLast();
     }
 
     public TaskRun onRunningResend() {
@@ -264,8 +260,7 @@ public class TaskRun implements TenantInterface {
      * @return The next retry date, null if maxAttempt || maxDuration is reached
      */
     public Instant nextRetryDate(AbstractRetry retry, Execution execution) {
-        if (retry.getMaxAttempts() != null && execution.getMetadata().getAttemptNumber() >= retry.getMaxAttempts()) {
-
+        if (this.attempts == null || this.attempts.isEmpty() || retry.getMaxAttempts() != null && execution.getMetadata().getAttemptNumber() >= retry.getMaxAttempts()) {
             return null;
         }
         Instant base = this.lastAttempt().getState().maxDate();

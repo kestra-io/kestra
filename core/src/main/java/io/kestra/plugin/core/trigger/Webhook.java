@@ -127,6 +127,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
+            .variables(flow.getVariables())
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,

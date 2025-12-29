@@ -13,7 +13,7 @@
                         }"
                         :defaultScope="false"
                     />
-                </template>xx
+                </template>
 
                 <template v-if="showStatChart()" #top>
                     <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault class="mb-4" />
@@ -31,10 +31,6 @@
                                 :log="log"
                                 :class="{'log-0': i === 0}"
                             />
-                        </div>
-
-                        <div v-else-if="!isLoading">
-                            <NoData :text="$t('no_logs_data_description')" />
                         </div>
                     </div>
                 </template>
@@ -55,7 +51,7 @@
     import DataTable from "../../components/layout/DataTable.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import LogLine from "../logs/LogLine.vue";
-    import NoData from "../layout/NoData.vue";
+    // NoData import is technically unused now, but safe to leave or remove 
     import {storageKeys} from "../../utils/constants";
     import {decodeSearchParams} from "../filter/utils/helpers";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";

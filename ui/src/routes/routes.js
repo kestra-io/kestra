@@ -7,6 +7,7 @@ import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
+import DemoAssets from "../components/demo/Assets.vue"
 import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
 export default [
@@ -123,6 +124,7 @@ export default [
     //Demo Pages
     {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
     {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
+    {name: "assets/list", path: "/:tenant?/assets", component: DemoAssets},
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
     {name: "admin/tenants/list", path: "/:tenant?/admin/tenants", component: DemoTenants},
     {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},

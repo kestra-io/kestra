@@ -1228,6 +1228,7 @@
       },
       "fields": {
         "general": {
+          "checks": "जांचें",
           "concurrency": "समानांतरता",
           "disabled": "अक्षम",
           "labels": "लेबल्स",

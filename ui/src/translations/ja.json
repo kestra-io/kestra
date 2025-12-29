@@ -1228,6 +1228,7 @@
       },
       "fields": {
         "general": {
+          "checks": "チェック",
           "concurrency": "並行性",
           "disabled": "無効",
           "labels": "ラベル",

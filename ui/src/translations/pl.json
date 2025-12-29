@@ -1228,6 +1228,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Kontrole",
           "concurrency": "Współbieżność",
           "disabled": "Wyłączony",
           "labels": "Etykiety",

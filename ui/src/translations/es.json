@@ -1228,6 +1228,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Comprobaciones",
           "concurrency": "Concurrente",
           "disabled": "Desactivado",
           "labels": "Etiquetas",

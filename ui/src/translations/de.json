@@ -1228,6 +1228,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Überprüfungen",
           "concurrency": "Nebenläufigkeit",
           "disabled": "Deaktiviert",
           "labels": "Labels",

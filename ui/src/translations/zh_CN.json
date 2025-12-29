@@ -1228,6 +1228,7 @@
       },
       "fields": {
         "general": {
+          "checks": "检查",
           "concurrency": "并发性",
           "disabled": "禁用",
           "labels": "标签",

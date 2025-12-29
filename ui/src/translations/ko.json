@@ -1228,6 +1228,7 @@
       },
       "fields": {
         "general": {
+          "checks": "점검",
           "concurrency": "병행성",
           "disabled": "비활성화됨",
           "labels": "레이블",

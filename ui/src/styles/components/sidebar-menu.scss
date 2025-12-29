@@ -1,6 +1,10 @@
 @import "@kestra-io/ui-libs/src/scss/variables.scss";
 
 #app {
+    .v-sidebar-menu.vsm_expanded.overlay {
+        position: absolute;
+    }
+
     .vsm--item {
         padding: 0 30px;
         transition: padding 0.2s ease;

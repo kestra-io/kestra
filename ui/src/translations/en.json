@@ -196,6 +196,8 @@
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
     "replay with inputs": "Replay with inputs",
+    "reuse_original_inputs": "Reuse original inputs",
+    "modify_inputs": "Modify inputs",
     "replay the execution": "Replay the execution <code>{executionId}</code> for the flow <code>{flowId}</code>",
     "prefill inputs": "Prefill",
     "current": "current",

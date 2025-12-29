@@ -26,21 +26,6 @@
                 </div>
 
                 <el-divider />
-                <div class="labels">
-                    <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
-                        <template #action>
-                            <SetLabels :execution />
-                        </template>
-                    </Row>
-                    <Labels :labels="execution.labels || []" />
-                </div>
-
-                <el-divider />
-                <div class="metadata">
-                    <Row :rows="metadata" />
-                </div>
-
-                <el-divider />
                 <div class="actions">
                     <Row
                         :rows="[{icon: SortVariant, label: $t('actions')}]"
@@ -59,6 +44,21 @@
                             />
                         </el-col>
                     </el-row>
+                </div>
+
+                <el-divider />
+                <div class="metadata">
+                    <Row :rows="metadata" />
+                </div>
+
+                <el-divider />
+                <div class="labels">
+                    <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
+                        <template #action>
+                            <SetLabels :execution />
+                        </template>
+                    </Row>
+                    <Labels :labels="execution.labels || []" />
                 </div>
             </div>
         </el-splitter-panel>

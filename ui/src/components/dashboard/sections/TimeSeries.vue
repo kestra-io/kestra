@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, PropType} from "vue";
+    import {computed, ref, watch, PropType, onMounted, onUnmounted} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
@@ -73,12 +73,30 @@
 
     const theme = useTheme();
 
+    const isMobile = ref(false);
+    const MOBILE_BREAKPOINT = 768; 
+
+    function checkMobile() {
+        if (typeof window === "undefined") return;
+        isMobile.value = window.innerWidth <= MOBILE_BREAKPOINT;
+    }
+
+    onMounted(() => {
+        checkMobile();
+        window.addEventListener("resize", checkMobile);
+    });
+
+    onUnmounted(() => {
+        window.removeEventListener("resize", checkMobile);
+    });
+
     const DEFAULTS = {
         display: true,
         stacked: true,
         ticks: {maxTicksLimit: 8},
         grid: {display: false},
     };
+
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
@@ -120,7 +138,7 @@
                     },
                     position: "bottom",
                     ...DEFAULTS,
-                    display: props.short ? false : true,
+                    display: isMobile.value ? true : (props.short ? false : true),
                 },
                 y: {
                     title: {
@@ -129,7 +147,7 @@
                     },
                     position: "left",
                     ...DEFAULTS,
-                    display: props.short || props.execution ? false : true,
+                    display: isMobile.value ? false : (props.short || props.execution ? false : true),
                     ticks: {
                         ...DEFAULTS.ticks,
                         callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
@@ -143,7 +161,7 @@
                         },
                         position: "right",
                         ...DEFAULTS,
-                        display: props.short ? false : true,
+                        display: isMobile.value ? false : (props.short ? false : true),
                         ticks: {
                             ...DEFAULTS.ticks,
                             callback: (value: any) => isDuration(aggregator.value[1]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
@@ -151,6 +169,7 @@
                     },
                 }),
             },
+
             onClick: (e, elements) => {
                 if (data.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) {
                     return;

@@ -25,6 +25,8 @@ interface Blueprint {
     [key: string]: any;
 }
 
+export type TemplateArgument = Record<string, Input>;
+
 export interface BlueprintTemplate {
     source: string;
     templateArguments: Record<string, Input>;
@@ -54,6 +56,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
     const blueprint = ref<Blueprint | undefined>(undefined);
     const source = ref<string | undefined>(undefined);
     const graph = ref<any | undefined>(undefined);
+
+    const validateYAML = ref<boolean>(true); // Used to enable/disable YAML validation in Monaco editor, for the purpose of Templated Blueprints
 
     const getBlueprints = async (options: Options) => {
         const PARAMS = {params: options.params, ...VALIDATE};
@@ -165,6 +169,8 @@ export const useBlueprintsStore = defineStore("blueprints", () => {
         blueprints,
         source,
         graph,
+
+        validateYAML,
 
         getBlueprints,
         getBlueprint,

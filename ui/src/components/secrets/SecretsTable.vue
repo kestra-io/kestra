@@ -156,7 +156,7 @@
                 <el-form-item :label="$t('secret.key')" prop="key">
                     <el-input v-model="secret.key" :disabled="secret.update" required />
                 </el-form-item>
-                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value">
+                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
                     <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" />
                 </el-form-item>
                 <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">

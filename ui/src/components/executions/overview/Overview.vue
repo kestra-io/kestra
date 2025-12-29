@@ -192,7 +192,7 @@
 
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
-    import Cascader from "./components/main/cascaders/Cascader.vue";
+    import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
     import PrevNext from "./components/main/PrevNext.vue";
 
@@ -406,7 +406,7 @@
         );
     };
 
-    const cascaders = [
+    const cascaders: Element[] = [
         {
             title: t("variables"),
             empty: t("no_variables"),

@@ -154,7 +154,6 @@
                     },
                 }),
             },
-
             onClick: (e, elements) => {
                 if (data.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) {
                     return;

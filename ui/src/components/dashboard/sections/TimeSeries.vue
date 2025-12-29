@@ -82,7 +82,6 @@
         ticks: {maxTicksLimit: 8},
         grid: {display: false},
     };
-
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,

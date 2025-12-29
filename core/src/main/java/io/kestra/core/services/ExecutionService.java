@@ -187,7 +187,7 @@ public class ExecutionService {
     }
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
-        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
+        if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );

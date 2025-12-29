@@ -233,7 +233,7 @@ export function useLeftMenu() {
                 ],
             },
             {
-                title: t("tenant_administration"),
+                title: t("tenant.name"),
                 routes: [
                     "admin/stats",
                     "kv",
@@ -332,7 +332,7 @@ export function useLeftMenu() {
                 ],
             },
             {
-                title: t("instance_administration"),
+                title: t("instance"),
                 routes: routeStartWith("admin/instance"),
                 href: {
                     name: "admin/instance",

@@ -1011,7 +1011,6 @@
     "input_custom_duration": "또는 사용자 지정 기간 입력:",
     "inputs": "Inputs",
     "instance": "인스턴스",
-    "instance_administration": "인스턴스 관리",
     "invalid bulk delete": "실행을 삭제할 수 없습니다",
     "invalid bulk force run": "실행을 강제로 실행할 수 없습니다.",
     "invalid bulk kill": "실행을 강제 종료할 수 없습니다",
@@ -1747,7 +1746,6 @@
       "names": "테넌트"
     },
     "tenantId": "테넌트 ID",
-    "tenant_administration": "테넌트 관리",
     "test-badge-text": "테스트",
     "test-badge-tooltip": "이 실행은 테스트에 의해 생성되었습니다.",
     "theme": "테마",

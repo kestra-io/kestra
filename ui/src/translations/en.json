@@ -393,8 +393,6 @@
     "conditions": "Conditions",
     "triggerId": "Trigger ID",
     "tenantId": "Tenant ID",
-    "tenant_administration": "Tenant Administration",
-    "instance_administration": "Instance Administration",
     "codeDisabled": "Disabled in Flow",
     "paused": "Paused",
     "Fold auto": "Editor: automatic fold of multi-lines",

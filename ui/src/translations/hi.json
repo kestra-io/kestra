@@ -1011,7 +1011,6 @@
     "input_custom_duration": "या कस्टम अवधि दर्ज करें:",
     "inputs": "इनपुट्स",
     "instance": "इंस्टेंस",
-    "instance_administration": "इंस्टेंस प्रशासन",
     "invalid bulk delete": "निष्पादन हटाने में असमर्थ",
     "invalid bulk force run": "निष्पादन को जबरन चलाने में असमर्थ",
     "invalid bulk kill": "निष्पादन kill करने में असमर्थ",
@@ -1747,7 +1746,6 @@
       "names": "मंडल"
     },
     "tenantId": "टेनेंट ID",
-    "tenant_administration": "किरायेदार प्रशासन",
     "test-badge-text": "परीक्षण",
     "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
     "theme": "थीम",

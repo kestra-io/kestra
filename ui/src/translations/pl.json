@@ -1011,7 +1011,6 @@
     "input_custom_duration": "lub wprowadź niestandardowy czas trwania:",
     "inputs": "Inputs",
     "instance": "Instancja",
-    "instance_administration": "Administracja Instancji",
     "invalid bulk delete": "Nie można usunąć wykonań",
     "invalid bulk force run": "Nie można wymusić uruchomienia wykonania",
     "invalid bulk kill": "Nie można zabić wykonań",
@@ -1747,7 +1746,6 @@
       "names": "Najemcy"
     },
     "tenantId": "Identyfikator Mandanta",
-    "tenant_administration": "Administracja Mandanta",
     "test-badge-text": "Test",
     "test-badge-tooltip": "To wykonanie zostało utworzone przez Test.",
     "theme": "Motyw",

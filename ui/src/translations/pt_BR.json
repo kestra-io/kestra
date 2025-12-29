@@ -1011,7 +1011,6 @@
     "input_custom_duration": "ou insira uma duração personalizada:",
     "inputs": "Inputs",
     "instance": "Instância",
-    "instance_administration": "Administração da Instância",
     "invalid bulk delete": "Não foi possível excluir execuções",
     "invalid bulk force run": "Não foi possível forçar a execução das execuções",
     "invalid bulk kill": "Não foi possível matar execuções",
@@ -1747,7 +1746,6 @@
       "names": "Clientes"
     },
     "tenantId": "ID do Cliente",
-    "tenant_administration": "Administração de Tenant",
     "test-badge-text": "Teste",
     "test-badge-tooltip": "Esta execução foi criada por um Teste",
     "theme": "Tema",

@@ -1011,7 +1011,6 @@
     "input_custom_duration": "oppure inserisci durata personalizzata:",
     "inputs": "Inputs",
     "instance": "Istanza",
-    "instance_administration": "Amministrazione dell'istanza",
     "invalid bulk delete": "Impossibile eliminare le esecuzioni",
     "invalid bulk force run": "Impossibile forzare l'esecuzione delle esecuzioni",
     "invalid bulk kill": "Impossibile kill le esecuzioni",
@@ -1747,7 +1746,6 @@
       "names": "Mandanti"
     },
     "tenantId": "ID del Mandante",
-    "tenant_administration": "Amministrazione del Mandante",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Questa esecuzione è stata creata da un Test",
     "theme": "Tema",

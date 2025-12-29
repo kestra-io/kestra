@@ -1011,7 +1011,6 @@
     "input_custom_duration": "或输入自定义持续时间：",
     "inputs": "输入",
     "instance": "实例",
-    "instance_administration": "实例管理",
     "invalid bulk delete": "无法删除执行",
     "invalid bulk force run": "无法强制运行执行",
     "invalid bulk kill": "无法终止执行",
@@ -1747,7 +1746,6 @@
       "names": "租户"
     },
     "tenantId": "租户 ID",
-    "tenant_administration": "租户管理",
     "test-badge-text": "测试",
     "test-badge-tooltip": "此执行由测试创建",
     "theme": "主题",

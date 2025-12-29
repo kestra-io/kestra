@@ -1011,7 +1011,6 @@
     "input_custom_duration": "o ingrese duración personalizada:",
     "inputs": "Entradas",
     "instance": "Instancia",
-    "instance_administration": "Administración de Instancia",
     "invalid bulk delete": "No se pudieron eliminar las ejecuciones",
     "invalid bulk force run": "No se pudo forzar la ejecución de ejecuciones",
     "invalid bulk kill": "No se pudieron matar las ejecuciones",
@@ -1747,7 +1746,6 @@
       "names": "Arrendatarios"
     },
     "tenantId": "ID de Mandante",
-    "tenant_administration": "Administración de Mandantes",
     "test-badge-text": "Prueba",
     "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "theme": "Tema",

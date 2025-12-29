@@ -1011,7 +1011,6 @@
     "input_custom_duration": "ou saisir une durée personnalisée :",
     "inputs": "Entrées",
     "instance": "Instance",
-    "instance_administration": "Administration de l'Instance",
     "invalid bulk delete": "Impossible de supprimer les exécutions",
     "invalid bulk force run": "Impossible de forcer l'exécution des exécutions",
     "invalid bulk kill": "Impossible d'arrêter les exécutions",
@@ -1747,7 +1746,6 @@
       "names": "Mandants"
     },
     "tenantId": "ID du mandant",
-    "tenant_administration": "Administration des Mandants",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Cette exécution a été créée par un Test",
     "theme": "Thème",

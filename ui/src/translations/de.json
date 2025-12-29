@@ -1011,7 +1011,6 @@
     "input_custom_duration": "oder benutzerdefinierte Dauer eingeben:",
     "inputs": "Inputs",
     "instance": "Instanz",
-    "instance_administration": "Instanzverwaltung",
     "invalid bulk delete": "Ausführungen konnten nicht gelöscht werden",
     "invalid bulk force run": "Konnte Ausführungen nicht erzwingen",
     "invalid bulk kill": "Ausführungen konnten nicht beendet werden",
@@ -1747,7 +1746,6 @@
       "names": "Mandanten"
     },
     "tenantId": "Mandanten-ID",
-    "tenant_administration": "Mandantenverwaltung",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Diese Ausführung wurde durch einen Test erstellt",
     "theme": "Modus",

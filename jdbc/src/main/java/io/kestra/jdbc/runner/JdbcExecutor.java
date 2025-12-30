@@ -7,6 +7,7 @@ import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.Execution.FailedExecutionWithLog;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.sla.*;
 import io.kestra.core.models.tasks.ExecutableTask;
@@ -757,8 +758,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         // avoid infinite loop
                         if (!executor.getExecution().getState().getCurrent().isFailed()) {
                             return Pair.of(
-                                handleFailedExecutionFromExecutor(
-                                    new Executor(executor.getExecution().withState(State.Type.FAILED), null), e),
+                                failedExecutionFromExecutor(executor, e),
                                 executorState
                             );
                         }
@@ -1511,9 +1511,24 @@ public class JdbcExecutor implements ExecutorInterface {
         return taskRun.getId() + (taskRun.getAttempts() != null ? "-" + taskRun.getAttempts().size() : "") + (taskRun.getIteration() == null ? "" : "-" + taskRun.getIteration());
     }
 
+    private Executor failedExecutionFromExecutor(Executor executor, Exception e) {
+        Execution.FailedExecutionWithLog failedExecutionWithLog;
+        if (!executor.getExecution().hasFailed()) {
+            failedExecutionWithLog = executor.getExecution().withState(State.Type.FAILED).failedExecutionFromExecutor(e);
+        } else {
+            failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
+        }
+
+        return handleFailedExecutionFromExecutor(executor, failedExecutionWithLog);
+    }
+
     private Executor handleFailedExecutionFromExecutor(Executor executor, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
 
+        return handleFailedExecutionFromExecutor(executor, failedExecutionWithLog);
+    }
+
+    private Executor handleFailedExecutionFromExecutor(Executor executor, FailedExecutionWithLog failedExecutionWithLog) {
         try {
             logQueue.emitAsync(failedExecutionWithLog.getLogs());
         } catch (QueueException ex) {

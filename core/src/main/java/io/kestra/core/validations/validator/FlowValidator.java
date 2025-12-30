@@ -19,15 +19,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -155,6 +147,8 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .map(task -> task.getId())
             .collect(Collectors.toList());
 
+        violations.addAll(assetsViolations(allTasks));
+
         if (!invalidTasks.isEmpty()) {
             violations.add("Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending tasks:" +
                 " [" + String.join(", ", invalidTasks) + "]");
@@ -179,6 +173,12 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         } else {
             return true;
         }
+    }
+
+    protected List<String> assetsViolations(List<Task> allTasks) {
+        return allTasks.stream().filter(task -> task.getAssets() != null)
+            .map(taskWithAssets -> "Task '" + taskWithAssets.getId() + "' can't have any `assets` because assets are only available in Enterprise Edition.")
+            .toList();
     }
 
     private static boolean checkObjectFieldsWithPatterns(Object object, List<Pattern> patterns) {

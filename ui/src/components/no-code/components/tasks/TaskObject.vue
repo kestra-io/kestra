@@ -28,7 +28,15 @@
                         </Wrapper>
                     </template>
                 </el-collapse-item>
-
+                <el-collapse-item name="general" v-if="generalProperties?.length" :title="$t('no_code.sections.general')">
+                    <template v-for="[fieldKey, fieldSchema] in generalProperties" :key="fieldKey">
+                        <Wrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </Wrapper>
+                    </template>
+                </el-collapse-item>
                 <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <Wrapper>
@@ -125,6 +133,16 @@
         return value?.$deprecated;
     }
 
+    function isPartOfGroup(value: any, groups: string[]) {
+        if (value?.allOf) {
+            return value.allOf.some((item: any) => isPartOfGroup(item, groups));
+        }
+        if (value?.anyOf) {
+            return value.anyOf.some((item: any) => isPartOfGroup(item, groups));
+        }
+        return value?.$group && groups.includes(value.$group);
+    }
+
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties);
         const isOutputsContext = props.root?.startsWith("outputs[") || false;
@@ -159,9 +177,17 @@
     const protectedRequiredProperties = computed<Entry[]>(() => {
         return requiredProperties.value.length ? requiredProperties.value : sortedProperties.value;
     });
+    
+    const connectionProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && isPartOfGroup(v, ["connection"]));
+    });
 
     const optionalProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && v.$group !== "connection");
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && !isPartOfGroup(v, ["core","connection"]));
+    });
+
+    const generalProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["core"]));
     });
 
     const deprecatedProperties = computed<Entry[]>(() => {
@@ -169,9 +195,6 @@
         return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && isDeprecated(v) && obj[k] !== undefined);
     });
 
-    const connectionProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && v.$group === "connection" && !isRequired(p));
-    });
 
     function onInput(value: any) {
         emit("update:modelValue", collapseEmptyValues(value));

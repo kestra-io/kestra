@@ -1,6 +1,7 @@
 package io.kestra.core.plugins;
 
 import io.kestra.core.models.Plugin;
+import io.kestra.core.models.assets.Asset;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;

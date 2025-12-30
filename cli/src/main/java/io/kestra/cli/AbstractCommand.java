@@ -203,15 +203,18 @@ public abstract class AbstractCommand implements Callable<Integer> {
                 server.start();
 
                 if (this.endpointConfiguration.getPort().isPresent()) {
-                    URI endpoint = null;
+                    URI managementEndpoint = null;
+                    URI healthEndpoint = null;
                     try {
-                        endpoint = UriBuilder.of(server.getURL().toURI())
+                        managementEndpoint = UriBuilder.of(server.getURL().toURI())
                             .port(this.endpointConfiguration.getPort().get())
                             .build();
+                        healthEndpoint = managementEndpoint.resolve("./health");
                     } catch (URISyntaxException e) {
                         e.printStackTrace();
                     }
-                    log.info("Main server is running at {}, management server at {}", server.getURL(), endpoint);
+                    log.info("Main server is running at {}, management server at {}", server.getURL(), managementEndpoint);
+                    log.info("Health endpoint is available at {}", healthEndpoint);
                 } else {
                     log.info("Server is running at {}", server.getURL());
                 }

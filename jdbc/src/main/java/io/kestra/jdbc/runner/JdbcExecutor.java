@@ -756,7 +756,6 @@ public class JdbcExecutor implements ExecutorInterface {
                     } catch (FlowNotFoundException e) {
                         // avoid infinite loop
                         if (!executor.getExecution().getState().getCurrent().isFailed()) {
-                            // execution state needs to be FAILED
                             return Pair.of(
                                 handleFailedExecutionFromExecutor(executor, e),
                                 executorState

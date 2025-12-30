@@ -1,6 +1,6 @@
 import {markRaw, h} from "vue";
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
-import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
+import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
 import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import ChartBarIcon from "vue-material-design-icons/ChartBar.vue";
 import ViewDashboardIcon from "vue-material-design-icons/ViewDashboard.vue";
@@ -27,7 +27,7 @@ export const DASHBOARD_EDITOR_ELEMENTS = [
     },
     {
         button: {
-            icon: markRaw(DotsSquareIcon),
+            icon: markRaw(FolderOpenOutline),
             label: "No Code"
         },
         uid: "nocode",

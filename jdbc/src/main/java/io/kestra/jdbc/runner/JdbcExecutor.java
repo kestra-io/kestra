@@ -757,7 +757,8 @@ public class JdbcExecutor implements ExecutorInterface {
                         // avoid infinite loop
                         if (!executor.getExecution().getState().getCurrent().isFailed()) {
                             return Pair.of(
-                                handleFailedExecutionFromExecutor(executor, e),
+                                handleFailedExecutionFromExecutor(
+                                    new Executor(executor.getExecution().withState(State.Type.FAILED), null), e),
                                 executorState
                             );
                         }
@@ -1511,13 +1512,7 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private Executor handleFailedExecutionFromExecutor(Executor executor, Exception e) {
-        Execution.FailedExecutionWithLog failedExecutionWithLog;
-        if (executor.getExecution().getState().isFailed()){
-            failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
-        } else {
-            failedExecutionWithLog = executor.getExecution().withState(State.Type.FAILED).failedExecutionFromExecutor(e);
-        }
-
+        Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().withState(State.Type.FAILED).failedExecutionFromExecutor(e);
 
         try {
             logQueue.emitAsync(failedExecutionWithLog.getLogs());

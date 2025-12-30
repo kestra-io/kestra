@@ -9,6 +9,9 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
@@ -955,6 +958,15 @@ public class DefaultWorker implements Worker {
         try {
             Variables variables = variablesService.of(StorageContext.forTask(taskRun), workerTaskCallable.getTaskOutput());
             taskRun = taskRun.withOutputs(variables);
+            if (workerTask.getTask().getAssets() != null) {
+                List<Asset> outputAssets = runContext.assets().outputs();
+                Optional<AssetsDeclaration> renderedAssetsDeclaration = runContext.render(workerTask.getTask().getAssets()).as(AssetsDeclaration.class);
+                renderedAssetsDeclaration.map(AssetsDeclaration::getOutputs).ifPresent(outputAssets::addAll);
+                taskRun = taskRun.withAssets(new AssetsInOut(
+                    renderedAssetsDeclaration.map(AssetsDeclaration::getInputs).orElse(null),
+                    outputAssets
+                ));
+            }
         } catch (Exception e) {
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
         }

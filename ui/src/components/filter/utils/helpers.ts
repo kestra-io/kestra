@@ -25,7 +25,7 @@ export const decodeSearchParams = (query: LocationQuery) =>
 
             const [, field, operation, subKey] = match;
 
-            if (field === "labels" && subKey) {
+            if (subKey) {
                 return {
                     field,
                     value: `${subKey}:${decodeURIComponentSafely(value)}`,
@@ -57,30 +57,19 @@ export const encodeFiltersToQuery = (filters: Filter[], keyOfComparator: (compar
                     query[`filters[${key}][${comparatorKey}]`] = value?.toString() ?? "";
                 }
                 return query;
-            case "labels":
-                if (Array.isArray(value)) {
-                    value.forEach((label: string) => {
-                        const [k, v] = label.split(":", 2);
-                        if (k && v) query[`filters[labels][${comparatorKey}][${k}]`] = v;
-                    });
-                } else if (typeof value === "string") {
-                    const [k, v] = value.split(":", 2);
-                    if (k && v) {
-                        query[`filters[labels][${comparatorKey}][${k}]`] = v;
-                    } else {
-                        query[`filters[${key}][${comparatorKey}]`] = value;
-                    }
-                }
-                return query;
             default: {
-                const processedValue = Array.isArray(value)
-                    ? value.join(",")
-                    : typeof value === "object" && "startDate" in value
-                        ? `${value.startDate.toISOString()},${value.endDate.toISOString()}`
+                if (Array.isArray(value) && value.some(v => typeof v === "string" && v.includes(":"))) {
+                    value.forEach((item: string) => {
+                        const [k, v] = item.split(":", 2);
+                        if (k && v) query[`filters[${key}][${comparatorKey}][${k}]`] = v;
+                    });
+                } else {
+                    query[`filters[${key}][${comparatorKey}]`] = Array.isArray(value)
+                        ? value.join(",")
                         : value instanceof Date
                             ? value.toISOString()
-                            : value;
-                query[`filters[${key}][${comparatorKey}]`] = processedValue?.toString() ?? "";
+                            : value?.toString() ?? "";
+                }
                 return query;
             }
         }

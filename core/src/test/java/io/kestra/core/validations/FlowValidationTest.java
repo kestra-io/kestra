@@ -1,5 +1,7 @@
 package io.kestra.core.validations;
 
+import io.kestra.core.models.assets.AssetIdentifier;
+import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
@@ -7,7 +9,9 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.plugin.core.log.Log;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolation;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.services.FlowService;
@@ -228,6 +232,31 @@ class FlowValidationTest {
         assertThat(validate.isPresent()).isEqualTo(true);
         assertThat(validate.get().getMessage()).contains("Duplicate preconditions with id [flows]");
     }
+
+    @Test
+    void eeAllowsDefiningAssets() {
+        Flow flow = Flow.builder()
+            .id(TestsUtils.randomString())
+            .namespace(TestsUtils.randomNamespace())
+            .tasks(List.of(
+                Log.builder()
+                    .id("log")
+                    .type(Log.class.getName())
+                    .message("any")
+                    .assets(io.kestra.core.models.property.Property.ofValue(
+                        new AssetsDeclaration(true, List.of(new AssetIdentifier(null, null, "anyId")), null))
+                    )
+                    .build()
+            ))
+            .build();
+
+        Optional<ConstraintViolationException> violations = modelValidator.isValid(flow);
+
+        assertThat(violations.isPresent()).isEqualTo(true);
+        assertThat(violations.get().getConstraintViolations().stream().map(ConstraintViolation::getMessage)).satisfiesExactly(
+            message -> assertThat(message).contains("Task 'log' can't have any `assets` because assets are only available in Enterprise Edition.")
+        );
+    };
 
     private Flow parse(String path) {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);

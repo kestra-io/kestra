@@ -74,7 +74,7 @@ abstract public class TestsUtils {
      * @param prefix
      * @return
      */
-    private static String randomString(String... prefix) {
+    public static String randomString(String... prefix) {
         if (prefix.length == 0) {
             prefix = new String[]{String.join("-", stackTraceToParts())};
         }

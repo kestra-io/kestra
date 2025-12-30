@@ -105,7 +105,7 @@
             position: relative;
             background: $base-gray-200;
             padding: .125rem 0.5rem;
-            border-radius: $border-radius;
+            border-radius: 1rem;
             display: inline-block;
             z-index: 2;
             margin: 0 auto;
@@ -175,6 +175,7 @@
             line-height: 16px;
             font-size: 11px;
             text-align: left;
+            color: var(--ks-content-secondary);
         }
 
         .video-container {
@@ -261,7 +262,7 @@
             }
 
             p {
-                font-size: 14px;
+                font-size: 1rem;
                 line-height: 22px;
             }
         }

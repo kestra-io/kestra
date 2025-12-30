@@ -11,6 +11,7 @@ import io.kestra.core.queues.*;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -264,9 +265,15 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return this.receiveFetch(ctx, consumerGroup, queueType, true);
     }
 
+    protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
+        if (!ListUtils.isEmpty(offsets)) {
+            doUpdateGroupOffsets(ctx, consumerGroup, queueType, offsets);
+        }
+    }
+
     abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType, boolean forUpdate);
 
-    abstract protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
+    abstract protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
 
     protected abstract Condition buildTypeCondition(String type);
 

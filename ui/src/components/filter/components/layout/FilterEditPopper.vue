@@ -86,7 +86,7 @@
     );
 
     const isKVPairFilter = computed(() =>
-        props.filterKey?.valueType === "key-value" || (props.filterKey?.key === "labels" && KV_COMPARATORS.includes(state.selectedComparator))
+        props.filterKey?.valueType === "key-value"
     );
 
     const valueComponent = computed(() => {

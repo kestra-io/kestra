@@ -152,6 +152,8 @@
             font-size: 12px;
             color: var(--ks-content-primary);
             white-space: nowrap;
+            display: flex;
+            align-items: center;
         }
         .value {
             font-weight: 700;

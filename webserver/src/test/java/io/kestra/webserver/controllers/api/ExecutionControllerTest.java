@@ -6,6 +6,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
@@ -530,6 +531,39 @@ class ExecutionControllerTest {
         assertThat(csv).contains("id");
     }
 
+    @Test
+    void shouldBlockExecutionAndThrowCheckErrorMessage() {
+        String namespaceId = "io.othercompany";
+        String flowId = "flowWithCheck";
+
+        createFlowWithFailingCheck(namespaceId, flowId);
+
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () ->
+                client.toBlocking().retrieve(
+                    HttpRequest.POST("/api/v1/main/executions/" + namespaceId + "/" + flowId, null),
+                    Execution.class
+                )
+        );
+        assertThat(e.getMessage()).contains("No VM provided");
+    }
+
+    void createFlowWithFailingCheck(String namespaceId, String flowId) {
+         Flow create = Flow.builder()
+            .id(flowId)
+            .tenantId(MAIN_TENANT)
+            .namespace(namespaceId)
+            .checks(List.of(Check.builder().condition("{{ [] | length > 0 }}").message("No VM provided").style(Check.Style.ERROR).behavior(Check.Behavior.BLOCK_EXECUTION).build()))
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
+            .build();
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/flows", create),
+            Flow.class
+        );
+    }
+
     void createAndExecuteFlow() {
         String namespaceId = "io.othercompany";
         String flowId = "flowId";
@@ -550,4 +584,5 @@ class ExecutionControllerTest {
             Execution.class
         );
     }
+
 }

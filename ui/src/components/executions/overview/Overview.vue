@@ -26,21 +26,6 @@
                 </div>
 
                 <el-divider />
-                <div class="labels">
-                    <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
-                        <template #action>
-                            <SetLabels :execution />
-                        </template>
-                    </Row>
-                    <Labels :labels="execution.labels || []" />
-                </div>
-
-                <el-divider />
-                <div class="metadata">
-                    <Row :rows="metadata" />
-                </div>
-
-                <el-divider />
                 <div class="actions">
                     <Row
                         :rows="[{icon: SortVariant, label: $t('actions')}]"
@@ -59,6 +44,21 @@
                             />
                         </el-col>
                     </el-row>
+                </div>
+
+                <el-divider />
+                <div class="metadata">
+                    <Row :rows="metadata" />
+                </div>
+
+                <el-divider />
+                <div class="labels">
+                    <Row :rows="[{icon: LabelMultiple, label: $t('labels')}]">
+                        <template #action>
+                            <SetLabels :execution />
+                        </template>
+                    </Row>
+                    <Labels :labels="execution.labels || []" />
                 </div>
             </div>
         </el-splitter-panel>
@@ -192,7 +192,7 @@
 
     import ErrorAlert from "./components/main/ErrorAlert.vue";
     import Id from "../../Id.vue";
-    import Cascader from "./components/main/cascaders/Cascader.vue";
+    import Cascader, {type Element} from "./components/main/cascaders/Cascader.vue";
     import TimeSeries from "../../dashboard/sections/TimeSeries.vue";
     import PrevNext from "./components/main/PrevNext.vue";
 
@@ -406,7 +406,7 @@
         );
     };
 
-    const cascaders = [
+    const cascaders: Element[] = [
         {
             title: t("variables"),
             empty: t("no_variables"),

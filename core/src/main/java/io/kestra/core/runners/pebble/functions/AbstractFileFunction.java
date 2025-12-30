@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
+import com.cronutils.utils.VisibleForTesting;
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.LocalPathFactory;
 import io.kestra.core.services.NamespaceService;
@@ -155,31 +156,11 @@ abstract class AbstractFileFunction implements Function {
     }
 
     private String checkIfFileFromAllowedNamespaceAndReturnIt(URI path, String tenantId, String fromNamespace) {
-        // Extract namespace from the path, it should be of the form: kestra:///({tenantId}/){namespace}/{flowId}/executions/{executionId}/tasks/{taskId}/{taskRunId}/{fileName}'
-        // To extract the namespace, we must do it step by step as tenantId, namespace and taskId can contain the words 'executions' and 'tasks'
-        String namespace = path.toString().substring(KESTRA_SCHEME.length());
-        if (!EXECUTION_FILE.matcher(namespace).matches()) {
-            throw new IllegalArgumentException("Unable to read the file '" + path + "' as it is not an execution file");
-        }
 
-        // 1. remove the tenantId if existing
-        if (tenantId != null) {
-            namespace = namespace.substring(tenantId.length() + 1);
-        }
-        // 2. remove everything after tasks
-        namespace = namespace.substring(0, namespace.lastIndexOf("/tasks/"));
-        // 3. remove everything after executions
-        namespace = namespace.substring(0, namespace.lastIndexOf("/executions/"));
-        // 4. remove the flowId
-        namespace = namespace.substring(0, namespace.lastIndexOf('/'));
-        // 5. replace '/' with '.'
-        namespace = namespace.replace("/", ".");
-
+        String namespace = extractNamespace(path);
         namespaceService.checkAllowedNamespace(tenantId, namespace, tenantId, fromNamespace);
-
         return namespace;
     }
-
     private String checkEnabledLocalFileAndReturnNamespace(Map<String, Object> args, Map<String, String> flow) {
         if (!enableFileProtocol) {
             throw new SecurityException("The file:// protocol has been disabled inside the Kestra configuration.");
@@ -199,5 +180,25 @@ abstract class AbstractFileFunction implements Function {
             namespaceService.checkAllowedNamespace(tenantId, customNs, tenantId, flow.get(NAMESPACE));
         }
         return Optional.ofNullable(customNs).orElse(flow.get(NAMESPACE));
+    }
+
+    @VisibleForTesting
+    String extractNamespace( URI path){
+        // Extract namespace from the path, it should be of the form: kestra:///{namespace}/{flowId}/executions/{executionId}/tasks/{taskId}/{taskRunId}/{fileName}'
+        // To extract the namespace, we must do it step by step as namespace and taskId can contain the words 'executions' and 'tasks'
+        String namespace = path.toString().substring(KESTRA_SCHEME.length());
+        if (!EXECUTION_FILE.matcher(namespace).matches()) {
+            throw new IllegalArgumentException("Unable to read the file '" + path + "' as it is not an execution file");
+        }
+        // 1. remove everything after tasks
+        namespace = namespace.substring(0, namespace.lastIndexOf("/tasks/"));
+        // 2. remove everything after executions
+        namespace = namespace.substring(0, namespace.lastIndexOf("/executions/"));
+        // 3. remove the flowId
+        namespace = namespace.substring(0, namespace.lastIndexOf('/'));
+        // 4. replace '/' with '.'
+        namespace = namespace.replace("/", ".");
+
+        return namespace;
     }
 }

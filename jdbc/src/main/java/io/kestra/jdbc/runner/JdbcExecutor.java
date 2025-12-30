@@ -758,7 +758,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         // avoid infinite loop
                         if (!executor.getExecution().getState().getCurrent().isFailed()) {
                             return Pair.of(
-                                failedExecutionFromExecutor(executor, e),
+                                failExecutionFromExecutor(executor, e),
                                 executorState
                             );
                         }
@@ -1511,7 +1511,7 @@ public class JdbcExecutor implements ExecutorInterface {
         return taskRun.getId() + (taskRun.getAttempts() != null ? "-" + taskRun.getAttempts().size() : "") + (taskRun.getIteration() == null ? "" : "-" + taskRun.getIteration());
     }
 
-    private Executor failedExecutionFromExecutor(Executor executor, Exception e) {
+    private Executor failExecutionFromExecutor(Executor executor, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog;
         if (!executor.getExecution().hasFailed()) {
             failedExecutionWithLog = executor.getExecution().withState(State.Type.FAILED).failedExecutionFromExecutor(e);

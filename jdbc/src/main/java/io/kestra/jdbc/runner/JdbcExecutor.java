@@ -1512,7 +1512,7 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private Executor handleFailedExecutionFromExecutor(Executor executor, Exception e) {
-        Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().withState(State.Type.FAILED).failedExecutionFromExecutor(e);
+        Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
 
         try {
             logQueue.emitAsync(failedExecutionWithLog.getLogs());

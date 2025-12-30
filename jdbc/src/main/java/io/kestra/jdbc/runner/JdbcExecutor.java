@@ -297,7 +297,7 @@ public class JdbcExecutor implements ExecutorInterface {
         this.receiveCancellations.addFirst(((JdbcQueue<Execution>) this.executionQueue).receiveBatch(
             Executor.class,
             executions -> {
-                // process execution message grouped by executionId to avoid concurrency as the execution level as it would 
+                // process execution message grouped by executionId to avoid concurrency as the execution level as it would
                 List<CompletableFuture<Void>> perExecutionFutures = executions.stream()
                     .filter(Either::isLeft)
                     .collect(Collectors.groupingBy(either -> either.getLeft().getId()))
@@ -756,8 +756,10 @@ public class JdbcExecutor implements ExecutorInterface {
                     } catch (FlowNotFoundException e) {
                         // avoid infinite loop
                         if (!executor.getExecution().getState().getCurrent().isFailed()) {
+                            // execution state needs to be FAILED
                             return Pair.of(
-                                handleFailedExecutionFromExecutor(executor, e),
+                                handleFailedExecutionFromExecutor(
+                                    new Executor(executor.getExecution().withState(State.Type.FAILED), null), e),
                                 executorState
                             );
                         }
@@ -1511,7 +1513,7 @@ public class JdbcExecutor implements ExecutorInterface {
     }
 
     private Executor handleFailedExecutionFromExecutor(Executor executor, Exception e) {
-        Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
+        Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().withState(State.Type.FAILED).failedExecutionFromExecutor(e);
 
         try {
             logQueue.emitAsync(failedExecutionWithLog.getLogs());

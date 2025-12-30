@@ -24,6 +24,9 @@ dependencies {
     // reactor
     api "io.projectreactor:reactor-core"
 
+    // awaitility
+    api "org.awaitility:awaitility"
+
     // micronaut
     api "io.micronaut.data:micronaut-data-model"
     implementation "io.micronaut:micronaut-http-server-netty"

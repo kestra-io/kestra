@@ -32,7 +32,7 @@
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
-    import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
+    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import {useI18n} from "vue-i18n";
 
     const props = defineProps<{
@@ -123,7 +123,7 @@
         },
         {
             key: "tasks",
-            icon: FileDocumentOutline,
+            icon: TimelineTextOutline,
             labelKey: "tasks",
             value: tasks.value,
             route: "flows/list",

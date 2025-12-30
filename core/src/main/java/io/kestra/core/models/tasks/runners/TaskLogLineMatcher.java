@@ -1,10 +1,13 @@
 package io.kestra.core.models.tasks.runners;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.AssetEmitter;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import org.slf4j.spi.LoggingEventBuilder;
@@ -18,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static io.kestra.core.runners.RunContextLogger.ORIGINAL_TIMESTAMP_KEY;
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 /**
  * Service for matching and capturing structured data from task execution logs.
@@ -76,6 +80,18 @@ public class TaskLogLineMatcher {
                 }
             });
         }
+
+        if (match.assets() != null) {
+            try {
+                AssetEmitter assetEmitter = runContext.assets();
+                match.assets().forEach(throwConsumer(assetEmitter::upsert));
+            } catch (IllegalVariableEvaluationException e) {
+                logger.warn("Unable to get asset emitter for log '{}'", data, e);
+            } catch (QueueException e) {
+                logger.warn("Unable to emit asset for log '{}'", data, e);
+            }
+        }
+
         return match;
     }
 
@@ -94,8 +110,9 @@ public class TaskLogLineMatcher {
     public record TaskLogMatch(
         Map<String, Object> outputs,
         List<AbstractMetricEntry<?>> metrics,
-        List<LogLine> logs
-    ) {
+        List<LogLine> logs,
+        List<Asset> assets
+        ) {
         @Override
         public Map<String, Object> outputs() {
             return Optional.ofNullable(outputs).orElse(Map.of());

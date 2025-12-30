@@ -83,13 +83,20 @@
         children?: Node[];
     }
 
-    const props = defineProps<{
+    type DebugTypes = "outputs" | "trigger";
+
+    export type Element = {
         title: string;
         empty: string;
         elements?: Record<string, any>;
-        includeDebug?: "outputs" | "trigger";
-        execution: Execution;
-    }>();
+        includeDebug?: DebugTypes | undefined;
+    }
+
+    const props = defineProps<
+        Element & {
+            execution: Execution;
+        }
+    >();
 
     const path = ref<string>("");
 

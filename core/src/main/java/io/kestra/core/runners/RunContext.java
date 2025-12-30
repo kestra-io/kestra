@@ -143,6 +143,8 @@ public abstract class RunContext implements PropertyContext {
     @Deprecated(forRemoval = true)
     public abstract String tenantId();
 
+    public abstract TaskRunInfo taskRunInfo();
+
     public abstract FlowInfo flowInfo();
 
     /**
@@ -190,7 +192,19 @@ public abstract class RunContext implements PropertyContext {
      */
     public abstract LocalPath localPath();
 
+    public record TaskRunInfo(String executionId, String taskId, String taskRunId, Object value) {
+
+    }
+
     public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
+        public static FlowInfo from(Map<String, Object> flowInfoMap) {
+            return new FlowInfo(
+                (String) flowInfoMap.get("tenantId"),
+                (String) flowInfoMap.get("namespace"),
+                (String) flowInfoMap.get("id"),
+                (Integer) flowInfoMap.get("revision")
+            );
+        }
     }
 
     /**
@@ -205,6 +219,11 @@ public abstract class RunContext implements PropertyContext {
      * when Namespace ACLs are used (EE).
      */
     public abstract AclChecker acl();
+
+    /**
+     * Get access to the Assets handler.
+     */
+    public abstract AssetEmitter assets() throws IllegalVariableEvaluationException;
 
     /**
      * Clone this run context for a specific plugin.

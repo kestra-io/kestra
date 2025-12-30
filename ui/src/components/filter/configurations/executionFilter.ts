@@ -127,7 +127,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     label: t("filter.labels_execution.label"),
                     description: t("filter.labels_execution.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-                    valueType: "text",
+                    valueType: "key-value",
                 },
                 {
                     key: "triggerExecutionId",

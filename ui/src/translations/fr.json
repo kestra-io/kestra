@@ -314,6 +314,12 @@
         "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation.",
         "title": "Créez des applications personnalisées avec Kestra"
       },
+      "assets": {
+        "header": "Métadonnées des actifs et Observabilité",
+        "label": "Actifs",
+        "message": "Les assets connectent les métadonnées d'observabilité, de lignée et de propriété afin que les équipes de la plateforme puissent résoudre les problèmes plus rapidement et déployer en toute confiance.",
+        "title": "Amenez chaque dataset, service et dépendance en vue."
+      },
       "audit-logs": {
         "message": "L'édition Kestra Enterprise enregistre chaque activité avec des enregistrements robustes et immuables, ce qui facilite le suivi des modifications, le maintien de la conformité et la résolution des problèmes.",
         "title": "Suivre les modifications avec les Audit Logs"
@@ -389,6 +395,7 @@
         "zoom_out": "Dézoomer"
       },
       "search": {
+        "asset_placeholder": "Rechercher par asset, flow ou namespace...",
         "no_results": "Aucun résultat trouvé pour {term}",
         "placeholder": "Rechercher par flow ou namespace..."
       }
@@ -454,6 +461,10 @@
         "content": "Commencez à créer des Apps pour interagir avec Kestra depuis le monde extérieur.",
         "title": "Vous n'avez pas encore d'applications !"
       },
+      "assets": {
+        "content": "Ajoutez des ressources pour suivre et gérer vos ressources de données, services et infrastructures.",
+        "title": "Vous n'avez pas encore d'Assets !"
+      },
       "concurrency_executions": {
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Exécutions</a></strong> dans notre documentation.",
         "title": "Aucune exécution en cours pour ce flow."
@@ -463,6 +474,10 @@
         "title": "Aucune limite n'est définie pour ce flow."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Cet actif n'a pas de dépendances amont ou aval avec des flows ou d'autres actifs.",
+          "title": "Il n'y a actuellement aucune dépendance."
+        },
         "EXECUTION": {
           "content": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">dépendances d'exécution</a> dans notre documentation.",
           "title": "Il n'y a actuellement aucune dépendance."
@@ -1011,7 +1026,6 @@
     "input_custom_duration": "ou saisir une durée personnalisée :",
     "inputs": "Entrées",
     "instance": "Instance",
-    "instance_administration": "Administration de l'Instance",
     "invalid bulk delete": "Impossible de supprimer les exécutions",
     "invalid bulk force run": "Impossible de forcer l'exécution des exécutions",
     "invalid bulk kill": "Impossible d'arrêter les exécutions",
@@ -1228,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Vérifications",
           "concurrency": "Concurrence",
           "disabled": "Désactivé",
           "labels": "Étiquettes",
@@ -1296,6 +1311,7 @@
     "no_logs_data_description": "Aucun log trouvé pour les filtres sélectionnés. <br> Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
     "no_results": {
+      "assets": "Aucun actif trouvé",
       "executions": "Aucune exécution trouvée",
       "flows": "Aucun flow trouvé",
       "kv_pairs": "Aucune paire clé-valeur trouvée",
@@ -1746,7 +1762,6 @@
       "names": "Mandants"
     },
     "tenantId": "ID du mandant",
-    "tenant_administration": "Administration des Mandants",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Cette exécution a été créée par un Test",
     "theme": "Thème",

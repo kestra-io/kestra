@@ -314,6 +314,12 @@
         "message": "Las aplicaciones en Kestra Enterprise Edition te permiten construir interfaces de usuario personalizadas que interactúan con los workflows de Kestra desde fuera de la plataforma. Esta función te permite usar tus workflows como un backend para aplicaciones personalizadas, permitiendo a usuarios no técnicos enviar datos a través de formularios o reanudar workflows PAUSED que esperan aprobación.",
         "title": "Crea aplicaciones personalizadas con Kestra"
       },
+      "assets": {
+        "header": "Metadatos de Activos y Observabilidad",
+        "label": "Activos",
+        "message": "Los assets conectan la observabilidad, el linaje y los metadatos de propiedad para que los equipos de la plataforma puedan solucionar problemas más rápido y desplegar con confianza.",
+        "title": "Lleva cada dataset, servicio y dependencia a la vista."
+      },
       "audit-logs": {
         "message": "La edición Enterprise de Kestra registra cada actividad con registros robustos e inmutables, lo que facilita el seguimiento de cambios, el mantenimiento de la conformidad y la resolución de problemas.",
         "title": "Rastrear Cambios con Audit Logs"
@@ -389,6 +395,7 @@
         "zoom_out": "Alejar"
       },
       "search": {
+        "asset_placeholder": "Buscar por asset, flow o namespace...",
         "no_results": "No se encontraron resultados para {term}",
         "placeholder": "Buscar por flow o namespace..."
       }
@@ -454,6 +461,10 @@
         "content": "Comienza a crear Apps para interactuar con Kestra desde el mundo exterior.",
         "title": "¡Aún no tienes aplicaciones!"
       },
+      "assets": {
+        "content": "Agrega activos para rastrear y gestionar tus activos de datos, servicios e infraestructura.",
+        "title": "¡Aún no tienes Assets!"
+      },
       "concurrency_executions": {
         "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Ejecuciones</a></strong> en nuestra documentación.",
         "title": "No hay Ejecuciones en curso para este Flow."
@@ -463,6 +474,10 @@
         "title": "No se han establecido límites para este Flow."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Este recurso no tiene dependencias ascendentes o descendentes con flows u otros recursos.",
+          "title": "Actualmente no hay dependencias."
+        },
         "EXECUTION": {
           "content": "Lea más sobre <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Dependencias de Ejecución</a> en nuestra documentación.",
           "title": "Actualmente no hay dependencias."
@@ -1011,7 +1026,6 @@
     "input_custom_duration": "o ingrese duración personalizada:",
     "inputs": "Entradas",
     "instance": "Instancia",
-    "instance_administration": "Administración de Instancia",
     "invalid bulk delete": "No se pudieron eliminar las ejecuciones",
     "invalid bulk force run": "No se pudo forzar la ejecución de ejecuciones",
     "invalid bulk kill": "No se pudieron matar las ejecuciones",
@@ -1228,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Comprobaciones",
           "concurrency": "Concurrente",
           "disabled": "Desactivado",
           "labels": "Etiquetas",
@@ -1296,6 +1311,7 @@
     "no_logs_data_description": "No se encontraron logs para los filtros seleccionados. <br> Por favor, intente ajustar sus filtros, cambiar el rango de tiempo o verifique si el flow se ha ejecutado recientemente.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
     "no_results": {
+      "assets": "No se encontraron activos",
       "executions": "No se encontraron ejecuciones",
       "flows": "No se encontraron Flows",
       "kv_pairs": "No se encontraron pares Key-Value",
@@ -1746,7 +1762,6 @@
       "names": "Arrendatarios"
     },
     "tenantId": "ID de Mandante",
-    "tenant_administration": "Administración de Mandantes",
     "test-badge-text": "Prueba",
     "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "theme": "Tema",

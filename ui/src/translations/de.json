@@ -314,6 +314,12 @@
         "message": "Apps in der Kestra Enterprise Edition ermöglichen es Ihnen, benutzerdefinierte UIs zu erstellen, die mit Kestra-Workflows außerhalb der Plattform interagieren. Diese Funktion erlaubt es Ihnen, Ihre Workflows als Backend für benutzerdefinierte Anwendungen zu nutzen, sodass nicht-technische Benutzer Daten über Formulare einreichen oder pausierte Workflows, die auf eine Genehmigung warten, fortsetzen können.",
         "title": "Erstellen Sie benutzerdefinierte Apps mit Kestra"
       },
+      "assets": {
+        "header": "Assets-Metadaten und Observability",
+        "label": "Assets",
+        "message": "Assets verbinden Observability-, Lineage- und Ownership-Metadaten, damit Plattformteams schneller Probleme beheben und mit Vertrauen bereitstellen können.",
+        "title": "Bringen Sie jedes Dataset, jeden Service und jede Abhängigkeit in Sicht."
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition protokolliert jede Aktivität mit robusten, unveränderlichen Aufzeichnungen, was es einfach macht, Änderungen nachzuverfolgen, die Einhaltung von Vorschriften zu gewährleisten und Probleme zu beheben.",
         "title": "Änderungen mit Audit Logs nachverfolgen"
@@ -389,6 +395,7 @@
         "zoom_out": "Rauszoomen"
       },
       "search": {
+        "asset_placeholder": "Suche nach Asset, flow oder namespace...",
         "no_results": "Keine Ergebnisse gefunden für {term}",
         "placeholder": "Suche nach flow oder namespace..."
       }
@@ -454,6 +461,10 @@
         "content": "Beginnen Sie mit dem Erstellen von Apps, um mit Kestra von der Außenwelt zu interagieren.",
         "title": "Sie haben noch keine Apps!"
       },
+      "assets": {
+        "content": "Fügen Sie Assets hinzu, um Ihre Daten-Assets, Dienste und Infrastruktur zu verfolgen und zu verwalten.",
+        "title": "Sie haben noch keine Assets!"
+      },
       "concurrency_executions": {
         "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Ausführungen</a></strong> in unserer Dokumentation.",
         "title": "Keine laufenden Ausführungen für diesen Flow."
@@ -463,6 +474,10 @@
         "title": "Für diesen Flow sind keine Grenzen festgelegt."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Dieses Asset hat keine Upstream- oder Downstream-Abhängigkeiten mit flows oder anderen Assets.",
+          "title": "Derzeit gibt es keine Abhängigkeiten."
+        },
         "EXECUTION": {
           "content": "Erfahren Sie mehr über <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Ausführungsabhängigkeiten</a> in unserer Dokumentation.",
           "title": "Derzeit gibt es keine Abhängigkeiten."
@@ -1011,7 +1026,6 @@
     "input_custom_duration": "oder benutzerdefinierte Dauer eingeben:",
     "inputs": "Inputs",
     "instance": "Instanz",
-    "instance_administration": "Instanzverwaltung",
     "invalid bulk delete": "Ausführungen konnten nicht gelöscht werden",
     "invalid bulk force run": "Konnte Ausführungen nicht erzwingen",
     "invalid bulk kill": "Ausführungen konnten nicht beendet werden",
@@ -1228,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Überprüfungen",
           "concurrency": "Nebenläufigkeit",
           "disabled": "Deaktiviert",
           "labels": "Labels",
@@ -1296,6 +1311,7 @@
     "no_logs_data_description": "Keine Logs für die ausgewählten Filter gefunden. <br> Bitte versuchen Sie, Ihre Filter anzupassen, den Zeitraum zu ändern oder überprüfen Sie, ob der flow kürzlich ausgeführt wurde.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
     "no_results": {
+      "assets": "Keine Assets gefunden",
       "executions": "Keine Ausführungen gefunden",
       "flows": "Keine Flows gefunden",
       "kv_pairs": "Keine Key-Value-Paare gefunden",
@@ -1746,7 +1762,6 @@
       "names": "Mandanten"
     },
     "tenantId": "Mandanten-ID",
-    "tenant_administration": "Mandantenverwaltung",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Diese Ausführung wurde durch einen Test erstellt",
     "theme": "Modus",

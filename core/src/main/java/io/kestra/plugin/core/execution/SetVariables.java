@@ -15,6 +15,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 @SuperBuilder
 @ToString
@@ -62,14 +63,24 @@ public class SetVariables extends Task implements ExecutionUpdatableTask {
     public Execution update(Execution execution, RunContext runContext) throws Exception {
         Map<String, Object> renderedVars = runContext.render(this.variables).asMap(String.class, Object.class);
         boolean renderedOverwrite = runContext.render(overwrite).as(Boolean.class).orElseThrow();
+
+        Map<String, Object> currentVariables =
+            execution.getVariables() == null ? Collections.emptyMap() : execution.getVariables();
+
         if (!renderedOverwrite) {
             // check that none of the new variables already exist
-            List<String> duplicated = renderedVars.keySet().stream().filter(key -> execution.getVariables().containsKey(key)).toList();
+            List<String> duplicated = renderedVars.keySet().stream()
+                .filter(currentVariables::containsKey)
+                .toList();
+
             if (!duplicated.isEmpty()) {
-                throw new IllegalArgumentException("`overwrite` is set to false and the following variables already exist: " + String.join(",", duplicated));
+                throw new IllegalArgumentException(
+                    "`overwrite` is set to false and the following variables already exist: " +
+                    String.join(",", duplicated)
+                );
             }
         }
 
-        return execution.withVariables(MapUtils.deepMerge(execution.getVariables(), renderedVars));
+        return execution.withVariables(MapUtils.deepMerge(currentVariables, renderedVars));
     }
 }

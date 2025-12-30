@@ -314,6 +314,12 @@
         "message": "Aplikacje w Kestra Enterprise Edition umożliwiają tworzenie niestandardowych interfejsów użytkownika, które współdziałają z workflowami Kestra spoza platformy. Ta funkcja pozwala używać workflowów jako backendu dla niestandardowych aplikacji, umożliwiając użytkownikom nietechnicznym przesyłanie danych za pomocą formularzy lub wznawianie PAUSED workflowów oczekujących na zatwierdzenie.",
         "title": "Twórz własne aplikacje z Kestra"
       },
+      "assets": {
+        "header": "Metadane zasobów i obserwowalność",
+        "label": "Zasoby",
+        "message": "Zasoby łączą metadane dotyczące obserwowalności, pochodzenia i własności, aby zespoły platformowe mogły szybciej rozwiązywać problemy i wdrażać z pewnością.",
+        "title": "Przenieś każdy zestaw danych, usługę i zależność do widoku."
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition rejestruje każdą aktywność za pomocą solidnych, niezmiennych zapisów, co ułatwia śledzenie zmian, utrzymanie zgodności oraz rozwiązywanie problemów.",
         "title": "Śledź zmiany za pomocą Audit Logs"
@@ -389,6 +395,7 @@
         "zoom_out": "Oddal"
       },
       "search": {
+        "asset_placeholder": "Szukaj według asset, flow lub namespace...",
         "no_results": "Nie znaleziono wyników dla {term}",
         "placeholder": "Szukaj według flow lub namespace..."
       }
@@ -454,6 +461,10 @@
         "content": "Rozpocznij tworzenie aplikacji do interakcji z Kestra ze świata zewnętrznego.",
         "title": "Nie masz jeszcze aplikacji!"
       },
+      "assets": {
+        "content": "Dodaj zasoby, aby śledzić i zarządzać swoimi zasobami danych, usługami i infrastrukturą.",
+        "title": "Nie masz jeszcze zasobów!"
+      },
       "concurrency_executions": {
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> w naszej dokumentacji.",
         "title": "Brak trwających Executions dla tego flow."
@@ -463,6 +474,10 @@
         "title": "Dla tego flow nie ustawiono żadnych limitów."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Ten zasób nie ma zależności w górę ani w dół z flow lub innymi zasobami.",
+          "title": "Obecnie brak zależności."
+        },
         "EXECUTION": {
           "content": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">zależnościach wykonania</a> w naszej dokumentacji.",
           "title": "Obecnie brak zależności."
@@ -1011,7 +1026,6 @@
     "input_custom_duration": "lub wprowadź niestandardowy czas trwania:",
     "inputs": "Inputs",
     "instance": "Instancja",
-    "instance_administration": "Administracja Instancji",
     "invalid bulk delete": "Nie można usunąć wykonań",
     "invalid bulk force run": "Nie można wymusić uruchomienia wykonania",
     "invalid bulk kill": "Nie można zabić wykonań",
@@ -1228,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Kontrole",
           "concurrency": "Współbieżność",
           "disabled": "Wyłączony",
           "labels": "Etykiety",
@@ -1296,6 +1311,7 @@
     "no_logs_data_description": "Nie znaleziono logów dla wybranych filtrów. <br> Spróbuj dostosować filtry, zmienić zakres czasu lub sprawdź, czy flow został ostatnio wykonany.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
     "no_results": {
+      "assets": "Nie znaleziono zasobów",
       "executions": "Nie znaleziono wykonania",
       "flows": "Nie znaleziono flowów",
       "kv_pairs": "Nie znaleziono par klucz-wartość",
@@ -1746,7 +1762,6 @@
       "names": "Najemcy"
     },
     "tenantId": "Identyfikator Mandanta",
-    "tenant_administration": "Administracja Mandanta",
     "test-badge-text": "Test",
     "test-badge-tooltip": "To wykonanie zostało utworzone przez Test.",
     "theme": "Motyw",

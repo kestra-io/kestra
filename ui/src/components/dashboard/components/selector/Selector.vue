@@ -1,7 +1,7 @@
 <template>
     <el-dropdown trigger="click" hideOnClick placement="bottom-end">
-        <el-button :icon="Menu" class="selected">
-            <span class="text-truncate">
+        <el-button :icon="ChartLineVariant" class="selected">
+            <span v-if="!verticalLayout" class="text-truncate">
                 {{ selected ?? t("dashboards.default") }}
             </span>
         </el-button>
@@ -75,7 +75,10 @@
 
     import Item from "./Item.vue";
 
-    import Menu from "vue-material-design-icons/Menu.vue";
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+
+    import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Magnify from "vue-material-design-icons/Magnify.vue";
 

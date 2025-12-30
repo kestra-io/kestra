@@ -314,6 +314,12 @@
         "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação.",
         "title": "Crie Apps personalizadas com Kestra"
       },
+      "assets": {
+        "header": "Metadados e Observabilidade de Assets",
+        "label": "Ativos",
+        "message": "Os assets conectam observabilidade, linhagem e metadados de propriedade para que as equipes da plataforma possam solucionar problemas mais rapidamente e implantar com confiança.",
+        "title": "Traga todos os datasets, serviços e dependências para a visualização."
+      },
       "audit-logs": {
         "message": "A Kestra Enterprise Edition registra todas as atividades com registros robustos e imutáveis, facilitando o acompanhamento de alterações, a manutenção da conformidade e a resolução de problemas.",
         "title": "Acompanhe Alterações com Audit Logs"
@@ -389,6 +395,7 @@
         "zoom_out": "Reduzir zoom"
       },
       "search": {
+        "asset_placeholder": "Pesquisar por asset, flow ou namespace...",
         "no_results": "Nenhum resultado encontrado para {term}",
         "placeholder": "Pesquisar por flow ou namespace..."
       }
@@ -454,6 +461,10 @@
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo.",
         "title": "Você ainda não tem apps!"
       },
+      "assets": {
+        "content": "Adicione assets para rastrear e gerenciar seus data assets, serviços e infraestrutura.",
+        "title": "Você ainda não tem Assets!"
+      },
       "concurrency_executions": {
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Execuções</a></strong> em nossa documentação.",
         "title": "Nenhuma Execução em andamento para este Flow."
@@ -463,6 +474,10 @@
         "title": "Nenhum limite está definido para este Flow."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Este ativo não possui dependências upstream ou downstream com flows ou outros ativos.",
+          "title": "Atualmente, não há dependências."
+        },
         "EXECUTION": {
           "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Dependências de Execução</a> na nossa documentação.",
           "title": "Atualmente, não há dependências."
@@ -1011,7 +1026,6 @@
     "input_custom_duration": "ou insira uma duração personalizada:",
     "inputs": "Inputs",
     "instance": "Instância",
-    "instance_administration": "Administração da Instância",
     "invalid bulk delete": "Não foi possível deletar execuções",
     "invalid bulk force run": "Não foi possível forçar a execução das execuções",
     "invalid bulk kill": "Não foi possível matar execuções",
@@ -1228,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Verificações",
           "concurrency": "Concorrência",
           "disabled": "Desativado",
           "labels": "Etiquetas",
@@ -1296,6 +1311,7 @@
     "no_logs_data_description": "Nenhum log encontrado para os filtros selecionados. <br> Por favor, tente ajustar seus filtros, alterar o intervalo de tempo ou verifique se o flow foi executado recentemente.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
     "no_results": {
+      "assets": "Nenhum Asset Encontrado",
       "executions": "Nenhuma Execução Encontrada",
       "flows": "Nenhum Flow Encontrado",
       "kv_pairs": "Nenhum par de Key-Value encontrado",
@@ -1746,7 +1762,6 @@
       "names": "Mandantes"
     },
     "tenantId": "ID do Mandante",
-    "tenant_administration": "Administração do Mandante",
     "test-badge-text": "Teste",
     "test-badge-tooltip": "Esta execução foi criada por um Teste",
     "theme": "Tema",

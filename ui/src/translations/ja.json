@@ -314,6 +314,12 @@
         "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
         "title": "Kestraでカスタムアプリを構築する"
       },
+      "assets": {
+        "header": "アセットメタデータとオブザーバビリティ",
+        "label": "アセット",
+        "message": "アセットは、観測性、系譜、および所有権のメタデータを接続し、プラットフォームチームが迅速にトラブルシューティングを行い、自信を持ってデプロイできるようにします。",
+        "title": "すべてのデータセット、サービス、および依存関係を表示します。"
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Editionは、すべてのアクティビティを堅牢で不変の記録としてログに記録し、変更の追跡、コンプライアンスの維持、問題のトラブルシューティングを容易にします。",
         "title": "監査Logで変更を追跡"
@@ -389,6 +395,7 @@
         "zoom_out": "ズームアウト"
       },
       "search": {
+        "asset_placeholder": "アセット、flow、またはnamespaceで検索...",
         "no_results": "{term} に対する結果が見つかりませんでした",
         "placeholder": "flow または namespace で検索..."
       }
@@ -454,6 +461,10 @@
         "content": "外部からKestraと連携するアプリを作成し始めましょう。",
         "title": "まだアプリがありません！"
       },
+      "assets": {
+        "content": "データ資産、サービス、インフラストラクチャを追跡および管理するためのアセットを追加します。",
+        "title": "まだアセットがありません！"
+      },
       "concurrency_executions": {
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには進行中の実行はありません。"
@@ -463,6 +474,10 @@
         "title": "このFlowには制限が設定されていません。"
       },
       "dependencies": {
+        "ASSET": {
+          "content": "このアセットは、flowや他のアセットとの上流または下流の依存関係がありません。",
+          "title": "現在、依存関係はありません。"
+        },
         "EXECUTION": {
           "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">実行の依存関係</a>についての詳細は、ドキュメントをご覧ください。",
           "title": "現在、依存関係はありません。"
@@ -1011,7 +1026,6 @@
     "input_custom_duration": "またはカスタム期間を入力してください:",
     "inputs": "Inputs",
     "instance": "インスタンス",
-    "instance_administration": "インスタンス管理",
     "invalid bulk delete": "実行を削除できませんでした",
     "invalid bulk force run": "実行を強制的に開始できませんでした",
     "invalid bulk kill": "実行をkillできませんでした",
@@ -1228,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "チェック",
           "concurrency": "並行性",
           "disabled": "無効",
           "labels": "ラベル",
@@ -1296,6 +1311,7 @@
     "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
     "no_results": {
+      "assets": "アセットが見つかりません",
       "executions": "実行が見つかりません",
       "flows": "フローが見つかりません",
       "kv_pairs": "キー-バリュー ペアが見つかりません",
@@ -1746,7 +1762,6 @@
       "names": "テナント"
     },
     "tenantId": "テナントID",
-    "tenant_administration": "テナント管理",
     "test-badge-text": "テスト",
     "test-badge-tooltip": "この実行はテストによって作成されました",
     "theme": "テーマ",

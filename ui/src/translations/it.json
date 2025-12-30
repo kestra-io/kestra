@@ -314,6 +314,12 @@
         "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione.",
         "title": "Crea App personalizzate con Kestra"
       },
+      "assets": {
+        "header": "Metadati e Osservabilità degli Asset",
+        "label": "Risorse",
+        "message": "Le risorse collegano la osservabilità, la lineage e i metadati di proprietà in modo che i team della piattaforma possano risolvere i problemi più rapidamente e distribuire con fiducia.",
+        "title": "Porta ogni dataset, servizio e dipendenza in vista."
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition registra ogni attività con record robusti e immutabili, rendendo facile tracciare le modifiche, mantenere la conformità e risolvere i problemi.",
         "title": "Traccia le modifiche con i Log di Audit"
@@ -389,6 +395,7 @@
         "zoom_out": "Riduci zoom"
       },
       "search": {
+        "asset_placeholder": "Cerca per asset, flow o namespace...",
         "no_results": "Nessun risultato trovato per {term}",
         "placeholder": "Cerca per flow o namespace..."
       }
@@ -454,6 +461,10 @@
         "content": "Inizia a creare App per interagire con Kestra dal mondo esterno.",
         "title": "Non hai ancora app!"
       },
+      "assets": {
+        "content": "Aggiungi asset per tracciare e gestire i tuoi asset di dati, servizi e infrastruttura.",
+        "title": "Non hai ancora Asset!"
+      },
       "concurrency_executions": {
         "content": "Leggi di più sulle <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Esecuzioni</a></strong> nella nostra documentazione.",
         "title": "Nessuna Esecuzione in corso per questo Flow."
@@ -463,6 +474,10 @@
         "title": "Nessun limite è impostato per questo Flow."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Questo asset non ha dipendenze upstream o downstream con flow o altri asset.",
+          "title": "Attualmente non ci sono dipendenze."
+        },
         "EXECUTION": {
           "content": "Per saperne di più sulle <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Dipendenze di Esecuzione</a> nella nostra documentazione.",
           "title": "Attualmente non ci sono dipendenze."
@@ -1011,7 +1026,6 @@
     "input_custom_duration": "oppure inserisci durata personalizzata:",
     "inputs": "Inputs",
     "instance": "Istanza",
-    "instance_administration": "Amministrazione dell'istanza",
     "invalid bulk delete": "Impossibile eliminare le esecuzioni",
     "invalid bulk force run": "Impossibile forzare l'esecuzione delle esecuzioni",
     "invalid bulk kill": "Impossibile kill le esecuzioni",
@@ -1228,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Controlli",
           "concurrency": "Concorrenza",
           "disabled": "Disabilitato",
           "labels": "Etichette",
@@ -1296,6 +1311,7 @@
     "no_logs_data_description": "Nessun log trovato per i filtri selezionati. <br> Prova a modificare i filtri, cambiare l'intervallo di tempo o verifica se il flow è stato eseguito di recente.",
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",
     "no_results": {
+      "assets": "Nessun asset trovato",
       "executions": "Nessuna Esecuzione Trovata",
       "flows": "Nessun Flow Trovato",
       "kv_pairs": "Nessuna coppia Key-Value trovata",
@@ -1746,7 +1762,6 @@
       "names": "Mandanti"
     },
     "tenantId": "ID del Mandante",
-    "tenant_administration": "Amministrazione del Mandante",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Questa esecuzione è stata creata da un Test",
     "theme": "Tema",

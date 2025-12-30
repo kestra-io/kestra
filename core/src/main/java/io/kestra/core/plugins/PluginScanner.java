@@ -3,6 +3,7 @@ package io.kestra.core.plugins;
 import io.kestra.core.app.AppBlockInterface;
 import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
+import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -108,6 +109,7 @@ public class PluginScanner {
         List<Class<? extends StorageInterface>> storages = new ArrayList<>();
         List<Class<? extends SecretPluginInterface>> secrets = new ArrayList<>();
         List<Class<? extends TaskRunner<?>>> taskRunners = new ArrayList<>();
+        List<Class<? extends Asset>> assets = new ArrayList<>();
         List<Class<? extends AppPluginInterface>> apps = new ArrayList<>();
         List<Class<? extends AppBlockInterface>> appBlocks = new ArrayList<>();
         List<Class<? extends Chart<?>>> charts = new ArrayList<>();
@@ -154,6 +156,10 @@ public class PluginScanner {
                         log.debug("Loading TaskRunner plugin: '{}'", plugin.getClass());
                         //noinspection unchecked
                         taskRunners.add((Class<? extends TaskRunner<?>>) runner.getClass());
+                    }
+                    case Asset asset -> {
+                        log.debug("Loading Asset plugin: '{}'", plugin.getClass());
+                        assets.add(asset.getClass());
                     }
                     case AppPluginInterface app -> {
                         log.debug("Loading App plugin: '{}'", plugin.getClass());
@@ -223,6 +229,7 @@ public class PluginScanner {
             .conditions(conditions)
             .storages(storages)
             .secrets(secrets)
+            .assets(assets)
             .apps(apps)
             .appBlocks(appBlocks)
             .taskRunners(taskRunners)

@@ -26,8 +26,16 @@
     }
 
     const props = withDefaults(
-        defineProps<{ labels: Label[]; readOnly?: boolean }>(),
-        {labels: () => [], readOnly: false},
+        defineProps<{
+            labels?: Label[];
+            readOnly?: boolean;
+            filterType?: "labels" | "metadata";
+        }>(),
+        {
+            labels: () => [],
+            readOnly: false,
+            filterType: "labels",
+        },
     );
 
     import {decodeSearchParams} from "../../components/filter/utils/helpers";
@@ -48,7 +56,7 @@
     };
 
     const updateLabel = (label: Label) => {
-        const getKey = (key: string) => `filters[labels][EQUALS][${key}]`;
+        const getKey = (key: string) => `filters[${props.filterType}][EQUALS][${key}]`;
 
         if (isChecked(label)) {
             const replacementQuery = {...route.query};

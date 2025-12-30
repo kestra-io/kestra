@@ -314,6 +314,12 @@
         "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
         "title": "使用 Kestra 构建自定义应用程序"
       },
+      "assets": {
+        "header": "资产元数据和可观测性",
+        "label": "资产",
+        "message": "资产连接可观测性、血缘关系和所有权元数据，使平台团队能够更快地排查问题并自信地部署。",
+        "title": "将每个数据集、服务和依赖项展示出来。"
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition记录每个活动，提供强大且不可更改的记录，使得跟踪更改、保持合规性和解决问题变得容易。",
         "title": "使用审计日志跟踪更改"
@@ -389,6 +395,7 @@
         "zoom_out": "缩小视图"
       },
       "search": {
+        "asset_placeholder": "按资产、flow或namespace搜索...",
         "no_results": "未找到与 {term} 相关的结果",
         "placeholder": "按flow或namespace搜索..."
       }
@@ -454,6 +461,10 @@
         "content": "开始构建应用程序，以便与外部世界的Kestra进行交互。",
         "title": "您还没有应用程序！"
       },
+      "assets": {
+        "content": "添加资产以跟踪和管理您的数据资产、服务和基础设施。",
+        "title": "您还没有资产！"
+      },
       "concurrency_executions": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
         "title": "此 Flow 没有正在进行的 Executions。"
@@ -463,6 +474,10 @@
         "title": "此Flow未设置限制。"
       },
       "dependencies": {
+        "ASSET": {
+          "content": "此资产与flow或其他资产没有上游或下游依赖关系。",
+          "title": "当前没有依赖项。"
+        },
         "EXECUTION": {
           "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
@@ -1011,7 +1026,6 @@
     "input_custom_duration": "或输入自定义持续时间：",
     "inputs": "输入",
     "instance": "实例",
-    "instance_administration": "实例管理",
     "invalid bulk delete": "无法删除执行",
     "invalid bulk force run": "无法强制运行执行",
     "invalid bulk kill": "无法终止执行",
@@ -1228,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "检查",
           "concurrency": "并发性",
           "disabled": "禁用",
           "labels": "标签",
@@ -1296,6 +1311,7 @@
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
+      "assets": "未找到资产",
       "executions": "未找到执行",
       "flows": "未找到Flows",
       "kv_pairs": "未找到Key-Value对",
@@ -1746,7 +1762,6 @@
       "names": "租户"
     },
     "tenantId": "租户 ID",
-    "tenant_administration": "租户管理",
     "test-badge-text": "测试",
     "test-badge-tooltip": "此执行由测试创建",
     "theme": "主题",

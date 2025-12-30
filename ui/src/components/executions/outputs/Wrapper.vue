@@ -163,7 +163,7 @@
     import Editor from "../../inputs/Editor.vue";
     import VarValue from "../VarValue.vue";
     import SubFlowLink from "../../flows/SubFlowLink.vue";
-    import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
+    import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
     import {useAxios} from "../../../utils/axios";
     import {useMediaQuery} from "@vueuse/core";
@@ -393,7 +393,7 @@
         const HEADING = {
             label: t("tasks"),
             heading: true,
-            component: shallowRef(TimelineTextOutline),
+            component: shallowRef(FileDocumentOutline),
         };
         tasks?.unshift(HEADING);
 

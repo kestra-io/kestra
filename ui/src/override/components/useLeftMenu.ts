@@ -208,7 +208,6 @@ export function useLeftMenu() {
             },
             {
                 title: t("blueprints.title"),
-                routes: routeStartWith("blueprints"),
                 icon: {
                     element: ShapePlusOutline,
                 },

@@ -6,7 +6,7 @@ import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
-import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
+import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
 
 import NoCode from "../../../components/no-code/NoCode.vue";
 import EditorWrapper from "../../../components/inputs/EditorWrapper.vue";
@@ -49,7 +49,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
         uid: "topology",
         component: markRaw(LowCodeEditorWrapper),
     },
-        {
+    {
         button: {
             icon: markRaw(FileDocumentIcon),
             label: "Documentation"
@@ -68,7 +68,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     },
     {
         button: {
-            icon: markRaw(BallotOutlineIcon),
+            icon: markRaw(ShapePlusOutline),
             label: "Blueprints"
         },
         uid: "blueprints",
@@ -77,7 +77,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
 ].map((e): EditorElement => ({
     // add a default deserializer
     deserialize: (value: string) => {
-        if(e.uid === value){
+        if (e.uid === value) {
             return e;
         }
         return undefined;

@@ -1,21 +1,35 @@
 <template>
-    <div class="wrapper">
-        <div v-if="editing" class="inputs">
-            <el-input ref="titleInput" v-model="updatedTitle" @keyup.enter="renameBookmark" @keyup.esc="editing = false" />
+    <div class="wrapper vsm--item" :class="{editing}">
+        <div v-if="editing" class="edit-row">
+            <el-input 
+                class="vsm--input"
+                ref="titleInput"
+                v-model="updatedTitle"
+                @keyup.enter="renameBookmark"
+                @keyup.esc="editing = false"
+            />
             <CheckCircle @click.stop="renameBookmark" class="save" />
         </div>
-        <div class="buttons">
-            <PencilOutline @click="startEditBookmark" :title="t('edit')" />
-            <DeleteOutline @click="deleteBookmark" :title="t('delete')" />
-        </div>
-        <a :href="href" :title="updatedTitle">
-            {{ updatedTitle }}
-        </a>
+        <template v-else>
+            <a
+                class="vsm--link vsm--link_level-2"
+                :href="href"
+                :title="updatedTitle"
+            >
+                <div class="vsm--title">
+                    <span>{{ updatedTitle }}</span>
+                </div>
+                <div class="buttons">
+                    <PencilOutline @click.stop.prevent="startEditBookmark" :title="t('edit')" />
+                    <DeleteOutline @click.stop="deleteBookmark" :title="t('delete')" />
+                </div>
+            </a>     
+        </template>
     </div>
 </template>
 
 <script setup lang="ts">
-    import {nextTick, ref} from "vue"
+    import {ref, nextTick} from "vue";
     import {useI18n} from "vue-i18n";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
@@ -25,16 +39,11 @@
 
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps<{
-        href: string
-        title: string
-    }>()
-
-    const bookmarksStore = useBookmarksStore()
-
-    const editing = ref(false)
-    const updatedTitle = ref(props.title)
-    const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
+    const props = defineProps<{ href: string; title: string }>();
+    const bookmarksStore = useBookmarksStore();
+    const editing = ref(false);
+    const updatedTitle = ref(props.title);
+    const titleInput = ref<{ focus: () => void; select: () => void } | null>(null);
 
     function deleteBookmark() {
         ElMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
@@ -47,94 +56,83 @@
     }
 
     function startEditBookmark() {
-        editing.value = true
+        editing.value = true;
         nextTick(() => {
-            titleInput.value?.focus()
-            titleInput.value?.select()
-        })
+            titleInput.value?.focus();
+            titleInput.value?.select();
+        });
     }
-
     function renameBookmark() {
-        bookmarksStore.rename({
-            path: props.href,
-            label: updatedTitle.value
-        })
-        editing.value = false
+        bookmarksStore.rename({path: props.href, label: updatedTitle.value});
+        editing.value = false;
     }
 </script>
 
 <style scoped>
-    .wrapper{
-        position: relative;
 
-        .buttons {
-            color: var(--ks-content-primary);
-            position: absolute;
-            align-items: center;
-            z-index: 1;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            display: none;
-            gap: .5rem;
-            background-color: var(--ks-background-button-secondary-hover);
-            padding: .5rem;
-            > span{
-                cursor: pointer;
-            }
-        }
+.wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    overflow: hidden;
+    border-radius: 0.25rem;
+    box-sizing: border-box; 
+}
 
-        &:hover .buttons {
-            display: flex;
-        }
+.buttons {
+    position: absolute;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+    z-index: 10;
+}
 
-        .inputs{
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 2;
-            --el-input-height:18px;
-            .el-input {
-                font-size: 0.875em;
-                &:deep(.el-input__wrapper) {
-                    padding: 1px 8px;
-                }
-            }
+.vsm--input {
+    flex: 1;
+    font-size: 0.875em;
+}
 
-            .save {
-                position: absolute;
-                top: .5rem;
-                right: .5rem;
-                z-index: 2;
-                color: var(--ks-content-primary);
-                cursor: pointer;
-            }
-        }
+.edit-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+}
 
-        a {
-            display: block;
-            padding: .25rem .5rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--ks-content-primary);
-            font-size: 0.875em;
-            border-radius: 4px;
-            transition: none;
-            &:hover{
-                color: var(--ks-content-link);
+.save {
+    cursor: pointer;
+    color: var(--ks-content-primary);
+}
 
-            }
-        }
+.vsm--link {
+    position: relative;
+    z-index: 1;
+    display: inline-flex; 
+    max-width: 100%;  
+    width: 100%;
+    text-decoration: none;
+    color: var(--ks-content-primary);
+    font-size: 0.875em;
+}
 
-        &:hover a {
-            margin-right: 2.5rem;
-        }
+.wrapper:not(.editing) .vsm--link:hover .buttons {
+    opacity: 1;
+    visibility: visible;
+}
 
-        &:hover{
-            background-color: var(--ks-button-background-secondary-hover);
-            border-radius: 0.25rem;
-        }
-    }
+.vsm--title {
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 0.25rem 0.5rem;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 2.5rem); 
+}
+
 </style>
+

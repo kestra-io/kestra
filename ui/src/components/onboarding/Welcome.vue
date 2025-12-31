@@ -3,7 +3,7 @@
         <template #additional-right>
             <ul>
                 <li>
-                    <el-button v-if="canCreate" tag="router-link" :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" :icon="Plus" type="secondary">
+                    <el-button v-if="canCreate" tag="router-link" :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" :icon="Plus">
                         {{ $t('create_flow') }}
                     </el-button>
                 </li>

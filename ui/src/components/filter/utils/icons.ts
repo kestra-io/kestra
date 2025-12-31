@@ -42,7 +42,6 @@ import Sync from "vue-material-design-icons/Sync.vue";
 import TableColumn from "vue-material-design-icons/TableColumnPlusAfter.vue";
 import TablePlus from "vue-material-design-icons/TablePlus.vue";
 import TagOutline from "vue-material-design-icons/TagOutline.vue";
-import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
 import TuneVerticalVariant from "vue-material-design-icons/TuneVerticalVariant.vue";
 import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
 
@@ -91,7 +90,6 @@ export {
     TableColumn,
     TablePlus,
     TagOutline,
-    TimelineTextOutline,
     TuneVerticalVariant,
     ViewDashboardEdit
 };

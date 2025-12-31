@@ -6,7 +6,7 @@ import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
 import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
-import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
+import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
 
 import MultiPanelTabs from "../../../src/components/MultiPanelTabs.vue";
 import {Panel} from "../../../src/utils/multiPanelTypes";
@@ -118,7 +118,7 @@ const argGenerator = (index?: number) => {
                         component: () => <PlaceholderComponent tabId="5" />,
                     },
                     {
-                        button: {icon: markRaw(BallotOutlineIcon), label: "Tab 6"},
+                        button: {icon: markRaw(ShapePlusOutline), label: "Tab 6"},
                         uid: "tab6",
                         component: () => <PlaceholderComponent tabId="6" />,
                     },

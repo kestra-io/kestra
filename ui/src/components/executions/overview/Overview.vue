@@ -216,7 +216,7 @@
 
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
@@ -238,7 +238,7 @@
 
         return [
             {
-                icon: DotsSquare,
+                icon: FolderOpenOutline,
                 label: t("namespace"),
                 value: execution.value.namespace,
                 to: createLink("namespaces", execution.value),

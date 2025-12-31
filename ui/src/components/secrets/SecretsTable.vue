@@ -57,7 +57,7 @@
                                     type="info"
                                     class="namespace-tag"
                                 >
-                                    <DotsSquare />
+                                    <FolderOpenOutline />
                                     {{ scope.row?.namespace }}
                                 </el-tag>
                             </template>
@@ -225,7 +225,7 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import PencilOff from "vue-material-design-icons/PencilOff.vue";
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";

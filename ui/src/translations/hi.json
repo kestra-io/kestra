@@ -1845,6 +1845,7 @@
     "update aborted": "अपडेट रद्द कर दिया गया",
     "update ok": "अपडेट किया गया है",
     "updated date": "अपडेट तिथि",
+    "usage": "उपयोग",
     "use": "उपयोग करें",
     "use_dark_background": "इस संस्करण का उपयोग तब करें जब आप एक गहरे पृष्ठभूमि पर काम कर रहे हों ताकि यह सुनिश्चित हो सके कि हमारा नाम पठनीय बना रहे।",
     "validate": "मान्य करें",
@@ -1896,7 +1897,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
-    "years": "वर्ष",
-    "your usage": "आपका उपयोग"
+    "years": "वर्ष"
   }
 }

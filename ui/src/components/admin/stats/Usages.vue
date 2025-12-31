@@ -1,7 +1,7 @@
 <template>
     <div v-if="usages" class="usage-card">
         <div class="usage-card-header">
-            <span>{{ $t('your usage') }}</span>
+            <span>{{ $t('usage') }}</span>
             <slot name="button" />
         </div>
         <div class="usage-card-body">
@@ -155,7 +155,7 @@
 .usage-card {
     background-color: transparent;
     // min-height: 432px;
-    padding: 1.25rem;
+    padding: 1.5rem;
     border: 1px solid var(--ks-border-primary);
     border-radius: 8px;
     box-shadow: 0 2px 4px var(--ks-card-shadow);
@@ -165,11 +165,10 @@
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        padding-bottom: 1rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
 
         span {
-            font-size: 18.4px;
+            font-size: 1.25rem;
             font-weight: 600;
         }
     }
@@ -187,6 +186,13 @@
         min-height: 2rem;
         padding-top: 0.25rem;
         padding-bottom: 0.25rem;
+
+        &:first-child {
+            padding-top: 0;
+        }
+        &:last-child { 
+            padding-bottom: 0;
+        }
 
         .usage-icon {
             display: flex;

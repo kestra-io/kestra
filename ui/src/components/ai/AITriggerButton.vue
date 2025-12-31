@@ -6,7 +6,7 @@
             :icon="AiIcon" 
             @click="handleClick"
         >
-            {{ t("ai.flow.title") }}
+            {{ $t("ai.flow.title") }}
         </el-button>
     </div>
 </template>

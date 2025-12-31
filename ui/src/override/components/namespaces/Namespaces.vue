@@ -88,6 +88,7 @@
     import {useNamespacesFilter} from "../../../components/filter/configurations";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
+
     import useRestoreUrl from "../../../composables/useRestoreUrl";
 
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";

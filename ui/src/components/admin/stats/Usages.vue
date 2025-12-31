@@ -29,7 +29,7 @@
     import TextSearchVariant from "vue-material-design-icons/TextSearchVariant.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
@@ -137,7 +137,7 @@
         },
         {
             key: "executions",
-            icon: TimelineClockOutline,
+            icon: PlayOutline,
             labelKey: "executions",
             value: `${executionsOverTwoDays.value} (${t("last 48 hours")})`,
             route: "executions/list",

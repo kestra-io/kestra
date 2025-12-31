@@ -31,7 +31,7 @@
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import {useI18n} from "vue-i18n";
 
@@ -109,7 +109,7 @@
     const usageItems = computed(() => [
         {
             key: "namespaces",
-            icon: DotsSquare,
+            icon: FolderOpenOutline,
             labelKey: "namespaces",
             value: namespaces.value,
             route: namespaceRoute.value,

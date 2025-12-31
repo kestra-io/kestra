@@ -1,6 +1,7 @@
 import AccountCheck from "vue-material-design-icons/AccountCheck.vue";
 import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
 import BookmarkCheckOutline from "vue-material-design-icons/BookmarkCheckOutline.vue";
+import Cached from "vue-material-design-icons/Cached.vue";
 import CalendarEndOutline from "vue-material-design-icons/CalendarEndOutline.vue";
 import CalendarRangeOutline from "vue-material-design-icons/CalendarRangeOutline.vue";
 import ChartBar from "vue-material-design-icons/ChartBar.vue";
@@ -49,6 +50,7 @@ export {
     AccountCheck,
     AccountOutline,
     BookmarkCheckOutline,
+    Cached,
     CalendarEndOutline,
     CalendarRangeOutline,
     ChartBar,

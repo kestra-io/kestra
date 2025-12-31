@@ -3,15 +3,31 @@
         class="filter-container"
         :class="{'filter-shrink': filter.searchInputFullWidth.value}"
     >
-        <el-button
+        <el-dropdown
             v-if="filter.tableOptions.value?.refresh?.shown"
+            splitButton
+            :hideOnClick="false"
+            :buttonProps="{size: 'default', type: 'default', class: 'refresh-button'}"
             @click="filter.refreshData"
-            :icon="Refresh"
-            :size="'default'"
-            class="refresh-button"
         >
-            {{ $t("filter.refresh") }}
-        </el-button>
+            <el-tooltip :content="$t('filter.refresh')" placement="top" effect="light">
+                <el-icon><Cached /></el-icon>
+            </el-tooltip>
+            <template #dropdown>
+                <el-dropdown-menu class="m-dropdown-menu">
+                    <el-dropdown-item
+                        class="periodic-refresh-item"
+                        @click.stop
+                    >
+                        <el-checkbox v-model="periodicRefreshEnabled" @click.stop>
+                            <span class="periodic-refresh-label">
+                                {{ $t("toggle periodic refresh each x seconds", {interval: intervalSeconds}) }}
+                            </span>
+                        </el-checkbox>
+                    </el-dropdown-item>
+                </el-dropdown-menu>
+            </template>
+        </el-dropdown>
 
         <SaveFilters
             v-if="!filter.searchInputFullWidth.value"
@@ -78,9 +94,10 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, inject} from "vue";
-    import {ChevronDown, BookmarkCheckOutline, Refresh} from "../utils/icons";
+    import {ref, inject, computed, watch} from "vue";
+    import {ChevronDown, BookmarkCheckOutline, Cached} from "../utils/icons";
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
+    import {usePeriodicRefresh} from "../composables/usePeriodicRefresh";
     
     import SaveFilters from "../segments/SaveFilters.vue";
     import SavedFilters from "../segments/SavedFilters.vue";
@@ -88,6 +105,18 @@
 
     const isSavedFiltersVisible = ref(false);
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
+
+    const {isEnabled: periodicRefreshEnabled, intervalSeconds, toggleRefresh} = usePeriodicRefresh();
+    const refreshAvailable = computed(() => Boolean(filter.tableOptions.value?.refresh?.shown));
+    const refreshCallback = () => filter.refreshData();
+
+    watch(
+        [periodicRefreshEnabled, refreshAvailable],
+        ([enabled, available]) => {
+            toggleRefresh(enabled && available, refreshCallback);
+        },
+        {immediate: true}
+    );
 
     const handleSave = (name: string, description: string) => {
         filter.saveFilter(
@@ -158,20 +187,34 @@
     }
 
     .refresh-button {
-        background-color: transparent;
-        border: none;
-        box-shadow: none;
         margin: 0;
-        padding: 0.25rem 0.5rem;
-        font-size: 12px;
+        padding: 0.5rem;
+        font-size: 1rem;
+        color: var(--ks-content-primary) !important;
 
         :deep(svg) {
             color: var(--ks-content-tertiary);
         }
+    }
 
-        &:hover {
-            background-color: var(--ks-tag-background);
-        }
+    :deep(.el-button-group) {
+        box-shadow: var(--ks-box-shadow);
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+
+    :deep(.el-button-group > .el-button) {
+        box-shadow: none;
+        margin: 0;
+    }
+
+    :deep(.el-button-group > .el-button.el-dropdown__caret-button) {
+        box-shadow: none;
+        padding: 0.5rem 0.4rem;
+    }
+
+    .periodic-refresh-label {
+        font-weight: 500;
     }
 }
 </style>

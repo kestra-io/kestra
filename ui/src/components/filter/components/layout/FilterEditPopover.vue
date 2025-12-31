@@ -5,7 +5,6 @@
             ref="buttonRef"
             link
             size="small"
-            :icon="PencilOutline"
             class="edit-button"
             @click.stop="toggleDialog"
         />
@@ -40,7 +39,6 @@
 
 <script setup lang="ts">
     import {nextTick, onMounted, onUnmounted, ref} from "vue";
-    import {PencilOutline} from "../../utils/icons";
     import {AppliedFilter, FilterKeyConfig} from "../../utils/filterTypes";
     import FilterEditPopper from "./FilterEditPopper.vue";
 

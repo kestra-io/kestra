@@ -11,15 +11,6 @@
             </div>
 
             <div class="options-right">
-                <div class="option-item">
-                    <el-switch 
-                        v-model="periodicRefreshEnabled"
-                    />
-                    <Kicon :tooltip="refreshTooltip" placement="top">
-                        <span class="option-label periodic">{{ $t("filter.periodic refresh") }}</span>
-                    </Kicon>
-                </div>
-
                 <el-popover
                     v-if="filter.tableOptions.value?.columns?.shown !== false"
                     v-model:visible="isColumnsPanelVisible"
@@ -54,27 +45,16 @@
 <script setup lang="ts">
     import {ref, inject, watch} from "vue";
 
-    import Kicon from "../../Kicon.vue";
     import CustomColumns from "../segments/CustomColumns.vue";
 
     import {CogOutline} from "../utils/icons";
 
-    import {usePeriodicRefresh} from "../composables/usePeriodicRefresh";
     import {FILTER_CONTEXT_INJECTION_KEY} from "../utils/filterInjectionKeys";
 
     const filter = inject(FILTER_CONTEXT_INJECTION_KEY)!;
 
-    const {isEnabled: periodicRefreshEnabled, tooltip: refreshTooltip, toggleRefresh} = usePeriodicRefresh();
-
     const isColumnsPanelVisible = ref(false);
     const localChartVisible = ref(filter.chartVisible.value);
-
-    const refreshCallback = () => {
-        if (filter.tableOptions.value?.refresh?.callback) {
-            filter.tableOptions.value.refresh.callback();
-        }
-        filter.refreshData();
-    };
 
     watch(
         () => filter.chartVisible.value,
@@ -88,13 +68,6 @@
         (newVal) => {
             filter.updateChart(newVal);
         }
-    );
-
-    watch(
-        periodicRefreshEnabled,
-        (newVal) => {
-            toggleRefresh(newVal, refreshCallback);
-        }, {immediate: true}
     );
 </script>
 
@@ -122,10 +95,6 @@
                     font-weight: 500;
                     font-size: 0.875rem;
                     margin: 0 6px;
-                }
-
-                .periodic {
-                    margin-right: 0;
                 }
             }
         }

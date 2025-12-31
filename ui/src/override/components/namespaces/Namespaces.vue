@@ -89,7 +89,7 @@
     import permission from "../../../models/permission";
     import action from "../../../models/action";
     import useRestoreUrl from "../../../composables/useRestoreUrl";
-    
+
     import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";

@@ -229,7 +229,6 @@
     import SortVariant from "vue-material-design-icons/SortVariant.vue";
     import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 
-
     const emits = defineEmits(["follow"]);
 
     const execution = computed(() => store.execution);

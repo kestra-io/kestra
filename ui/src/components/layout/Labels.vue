@@ -8,7 +8,8 @@
             @change="updateLabel(label)"
             class="me-1 el-tag label"
         >
-            {{ label.key }}:{{ label.value }}
+            <template v-if="!label.key">{{ label.value }}</template>
+            <template v-else>{{ label.key }}:{{ label.value }}</template>
         </el-check-tag>
     </span>
 </template>
@@ -29,7 +30,7 @@
         defineProps<{
             labels?: Label[];
             readOnly?: boolean;
-            filterType?: "labels" | "metadata";
+            filterType?: "labels" | "metadata" | "type";
         }>(),
         {
             labels: () => [],
@@ -48,37 +49,47 @@
 
     const isChecked = (label: Label) => {
         return query.some((l) => {
+            if (props.filterType === "type") {
+                return l.field === props.filterType && l.operation === "EQUALS" && typeof l.value === "string" && l.value === label.value;
+            }
+
             if (typeof l?.value !== "string") return false;
 
             const [key, value] = l.value.split(":");
-            return key === label.key && value === label.value;
+            return l.field === props.filterType && l.operation === "EQUALS" && key === label.key && value === label.value;
         });
     };
 
     const updateLabel = (label: Label) => {
-        const getKey = (key: string) => `filters[${props.filterType}][EQUALS][${key}]`;
+        const getKey = (key?: string) => (props.filterType === "type" 
+            ? `filters[${props.filterType}][EQUALS]`
+            : `filters[${props.filterType}][EQUALS][${key}]`);
 
         if (isChecked(label)) {
             const replacementQuery = {...route.query};
-            delete replacementQuery[getKey(label.key)];
+            delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)];
             replacementQuery.page = "1";
             router.replace({query: replacementQuery});
         } else {
-            router.replace({
-                query: {...route.query, [getKey(label.key)]: label.value, page: "1"},
-            });
+            const newQuery = {...route.query, page: "1"};
+            if (props.filterType === "type") {
+                newQuery[getKey()] = label.value;
+            } else {
+                newQuery[getKey(label.key)] = label.value;
+            }
+            router.replace({query: newQuery});
         }
     };
 </script>
 
 <style scoped lang="scss">
 .label {
-    #{--ks-tag-background}: #E0E3F0;
-    #{--ks-tag-background-active}: #B8BDD4;
+    --ks-tag-background: #E0E3F0;
+    --ks-tag-background-active: #B8BDD4;
 
     html.dark & {
-        #{--ks-tag-background}: #404559;
-        #{--ks-tag-background-active}: #59607B;
+        --ks-tag-background: #404559;
+        --ks-tag-background-active: #59607B;
     }
 
     background-color: var(--ks-tag-background);
@@ -86,7 +97,7 @@
     color: var(--ks-content-primary);
 }
 
-.el-check-tag.el-check-tag--primary.is-checked {
+.label.el-check-tag.is-checked {
     background-color: var(--ks-tag-background-active);
     color: var(--ks-content-primary);
 }

@@ -23,6 +23,7 @@
         --el-button-bg-color: var(--ks-button-background-primary);
         --el-button-border-color: var(--ks-button-background-primary);
         --el-button-hover-bg-color: var(--ks-button-background-primary-hover);
+        --el-button-hover-border-color: var(--ks-button-background-primary-hover);
         --el-button-active-bg-color: var(--ks-button-background-primary-active);
         --el-button-disabled-text-color: var(--ks-content-inactive);
         --el-button-disabled-bg-color: var(--ks-button-background-inactive);
@@ -44,7 +45,32 @@
         --el-button-bg-color: var(--ks-button-background-success);
         --el-button-border-color: var(--ks-button-background-success);
         --el-button-hover-bg-color: var(--ks-button-background-success-hover);
+        --el-button-hover-border-color: var(--ks-button-background-success-hover);
         --el-button-active-bg-color: var(--ks-button-background-success-active);
+    }
+
+    &.el-button--warning {
+        --el-button-bg-color: var(--ks-button-background-warning);
+        --el-button-border-color: var(--ks-button-background-warning);
+        --el-button-hover-bg-color: var(--ks-button-background-warning-hover);
+        --el-button-hover-border-color: var(--ks-button-background-warning-hover);
+        --el-button-active-bg-color: var(--ks-button-background-warning-active);
+    }
+
+    &.el-button--danger {
+        --el-button-bg-color: var(--ks-button-background-danger);
+        --el-button-border-color: var(--ks-button-background-danger);
+        --el-button-hover-bg-color: var(--ks-button-background-danger-hover);
+        --el-button-hover-border-color: var(--ks-button-background-danger-hover);
+        --el-button-active-bg-color: var(--ks-button-background-danger-active);
+    }
+
+    &.el-button--info {
+        --el-button-bg-color: var(--ks-button-background-info);
+        --el-button-border-color: var(--ks-button-background-info);
+        --el-button-hover-bg-color: var(--ks-button-background-info-hover);
+        --el-button-hover-border-color: var(--ks-button-background-info-hover);
+        --el-button-active-bg-color: var(--ks-button-background-info-active);
     }
 
     .el-input-group--append & [class*=el-icon] + span {

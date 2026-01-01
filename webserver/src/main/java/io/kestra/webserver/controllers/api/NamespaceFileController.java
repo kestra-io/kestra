@@ -370,12 +370,14 @@ public class NamespaceFileController {
         if (path == null || path.isEmpty()) {
             return path;
         }
+        
         // Normalize the path to remove . and .. segments
         String normalized = Path.of(path).normalize().toString();
         
-        // If original path started with / but normalized doesn't, add it back
-        // This handles cases like /./folder -> folder (should be /folder)
-        if (path.startsWith("/") && !normalized.startsWith("/")) {
+        // For API paths, we want to ensure they start with /
+        // If path starts with ./ it becomes relative after normalization
+        // But for our API, all paths should be absolute (start with /)
+        if (!normalized.startsWith("/") && !normalized.isEmpty()) {
             normalized = "/" + normalized;
         }
         

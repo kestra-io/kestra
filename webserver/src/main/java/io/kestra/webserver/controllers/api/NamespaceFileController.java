@@ -370,7 +370,16 @@ public class NamespaceFileController {
         if (path == null || path.isEmpty()) {
             return path;
         }
-        return Path.of(path).normalize().toString();
+        // Normalize the path to remove . and .. segments
+        String normalized = Path.of(path).normalize().toString();
+        
+        // If original path started with / but normalized doesn't, add it back
+        // This handles cases like /./folder -> folder (should be /folder)
+        if (path.startsWith("/") && !normalized.startsWith("/")) {
+            normalized = "/" + normalized;
+        }
+        
+        return normalized;
     }
 
     private void ensureWritableNamespaceFile(URI path) {

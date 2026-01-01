@@ -13,16 +13,14 @@ import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.Schedule;
 import lombok.AllArgsConstructor;
 import lombok.With;
 
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -200,6 +198,19 @@ public final class RunVariables {
             // Trigger
             if (trigger != null) {
                 builder.put("trigger", RunVariables.of(trigger));
+                // useful when rendering labels when evaluating trigger before creating execution
+                if(execution == null ){
+                    List<Label> allLabels = new ArrayList<>();
+                    if(trigger.getLabels() != null){
+                        allLabels.addAll(trigger.getLabels());
+                    }
+                    if(flow != null && flow.getLabels() != null){
+                        allLabels.addAll(flow.getLabels());
+                    }
+                    allLabels = new ArrayList<>(LabelService.labelsExcludingSystem(allLabels));
+                    allLabels.add(new Label(Label.FROM, "trigger"));
+                    builder.put("labels", Label.toNestedMap(allLabels));
+                }
             }
 
             // Parents

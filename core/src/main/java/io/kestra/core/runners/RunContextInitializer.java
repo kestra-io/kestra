@@ -205,7 +205,16 @@ public class RunContextInitializer {
 
         final Map<String, Object> variables = new HashMap<>(runContext.getVariables());
         variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
-
+        // add a correlation ID if none exist
+        Map<String, Object> labels = (Map<String, Object>) variables.get("labels");
+        if(labels != null){
+            Map<String, Object> systemLabels = (Map<String, Object>) labels.get("system");
+            if (systemLabels == null) {
+                systemLabels = new HashMap<>();
+                labels.put("system", systemLabels);
+            }
+            systemLabels.putIfAbsent("correlationId", triggerExecutionId);
+        }
         final StorageContext context = StorageContext.forTrigger(
             triggerContext.getTenantId(),
             triggerContext.getNamespace(),

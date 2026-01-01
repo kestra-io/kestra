@@ -22,6 +22,13 @@ public final class LabelService {
     }
 
     /**
+     * Return labels excluding system labels.
+     */
+    public static List<Label> labelsExcludingSystem(List<Label> labels) {
+        return ListUtils.emptyOnNull(labels).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
+    }
+
+    /**
      * Return flow labels excluding system labels concatenated with trigger labels.
      *
      * Trigger labels will be rendered via the run context but not flow labels.

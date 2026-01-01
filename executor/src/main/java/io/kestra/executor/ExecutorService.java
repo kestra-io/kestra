@@ -1199,8 +1199,7 @@ public class ExecutorService {
                 .record(taskRun.getState().getDurationOrComputeIt());
 
             if (
-                !taskRun.getState().isFailed()
-                    && taskRun.getAssets() != null &&
+                taskRun.getAssets() != null &&
                     (!taskRun.getAssets().getInputs().isEmpty() || !taskRun.getAssets().getOutputs().isEmpty())
             ) {
                 AssetUser assetUser = new AssetUser(
@@ -1210,7 +1209,10 @@ public class ExecutorService {
                     newExecution.getFlowRevision(),
                     taskRun.getExecutionId(),
                     taskRun.getTaskId(),
-                    taskRun.getId()
+                    taskRun.getId(),
+                    taskRun.getState().getCurrent(),
+                    taskRun.getState().getStartDate(),
+                    taskRun.getState().getEndDate().orElse(null)
                 );
 
                 List<AssetIdentifier> outputIdentifiers = taskRun.getAssets().getOutputs().stream()
@@ -1230,13 +1232,16 @@ public class ExecutorService {
                     log.warn("Unable to submit asset lineage event for {} -> {}", inputAssets, outputIdentifiers, e);
                 }
 
-                taskRun.getAssets().getOutputs().forEach(asset -> {
-                    try {
-                        assetService.asyncUpsert(assetUser, asset);
-                    } catch (QueueException e) {
-                        log.warn("Unable to submit asset upsert event for asset {}", asset.getId(), e);
-                    }
-                });
+                // don't update output asserts if task fail
+                if (!taskRun.getState().isFailed()) {
+                    taskRun.getAssets().getOutputs().forEach(asset -> {
+                        try {
+                            assetService.asyncUpsert(assetUser, asset);
+                        } catch (QueueException e) {
+                            log.warn("Unable to submit asset upsert event for asset {}", asset.getId(), e);
+                        }
+                    });
+                }
             }
         }
     }

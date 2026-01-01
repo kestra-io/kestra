@@ -1845,6 +1845,7 @@
     "update aborted": "更新が中止されました",
     "update ok": "更新されました",
     "updated date": "更新日",
+    "usage": "使用",
     "use": "使用",
     "use_dark_background": "暗い背景で作業する際には、このバージョンを使用して、私たちの名前が読みやすい状態を保ってください。",
     "validate": "検証",
@@ -1896,7 +1897,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
-    "years": "年",
-    "your usage": "あなたの使用状況"
+    "years": "年"
   }
 }

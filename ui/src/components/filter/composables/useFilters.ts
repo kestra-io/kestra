@@ -103,7 +103,12 @@ export function useFilters(
         });
     };
 
-    const updateRoute = () => {
+    const hasValue = (filter: AppliedFilter): boolean => {
+        return (Array.isArray(filter.value) && filter.value.length > 0) ||
+            (!Array.isArray(filter.value) && filter.value !== "" && filter.value !== null && filter.value !== undefined);
+    };
+
+    const updateRoute = (shouldResetPage = false) => {
         const query = {...route.query};
         clearFilterQueryParams(query);
 
@@ -117,11 +122,7 @@ export function useFilters(
 
         updateSearchQuery(query);
 
-        if (
-            (appliedFilters.value.some(f => Array.isArray(f.value) && f.value.length > 0)
-            || searchQuery.value.trim())
-            && parseInt(String(query.page ?? "1")) > 1
-        ) {
+        if (shouldResetPage && parseInt(String(query.page ?? "1")) > 1) {
             delete query.page;
         }
 
@@ -371,14 +372,14 @@ export function useFilters(
         appliedFilters.value = index === -1
             ? [...appliedFilters.value, filter]
             : appliedFilters.value.map((f, i) => (i === index ? filter : f));
-        updateRoute();
+        updateRoute(hasValue(filter));
     };
 
     const removeFilter = (filterId: string) => {
         const filter = appliedFilters.value.find(f => f?.id === filterId);
         if (filter) {
             appliedFilters.value = appliedFilters.value.filter(f => f?.key !== filter?.key);
-            updateRoute();
+            updateRoute(false);
         }
     };
 
@@ -387,7 +388,7 @@ export function useFilters(
             ...appliedFilters.value.filter(f => f?.key !== updatedFilter?.key),
             updatedFilter
         ];
-        updateRoute();
+        updateRoute(hasValue(updatedFilter));
     };
 
     /**
@@ -396,7 +397,7 @@ export function useFilters(
     const clearFilters = () => {
         appliedFilters.value = [];
         searchQuery.value = "";
-        updateRoute();
+        updateRoute(true);
     };
 
     const {resetDefaultFilter} = useDefaultFilter({
@@ -418,7 +419,7 @@ export function useFilters(
     };
     
     watch(searchQuery, () => {
-        updateRoute();
+        updateRoute(searchQuery.value.trim() !== "");
     });
 
     return {

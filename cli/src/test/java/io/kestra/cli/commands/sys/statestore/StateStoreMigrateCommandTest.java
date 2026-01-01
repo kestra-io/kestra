@@ -55,11 +55,7 @@ class StateStoreMigrateCommandTest {
             );
             assertThat(storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri)).isTrue();
 
-            RunContext runContext = ctx.getBean(RunContextFactory.class).of(flow, Map.of("flow", Map.of(
-                "tenantId", tenantId,
-                "id", flow.getId(),
-                "namespace", flow.getNamespace()
-            )));
+            RunContext runContext = ctx.getBean(RunContextFactory.class).of(flow, Map.of());
             StateStore stateStore = new StateStore(runContext, true);
             Assertions.assertThrows(MigrationRequiredException.class, () -> stateStore.getState(true, "my-state", "sub-name", "my-taskrun-value"));
 

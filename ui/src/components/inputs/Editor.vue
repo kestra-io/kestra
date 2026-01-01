@@ -734,7 +734,7 @@
 
 .ks-editor {
     display: flex;
-
+    overflow: hidden;
     .top-nav {
         background-color: var(--ks-background-card);
         padding: 0.5rem;

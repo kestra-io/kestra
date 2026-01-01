@@ -1,15 +1,11 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.services.FlowService;
-import io.kestra.core.services.KVStoreService;
-import io.kestra.core.storages.kv.InternalKVStore;
-import io.kestra.core.storages.kv.KVStore;
+import io.kestra.core.services.NamespaceService;
 import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -33,7 +29,8 @@ public class InternalStorage implements Storage {
     private final Logger logger;
     private final StorageContext context;
     private final StorageInterface storage;
-    private final FlowService flowService;
+    private final NamespaceFactory namespaceFactory;
+    private final NamespaceService namespaceService;
 
     /**
      * Creates a new {@link InternalStorage} instance.
@@ -41,8 +38,8 @@ public class InternalStorage implements Storage {
      * @param context The storage context.
      * @param storage The storage to delegate operations.
      */
-    public InternalStorage(StorageContext context, StorageInterface storage) {
-        this(LOG, context, storage, null);
+    public InternalStorage(StorageContext context, StorageInterface storage, NamespaceFactory namespaceFactory) {
+        this(LOG, context, storage, null, namespaceFactory);
     }
 
     /**
@@ -52,11 +49,12 @@ public class InternalStorage implements Storage {
      * @param context The storage context.
      * @param storage The storage to delegate operations.
      */
-    public InternalStorage(Logger logger, StorageContext context, StorageInterface storage, FlowService flowService) {
+    public InternalStorage(Logger logger, StorageContext context, StorageInterface storage, NamespaceService namespaceService, NamespaceFactory namespaceFactory) {
         this.logger = logger;
         this.context = context;
         this.storage = storage;
-        this.flowService = flowService;
+        this.namespaceService = namespaceService;
+        this.namespaceFactory = namespaceFactory;
     }
 
     /**
@@ -64,7 +62,7 @@ public class InternalStorage implements Storage {
      **/
     @Override
     public Namespace namespace() {
-        return new InternalNamespace(logger, context.getTenantId(), context.getNamespace(), storage);
+        return namespaceFactory.of(logger, context.getTenantId(), context.getNamespace(), storage);
     }
 
     /**
@@ -74,13 +72,13 @@ public class InternalStorage implements Storage {
     public Namespace namespace(String namespace) {
         boolean isExternalNamespace = !namespace.equals(context.getNamespace());
         // Checks whether the contextual namespace is allowed to access the passed namespace.
-        if (isExternalNamespace && flowService != null) {
-            flowService.checkAllowedNamespace(
+        if (isExternalNamespace && namespaceService != null) {
+            namespaceService.checkAllowedNamespace(
                 context.getTenantId(), namespace, // requested Tenant/Namespace
                 context.getTenantId(), context.getNamespace() // from Tenant/Namespace
             );
         }
-        return new InternalNamespace(logger, context.getTenantId(), namespace, storage);
+        return namespaceFactory.of(logger, context.getTenantId(), namespace, storage);
     }
 
     /**
@@ -100,6 +98,13 @@ public class InternalStorage implements Storage {
 
         return this.storage.get(context.getTenantId(), context.getNamespace(), uri);
 
+    }
+
+    @Override
+    public FileAttributes getAttributes(URI uri) throws IOException {
+        uriGuard(uri);
+
+        return this.storage.getAttributes(context.getTenantId(), context.getNamespace(), uri);
     }
 
     /**
@@ -266,7 +271,13 @@ public class InternalStorage implements Storage {
         return this.storage.put(context.getTenantId(), context.getNamespace(), resolve, new BufferedInputStream(inputStream));
     }
 
+    @Override
     public Optional<StorageContext.Task> getTaskStorageContext() {
         return Optional.ofNullable((context instanceof StorageContext.Task task) ? task : null);
+    }
+
+    @Override
+    public List<FileAttributes> list(URI uri) throws IOException {
+        return this.storage.list(context.getTenantId(), context.getNamespace(), uri);
     }
 }

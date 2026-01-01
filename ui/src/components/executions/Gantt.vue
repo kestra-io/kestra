@@ -37,7 +37,7 @@
                                     <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                     <ChevronDown v-else />
                                 </div>
-                                <el-tooltip placement="top-start" :persistent="false" transition="" :hideAfter="0" effect="light">
+                                <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
                                     <template #content>
                                         <code>{{ item.name }}</code>
                                         <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
@@ -52,7 +52,7 @@
                                     </span>
                                 </el-tooltip>
                                 <div>
-                                    <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" :hideAfter="0" effect="light">
+                                    <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
                                         <template #content>
                                             <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                         </template>
@@ -60,7 +60,7 @@
                                     </el-tooltip>
                                 </div>
                                 <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                    <el-tooltip placement="top" :persistent="false" transition="" :hideAfter="0" effect="light">
+                                    <el-tooltip placement="top" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
                                         <template #content>
                                             <span style="white-space: pre-wrap;">
                                                 {{ item.tooltip }}

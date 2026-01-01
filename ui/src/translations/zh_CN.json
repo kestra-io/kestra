@@ -314,6 +314,12 @@
         "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
         "title": "使用 Kestra 构建自定义应用程序"
       },
+      "assets": {
+        "header": "资产元数据和可观测性",
+        "label": "资产",
+        "message": "资产连接可观测性、血缘关系和所有权元数据，使平台团队能够更快地排查问题并自信地部署。",
+        "title": "将每个数据集、服务和依赖项展示出来。"
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition记录每个活动，提供强大且不可更改的记录，使得跟踪更改、保持合规性和解决问题变得容易。",
         "title": "使用审计日志跟踪更改"
@@ -389,6 +395,7 @@
         "zoom_out": "缩小视图"
       },
       "search": {
+        "asset_placeholder": "按资产、flow或namespace搜索...",
         "no_results": "未找到与 {term} 相关的结果",
         "placeholder": "按flow或namespace搜索..."
       }
@@ -454,6 +461,10 @@
         "content": "开始构建应用程序，以便与外部世界的Kestra进行交互。",
         "title": "您还没有应用程序！"
       },
+      "assets": {
+        "content": "添加资产以跟踪和管理您的数据资产、服务和基础设施。",
+        "title": "您还没有资产！"
+      },
       "concurrency_executions": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
         "title": "此 Flow 没有正在进行的 Executions。"
@@ -463,6 +474,10 @@
         "title": "此Flow未设置限制。"
       },
       "dependencies": {
+        "ASSET": {
+          "content": "此资产与flow或其他资产没有上游或下游依赖关系。",
+          "title": "当前没有依赖项。"
+        },
         "EXECUTION": {
           "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
@@ -507,7 +522,7 @@
     "environment color setting": "环境颜色",
     "environment name setting": "环境名称",
     "error": "错误",
-    "error detected": "检测到错误",
+    "error detected": "检测到错误。",
     "error in editor": "在编辑器中发现错误",
     "errorLogs": "错误日志",
     "errors": {
@@ -539,7 +554,7 @@
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
     "execution labels": "执行标签",
-    "execution not found": "未找到执行 <code>{executionId}</code>",
+    "execution not found": "执行 <code>{executionId}</code> 未找到。",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
     "execution not in state PAUSED": "执行 <code>{executionId}</code> 未处于暂停状态",
     "execution replay": "此执行是以下内容的重放",
@@ -554,7 +569,7 @@
       "metrics": "删除指标",
       "storage": "删除内部存储文件"
     },
-    "execution_failed": "执行失败！最后的错误是",
+    "execution_failed": "执行失败！\n最后一个错误是",
     "execution_guide": {
       "get_started": {
         "text": "请按照快速入门指南安装Kestra并开始构建您的第一个工作流。",
@@ -595,6 +610,7 @@
     "export": "导出",
     "export all flows": "导出所有流程",
     "export all templates": "导出所有模板",
+    "export_csv": "导出为CSV",
     "exports": "导出",
     "failed to render pdf": "渲染PDF预览失败",
     "false": "假",
@@ -642,6 +658,7 @@
       "customize columns": "自定义表格列",
       "customize tooltip": "自定义显示哪些过滤器",
       "delete filter": "删除过滤器",
+      "delete filter confirm": "您确定要删除此过滤器吗？",
       "description": "描述",
       "deselect all": "取消全选",
       "drag to reorder": "拖动以重新排序",
@@ -881,6 +898,12 @@
         "description": "按 trigger ID 筛选",
         "label": "触发器 ID"
       },
+      "triggerState": {
+        "description": "按触发器状态筛选",
+        "disabled": "禁用",
+        "enabled": "启用",
+        "label": "触发状态"
+      },
       "update": "更新",
       "value": "值",
       "workerId": {
@@ -956,6 +979,7 @@
     "flow": "流程",
     "flow already exists": "流程已存在",
     "flow creation": "流程创建",
+    "flow creation denied in namespace": "您没有权限在namespace `{namespace}`中创建flows。",
     "flow delete": "确定要删除 <code>{flowCount}</code> 个流程吗？",
     "flow deleted, you can restore it": "流程已删除，这是只读视图。你仍然可以恢复它。",
     "flow disable": "确定要禁用 <code>{flowCount}</code> 个流程吗？",
@@ -1024,8 +1048,8 @@
     "kestra": "Kestra",
     "key": "键",
     "kill": "终止",
-    "kill only parents": "仅终止父流程",
-    "kill parents and subflow": "终止父流程和子流程",
+    "kill only parents": "仅终止当前",
+    "kill parents and subflow": "终止当前和subflows",
     "killed confirm": "确定要终止执行 <code>{id}</code> 吗？",
     "killed done": "执行已排队终止",
     "kv": {
@@ -1051,6 +1075,7 @@
     "last modified": "上次修改",
     "last trigger date": "上次触发日期",
     "last trigger date tooltip": "触发器上次执行的时间。在运行backfill时可能是过去的时间。",
+    "latest_update": "最新更新",
     "launch execution": "执行",
     "learn_more": "了解更多",
     "leave page": "离开页面",
@@ -1077,6 +1102,7 @@
     "min": "最小",
     "minutes": "分钟",
     "missingSource": "缺少源",
+    "modify_inputs": "修改输入",
     "monogram": "字母组合",
     "months": "月份",
     "more_actions": "更多操作",
@@ -1147,6 +1173,12 @@
         "new_file": "新的文件名（带扩展名）：",
         "new_folder": "新的文件夹名："
       },
+      "revisions": {
+        "history": "修订历史",
+        "restore": {
+          "success": "文件修订已成功恢复"
+        }
+      },
       "toggle": {
         "hide": "隐藏命名空间文件",
         "show": "显示命名空间文件"
@@ -1210,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "检查",
           "concurrency": "并发性",
           "disabled": "禁用",
           "labels": "标签",
@@ -1272,10 +1305,13 @@
     },
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_file_choosen": "未选择文件",
+    "no_flow_outputs": "没有可用的output。",
+    "no_inputs": "没有可用的input。",
     "no_logs_data": "无数据",
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
+      "assets": "未找到资产",
       "executions": "未找到执行",
       "flows": "未找到Flows",
       "kv_pairs": "未找到Key-Value对",
@@ -1285,6 +1321,8 @@
     },
     "no_results_found": "未找到结果",
     "no_tasks_running": "尚无任务正在运行。",
+    "no_trigger": "没有可用的trigger。",
+    "no_variables": "没有可用的变量。",
     "now": "现在",
     "of": "的",
     "ok": "确定",
@@ -1293,7 +1331,7 @@
       "next": "下一步",
       "no_flows": "教程命名空间下没有可用的流程。",
       "previous": "上一步",
-      "skip": "跳过教程",
+      "skip": "跳过产品指南",
       "steps": {
         "0": {
           "content": "我们很高兴你在这里。<br />让我们创建你的第一个流程。",
@@ -1419,6 +1457,7 @@
     "reach us": "联系我们",
     "read-more": "了解更多关于",
     "readonly property": "只读属性",
+    "recent_executions": "最近执行",
     "refresh": "刷新",
     "reject": "拒绝",
     "relative": "相对",
@@ -1452,6 +1491,7 @@
     "resumed confirm": "确定要恢复执行 <code>{id}</code> 吗？",
     "resumed done": "执行已恢复",
     "resumed title": "恢复执行 <code>{id}</code>",
+    "reuse_original_inputs": "重用原始input",
     "revision": "修订版",
     "revisions": "修订版",
     "row count": "行数",
@@ -1518,6 +1558,7 @@
     "sequential": "顺序",
     "server type": "服务器类型",
     "services": "服务",
+    "set_extra_labels": "设置额外的labels",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1597,7 +1638,8 @@
         "email": "电子邮件",
         "firstName": "名字",
         "lastName": "姓氏",
-        "password": "密码"
+        "password": "密码",
+        "password_requirements": "密码必须至少包含8个字符，并且至少包含1个大写字母和1个数字。"
       },
       "login": "登录",
       "logout": "注销",
@@ -1678,6 +1720,7 @@
     "start datetime": "开始日期时间",
     "started date": "开始日期",
     "state": "状态",
+    "state_history": "状态历史",
     "stats": "统计",
     "steps": "步骤",
     "stream": "流",
@@ -1802,6 +1845,7 @@
     "update aborted": "更新中止",
     "update ok": "已更新",
     "updated date": "更新日期",
+    "usage": "使用情况",
     "use": "使用",
     "use_dark_background": "在深色背景上工作时使用此版本，以确保我们的名称保持可读。",
     "validate": "验证",
@@ -1837,7 +1881,7 @@
     },
     "welcome aboard": "🚀 欢迎使用 Kestra!",
     "welcome aboard content": "使用我们的引导游览来创建你的第一个流程，并查看蓝图以找到更多示例。",
-    "welcome button create": "创建我的第一个流程",
+    "welcome button create": "开始产品导览",
     "welcome display require": "运行你的 <strong>第一个流程</strong> 以开始",
     "welcome_page": {
       "guide": "需要指导来执行您的第一个flow吗？",
@@ -1853,7 +1897,6 @@
     "workerId": "工作者ID",
     "workers": "工作者",
     "wrong labels": "标签中不允许空键或值",
-    "years": "年",
-    "your usage": "你的使用情况"
+    "years": "年"
   }
 }

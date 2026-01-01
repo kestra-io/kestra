@@ -36,6 +36,10 @@ public class ErrorController {
     public HttpResponse<JsonError> error(HttpRequest<?> request, JsonParseException e) {
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid json");
     }
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, InputOutputValidationException e) {
+        return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid entity");
+    }
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, ConversionErrorException e) {
@@ -157,7 +161,7 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidQueryFiltersException e) {
-        return jsonError(request, e, HttpStatus.BAD_REQUEST, e.formatedInvalidObjects());
+        return jsonError(request, e, HttpStatus.BAD_REQUEST, "Invalid query filters");
     }
 
     @Error(global = true)
@@ -225,11 +229,9 @@ public class ErrorController {
 
     public static HttpResponse<JsonError> jsonError(HttpRequest<?> request, Throwable e, HttpStatus status, String reason) {
         if (status == HttpStatus.INTERNAL_SERVER_ERROR) {
-            var prefixMessage = "Server error: ";
-            log.error(prefixMessage + (e.getMessage() != null ? e.getMessage() : ""), e);
+            log.error("Server error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         } else {
-            var prefixMessage = "Client error: ";
-            log.trace(prefixMessage + (e.getMessage() != null ? e.getMessage() : ""), e);
+            log.trace("Client error: {}", e.getMessage() != null ? e.getMessage() : "", e);
         }
 
         JsonError error = new JsonError(reason + (e.getMessage() != null ? ": " + e.getMessage() : ""))

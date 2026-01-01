@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @KvVersionBehaviorValidation
-public class Version extends PurgeBehavior {
+public class Version extends KvPurgeBehavior {
     @NotNull
     @JsonInclude
     @Builder.Default

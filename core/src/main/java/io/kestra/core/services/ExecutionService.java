@@ -187,7 +187,7 @@ public class ExecutionService {
     }
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
-        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
+        if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
@@ -754,7 +754,7 @@ public class ExecutionService {
         var parentTaskRun = execution.findTaskRunByTaskRunId(taskRun.getParentTaskRunId());
         Execution newExecution = execution;
         if (parentTaskRun.getState().getCurrent() != State.Type.KILLED) {
-            newExecution = newExecution.withTaskRun(parentTaskRun.withState(State.Type.KILLED));
+            newExecution = newExecution.withTaskRun(parentTaskRun.withStateAndAttempt(State.Type.KILLED));
         }
         if (parentTaskRun.getParentTaskRunId() != null) {
             return killParentTaskruns(parentTaskRun, newExecution);

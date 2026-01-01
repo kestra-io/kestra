@@ -6,20 +6,20 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.AbstractRunnerTest;
 import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.TestsUtils;
-import org.junit.jupiter.api.BeforeAll;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -27,8 +27,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public abstract class JdbcRunnerTest extends AbstractRunnerTest {
+    @Inject
+    @Named(QueueFactoryInterface.EXECUTION_NAMED)
+    protected QueueInterface<Execution> executionQueue;
 
     public static final String NAMESPACE = "io.kestra.tests";
+
+    @Test
+    void avoidInfiniteExecutionLoop() throws QueueException, InterruptedException {
+        Flux<Execution> executionFlux = TestsUtils.receive(executionQueue);
+        Execution execution = Execution.newExecution(TestsUtils.mockFlow(), Collections.emptyList());
+        executionQueue.emit(execution);
+
+        // Wait some time to ensure no infinite loop occurs
+        Thread.sleep(500);
+
+        // We expect the initial execution message + the failed due to missing flow
+        assertThat(
+            Objects.requireNonNull(executionFlux.collectList().block()).stream()
+                .filter(e -> e.getId().equals(execution.getId()))
+                .toList()
+        ).hasSize(2);
+    }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-child-task-warning.yaml"})

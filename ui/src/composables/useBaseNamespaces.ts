@@ -61,6 +61,10 @@ export const useBaseNamespacesStore = () => {
         return response.data;
     }
 
+    async function update(this: any, _: {route: any, payload: any}) {
+        // NOOP IN OSS
+    }
+
     async function loadDependencies(this: any, options: {namespace: string}) {
         return await axios.get(`${apiUrl()}/namespaces/${options.namespace}/dependencies`);
     }
@@ -203,10 +207,27 @@ export const useBaseNamespacesStore = () => {
         await axios.post(URL, Utils.toFormData(DATA), HEADERS);
     }
 
-    async function readFile(this: any, payload: {namespace: string; path: string}) {
+    async function fileRevisions(this: any, payload: {namespace: string; path: string}): Promise<{revision: number}[]> {
+        if (!payload.path) return [];
+
+        const URL = `${base(payload.namespace)}/files/revisions?path=${slashPrefix(safePath(payload.path))}`;
+        const request = await axios.get(URL, {
+            ...VALIDATE
+        });
+
+        if(request.status === 404) {
+            const message = JSON.parse(request.data)?.message;
+            console.error(message ?? "File not found");
+            return [];
+        }
+
+        return (request.data as {revision: number}[]);
+    }
+
+    async function readFile(this: any, payload: {namespace: string; path: string, revision?: number}) {
         if (!payload.path) return;
 
-        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
+        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}${payload.revision !== undefined ? `&revision=${payload.revision}` : ""}`;
         const request = await axios.get(URL, {
             ...VALIDATE,
             transformResponse: (response: any) => response,
@@ -266,6 +287,7 @@ export const useBaseNamespacesStore = () => {
         search,
         total,
         load,
+        update,
         loadDependencies,
         existing,
         namespace,
@@ -293,6 +315,7 @@ export const useBaseNamespacesStore = () => {
         readDirectory,
         saveOrCreateFile: createFile,
         readFile,
+        fileRevisions,
         searchFiles,
         importFileDirectory,
         moveFileDirectory,

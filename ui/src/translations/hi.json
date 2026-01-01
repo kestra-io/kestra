@@ -314,6 +314,12 @@
         "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।",
         "title": "Kestra के साथ कस्टम ऐप्स बनाएं"
       },
+      "assets": {
+        "header": "संपत्तियों का मेटाडेटा और अवलोकनीयता",
+        "label": "संपत्तियाँ",
+        "message": "एसेट्स अवलोकन, वंशावली, और स्वामित्व मेटाडेटा को जोड़ते हैं ताकि प्लेटफ़ॉर्म टीमें तेजी से समस्या निवारण कर सकें और आत्मविश्वास के साथ परिनियोजन कर सकें।",
+        "title": "हर dataset, सेवा, और निर्भरता को दृश्य में लाएं।"
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition हर गतिविधि को मजबूत, अपरिवर्तनीय रिकॉर्ड के साथ लॉग करता है, जिससे परिवर्तनों को ट्रैक करना, अनुपालन बनाए रखना और समस्याओं का समाधान करना आसान हो जाता है।",
         "title": "परिवर्तनों को ट्रैक करें Audit Logs के साथ"
@@ -389,6 +395,7 @@
         "zoom_out": "ज़ूम आउट"
       },
       "search": {
+        "asset_placeholder": "एसेट, flow या namespace द्वारा खोजें...",
         "no_results": "{term} के लिए कोई परिणाम नहीं मिला",
         "placeholder": "flow या namespace द्वारा खोजें..."
       }
@@ -454,6 +461,10 @@
         "content": "बाहरी दुनिया से Kestra के साथ इंटरैक्ट करने के लिए Apps बनाना शुरू करें।",
         "title": "आपके पास अभी तक कोई ऐप्स नहीं हैं!"
       },
+      "assets": {
+        "content": "अपने डेटा एसेट्स, सेवाओं और इन्फ्रास्ट्रक्चर को ट्रैक और प्रबंधित करने के लिए एसेट्स जोड़ें।",
+        "title": "आपके पास अभी तक कोई Assets नहीं हैं!"
+      },
       "concurrency_executions": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> के बारे में अधिक पढ़ें।",
         "title": "इस Flow के लिए कोई चल रही Executions नहीं हैं।"
@@ -463,6 +474,10 @@
         "title": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं हैं।"
       },
       "dependencies": {
+        "ASSET": {
+          "content": "इस संपत्ति का flows या अन्य संपत्तियों के साथ कोई upstream या downstream निर्भरता नहीं है।",
+          "title": "वर्तमान में कोई निर्भरता नहीं है।"
+        },
         "EXECUTION": {
           "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Execution Dependencies</a> के बारे में अधिक पढ़ें।",
           "title": "वर्तमान में कोई निर्भरता नहीं है।"
@@ -507,7 +522,7 @@
     "environment color setting": "पर्यावरण रंग",
     "environment name setting": "पर्यावरण नाम",
     "error": "त्रुटि",
-    "error detected": "त्रुटि का पता चला",
+    "error detected": "त्रुटि(त्रुटियाँ) पाई गईं।",
     "error in editor": "संपादक में एक त्रुटि पाई गई है",
     "errorLogs": "त्रुटियाँ logs",
     "errors": {
@@ -539,7 +554,7 @@
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
     "execution labels": "निष्पादन labels",
-    "execution not found": "निष्पादन <code>{executionId}</code> नहीं मिला",
+    "execution not found": "<code>{executionId}</code> निष्पादन नहीं मिला।",
     "execution not in state FAILED": "निष्पादन <code>{executionId}</code> FAILED स्थिति में नहीं है",
     "execution not in state PAUSED": "निष्पादन <code>{executionId}</code> PAUSED स्थिति में नहीं है",
     "execution replay": "यह निष्पादन का पुनरावृत्ति है",
@@ -554,7 +569,7 @@
       "metrics": "Metrics हटाएं",
       "storage": "आंतरिक स्टोरेज फाइलें हटाएं"
     },
-    "execution_failed": "निष्पादन FAILED! अंतिम त्रुटि थी",
+    "execution_failed": "निष्पादन विफल हुआ!\nअंतिम त्रुटि थी",
     "execution_guide": {
       "get_started": {
         "text": "क्विकस्टार्ट गाइड का पालन करें ताकि आप Kestra को इंस्टॉल कर सकें और अपनी पहली workflows बनाना शुरू कर सकें।",
@@ -595,6 +610,7 @@
     "export": "निर्यात करें",
     "export all flows": "सभी Flows निर्यात करें",
     "export all templates": "सभी templates निर्यात करें",
+    "export_csv": "CSV के रूप में निर्यात करें",
     "exports": "निर्यात",
     "failed to render pdf": "PDF प्रस्तुत करने में विफल",
     "false": "असत्य",
@@ -642,6 +658,7 @@
       "customize columns": "तालिका स्तंभों को अनुकूलित करें",
       "customize tooltip": "कौन से फ़िल्टर प्रदर्शित करने हैं, इसे अनुकूलित करें",
       "delete filter": "फ़िल्टर हटाएं",
+      "delete filter confirm": "क्या आप वाकई इस फ़िल्टर को हटाना चाहते हैं?",
       "description": "विवरण",
       "deselect all": "सभी को अचयनित करें",
       "drag to reorder": "पुनः क्रमबद्ध करने के लिए खींचें",
@@ -881,6 +898,12 @@
         "description": "ट्रिगर ID द्वारा फ़िल्टर करें",
         "label": "ट्रिगर ID"
       },
+      "triggerState": {
+        "description": "ट्रिगर स्थिति द्वारा फ़िल्टर करें",
+        "disabled": "अक्षम",
+        "enabled": "सक्रिय",
+        "label": "ट्रिगर स्थिति"
+      },
       "update": "अपडेट",
       "value": "मान",
       "workerId": {
@@ -956,6 +979,7 @@
     "flow": "Flow",
     "flow already exists": "Flow पहले से मौजूद है",
     "flow creation": "Flow निर्माण",
+    "flow creation denied in namespace": "आपके पास namespace `{namespace}` में flows बनाने की अनुमति नहीं है।",
     "flow delete": "क्या आप वाकई <code>{flowCount}</code> flow(s) को हटाना चाहते हैं?",
     "flow deleted, you can restore it": "Flow हटा दिया गया है और यह एक केवल-पढ़ने का दृश्य है। आप इसे अभी भी पुनर्स्थापित कर सकते हैं।",
     "flow disable": "क्या आप वाकई <code>{flowCount}</code> flow(s) को अक्षम करना चाहते हैं?",
@@ -1024,8 +1048,8 @@
     "kestra": "केस्ट्रा",
     "key": "Key",
     "kill": "समाप्त करें",
-    "kill only parents": "केवल parents समाप्त करें",
-    "kill parents and subflow": "parents और subflows समाप्त करें",
+    "kill only parents": "केवल वर्तमान को समाप्त करें",
+    "kill parents and subflow": "वर्तमान और subflows को समाप्त करें",
     "killed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को समाप्त करना चाहते हैं?",
     "killed done": "निष्पादन समाप्त करने के लिए कतारबद्ध है",
     "kv": {
@@ -1051,6 +1075,7 @@
     "last modified": "अंतिम संशोधित",
     "last trigger date": "अंतिम ट्रिगर की तारीख",
     "last trigger date tooltip": "ट्रिगर ने आखिरी बार कब निष्पादित किया था। जब एक backfill चल रहा हो तो यह अतीत में हो सकता है।",
+    "latest_update": "नवीनतम अपडेट",
     "launch execution": "निष्पादित करें",
     "learn_more": "और जानें",
     "leave page": "पृष्ठ छोड़ें",
@@ -1077,6 +1102,7 @@
     "min": "न्यूनतम",
     "minutes": "मिनट्स",
     "missingSource": "स्रोत अनुपलब्ध",
+    "modify_inputs": "इनपुट्स संशोधित करें",
     "monogram": "मोनोग्राम",
     "months": "महीने",
     "more_actions": "अधिक क्रियाएँ",
@@ -1147,6 +1173,12 @@
         "new_file": "एक्सटेंशन के साथ नया नाम:",
         "new_folder": "नए फ़ोल्डर का नाम:"
       },
+      "revisions": {
+        "history": "संशोधन इतिहास",
+        "restore": {
+          "success": "फ़ाइल संशोधन सफलतापूर्वक पुनर्स्थापित किया गया"
+        }
+      },
       "toggle": {
         "hide": "Namespace फ़ाइलें छिपाएं",
         "show": "Namespace फ़ाइलें दिखाएं"
@@ -1210,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "जांचें",
           "concurrency": "समानांतरता",
           "disabled": "अक्षम",
           "labels": "लेबल्स",
@@ -1272,10 +1305,13 @@
     },
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
     "no_file_choosen": "कोई फ़ाइल चयनित नहीं",
+    "no_flow_outputs": "कोई output उपलब्ध नहीं है।",
+    "no_inputs": "कोई input उपलब्ध नहीं है।",
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "चयनित फ़िल्टर के लिए कोई logs नहीं मिले। <br> कृपया अपने फ़िल्टर समायोजित करें, समय सीमा बदलें, या जांचें कि flow ने हाल ही में निष्पादन किया है या नहीं।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
     "no_results": {
+      "assets": "कोई Assets नहीं मिले",
       "executions": "कोई Executions नहीं मिला",
       "flows": "कोई Flows नहीं मिला",
       "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
@@ -1285,6 +1321,8 @@
     },
     "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
+    "no_trigger": "कोई trigger उपलब्ध नहीं है।",
+    "no_variables": "कोई वेरिएबल उपलब्ध नहीं हैं।",
     "now": "अब",
     "of": "का",
     "ok": "ठीक है",
@@ -1293,7 +1331,7 @@
       "next": "अगला",
       "no_flows": "ट्यूटोरियल namespace के अंतर्गत कोई flows उपलब्ध नहीं हैं।",
       "previous": "पिछला",
-      "skip": "ट्यूटोरियल छोड़ें",
+      "skip": "उत्पाद टूर छोड़ें",
       "steps": {
         "0": {
           "content": "हमें खुशी है कि आप यहाँ हैं।<br />आइए अपना पहला flow बनाएं।",
@@ -1419,6 +1457,7 @@
     "reach us": "हमसे बात करें",
     "read-more": "और अधिक पढ़ें",
     "readonly property": "केवल-पढ़ने की संपत्ति",
+    "recent_executions": "हाल की Executions",
     "refresh": "ताज़ा करें",
     "reject": "अस्वीकार करें",
     "relative": "सापेक्ष",
@@ -1452,6 +1491,7 @@
     "resumed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः आरंभ करना चाहते हैं?",
     "resumed done": "निष्पादन पुनः आरंभ किया गया है",
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
+    "reuse_original_inputs": "मूल inputs का पुनः उपयोग करें",
     "revision": "संशोधन",
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
@@ -1518,6 +1558,7 @@
     "sequential": "अनुक्रमिक",
     "server type": "सर्वर प्रकार",
     "services": "सेवाएँ",
+    "set_extra_labels": "अतिरिक्त labels सेट करें",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1597,7 +1638,8 @@
         "email": "ईमेल",
         "firstName": "पहला नाम",
         "lastName": "अंतिम नाम",
-        "password": "पासवर्ड"
+        "password": "पासवर्ड",
+        "password_requirements": "पासवर्ड कम से कम 8 अक्षरों का होना चाहिए और इसमें कम से कम 1 बड़ा अक्षर और 1 संख्या शामिल होनी चाहिए।"
       },
       "login": "लॉगिन",
       "logout": "लॉगआउट",
@@ -1678,6 +1720,7 @@
     "start datetime": "प्रारंभ दिनांक और समय",
     "started date": "प्रारंभ तिथि",
     "state": "स्थिति",
+    "state_history": "स्थिति इतिहास",
     "stats": "आँकड़े",
     "steps": "चरण",
     "stream": "स्ट्रीम",
@@ -1802,6 +1845,7 @@
     "update aborted": "अपडेट रद्द कर दिया गया",
     "update ok": "अपडेट किया गया है",
     "updated date": "अपडेट तिथि",
+    "usage": "उपयोग",
     "use": "उपयोग करें",
     "use_dark_background": "इस संस्करण का उपयोग तब करें जब आप एक गहरे पृष्ठभूमि पर काम कर रहे हों ताकि यह सुनिश्चित हो सके कि हमारा नाम पठनीय बना रहे।",
     "validate": "मान्य करें",
@@ -1837,7 +1881,7 @@
     },
     "welcome aboard": "🚀 केस्ट्रा में आपका स्वागत है!",
     "welcome aboard content": "अपना पहला flow बनाने के लिए हमारे Guided Tour का उपयोग करें और अधिक उदाहरण खोजने के लिए Blueprints देखें।",
-    "welcome button create": "मेरा पहला flow बनाएं",
+    "welcome button create": "उत्पाद यात्रा शुरू करें",
     "welcome display require": "शुरू करने के लिए अपना <strong>पहला flow</strong> चलाएँ",
     "welcome_page": {
       "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",
@@ -1853,7 +1897,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",
-    "years": "वर्ष",
-    "your usage": "आपका उपयोग"
+    "years": "वर्ष"
   }
 }

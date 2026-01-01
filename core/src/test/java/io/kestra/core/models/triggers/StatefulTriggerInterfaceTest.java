@@ -1,8 +1,8 @@
 package io.kestra.core.models.triggers;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.RunContextFactory;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -16,27 +16,21 @@ import static io.kestra.core.models.triggers.StatefulTriggerService.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@KestraTest
+@MicronautTest
 class StatefulTriggerInterfaceTest {
     @Inject
     RunContextFactory runContextFactory;
     
     @Test
-    void shouldPersistAndReadState() throws Exception {
+    void shouldPersistAndReadState() {
         var flow = Flow.builder()
+            .tenantId("main")
             .namespace("io.kestra.unittest")
             .id("test-flow")
             .revision(1)
             .build();
 
-        var runContext = runContextFactory.of(flow, Map.of(
-            "flow", Map.of(
-                "tenantId", "main",
-                "namespace", "io.kestra.unittest",
-                "id", "test-flow",
-                "revision", 1
-            )
-        ));
+        var runContext = runContextFactory.of(flow, Map.of());
 
         var key = defaultKey("ns", "test-flow", "trigger-persist");
         var ttl = Optional.of(Duration.ofMinutes(5));
@@ -59,21 +53,15 @@ class StatefulTriggerInterfaceTest {
     }
 
     @Test
-    void shouldExpireOldEntriesAfterTTL() throws Exception {
+    void shouldExpireOldEntriesAfterTTL() {
         var flow = Flow.builder()
+            .tenantId("main")
             .namespace("io.kestra.unittest")
             .id("test-flow")
             .revision(1)
             .build();
 
-        var runContext = runContextFactory.of(flow, Map.of(
-            "flow", Map.of(
-                "tenantId", "main",
-                "namespace", "io.kestra.unittest",
-                "id", "test-flow",
-                "revision", 1
-            )
-        ));
+        var runContext = runContextFactory.of(flow, Map.of());
 
         var key = defaultKey("ns", "test-flow", "trigger-ttl");
         var ttl = Optional.of(Duration.ofMinutes(5));

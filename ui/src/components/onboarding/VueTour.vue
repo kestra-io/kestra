@@ -60,7 +60,7 @@
                                 @click="activeFlow = flowIndex"
                             >
                                 <p class="title mb-2">
-                                    {{ flow.description }}
+                                    {{ flow.labels?.find(l => l.key === 'name')?.value ?? flow.id }}
                                 </p>
                                 <div>
                                     <div
@@ -353,6 +353,10 @@
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
             before: () => {
+                coreStore.guidedProperties = {
+                    ...coreStore.guidedProperties,
+                    glowExecuteButton: true
+                };
                 return wait();
             },
         },
@@ -369,6 +373,10 @@
                 placement: "bottom",
             },
             before: () => {
+                coreStore.guidedProperties = {
+                    ...coreStore.guidedProperties,
+                    glowExecuteButton: false
+                };
                 return wait()
             },
         },
@@ -414,6 +422,7 @@
         coreStore.guidedProperties = {
             ...coreStore.guidedProperties,
             tourStarted: false,
+            glowExecuteButton: false
         };
 
         TOURS[TOUR_NAME].stop();
@@ -491,7 +500,7 @@ $flow-image-size-container: 36px;
 
     &.last {
         position: fixed;
-        top: 50%;
+        top: 75%;
         left: 50%;
         transform: translate(-50%, -50%);
         max-width: $last-step-max-width;

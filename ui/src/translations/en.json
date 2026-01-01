@@ -63,6 +63,7 @@
     "edit flow": "Edit flow",
     "executions": "Executions",
     "execution": "Execution",
+    "recent_executions": "Recent Executions",
     "details": "Details",
     "overview": "Overview",
     "gantt": "Gantt",
@@ -121,6 +122,7 @@
       "previousYear": "Previous year"
     },
     "created date": "Created date",
+    "latest_update": "Latest update",
     "updated date": "Updated date",
     "expiration date": "Expiration date",
     "started date": "Started date",
@@ -154,6 +156,7 @@
     },
     "steps": "Steps",
     "state": "State",
+    "state_history": "State history",
     "search term in message": "Search term in message",
     "search": "Search",
     "search blueprint": "Search blueprints",
@@ -193,6 +196,8 @@
     "replayed": "Execution is replayed",
     "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
     "replay with inputs": "Replay with inputs",
+    "reuse_original_inputs": "Reuse original inputs",
+    "modify_inputs": "Modify inputs",
     "replay the execution": "Replay the execution <code>{executionId}</code> for the flow <code>{flowId}</code>",
     "prefill inputs": "Prefill",
     "current": "current",
@@ -228,8 +233,8 @@
     "mark as": "Mark as <code>{status}</code>",
     "unqueue as": "Unqueue as <code>{status}</code>",
     "kill": "Kill",
-    "kill parents and subflow": "Kill parents and subflows",
-    "kill only parents": "Kill parents only",
+    "kill parents and subflow": "Kill current and subflows",
+    "kill only parents": "Kill current only",
     "killed confirm": "Are you sure you want to kill execution <code>{id}</code>?",
     "killed done": "Execution is queued for killing",
     "resume": "Resume",
@@ -255,10 +260,11 @@
     "no data current task": "There's no data available for the current task",
     "outputs": "Outputs",
     "flow_outputs": "Flow Outputs",
+    "no_flow_outputs": "No outputs available.",
     "output": "Output",
     "eval": {
       "title": "Debug Expression",
-      "render": "Render Expression",
+      "render": "Render",
       "tooltip": "Render any Pebble expression and inspect the Execution context."
     },
     "attempt": "Attempt",
@@ -297,7 +303,7 @@
     "stats": "Stats",
     "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
-    "your usage": "Your usage",
+    "usage": "Usage",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Total executions duration (in minutes)",
@@ -318,8 +324,10 @@
     "invalid flow": "Invalid flow",
     "invalid yaml": "Invalid YAML",
     "inputs": "Inputs",
+    "no_inputs": "No inputs available.",
     "input": "Input",
     "variables": "Variables",
+    "no_variables": "No variables available.",
     "download": "Download",
     "concurrency_limit": {
         "dialog_title": "Concurrency Limits",
@@ -371,6 +379,7 @@
     "no result": "There are no results to be shown.",
     "empty search": "Search results are empty",
     "trigger": "Trigger",
+    "no_trigger": "No trigger available.",
     "triggers": "Triggers",
     "trigger details": "Trigger details",
     "triggerflow disabled": "Trigger is disabled from flow definition",
@@ -483,7 +492,7 @@
     "invalid bulk restart": "Could not restart executions",
     "invalid bulk kill": "Could not kill executions",
     "invalid bulk delete": "Could not delete executions",
-    "execution not found": "Execution <code>{executionId}</code> not found",
+    "execution not found": "Execution <code>{executionId}</code> is not found.",
     "execution not in state PAUSED": "Execution <code>{executionId}</code> not in state PAUSED",
     "execution not in state FAILED": "Execution <code>{executionId}</code> not in state FAILED",
     "execution already finished": "Execution <code>{executionId}</code> already finished",
@@ -491,6 +500,7 @@
     "seeing old revision": "You are seeing an old revision: {revision}",
     "export": "Export",
     "exports": "Exports",
+    "export_csv": "Export as CSV",
     "template export": "Are you sure you want to export <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exported",
     "export all templates": "Export all templates",
@@ -530,7 +540,7 @@
     "welcome aboard": "\uD83D\uDE80 Welcome to Kestra!",
     "welcome aboard content": "Use our Guided Tour to create your first flow and check Blueprints to find more examples.",
     "welcome display require": "Run your <strong>first flow</strong> to get started",
-    "welcome button create": "Create my first flow",
+    "welcome button create": "Start Product Tour",
     "live help": "Live help",
     "show task documentation": "Show task documentation",
     "hide task documentation": "Hide task documentation",
@@ -566,6 +576,7 @@
     "can not save": "Can not save",
     "flow must not be empty": "Flow must not be empty",
     "flow must have id and namespace": "Flow must have an id and a namespace.",
+    "flow creation denied in namespace": "You don't have permission to create flows in the namespace `{namespace}`.",
     "readonly property": "Read-only property",
     "namespace and id readonly": "The properties `namespace` and `id` cannot be changed — they are now set to their initial values. If you want to rename a flow or change its namespace, you can create a new flow and remove the old one.",
     "avg": "Average",
@@ -601,7 +612,7 @@
     "kestra": "Kestra",
     "reach us": "Talk to us",
     "new version": "New version {version} available!",
-    "error detected": "Error(s) detected",
+    "error detected": "Error(s) detected.",
     "warning detected": "Warning(s) detected",
     "informative notice": "Note(s)",
     "cannot swap tasks": "Can't swap the tasks",
@@ -727,6 +738,12 @@
           "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?"
         }
       },
+      "revisions": {
+          "history": "Revision history",
+          "restore": {
+              "success": "File revision restored successfully"
+          }
+      },
       "path": {
         "copy": "Copy path",
         "success": "Path copied to clipboard",
@@ -751,6 +768,7 @@
     "backfill": "Backfill",
     "Set labels tooltip": "Set labels to the execution",
     "Set labels": "Set labels",
+    "set_extra_labels": "Set extra labels",
     "Set labels to execution": "Add or update the labels of the execution <code>{id}</code>",
     "Set labels done": "Successfully set the labels of the execution",
     "bulk set labels": "Are you sure you want to set labels to <code>{executionCount}</code> executions(s)?",
@@ -878,6 +896,12 @@
         "title": "Ensure Reliability with Every Change",
         "message": "Verify the logic of your flows in isolation, detect regressions early, and maintain confidence in your automations as they change and grow."
       },
+      "assets": {
+        "label": "Assets",
+        "header": "Assets Metadata and Observability",
+        "title": "Bring every dataset, service, and dependency into view.",
+        "message": "Assets connect observability, lineage, and ownership metadata so platform teams can troubleshoot faster and deploy with confidence."
+      },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
         "message": "Kestra Enterprise Edition has built-in IAM capabilities with single sign-on (SSO), SCIM directory sync, and role-based access control (RBAC), integrating with multiple identity providers and letting you assign fine-grained permissions for users and service accounts."
@@ -929,7 +953,7 @@
       "next": "Next",
       "previous": "Previous",
       "finish": "Finish",
-      "skip": "Skip Tutorial",
+      "skip": "Skip Product Tour",
       "no_flows": "No flows available under tutorial namespace.",
       "steps": {
         "0": {
@@ -1117,7 +1141,7 @@
     "item": "item",
     "items": "items",
     "cron": "Cron",
-    "execution_failed": "Execution failed! Last error was",
+    "execution_failed": "Execution failed!\nLast error was",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
     "execution replay": "This execution is a replay of",
     "execution replayed": "This execution has been replayed.",
@@ -1234,7 +1258,8 @@
           "disabled": "Disabled",
           "listeners": "Listeners",
           "taskDefaults": "Task Defaults",
-          "workerGroup": "Worker Group"
+          "workerGroup": "Worker Group",
+          "checks": "Checks"
         }
       },
       "select": {
@@ -1351,6 +1376,10 @@
         "title": "You have no Tests yet!",
         "content": "Add tests to validate quality and avoid regressions in your flows."
       },
+      "assets": {
+        "title": "You have no Assets yet!",
+        "content": "Add assets to track and manage your data assets, services, and infrastructure."
+      },
       "concurrency_executions": {
         "title": "No ongoing Executions for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> in our documentation."
@@ -1371,6 +1400,10 @@
         "NAMESPACE": {
           "title": "There are currently no dependencies.",
           "content": "Read more about <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> in our documentation."
+        },
+        "ASSET": {
+          "title": "There are currently no dependencies.",
+          "content": "This asset has no upstream or downstream dependencies with flows or other assets."
         }
       },
       "plugins": {
@@ -1411,7 +1444,8 @@
       "flows": "No Flows Found",
       "kv_pairs": "No Key-Value pairs Found",
       "secrets": "No Secrets Found",
-      "templates": "No Templates Found"
+      "templates": "No Templates Found",
+      "assets": "No Assets Found"
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
@@ -1462,7 +1496,8 @@
         "email": "Email",
         "firstName": "First Name",
         "lastName": "Last Name",
-        "password": "Password"
+        "password": "Password",
+        "password_requirements": "Password must be at least 8 characters long and include at least 1 uppercase letter and 1 number."
       },
       "validation": {
         "email_required": "Email is required",
@@ -1555,6 +1590,7 @@
       },
       "search": {
         "placeholder": "Search by flow or namespace...",
+        "asset_placeholder": "Search by asset or flow or namespace...",
         "no_results": "No results found for {term}"
       }
     },
@@ -1578,6 +1614,7 @@
         "customize tooltip": "Customize which filters to display",
         "customize columns": "Customize table columns",
         "delete filter": "Delete filter",
+        "delete filter confirm": "Are you sure you want to remove this filter?",
         "edit filter": "Edit filter",
         "options": "Data Options",
         "periodic refresh": "Periodic refresh",
@@ -1708,6 +1745,12 @@
         "triggerExecutionId": {
             "label": "Trigger Execution ID",
             "description": "Filter by trigger execution ID"
+        },
+        "triggerState":{
+          "label": " Trigger State",
+          "description": "Filter by trigger state",
+          "enabled": "Enabled",
+          "disabled": "Disabled"
         },
         "scope_flow": {
             "label": "Scope",

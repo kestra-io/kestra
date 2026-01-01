@@ -314,6 +314,12 @@
         "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
         "title": "Kestraでカスタムアプリを構築する"
       },
+      "assets": {
+        "header": "アセットメタデータとオブザーバビリティ",
+        "label": "アセット",
+        "message": "アセットは、観測性、系譜、および所有権のメタデータを接続し、プラットフォームチームが迅速にトラブルシューティングを行い、自信を持ってデプロイできるようにします。",
+        "title": "すべてのデータセット、サービス、および依存関係を表示します。"
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Editionは、すべてのアクティビティを堅牢で不変の記録としてログに記録し、変更の追跡、コンプライアンスの維持、問題のトラブルシューティングを容易にします。",
         "title": "監査Logで変更を追跡"
@@ -389,6 +395,7 @@
         "zoom_out": "ズームアウト"
       },
       "search": {
+        "asset_placeholder": "アセット、flow、またはnamespaceで検索...",
         "no_results": "{term} に対する結果が見つかりませんでした",
         "placeholder": "flow または namespace で検索..."
       }
@@ -454,6 +461,10 @@
         "content": "外部からKestraと連携するアプリを作成し始めましょう。",
         "title": "まだアプリがありません！"
       },
+      "assets": {
+        "content": "データ資産、サービス、インフラストラクチャを追跡および管理するためのアセットを追加します。",
+        "title": "まだアセットがありません！"
+      },
       "concurrency_executions": {
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには進行中の実行はありません。"
@@ -463,6 +474,10 @@
         "title": "このFlowには制限が設定されていません。"
       },
       "dependencies": {
+        "ASSET": {
+          "content": "このアセットは、flowや他のアセットとの上流または下流の依存関係がありません。",
+          "title": "現在、依存関係はありません。"
+        },
         "EXECUTION": {
           "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">実行の依存関係</a>についての詳細は、ドキュメントをご覧ください。",
           "title": "現在、依存関係はありません。"
@@ -507,7 +522,7 @@
     "environment color setting": "環境色",
     "environment name setting": "環境名",
     "error": "エラー",
-    "error detected": "エラーが検出されました",
+    "error detected": "エラーが検出されました。",
     "error in editor": "エディタにエラーが見つかりました",
     "errorLogs": "エラーログ",
     "errors": {
@@ -539,7 +554,7 @@
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
     "execution labels": "実行ラベル",
-    "execution not found": "実行<code>{executionId}</code>が見つかりません",
+    "execution not found": "<code>{executionId}</code> の実行が見つかりません。",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
     "execution not in state PAUSED": "実行<code>{executionId}</code>はPAUSED状態ではありません",
     "execution replay": "この実行は次のリプレイです",
@@ -554,7 +569,7 @@
       "metrics": "メトリクスを削除",
       "storage": "内部ストレージファイルを削除"
     },
-    "execution_failed": "実行に失敗しました！最後のエラーは",
+    "execution_failed": "実行に失敗しました！\n最後のエラーは",
     "execution_guide": {
       "get_started": {
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。",
@@ -595,6 +610,7 @@
     "export": "エクスポート",
     "export all flows": "すべてのflowをエクスポート",
     "export all templates": "すべてのテンプレートをエクスポート",
+    "export_csv": "CSVとしてエクスポート",
     "exports": "エクスポート",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
@@ -642,6 +658,7 @@
       "customize columns": "テーブル列をカスタマイズ",
       "customize tooltip": "表示するフィルターをカスタマイズ",
       "delete filter": "フィルターを削除",
+      "delete filter confirm": "このフィルターを削除してもよろしいですか？",
       "description": "説明",
       "deselect all": "すべて選択解除",
       "drag to reorder": "ドラッグして並べ替え",
@@ -881,6 +898,12 @@
         "description": "トリガーIDでフィルター",
         "label": "トリガーID"
       },
+      "triggerState": {
+        "description": "トリガー状態でフィルター",
+        "disabled": "無効",
+        "enabled": "有効",
+        "label": "トリガー状態"
+      },
       "update": "更新",
       "value": "値",
       "workerId": {
@@ -956,6 +979,7 @@
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",
     "flow creation": "Flow作成",
+    "flow creation denied in namespace": "`{namespace}`でflowを作成する権限がありません。",
     "flow delete": "<code>{flowCount}</code>件のflowを削除してもよろしいですか？",
     "flow deleted, you can restore it": "Flowは削除されており、これは読み取り専用ビューです。復元することは可能です。",
     "flow disable": "<code>{flowCount}</code>件のflowを無効化してもよろしいですか？",
@@ -1024,8 +1048,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "キル",
-    "kill only parents": "親のみをキル",
-    "kill parents and subflow": "親とsubflowsをキル",
+    "kill only parents": "現在のもののみを終了",
+    "kill parents and subflow": "現在のflowとsubflowを終了",
     "killed confirm": "実行<code>{id}</code>をキルしてもよろしいですか？",
     "killed done": "実行はキルのためにキューに入れられました",
     "kv": {
@@ -1051,6 +1075,7 @@
     "last modified": "最終更新日時",
     "last trigger date": "最終トリガー日時",
     "last trigger date tooltip": "トリガーが最後に実行された時刻。バックフィルを実行している場合、過去の時刻になることがあります。",
+    "latest_update": "最新の更新",
     "launch execution": "実行",
     "learn_more": "詳細を確認",
     "leave page": "ページを離れる",
@@ -1077,6 +1102,7 @@
     "min": "Min",
     "minutes": "分",
     "missingSource": "ソースが見つかりません",
+    "modify_inputs": "入力を変更",
     "monogram": "モノグラム",
     "months": "月",
     "more_actions": "その他のアクション",
@@ -1147,6 +1173,12 @@
         "new_file": "拡張子付きの新しい名前:",
         "new_folder": "新しいフォルダー名:"
       },
+      "revisions": {
+        "history": "リビジョン履歴",
+        "restore": {
+          "success": "ファイルのリビジョンが正常に復元されました"
+        }
+      },
       "toggle": {
         "hide": "namespaceファイルを非表示",
         "show": "namespaceファイルを表示"
@@ -1210,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "チェック",
           "concurrency": "並行性",
           "disabled": "無効",
           "labels": "ラベル",
@@ -1272,10 +1305,13 @@
     },
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "no_file_choosen": "ファイルが選択されていません",
+    "no_flow_outputs": "出力は利用できません。",
+    "no_inputs": "入力が利用できません。",
     "no_logs_data": "データなし",
     "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
     "no_results": {
+      "assets": "アセットが見つかりません",
       "executions": "実行が見つかりません",
       "flows": "フローが見つかりません",
       "kv_pairs": "キー-バリュー ペアが見つかりません",
@@ -1285,6 +1321,8 @@
     },
     "no_results_found": "結果が見つかりません",
     "no_tasks_running": "タスクはまだ実行されていません。",
+    "no_trigger": "トリガーが利用できません。",
+    "no_variables": "変数は利用できません。",
     "now": "現在",
     "of": "の",
     "ok": "OK",
@@ -1293,7 +1331,7 @@
       "next": "次へ",
       "no_flows": "チュートリアルnamespaceに利用可能なflowはありません。",
       "previous": "前へ",
-      "skip": "チュートリアルをスキップ",
+      "skip": "プロダクトツアーをスキップ",
       "steps": {
         "0": {
           "content": "ここに来てくれてとても嬉しいです。<br />最初のflowを作成しましょう。",
@@ -1419,6 +1457,7 @@
     "reach us": "お問い合わせ",
     "read-more": "続きを読む",
     "readonly property": "読み取り専用プロパティ",
+    "recent_executions": "最近の実行",
     "refresh": "更新",
     "reject": "拒否",
     "relative": "相対",
@@ -1452,6 +1491,7 @@
     "resumed confirm": "実行<code>{id}</code>を再開してもよろしいですか？",
     "resumed done": "実行が再開されました",
     "resumed title": "実行<code>{id}</code>を再開",
+    "reuse_original_inputs": "元のinputを再利用",
     "revision": "リビジョン",
     "revisions": "リビジョン",
     "row count": "行数",
@@ -1518,6 +1558,7 @@
     "sequential": "逐次",
     "server type": "サーバータイプ",
     "services": "サービス",
+    "set_extra_labels": "追加のラベルを設定",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1597,7 +1638,8 @@
         "email": "メール",
         "firstName": "名",
         "lastName": "姓",
-        "password": "パスワード"
+        "password": "パスワード",
+        "password_requirements": "パスワードは8文字以上で、少なくとも1つの大文字と1つの数字を含める必要があります。"
       },
       "login": "ログイン",
       "logout": "ログアウト",
@@ -1678,6 +1720,7 @@
     "start datetime": "開始日時",
     "started date": "開始日",
     "state": "状態",
+    "state_history": "状態履歴",
     "stats": "統計",
     "steps": "ステップ",
     "stream": "ストリーム",
@@ -1802,6 +1845,7 @@
     "update aborted": "更新が中止されました",
     "update ok": "更新されました",
     "updated date": "更新日",
+    "usage": "使用",
     "use": "使用",
     "use_dark_background": "暗い背景で作業する際には、このバージョンを使用して、私たちの名前が読みやすい状態を保ってください。",
     "validate": "検証",
@@ -1837,7 +1881,7 @@
     },
     "welcome aboard": "🚀 Kestraへようこそ！",
     "welcome aboard content": "ガイド付きツアーを利用して最初のflowを作成し、Blueprintsでさらに多くの例を見つけてください。",
-    "welcome button create": "最初のflowを作成",
+    "welcome button create": "プロダクトツアーを開始",
     "welcome display require": "<strong>最初のflow</strong>を実行して始めましょう",
     "welcome_page": {
       "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
@@ -1853,7 +1897,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
-    "years": "年",
-    "your usage": "あなたの使用状況"
+    "years": "年"
   }
 }

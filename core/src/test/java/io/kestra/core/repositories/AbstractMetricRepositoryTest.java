@@ -10,10 +10,9 @@ import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.data.model.Pageable;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
@@ -21,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 public abstract class AbstractMetricRepositoryTest {
     @Inject
     protected MetricRepositoryInterface metricRepository;
@@ -33,20 +32,22 @@ public abstract class AbstractMetricRepositoryTest {
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
+        MetricEntry normalCounter = MetricEntry.of(taskRun1, counter("normal"), ExecutionKind.NORMAL);
         TaskRun taskRun2 = taskRun(tenant, executionId, "task");
         MetricEntry timer = MetricEntry.of(taskRun2, timer(), null);
         metricRepository.save(counter);
         metricRepository.save(testCounter); // should only be retrieved by execution id
+        metricRepository.save(normalCounter);
         metricRepository.save(timer);
 
         List<MetricEntry> results = metricRepository.findByExecutionId(tenant, executionId, Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(3);
+        assertThat(results.size()).isEqualTo(4);
 
         results = metricRepository.findByExecutionIdAndTaskId(tenant, executionId, taskRun1.getTaskId(), Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(3);
+        assertThat(results.size()).isEqualTo(4);
 
         results = metricRepository.findByExecutionIdAndTaskRunId(tenant, executionId, taskRun1.getId(), Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(2);
+        assertThat(results.size()).isEqualTo(3);
 
         MetricAggregations aggregationResults = metricRepository.aggregateByFlowId(
             tenant,

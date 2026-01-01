@@ -4,14 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import java.util.Collections;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-@KestraTest
+@MicronautTest
 class RandomIntFunctionTest {
   @Inject VariableRenderer variableRenderer;
 

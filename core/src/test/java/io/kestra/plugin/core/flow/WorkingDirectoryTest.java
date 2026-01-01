@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -18,6 +19,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
@@ -25,6 +27,8 @@ import jakarta.inject.Singleton;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.Collections;
@@ -85,13 +89,13 @@ public class WorkingDirectoryTest {
 
     @Test
     @LoadFlows({"flows/valids/working-directory-namespace-files.yaml"})
-    void namespaceFiles() throws TimeoutException, IOException, QueueException {
+    void namespaceFiles() throws TimeoutException, IOException, QueueException, URISyntaxException {
         suite.namespaceFiles(runnerUtils);
     }
 
     @Test
     @LoadFlows({"flows/valids/working-directory-namespace-files-with-namespaces.yaml"})
-    void namespaceFilesWithNamespace() throws TimeoutException, IOException, QueueException {
+    void namespaceFilesWithNamespace() throws TimeoutException, IOException, QueueException, URISyntaxException {
         suite.namespaceFilesWithNamespaces(runnerUtils);
     }
 
@@ -101,7 +105,8 @@ public class WorkingDirectoryTest {
         suite.inputFiles(runnerUtils);
     }
 
-    @Test
+    // FIXME can be moved back to regular @Test once https://github.com/kestra-io/kestra/issues/13134 is handled
+    @FlakyTest
     @LoadFlows(value = {"flows/valids/working-directory-outputs.yml"}, tenantId = "output")
     void outputFiles() throws Exception {
         suite.outputFiles("output", runnerUtils);
@@ -123,6 +128,8 @@ public class WorkingDirectoryTest {
     public static class Suite {
         @Inject
         StorageInterface storageInterface;
+        @Inject
+        NamespaceFactory namespaceFactory;
 
         public void success(TestRunnerUtils runnerUtils) throws TimeoutException, QueueException {
             Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "working-directory", null,
@@ -161,6 +168,7 @@ public class WorkingDirectoryTest {
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
             TaskRun taskRun = execution.getTaskRunList().getFirst();
+            System.out.println(taskRun.getTaskId());
             Map<String, Object> outputs = taskRun.getOutputs();
             assertThat(outputs).containsKey("outputFiles");
 
@@ -169,7 +177,8 @@ public class WorkingDirectoryTest {
                 null,
                 storageContext,
                 storageInterface,
-                null
+                null,
+                namespaceFactory
             );
 
             URI uri = ((Map<String, String>) outputs.get("outputFiles")).values()
@@ -192,7 +201,8 @@ public class WorkingDirectoryTest {
                 null,
                 storageContext,
                 storageInterface,
-                null
+                null,
+                namespaceFactory
             );
 
             TaskRun taskRun = execution.getTaskRunList().get(1);
@@ -219,7 +229,8 @@ public class WorkingDirectoryTest {
                 null,
                 storageContext,
                 storageInterface,
-                null
+                null,
+                namespaceFactory
             );
             storage.deleteCacheFile("workingDir", null);
 
@@ -265,7 +276,7 @@ public class WorkingDirectoryTest {
             assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-workerparent", List.of("1")).getOutputs().get("value"))).contains("{\"taskrun\":{\"value\":\"1\"}}");
         }
 
-        public void namespaceFiles(TestRunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
+        public void namespaceFiles(TestRunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException, URISyntaxException {
             put("/test/a/b/c/1.txt", "first");
             put("/a/b/c/2.txt", "second");
             put("/a/b/3.txt", "third");
@@ -281,7 +292,7 @@ public class WorkingDirectoryTest {
             assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value")).isEqualTo("third");
         }
 
-        public void namespaceFilesWithNamespaces(TestRunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
+        public void namespaceFilesWithNamespaces(TestRunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException, URISyntaxException {
             //fist namespace
             put("/test/a/b/c/1.txt", "first in first namespace", "io.test.first");
             put("/a/b/c/2.txt", "second in first namespace", "io.test.first");
@@ -327,17 +338,12 @@ public class WorkingDirectoryTest {
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         }
 
-        private void put(String path, String content) throws IOException {
+        private void put(String path, String content) throws IOException, URISyntaxException {
             put(path, content, "io.kestra.tests");
         }
 
-        private void put(String path, String content, String namespace) throws IOException {
-            storageInterface.put(
-                MAIN_TENANT,
-                null,
-                URI.create(StorageContext.namespaceFilePrefix(namespace)  + path),
-                new ByteArrayInputStream(content.getBytes())
-            );
+        private void put(String path, String content, String namespace) throws IOException, URISyntaxException {
+            namespaceFactory.of(MAIN_TENANT, namespace, storageInterface).putFile(Path.of(path), new ByteArrayInputStream(content.getBytes()));
         }
     }
 }

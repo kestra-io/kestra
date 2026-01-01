@@ -6,8 +6,10 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
@@ -81,6 +83,15 @@ abstract public class AbstractTrigger implements TriggerInterface {
     @Builder.Default
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private boolean failOnTriggerError = false;
+
+    @PluginProperty(group = PluginProperty.CORE_GROUP)
+    @Schema(
+        title = "Specifies whether a trigger is allowed to start a new execution even if a previous run is still in progress."
+    )
+    private boolean allowConcurrent = false;
+
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
+    private Property<AssetsDeclaration> assets;
 
     /**
      * For backward compatibility: we rename minLogLevel to logLevel.

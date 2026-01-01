@@ -314,6 +314,12 @@
         "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation.",
         "title": "Créez des applications personnalisées avec Kestra"
       },
+      "assets": {
+        "header": "Métadonnées des actifs et Observabilité",
+        "label": "Actifs",
+        "message": "Les assets connectent les métadonnées d'observabilité, de lignée et de propriété afin que les équipes de la plateforme puissent résoudre les problèmes plus rapidement et déployer en toute confiance.",
+        "title": "Amenez chaque dataset, service et dépendance en vue."
+      },
       "audit-logs": {
         "message": "L'édition Kestra Enterprise enregistre chaque activité avec des enregistrements robustes et immuables, ce qui facilite le suivi des modifications, le maintien de la conformité et la résolution des problèmes.",
         "title": "Suivre les modifications avec les Audit Logs"
@@ -389,6 +395,7 @@
         "zoom_out": "Dézoomer"
       },
       "search": {
+        "asset_placeholder": "Rechercher par asset, flow ou namespace...",
         "no_results": "Aucun résultat trouvé pour {term}",
         "placeholder": "Rechercher par flow ou namespace..."
       }
@@ -454,6 +461,10 @@
         "content": "Commencez à créer des Apps pour interagir avec Kestra depuis le monde extérieur.",
         "title": "Vous n'avez pas encore d'applications !"
       },
+      "assets": {
+        "content": "Ajoutez des ressources pour suivre et gérer vos ressources de données, services et infrastructures.",
+        "title": "Vous n'avez pas encore d'Assets !"
+      },
       "concurrency_executions": {
         "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Exécutions</a></strong> dans notre documentation.",
         "title": "Aucune exécution en cours pour ce flow."
@@ -463,6 +474,10 @@
         "title": "Aucune limite n'est définie pour ce flow."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Cet actif n'a pas de dépendances amont ou aval avec des flows ou d'autres actifs.",
+          "title": "Il n'y a actuellement aucune dépendance."
+        },
         "EXECUTION": {
           "content": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">dépendances d'exécution</a> dans notre documentation.",
           "title": "Il n'y a actuellement aucune dépendance."
@@ -507,7 +522,7 @@
     "environment color setting": "Couleur de l'environnement",
     "environment name setting": "Nom de l'environnement",
     "error": "Erreur",
-    "error detected": "Erreur(s) détectée(s)",
+    "error detected": "Erreur(s) détectée(s).",
     "error in editor": "Une erreur a été trouvé dans l'éditeur",
     "errorLogs": "Logs des erreurs",
     "errors": {
@@ -539,7 +554,7 @@
     "execution": "Exécution",
     "execution already finished": "Exécution <code>{executionId}</code> déjà terminée",
     "execution labels": "Labels d'exécution",
-    "execution not found": "Exécution <code>{executionId}</code> non trouvée",
+    "execution not found": "L'exécution <code>{executionId}</code> est introuvable.",
     "execution not in state FAILED": "Exécution <code>{executionId}</code> n'est pas dans l'état FAILED",
     "execution not in state PAUSED": "Exécution <code>{executionId}</code> n'est pas dans l'état PAUSED",
     "execution replay": "Cette exécution est une relecture de",
@@ -554,7 +569,7 @@
       "metrics": "Supprimer les métriques",
       "storage": "Supprimer les fichiers de stockage interne"
     },
-    "execution_failed": "Échec de l'exécution ! La dernière erreur était",
+    "execution_failed": "Échec de l'exécution !\nLa dernière erreur était",
     "execution_guide": {
       "get_started": {
         "text": "Suivez le Guide de démarrage rapide pour installer Kestra et commencer à créer vos premiers workflows.",
@@ -595,6 +610,7 @@
     "export": "Exporter",
     "export all flows": "Exporter tous les flows",
     "export all templates": "Exporter tous les templates",
+    "export_csv": "Exporter en CSV",
     "exports": "Exporter",
     "failed to render pdf": "Impossible de rendre l'aperçu PDF",
     "false": "Faux",
@@ -642,6 +658,7 @@
       "customize columns": "Personnaliser les colonnes du tableau",
       "customize tooltip": "Personnaliser les filtres à afficher",
       "delete filter": "Supprimer le filtre",
+      "delete filter confirm": "Êtes-vous sûr de vouloir supprimer ce filtre ?",
       "description": "Description",
       "deselect all": "Tout désélectionner",
       "drag to reorder": "Faites glisser pour réorganiser",
@@ -881,6 +898,12 @@
         "description": "Filtrer par trigger ID",
         "label": "ID du trigger"
       },
+      "triggerState": {
+        "description": "Filtrer par état du trigger",
+        "disabled": "Désactivé",
+        "enabled": "Activé",
+        "label": "État du Trigger"
+      },
       "update": "Mettre à jour",
       "value": "Valeur",
       "workerId": {
@@ -956,6 +979,7 @@
     "flow": "Flow",
     "flow already exists": "Flow déjà existant",
     "flow creation": "Création de flow",
+    "flow creation denied in namespace": "Vous n'avez pas la permission de créer des flows dans le namespace `{namespace}`.",
     "flow delete": "Êtes vous sûr de vouloir supprimer <code>{flowCount}</code> flow(s)?",
     "flow deleted, you can restore it": "Le flow a été supprimé et ceci est une vue en lecture seule, mais vous pouvez toujours le restaurer.",
     "flow disable": "Êtes vous sûr de vouloir désactiver <code>{flowCount}</code> flow(s)?",
@@ -1024,8 +1048,8 @@
     "kestra": "Kestra",
     "key": "Clé",
     "kill": "Arrêter",
-    "kill only parents": "Arrêter uniquement les exécutions parents",
-    "kill parents and subflow": "Arrêter les exécutions parents et enfants",
+    "kill only parents": "Tuer uniquement le courant",
+    "kill parents and subflow": "Tuer le flow actuel et les subflows",
     "killed confirm": "Êtes-vous sur de vouloir arrêter l'exécution <code>{id}</code> ?",
     "killed done": "L'exécution est en attente d'arrêt",
     "kv": {
@@ -1051,6 +1075,7 @@
     "last modified": "Dernière modification",
     "last trigger date": "Dernière date de trigger",
     "last trigger date tooltip": "Dernière exécution du trigger. Peut être dans le passé lors de l'exécution d'un backfill.",
+    "latest_update": "Dernière mise à jour",
     "launch execution": "Déclencher",
     "learn_more": "En savoir plus",
     "leave page": "Quitter la page",
@@ -1077,6 +1102,7 @@
     "min": "Minimum",
     "minutes": "Minutes",
     "missingSource": "Source manquant",
+    "modify_inputs": "Modifier les inputs",
     "monogram": "Monogramme",
     "months": "Mois",
     "more_actions": "Plus d'actions",
@@ -1147,6 +1173,12 @@
         "new_file": "Nouveau nom avec extension :",
         "new_folder": "Nouveau nom de dossier :"
       },
+      "revisions": {
+        "history": "Historique des révisions",
+        "restore": {
+          "success": "Révision du fichier restaurée avec succès"
+        }
+      },
       "toggle": {
         "hide": "Masquer les fichiers de l'espace de noms",
         "show": "Afficher les fichiers de l'espace de noms"
@@ -1210,6 +1242,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Vérifications",
           "concurrency": "Concurrence",
           "disabled": "Désactivé",
           "labels": "Étiquettes",
@@ -1272,10 +1305,13 @@
     },
     "no_data": "On dirait qu'il n'y a rien ici… pour l'instant !<br/>Ajustez vos filtres, ou réessayez !",
     "no_file_choosen": "Aucun fichier choisi",
+    "no_flow_outputs": "Aucune sortie disponible.",
+    "no_inputs": "Aucun input disponible.",
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Aucun log trouvé pour les filtres sélectionnés. <br> Veuillez essayer d'ajuster vos filtres, de changer la plage de temps, ou vérifier si le flow a été exécuté récemment.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
     "no_results": {
+      "assets": "Aucun actif trouvé",
       "executions": "Aucune exécution trouvée",
       "flows": "Aucun flow trouvé",
       "kv_pairs": "Aucune paire clé-valeur trouvée",
@@ -1285,6 +1321,8 @@
     },
     "no_results_found": "Aucun résultat trouvé",
     "no_tasks_running": "Aucune tâche n'est encore en cours d'exécution.",
+    "no_trigger": "Aucun trigger disponible.",
+    "no_variables": "Aucune variable disponible.",
     "now": "Maintenant",
     "of": "de",
     "ok": "OK",
@@ -1293,7 +1331,7 @@
       "next": "Suivant",
       "no_flows": "Aucun flux disponible dans l'espace de noms du tutoriel.",
       "previous": "Précédent",
-      "skip": "Passer le tutoriel",
+      "skip": "Passer la visite guidée du produit",
       "steps": {
         "0": {
           "content": "Nous sommes ravis de vous avoir ici.<br />Créons votre premier flux.",
@@ -1419,6 +1457,7 @@
     "reach us": "Contactez-nous",
     "read-more": "En savoir plus sur",
     "readonly property": "Propriété non modifiable",
+    "recent_executions": "Exécutions Récentes",
     "refresh": "Rafraîchir",
     "reject": "Rejeter",
     "relative": "Relative",
@@ -1452,6 +1491,7 @@
     "resumed confirm": "Êtes-vous sur de vouloir reprendre l'exécution <code>{id}</code>?",
     "resumed done": "L'exécution est reprise",
     "resumed title": "Reprendre l'exécution <code>{id}</code>",
+    "reuse_original_inputs": "Réutiliser les inputs d'origine",
     "revision": "Révision",
     "revisions": "Révisions",
     "row count": "Nombre de lignes",
@@ -1518,6 +1558,7 @@
     "sequential": "Séquentiel",
     "server type": "Type de serveur",
     "services": "Services",
+    "set_extra_labels": "Définir des labels supplémentaires",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1597,7 +1638,8 @@
         "email": "E-mail",
         "firstName": "Prénom",
         "lastName": "Nom de famille",
-        "password": "Mot de passe"
+        "password": "Mot de passe",
+        "password_requirements": "Le mot de passe doit comporter au moins 8 caractères, inclure au moins 1 lettre majuscule et 1 chiffre."
       },
       "login": "Connexion",
       "logout": "Déconnexion",
@@ -1678,6 +1720,7 @@
     "start datetime": "Date de départ",
     "started date": "Date de démarrage",
     "state": "État",
+    "state_history": "Historique des états",
     "stats": "Stats",
     "steps": "Étapes",
     "stream": "Flow",
@@ -1802,6 +1845,7 @@
     "update aborted": "Mise à jour annulée",
     "update ok": "est mis à jour",
     "updated date": "Date de mise à jour",
+    "usage": "Utilisation",
     "use": "Utiliser",
     "use_dark_background": "Utilisez cette version lorsque vous travaillez sur un fond sombre pour garantir que notre nom reste lisible.",
     "validate": "Valider",
@@ -1837,7 +1881,7 @@
     },
     "welcome aboard": "🚀 Bienvenue à bord !",
     "welcome aboard content": "Tout est prêt pour Kestra, commencez la création de votre flow et admirez la magie !",
-    "welcome button create": "Créer mon premier flow",
+    "welcome button create": "Démarrer la visite guidée du produit",
     "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flow</strong> !",
     "welcome_page": {
       "guide": "Besoin d'aide pour exécuter votre premier flow ?",
@@ -1853,7 +1897,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Clé ou valeur vide détecté dans les labels",
-    "years": "Années",
-    "your usage": "Votre utilisation"
+    "years": "Années"
   }
 }

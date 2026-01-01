@@ -36,6 +36,8 @@ import java.util.Optional;
 
 @KestraTest(rebuildContext = true)
 abstract public class AbstractSchedulerTest {
+    public final static String TENANT_ID = "main";
+
     @Inject
     protected ApplicationContext applicationContext;
 
@@ -74,7 +76,7 @@ abstract public class AbstractSchedulerTest {
      */
     @Deprecated
     protected static FlowWithSource createFlow(List<AbstractTrigger> triggers) {
-        return createFlow(null, triggers);
+        return createFlow(TENANT_ID, triggers);
     }
 
     protected static FlowWithSource createFlow(String tenantId, List<AbstractTrigger> triggers) {

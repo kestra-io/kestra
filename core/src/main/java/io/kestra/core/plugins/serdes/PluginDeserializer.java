@@ -12,6 +12,7 @@ import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
+import io.micronaut.context.exceptions.NoSuchBeanException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ import java.util.Optional;
  * The {@link PluginDeserializer} uses the {@link PluginRegistry} to found the plugin class corresponding to
  * a plugin type.
  */
-public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
+public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
 
     private static final Logger log = LoggerFactory.getLogger(PluginDeserializer.class);
 
@@ -72,7 +73,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
                 // By default, if no plugin-registry is configured retrieve
                 // the one configured from the static Kestra's context.
                 pluginRegistry = KestraContext.getContext().getPluginRegistry();
-            } catch (IllegalStateException ignore) {
+            } catch (IllegalStateException | NoSuchBeanException ignore) {
                 // This error can only happen if the KestraContext is not initialized (i.e. in unit tests).
                 log.error("No plugin registry was initialized. Use default implementation.");
                 pluginRegistry = DefaultPluginRegistry.getOrCreate();
@@ -92,6 +93,10 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
                 identifier
             );
             pluginType = pluginRegistry.findClassByIdentifier(identifier);
+
+            if (pluginType == null) {
+                pluginType = fallbackClass();
+            }
         }
 
         if (pluginType == null) {
@@ -151,5 +156,9 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
         }
 
         return isVersioningSupported && version != null && !version.isEmpty() ? type + ":" + version : type;
+    }
+
+    protected Class<? extends Plugin> fallbackClass() {
+        return null;
     }
 }

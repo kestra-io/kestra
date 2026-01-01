@@ -2,7 +2,6 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -26,7 +25,8 @@ import io.kestra.core.runners.InputsTest;
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
@@ -53,16 +53,17 @@ import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -126,6 +127,9 @@ class ExecutionControllerRunnerTest {
     @Inject
     private StorageInterface storageInterface;
 
+    @Inject
+    private NamespaceFactory namespaceFactory;
+
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
 
@@ -139,8 +143,8 @@ class ExecutionControllerRunnerTest {
         .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("data/hello.txt")).getPath())
         .put("secret", "secret")
         .put("array", "[1, 2, 3]")
-        .put("json", "{}")
-        .put("yaml", """
+        .put("json1", "{}")
+        .put("yaml1", """
             some: property
             alist:
             - of
@@ -165,12 +169,15 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
         assertThat(result.getInputs().containsKey("bool")).isTrue();
         assertThat(result.getInputs().get("bool")).isNull();
-        assertThat(result.getLabels().size()).isEqualTo(6);
-        assertThat(result.getLabels().getFirst()).isEqualTo(new Label("flow-label-1", "flow-label-1"));
-        assertThat(result.getLabels().get(1)).isEqualTo(new Label("flow-label-2", "flow-label-2"));
-        assertThat(result.getLabels().get(2)).isEqualTo(new Label("a", "label-1"));
-        assertThat(result.getLabels().get(3)).isEqualTo(new Label("b", "label-2"));
-        assertThat(result.getLabels().get(4)).isEqualTo(new Label("url", URL_LABEL_VALUE));
+        assertThat(result.getLabels()).containsExactlyInAnyOrder(
+            new Label("flow-label-1", "flow-label-1"),
+            new Label("flow-label-2", "flow-label-2"),
+            new Label("a", "label-1"),
+            new Label("b", "label-2"),
+            new Label("url", URL_LABEL_VALUE),
+            new Label(Label.CORRELATION_ID, result.getId()),
+            new Label(Label.FROM, "api")
+        );
 
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(
             HttpRequest
@@ -198,6 +205,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(execution.getLabels()).containsExactlyInAnyOrder(
             new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label(Label.FROM, "api"),
             new Label("existing", "fromExecution")
         );
     }
@@ -234,7 +242,7 @@ class ExecutionControllerRunnerTest {
         String response = e.getResponse().getBody(String.class).orElseThrow();
 
         assertThat(response).contains("Invalid entity");
-        assertThat(response).contains("Invalid input for `validatedString`");
+        assertThat(response).contains("Invalid value for input `validatedString`");
     }
 
     @Test
@@ -243,7 +251,7 @@ class ExecutionControllerRunnerTest {
         Execution result = triggerExecutionInputsFlowExecution(true);
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(result.getTaskRunList().size()).isEqualTo(14);
+        assertThat(result.getTaskRunList().size()).isEqualTo(16);
     }
 
     @Test
@@ -717,7 +725,7 @@ class ExecutionControllerRunnerTest {
     @LoadFlows({"flows/valids/inputs.yaml"})
     void downloadInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
-        assertThat(execution.getTaskRunList()).hasSize(14);
+        assertThat(execution.getTaskRunList()).hasSize(16);
 
         String path = (String) execution.getInputs().get("file");
 
@@ -755,7 +763,7 @@ class ExecutionControllerRunnerTest {
     @LoadFlows({"flows/valids/inputs.yaml"})
     void previewInternalStorageFileFromExecution() throws TimeoutException, QueueException{
         Execution defaultExecution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
-        assertThat(defaultExecution.getTaskRunList()).hasSize(14);
+        assertThat(defaultExecution.getTaskRunList()).hasSize(16);
 
         String defaultPath = (String) defaultExecution.getInputs().get("file");
 
@@ -776,12 +784,12 @@ class ExecutionControllerRunnerTest {
             .put("file", Objects.requireNonNull(ExecutionControllerTest.class.getClassLoader().getResource("data/iso88591.txt")).getPath())
             .put("secret", "secret")
             .put("array", "[1, 2, 3]")
-            .put("json", "{}")
-            .put("yaml", "{}")
+            .put("json1", "{}")
+            .put("yaml1", "{}")
             .build();
 
         Execution latin1Execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, latin1FileInputs));
-        assertThat(latin1Execution.getTaskRunList()).hasSize(14);
+        assertThat(latin1Execution.getTaskRunList()).hasSize(16);
 
         String latin1Path = (String) latin1Execution.getInputs().get("file");
 
@@ -844,7 +852,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
-    void previewNsFileFromExecution() throws TimeoutException, QueueException, IOException {
+    void previewNsFileFromExecution() throws TimeoutException, QueueException, IOException, URISyntaxException {
         HashMap<String, Object> newInputs = new HashMap<>(InputsTest.inputs);
         URI file = createNsFile(false);
         newInputs.put("file", file);
@@ -903,8 +911,12 @@ class ExecutionControllerRunnerTest {
         assertThat((Boolean) ((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b")).isTrue();
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters")).get("name")).isEqualTo(List.of("john"));
         assertThat(((Map<String, List<String>>) execution.getTrigger().getVariables().get("parameters")).get("age")).containsExactlyInAnyOrder("12", "13");
-        assertThat(execution.getLabels().getFirst()).isEqualTo(new Label("flow-label-1", "flow-label-1"));
-        assertThat(execution.getLabels().get(1)).isEqualTo(new Label("flow-label-2", "flow-label-2"));
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label(Label.FROM, "trigger"),
+            new Label("flow-label-1", "flow-label-1"),
+            new Label("flow-label-2", "flow-label-2")
+        );
 
         execution = client.toBlocking().retrieve(
             HttpRequest
@@ -1059,7 +1071,7 @@ class ExecutionControllerRunnerTest {
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         ));
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
-        assertThat(exception.getMessage()).isEqualTo("Invalid entity: asked: Invalid input for `asked`, missing required input, but received `null`");
+        assertThat(exception.getMessage()).isEqualTo("Invalid entity: Missing required input:asked");
     }
 
     @Test
@@ -1288,7 +1300,6 @@ class ExecutionControllerRunnerTest {
         assertThat(executions.getTotal()).isEqualTo(4L);
     }
 
-    @FlakyTest
     @Test
     @LoadFlows({"flows/valids/pause-test.yaml"})
     void killExecutionPaused() throws TimeoutException, QueueException {
@@ -1306,8 +1317,7 @@ class ExecutionControllerRunnerTest {
         assertThat(killedExecution.getTaskRunList()).hasSize(1);
     }
 
-    // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/sleep-long.yml"})
     void killExecution() throws TimeoutException, InterruptedException, QueueException {
         // listen to the execution queue
@@ -2338,11 +2348,11 @@ class ExecutionControllerRunnerTest {
         return tempFile.toPath().toUri();
     }
 
-    private URI createNsFile(boolean nsInAuthority) throws IOException {
+    private URI createNsFile(boolean nsInAuthority) throws IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 

@@ -13,7 +13,7 @@ interface LogsState {
     results: any[];
 }
 
-export interface Label{
+export interface Label {
     key: string;
     value: string;
 }
@@ -23,12 +23,12 @@ export type Histories = {
     date: string;
 }
 
-export interface Execution{
+export interface Execution {
     id: string;
     namespace: string;
     flowId: string;
     tenantId?: string;
-    taskRunList:  {
+    taskRunList: {
         id: string,
         taskId: string,
         value?: string
@@ -83,7 +83,7 @@ export const useExecutionsStore = defineStore("executions", () => {
     // clear flow graph when execution is reset
     // since it is supposed to represent the current execution's flow
     watch(execution, (newExecution) => {
-        if(!newExecution){
+        if (!newExecution) {
             flowGraph.value = undefined;
             flow.value = undefined;
         }
@@ -351,7 +351,7 @@ export const useExecutionsStore = defineStore("executions", () => {
         if (sse.value) {
             // when closing SSE, the doc seems to say the onerror is called
             // trying to prevent an unwanted error is displayed for the user
-            sse.value.onerror = () => {};
+            sse.value.onerror = () => { };
 
             sse.value.close();
             sse.value = undefined;
@@ -593,34 +593,34 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     function isUnused(nodeByUid: Record<string, any>, nodeUid: string): boolean {
-            const nodeToCheck = nodeByUid[nodeUid];
+        const nodeToCheck = nodeByUid[nodeUid];
 
-            if(!nodeToCheck) {
-                return false;
-            }
-
-            if(!nodeToCheck.task) {
-                // check if parent is unused (current node is probably a cluster root or end)
-                const splitUid = nodeToCheck.uid.split(".");
-                splitUid.pop();
-                return isUnused(nodeByUid, splitUid.join("."));
-            }
-
-            if (!nodeToCheck.executionId) {
-                return true;
-            }
-
-            const nodeExecution = nodeToCheck.executionId === execution.value?.id ? execution.value
-                : Object.values(subflowsExecutions.value).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
-
-            if (!nodeExecution) {
-                return true;
-            }
-
-            return !nodeExecution.taskRunList?.some((taskRun: { taskId: string }) => taskRun.taskId === nodeToCheck.task?.id);
-
-
+        if (!nodeToCheck) {
+            return false;
         }
+
+        if (!nodeToCheck.task) {
+            // check if parent is unused (current node is probably a cluster root or end)
+            const splitUid = nodeToCheck.uid.split(".");
+            splitUid.pop();
+            return isUnused(nodeByUid, splitUid.join("."));
+        }
+
+        if (!nodeToCheck.executionId) {
+            return true;
+        }
+
+        const nodeExecution = nodeToCheck.executionId === execution.value?.id ? execution.value
+            : Object.values(subflowsExecutions.value).filter(execution => execution.id === nodeToCheck.executionId)?.[0];
+
+        if (!nodeExecution) {
+            return true;
+        }
+
+        return !nodeExecution.taskRunList?.some((taskRun: { taskId: string }) => taskRun.taskId === nodeToCheck.task?.id);
+
+
+    }
 
     const loadAugmentedGraph = async (options: { id: string; params?: Record<string, any> }) => {
         const params = options.params ? options.params : {};
@@ -647,8 +647,8 @@ export const useExecutionsStore = defineStore("executions", () => {
                 const parentSubflow = subflowPaths.filter(subflowPath => node.uid.startsWith(subflowPath + "."))
                     .sort((a, b) => b.length - a.length)?.[0]
 
-                if(parentSubflow) {
-                    if(parentSubflow in subflowsExecutions.value) {
+                if (parentSubflow) {
+                    if (parentSubflow in subflowsExecutions.value) {
                         node.executionId = subflowsExecutions.value[parentSubflow]?.id;
                     }
 
@@ -658,7 +658,7 @@ export const useExecutionsStore = defineStore("executions", () => {
                 node.executionId = options.id;
 
                 // reduce opacity for cluster root & end
-                if(!node.task && isUnused(nodeByUid, node.uid)) {
+                if (!node.task && isUnused(nodeByUid, node.uid)) {
                     node.unused = true;
                 }
             });

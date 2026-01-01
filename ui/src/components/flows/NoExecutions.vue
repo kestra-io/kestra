@@ -73,9 +73,22 @@
     }
 
     .trigger {
-        :deep(.el-button) {
+        :deep(#run-all-button) {
             width: 226px;
             height: 45px;
+        }
+
+        :deep(#execute-button) {
+            width: 36px;
+            display: inline-flex;
+
+            .el-button {
+                height: 45px;
+            }
+
+            .el-button:first-child {
+                width: 50%;
+            }
         }
     }
 }

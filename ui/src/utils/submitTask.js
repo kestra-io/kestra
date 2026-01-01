@@ -16,7 +16,7 @@ export const inputsToFormData = (submitor, inputsList, values) => {
     }
 
     if (Object.keys(inputValuesCloned).length === 0) {
-        return;
+        return new FormData();
     }
 
     const formData = new FormData();
@@ -78,12 +78,12 @@ export const executeTask = (submitor, flow, values, options) => {
                 }
             }
 
-            if(options.nextStep) submitor.$tours["guidedTour"]?.nextStep();
+            if (options.nextStep) submitor.$tours["guidedTour"]?.nextStep();
 
             return response.data;
         })
         .then((execution) => {
-            if(!options.nextStep){
+            if (!options.nextStep) {
                 submitor.$toast().success(submitor.$t("triggered done", {name: execution.id}));
             }
         })

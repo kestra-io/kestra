@@ -3,9 +3,28 @@
         <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
-        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-dropdown
+            v-else
+            id="execute-button"
+            splitButton
+            :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}"
+            :type="type"
+            :disabled="isDisabled()"
+            trigger="click"
+            placement="bottom-end"
+            @click="onExecute(false)"
+            @command="onExecute(true)"
+        >
+            <component :is="icon.LightningBolt" class="me-2" />
             {{ $t("execute") }}
-        </el-button>
+            <template #dropdown>
+                <el-dropdown-menu>
+                    <el-dropdown-item>
+                        {{ $t("Execute with inputs") }}
+                    </el-dropdown-item>
+                </el-dropdown-menu>
+            </template>
+        </el-dropdown>
         <el-dialog
             id="execute-flow-dialog"
             v-model="isOpen"
@@ -84,6 +103,7 @@
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
     import {useFlowStore} from "../../stores/flow";
+    import {executeTask} from "../../utils/submitTask";
 
     export default {
         components: {
@@ -125,7 +145,7 @@
             };
         },
         methods: {
-            onClick() {
+            async onExecute(forceModal) {
                 if (this.$tours["guidedTour"]?.isRunning?.value) {
                     this.$tours["guidedTour"]?.nextStep();
                     this.apiStore.events({
@@ -144,12 +164,29 @@
                     this.$toast().confirm(FlowWarningDialog, () => (this.toggleModal()), true, null);
                 }
                 else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
-                    this.toggleModal(true)
+                    if (this.flowId && this.namespace) {
+                        await this.loadDefinition();
+                    }
+
+                    if (forceModal || this.hasRequiredInputs()) {
+                        this.toggleModal(true)
+                    } else {
+                        executeTask(this, this.executionsStore.flow, {}, {
+                            redirect: true,
+                            id: this.executionsStore.flow.id,
+                            namespace: this.executionsStore.flow.namespace,
+                            labels: ["system.from:ui"],
+                        })
+                    }
                 }
                 else {
                     this.executionsStore.loadNamespaces();
                     this.isSelectFlowOpen = !this.isSelectFlowOpen;
                 }
+            },
+            hasRequiredInputs() {
+                const inputs = this.executionsStore.flow?.inputs || [];
+                return inputs.some(input => input.required !== false && input.defaults === undefined);
             },
             async toggleModal(newValue) {
                 if (newValue === undefined) {
@@ -210,7 +247,7 @@
             "coreStore.guidedProperties": {
                 handler() {
                     if (this.coreStore.guidedProperties.executeFlow) {
-                        this.onClick();
+                        this.onExecute(true);
                     }
                 },
                 deep: true
@@ -219,7 +256,7 @@
                 handler(value) {
                     if (value && !this.isDisabled()) {
                         this.flowStore.executeFlow = false;
-                        this.onClick();
+                        this.onExecute(true);
                     }
                 }
             },
@@ -261,12 +298,12 @@
     .trigger-flow-wrapper {
         display: inline;
     }
-    
+
     .onboarding-glow {
         animation: glowAnimation 1s infinite alternate;
     }
-    
-    
+
+
     @keyframes glowAnimation {
         0% {
             box-shadow: 0px 0px 0px 0px #8405FF;

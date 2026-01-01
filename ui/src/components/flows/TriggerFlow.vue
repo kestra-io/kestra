@@ -89,7 +89,7 @@
 </template>
 
 
-<script>
+<script lang="ts">
     import FlowRun from "./FlowRun.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import Play from "vue-material-design-icons/Play.vue";

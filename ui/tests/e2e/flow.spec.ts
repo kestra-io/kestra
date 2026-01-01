@@ -49,7 +49,13 @@ test.describe("Flow Page", () => {
 
             await expect(page.locator("section").getByRole("button", {name: "Execute"})).toBeVisible();
             await page.locator("section").getByRole("button", {name: "Execute"}).click();
-            await page.getByRole("button", {name: "Execute with inputs"}).click();
+            const dropdownCaret = page
+                .locator("section")
+                .locator("button:has-text(\"Execute\")")
+                .locator("xpath=following-sibling::button");
+            await dropdownCaret.click();
+            await page.getByRole("menuitem", {name: "Execute with inputs"}).click();
+
 
             await page.getByRole("dialog").getByRole("button", {name: "Execute"}).click();
 

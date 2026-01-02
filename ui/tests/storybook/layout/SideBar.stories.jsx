@@ -2,7 +2,7 @@ import {shallowRef} from "vue";
 import {vueRouter} from "storybook-vue3-router";
 import HomeIcon from "vue-material-design-icons/Home.vue";
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
+import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 import CogOutline from "vue-material-design-icons/CogOutline.vue";
 import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
 import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
@@ -70,7 +70,7 @@ Default.args = {
         title: "Executions",
         href: "/executions",
         icon: {
-          element: shallowRef(TimelineClockOutline),
+          element: shallowRef(PlayOutline),
           class: "menu-icon"
         },
     },

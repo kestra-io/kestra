@@ -46,4 +46,5 @@ export type States = {
     faded: string;
     selected: string;
     hovered: string;
+    assets: string;
 };

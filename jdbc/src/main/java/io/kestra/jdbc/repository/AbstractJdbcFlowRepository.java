@@ -789,12 +789,15 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         List<FlowWithSource> flows = findRevisions(tenantId, namespace, id, true, revisions);
         Integer last = lastRevision(tenantId, namespace, id);
         FlowWithSource lastFlow = null;
-        List<FlowInterface> revisionsToDelete = new ArrayList<>();
+        HashMap<FlowInterface, Map<Field<Object>, Object>> revisionsToDelete = new HashMap<>();
         for (FlowWithSource flow : flows) {
             if (Objects.equals(flow.getRevision(), last)) {
                 lastFlow = flow;
             } else {
-                revisionsToDelete.add(flow.toBuilder().deleted(true).build());
+                FlowWithSource toDelete = flow.toBuilder().deleted(true).build();
+                Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(toDelete.toFlow());
+                fields.put(field("source_code"), flow.getSource());
+                revisionsToDelete.put(toDelete, fields);
             }
         }
 

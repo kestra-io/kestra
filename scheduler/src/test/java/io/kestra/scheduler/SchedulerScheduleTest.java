@@ -667,18 +667,17 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution).isNotNull();
                 assertThat(execution.getFlowId()).isEqualTo(flow.getId());
                 assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CREATED);
-                List<Label> resolvedLabels = execution.getLabels();
-                Map<Object, Object> resolvedlabelsAsMap =
-                    resolvedLabels.stream()
+                Map<Object, Object> resolvedLabels =
+                    execution.getLabels().stream()
                         .collect(Collectors.toMap(
                             Label::key,
                             Label::value
                         ));
-                assertThat(resolvedlabelsAsMap.get("source")).isEqualTo("cairo");
-                assertThat(resolvedlabelsAsMap.get("destination")).isEqualTo("paris");
-                assertThat(resolvedlabelsAsMap.get("tr_key")).isEqualTo("tr_value");
-                assertThat(resolvedlabelsAsMap.get("system.from")).isEqualTo("trigger");
-                assertThat(resolvedlabelsAsMap.containsKey("correlationId"));
+                assertThat(resolvedLabels.get("source")).isEqualTo("cairo");
+                assertThat(resolvedLabels.get("destination")).isEqualTo("paris");
+                assertThat(resolvedLabels.get("tr_key")).isEqualTo("tr_value");
+                assertThat(resolvedLabels.get("system.from")).isEqualTo("trigger");
+                assertThat(resolvedLabels.containsKey("correlationId"));
                 queueCount.countDown();
             });
             scheduler.run();

@@ -27,6 +27,7 @@ interface DataTableActionsOptions {
     embed?: boolean;
     dataTableRef?: Ref<DataTableRef | null>;
     loadData?: (callback?: () => void) => void;
+    restoreUrl?: boolean;
 }
 
 export function useDataTableActions(options: DataTableActionsOptions = {}) {
@@ -46,7 +47,7 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
     const embed = computed(() => options.embed);
     const dataTableRef = computed(() => options.dataTableRef?.value);
 
-    const {loadInit, saveRestoreUrl} = useRestoreUrl({restoreUrl: true});
+    const {loadInit, saveRestoreUrl} = useRestoreUrl({restoreUrl: options.restoreUrl ?? true});
 
     const sortString = (sortItem: SortItem, sortKeyMapper: (k: string) => string): string | undefined => {
         if (sortItem && sortItem.prop && sortItem.order) {
@@ -205,4 +206,3 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
         refreshPaging
     };
 }
-

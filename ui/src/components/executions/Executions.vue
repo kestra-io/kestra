@@ -56,7 +56,7 @@
                         refresh: {shown: true, callback: refresh}
                     }"
                     @update-properties="updateDisplayColumns"
-                    :defaultScope="defaultScopeFilter"
+                    :defaultScope="defaultScopeFilter ?? !route.name?.toString().startsWith('namespaces/')"
                 />
             </template>
 
@@ -637,6 +637,7 @@
     } = useDataTableActions({
         dblClickRouteName: dblClickRouteName.value,
         embed: props.embed,
+        restoreUrl: !(route.name?.toString().startsWith("namespaces/") ?? false),
         dataTableRef,
         loadData: loadData
     });

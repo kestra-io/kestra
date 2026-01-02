@@ -56,7 +56,6 @@ import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Positive;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
@@ -586,7 +585,7 @@ public class FlowController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "{namespace}/{id}/revisions")
-    @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
+    @Operation(tags = {"Flows"}, summary = "Delete revisions for a flow")
     public HttpResponse<Void> deleteRevisions(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,

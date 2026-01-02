@@ -1,5 +1,9 @@
 <template>
-    <el-tooltip :content="$t('filter.save filter tooltip')" placement="top" effect="light">
+    <el-tooltip
+        :content="$t('filter.save filter tooltip')"
+        placement="top"
+        effect="light"
+    >
         <el-button
             type="default"
             :disabled="disabled"
@@ -11,23 +15,30 @@
 
     <el-dialog
         v-model="showSaveDialog"
-        :title="isEditMode ? $t('filter.edit filter') : $t('filter.save filter')"
+        :title="
+            isEditMode ? $t('filter.edit filter') : $t('filter.save filter')
+        "
         class="custom-dialog"
         width="25%"
         @close="closeSaveDialog"
     >
         <div class="save-form">
-            <el-alert v-if="hasDuplicate" type="error" showIcon :closable="false">
+            <el-alert
+                v-if="hasDuplicate"
+                type="error"
+                showIcon
+                :closable="false"
+            >
                 {{ $t("filter.save duplicate") }}
                 <template #icon>
                     <CloseCircleOutline />
                 </template>
             </el-alert>
             <div>
-                <label>{{ $t("filter.label") }}</label>
+                <label>{{ $t("filter.name") }}</label>
                 <el-input
                     v-model="filterName"
-                    :placeholder="$t('filter.enter label')"
+                    :placeholder="$t('filter.enter name')"
                     clearable
                 />
             </div>
@@ -52,7 +63,9 @@
                             class="item"
                         >
                             <span class="key">{{ filter.keyLabel }}</span>
-                            <span class="comparator">{{ filter.comparatorLabel }}</span>
+                            <span class="comparator">{{
+                                filter.comparatorLabel
+                            }}</span>
                             <span class="value">{{ filter.valueLabel }}</span>
                         </div>
                     </div>
@@ -89,7 +102,7 @@
         editingFilter?: SavedFilter;
         appliedFilters: AppliedFilter[];
     }>();
-    
+
     const emits = defineEmits<{
         "close-edit": [];
         save: [name: string, description: string];
@@ -105,24 +118,37 @@
     const hasDuplicate = computed(() => {
         const name = filterName.value.trim();
         if (!name) return false;
-        return props.savedFilters.some(f => f.name === name && (!isEditMode.value || f.id !== props.editingFilter?.id));
+        return props.savedFilters.some(
+            (f) =>
+                f.name === name &&
+                (!isEditMode.value || f.id !== props.editingFilter?.id),
+        );
     });
 
-    watch(() => props.editingFilter, (newFilter, oldFilter) => {
-        if (newFilter && !oldFilter) {
-            filterName.value = newFilter.name;
-            filterDescription.value = newFilter.description || "";
-            showSaveDialog.value = true;
-        } else if (!newFilter && oldFilter) {
-            closeSaveDialog();
-        }
-    }, {immediate: true});
+    watch(
+        () => props.editingFilter,
+        (newFilter, oldFilter) => {
+            if (newFilter && !oldFilter) {
+                filterName.value = newFilter.name;
+                filterDescription.value = newFilter.description || "";
+                showSaveDialog.value = true;
+            } else if (!newFilter && oldFilter) {
+                closeSaveDialog();
+            }
+        },
+        {immediate: true},
+    );
 
     const saveFilter = () => {
         if (!filterName.value.trim()) return;
 
         if (isEditMode.value && props.editingFilter) {
-            emits("edit", props.editingFilter.id, filterName.value.trim(), filterDescription.value.trim());
+            emits(
+                "edit",
+                props.editingFilter.id,
+                filterName.value.trim(),
+                filterDescription.value.trim(),
+            );
         } else {
             emits("save", filterName.value.trim(), filterDescription.value.trim());
         }
@@ -141,7 +167,7 @@
 
 <style lang="scss" scoped>
 .save-form {
-    >div {
+    > div {
         margin-bottom: 1rem;
 
         &:last-child {

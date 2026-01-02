@@ -2,22 +2,23 @@ package io.kestra.scheduler;
 
 import com.devskiller.friendly_id.FriendlyId;
 import io.kestra.core.junit.annotations.FlakyTest;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.PluginDefault;
+import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.SchedulerTriggerStateInterface;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.condition.Expression;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
+import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -37,6 +38,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -598,7 +600,98 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             throw new RuntimeException(e);
         }
     }
+    @Test
+    void successfulLabelRendering() {
+        // mock flow listeners
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "successfulLabelRendering", false)
+            .inputs(
+                Map.of("user", Expression.builder()
+                    .type(Expression.class.getName())
+                    .expression(
+                        Property.ofExpression("All labels with trigger: {{labels.source}}, {{labels.destination}}, {{labels.tr_key}}, {{labels.system.from}}, {{labels.system.correlationId}}"))
+                    .build()
+                )
+            )
+            .labels(List.of(new Label("tr_key","tr_value")))
+            .build();
+        FlowWithSource builder = FlowWithSource.builder()
+            .id(IdUtils.create())
+            .tenantId(tenantId)
+            .namespace("io.kestra.unittest")
+            .inputs(List.of(
+                StringInput.builder()
+                    .type(Type.STRING)
+                    .id("user")
+                    .required(false)
+                    .defaults(Property.ofValue("any"))
+                    .build()
+            ))
+            .revision(1)
+            .labels(
+                List.of(
+                    new Label("source", "cairo"),
+                    new Label("destination", "paris")
+                )
+            )
+            .triggers(Collections.singletonList(schedule))
+            .tasks(Collections.singletonList(Return.builder()
+                .id("test")
+                .type(Return.class.getName())
+                .format(Property.ofExpression("Hello from {{inputs.user}}"))
+                .build()))
+            .build();
+        FlowWithSource flow = builder.toBuilder().source(builder.sourceOrGenerateIfNull()).build();
 
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+        // to avoid waiting too much before a trigger execution, we add a last trigger with a date now - 1m.
+        Trigger lastTrigger = Trigger
+            .builder()
+            .triggerId("successfulLabelRendering")
+            .tenantId(this.tenantId)
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(ZonedDateTime.now().minusMinutes(1L))
+            .build();
+        triggerState.create(lastTrigger);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        // scheduler
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+            // wait for execution
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+                Execution execution = either.getLeft();
+                assertThat(execution).isNotNull();
+                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+                List<Label> resolvedLabels = execution.getLabels();
+                Map<Object, Object> resolvedlabelsAsMap =
+                    resolvedLabels.stream()
+                        .collect(Collectors.toMap(
+                            Label::key,
+                            Label::value
+                        ));
+                assertThat(resolvedlabelsAsMap.get("source")).isEqualTo("cairo");
+                assertThat(resolvedlabelsAsMap.get("destination")).isEqualTo("paris");
+                assertThat(resolvedlabelsAsMap.get("tr_key")).isEqualTo("tr_value");
+                assertThat(resolvedlabelsAsMap.get("system.from")).isEqualTo("trigger");
+                assertThat(resolvedlabelsAsMap.containsKey("correlationId"));
+                queueCount.countDown();
+            });
+            scheduler.run();
+
+            queueCount.await(1, TimeUnit.MINUTES);
+            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
+            receive.blockLast();
+
+            assertThat(queueCount.getCount()).isEqualTo(0L);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
     @FlakyTest(description = "too flaky on CI")
     @Test
     void recoverLASTLongRunningExecution() throws Exception {

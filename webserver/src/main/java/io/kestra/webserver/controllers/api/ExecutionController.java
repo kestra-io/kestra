@@ -1030,7 +1030,9 @@ public class ExecutionController {
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
     @ApiResponse(responseCode = "422", description = "Restarted with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> restartExecutionsByIds(
-        @RequestBody(description = "The list of executions id") @Body List<String> executionsId
+        @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision
     ) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -1067,7 +1069,9 @@ public class ExecutionController {
             );
         }
         for (Execution execution : executions) {
-            Execution restart = executionService.restart(execution, null);
+            Optional<Integer> revisionToUse = getRevisionToUse(execution, revision, latestRevision);
+            
+            Execution restart = executionService.restart(execution, revisionToUse.get());
             executionQueue.emit(restart);
             eventPublisher.publishEvent(new CrudEvent<>(restart, execution, CrudEventType.UPDATE));
         }
@@ -1094,7 +1098,10 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
         @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
-        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision
     ) throws Exception {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -1115,7 +1122,7 @@ public class ExecutionController {
         );
 
         var ids = getExecutionIds(filters);
-        return restartExecutionsByIds(ids);
+        return restartExecutionsByIds(ids, revision, latestRevision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1859,6 +1866,7 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
         @Deprecated @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
 
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision
     ) throws Exception {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
@@ -1881,7 +1889,7 @@ public class ExecutionController {
 
         var ids = getExecutionIds(filters);
 
-        return replayExecutionsByIds(ids, latestRevision);
+        return replayExecutionsByIds(ids, revision, latestRevision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1891,6 +1899,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "422", description = "Replayed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> replayExecutionsByIds(
         @RequestBody(description = "The list of executions id") @Body List<String> executionsId,
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision
     ) throws Exception {
         List<Execution> executions = new ArrayList<>();
@@ -1921,12 +1930,9 @@ public class ExecutionController {
         }
 
         for (Execution execution : executions) {
-            if (latestRevision) {
-                Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
-                innerReplay(execution, null, flow.getRevision(), Optional.empty());
-            } else {
-                innerReplay(execution, null, null, Optional.empty());
-            }
+            Optional<Integer> revisionToUse = getRevisionToUse(execution, revision, latestRevision);
+            
+            innerReplay(execution, null, revisionToUse.get(), Optional.empty());
         }
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
@@ -2439,6 +2445,19 @@ public class ExecutionController {
         return forceRunByIds(ids);
     }
 
+    private Optional<Integer> getRevisionToUse(Execution execution, Integer revision, Boolean latestRevision) {
+        if (revision != null) {
+            // Validate and use specific revision
+            this.controlRevision(execution, revision);
+            return Optional.of(revision);
+        } else if (latestRevision != null && latestRevision) {
+            // Get latest revision for this flow
+            Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
+            return Optional.of(flow.getRevision());
+        }
+        return Optional.empty();
+    }
+    
     private List<String> getExecutionIds(List<QueryFilter> filters) {
         return executionRepository
             .find(

@@ -104,10 +104,12 @@ export const useExecutionsStore = defineStore("executions", () => {
             })
     }
 
-    const bulkRestartExecution = (options: { executionsId: string[] }) => {
+    const bulkRestartExecution = (options: { executionsId: string[] } & Record<string, any>) => {
+        const {executionsId, ...params} = options;
         return axios.post(
             `${apiUrl()}/executions/restart/by-ids`,
-            options.executionsId
+            executionsId,
+            {params: params}
         )
     }
 
@@ -135,10 +137,11 @@ export const useExecutionsStore = defineStore("executions", () => {
     }
 
     const bulkReplayExecution = (options: { executionsId: string[] } & Record<string, any>) => {
+        const {executionsId, ...params} = options;
         return axios.post(
             `${apiUrl()}/executions/replay/by-ids`,
-            options.executionsId,
-            {params: options}
+            executionsId,
+            {params: params}
         )
     }
 

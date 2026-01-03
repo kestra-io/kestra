@@ -90,7 +90,7 @@
                             <el-button v-if="canUpdate" :icon="StateMachine" @click="changeStatusDialogVisible = !changeStatusDialogVisible">
                                 {{ $t("change state") }}
                             </el-button>
-                            <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
+                            <el-button v-if="canUpdate" :icon="Restart" @click="isOpenRestartModal = !isOpenRestartModal">
                                 {{ $t("restart") }}
                             </el-button>
                             <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
@@ -364,6 +364,21 @@
 
         <template #default>
             <p v-html="changeReplayToast()" />
+            <el-form v-if="canShowRevisionPicker && revisionsOptions && revisionsOptions.length > 1">
+                <p class="execution-description">
+                    {{ $t("restart change revision") }}
+                </p>
+                <ElFormItem :label="$t('revisions')">
+                    <el-select v-model="replayRevisionSelected">
+                        <el-option
+                            v-for="item in revisionsOptions"
+                            :key="item.value"
+                            :label="item.text"
+                            :value="item.value"
+                        />
+                    </el-select>
+                </ElFormItem>
+            </el-form>
         </template>
 
         <template #footer>
@@ -381,13 +396,53 @@
             </el-button>
         </template>
     </el-dialog>
+
+    <el-dialog v-if="isOpenRestartModal" v-model="isOpenRestartModal" :id="Utils.uid()" destroyOnClose :appendToBody="true" alignCenter>
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="changeRestartToast()" />
+            <el-form v-if="canShowRevisionPicker && revisionsOptions && revisionsOptions.length > 1">
+                <p class="execution-description">
+                    {{ $t("restart change revision") }}
+                </p>
+                <ElFormItem :label="$t('revisions')">
+                    <el-select v-model="restartRevisionSelected">
+                        <el-option
+                            v-for="item in revisionsOptions"
+                            :key="item.value"
+                            :label="item.text"
+                            :value="item.value"
+                        />
+                    </el-select>
+                </ElFormItem>
+            </el-form>
+        </template>
+
+        <template #footer>
+            <el-button @click="isOpenRestartModal = false">
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button @click="restartExecutions(true)">
+                {{ $t('restart latest revision') }}
+            </el-button>
+            <el-button
+                type="primary"
+                @click="restartExecutions(false)"
+            >
+                {{ $t('ok') }}
+            </el-button>
+        </template>
+    </el-dialog>
 </template>
 
 <script setup lang="ts">
     import _merge from "lodash/merge";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
-    import {ref, computed, watch, h, useTemplateRef} from "vue";
+    import {ref, computed, watch, h, useTemplateRef, type Ref} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import {ElMessageBox, ElSwitch, ElFormItem, ElAlert, ElCheckbox} from "element-plus";
 
@@ -497,6 +552,7 @@
     const recomputeInterval = ref(false);
     const isOpenLabelsModal = ref(false);
     const isOpenReplayModal = ref(false);
+    const isOpenRestartModal = ref(false);
     const selectedStatus = ref(undefined);
     const lastRefreshDate = ref(new Date());
     const unqueueDialogVisible = ref(false);
@@ -705,6 +761,87 @@
         ];
     });
 
+    /**
+     * Gets the currently selected executions from table selection or query bulk action.
+     * @returns Array of selected execution objects
+     */
+    const getSelectedExecutions = () => {
+        if (queryBulkAction.value) {
+            return executionsStore.executions || [];
+        } else {
+            return (executionsStore.executions || []).filter((exec: any) => selection.value.includes(exec.id));
+        }
+    };
+
+    /**
+     * Checks if all selected executions belong to the same flow.
+     * @returns Flow info object if all same flow, null otherwise
+     */
+    const getCommonFlowInfo = () => {
+        const selectedExecs = getSelectedExecutions();
+        if (selectedExecs.length === 0) return null;
+
+        const firstExec = selectedExecs[0];
+        const allSameFlow = selectedExecs.every((exec: any) => 
+            exec.namespace === firstExec.namespace && exec.flowId === firstExec.flowId
+        );
+
+        if (allSameFlow) {
+            return {
+                namespace: firstExec.namespace,
+                flowId: firstExec.flowId,
+                executions: selectedExecs
+            };
+        }
+        return null;
+    };
+
+    const replayRevisionSelected = ref<number | undefined>(undefined);
+    const restartRevisionSelected = ref<number | undefined>(undefined);
+
+    const canShowRevisionPicker = computed(() => getCommonFlowInfo() !== null);
+
+    /**
+     * Generates revision options for the dropdown, marking current revision if all executions use the same one.
+     * @returns Array of revision option objects with value and text
+     */
+    const getRevisionsOptions = () => {
+        const commonFlow = getCommonFlowInfo();
+        if (!commonFlow || !flowStore.revisions) return [];
+
+        const selectedExecs = commonFlow.executions;
+        const allSameRevision = selectedExecs.every((exec: any) => exec.flowRevision === selectedExecs[0].flowRevision);
+
+        return flowStore.revisions
+            .map((revision) => ({
+                value: revision.revision,
+                text: revision.revision + (allSameRevision && revision.revision === selectedExecs[0].flowRevision ? ` (${t("current")})` : ""),
+            }))
+            .reverse();
+    };
+
+    const revisionsOptions = computed(() => getRevisionsOptions());
+
+    /**
+     * Loads revisions for the common flow and preselects current revision (if all same) or latest revision.
+     * @param revisionRef - The ref to update with the preselected revision value
+     */
+    const loadRevisions = async (revisionRef: Ref<number | undefined>) => {
+        const commonFlow = getCommonFlowInfo();
+        if (commonFlow) {
+            await flowStore.loadRevisions({
+                namespace: commonFlow.namespace,
+                id: commonFlow.flowId
+            });
+            if (flowStore.revisions && flowStore.revisions.length > 0) {
+                const selectedExecs = commonFlow.executions;
+                const allSameRevision = selectedExecs.every((exec: any) => exec.flowRevision === selectedExecs[0].flowRevision);
+                // Preselect current revision if all executions have same revision, otherwise latest
+                revisionRef.value = allSameRevision ? selectedExecs[0].flowRevision : flowStore.revisions[flowStore.revisions.length - 1].revision;
+            }
+        }
+    };
+
     const filteredLabels = (labels: any[]) => {
         const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || [];
 
@@ -869,28 +1006,72 @@
         );
     };
 
-    const restartExecutions = () => {
-        genericConfirmAction(
-            "bulk restart",
+    /**
+     * Handles bulk restart execution with optional revision selection.
+     * If same revision selected, performs true restart (no revision param).
+     * @param useLatestRevision - Whether to use latest revision (from button click)
+     */
+    const restartExecutions = (useLatestRevision: boolean) => {
+        isOpenRestartModal.value = false;
+
+        let latestRevision: boolean | undefined = undefined;
+        let revision: number | undefined = undefined;
+
+        if (canShowRevisionPicker.value && !useLatestRevision && restartRevisionSelected.value !== undefined) {
+            const selectedExecs = getSelectedExecutions();
+            const allSameRevision = selectedExecs.length > 0 && selectedExecs.every((exec: any) => exec.flowRevision === selectedExecs[0].flowRevision);
+            
+            if (allSameRevision && restartRevisionSelected.value === selectedExecs[0].flowRevision) {
+                revision = undefined;
+            } else {
+                revision = restartRevisionSelected.value;
+            }
+        } else if (useLatestRevision) {
+            latestRevision = true;
+        }
+
+        genericConfirmCallback(
             "queryRestartExecution",
             "bulkRestartExecution",
-            "executions restarted"
+            "executions restarted",
+            revision !== undefined ? {revision} : latestRevision !== undefined ? {latestRevision} : {}
         );
     };
 
-    const replayExecutions = (latestRevision: boolean) => {
+    /**
+     * Handles bulk replay execution with optional revision selection.
+     * @param useLatestRevision - Whether to use latest revision (from button click)
+     */
+    const replayExecutions = (useLatestRevision: boolean) => {
         isOpenReplayModal.value = false;
+
+        let latestRevision: boolean | undefined = undefined;
+        let revision: number | undefined = undefined;
+
+        if (canShowRevisionPicker.value && !useLatestRevision && replayRevisionSelected.value !== undefined) {
+            revision = replayRevisionSelected.value;
+        } else if (useLatestRevision) {
+            latestRevision = true;
+        }
 
         genericConfirmCallback(
             "queryReplayExecution",
             "bulkReplayExecution",
             "executions replayed",
-            {latestRevision: latestRevision}
+            revision !== undefined ? {revision} : {latestRevision: latestRevision ?? false}
         );
     };
 
     const changeReplayToast = () => {
         return t("bulk replay", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length});
+    };
+
+    /**
+     * Returns the confirmation toast message for bulk restart action.
+     * @returns Formatted toast message with execution count
+     */
+    const changeRestartToast = () => {
+        return t("bulk restart", {"executionCount": queryBulkAction.value ? executionsStore.total : selection.value.length});
     };
 
     const changeStatus = () => {
@@ -1048,6 +1229,18 @@
         }
     });
 
+    watch(isOpenReplayModal, (opening) => {
+        if (opening) {
+            loadRevisions(replayRevisionSelected);
+        }
+    });
+
+    watch(isOpenRestartModal, (opening) => {
+        if (opening) {
+            loadRevisions(restartRevisionSelected);
+        }
+    });
+
     async function exportExecutionsAsStream() {
         await executionsStore.exportExecutionsAsCSV(
             route.query
@@ -1091,5 +1284,9 @@
 
 :deep(a.execution-id) code {
     color: var(--bs-code-color) !important;
+}
+
+.execution-description {
+    color: var(--ks-content-secondary);
 }
 </style>

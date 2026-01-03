@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.services.NamespaceService;
@@ -205,7 +206,8 @@ public class RunContextInitializer {
 
         final Map<String, Object> variables = new HashMap<>(runContext.getVariables());
         variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
-        // add a correlation ID if none exist
+        // add a correlation ID label if none exists
+        // add backfill labels if backfill exists with labels
         Map<String, Object> labels = (Map<String, Object>) variables.get("labels");
         if(labels != null){
             Map<String, Object> systemLabels = (Map<String, Object>) labels.get("system");
@@ -214,7 +216,13 @@ public class RunContextInitializer {
                 labels.put("system", systemLabels);
             }
             systemLabels.putIfAbsent("correlationId", triggerExecutionId);
+            Backfill backfill = triggerContext.getBackfill();
+            if(backfill != null && backfill.getLabels() != null){
+             backfill.getLabels().forEach(label -> labels.putIfAbsent(label.key(), label.value()));
+            }
         }
+
+
         final StorageContext context = StorageContext.forTrigger(
             triggerContext.getTenantId(),
             triggerContext.getNamespace(),

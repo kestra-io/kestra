@@ -654,6 +654,20 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now().minusMinutes(1L))
+            .backfill(
+                Backfill.builder()
+                    .start(date(5))
+                    .end(ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS))
+                    .currentDate(date(5))
+                    .previousNextExecutionDate(ZonedDateTime.now().truncatedTo(ChronoUnit.HOURS))
+                    .labels(List.of(new Label("course", "algorithms")))
+                    .inputs(Map.of("backfill_input",Expression.builder()
+                        .type(Expression.class.getName())
+                        .expression(
+                            Property.ofExpression("backfill input as label: {{labels.course}}"))
+                        .build()))
+                    .build()
+            )
             .build();
         triggerState.create(lastTrigger);
 
@@ -673,9 +687,11 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                             Label::key,
                             Label::value
                         ));
+                assertThat(resolvedLabels).hasSize(6);
                 assertThat(resolvedLabels.get("source")).isEqualTo("cairo");
                 assertThat(resolvedLabels.get("destination")).isEqualTo("paris");
                 assertThat(resolvedLabels.get("tr_key")).isEqualTo("tr_value");
+                assertThat(resolvedLabels.get("course")).isEqualTo("algorithms");
                 assertThat(resolvedLabels.get("system.from")).isEqualTo("trigger");
                 assertThat(resolvedLabels.containsKey("correlationId"));
                 queueCount.countDown();

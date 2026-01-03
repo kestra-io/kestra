@@ -1071,7 +1071,7 @@ public class ExecutionController {
         for (Execution execution : executions) {
             Optional<Integer> revisionToUse = getRevisionToUse(execution, revision, latestRevision);
             
-            Execution restart = executionService.restart(execution, revisionToUse.get());
+            Execution restart = executionService.restart(execution, revisionToUse.orElse(null));
             executionQueue.emit(restart);
             eventPublisher.publishEvent(new CrudEvent<>(restart, execution, CrudEventType.UPDATE));
         }
@@ -1932,7 +1932,7 @@ public class ExecutionController {
         for (Execution execution : executions) {
             Optional<Integer> revisionToUse = getRevisionToUse(execution, revision, latestRevision);
             
-            innerReplay(execution, null, revisionToUse.get(), Optional.empty());
+            innerReplay(execution, null, revisionToUse.orElse(null), Optional.empty());
         }
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
@@ -2452,8 +2452,12 @@ public class ExecutionController {
             return Optional.of(revision);
         } else if (latestRevision != null && latestRevision) {
             // Get latest revision for this flow
-            Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
-            return Optional.of(flow.getRevision());
+            Optional<Flow> flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty());
+            if (flow.isPresent()) {
+                return Optional.of(flow.get().getRevision());
+            }
+            // If flow not found, return empty (will use original execution's revision)
+            return Optional.empty();
         }
         return Optional.empty();
     }

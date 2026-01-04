@@ -609,11 +609,11 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 Map.of("user", Expression.builder()
                     .type(Expression.class.getName())
                     .expression(
-                        Property.ofExpression("All labels with trigger: {{labels.source}}, {{labels.destination}}, {{labels.tr_key}}, {{labels.system.from}}, {{labels.system.correlationId}}"))
+                        Property.ofExpression("All labels with trigger: {{labels.source}}, {{labels.destination}}, {{labels.tr_key}}, {{labels.system.from}}, {{labels.system.correlationId}}, {{labels.label1}}"))
                     .build()
                 )
             )
-            .labels(List.of(new Label("tr_key","tr_value")))
+            .labels(List.of(new Label("tr_key","tr_value"), new Label("label1","resolved value from variable: {{vars.variable_test}}")))
             .build();
         FlowWithSource builder = FlowWithSource.builder()
             .id(IdUtils.create())
@@ -640,6 +640,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 .type(Return.class.getName())
                 .format(Property.ofExpression("Hello from {{inputs.user}}"))
                 .build()))
+            .variables(Map.of("variable_test","custom_value"))
             .build();
         FlowWithSource flow = builder.toBuilder().source(builder.sourceOrGenerateIfNull()).build();
 
@@ -687,13 +688,14 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                             Label::key,
                             Label::value
                         ));
-                assertThat(resolvedLabels).hasSize(6);
+                assertThat(resolvedLabels).hasSize(7);
                 assertThat(resolvedLabels.get("source")).isEqualTo("cairo");
                 assertThat(resolvedLabels.get("destination")).isEqualTo("paris");
                 assertThat(resolvedLabels.get("tr_key")).isEqualTo("tr_value");
                 assertThat(resolvedLabels.get("course")).isEqualTo("algorithms");
                 assertThat(resolvedLabels.get("system.from")).isEqualTo("trigger");
                 assertThat(resolvedLabels.containsKey("correlationId"));
+                assertThat(resolvedLabels.get("label1")).isEqualTo("resolved value from variable: custom_value");
                 queueCount.countDown();
             });
             scheduler.run();

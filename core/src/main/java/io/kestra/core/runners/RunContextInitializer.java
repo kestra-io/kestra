@@ -211,12 +211,14 @@ public class RunContextInitializer {
          * Flow labels and system.from label were added earlier in Run Variables since no need for rendering
          * Adding Trigger, backfill labels and system.correlationId here is suitable since the first two need for rendering and the last one needs for triggerExecutionId
          */
-        Map<String, Object> labels = (Map<String, Object>) variables.get("labels");
-        if(labels != null){
-         List<Label> labelsList = Label.toList(labels);
-         labelsList.add(new Label(Label.CORRELATION_ID, triggerExecutionId));
-         labelsList.addAll(LabelService.getLabels((Schedulable) trigger, runContext, triggerContext.getBackfill(), null));
-         variables.put("labels", Label.toNestedMap(labelsList));
+        if(trigger instanceof Schedulable schedulable){
+            Map<String, Object> labels = (Map<String, Object>) variables.get("labels");
+            if(labels != null){
+                List<Label> labelsList = Label.toList(labels);
+                labelsList.add(new Label(Label.CORRELATION_ID, triggerExecutionId));
+                labelsList.addAll(LabelService.getLabels( schedulable, runContext, triggerContext.getBackfill(), null));
+                variables.put("labels", Label.toNestedMap(labelsList));
+            }
         }
 
         final StorageContext context = StorageContext.forTrigger(

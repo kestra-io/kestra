@@ -23,6 +23,14 @@ public final class LabelService {
         return ListUtils.emptyOnNull(flow.getLabels()).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
     }
 
+    /**
+     * Return labels excluding system labels.
+     */
+    public static List<Label> labelsExcludingSystem(List<Label> labels) {
+        return ListUtils.emptyOnNull(labels).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
+    }
+
+
 
 
     /**
@@ -35,7 +43,7 @@ public final class LabelService {
         final List<Label> labels = new ArrayList<>();
 
         if (flow != null && flow.getLabels() != null) {
-            labels.addAll(LabelService.labelsExcludingSystem(flow)); // no need for rendering
+            labels.addAll(flow.getLabels()); // no need for rendering
         }
 
         if (trigger.getLabels() != null) {
@@ -46,8 +54,7 @@ public final class LabelService {
                 }
             }
         }
-
-        return labels;
+        return labelsExcludingSystem(labels);
     }
 
     private static String renderLabelValue(RunContext runContext, Label label) {
@@ -79,6 +86,6 @@ public final class LabelService {
                     }
             }
         }
-        return labels;
+        return labelsExcludingSystem(labels);
     }
 }

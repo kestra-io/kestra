@@ -37,6 +37,43 @@ public record Label(
     public static Map<String, Object> toNestedMap(List<Label> labels) {
         return MapUtils.flattenToNestedMap(toMap(labels));
     }
+    /**
+     * Static helper method for converting a nested map of labels to a list of labels.
+     *
+     * @param labels The map of {@link Label} to be converted.
+     * @return {@link List}.
+     */
+    public static List<Label> toList(Map<String, Object> labels) {
+        List<Label> result = new ArrayList<>();
+        flatten(labels, "", result);
+        return result;
+    }
+
+    private static void flatten(Object current, String prefix, List<Label> out) {
+
+        if (current instanceof Map<?, ?> map) {
+
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                String key = entry.getKey().toString();
+                Object value = entry.getValue();
+
+                String newPrefix = prefix.isEmpty()
+                    ? key
+                    : prefix + "." + key;
+
+                flatten(value, newPrefix, out);
+            }
+
+        } else if (current instanceof Collection<?> collection) {
+
+            for (Object item : collection) {
+                flatten(item, prefix, out);
+            }
+
+        } else {
+            out.add(new Label(prefix, String.valueOf(current)));
+        }
+    }
 
     /**
      * Static helper method for converting a list of labels to a flat map.

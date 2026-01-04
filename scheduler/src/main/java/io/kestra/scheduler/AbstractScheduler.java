@@ -784,7 +784,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     if (abstractTrigger.isAllowConcurrent()) {
                         trigger = trigger.toBuilder().executionId(null).build();
                     }
-                
+
                     // Worker triggers result is evaluated in another thread with the workerTriggerResultQueue.
                     // We can then update the trigger directly.
                     this.saveLastTriggerAndEmitExecution(executionWithTrigger.getExecution(), trigger, triggerToSave -> this.triggerState.update(triggerToSave));
@@ -806,7 +806,7 @@ public abstract class AbstractScheduler implements Scheduler {
         if (result.getExecution().getState().getCurrent() == State.Type.FAILED) {
             trigger = trigger.resetExecution(State.Type.FAILED);
         }
-        
+
         // if the trigger is allowed to run concurrently we do not attached the executio-id to the trigger state
         // i.e., the trigger will not be locked
         if (((AbstractTrigger)schedule).isAllowConcurrent()) {
@@ -951,7 +951,8 @@ public abstract class AbstractScheduler implements Scheduler {
                     runContextInitializer.forScheduler(
                         runContext,
                         flowWithTrigger.getTriggerContext(),
-                        flowWithTrigger.getAbstractTrigger()
+                        flowWithTrigger.getAbstractTrigger(),
+                        flowWithTrigger.getFlow()
                     );
 
                     Optional<Execution> evaluate = ((Schedulable) flowWithTrigger.getAbstractTrigger()).evaluate(

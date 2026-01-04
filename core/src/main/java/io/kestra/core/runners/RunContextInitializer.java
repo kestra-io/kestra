@@ -50,9 +50,6 @@ public class RunContextInitializer {
     @Inject
     protected NamespaceService namespaceService;
 
-    @Inject
-    protected FlowRepositoryInterface flowRepositoryInterface;
-
     @Value("${kestra.encryption.secret-key}")
     protected Optional<String> secretKey;
 
@@ -197,11 +194,13 @@ public class RunContextInitializer {
      * @param runContext     The {@link RunContext} to initialize.
      * @param triggerContext The {@link TriggerContext}.
      * @param trigger        The {@link AbstractTrigger}.
+     * @param flow           The {@link FlowInterface}.
      * @return The {@link RunContext} to initialize
      */
     public DefaultRunContext forScheduler(final DefaultRunContext runContext,
                                           final TriggerContext triggerContext,
-                                          final AbstractTrigger trigger) {
+                                          final AbstractTrigger trigger,
+                                          final FlowInterface flow) {
 
         runContext.init(applicationContext);
 
@@ -218,7 +217,6 @@ public class RunContextInitializer {
             Map<String, Object> labels = (Map<String, Object>) variables.get("labels");
 
             List<Label> labelsList = labels != null ? Label.toList(labels): new ArrayList<>();
-            FlowInterface flow = flowRepositoryInterface.findById(triggerContext.getTenantId(), triggerContext.getNamespace(),triggerContext.getFlowId()).orElse(null);
 
             labelsList.addAll(LabelService.getLabels( schedulable, runContext, triggerContext.getBackfill(), flow));
             labelsList.add(new Label(Label.CORRELATION_ID, triggerExecutionId));
@@ -264,7 +262,8 @@ public class RunContextInitializer {
         return forScheduler(
             runContext,
             workerTrigger.getTriggerContext(),
-            workerTrigger.getTrigger()
+            workerTrigger.getTrigger(),
+            workerTrigger.getConditionContext().getFlow()
         );
     }
 }

@@ -601,7 +601,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
     @Test
-    void successfulInputRenderingWithLabels() {
+    void successfulInputsRenderingWithLabels() {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "successfulLabelRendering", false)

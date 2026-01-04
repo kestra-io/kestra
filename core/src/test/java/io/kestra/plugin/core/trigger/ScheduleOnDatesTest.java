@@ -123,7 +123,7 @@ class ScheduleOnDatesTest {
             .build();
 
         return ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger, flow))
             .flow(flow)
             .build();
     }

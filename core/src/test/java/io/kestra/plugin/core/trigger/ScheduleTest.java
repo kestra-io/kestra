@@ -577,7 +577,7 @@ class ScheduleTest {
             .build();
 
         return ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger, flow))
             .flow(flow)
             .build();
     }
@@ -608,7 +608,7 @@ class ScheduleTest {
 
         return ConditionContext.builder()
             .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(),
-                    triggerContext, trigger))
+                    triggerContext, trigger, flow))
             .flow(flow)
             .build();
     }
@@ -639,7 +639,7 @@ class ScheduleTest {
 
         return ConditionContext.builder()
             .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(),
-                    triggerContext, trigger))
+                    triggerContext, trigger, flow))
             .flow(flow)
             .build();
     }
@@ -671,7 +671,7 @@ class ScheduleTest {
         TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
 
         ConditionContext conditionContext = ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger, null))
             .build();
 
         Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
@@ -702,7 +702,7 @@ class ScheduleTest {
         TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
 
         ConditionContext conditionContext = ConditionContext.builder()
-            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger, null))
             .build();
 
         Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);

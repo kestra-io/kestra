@@ -95,7 +95,7 @@ public class TriggerEvaluationExtension implements ParameterResolver {
 
         return ConditionContext.builder()
             .runContext(runContextInitializer.forScheduler(
-                (DefaultRunContext) runContextFactory.of(), triggerContext, trigger
+                (DefaultRunContext) runContextFactory.of(), triggerContext, trigger, flow
             ))
             .flow(flow)
             .build();

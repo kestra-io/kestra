@@ -201,13 +201,9 @@ public final class RunVariables {
                 // useful when rendering labels when evaluating trigger before creating execution
                 if(execution == null ){
                     List<Label> allLabels = new ArrayList<>();
-                    if(trigger.getLabels() != null){
-                        allLabels.addAll(trigger.getLabels());
-                    }
                     if(flow != null && flow.getLabels() != null){
-                        allLabels.addAll(flow.getLabels());
+                        allLabels.addAll(LabelService.labelsExcludingSystem(flow));
                     }
-                    allLabels = new ArrayList<>(LabelService.labelsExcludingSystem(allLabels));
                     allLabels.add(new Label(Label.FROM, "trigger"));
                     builder.put("labels", Label.toNestedMap(allLabels));
                 }

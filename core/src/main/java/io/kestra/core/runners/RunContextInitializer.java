@@ -1,12 +1,14 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.Lists;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Backfill;
+import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
+import io.kestra.core.services.LabelService;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.InternalStorage;
 import io.kestra.core.storages.NamespaceFactory;
@@ -18,10 +20,7 @@ import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -206,22 +205,19 @@ public class RunContextInitializer {
 
         final Map<String, Object> variables = new HashMap<>(runContext.getVariables());
         variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
-        // add a correlation ID label if none exists
-        // add backfill labels if backfill exists with labels
+
+        /**
+         * Adding labels into Run Context earlier is useful when rendering inputs at SchedulableExecutionFactory
+         * Flow labels and system.from label were added earlier in Run Variables since no need for rendering
+         * Adding Trigger, backfill labels and system.correlationId here is suitable since the first two need for rendering and the last one needs for triggerExecutionId
+         */
         Map<String, Object> labels = (Map<String, Object>) variables.get("labels");
         if(labels != null){
-            Map<String, Object> systemLabels = (Map<String, Object>) labels.get("system");
-            if (systemLabels == null) {
-                systemLabels = new HashMap<>();
-                labels.put("system", systemLabels);
-            }
-            systemLabels.putIfAbsent("correlationId", triggerExecutionId);
-            Backfill backfill = triggerContext.getBackfill();
-            if(backfill != null && backfill.getLabels() != null){
-             backfill.getLabels().forEach(label -> labels.putIfAbsent(label.key(), label.value()));
-            }
+         List<Label> labelsList = Label.toList(labels);
+         labelsList.add(new Label(Label.CORRELATION_ID, triggerExecutionId));
+         labelsList.addAll(LabelService.getLabels((Schedulable) trigger, runContext, triggerContext.getBackfill(), null));
+         variables.put("labels", Label.toNestedMap(labelsList));
         }
-
 
         final StorageContext context = StorageContext.forTrigger(
             triggerContext.getTenantId(),
@@ -256,7 +252,7 @@ public class RunContextInitializer {
      * @param workerTrigger The {@link WorkerTrigger}.
      * @return The {@link RunContext} to initialize
      */
-    public RunContext forWorker(final DefaultRunContext runContext, final WorkerTrigger workerTrigger) {
+    public RunContext forWorker(final DefaultRunContext runContext, final WorkerTrigger workerTrigger)  {
         return forScheduler(
             runContext,
             workerTrigger.getTriggerContext(),

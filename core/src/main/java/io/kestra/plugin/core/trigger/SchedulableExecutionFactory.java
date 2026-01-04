@@ -38,7 +38,7 @@ final class SchedulableExecutionFactory {
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())
             .flowRevision(conditionContext.getFlow().getRevision())
-            .labels(SchedulableExecutionFactory.getLabels(trigger, conditionContext.getRunContext(), triggerContext.getBackfill(), conditionContext.getFlow()))
+            .labels(LabelService.getLabels(trigger, conditionContext.getRunContext(), triggerContext.getBackfill(), conditionContext.getFlow()))
             .state(new State().withState(State.Type.FAILED))
             .build();
     }
@@ -46,16 +46,9 @@ final class SchedulableExecutionFactory {
     static Execution createExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext, Map<String, Object> variables, ZonedDateTime scheduleDate) throws IllegalVariableEvaluationException {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of((AbstractTrigger) trigger, variables);
-
-        List<Label> labels = getLabels(trigger, runContext, triggerContext.getBackfill(), conditionContext.getFlow());
-
-        List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(labels));
-        executionLabels.add(new Label(Label.FROM, "trigger"));
-        if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
-            // add a correlation ID if none exist
-            executionLabels.add(new Label(Label.CORRELATION_ID, runContext.getTriggerExecutionId()));
-        }
-
+        // load labels from trigger run context
+        Map<String, Object> executionLabels = (Map<String, Object>) runContext.getVariables().get("labels");
+        List<Label> labelsList = Label.toList(executionLabels);
         Execution execution = Execution.builder()
             .id(runContext.getTriggerExecutionId())
             .tenantId(triggerContext.getTenantId())
@@ -63,7 +56,7 @@ final class SchedulableExecutionFactory {
             .flowId(triggerContext.getFlowId())
             .flowRevision(conditionContext.getFlow().getRevision())
             .variables(conditionContext.getFlow().getVariables())
-            .labels(executionLabels)
+            .labels(labelsList)
             .state(new State())
             .trigger(executionTrigger)
             .scheduleDate(Optional.ofNullable(scheduleDate).map(ChronoZonedDateTime::toInstant).orElse(null))
@@ -91,17 +84,4 @@ final class SchedulableExecutionFactory {
         return inputs;
     }
 
-    private static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, FlowInterface flow) throws IllegalVariableEvaluationException {
-        List<Label> labels = LabelService.fromTrigger(runContext, flow, (AbstractTrigger) trigger);
-
-        if (backfill != null && backfill.getLabels() != null) {
-            for (Label label : backfill.getLabels()) {
-                final var value = runContext.render(label.value());
-                if (value != null) {
-                    labels.add(new Label(label.key(), value));
-                }
-            }
-        }
-        return labels;
-    }
 }

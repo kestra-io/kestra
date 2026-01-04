@@ -3,11 +3,13 @@ package io.kestra.core.runners;
 import com.google.common.collect.Lists;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Schedulable;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.InternalStorage;
@@ -47,6 +49,9 @@ public class RunContextInitializer {
 
     @Inject
     protected NamespaceService namespaceService;
+
+    @Inject
+    protected FlowRepositoryInterface flowRepositoryInterface;
 
     @Value("${kestra.encryption.secret-key}")
     protected Optional<String> secretKey;
@@ -208,17 +213,18 @@ public class RunContextInitializer {
 
         /**
          * Adding labels into Run Context earlier is useful when rendering inputs at SchedulableExecutionFactory
-         * Flow labels and system.from label were added earlier in Run Variables since no need for rendering
-         * Adding Trigger, backfill labels and system.correlationId here is suitable since the first two need for rendering and the last one needs for triggerExecutionId
          */
         if(trigger instanceof Schedulable schedulable){
             Map<String, Object> labels = (Map<String, Object>) variables.get("labels");
-            if(labels != null){
-                List<Label> labelsList = Label.toList(labels);
-                labelsList.add(new Label(Label.CORRELATION_ID, triggerExecutionId));
-                labelsList.addAll(LabelService.getLabels( schedulable, runContext, triggerContext.getBackfill(), null));
-                variables.put("labels", Label.toNestedMap(labelsList));
-            }
+
+            List<Label> labelsList = labels != null ? Label.toList(labels): new ArrayList<>();
+            FlowInterface flow = flowRepositoryInterface.findById(triggerContext.getTenantId(), triggerContext.getNamespace(),triggerContext.getFlowId()).orElse(null);
+
+            labelsList.addAll(LabelService.getLabels( schedulable, runContext, triggerContext.getBackfill(), flow));
+            labelsList.add(new Label(Label.CORRELATION_ID, triggerExecutionId));
+            labelsList.add(new Label(Label.FROM, "trigger"));
+
+            variables.put("labels", Label.toNestedMap(labelsList));
         }
 
         final StorageContext context = StorageContext.forTrigger(

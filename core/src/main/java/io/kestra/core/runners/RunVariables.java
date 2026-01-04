@@ -198,15 +198,6 @@ public final class RunVariables {
             // Trigger
             if (trigger != null) {
                 builder.put("trigger", RunVariables.of(trigger));
-                // useful when rendering labels when evaluating trigger before creating execution
-                if(execution == null ){
-                    List<Label> allLabels = new ArrayList<>();
-                    if(flow != null && flow.getLabels() != null){
-                        allLabels.addAll(LabelService.labelsExcludingSystem(flow));
-                    }
-                    allLabels.add(new Label(Label.FROM, "trigger"));
-                    builder.put("labels", Label.toNestedMap(allLabels));
-                }
             }
 
             // Parents

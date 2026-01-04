@@ -23,12 +23,7 @@ public final class LabelService {
         return ListUtils.emptyOnNull(flow.getLabels()).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
     }
 
-    /**
-     * Return labels excluding system labels.
-     */
-    public static List<Label> labelsExcludingSystem(List<Label> labels) {
-        return ListUtils.emptyOnNull(labels).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
-    }
+
 
     /**
      * Return flow labels excluding system labels concatenated with trigger labels.

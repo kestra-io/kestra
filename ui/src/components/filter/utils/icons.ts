@@ -12,7 +12,7 @@ import CogOutline from "vue-material-design-icons/CogOutline.vue";
 import ContentSaveOutline from "vue-material-design-icons/ContentSaveOutline.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
 import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
 import Drag from "vue-material-design-icons/Drag.vue";
 import Eye from "vue-material-design-icons/Eye.vue";
 import EyeOff from "vue-material-design-icons/EyeOff.vue";
@@ -60,7 +60,7 @@ export {
     ContentSaveOutline,
     Delete,
     DeleteOutline,
-    DotsSquare,
+    FolderOpenOutline,
     Drag,
     Eye,
     EyeOff,

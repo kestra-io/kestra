@@ -384,7 +384,16 @@
 
     .revision-option {
         padding-right: 0.5rem;
-        min-width: 300px;
+        min-width: 350px;
+    }
+
+    .revision-number {
+        font-weight: 500;
+    }
+
+    .revision-timestamp {
+        color: #888;
+        font-size: 0.85em;
     }
 
     .display-select {

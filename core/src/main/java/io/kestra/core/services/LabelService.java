@@ -27,7 +27,12 @@ public final class LabelService {
      * Return labels excluding system labels.
      */
     public static List<Label> labelsExcludingSystem(List<Label> labels) {
-        return ListUtils.emptyOnNull(labels).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
+        return new ArrayList<>(
+            ListUtils.emptyOnNull(labels)
+                .stream()
+                .filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX))
+                .toList()
+        );
     }
 
 

@@ -1211,7 +1211,7 @@ class FlowControllerTest {
         List<Flow> revisions = client.toBlocking().retrieve(
             GET("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId() + "/revisions"),
             Argument.listOf(Flow.class));
-        assertThat(revisions).hasSize(4);
+        assertThat(revisions).hasSize(3);
 
         revisions = client.toBlocking().retrieve(
             GET("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId() + "/revisions?allowDelete=true"),

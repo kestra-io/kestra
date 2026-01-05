@@ -585,7 +585,7 @@ function deleteFlowAndDependencies() {
             .then(response => response.data)
     }
 
-    function loadRevisions(options: { namespace: string, id: string, store?: boolean }) {
+    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }) {
         return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
             if (options.store !== false) {
                 revisions.value = response.data

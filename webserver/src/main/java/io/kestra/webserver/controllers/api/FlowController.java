@@ -192,7 +192,7 @@ public class FlowController {
     public List<FlowWithSource> listFlowRevisions(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
-        @QueryValue(defaultValue = "true") Boolean allowDelete
+        @QueryValue(defaultValue = "false") Boolean allowDelete
     ) {
         return flowRepository.findRevisions(tenantService.resolveTenant(), namespace, id, allowDelete);
     }

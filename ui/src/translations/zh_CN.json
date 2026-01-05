@@ -1845,6 +1845,7 @@
     "update aborted": "更新中止",
     "update ok": "已更新",
     "updated date": "更新日期",
+    "usage": "使用情况",
     "use": "使用",
     "use_dark_background": "在深色背景上工作时使用此版本，以确保我们的名称保持可读。",
     "validate": "验证",
@@ -1896,7 +1897,6 @@
     "workerId": "工作者ID",
     "workers": "工作者",
     "wrong labels": "标签中不允许空键或值",
-    "years": "年",
-    "your usage": "你的使用情况"
+    "years": "年"
   }
 }

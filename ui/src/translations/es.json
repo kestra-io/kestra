@@ -1845,6 +1845,7 @@
     "update aborted": "actualización abortada",
     "update ok": "está actualizado",
     "updated date": "Fecha de actualización",
+    "usage": "Uso",
     "use": "Usar",
     "use_dark_background": "Utiliza esta versión cuando trabajes sobre un fondo oscuro para asegurar que nuestro nombre permanezca legible.",
     "validate": "Validar",
@@ -1896,7 +1897,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "No se permite una key o value vacía en las etiquetas",
-    "years": "Años",
-    "your usage": "Tu uso"
+    "years": "Años"
   }
 }

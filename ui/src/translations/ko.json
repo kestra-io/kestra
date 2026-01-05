@@ -1845,6 +1845,7 @@
     "update aborted": "업데이트 중단됨",
     "update ok": "업데이트됨",
     "updated date": "업데이트 날짜",
+    "usage": "사용량",
     "use": "사용",
     "use_dark_background": "어두운 배경에서 작업할 때는 이 버전을 사용하여 우리의 이름이 읽기 쉽게 유지되도록 하세요.",
     "validate": "유효성 검사",
@@ -1896,7 +1897,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
-    "years": "연도",
-    "your usage": "사용량"
+    "years": "연도"
   }
 }

@@ -106,8 +106,7 @@
             addFilter(filter);
         });
 
-       // searchQuery.value = savedFilter.searchQuery ?? "";
-       searchQuery.value = "";
+        searchQuery.value = savedFilter.searchQuery ?? "";
     };
 
     const refreshData = () => {

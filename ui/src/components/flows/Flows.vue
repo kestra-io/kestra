@@ -53,7 +53,7 @@
                             refresh: {shown: true, callback: refresh}
                         }"
                         @update-properties="updateDisplayColumns"
-                        :defaultScope="!route.name?.toString().startsWith('namespaces/')"
+                        :defaultScope="defaultScopeFilter"
                     />
                 </template>
 
@@ -298,10 +298,12 @@
         topbar?: boolean;
         namespace?: string;
         id?: string | null;
+        defaultScopeFilter: boolean,
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
+        defaultScopeFilter: undefined,
     });
 
     const flowStore = useFlowStore();

@@ -99,7 +99,11 @@ export function useHelpers() {
             name: "flows",
             title: t("flows"),
             component: Flows,
-            props: {namespace: namespace.value, topbar: false},
+            props: {
+                namespace: namespace.value,
+                topbar: false,
+                defaultScopeFilter: false,
+            },
         },
         {
             name: "executions",
@@ -110,6 +114,7 @@ export function useHelpers() {
                 topbar: false,
                 visibleCharts: true,
                 embed: false,
+                defaultScopeFilter: false,
             },
         },
         {

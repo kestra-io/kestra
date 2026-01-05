@@ -15,6 +15,7 @@ import lombok.SneakyThrows;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.InsertOnDuplicateSetMoreStep;
 import org.jooq.JSONB;
 import org.jooq.Record;
 import org.jooq.RecordMapper;
@@ -77,24 +78,16 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     }
 
     @Override
-    public int persistBatch(List<T> items) {
-        return dslContextWrapper.transactionResult(configuration -> {
-            DSLContext dslContext = DSL.using(configuration);
-            var inserts = items.stream().map(item -> {
-                    Map<Field<Object>, Object> finalFields = this.persistFields(item);
+    protected InsertOnDuplicateSetMoreStep<Record> buildInsertRequest(T entity, Map<Field<Object>, Object> fields,
+        DSLContext dslContext) {
 
-                    return dslContext
-                        .insertInto(table)
-                        .set(AbstractJdbcRepository.field("key"), key(item))
-                        .set(finalFields)
-                        .onConflict(AbstractJdbcRepository.field("key"))
-                        .doUpdate()
-                        .set(finalFields);
-                })
-                .toList();
-
-            return Arrays.stream(dslContext.batch(inserts).execute()).sum();
-        });
+        return dslContext
+            .insertInto(table)
+            .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(entity))
+            .set(fields)
+            .onConflict(AbstractJdbcRepository.field("key"))
+            .doUpdate()
+            .set(fields);
     }
 
     @SuppressWarnings("unchecked")

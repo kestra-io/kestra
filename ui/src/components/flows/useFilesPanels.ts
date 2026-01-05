@@ -100,7 +100,7 @@ export function useFilesPanels(panels: Ref<Panel[]>, namespace: Ref<string | und
     provide(FILES_CLOSE_TAB_INJECTION_KEY, (tab) => {
         const uid = generateUid(tab)
         for(const panel of panels.value){
-            const tabIndex = panel.tabs.findIndex(e => e.uid === uid);
+            const tabIndex = panel.tabs.findIndex(e => e.uid.startsWith(uid));
             
             if (tabIndex > -1) {
                 // if the closed tab is the active one, 

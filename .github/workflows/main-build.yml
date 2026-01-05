@@ -34,6 +34,7 @@ jobs:
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
           repository: kestra-io/kestra-ee
           event-type: "oss-updated"
+          client-payload: '{"ref": "${{ github.ref }}", "commit_sha": "${{ github.sha }}"}'
 
   backend-tests:
     name: Backend tests

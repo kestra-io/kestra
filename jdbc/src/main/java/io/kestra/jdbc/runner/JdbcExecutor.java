@@ -7,6 +7,7 @@ import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.Execution.FailedExecutionWithLog;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.sla.*;
 import io.kestra.core.models.tasks.ExecutableTask;
@@ -297,10 +298,23 @@ public class JdbcExecutor implements ExecutorInterface {
         this.receiveCancellations.addFirst(((JdbcQueue<Execution>) this.executionQueue).receiveBatch(
             Executor.class,
             executions -> {
-                List<CompletableFuture<Void>> futures = executions.stream()
-                    .map(execution -> CompletableFuture.runAsync(() -> executionQueue(execution), executionExecutorService))
+                // process execution message grouped by executionId to avoid concurrency as the execution level as it would
+                List<CompletableFuture<Void>> perExecutionFutures = executions.stream()
+                    .filter(Either::isLeft)
+                    .collect(Collectors.groupingBy(either -> either.getLeft().getId()))
+                    .values()
+                    .stream()
+                    .map(eithers -> CompletableFuture.runAsync(() -> {
+                        eithers.forEach(this::executionQueue);
+                    }, executionExecutorService))
                     .toList();
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+                // directly process deserialization issues as most of the time there will be none
+                executions.stream()
+                    .filter(Either::isRight)
+                    .forEach(either -> executionQueue(either));
+
+                CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
             }
         ));
         this.receiveCancellations.addFirst(((JdbcQueue<WorkerTaskResult>) this.workerTaskResultQueue).receiveBatch(
@@ -744,7 +758,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         // avoid infinite loop
                         if (!executor.getExecution().getState().getCurrent().isFailed()) {
                             return Pair.of(
-                                handleFailedExecutionFromExecutor(executor, e),
+                                failExecutionFromExecutor(executor, e),
                                 executorState
                             );
                         }
@@ -1497,9 +1511,24 @@ public class JdbcExecutor implements ExecutorInterface {
         return taskRun.getId() + (taskRun.getAttempts() != null ? "-" + taskRun.getAttempts().size() : "") + (taskRun.getIteration() == null ? "" : "-" + taskRun.getIteration());
     }
 
+    private Executor failExecutionFromExecutor(Executor executor, Exception e) {
+        Execution.FailedExecutionWithLog failedExecutionWithLog;
+        if (!executor.getExecution().hasFailed()) {
+            failedExecutionWithLog = executor.getExecution().withState(State.Type.FAILED).failedExecutionFromExecutor(e);
+        } else {
+            failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
+        }
+
+        return handleFailedExecutionFromExecutor(executor, failedExecutionWithLog);
+    }
+
     private Executor handleFailedExecutionFromExecutor(Executor executor, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
 
+        return handleFailedExecutionFromExecutor(executor, failedExecutionWithLog);
+    }
+
+    private Executor handleFailedExecutionFromExecutor(Executor executor, FailedExecutionWithLog failedExecutionWithLog) {
         try {
             logQueue.emitAsync(failedExecutionWithLog.getLogs());
         } catch (QueueException ex) {

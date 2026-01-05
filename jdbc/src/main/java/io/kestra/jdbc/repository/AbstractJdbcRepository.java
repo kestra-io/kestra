@@ -300,7 +300,7 @@ public abstract class AbstractJdbcRepository {
         }
 
         // Special handling for START_DATE and END_DATE
-        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED) {
+        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED || field == QueryFilter.Field.CREATED) {
             if(dateColumn == null){
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
@@ -328,6 +328,10 @@ public abstract class AbstractJdbcRepository {
             return applyTriggerStateCondition(value, operation);
         }
 
+        if (field.equals(QueryFilter.Field.METADATA)) {
+            return findMetadataCondition((Map<?, ?>) value, operation);
+        }
+
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -340,11 +344,10 @@ public abstract class AbstractJdbcRepository {
             case IN -> DSL.field(columnName).in(ListUtils.convertToListString(value));
             case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToListString(value));
             case STARTS_WITH -> DSL.field(columnName).like(value + "%");
-
             case ENDS_WITH -> DSL.field(columnName).like("%" + value);
             case CONTAINS -> DSL.field(columnName).like("%" + value + "%");
             case REGEX -> DSL.field(columnName).likeRegex((String) value);
-            case PREFIX -> DSL.field(columnName).like(value + "%")
+            case PREFIX -> DSL.field(columnName).like(value + ".%")
                 .or(DSL.field(columnName).eq(value));
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
@@ -377,6 +380,10 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition findMetadataCondition(Map<?, ?> metadata, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 

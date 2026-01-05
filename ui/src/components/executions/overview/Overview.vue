@@ -124,7 +124,7 @@
                     <div>
                         <section>
                             <div class="heading">
-                                <TimelineClockOutline />
+                                <PlayOutline />
                                 <span>{{ $t("recent_executions") }}</span>
                             </div>
                             <div class="timerange">
@@ -227,7 +227,7 @@
     import TimerSand from "vue-material-design-icons/TimerSand.vue";
     import History from "vue-material-design-icons/History.vue";
     import SortVariant from "vue-material-design-icons/SortVariant.vue";
-    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 
     const emits = defineEmits(["follow"]);
 

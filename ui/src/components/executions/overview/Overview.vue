@@ -124,7 +124,7 @@
                     <div>
                         <section>
                             <div class="heading">
-                                <TimelineClockOutline />
+                                <PlayOutline />
                                 <span>{{ $t("recent_executions") }}</span>
                             </div>
                             <div class="timerange">
@@ -216,7 +216,7 @@
 
     import StateMachine from "vue-material-design-icons/StateMachine.vue";
     import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LayersTripleOutline from "vue-material-design-icons/LayersTripleOutline.vue";
     import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
@@ -227,7 +227,7 @@
     import TimerSand from "vue-material-design-icons/TimerSand.vue";
     import History from "vue-material-design-icons/History.vue";
     import SortVariant from "vue-material-design-icons/SortVariant.vue";
-    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 
     const emits = defineEmits(["follow"]);
 
@@ -237,7 +237,7 @@
 
         return [
             {
-                icon: DotsSquare,
+                icon: FolderOpenOutline,
                 label: t("namespace"),
                 value: execution.value.namespace,
                 to: createLink("namespaces", execution.value),

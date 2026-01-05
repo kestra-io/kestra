@@ -24,7 +24,7 @@ dependencies {
     def jacksonVersion = "2.20.1"
     def jacksonAnnotationsVersion = "2.20"
     def jugVersion = "5.2.0"
-    def langchain4jVersion = "1.9.1"
+    def langchain4jVersion = "1.10.0"
     def langchain4jCommunityVersion = "1.9.1-beta17"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(

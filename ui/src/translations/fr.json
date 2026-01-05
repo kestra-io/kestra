@@ -668,6 +668,7 @@
       "end_date": "Date de fin",
       "enter description": "Entrez la description du filtre",
       "enter label": "Entrez le label de filtre",
+      "enter name": "Entrez le nom du filtre",
       "execution_kind": {
         "playground": "Terrain de jeu",
         "playground_description": "Exécutions déclenchées depuis le mode Playground",
@@ -714,6 +715,7 @@
         "description": "Filtrer par type de métrique",
         "label": "Métrique"
       },
+      "name": "Nom",
       "namespace": {
         "description": "Filtrer par namespace",
         "label": "Namespace"

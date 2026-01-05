@@ -25,7 +25,7 @@
                         :title="t('edit')"
                     />
                     <DeleteOutline
-                        @click.stop="deleteBookmark"
+                        @click.prevent="deleteBookmark"
                         :title="t('delete')"
                     />
                 </div>
@@ -127,6 +127,7 @@
 }
 
 .wrapper:not(.editing) .vsm--link:hover .buttons {
+    margin-right: 1rem;
     opacity: 1;
     visibility: visible;
 }

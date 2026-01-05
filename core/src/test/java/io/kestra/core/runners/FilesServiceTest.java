@@ -2,6 +2,8 @@ package io.kestra.core.runners;
 
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.context.ApplicationContext;
@@ -15,6 +17,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -36,6 +39,9 @@ class FilesServiceTest {
 
     @Inject
     private StorageInterface storageInterface;
+
+    @Inject
+    private NamespaceFactory namespaceFactory;
 
     @Test
     void overrideExistingInputFile() throws Exception {
@@ -106,28 +112,28 @@ class FilesServiceTest {
         var runContext = runContextFactory.of();
 
         Path fileWithSpace = tempDir.resolve("with space.txt");
-        Path fileWithUnicode = tempDir.resolve("สวัสดี.txt");
+        Path fileWithUnicode = tempDir.resolve("สวัสดี&.txt");
 
         Files.writeString(fileWithSpace, "content");
         Files.writeString(fileWithUnicode, "content");
 
         Path targetFileWithSpace = runContext.workingDir().path().resolve("with space.txt");
-        Path targetFileWithUnicode = runContext.workingDir().path().resolve("สวัสดี.txt");
+        Path targetFileWithUnicode = runContext.workingDir().path().resolve("สวัสดี&.txt");
 
         Files.copy(fileWithSpace, targetFileWithSpace);
         Files.copy(fileWithUnicode, targetFileWithUnicode);
 
         Map<String, URI> outputFiles = FilesService.outputFiles(
             runContext,
-            List.of("with space.txt", "สวัสดี.txt")
+            List.of("with space.txt", "สวัสดี&.txt")
         );
 
         assertThat(outputFiles).hasSize(2);
         assertThat(outputFiles).containsKey("with space.txt");
-        assertThat(outputFiles).containsKey("สวัสดี.txt");
+        assertThat(outputFiles).containsKey("สวัสดี&.txt");
 
         assertThat(runContext.storage().getFile(outputFiles.get("with space.txt"))).isNotNull();
-        assertThat(runContext.storage().getFile(outputFiles.get("สวัสดี.txt"))).isNotNull();
+        assertThat(runContext.storage().getFile(outputFiles.get("สวัสดี&.txt"))).isNotNull();
     }
 
     private URI createFile() throws IOException {
@@ -136,11 +142,11 @@ class FilesServiceTest {
         return tempFile.toPath().toUri();
     }
 
-    private URI createNsFile(boolean nsInAuthority) throws IOException {
+    private URI createNsFile(boolean nsInAuthority) throws IOException, URISyntaxException {
         String namespace = "namespace";
         String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 }

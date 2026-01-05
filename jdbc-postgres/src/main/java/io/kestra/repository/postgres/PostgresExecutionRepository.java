@@ -3,7 +3,9 @@ package io.kestra.repository.postgres;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -16,31 +18,23 @@ import org.jooq.Field;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Singleton
 @PostgresRepositoryEnabled
 public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository {
     @Inject
     public PostgresExecutionRepository(@Named("executions") PostgresRepository<Execution> repository,
+                                       QueueService queueService,
                                        ApplicationContext applicationContext,
                                        AbstractJdbcExecutorStateStorage executorStateStorage,
                                        JdbcFilterService filterService) {
-        super(repository, applicationContext, executorStateStorage, filterService);
+        super(repository, queueService, applicationContext, executorStateStorage, filterService);
     }
 
     @Override
     protected Condition statesFilter(List<State.Type> state) {
-        return DSL.or(state
-            .stream()
-            .map(Enum::name)
-            .map(s -> DSL.field("state_current")
-                .eq(DSL.field("CAST(? AS state_type)", SQLDataType.VARCHAR(50).getArrayType(), s)
-                ))
-            .toList()
-        );
+        return PostgresExecutionRepositoryService.statesFilter(state);
     }
 
     @Override
@@ -49,25 +43,12 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
     }
 
     @Override
-    protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return PostgresExecutionRepositoryService.findCondition(value, operation);
+    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+        return PostgresExecutionRepositoryService.findLabelCondition(input, operation);
     }
 
     @Override
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
-        switch (groupType) {
-            case MONTH:
-                return DSL.field("TO_CHAR({0}, 'YYYY-MM')", Date.class, DSL.field(dateField));
-            case WEEK:
-                return DSL.field("TO_CHAR({0}, 'IYYY-IW')", Date.class, DSL.field(dateField));
-            case DAY:
-                return DSL.field("DATE({0})", Date.class, DSL.field(dateField));
-            case HOUR:
-                return DSL.field("TO_CHAR({0}, 'YYYY-MM-DD HH24:00:00')", Date.class, DSL.field(dateField));
-            case MINUTE:
-                return DSL.field("TO_CHAR({0}, 'YYYY-MM-DD HH24:MI:00')", Date.class, DSL.field(dateField));
-            default:
-                throw new IllegalArgumentException("Unsupported GroupType: " + groupType);
-        }
+        return PostgresRepositoryUtils.formatDateField(dateField, groupType);
     }
 }

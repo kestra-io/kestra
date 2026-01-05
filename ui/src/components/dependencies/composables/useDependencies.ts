@@ -41,7 +41,7 @@ const layout: cytoscape.CoseLayoutOptions = {
     name: "cose",
 
     // Physical forces
-    nodeRepulsion: 2_000_000,
+    nodeRepulsion: 10_000_000,
     edgeElasticity: 100,
     idealEdgeLength: 250,
 
@@ -49,13 +49,13 @@ const layout: cytoscape.CoseLayoutOptions = {
     gravity: 0.05,
 
     // Layout iterations & cooling
-    numIter: 10_000,
+    numIter: 30_000,
     initialTemp: 200,
     minTemp: 1,
 
     // Spacing and padding
     padding: 50,
-    componentSpacing: 150,
+    componentSpacing: 200,
 
     // Node sizing
     nodeDimensionsIncludeLabels: true,
@@ -163,7 +163,7 @@ const setExecutionEdgeColors = throttle(
  * @param classes - An array of class names to remove from all elements.
  *                  Defaults to [`selected`, `faded`, `hovered`, `executions`].
  */
-export function clearClasses(cy: cytoscape.Core, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
+export function clearClasses(cy: cytoscape.Core, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET, classes: string[] = [SELECTED, FADED, HOVERED, EXECUTIONS]): void {
     cy.elements().removeClass(classes.join(" "));
     if (subtype === EXECUTION) cy.edges().style(edgeColors());
 }
@@ -197,7 +197,7 @@ export function fit(cy: cytoscape.Core, padding: number = 50): void {
  * @param subtype - Determines how connected elements are highlighted (`FLOW`, `EXECUTION` or `NAMESPACE`).
  * @param id - Optional explicit ID to assign to the ref (defaults to the node’s own ID).
  */
-function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE, id?: Node["id"]): void {
+function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selected: Ref<Node["id"] | undefined>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET, id?: Node["id"]): void {
     // Clear all existing classes
     clearClasses(cy, subtype);
 
@@ -263,7 +263,17 @@ function hoverHandler(cy: cytoscape.Core): void {
  * @returns An object with element getters, loading state, rendering state, selected node ID,
  *          selection helpers, and control handlers.
  */
-export function useDependencies(container: Ref<HTMLElement | null>, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE = FLOW, initialNodeID: string, params: RouteParams, isTesting = false) {
+export function useDependencies(
+    container: Ref<HTMLElement | null>,
+    subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET = FLOW,
+    initialNodeID: string,
+    params: RouteParams,
+    isTesting = false,
+    fetchAssetDependencies?: () => Promise<{
+        data: Element[];
+        count: number;
+    }>
+) {
     const coreStore = useCoreStore();
     const flowStore = useFlowStore();
     const executionsStore = useExecutionsStore();
@@ -301,33 +311,73 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         }
     };
 
-    const elements = ref<{ data: cytoscape.ElementDefinition[]; count: number; }>({data: [], count: 0});
+    const elements = ref<{
+        data: cytoscape.ElementDefinition[];
+        count: number;
+    }>({
+        data: [],
+        count: 0,
+    });
     onMounted(async () => {
-        if (!container.value) return;
-
         if (isTesting) {
-            elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
-
-            isLoading.value = false;
-        }
-        else {
-            if (subtype === NAMESPACE) {
-                const {data} = await namespacesStore.loadDependencies({namespace: params.id as string});
-                const nodes = data.nodes ?? [];
-                elements.value = {data: transformResponse(data, NAMESPACE), count: new Set(nodes.map((r: { uid: string }) => r.uid)).size};
-
+            if (!container.value) {
                 isLoading.value = false;
-            } else {
-                const result = await flowStore.loadDependencies({id: (subtype === FLOW ? params.id : params.flowId) as string, namespace: params.namespace as string, subtype});
-                elements.value = {data: result.data ?? [], count: result.count};
+                return;
+            }
 
+            elements.value = {data: getDependencies({subtype}), count: getRandomNumber(1, 100)};
+            isLoading.value = false;
+        } else {
+            try {
+                if (fetchAssetDependencies) {
+                    const result = await fetchAssetDependencies();
+                    elements.value = {
+                        data: result.data,
+                        count: result.count
+                    };
+                    isLoading.value = false;
+                } else if (subtype === NAMESPACE) {
+                    const {data} = await namespacesStore.loadDependencies({
+                        namespace: params.id as string,
+                    });
+                    const nodes = data.nodes ?? [];
+                    elements.value = {
+                        data: transformResponse(data, NAMESPACE),
+                        count: new Set(nodes.map((r: { uid: string }) => r.uid)).size,
+                    };
+                    isLoading.value = false;
+                } else {
+                    const result = await flowStore.loadDependencies(
+                        {
+                            id: (subtype === FLOW ? params.id : params.flowId) as string,
+                            namespace: params.namespace as string,
+                            subtype,
+                        },
+                        false
+                    );
+                    elements.value = {data: result.data ?? [], count: result.count};
+                    isLoading.value = false;
+                }
+            } catch (error) {
+                console.error(`Failed to load ${subtype} dependencies:`, error);
+                elements.value = {data: [], count: 0};
                 isLoading.value = false;
             }
         }
 
-        if (subtype === EXECUTION) nextTick(() => openSSE());
+        if (isTesting && container.value) {
+            cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+        } else if (!isTesting && elements.value.data.length > 0) {
+            await nextTick(); // Wait for the container to be available in the DOM
+            
+            if (!container.value) return;
 
-        cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+            cy = cytoscape({container: container.value, layout, ...options, style: getStyle(), elements: elements.value.data});
+        }
+
+        if (!cy) return;
+
+        if (subtype === EXECUTION) nextTick(() => openSSE());
 
         // Hide nodes immediately after initialization to avoid visual flickering or rearrangement during layout setup
         cy.ready(() => cy.nodes().style("display", "none"));
@@ -433,8 +483,16 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
         selectedNodeID,
         selectNode,
         handlers: {
-            zoomIn: () => cy.zoom({level: cy.zoom() + 0.1, renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition()}),
-            zoomOut: () => cy.zoom({level: cy.zoom() - 0.1, renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition()}),
+            zoomIn: () =>
+                cy.zoom({
+                    level: cy.zoom() + 0.1,
+                    renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition(),
+                }),
+            zoomOut: () =>
+                cy.zoom({
+                    level: cy.zoom() - 0.1,
+                    renderedPosition: cy.getElementById(selectedNodeID.value!).renderedPosition(),
+                }),
             clearSelection: () => {
                 clearClasses(cy, subtype);
                 selectedNodeID.value = undefined;
@@ -453,9 +511,23 @@ export function useDependencies(container: Ref<HTMLElement | null>, subtype: typ
  * @param subtype - The node subtype, either `FLOW`, `EXECUTION`, or `NAMESPACE`.
  * @returns An array of cytoscape elements with correctly typed nodes and edges.
  */
-export function transformResponse(response: {nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[]; }, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE): Element[] {
-    const nodes: Node[] = response.nodes.map((node) => ({id: node.uid, type: NODE, flow: node.id, namespace: node.namespace, metadata: {subtype}}));
-    const edges: Edge[] = response.edges.map((edge) => ({id: uuid(), type: EDGE, source: edge.source, target: edge.target}));
+export function transformResponse(response: {nodes: { uid: string; namespace: string; id: string }[]; edges: { source: string; target: string }[];}, subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE): Element[] {
+    const nodes: Node[] = response.nodes.map((node) => ({
+        id: node.uid,
+        type: NODE,
+        flow: node.id,
+        namespace: node.namespace,
+        metadata: {subtype},
+    }));
+    const edges: Edge[] = response.edges.map((edge) => ({
+        id: uuid(),
+        type: EDGE,
+        source: edge.source,
+        target: edge.target,
+    }));
 
-    return [...nodes.map((node) => ({data: node}) as Element), ...edges.map((edge) => ({data: edge}) as Element)];
+    return [
+        ...nodes.map((node) => ({data: node}) as Element),
+        ...edges.map((edge) => ({data: edge}) as Element),
+    ];
 }

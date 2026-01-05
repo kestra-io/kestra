@@ -4,8 +4,8 @@
             <div class="d-flex flex-column align-items-center gap-2 px-2">
                 <img :src>
 
-                <h2>{{ t(`empty.${props.type}.title`) }}</h2>
-                <p v-html="t(`empty.${props.type}.content`)" />
+                <h2>{{ $t(`empty.${props.type}.title`) }}</h2>
+                <p v-html="$t(`empty.${props.type}.content`)" />
 
                 <slot name="button" />
             </div>
@@ -16,13 +16,11 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
+    
+    import {images} from "./images";
 
     const props = defineProps({type: {type: String, required: true}});
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
-    import {images} from "./images";
     const src = computed((): string => images[props.type]);
 </script>
 
@@ -51,6 +49,10 @@
         font-size: 1rem;
         color: var(--ks-content-secondary);
         line-height: 1.5rem;
+    }
+
+    img {
+        max-width: 222px;
     }
 }
 </style>

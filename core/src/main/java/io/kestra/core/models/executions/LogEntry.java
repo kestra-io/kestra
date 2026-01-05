@@ -3,13 +3,14 @@ package io.kestra.core.models.executions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.TenantInterface;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.Value;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.event.Level;
 
 import jakarta.validation.constraints.NotNull;
@@ -96,7 +97,7 @@ public class LogEntry implements DeletedInterface, TenantInterface {
             .build();
     }
 
-    public static LogEntry of(Flow flow, AbstractTrigger abstractTrigger, ExecutionKind executionKind) {
+    public static LogEntry of(FlowInterface flow, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
             .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
@@ -106,7 +107,7 @@ public class LogEntry implements DeletedInterface, TenantInterface {
             .build();
     }
 
-    public static LogEntry of(TriggerContext triggerContext, AbstractTrigger abstractTrigger, ExecutionKind executionKind) {
+    public static LogEntry of(TriggerContext triggerContext, AbstractTrigger abstractTrigger) {
         return LogEntry.builder()
             .tenantId(triggerContext.getTenantId())
             .namespace(triggerContext.getNamespace())
@@ -118,6 +119,16 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     public static String toPrettyString(LogEntry logEntry) {
         return logEntry.getTimestamp().toString() + " " + logEntry.getLevel() + " " + logEntry.getMessage();
+    }
+
+    public static String toPrettyString(LogEntry logEntry, Integer maxMessageSize) {
+        String message;
+        if (maxMessageSize != null && maxMessageSize > 0) {
+            message = StringUtils.truncate(logEntry.getMessage(), maxMessageSize);
+        } else {
+            message = logEntry.getMessage();
+        }
+        return logEntry.getTimestamp().toString() + " " + logEntry.getLevel() + " " + message;
     }
 
     public Map<String, String> toMap() {

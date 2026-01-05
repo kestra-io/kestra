@@ -6,6 +6,7 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.micronaut.context.ApplicationContext;
@@ -20,78 +21,26 @@ import java.util.Optional;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
 
-public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcRepository implements TemplateRepositoryInterface {
+public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcCrudRepository<Template> implements TemplateRepositoryInterface {
     private final QueueInterface<Template> templateQueue;
     private final ApplicationEventPublisher<CrudEvent<Template>> eventPublisher;
-    protected io.kestra.jdbc.AbstractJdbcRepository<Template> jdbcRepository;
 
     @SuppressWarnings("unchecked")
-    public AbstractJdbcTemplateRepository(io.kestra.jdbc.AbstractJdbcRepository<Template> jdbcRepository, ApplicationContext applicationContext) {
-        this.jdbcRepository = jdbcRepository;
+    public AbstractJdbcTemplateRepository(io.kestra.jdbc.AbstractJdbcRepository<Template> jdbcRepository, QueueService queueService, ApplicationContext applicationContext) {
+        super(jdbcRepository, queueService);
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.templateQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TEMPLATE_NAMED));
     }
 
     @Override
     public Optional<Template> findById(String tenantId, String namespace, String id) {
-        return jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                Select<Record1<Object>> from = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
-                    .and(field("namespace").eq(namespace))
-                    .and(field("id").eq(id));
-
-                return this.jdbcRepository.fetchOne(from);
-            });
-    }
-
-    @Override
-    public List<Template> findAll(String tenantId) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                return this.jdbcRepository.fetch(select);
-            });
+        var condition = field("namespace").eq(namespace).and(field("id").eq(id));
+        return findOne(tenantId, condition);
     }
 
     @Override
     public List<Template> findAllWithNoAcl(String tenantId) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilterWithNoACL(tenantId));
-
-                return this.jdbcRepository.fetch(select);
-            });
-    }
-
-    @Override
-    public List<Template> findAllForAllTenants() {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter());
-
-                return this.jdbcRepository.fetch(select);
-            });
+        return findAll(this.defaultFilterWithNoACL(tenantId));
     }
 
     abstract protected Condition findCondition(String query);
@@ -102,70 +51,35 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
         @Nullable String tenantId,
         @Nullable String namespace
     ) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
+        Condition condition = computeCondition(query, namespace);
 
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(
-                        field("value")
-                    )
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                if (query != null) {
-                    select.and(this.findCondition(query));
-                }
-
-                if (namespace != null) {
-                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
-                }
-
-                return this.jdbcRepository.fetchPage(context, select, pageable);
-            });
+        return findPage(pageable, tenantId, condition);
     }
 
     @Override
     public List<Template> find(@Nullable String query, @Nullable String tenantId, @Nullable String namespace) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
+        Condition condition = computeCondition(query, namespace);
 
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(
-                        field("value")
-                    )
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
+        return find(tenantId, condition);
+    }
 
-                if (query != null) {
-                    select.and(this.findCondition(query));
-                }
+    private Condition computeCondition(@Nullable String query, @Nullable String namespace) {
+        Condition condition = DSL.trueCondition();
 
-                if (namespace != null) {
-                    select.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
-                }
+        if (query != null) {
+            condition = condition.and(this.findCondition(query));
+        }
+        if (namespace != null) {
+            condition = condition.and(DSL.or(field("namespace").eq(namespace), field("namespace").likeIgnoreCase(namespace + ".%")));
+        }
 
-                return this.jdbcRepository.fetch(select);
-            });
+        return condition;
     }
 
     @Override
     public List<Template> findByNamespace(String tenantId, String namespace) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                SelectConditionStep<Record1<Object>> select = DSL
-                    .using(configuration)
-                    .select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(field("namespace").eq(namespace))
-                    .and(this.defaultFilter(tenantId));
-
-                return this.jdbcRepository.fetch(select);
-            });
+        var condition = field("namespace").eq(namespace);
+        return this.find(tenantId, condition);
     }
 
     @Override

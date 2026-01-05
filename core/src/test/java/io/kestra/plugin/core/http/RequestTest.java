@@ -15,7 +15,10 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import io.micronaut.http.*;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
@@ -35,6 +38,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -94,7 +98,6 @@ class RequestTest {
         assertThat(output.getHeaders().get("content-length").getFirst()).isEqualTo("512789");
     }
 
-
     @Test
     void head404() throws Exception {
         final String url = "https://bdnb-data.s3.fr-par.scw.cloud/bnb_export_metropole_sql_dump.tar.gz";
@@ -134,6 +137,37 @@ class RequestTest {
             Request.Output output = task.run(runContext);
 
             assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
+            assertThat(output.getCode()).isEqualTo(200);
+        }
+    }
+
+    @Test
+    void params() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.ofValue(server.getURL().toString() + "/params?foo=baz"))
+                .params(Property.ofValue(Map.of(
+                    "hello", "world",
+                    "foo", "bar",
+                    "bar", List.of("foo1", "foo2")
+                )))
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat((String) output.getBody()).contains("hello=world");
+            assertThat((String) output.getBody()).contains("foo=baz");
+            assertThat((String) output.getBody()).contains("foo=bar");
+            assertThat((String) output.getBody()).contains("bar=foo1");
+            assertThat((String) output.getBody()).contains("bar=foo2");
             assertThat(output.getCode()).isEqualTo(200);
         }
     }
@@ -597,6 +631,10 @@ class RequestTest {
 
     @Controller
     static class MockController {
+
+        private static final int LARGE_BODY_SIZE = 20 * 1024 * 1024; // 20MB > 19MB safeguard
+        private static final String LARGE_BODY = "a".repeat(LARGE_BODY_SIZE);
+
         @Get("/hello")
         HttpResponse<String> hello() {
             return HttpResponse.ok("{ \"hello\": \"world\" }");
@@ -617,6 +655,11 @@ class RequestTest {
         @Get("/hello417")
         HttpResponse<String> hello417() {
             return HttpResponse.status(HttpStatus.EXPECTATION_FAILED).body("{ \"hello\": \"world\" }");
+        }
+
+        @Get("/params")
+        HttpResponse<String> params(HttpRequest<?> request) {
+            return HttpResponse.ok(request.getUri().getRawQuery());
         }
 
         @Post("/markdown")
@@ -686,6 +729,36 @@ class RequestTest {
         @Get("/uri%20with%20space")
         HttpResponse<String> uriWithSpace() {
             return HttpResponse.ok("Hello World");
+        }
+
+        @Get("/large")
+        HttpResponse<String> large() {
+            return HttpResponse.ok(LARGE_BODY);
+        }
+    }
+
+    @Test
+    void largeBodyFailsFast() {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.ofValue(server.getURL().toString() + "/large"))
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            IllegalArgumentException exception = assertThrows(
+                IllegalArgumentException.class,
+                () -> task.run(runContext)
+            );
+
+            assertThat(exception.getMessage())
+                .contains("Response body is too large to store in task outputs")
+                .contains("Download");
         }
     }
 }

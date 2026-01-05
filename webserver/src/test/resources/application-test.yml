@@ -172,6 +172,7 @@ kestra:
         - "/api/v1/main/executions/webhook/"
     liveness:
       enabled: false
+    termination-grace-period: 5s
     service:
       purge:
         initial-delay: 1h
@@ -184,7 +185,7 @@ kestra:
 
 datasources:
   h2:
-    url: jdbc:h2:mem:public;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:mem:public_webserver;TIME ZONE=UTC;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
     username: sa
     password: ""
     driverClassName: org.h2.Driver

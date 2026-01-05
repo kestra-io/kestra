@@ -7,6 +7,8 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.sla.SLAMonitor;
+import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.Trigger;
@@ -129,6 +131,18 @@ public class JdbcTableConfigsFactory {
     @Named("concurrencylimit")
     public InstantiableJdbcTableConfig concurrencyLimit() {
         return new InstantiableJdbcTableConfig("concurrencylimit", ConcurrencyLimit.class, "concurrency_limit");
+    }
+
+    @Bean
+    @Named("kvmetadata")
+    public InstantiableJdbcTableConfig kvMetadata() {
+        return new InstantiableJdbcTableConfig("kvmetadata", PersistedKvMetadata.class, "kv_metadata");
+    }
+
+    @Bean
+    @Named("namespacefilemetadata")
+    public InstantiableJdbcTableConfig namespaceFileMetadata() {
+        return new InstantiableJdbcTableConfig("namespacefilemetadata", NamespaceFileMetadata.class, "namespace_file_metadata");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

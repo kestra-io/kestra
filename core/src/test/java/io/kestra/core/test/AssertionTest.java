@@ -1,10 +1,10 @@
 package io.kestra.core.test;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.test.flow.Assertion;
 import io.kestra.core.test.flow.AssertionResult;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ import static io.kestra.core.test.flow.Assertion.Operator.EQUAL_TO;
 import static io.kestra.core.test.flow.Assertion.Operator.IS_NOT_NULL;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class AssertionTest {
 
     @Inject
@@ -59,7 +59,8 @@ class AssertionTest {
     @Test
     void shouldBrokenAssert_returnError() {
         var assertion = Assertion.builder()
-            .value(new Property<>("{{ invalid-pebble-expression() }}"))
+            .value(Property.ofExpression("{{ invalid-pebble-expression() }}")
+            )
             .equalTo(Property.ofValue("value"))
             .build();
 
@@ -78,7 +79,7 @@ class AssertionTest {
     @Test
     void shouldRender_values_fromTaskOutputs() {
         var assertion = Assertion.builder()
-            .value(new Property<>("{{ outputs.my_task.res }}"))
+            .value(Property.ofExpression("{{ outputs.my_task.res }}"))
             .equalTo(Property.ofValue("value1"))
             .build();
         var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("res", "value1"))));
@@ -92,7 +93,7 @@ class AssertionTest {
     @Test
     void shouldRender_values_fromTaskOutputs_and_produce_defaultErrorMessage() {
         var assertion = Assertion.builder()
-            .value(new Property<>("{{ outputs.my_task.res }}"))
+            .value(Property.ofExpression("{{ outputs.my_task.res }}"))
             .equalTo(Property.ofValue("expectedValue2"))
             .build();
         var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("res", "actualValue1"))));

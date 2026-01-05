@@ -32,7 +32,7 @@ Watch out for duplicates! If you are creating a new issue, please check existing
 #### Requirements
 The following dependencies are required to build Kestra locally:
 - Java 21+
-- Node 18+ and npm
+- Node 22+ and npm 10+
 - Python 3, pip and python venv
 - Docker & Docker Compose
 - an IDE (Intellij IDEA, Eclipse or VS Code)
@@ -63,9 +63,9 @@ You can also build it from a terminal using `./gradlew build`, the Gradle wrappe
   - Configure the following environment variables:
     - `MICRONAUT_ENVIRONMENTS`: can be set to any string and will load a custom configuration file in `cli/src/main/resources/application-{env}.yml`.
     - `KESTRA_PLUGINS_PATH`: is the path where you will save plugins as Jar and will be load on startup.
-  - See the screenshot below for an example: ![Intellij IDEA Configuration ](run-app.png)
+  - See the screenshot below for an example: ![Intellij IDEA Configuration ](./assets/run-app.png)
   - If you encounter **JavaScript memory heap out** error during startup, configure `NODE_OPTIONS` environment variable with some large value.
-      - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![Intellij IDEA Configuration ](node_option_env_var.png)
+      - Example `NODE_OPTIONS: --max-old-space-size=4096` or `NODE_OPTIONS: --max-old-space-size=8192` ![Intellij IDEA Configuration ](./assets/node_option_env_var.png)
 - The server starts by default on port 8080 and is reachable on `http://localhost:8080`
 
 If you want to launch all tests, you need Python and some packages installed on your machine, on Ubuntu you can install them with:
@@ -126,7 +126,7 @@ By default, Kestra will be installed under: `$HOME/.kestra/current`. Set the `KE
 ```bash
 # build and install Kestra
 make install
-# install plugins (plugins installation is based on the `.plugins` or `.plugins.override` files located at the root of the project.
+# install plugins (plugins installation is based on the API).
 make install-plugins
 # start Kestra in standalone mode with Postgres as backend
 make start-standalone-postgres

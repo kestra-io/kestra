@@ -6,6 +6,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
@@ -123,6 +124,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RESTARTED).count()).isGreaterThan(1L);
         assertThat(restart.getTaskRunList().stream().filter(taskRun -> taskRun.getState().getCurrent() == State.Type.RUNNING).count()).isGreaterThan(1L);
+
         assertThat(restart.getTaskRunList().getFirst().getId()).isEqualTo(restart.getTaskRunList().getFirst().getId());
         assertThat(restart.getLabels()).contains(new Label(Label.RESTARTED, "true"));
     }
@@ -333,7 +335,7 @@ class ExecutionServiceTest {
         assertThat(restart.findTaskRunByTaskIdAndValue("1_each", List.of()).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getState().getHistories()).hasSize(4);
-        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getAttempts()).isNull();
+        assertThat(restart.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         restart = executionService.markAs(execution, flow, execution.findTaskRunByTaskIdAndValue("2-1-2_t2", List.of("value 1")).getId(), State.Type.FAILED);
 
@@ -417,9 +419,9 @@ class ExecutionServiceTest {
 
         Execution killed = executionService.kill(execution, flow);
 
-        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.KILLING);
         assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
-        assertThat(killed.getState().getHistories()).hasSize(4);
+        assertThat(killed.getState().getHistories()).hasSize(5);
     }
 
     @Test
@@ -444,6 +446,7 @@ class ExecutionServiceTest {
 
         assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
         assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(killed.getState().getHistories()).hasSize(5);
     }
 
@@ -463,5 +466,21 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getHistories()).hasSize(4);
         assertThat(restart.getTaskRunList()).hasSize(2);
         assertThat(restart.findTaskRunsByTaskId("make_error").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/each-pause.yaml"})
+    void killExecutionWithFlowableTask() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "each-pause");
+
+        TaskRun childTaskRun = execution.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("pause")).toList().getFirst();
+
+        Execution killed = executionService.killParentTaskruns(childTaskRun,execution);
+
+        TaskRun parentTaskRun = killed.getTaskRunList().stream().filter(tr -> tr.getTaskId().equals("each_task")).toList().getFirst();
+
+        assertThat(parentTaskRun.getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(parentTaskRun.getAttempts().getLast().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+
     }
 }

@@ -1,23 +1,16 @@
 <template>
-    <div>
+    <div data-component="FILENAME_PLACEHOLDER">
+        <KSFilter
+            :configuration="logExecutionsFilter"
+            :tableOptions="{
+                chart: {shown: false},
+                columns: {shown: false},
+                refresh: {shown: true, callback: loadLogs}
+            }"
+            @search="filter = $event"
+            @filter="onFilterChange"
+        />
         <Collapse>
-            <el-form-item>
-                <el-input
-                    v-model="filter"
-                    @update:model-value="onChange"
-                    :placeholder="$t('search')"
-                >
-                    <template #suffix>
-                        <Magnify />
-                    </template>
-                </el-input>
-            </el-form-item>
-            <el-form-item>
-                <LogLevelSelector
-                    v-model="level"
-                    @update:model-value="onChange"
-                />
-            </el-form-item>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
                 <LogLevelNavigator
                     v-if="countByLogLevel[logLevel] > 0"
@@ -31,7 +24,7 @@
                 />
             </el-form-item>
             <el-form-item>
-                <el-button @click="expandCollapseAll()">
+                <el-button @click="expandCollapseAll()" :disabled="raw_view" :icon="logDisplayButtonIcon">
                     {{ logDisplayButtonText }}
                 </el-button>
             </el-form-item>
@@ -39,7 +32,7 @@
                 <el-tooltip
                     :content="!raw_view ? $t('logs_view.raw_details') : $t('logs_view.compact_details')"
                 >
-                    <el-button @click="toggleViewType">
+                    <el-button @click="toggleViewType" :icon="logViewTypeButtonIcon">
                         {{ !raw_view ? $t('logs_view.raw') : $t('logs_view.compact') }}
                     </el-button>
                 </el-tooltip>
@@ -119,13 +112,20 @@
     </div>
 </template>
 
+<script setup>
+    import {useLogExecutionsFilter} from "../filter/configurations";
+
+    const logExecutionsFilter = useLogExecutionsFilter();
+</script>
 <script>
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import Download from "vue-material-design-icons/Download.vue";
-    import Magnify from "vue-material-design-icons/Magnify.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
+    import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
+    import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
+    import ViewList from "vue-material-design-icons/ViewList.vue";
+    import ViewGrid from "vue-material-design-icons/ViewGrid.vue";
     import Kicon from "../Kicon.vue";
-    import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -133,27 +133,28 @@
     import {State, Utils as LibUtils} from "@kestra-io/ui-libs"
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
-    import Restart from "./Restart.vue";
-    import LogUtils from "../../utils/logs";
+    import Restart from "./overview/components/actions/Restart.vue";
+    import * as LogUtils from "../../utils/logs";
     import Refresh from "vue-material-design-icons/Refresh.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
+    import KSFilter from "../filter/components/KSFilter.vue";
+    import {storageKeys} from "../../utils/constants";
 
     export default {
         components: {
             LogLine,
             TaskRunDetails,
-            LogLevelSelector,
             LogLevelNavigator,
             Kicon,
             Download,
-            Magnify,
             ContentCopy,
             Collapse,
             Restart,
             DynamicScroller,
             DynamicScrollerItem,
-            Refresh
+            Refresh,
+            KSFilter
         },
         data() {
             return {
@@ -161,7 +162,7 @@
                 level: undefined,
                 filter: undefined,
                 openedTaskrunsCount: 0,
-                raw_view: false,
+                raw_view: (localStorage.getItem(storageKeys.LOGS_VIEW_TYPE) ?? "false").toLowerCase() === "true",
                 logIndicesByLevel: Object.fromEntries(LogUtils.levelOrLower(undefined).map(level => [level, []])),
                 logCursor: undefined
             };
@@ -213,6 +214,12 @@
             logDisplayButtonText() {
                 return this.openedTaskrunsCount === 0 ? this.$t("expand all") : this.$t("collapse all")
             },
+            logDisplayButtonIcon() {
+                return this.openedTaskrunsCount === 0 ? UnfoldMoreHorizontal : UnfoldLessHorizontal;
+            },
+            logViewTypeButtonIcon() {
+                return this.raw_view ? ViewGrid : ViewList;
+            },
             currentLevelOrLower() {
                 return LogUtils.levelOrLower(this.level);
             },
@@ -243,13 +250,15 @@
             },
             viewTypeAwareLogIndicesByLevel() {
                 return this.raw_view ? this.temporalViewLogIndicesByLevel : this.logIndicesByLevel;
-            }
+            },
         },
         methods: {
             loadLogs(){
                 this.executionsStore.loadLogs({
                     executionId: this.executionId,
-                    minLevel: this.level
+                    params: {
+                        minLevel: this.level
+                    }
                 })
             },
             downloadContent() {
@@ -278,15 +287,23 @@
             prevent(event) {
                 event.preventDefault();
             },
-            onChange() {
-                this.$router.push({query: {...this.$route.query, q: this.filter, level: this.level, page: 1}});
+            onFilterChange(filters) {
+                const levelFilter = filters.find(f => f.key === "level");
+                if (levelFilter) {
+                    this.level = Array.isArray(levelFilter.value) ? levelFilter.value[0] : levelFilter.value;
+                } else {
+                    this.level = undefined;
+                }
             },
             expandCollapseAll() {
-                this.$refs.logs.toggleExpandCollapseAll();
+                if (this.$refs.logs && this.$refs.logs.toggleExpandCollapseAll) {
+                    this.$refs.logs.toggleExpandCollapseAll();
+                }
             },
             toggleViewType() {
                 this.logCursor = undefined;
                 this.raw_view = !this.raw_view;
+                localStorage.setItem(storageKeys.LOGS_VIEW_TYPE, String(this.raw_view));
             },
             sortLogsByViewOrder(a, b) {
                 const aSplit = a.split("/");
@@ -365,5 +382,18 @@
     .ks-b-group {
         min-width: auto!important;
         max-width: max-content !important;
+    }
+
+    :deep(.el-form) {
+        padding: 1rem 1rem 0.5rem 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.5rem;
+        background-color: var(--ks-background-panel);
+        box-shadow: 2px 3px 3px 0px var(--ks-card-shadow);
+    }
+
+    :deep(.el-form-item) {
+        margin-bottom: 0.5rem !important;
     }
 </style>

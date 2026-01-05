@@ -26,7 +26,6 @@ import org.apache.commons.lang3.stream.Streams;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.trace.Tracer.throwCallable;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -54,12 +53,10 @@ public final class ExecutableUtils {
     }
 
     public static SubflowExecutionResult subflowExecutionResult(TaskRun parentTaskrun, Execution execution) {
-        List<TaskRunAttempt> attempts = parentTaskrun.getAttempts() == null ? new ArrayList<>() : new ArrayList<>(parentTaskrun.getAttempts());
-        attempts.add(TaskRunAttempt.builder().state(parentTaskrun.getState()).build());
         return SubflowExecutionResult.builder()
             .executionId(execution.getId())
             .state(parentTaskrun.getState().getCurrent())
-            .parentTaskRun(parentTaskrun.withAttempts(attempts))
+            .parentTaskRun(parentTaskrun.addAttempt(TaskRunAttempt.builder().state(parentTaskrun.getState()).build()))
             .build();
     }
 
@@ -67,7 +64,7 @@ public final class ExecutableUtils {
         RunContext runContext,
         FlowMetaStoreInterface flowExecutorInterface,
         Execution currentExecution,
-        Flow currentFlow,
+        FlowInterface currentFlow,
         T currentTask,
         TaskRun currentTaskRun,
         Map<String, Object> inputs,
@@ -192,12 +189,11 @@ public final class ExecutableUtils {
                 variables.put("taskRunIteration", currentTaskRun.getIteration());
             }
 
-            FlowInputOutput flowInputOutput = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowInputOutput.class);
             Instant scheduleOnDate = runContext.render(scheduleDate).as(ZonedDateTime.class).map(date -> date.toInstant()).orElse(null);
             Execution execution = Execution
                 .newExecution(
                     flow,
-                    (f, e) -> flowInputOutput.readExecutionInputs(f, e, inputs),
+                    (f, e) -> runContext.inputAndOutput().readInputs(f, e, inputs),
                     newLabels,
                     Optional.empty())
                 .withTrigger(ExecutionTrigger.builder()

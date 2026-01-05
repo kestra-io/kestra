@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -15,16 +16,14 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.plugin.core.trigger.Schedule;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.core.annotation.Nullable;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MutableHttpResponse;
+import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
@@ -32,6 +31,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
@@ -40,10 +40,12 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -75,6 +77,9 @@ public class TriggerController {
     @Inject
     private ConditionService conditionService;
 
+    @Inject
+    private ObjectMapper objectMapper;
+
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = {"Triggers"}, summary = "Search for triggers")
@@ -82,14 +87,12 @@ public class TriggerController {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
         // Deprecated params
         @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
         @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
         @Parameter(description = "The flow identifier",deprecated = true) @Nullable @QueryValue String flowId
-
-
     ) throws HttpStatusException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -205,10 +208,10 @@ public class TriggerController {
     @Post(uri = "/unlock/by-query")
     @Operation(tags = {"Triggers"}, summary = "Unlock triggers by query parameters")
     public MutableHttpResponse<?> unlockTriggersByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace
     ) {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -225,7 +228,7 @@ public class TriggerController {
             null);
 
         Integer count = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .filter(trigger -> trigger.getExecutionId() != null || trigger.getEvaluateRunningDate() != null)
             .map(trigger -> {
                 try {
@@ -266,7 +269,7 @@ public class TriggerController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Put(uri = "/")
+    @Put
     @Operation(tags = {"Triggers"}, summary = "Update a trigger")
     public HttpResponse<Trigger> updateTrigger(
         @Parameter(description = "The trigger") @Body final Trigger newTrigger
@@ -280,13 +283,13 @@ public class TriggerController {
         if (abstractTrigger == null) {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, String.format("Flow %s has no trigger %s", newTrigger.getFlowId(), newTrigger.getTriggerId()));
         }
-        
+
         if (abstractTrigger instanceof RealtimeTriggerInterface) {
             throw new IllegalArgumentException("Realtime triggers can not be updated through the API, please edit the trigger from the flow.");
         }
-        
+
         Trigger updatedTrigger;
-        
+
         if (newTrigger.getBackfill() != null) {
             try {
                 updatedTrigger = setTriggerBackfill(newTrigger, maybeFlow.get(), abstractTrigger);
@@ -296,13 +299,13 @@ public class TriggerController {
         } else {
             updatedTrigger = setTriggerDisabled(newTrigger.uid(), newTrigger.getDisabled(), abstractTrigger, maybeFlow.get());
         }
-        
+
         if (updatedTrigger == null) {
             return HttpResponse.notFound();
         }
         return HttpResponse.ok(updatedTrigger);
     }
-    
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{namespace}/{flowId}/{triggerId}/restart")
     @Operation(tags = {"Triggers"}, summary = "Restart a trigger")
@@ -369,14 +372,14 @@ public class TriggerController {
     @Post(uri = "/backfill/pause/by-query")
     @Operation(tags = {"Triggers"}, summary = "Pause backfill for given triggers")
     public MutableHttpResponse<?> pauseBackfillByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace
     ) throws QueueException {
         // Updating the backfill within the flux does not works
         List<Trigger> triggers = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .collectList().block();
 
         int count = triggers == null ? 0 : backfillsAction(triggers, BACKFILL_ACTION.PAUSE);
@@ -408,10 +411,10 @@ public class TriggerController {
     @Post(uri = "/backfill/unpause/by-query")
     @Operation(tags = {"Triggers"}, summary = "Unpause backfill for given triggers")
     public MutableHttpResponse<?> unpauseBackfillByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace
     ) throws QueueException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -429,7 +432,7 @@ public class TriggerController {
 
         // Updating the backfill within the flux does not works
         List<Trigger> triggers = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .collectList().block();
 
         int count = triggers == null ? 0 : backfillsAction(triggers, BACKFILL_ACTION.UNPAUSE);
@@ -477,10 +480,10 @@ public class TriggerController {
     @Post(uri = "/backfill/delete/by-query")
     @Operation(tags = {"Triggers"}, summary = "Delete backfill for given triggers")
     public MutableHttpResponse<?> deleteBackfillByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace
     ) throws QueueException {
         filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
             filters,
@@ -498,10 +501,84 @@ public class TriggerController {
 
         // Updating the backfill within the flux does not works
         List<Trigger> triggers = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .collectList().block();
 
         int count = triggers == null ? 0 : backfillsAction(triggers, BACKFILL_ACTION.DELETE);
+
+        return HttpResponse.ok(BulkResponse.builder().count(count).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/{namespace}/{flowId}/{triggerId}")
+    @Operation(tags = {"Triggers"}, summary = "Delete a trigger")
+    public MutableHttpResponse<?> deleteTrigger(
+        @Parameter(description = "The namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String flowId,
+        @Parameter(description = "The trigger id") @PathVariable String triggerId
+    ) throws HttpStatusException {
+        Optional<Trigger> triggerOpt = triggerRepository.findLast(TriggerContext.builder()
+            .tenantId(tenantService.resolveTenant())
+            .namespace(namespace)
+            .flowId(flowId)
+            .triggerId(triggerId)
+            .build());
+
+        if (triggerOpt.isEmpty()) {
+            return HttpResponse.notFound();
+        }
+
+        Trigger trigger = triggerOpt.get();
+        triggerRepository.delete(trigger);
+
+        return HttpResponse.noContent();
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/delete/by-triggers")
+    @Operation(tags = {"Triggers"}, summary = "Delete given triggers")
+    public MutableHttpResponse<?> deleteTriggersByIds(
+        @Parameter(description = "The triggers to delete") @Body List<Trigger> triggers
+    ) {
+        AtomicInteger count = new AtomicInteger();
+        triggers.forEach(trigger -> {
+            try {
+                Optional<Trigger> triggerOpt = triggerRepository.findLast(TriggerContext.builder()
+                    .tenantId(tenantService.resolveTenant())
+                    .namespace(trigger.getNamespace())
+                    .flowId(trigger.getFlowId())
+                    .triggerId(trigger.getTriggerId())
+                    .build());
+
+                if (triggerOpt.isPresent()) {
+                    triggerRepository.delete(triggerOpt.get());
+                    count.getAndIncrement();
+                }
+            } catch (Exception ignored) {
+            }
+        });
+
+        return HttpResponse.ok(BulkResponse.builder().count(count.get()).build());
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/delete/by-query")
+    @Operation(tags = {"Triggers"}, summary = "Delete triggers by query parameters")
+    public MutableHttpResponse<?> deleteTriggersByQuery(
+        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters
+    ) {
+        Integer count = triggerRepository
+            .findAsync(tenantService.resolveTenant(), filters)
+            .map(trigger -> {
+                try {
+                    triggerRepository.delete(trigger);
+                    return 1;
+                } catch (Exception ignored) {
+                    return 0;
+                }
+            })
+            .reduce(Integer::sum)
+            .block();
 
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
@@ -521,10 +598,10 @@ public class TriggerController {
     @Post(uri = "/set-disabled/by-query")
     @Operation(tags = {"Triggers"}, summary = "Disable/enable triggers by query parameters")
     public MutableHttpResponse<?> disabledTriggersByQuery(
-        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        @Parameter(description = "Filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters,
 
-        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
 
         @Parameter(description = "The disabled state") @QueryValue(defaultValue = "true") Boolean disabled
     ) throws QueueException {
@@ -543,7 +620,7 @@ public class TriggerController {
             null);
 
         Integer count = triggerRepository
-            .find(tenantService.resolveTenant(), filters)
+            .findAsync(tenantService.resolveTenant(), filters)
             .map(throwFunction(trigger -> {
                 this.setTriggerDisabled(trigger, disabled);
                 return 1;
@@ -555,26 +632,43 @@ public class TriggerController {
         return HttpResponse.ok(BulkResponse.builder().count(count).build());
     }
 
+    @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Triggers"}, summary = "Export all triggers as a streamed CSV file")
+    @SuppressWarnings("unchecked")
+    public MutableHttpResponse<Flux> exportTriggers(
+        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+    ) {
+
+        return HttpResponse.ok(
+                CSVUtils.toCSVFlux(
+                    triggerRepository.findAsync(this.tenantService.resolveTenant(), filters)
+                        .map(log -> objectMapper.convertValue(log, Map.class))
+                )
+            )
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=triggers.csv");
+    }
+
     public void setTriggerDisabled(Trigger trigger, Boolean disabled) throws QueueException {
         Optional<Flow> maybeFlow = this.flowRepository.findById(this.tenantService.resolveTenant(), trigger.getNamespace(), trigger.getFlowId());
-        
+
         if (maybeFlow.isEmpty()) {
             return; // Flow doesn't exist
         }
-        
+
         Optional<AbstractTrigger> maybeAbstractTrigger = maybeFlow.flatMap(flow -> flow.getTriggers().stream().filter(t -> t.getId().equals(trigger.getTriggerId())).findFirst());
-        
+
         if (maybeAbstractTrigger.isEmpty()) {
             return; // Trigger doesn't exist
         }
-        
+
         if (maybeAbstractTrigger.get() instanceof RealtimeTriggerInterface) {
             return; // RealTimeTriggers can't be disabled/enabled through API.
         }
-        
+
         setTriggerDisabled(trigger.uid(), disabled, maybeAbstractTrigger.get(), maybeFlow.get());
     }
-    
+
     private Trigger setTriggerDisabled(String triggerUID, Boolean disabled, AbstractTrigger triggerDefinition, Flow flow) throws QueueException {
         return this.triggerRepository.lock(triggerUID, throwFunction(current -> {
             if (disabled.equals(current.getDisabled())) {
@@ -583,46 +677,46 @@ public class TriggerController {
             return doSetTriggerDisabled(current, disabled, flow, triggerDefinition);
         }));
     }
-    
+
     private Trigger setTriggerBackfill(Trigger newTrigger, Flow flow, AbstractTrigger abstractTrigger) throws Exception {
         return this.triggerRepository.lock(newTrigger.uid(), throwFunction(current -> doSetTriggerBackfill(current, newTrigger.getBackfill(), flow, abstractTrigger)));
     }
-    
+
     protected Trigger doSetTriggerDisabled(Trigger currentState, Boolean disabled, Flow flow, AbstractTrigger trigger) throws QueueException {
         Trigger.TriggerBuilder<?, ?> builder = currentState.toBuilder().disabled(disabled);
-        
+
         if (disabled) {
             builder = builder.nextExecutionDate(null);
         }
-        
+
         Trigger updated = builder.build();
         triggerQueue.emit(updated);
         return updated;
     }
-    
+
     protected Trigger doSetTriggerBackfill(Trigger currentState, Backfill backfill, Flow flow, AbstractTrigger trigger) throws Exception {
         Trigger updated;
         ZonedDateTime nextExecutionDate = null;
-        
+
         RunContext runContext = runContextFactory.of(flow, trigger);
         ConditionContext conditionContext = conditionService.conditionContext(runContext, flow, null);
-        
+
         // We must set up the backfill before the update to calculate the next execution date
         updated = currentState.withBackfill(backfill);
-        
+
         if (trigger instanceof PollingTriggerInterface pollingTriggerInterface) {
             nextExecutionDate = pollingTriggerInterface.nextEvaluationDate(conditionContext, Optional.of(updated));
         }
-        
+
         updated = updated
             .toBuilder()
             .nextExecutionDate(nextExecutionDate)
             .build();
-        
+
         triggerQueue.emit(updated);
         return updated;
     }
-    
+
     public int backfillsAction(List<Trigger> triggers, BACKFILL_ACTION action) throws QueueException {
         AtomicInteger count = new AtomicInteger();
         triggers.forEach(throwConsumer(trigger -> {

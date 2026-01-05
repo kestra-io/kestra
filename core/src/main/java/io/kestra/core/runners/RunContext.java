@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
@@ -142,6 +143,8 @@ public abstract class RunContext implements PropertyContext {
     @Deprecated(forRemoval = true)
     public abstract String tenantId();
 
+    public abstract TaskRunInfo taskRunInfo();
+
     public abstract FlowInfo flowInfo();
 
     /**
@@ -176,6 +179,10 @@ public abstract class RunContext implements PropertyContext {
      */
     public abstract KVStore namespaceKv(String namespace);
 
+    /**
+     * @deprecated use #namespaceKv(String) instead
+     */
+    @Deprecated(since = "1.1.0", forRemoval = true)
     public StateStore stateStore() {
         return new StateStore(this, true);
     }
@@ -185,8 +192,47 @@ public abstract class RunContext implements PropertyContext {
      */
     public abstract LocalPath localPath();
 
-    public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
+    public record TaskRunInfo(String executionId, String taskId, String taskRunId, Object value) {
+
     }
 
+    public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
+        public static FlowInfo from(Map<String, Object> flowInfoMap) {
+            return new FlowInfo(
+                (String) flowInfoMap.get("tenantId"),
+                (String) flowInfoMap.get("namespace"),
+                (String) flowInfoMap.get("id"),
+                (Integer) flowInfoMap.get("revision")
+            );
+        }
+    }
+
+    /**
+     * @deprecated there is no legitimate use case of this method outside the run context internal self-usage, so it should not be part of the interface
+     */
+    @Deprecated(since = "1.2.0", forRemoval = true)
     public abstract boolean isInitialized();
+
+    /**
+     * Get access to the ACL checker.
+     * Plugins are responsible for using the ACL checker when they access restricted resources, for example,
+     * when Namespace ACLs are used (EE).
+     */
+    public abstract AclChecker acl();
+
+    /**
+     * Get access to the Assets handler.
+     */
+    public abstract AssetEmitter assets() throws IllegalVariableEvaluationException;
+
+    /**
+     * Clone this run context for a specific plugin.
+     * @return a new run context with the plugin configuration of the given plugin.
+     */
+    public abstract RunContext cloneForPlugin(Plugin plugin);
+
+    /**
+     * @return an InputAndOutput that can be used to work with inputs and outputs.
+     */
+    public abstract InputAndOutput inputAndOutput();
 }

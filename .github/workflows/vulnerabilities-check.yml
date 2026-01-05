@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checkout
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -43,7 +43,7 @@ jobs:
 
         # Upload dependency check report
       - name: Upload dependency check report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: ${{ always() }}
         with:
           name: dependency-check-report
@@ -58,7 +58,7 @@ jobs:
       actions: read
     steps:
       # Checkout
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -71,7 +71,7 @@ jobs:
 
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           image-ref: kestra/kestra:develop
           format: 'template'
@@ -95,7 +95,7 @@ jobs:
       actions: read
     steps:
       # Checkout
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -108,7 +108,7 @@ jobs:
 
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@b6643a29fecd7f34b3597bc6acb0a98b03d33ff8 # 0.33.1
         with:
           image-ref: kestra/kestra:latest
           format: table

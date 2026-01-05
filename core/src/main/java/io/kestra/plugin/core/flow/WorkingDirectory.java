@@ -141,12 +141,12 @@ import jakarta.validation.constraints.NotNull;
                       - id: first
                         type: io.kestra.plugin.scripts.shell.Commands
                         commands:
-                        - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
+                          - 'echo "{{ taskrun.id }}" > {{ workingDir }}/stay.txt'
                       - id: second
                         type: io.kestra.plugin.scripts.shell.Commands
                         commands:
-                        - |
-                          echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::''
+                          - |
+                            echo '::{"outputs": {"stay":"'$(cat {{ workingDir }}/stay.txt)'"}}::''
                 """
         ),
         @Example(
@@ -260,8 +260,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         }
 
         if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
-            NamespaceFilesUtils namespaceFilesUtils = ((DefaultRunContext) runContext).getApplicationContext().getBean(NamespaceFilesUtils.class);
-            namespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
+            NamespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
         }
 
         if (this.inputFiles != null) {

@@ -26,12 +26,18 @@
                 <span v-else>{{ item.title }}</span>
             </el-breadcrumb-item>
         </el-breadcrumb>
+        <SearchField 
+            v-if="navigationStack.length === 0" 
+            class="search-field" 
+            :router="false" 
+            @search="value => searchQuery = value" 
+        />
     </div>
 
-    <div v-if="currentView === 'list'" class="list">
+    <div v-if="currentView === 'list'" class="list" ref="listRef">
         <div
             v-for="plugin in sortedPlugins"
-            :key="`${plugin.group}-${plugin.title}`"
+            :key="`${plugin.group}-${plugin.title}-${plugin.subGroup}`"
             class="item"
             @click.prevent="openGroup(plugin)"
         >
@@ -48,7 +54,7 @@
         </div>
     </div>
 
-    <div v-else-if="currentView === 'group'" class="group-view">
+    <div v-else-if="currentView === 'group'" class="group-view" ref="groupRef">
         <PluginUnified
             :group="currentGroup"
             :subgroup="currentSubgroup"
@@ -57,7 +63,7 @@
         />
     </div>
 
-    <div v-else-if="currentView === 'documentation'" :class="['doc-view', {'no-padding': !currentDocumentationPlugin}]">
+    <div v-else-if="currentView === 'documentation'" :class="['doc-view', {'no-padding': !currentDocumentationPlugin}]" ref="docRef">
         <PluginDocumentation 
             :plugin="currentDocumentationPlugin"
         />
@@ -71,8 +77,11 @@
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import PluginUnified from "./PluginUnified.vue";
     import PluginDocumentation from "./PluginDocumentation.vue";
+    import SearchField from "../layout/SearchField.vue";
     import {usePluginsStore} from "../../stores/plugins";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
     import {capitalize, formatPluginTitle} from "../../utils/global";
+    import {useMiscStore} from "../../override/stores/misc";
 
     interface Props {
         plugins: any[];
@@ -90,10 +99,23 @@
 
     const currentGroup = ref<string>("");
     const currentSubgroup = ref<string>();
+    const searchQuery = ref<string>("");
     const icons = ref<Record<string, string>>({});
     const navigationStack = ref<NavigationItem[]>([]);
     const currentDocumentationPlugin = ref<any>(null);
     const currentView = ref<"list" | "group" | "documentation">("documentation");
+    const listRef = ref<HTMLDivElement | null>(null);
+    const groupRef = ref<HTMLDivElement | null>(null);
+    const docRef = ref<HTMLDivElement | null>(null);
+    const scrollKeyBase = "plugins:documentation";
+
+    const listScrollKey = computed(() => `${scrollKeyBase}:list`);
+    const groupScrollKey = computed(() => `${scrollKeyBase}:group`);
+    const docScrollKey = computed(() => `${scrollKeyBase}:documentation`);
+
+    useScrollMemory(listScrollKey, listRef);
+    useScrollMemory(groupScrollKey, groupRef);
+    useScrollMemory(docScrollKey, docRef);
 
     const getSimpleType = (item: string) => item.split(".").pop() || item;
 
@@ -137,7 +159,7 @@
         currentDocumentationPlugin.value = null;
     };
 
-    const sortedPlugins = computed(() => 
+    const basePlugins = computed(() => 
         removeDuplicatePlugins(
             (props.plugins ?? [])
                 .filter(plugin => plugin && (plugin.group || plugin.subGroup))
@@ -146,11 +168,21 @@
             .sort((a, b) => (getPluginDisplayName(a) ?? "").toLowerCase().localeCompare((getPluginDisplayName(b) ?? "").toLowerCase()))
     );
 
+    const sortedPlugins = computed(() => {
+        if (!searchQuery.value) return basePlugins.value;
+        const query = searchQuery.value.toLowerCase();
+        return basePlugins.value.filter(plugin => 
+            (getPluginDisplayName(plugin) ?? "").toLowerCase().includes(query) ||
+            (plugin.title ?? "").toLowerCase().includes(query)
+        );
+    });
+
     const loadPluginIcons = async () => {
         icons.value = await pluginsStore.groupIcons() ?? {};
     };
 
     const openGroup = (plugin: any) => {
+        searchQuery.value = "";
         currentGroup.value = plugin.group;
         currentView.value = "group";
         currentDocumentationPlugin.value = null;
@@ -226,10 +258,14 @@
 
     const hasIcon = (cls: string) => !!icons.value?.[cls];
 
-    const navigateToEditorPlugin = async (editorPlugin: any) => {
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
+    const miscStore = useMiscStore();
+
+    const navigateToEditorPlugin = async (editorPlugin: {cls: string, version?: string}) => {
         if (!editorPlugin?.cls) return;
 
         const pluginCls = editorPlugin.cls;
+        const pluginVersion = editorPlugin.version;
         const matchingPlugin = props.plugins.find(plugin => getPluginElements(plugin).includes(pluginCls));
 
         if (!matchingPlugin) {
@@ -252,7 +288,7 @@
 
         pushNavigationItem(getSimpleType(pluginCls), "element", {cls: pluginCls});
         currentView.value = "documentation";
-        const pluginData = await pluginsStore.load({cls: pluginCls});
+        const pluginData = await pluginsStore.load({cls: pluginCls, version: pluginVersion, hash: hash.value});
         currentDocumentationPlugin.value = pluginData ? {cls: pluginCls, ...pluginData} : editorPlugin;
     };
 
@@ -275,7 +311,9 @@
         }
     }, {immediate: true, deep: true});
 
-    onMounted(loadPluginIcons);
+    onMounted(async () => {
+        await loadPluginIcons();
+    });
 </script>
 
 <style scoped lang="scss">
@@ -289,6 +327,7 @@
     min-height: 3.0625rem;
     display: flex;
     align-items: center;
+    gap: 10px;
 
     .back-btn {
         background: none;
@@ -300,6 +339,19 @@
             font-size: 1.25rem;
             position: absolute;
             bottom: -0.10em;
+        }
+    }
+
+    .search-field {
+        width: 35%;
+        margin-left: auto;
+
+        :deep(.el-input__inner) {
+            font-size: 14px;
+
+            &::placeholder {
+                color: var(--ks-content-tertiary) !important;
+            }
         }
     }
 

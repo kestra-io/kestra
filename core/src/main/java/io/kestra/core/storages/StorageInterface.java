@@ -4,6 +4,7 @@ import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
 import jakarta.annotation.Nullable;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -12,6 +13,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.NoSuchFileException;
 import java.util.List;
 
 /**
@@ -51,7 +53,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return an InputStream to read the object's contents
      * @throws IOException if the object cannot be read
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     InputStream get(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -63,7 +65,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return an InputStream to read the object's contents
      * @throws IOException if the object cannot be read
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     InputStream getInstanceResource(@Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -75,7 +77,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return the storage object with metadata
      * @throws IOException if the object cannot be retrieved
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     StorageObject getWithMetadata(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -88,7 +90,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return a list of matching object URIs
      * @throws IOException if the listing fails
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     List<URI> allByPrefix(String tenantId, @Nullable String namespace, URI prefix, boolean includeDirectories) throws IOException;
 
     /**
@@ -100,7 +102,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return a list of file attributes
      * @throws IOException if the listing fails
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     List<FileAttributes> list(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -112,7 +114,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return a list of file attributes
      * @throws IOException if the listing fails
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     List<FileAttributes> listInstanceResource(@Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -158,7 +160,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return the file attributes
      * @throws IOException if the attributes cannot be retrieved
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     FileAttributes getAttributes(String tenantId, @Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -170,7 +172,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return the file attributes
      * @throws IOException if the attributes cannot be retrieved
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     FileAttributes getInstanceAttributes(@Nullable String namespace, URI uri) throws IOException;
 
     /**
@@ -287,7 +289,7 @@ public interface StorageInterface extends AutoCloseable, Plugin {
      * @return the URI of the moved object
      * @throws IOException if moving fails
      */
-    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class})
+    @Retryable(includes = {IOException.class}, excludes = {FileNotFoundException.class, NoSuchFileException.class})
     URI move(String tenantId, @Nullable String namespace, URI from, URI to) throws IOException;
 
     /**
@@ -359,5 +361,41 @@ public interface StorageInterface extends AutoCloseable, Plugin {
         path = tenantId + (path.startsWith("/") ? path :  "/" + path);
 
         return path;
+    }
+
+    /**
+     * Ensures the object name length does not exceed the allowed maximum.
+     * If it does, the object name is truncated and a short random prefix is added
+     * to avoid potential name collisions.
+     *
+     * @param uri                  the URI of the object
+     * @param maxObjectNameLength  the maximum allowed length for the object name
+     * @return a normalized URI respecting the length limit
+     * @throws IOException if the URI cannot be rebuilt
+     */
+    default URI limit(URI uri, int maxObjectNameLength) throws IOException {
+        if (uri == null) {
+            return null;
+        }
+
+        String path = uri.getPath();
+        String objectName = path.contains("/") ? path.substring(path.lastIndexOf("/") + 1) : path;
+        if (objectName.length() > maxObjectNameLength) {
+            objectName = objectName.substring(objectName.length() - maxObjectNameLength + 6);
+            String prefix = RandomStringUtils.secure()
+                .nextAlphanumeric(5)
+                .toLowerCase();
+
+            String newPath = (path.contains("/") ? path.substring(0, path.lastIndexOf("/") + 1) : "")
+                + prefix + "-" + objectName;
+
+            try {
+                return new URI(uri.getScheme(), uri.getHost(), newPath, uri.getFragment());
+            } catch (java.net.URISyntaxException e) {
+                throw new IOException(e);
+            }
+        }
+
+        return uri;
     }
 }

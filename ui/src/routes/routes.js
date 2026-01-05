@@ -7,23 +7,12 @@ import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
-
-function maybeAddTimeRangeFilter(to) {
-    const dateTimeKeys = ["startDate", "endDate", "timeRange"];
-
-    // Default to the last 7 days if no time range is set
-    if (!Object.keys(to.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-        to.query["filters[timeRange][EQUALS]"] = "PT168H";
-
-        return true;
-    }
-
-    return false;
-}
+import DemoAssets from "../components/demo/Assets.vue"
+import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
 export default [
     //Initial
-    {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}}},
+    {name: "root", path: "/", redirect: {name: "home"}, meta: {layout: {template: "<div />"}, anonymous: true}},
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
 
     //Dashboards
@@ -31,35 +20,46 @@ export default [
         name: "home",
         path: "/:tenant?/dashboards/:dashboard?",
         component: () => import("../components/dashboard/Dashboard.vue"),
-        beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query: to.query,
-                });
-                return;
-            }
+        beforeEnter: (to, _from, next) => {
+            // This specific case is to avoid redirecting dashboards twice:
+            // - once here in beforeEnter
+            // - once in useDefaultFilter composable
 
+            // We analyzed other ways to fix this:
+            // - using nextTick in useDefaultFilter to delay the redirection
+            // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
+            // but both were more complex and fragile than this simple check.
+            const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
             if (!to.params.dashboard) {
                 next({
-                    name: "home",
+                    ...to,
                     params: {
                         ...to.params,
                         dashboard: "default",
                     },
-                    query: to.query,
+                    query,
                 });
-            } else {
-                next();
+                return;
             }
+            if(change) {
+                next({
+                    ...to,
+                    query,
+                });
+                return;
+            }
+            next()
         },
     },
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
     {name: "dashboards/update", path: "/:tenant?/dashboards/:dashboard/edit", component: () => import("override/components/dashboard/Edit.vue")},
 
     //Flows
-    {name: "flows/list", path: "/:tenant?/flows", component: () => import("../components/flows/Flows.vue")},
+    {
+        name: "flows/list",
+        path: "/:tenant?/flows",
+        component: () => import("../components/flows/Flows.vue"),
+    },
     {name: "flows/search", path: "/:tenant?/flows/search", component: () => import("../components/flows/FlowsSearch.vue")},
     {name: "flows/create", path: "/:tenant?/flows/new", component: () => import("../components/flows/FlowCreate.vue")},
     {name: "flows/update", path: "/:tenant?/flows/edit/:namespace/:id/:tab?", component: () => import("../components/flows/FlowRoot.vue")},
@@ -69,18 +69,6 @@ export default [
         name: "executions/list",
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
-        beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query: to.query,
-                });
-                return;
-            }
-
-            next();
-        }
     },
     {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
 
@@ -92,7 +80,7 @@ export default [
 
     //Blueprints
     {name: "blueprints", path: "/:tenant?/blueprints/:kind/:tab", component: () => import("override/components/flows/blueprints/Blueprints.vue"), props: true},
-    {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("../components/flows/blueprints/BlueprintDetail.vue"), props: true},
+    {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("../override/components/flows/blueprints/BlueprintDetail.vue"), props: true},
 
     //Documentation
     {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/Plugin.vue")},
@@ -108,23 +96,10 @@ export default [
         name: "logs/list",
         path: "/:tenant?/logs",
         component: () => import("../components/logs/LogsWrapper.vue"),
-        beforeEnter: (to, from, next) => {
-            if (maybeAddTimeRangeFilter(to)) {
-                next({
-                    name: to.name,
-                    params: to.params,
-                    query: to.query,
-                });
-                return;
-            }
-
-            next();
-        }
     },
 
     //Namespaces
     {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("override/components/namespaces/Namespaces.vue")},
-    {name: "namespaces/create", path: "/:tenant?/namespaces/new/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
     {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
 
     //Docs
@@ -135,12 +110,13 @@ export default [
 
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: () => import("../components/admin/Triggers.vue")},
-    {name: "admin/stats", path: "/:tenant?/admin/stats", component: () => import("override/components/admin/stats/Stats.vue")},
+    {name: "admin/stats", path: "/:tenant?/admin/stats/:type?", component: () => import("override/components/admin/stats/Stats.vue")},
+    {name: "admin/concurrency-limits", path: "/:tenant?/admin/concurrency-limits", component: () => import("../components/admin/ConcurrencyLimits.vue")},
 
     //Setup
-    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout}},
+    {name: "setup", path: "/:tenant?/setup", component: () => import("../components/basicauth/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
     //Login
-    {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout}},
+    {name: "login", path: "/:tenant?/login", component: () => import("../components/basicauth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout, anonymous: true}},
 
     //Errors
     {name: "errors/404-wildcard", path: "/:tenant?/:pathMatch(.*)", component: Errors, props: {code: 404}},
@@ -148,6 +124,7 @@ export default [
     //Demo Pages
     {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
     {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
+    {name: "assets/list", path: "/:tenant?/assets", component: DemoAssets},
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
     {name: "admin/tenants/list", path: "/:tenant?/admin/tenants", component: DemoTenants},
     {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},

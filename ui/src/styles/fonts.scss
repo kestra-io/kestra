@@ -1,0 +1,87 @@
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src:
+    local('Public Sans Light'),
+    local('PublicSans-Light'),
+    url('../assets/fonts/public-sans/public-sans-v21-latin-300.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Public Sans Regular'),
+    local('PublicSans-Regular'),
+    url('../assets/fonts/public-sans/public-sans-v21-latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src:
+    local('Public Sans SemiBold'),
+    local('PublicSans-SemiBold'),
+    url('../assets/fonts/public-sans/public-sans-v21-latin-600.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local('Public Sans Bold'),
+    local('PublicSans-Bold'),
+    url('../assets/fonts/public-sans/public-sans-v21-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src:
+    local('Public Sans ExtraBold'),
+    local('PublicSans-ExtraBold'),
+    url('../assets/fonts/public-sans/public-sans-v21-latin-800.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Source Code Pro Regular'),
+    local('SourceCodePro-Regular'),
+    url('../assets/fonts/source-code-pro/source-code-pro-v31-latin-regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local('Source Code Pro Bold'),
+    local('SourceCodePro-Bold'),
+    url('../assets/fonts/source-code-pro/source-code-pro-v31-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Source Code Pro';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src:
+    local('Source Code Pro ExtraBold'),
+    local('SourceCodePro-ExtraBold'),
+    url('../assets/fonts/source-code-pro/source-code-pro-v31-latin-800.woff2') format('woff2');
+}

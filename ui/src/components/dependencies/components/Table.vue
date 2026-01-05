@@ -2,14 +2,14 @@
     <section id="input">
         <el-input
             v-model="search"
-            :placeholder="t('dependency.search.placeholder')"
+            :placeholder="$t(props.subtype === ASSET ? 'dependency.search.asset_placeholder' : 'dependency.search.placeholder')"
             clearable
         />
     </section>
 
     <el-table
         :data="results"
-        :emptyText="t('dependency.search.no_results', {term: search})"
+        :emptyText="$t('dependency.search.no_results', {term: search})"
         :showHeader="false"
         class="nodes"
         @row-click="(row: { data: Node }) => emits('select', row.data.id)"
@@ -38,10 +38,13 @@
                             size="small"
                         />
                         <RouterLink
-                            v-if="[FLOW, NAMESPACE].includes(row.data.metadata.subtype)"
+                            v-if="[FLOW, NAMESPACE, ASSET].includes(row.data.metadata.subtype)"
                             :to="{
-                                name: 'flows/update',
-                                params: {namespace: row.data.namespace, id: row.data.flow}}"
+                                name: row.data.metadata.subtype === ASSET ? 'assets/update' : 'flows/update',
+                                params: row.data.metadata.subtype === ASSET 
+                                    ? {namespace: row.data.namespace, assetId: row.data.flow}
+                                    : {namespace: row.data.namespace, id: row.data.flow}
+                            }"
                         >
                             <el-icon :size="16">
                                 <OpenInNew />
@@ -60,19 +63,17 @@
     import type cytoscape from "cytoscape";
 
     import Link from "./Link.vue";
-    import Status from "../../Status.vue";
+    import {Status} from "@kestra-io/ui-libs";
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
-    import {NODE, FLOW, EXECUTION, NAMESPACE, type Node} from "../utils/types";
+    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET, type Node} from "../utils/types";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{
         elements: cytoscape.ElementDefinition[];
         selected: Node["id"] | undefined;
+        subtype?: typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET;
     }>();
 
     const focusSelectedRow = () => {
@@ -180,6 +181,10 @@ section#row {
     & section#right {
         flex-shrink: 0;
         margin-left: 0.5rem;
+
+        :deep(a:hover .el-icon) {
+            color: var(--ks-content-link-hover);
+        }
     }
 }
 </style>

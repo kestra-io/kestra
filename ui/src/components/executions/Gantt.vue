@@ -3,11 +3,15 @@
         v-if="!isExecutionStarted"
         :execution="execution"
     />
-    <el-card id="gantt" shadow="never" v-else-if="execution && executionsStore.flow">
-        <template #header>
+    <el-card id="gantt" shadow="never" :class="{'no-border': !hasValidDate}" v-else-if="execution && executionsStore.flow">
+        <template #header v-if="hasValidDate">
             <div class="d-flex">
                 <Duration class="th text-end" :histories="execution.state.histories" />
-                <span class="text-end" v-for="(date, i) in dates" :key="i">
+                <div v-if="verticalLayout" class="timeline-header">
+                    <span class="timeline-start">{{ startTime }}</span>
+                    <span class="timeline-end">{{ endTime }}</span>
+                </div>
+                <span v-else class="text-end" v-for="(date, i) in dates" :key="i">
                     {{ date }}
                 </span>
             </div>
@@ -29,22 +33,26 @@
                     >
                         <div class="d-flex flex-column">
                             <div class="gantt-row d-flex cursor-icon" @click="onTaskSelect(item.id)">
-                                <div class="d-inline-flex">
+                                <div v-if="!verticalLayout" class="d-inline-flex">
                                     <ChevronRight v-if="!selectedTaskRuns.includes(item.id)" />
                                     <ChevronDown v-else />
                                 </div>
-                                <el-tooltip placement="top-start" :persistent="false" transition="" :hideAfter="0" effect="light">
+                                <el-tooltip placement="top-start" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
                                     <template #content>
                                         <code>{{ item.name }}</code>
                                         <small v-if="item.task && item.task.value"><br>{{ item.task.value }}</small>
                                     </template>
-                                    <span>
+                                    <span v-if="verticalLayout" class="task-name">
+                                        <code :title="item.name">{{ item.name }}</code>
+                                        <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
+                                    </span>
+                                    <span v-else>
                                         <code>{{ item.name }}</code>
                                         <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                     </span>
                                 </el-tooltip>
                                 <div>
-                                    <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" :hideAfter="0" effect="light">
+                                    <el-tooltip v-if="item.attempts > 1" placement="right" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
                                         <template #content>
                                             <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                         </template>
@@ -52,20 +60,20 @@
                                     </el-tooltip>
                                 </div>
                                 <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
-                                    <el-tooltip placement="top" :persistent="false" transition="" :hideAfter="0" effect="light">
+                                    <el-tooltip placement="top" :persistent="false" transition="el-fade-in-linear" :autoClose="2000" effect="light">
                                         <template #content>
                                             <span style="white-space: pre-wrap;">
                                                 {{ item.tooltip }}
                                             </span>
                                         </template>
                                         <div
-                                            :style="{left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
+                                            :style="item.parentEndPercent !== undefined ? {left: `${item.start}%`, width: `${item.parentEndPercent - item.start}%`} : {left: `${item.start}%`, width: `${Math.max(item.width, 3)}%`}"
                                             class="task-progress"
                                         >
                                             <div class="progress">
                                                 <div
-                                                    class="progress-bar"
                                                     :style="{left: `${Math.min(item.left, 90)}%`, width: `${Math.max(100 - item.left, 10)}%`}"
+                                                    class="progress-bar"
                                                     :class="'bg-' + item.color + (item.running ? ' progress-bar-striped progress-bar-animated' : '')"
                                                     role="progressbar"
                                                 />
@@ -100,6 +108,8 @@
     import FlowUtils from "../../utils/flowUtils";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Warning from "vue-material-design-icons/Alert.vue";
@@ -119,6 +129,12 @@
             ChevronRight,
             ChevronDown,
             ExecutionPending
+        },
+        setup() {
+            const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+            return {
+                verticalLayout
+            };
         },
         data() {
             return {
@@ -195,7 +211,7 @@
                 const sortedTasks = []
                 const tasksById = {}
                 for (let task of (this.execution.taskRunList || [])) {
-                    const taskWrapper = {task}
+                    const taskWrapper = {task, depth: task.parentTaskRunId ? undefined : 0}
                     if (task.parentTaskRunId) {
                         childTasks.push(taskWrapper)
                     } else {
@@ -208,6 +224,7 @@
                     const taskWrapper = childTasks[i];
                     const parentTask = tasksById[taskWrapper.task.parentTaskRunId]
                     if (parentTask) {
+                        taskWrapper.depth = parentTask.depth + 1
                         tasksById[taskWrapper.task.id] = taskWrapper
                         if (!parentTask.children) {
                             parentTask.children = []
@@ -222,7 +239,7 @@
                         return nodeStart(n1) > nodeStart(n2) ? 1 : -1
                     })
                     for (let node of nodes) {
-                        sortedTasks.push(node.task)
+                        sortedTasks.push(node)
                         if (node.children) {
                             childrenSort(node.children)
                         }
@@ -233,6 +250,20 @@
             },
             isExecutionStarted() {
                 return this.execution?.state?.current && !["CREATED", "QUEUED"].includes(this.execution.state.current);
+            },
+            hasValidDate() {
+                return isFinite(this.delta());
+            },
+            startTime() {
+                if (!this.execution) return "";
+                return this.$moment(this.execution.state.histories[0].date).format("HH:mm:ss");
+            },
+            endTime() {
+                if (!this.execution) return "";
+                const endDate = State.isRunning(this.execution.state.current) 
+                    ? new Date() 
+                    : new Date(this.stop());
+                return this.$moment(endDate).format("HH:mm:ss");
             },
         },
         methods: {
@@ -262,8 +293,11 @@
                 }
 
                 const series = [];
-                const executionDelta = this.delta(); //caching this value matters
-                for (let task of this.tasks) {
+                const executionDelta = this.delta();
+                const taskMap = {};
+                
+                for (let taskWrapper of this.tasks) {
+                    let task = taskWrapper.task
                     let stopTs;
                     if (State.isRunning(task.state.current)) {
                         stopTs = ts(new Date());
@@ -292,13 +326,21 @@
 
                     let width = (stop / executionDelta) * 100
                     if (State.isRunning(task.state.current)) {
-                        width = ((this.stop() - startTs) / executionDelta) * 100 //(stop / executionDelta) * 100
+                        width = ((this.stop() - startTs) / executionDelta) * 100
                     }
 
-                    series.push({
+                    let startPercent = (start / executionDelta) * 100;
+                    let parentEndPercent = undefined;
+                    
+                    if (task.parentTaskRunId && taskMap[task.parentTaskRunId]) {
+                        const parent = taskMap[task.parentTaskRunId];
+                        parentEndPercent = parent.start + parent.width;
+                    }
+
+                    const seriesItem = {
                         id: task.id,
                         name: task.taskId,
-                        start: (start / executionDelta) * 100,
+                        start: startPercent,
                         width,
                         left: left,
                         tooltip,
@@ -308,8 +350,13 @@
                         flowId: task.flowId,
                         namespace: task.namespace,
                         executionId: task.outputs && task.outputs.executionId,
-                        attempts: task.attempts ? task.attempts.length : 1
-                    });
+                        attempts: task.attempts ? task.attempts.length : 1,
+                        depth: taskWrapper.depth,
+                        parentEndPercent: parentEndPercent
+                    };
+                    
+                    taskMap[task.id] = seriesItem;
+                    series.push(seriesItem);
                 }
                 this.series = series;
             },
@@ -365,6 +412,20 @@
                 > :not(.th) {
                     font-weight: normal;
                 }
+
+                .timeline-header {
+                    flex: 1;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: .5rem;
+                    font-weight: normal;
+
+                    .timeline-start, .timeline-end {
+                        font-size: var(--font-size-sm);
+                        color: var(--ks-content-primary);
+                    }
+                }
             }
         }
 
@@ -411,8 +472,27 @@
                     }
 
                     code {
-                        font-size: var(--font-size-xs);
+                        font-size: var(--font-size-sm);
                         color: var(--ks-content-primary);
+                    }
+                }
+
+                .task-name {
+                    flex: 1;
+                    min-width: 100px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+
+                    code {
+                        font-size: var(--font-size-sm);
+                        color: var(--ks-content-primary);
+                    }
+
+                    small {
+                        margin-left: 5px;
+                        font-family: var(--bs-font-monospace);
+                        font-size: var(--font-size-xs);
                     }
                 }
 
@@ -443,6 +523,9 @@
         }
     }
 
+    .no-border {
+        border: none !important;
+    }
 
     // To Separate through Line
     :deep(.vue-recycle-scroller__item-view) {

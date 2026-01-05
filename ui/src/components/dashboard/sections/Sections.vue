@@ -1,12 +1,13 @@
 <template>
-    <section id="charts" :class="{padding}">
-        <el-row :gutter="16">
-            <el-col
+    <div class="dashboard-sections-container">
+        <section id="charts" :class="{padding}">
+            <div
                 v-for="chart in props.charts"
                 :key="`chart__${chart.id}`"
-                :xs="24"
-                :sm="(chart.chartOptions?.width || 6) * 4"
-                :md="(chart.chartOptions?.width || 6) * 2"
+                class="dashboard-block"
+                :class="{
+                    [`dash-width-${chart.chartOptions?.width || 6}`]: true
+                }"
             >
                 <div class="d-flex flex-column">
                     <div class="d-flex justify-content-between">
@@ -26,7 +27,7 @@
                         <div id="charts_buttons">
                             <KestraIcon
                                 v-if="isTableChart(chart.type)"
-                                :tooltip="t('dashboards.export')"
+                                :tooltip="$t('dashboards.export')"
                             >
                                 <el-button
                                     @click="dashboardStore.export(dashboard, chart, {filters})"
@@ -38,7 +39,7 @@
 
                             <KestraIcon
                                 v-if="props.dashboard?.id !== 'default'"
-                                :tooltip="t('dashboards.edition.chart')"
+                                :tooltip="$t('dashboards.edition.chart')"
                             >
                                 <el-button
                                     tag="router-link"
@@ -64,25 +65,23 @@
                         />
                     </div>
                 </div>
-            </el-col>
-        </el-row>
-    </section>
+            </div>
+        </section>
+    </div>
 </template>
 
 <script setup lang="ts">
-    import {onMounted, ref} from "vue";
+    import {ref, computed} from "vue";
 
     import type {Dashboard, Chart} from "../composables/useDashboards";
-    import {TYPES, isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards";
+    import {isKPIChart, isTableChart, getChartTitle} from "../composables/useDashboards";
+    import {TYPES} from "../dashboard-types";
 
     import {useRoute} from "vue-router";
     const route = useRoute();
 
     import {useDashboardStore} from "../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
-
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
 
     import KestraIcon from "../../Kicon.vue";
 
@@ -113,30 +112,48 @@
         description: chart?.chartOptions?.description,
     });
 
-    const filters = ref<{ field: string; operation: string; value: string | string[] }[]>([]);
-    onMounted(() => {
+    // Make the overview of flows/dashboard/namespace specific
+    const filters = computed(() => {
+        const baseFilters: { field: string; operation: string; value: string | string[] }[] = [];
+
         if (route.name === "flows/update") {
-            filters.value.push({field: "namespace", operation: "EQUALS", value: route.params.namespace});
-            filters.value.push({field: "flowId", operation: "EQUALS", value: route.params.id});
+            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.namespace as string});
+            baseFilters.push({field: "flowId", operation: "EQUALS", value: route.params.id as string});
         }
 
         if (route.name === "namespaces/update") {
-            filters.value.push({field: "namespace", operation: "EQUALS", value: route.params.id});
+            baseFilters.push({field: "namespace", operation: "EQUALS", value: route.params.id as string});
         }
+
+        return baseFilters;
     });
 </script>
 
 <style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
+.dashboard-sections-container{
+    container-type: inline-size;
+}
+
+$smallMobile: 375px;
+$tablet: 768px;
+
 section#charts {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(3, 1fr);
+    @container (min-width: #{$smallMobile}) {
+        grid-template-columns: repeat(6, 1fr);
+    }
+    @container (min-width: #{$tablet}) {
+        grid-template-columns: repeat(12, 1fr);
+    }
     &.padding {
         padding: 0 2rem 1rem;
     }
 
-    & .el-row .el-col {
-        margin-bottom: 1rem;
-
+    .dashboard-block {
         & > div {
             height: 100%;
             padding: 1.5rem;
@@ -153,6 +170,34 @@ section#charts {
 
         &:hover #charts_buttons {
             opacity: 1;
+        }
+    }
+
+    @for $i from 1 through 3 {
+        .dash-width-#{$i} {
+            grid-column: span #{$i};
+        }
+    }
+
+    @for $i from 4 through 12 {
+        .dash-width-#{$i} {
+            grid-column: span 3;
+        }
+    }
+
+    @container (min-width: #{$smallMobile}) {
+        @for $i from 4 through 12 {
+            .dash-width-#{$i} {
+                grid-column: span 6;
+            }
+        }
+    }
+
+    @container (min-width: #{$tablet}) {
+        @for $i from 4 through 12 {
+            .dash-width-#{$i} {
+                grid-column: span #{$i};
+            }
         }
     }
 }

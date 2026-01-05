@@ -3,7 +3,7 @@
         <template #additional-right>
             <ul>
                 <li>
-                    <el-button v-if="canCreate" tag="router-link" :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" :icon="Plus" type="primary">
+                    <el-button v-if="canCreate" tag="router-link" :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" :icon="Plus">
                         {{ $t('create_flow') }}
                     </el-button>
                 </li>
@@ -26,15 +26,29 @@
                     <p class="section-1-desc">
                         {{ $t("welcome_page.start") }}
                     </p>
+
                     <el-button
+                        v-if="isOSS"
                         @click="startTour"
-                        :icon="Plus"
+                        :icon="Compass"
                         size="large"
                         type="primary"
                         class="px-3 p-4 section-1-link product-link"
                     >
                         {{ $t("welcome button create") }}
                     </el-button>
+                    <el-button
+                        v-else
+                        :icon="Compass"
+                        tag="router-link"
+                        :to="{name: 'flows/create'}"
+                        size="large"
+                        type="primary"
+                        class="px-3 p-4 section-1-link product-link"
+                    >
+                        {{ $t("welcome button create") }}
+                    </el-button>
+
                     <el-button
                         :icon="Play"
                         tag="a"
@@ -60,6 +74,7 @@
     import {useCoreStore} from "../../stores/core";
     import {useI18n} from "vue-i18n";
     import Plus from "vue-material-design-icons/Plus.vue";
+    import Compass from "vue-material-design-icons/Compass.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import OnboardingBottom from "override/components/OnboardingBottom.vue";
     import kestraWelcome from "../../assets/onboarding/kestra_welcome.svg";
@@ -69,6 +84,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useAuthStore} from "override/stores/auth";
+    import {useMiscStore} from "override/stores/misc";
 
     const {topbar = true} = defineProps<{topbar?: boolean}>();
 
@@ -83,6 +99,8 @@
     const routeInfo = computed(() =>  ({title: t("welcome_page.welcome")}));
 
     const authStore = useAuthStore();
+
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const canCreate = computed(() => {
         return authStore.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);

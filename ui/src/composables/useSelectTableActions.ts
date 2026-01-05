@@ -10,26 +10,28 @@ export function useSelectTableActions({
     const queryBulkAction = ref(false)
     const selection = ref<any[]>([])
 
-    const elTable = computed(() => dataTableRef.value?.$refs?.table)
+    const selectTable = computed(() => dataTableRef.value)
+    const elTable = computed(() => selectTable.value?.$refs?.table)
 
     selectionMapper = selectionMapper ?? ((element: any) => element)
 
     const handleSelectionChange = (value: any[]) => {
         selection.value = value.map(selectionMapper)
 
-        if (queryBulkAction.value && elTable?.value && value?.length < elTable.value.data?.length) {
+        if (queryBulkAction.value && elTable?.value && value?.length < elTable.value?.data?.length) {
             queryBulkAction.value = false
         }
     }
 
     const toggleAllUnselected = () => {
-        elTable.value.clearSelection()
+        selectTable.value?.clearSelection()
         queryBulkAction.value = false
+        selection.value = []
     }
 
     const toggleAllSelection = () => {
-        if (elTable.value.getSelectionRows().length < elTable.value.data.length) {
-            elTable.value.toggleAllSelection()
+        if (elTable.value?.getSelectionRows().length < elTable.value?.data?.length) {
+            elTable.value?.toggleAllSelection()
         }
         queryBulkAction.value = true
     }

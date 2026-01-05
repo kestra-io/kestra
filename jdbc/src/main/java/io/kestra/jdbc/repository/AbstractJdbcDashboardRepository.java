@@ -7,6 +7,7 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
@@ -14,7 +15,6 @@ import io.kestra.plugin.core.dashboard.chart.kpis.KpiOption;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.validation.ConstraintViolationException;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.impl.DSL;
@@ -30,19 +30,17 @@ import java.util.Optional;
 import static io.kestra.core.utils.MathUtils.roundDouble;
 
 @Slf4j
-@AllArgsConstructor
-public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcRepository implements DashboardRepositoryInterface {
-    protected io.kestra.jdbc.AbstractJdbcRepository<Dashboard> jdbcRepository;
+public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRepository<Dashboard> implements DashboardRepositoryInterface {
     private final ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher;
+    private final List<QueryBuilderInterface<?>> queryBuilders;
 
-    List<QueryBuilderInterface<?>> queryBuilders;
-
-    /**
-     * {@inheritDoc}
-     **/
-    @Override
-    public long count() {
-        return jdbcRepository.count(this.defaultFilter());
+    public AbstractJdbcDashboardRepository(io.kestra.jdbc.AbstractJdbcRepository<Dashboard> jdbcRepository,
+                                           QueueService queueService,
+                                           ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher,
+                                           List<QueryBuilderInterface<?>> queryBuilders) {
+        super(jdbcRepository, queueService);
+        this.eventPublisher = eventPublisher;
+        this.queryBuilders = queryBuilders;
     }
 
 
@@ -77,58 +75,12 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
 
     @Override
     public ArrayListTotal<Dashboard> list(Pageable pageable, String tenantId, String query) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(
-                        field("value")
-                    )
-                    .from(jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                select = select.and(this.findCondition(query));
-
-                return this.jdbcRepository.fetchPage(context, select, pageable);
-            });
-    }
-
-    @Override
-    public List<Dashboard> findAll(String tenantId) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(
-                        field("value")
-                    )
-                    .from(jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
-
-                return this.jdbcRepository.fetch(select);
-            });
+        return findPage(pageable, tenantId, this.findCondition(query));
     }
 
     @Override
     public List<Dashboard> findAllWithNoAcl(String tenantId) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = context
-                    .select(
-                        field("value")
-                    )
-                    .from(jdbcRepository.getTable())
-                    .where(this.defaultFilterWithNoACL(tenantId));
-
-                return this.jdbcRepository.fetch(select);
-            });
+        return findAll(this.defaultFilterWithNoACL(tenantId));
     }
 
     @Override

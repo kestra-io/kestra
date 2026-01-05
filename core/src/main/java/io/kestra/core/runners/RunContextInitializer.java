@@ -1,15 +1,14 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.Lists;
-import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.plugins.PluginConfigurations;
-import io.kestra.core.services.FlowService;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.storages.InternalStorage;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
@@ -44,24 +43,13 @@ public class RunContextInitializer {
     protected StorageInterface storageInterface;
 
     @Inject
-    protected FlowService flowService;
+    protected NamespaceFactory namespaceFactory;
+
+    @Inject
+    protected NamespaceService namespaceService;
 
     @Value("${kestra.encryption.secret-key}")
     protected Optional<String> secretKey;
-
-    /**
-     * Initializes the given {@link RunContext} for the given {@link Plugin}.
-     *
-     * @param runContext The {@link RunContext} to initialize.
-     * @param plugin The {@link TaskRunner} used for initialization.
-     * @return The {@link RunContext} to initialize
-     */
-    public DefaultRunContext forPlugin(final DefaultRunContext runContext,
-                                       final Plugin plugin) {
-        runContext.init(applicationContext);
-        runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(plugin.getType(), plugin.getClass()));
-        return runContext;
-    }
 
     /**
      * Initializes the given {@link RunContext} for the given {@link WorkerTask} for executor.
@@ -135,7 +123,7 @@ public class RunContextInitializer {
 
         runContext.setVariables(enrichedVariables);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
-        runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, flowService));
+        runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, namespaceService, namespaceFactory));
         runContext.setLogger(runContextLogger);
         runContext.setTask(task);
 
@@ -213,7 +201,7 @@ public class RunContextInitializer {
         runContext.init(applicationContext);
 
         final String triggerExecutionId = IdUtils.create();
-        final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger, null);
+        final RunContextLogger runContextLogger = contextLoggerFactory.create(triggerContext, trigger);
 
         final Map<String, Object> variables = new HashMap<>(runContext.getVariables());
         variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
@@ -230,7 +218,8 @@ public class RunContextInitializer {
             runContextLogger.logger(),
             context,
             storageInterface,
-            flowService
+            namespaceService,
+            namespaceFactory
         );
 
         runContext.setLogger(runContextLogger);

@@ -1,5 +1,5 @@
 <template>
-    <ContextInfoContent :title="t('feeds.title')">
+    <ContextInfoContent ref="contextInfoRef" :title="$t('feeds.title')">
         <div
             class="post"
             :class="{
@@ -16,10 +16,9 @@
                 <h5>
                     {{ feed.title }}
                 </h5>
-                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" />
+                <DateAgo className="news-date small" :inverted="true" :date="feed.publicationDate" format="LL" :showTooltip="false" />
             </div>
-
-            <Markdown class="markdown-tooltip mt-3 postParagraph" :source="feed.description" />
+            <Markdown class="markdown-tooltip postParagraph" :source="feed.description" />
 
             <div class="newsButtonBar">
                 <el-button
@@ -27,11 +26,11 @@
                     @click="expanded[feed.id] = !expanded[feed.id]"
                 >
                     <MenuDown class="expandIcon" />
-                    {{ expanded[feed.id] ? t("showLess") : t("showMore") }}
+                    {{ expanded[feed.id] ? $t("showLess") : $t("showMore") }}
                 </el-button>
                 <el-button
                     v-if="feed.href"
-                    :title="t('open in new tab')"
+                    :title="$t('open in new tab')"
                     tag="a"
                     type="primary"
                     target="_blank"
@@ -41,15 +40,15 @@
                 </el-button>
             </div>
 
-            <el-divider v-if="index !== feeds.length - 1" />
+            <el-divider class="mb-2" v-if="index !== feeds.length - 1" />
         </div>
     </ContextInfoContent>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, reactive} from "vue";
-    import {useI18n} from "vue-i18n";
+    import {computed, onMounted, reactive, ref} from "vue";
     import {useStorage} from "@vueuse/core"
+    import {useScrollMemory} from "../../composables/useScrollMemory"
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
@@ -61,8 +60,8 @@
     import {useApiStore} from "../../stores/api";
 
     const apiStore = useApiStore();
-    const {t} = useI18n({useScope: "global"});
 
+    const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null);
     const feeds = computed(() => apiStore.feeds);
 
     const expanded = reactive<Record<string, boolean>>({});
@@ -71,11 +70,14 @@
     onMounted(() => {
         lastNewsReadDate.value = feeds.value[0].publicationDate;
     });
+
+    const scrollableElement = computed(() => contextInfoRef.value?.contentRef || null)
+    useScrollMemory(ref("context-panel-news"), scrollableElement as any)
 </script>
 
 <style scoped lang="scss">
     .post {
-        padding: 1rem;
+        padding: 1rem 1rem 0rem 1rem;
 
         h5 {
             margin-bottom: 0;
@@ -87,7 +89,7 @@
             max-width: 10rem;
             margin-right: 1rem;
             float: left;
-            border-radius: var(--border-radius-lg);
+            border-radius: var(--bs-border-radius-lg);
         }
 
         .metaBlock {
@@ -157,6 +159,6 @@
     }
 
     :deep(.news-date) {
-        color: var(--bs-gray-700);
+        color: var(--ks-content-secondary);
     }
 </style>

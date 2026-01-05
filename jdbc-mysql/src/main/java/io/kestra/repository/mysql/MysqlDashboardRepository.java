@@ -2,6 +2,7 @@ package io.kestra.repository.mysql;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.dashboards.Dashboard;
+import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -17,9 +18,10 @@ import java.util.List;
 public class MysqlDashboardRepository extends AbstractJdbcDashboardRepository {
     @Inject
     public MysqlDashboardRepository(@Named("dashboards") MysqlRepository<Dashboard> repository,
+                                    QueueService queueService,
                                     ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher,
                                     List<QueryBuilderInterface<?>> queryBuilders) {
-        super(repository, eventPublisher, queryBuilders);
+        super(repository, queueService, eventPublisher, queryBuilders);
     }
 
     @Override

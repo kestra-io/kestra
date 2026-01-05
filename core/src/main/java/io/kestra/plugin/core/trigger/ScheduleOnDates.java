@@ -10,7 +10,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.LabelService;
 import io.kestra.core.validations.TimezoneId;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -23,7 +22,10 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -45,11 +47,7 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     @Builder.Default
     @Null
     private final Duration interval = null;
-
-    @Schema(
-        title = "The inputs to pass to the scheduled flow"
-    )
-    @PluginProperty(dynamic = true)
+    
     private Map<String, Object> inputs;
 
     @TimezoneId
@@ -63,31 +61,24 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     @NotNull
     private Property<List<ZonedDateTime>> dates;
 
-    @Schema(
-        title = "Action to take in the case of missed schedules",
-        description = "`ALL` will recover all missed schedules, `LAST`  will only recovered the last missing one, `NONE` will not recover any missing schedule.\n" +
-            "The default is `ALL` unless a different value is configured using the global plugin configuration."
-    )
-    @PluginProperty
     private RecoverMissedSchedules recoverMissedSchedules;
 
     @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext triggerContext) throws Exception {
         RunContext runContext = conditionContext.getRunContext();
+
         ZonedDateTime lastEvaluation = triggerContext.getDate();
         Optional<ZonedDateTime> nextDate = nextDate(runContext, date -> date.isEqual(lastEvaluation) || date.isAfter(lastEvaluation));
 
         if (nextDate.isPresent()) {
             log.info("Schedule execution on {}", nextDate.get());
 
-            Execution execution = TriggerService.generateScheduledExecution(
+            Execution execution = SchedulableExecutionFactory.createExecution(
                 this,
                 conditionContext,
                 triggerContext,
-                LabelService.fromTrigger(runContext, conditionContext.getFlow(), this),
-                this.inputs != null ? runContext.render(this.inputs) : Collections.emptyMap(),
                 Collections.emptyMap(),
-                nextDate
+                nextDate.orElse(null)
             );
 
             return Optional.of(execution);
@@ -97,28 +88,20 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
     }
 
     @Override
-    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> last) {
-        try {
-            return last
-                .map(throwFunction(context ->
-                    nextDate(conditionContext.getRunContext(), date -> date.isAfter(context.getDate()))
-                        .orElse(ZonedDateTime.now().plusYears(1))
-                ))
-                .orElse(conditionContext.getRunContext()
-                    .render(dates)
-                    .asList(ZonedDateTime.class)
-                    .stream()
-                    .sorted()
-                    .findFirst()
-                    .orElse(ZonedDateTime.now()))
-                .truncatedTo(ChronoUnit.SECONDS);
-        } catch (IllegalVariableEvaluationException e) {
-            log.warn("Failed to evaluate schedule dates for trigger '{}': {}", this.getId(), e.getMessage());
-            return ZonedDateTime.now().plusYears(1);
-        }
+    public ZonedDateTime nextEvaluationDate(ConditionContext conditionContext, Optional<? extends TriggerContext> triggerContext) {
+        return triggerContext
+            .map(ctx -> ctx.getBackfill() != null ? ctx.getBackfill().getCurrentDate() : ctx.getDate())
+            .map(this::withTimeZone)
+            .or(() -> Optional.of(ZonedDateTime.now()))
+            .flatMap(dt -> {
+                try {
+                    return nextDate(conditionContext.getRunContext(), date -> date.isAfter(dt));
+                } catch (IllegalVariableEvaluationException e) {
+                    log.warn("Failed to evaluate schedule dates for trigger '{}': {}", this.getId(), e.getMessage());
+                    throw new InvalidTriggerConfigurationException("Failed to evaluate schedule 'dates'. Cause: " + e.getMessage());
+                }
+            }).orElseGet(() -> ZonedDateTime.now().plusYears(1));
     }
-
-
 
     @Override
     public ZonedDateTime nextEvaluationDate() {
@@ -139,9 +122,17 @@ public class ScheduleOnDates extends AbstractTrigger implements Schedulable, Tri
         return previousDates.isEmpty() ? ZonedDateTime.now() : previousDates.getFirst();
     }
 
-    private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> filter) throws IllegalVariableEvaluationException {
-        return runContext.render(dates).asList(ZonedDateTime.class).stream().sorted()
-            .filter(date -> filter.test(date))
+    private ZonedDateTime withTimeZone(ZonedDateTime date) {
+        if (this.timezone == null) {
+            return date;
+        }
+        return date.withZoneSameInstant(ZoneId.of(this.timezone));
+    }
+    
+    private Optional<ZonedDateTime> nextDate(RunContext runContext, Predicate<ZonedDateTime> predicate) throws IllegalVariableEvaluationException {
+        return runContext.render(dates)
+            .asList(ZonedDateTime.class).stream().sorted()
+            .filter(predicate)
             .map(throwFunction(date -> timezone == null ? date : date.withZoneSameInstant(ZoneId.of(runContext.render(timezone)))))
             .findFirst()
             .map(date -> date.truncatedTo(ChronoUnit.SECONDS));

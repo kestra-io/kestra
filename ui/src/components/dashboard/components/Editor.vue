@@ -1,28 +1,28 @@
 <template>
     <div class="button-top">
         <el-button-group class="view-buttons">
-            <el-tooltip :content="t('source only')">
+            <el-tooltip :content="$t('source only')">
                 <el-button
                     :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
             </el-tooltip>
-            <el-tooltip :content="t('documentation.documentation')">
+            <el-tooltip :content="$t('documentation.documentation')">
                 <el-button
                     :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
             </el-tooltip>
-            <el-tooltip :content="t('chart preview')">
+            <el-tooltip :content="$t('chart preview')">
                 <el-button
                     :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
             </el-tooltip>
-            <el-tooltip :content="t('dashboards.preview')">
+            <el-tooltip :content="$t('dashboards.preview')">
                 <el-button
                     :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
@@ -43,7 +43,7 @@
             :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
-            {{ t("save") }}
+            {{ $t("save") }}
         </el-button>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
@@ -85,7 +85,7 @@
                         <el-empty :image="EmptyVisualDashboard" :imageSize="200">
                             <template #description>
                                 <h5>
-                                    {{ t("dashboards.chart_preview") }}
+                                    {{ $t("dashboards.chart_preview") }}
                                 </h5>
                             </template>
                         </el-empty>

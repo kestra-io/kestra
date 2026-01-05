@@ -1,9 +1,11 @@
 package io.kestra.core.services;
 
+import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.storages.kv.KVStoreException;
+import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -12,12 +14,11 @@ import java.io.IOException;
 
 @Singleton
 public class KVStoreService {
+    @Inject
+    private KvMetadataRepositoryInterface kvMetadataRepository;
 
     @Inject
     private StorageInterface storageInterface;
-
-    @Inject
-    private FlowService flowService;
 
     @Inject
     private NamespaceService namespaceService;
@@ -34,7 +35,7 @@ public class KVStoreService {
         boolean isNotSameNamespace = fromNamespace != null && !namespace.equals(fromNamespace);
         if (isNotSameNamespace && isNotParentNamespace(namespace, fromNamespace)) {
             try {
-                flowService.checkAllowedNamespace(tenant, namespace, tenant, fromNamespace);
+                namespaceService.checkAllowedNamespace(tenant, namespace, tenant, fromNamespace);
             } catch (IllegalArgumentException e) {
                 throw new KVStoreException(String.format(
                     "Cannot access the KV store. Access to '%s' namespace is not allowed from '%s'.", namespace, fromNamespace)
@@ -46,9 +47,9 @@ public class KVStoreService {
         boolean checkIfNamespaceExists = fromNamespace == null || isNotParentNamespace(namespace, fromNamespace);
         if (checkIfNamespaceExists && !namespaceService.isNamespaceExists(tenant, namespace)) {
             // if it didn't exist, we still check if there are KV as you can add KV without creating a namespace in DB or having flows in it
-            KVStore kvStore = new InternalKVStore(tenant, namespace, storageInterface);
+            KVStore kvStore = new InternalKVStore(tenant, namespace, storageInterface, kvMetadataRepository);
             try {
-                if (kvStore.list().isEmpty()) {
+                if (kvStore.list(Pageable.from(1, 1)).isEmpty()) {
                     throw new KVStoreException(String.format(
                         "Cannot access the KV store. The namespace '%s' does not exist.",
                         namespace
@@ -60,7 +61,7 @@ public class KVStoreService {
             return kvStore;
         }
 
-        return new InternalKVStore(tenant, namespace, storageInterface);
+        return new InternalKVStore(tenant, namespace, storageInterface, kvMetadataRepository);
     }
 
     private static boolean isNotParentNamespace(final String parentNamespace, final String childNamespace) {

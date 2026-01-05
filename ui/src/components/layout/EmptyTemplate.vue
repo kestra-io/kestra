@@ -6,7 +6,7 @@
 
 <style scoped lang="scss">
     .empty-template {
-        margin-top: -0.900rem;
+        margin-top: -1.5rem;
         padding: 3rem 0;
         text-align: center;
         background-repeat: no-repeat;
@@ -15,6 +15,14 @@
         html.dark & {
             background-image: url("../../assets/empty-page-dark.svg#file");
             background-position: top center;
+        }
+    }
+    @media (max-width: 768px) {
+        .empty-template{
+            padding: 2rem;
+        }
+        .container-sm, .container {
+            max-width: 768px;
         }
     }
 </style>

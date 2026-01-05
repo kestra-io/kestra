@@ -35,12 +35,12 @@
     import PlayBox from "vue-material-design-icons/PlayBoxMultiple.vue";
     import Markdown from "../layout/Markdown.vue";
 
-    interface Props {
+    export interface OnboardingCardModel {
         title: string;
         category: string;
     }
 
-    const props = defineProps<Props>();
+    const props = defineProps<OnboardingCardModel>();
 
     const getIcon = () => ({help: Slack, tutorial: PlayBox, tour: Monitor}[props.category] || Monitor);
 

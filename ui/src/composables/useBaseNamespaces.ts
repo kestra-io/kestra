@@ -61,6 +61,10 @@ export const useBaseNamespacesStore = () => {
         return response.data;
     }
 
+    async function update(this: any, _: {route: any, payload: any}) {
+        // NOOP IN OSS
+    }
+
     async function loadDependencies(this: any, options: {namespace: string}) {
         return await axios.get(`${apiUrl()}/namespaces/${options.namespace}/dependencies`);
     }
@@ -72,9 +76,13 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function kv(this: any, payload: {namespace: string; key: string}) {
-        const response = await axios.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`);
+        const response = await axios.get(`${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`, VALIDATE);
+        if (response.status === 404) {
+            throw new Error(response.data.message);
+        }
         const data = response.data;
         const contentLength = response.headers?.["content-length"];
+
         if (contentLength === (data.length + 2).toString()) {
             return `"${data}"`;
         }
@@ -86,7 +94,7 @@ export const useBaseNamespacesStore = () => {
         inheritedKVs.value = response.data;
     }
 
-    async function createKv(this: any, payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl: string}) {
+    async function createKv(this: any, payload: {namespace: string; key: string; value: any; contentType: string; description: string; ttl?: string}) {
         await axios.put(
             `${apiUrl()}/namespaces/${payload.namespace}/kv/${payload.key}`,
             payload.value,
@@ -128,9 +136,15 @@ export const useBaseNamespacesStore = () => {
     }
 
     async function listSecrets(this: any, {id, commit: shouldCommit, ...params}: {id: string; commit: boolean | undefined; [key: string]: any}): Promise<{total: number, results: {key: string, description?: string, tags?: {key: string, value: string}[]}[], readOnly?: boolean}> {
-        const response = await axios.get(`${apiUrl()}/namespaces/${id}/secrets`, {
+        const response = await axios.get(`${apiUrl()}/secrets`, {
             ...VALIDATE,
-            params
+            params: {
+                ...params,
+                filters: {
+                    namespace: {EQUALS: id},
+                    ...params.filters
+                }
+            }
         });
         if (response.status === 200 && shouldCommit !== false) {
             secrets.value = response.data.results;
@@ -160,12 +174,16 @@ export const useBaseNamespacesStore = () => {
         // NOOP IN OSS
     }
 
+    async function loadInheritedVariables(this: any, _: {id: string, commit?: boolean}) {
+        // NOOP IN OSS
+    }
+
     async function createDirectory(this: any, payload: {namespace: string; path: string}) {
         const URL = `${base(payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`;
         await axios.post(URL);
     }
 
-    async function readDirectory(this: any, payload: {namespace: string; path?: string}) {
+    async function readDirectory<T>(this: any, payload: {namespace: string; path?: string}): Promise<T[]> {
         const URL = `${base(payload.namespace)}/files/directory${payload.path ? `?path=${slashPrefix(safePath(payload.path))}` : ""}`;
         // Accept 200 or 404 so axios doesn't treat 404 as an error (which would set coreStore.error globally)
         const response = await axios.get(URL, VALIDATE);
@@ -189,10 +207,27 @@ export const useBaseNamespacesStore = () => {
         await axios.post(URL, Utils.toFormData(DATA), HEADERS);
     }
 
-    async function readFile(this: any, payload: {namespace: string; path: string}) {
+    async function fileRevisions(this: any, payload: {namespace: string; path: string}): Promise<{revision: number}[]> {
+        if (!payload.path) return [];
+
+        const URL = `${base(payload.namespace)}/files/revisions?path=${slashPrefix(safePath(payload.path))}`;
+        const request = await axios.get(URL, {
+            ...VALIDATE
+        });
+
+        if(request.status === 404) {
+            const message = JSON.parse(request.data)?.message;
+            console.error(message ?? "File not found");
+            return [];
+        }
+
+        return (request.data as {revision: number}[]);
+    }
+
+    async function readFile(this: any, payload: {namespace: string; path: string, revision?: number}) {
         if (!payload.path) return;
 
-        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
+        const URL = `${base(payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}${payload.revision !== undefined ? `&revision=${payload.revision}` : ""}`;
         const request = await axios.get(URL, {
             ...VALIDATE,
             transformResponse: (response: any) => response,
@@ -214,7 +249,7 @@ export const useBaseNamespacesStore = () => {
         return request.data ?? [];
     }
 
-    async function importFileDirectory(this: any, payload: {namespace: string; path: string; content: string}) {
+    async function importFileDirectory(this: any, payload: {namespace: string; path: string; content: ArrayBuffer}) {
         const DATA = new FormData();
         const BLOB = new Blob([payload.content], {type: "text/plain"});
         DATA.append("fileContent", BLOB);
@@ -252,6 +287,7 @@ export const useBaseNamespacesStore = () => {
         search,
         total,
         load,
+        update,
         loadDependencies,
         existing,
         namespace,
@@ -274,10 +310,12 @@ export const useBaseNamespacesStore = () => {
         createSecrets,
         patchSecret,
         deleteSecrets,
+        loadInheritedVariables,
         createDirectory,
         readDirectory,
-        createFile,
+        saveOrCreateFile: createFile,
         readFile,
+        fileRevisions,
         searchFiles,
         importFileDirectory,
         moveFileDirectory,

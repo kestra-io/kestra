@@ -5,27 +5,28 @@
             key="sideBar"
             :size="sideBarSize"
         >
-            <EditorSidebar :currentNS="namespace" style="width: 100%;height: 100%;" />
+            <FileExplorer
+                :currentNS="namespace"
+                style="width: 100%;height: 100%;"
+            />
         </el-splitter-panel>
         <el-splitter-panel
             min="20%"
             key="editor"
             :size="editorSize"
         >
-            <MultiPanelTabs v-if="mounted" v-model="panels" @remove-tab="onRemoveTab" />
+            <MultiPanelTabs v-if="mounted" v-model="panels" />
         </el-splitter-panel>
     </el-splitter>
 </template>
 
 <script setup lang="ts">
-    import {watch} from "vue";
+    import {computed, watch} from "vue";
     import {useMounted, useStorage} from "@vueuse/core";
-    // @ts-expect-error no types on editor sidebar
-    import EditorSidebar from "../../inputs/EditorSidebar.vue";
+    import FileExplorer from "../../inputs/FileExplorer.vue";
     import MultiPanelTabs from "../../MultiPanelTabs.vue";
-    import {getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels";
+    import {CODE_PREFIX, getTabFromFilesTab, getTabPropsFromFilePath, useFilesPanels} from "../../flows/useFilesPanels";
     import {useFlowStore} from "../../../stores/flow";
-    import {useEditorStore} from "../../../stores/editor";
     import {useStoredPanels} from "../../../composables/useStoredPanels";
 
     const mounted = useMounted()
@@ -54,20 +55,17 @@
         editorSize.value = sizes[1]
     }
 
-    const editorStore = useEditorStore();
-
-    const panels = useStoredPanels(
+    const {panels} = useStoredPanels(
         `namespace-files-editor-view-panels-${props.namespace}`,
         [{
             deserialize: (value: string) => {
-                if(value.startsWith("code-")){
+                if(value.startsWith(`${CODE_PREFIX}-`)){
                     value = value.slice(5)
                 } else {
                     // not a file tab
                     return
                 }
                 const tabProps = getTabPropsFromFilePath(value, false);
-                editorStore.openTab(tabProps)
                 if(!tabProps) return
 
                 return getTabFromFilesTab(tabProps)
@@ -76,5 +74,5 @@
 
     );
 
-    const {onRemoveTab} = useFilesPanels(panels, true);
+    useFilesPanels(panels, computed(() => props.namespace))
 </script>

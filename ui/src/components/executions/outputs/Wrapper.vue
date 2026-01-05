@@ -1,7 +1,7 @@
 <template>
     <div class="outputs">
-        <el-splitter>
-            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'">
+        <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
+            <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
                 <div class="d-flex flex-column overflow-x-auto left">
                     <el-cascader-panel
                         ref="cascader"
@@ -52,7 +52,7 @@
                 </div>
             </el-splitter-panel>
             <el-splitter-panel>
-                <div class="right wrapper" :style="{'z-index': 999}">
+                <div class="right wrapper">
                     <div
                         v-if="multipleSelected || selectedValue"
                         class="w-100 overflow-auto p-3 content-container"
@@ -166,6 +166,7 @@
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
     import {useAxios} from "../../../utils/axios";
+    import {useMediaQuery} from "@vueuse/core";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -225,14 +226,15 @@
                     const debugOutput = JSON.stringify(parsedResult, null, 2);
                     debugExpression.value = debugOutput;
 
-                    selected.value.push(debugOutput);
-
+                    if (response.status === 200 && debugOutput !== null && debugOutput !== undefined) {
+                        selected.value.push(debugOutput);
+                    }
                     isJSON.value = true;
                 } catch {
                     debugExpression.value = response.data.result;
 
                     // Parsing failed, therefore, copy raw result
-                    if (response.status === 200 && response.data.result)
+                    if (response.status === 200 && response.data.result !== null && response.data.result !== undefined)
                         selected.value.push(response.data.result);
                 }
 
@@ -431,6 +433,7 @@
         selectedValue.value !== debugExpression.value;
 
     const leftWidth = ref("70%");
+    const isMobile = useMediaQuery("(max-width: 768px)");
 </script>
 
 <style scoped lang="scss">
@@ -478,6 +481,8 @@
 
 .wrapper {
     background: var(--ks-background-card);
+    position: relative;
+    z-index: 1;
 }
 
 :deep(.el-cascader-menu) {
@@ -529,27 +534,27 @@
 }
 .content-container {
     height: calc(100vh - 0px);
-    overflow-y: auto !important;
+    overflow-y: scroll;
     overflow-x: hidden;
+    scrollbar-gutter: stable;
     word-wrap: break-word;
     word-break: break-word;
+    position: relative;
+    z-index: 0;
 }
 
 :deep(.el-collapse) {
     .el-collapse-item__wrap {
-        overflow-y: auto !important;
         max-height: none !important;
     }
 
     .el-collapse-item__content {
-        overflow-y: auto !important;
         word-wrap: break-word;
         word-break: break-word;
     }
 }
 
 :deep(.var-value) {
-    overflow-y: auto !important;
     word-wrap: break-word;
     word-break: break-word;
 }
@@ -559,5 +564,31 @@
     word-wrap: break-word !important;
     word-break: break-word !important;
     overflow-wrap: break-word !important;
+}
+
+:deep(.monaco-editor),
+:deep(.editor-container),
+:deep(.complex-value-editor) {
+    position: relative !important;
+    z-index: auto !important;
+}
+
+//Mobile Version
+@media (max-width: 768px) {
+    :deep(.el-splitter) { 
+        .outputs-top {
+            margin: 10px;
+            border: 2px solid var(--ks-border-primary);
+            box-sizing: border-box;
+            overflow: auto;
+            flex: 1 1 0 !important;
+            min-height: 0 !important;
+        }
+    }
+    :deep(.el-splitter-bar){
+        height: 4px !important;
+        width: auto !important;
+        
+    }
 }
 </style>

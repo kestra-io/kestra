@@ -13,8 +13,8 @@
 
     const route = useRoute();
 
-    import {useCoreStore} from "../../../stores/core";
-    const coreStore = useCoreStore();
+    import {useUnsavedChangesStore} from "../../../stores/unsavedChanges";
+    const unsavedChangesStore = useUnsavedChangesStore();
 
     import {useDashboardStore} from "../../../stores/dashboard";
     const dashboardStore = useDashboardStore();
@@ -36,10 +36,12 @@
         dashboard.value.sourceCode = source;
 
         toast.success(t("dashboards.edition.confirmation", {title: response.title}));
-        coreStore.unsavedChange = false;
+        unsavedChangesStore.unsavedChange = false;
     };
 
     onMounted(() => {
+        dashboardStore.isCreating = false;
+        
         dashboardStore.load(route.params.dashboard as string).then((response) => {
             dashboard.value = response;
         });
@@ -54,6 +56,7 @@
     const routeInfo = computed(() => ({title: t("dashboards.edition.label")}));
 
     import useRouteContext from "../../../composables/useRouteContext";
+
 
     useRouteContext(routeInfo);
 </script>

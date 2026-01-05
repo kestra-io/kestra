@@ -1,7 +1,6 @@
 package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
@@ -80,6 +79,28 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
     }
 
     @Override
+    public List<FlowTopology> findByNamespacePrefix(String tenantId, String namespacePrefix) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                // Match flows that originate from the namespace or its children
+                Condition sourceCondition = field("source_namespace").eq(namespacePrefix)
+                    .or(field("source_namespace").likeIgnoreCase(namespacePrefix + ".%"));
+
+                Condition tenantSource = buildTenantCondition("source", tenantId);
+                Condition tenantDest = buildTenantCondition("destination", tenantId);
+
+                Select<Record1<Object>> from = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(tenantSource.and(tenantDest).and(sourceCondition));
+
+                return this.jdbcRepository.fetch(from);
+            });
+    }
+
+    @Override
     public List<FlowTopology> findAll(String tenantId) {
         return jdbcRepository
             .getDslContextWrapper()
@@ -147,6 +168,7 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
             .set(this.jdbcRepository.persistFields(flowTopology));
     }
 
+
     @Override
     public FlowTopology save(FlowTopology flowTopology) {
         this.jdbcRepository.persist(flowTopology);
@@ -161,6 +183,7 @@ public abstract class AbstractJdbcFlowTopologyRepository extends AbstractJdbcRep
 
         return flowTopology;
     }
+
 
     protected Condition buildTenantCondition(String prefix, String tenantId) {
         return tenantId == null ? field(prefix + "_tenant_id").isNull() : field(prefix + "_tenant_id").eq(tenantId);

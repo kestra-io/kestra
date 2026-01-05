@@ -5,19 +5,19 @@
         <ValidationError
             class="validation"
             tooltipPlacement="bottom-start"
-            :errors="flowErrors"
+            :errors="flowStore.flowErrors"
             :warnings="flowWarnings"
-            :infos="flowInfos"
+            :infos="flowStore.flowInfos"
         />
 
         <EditorButtons
-            :isCreating="isCreating"
-            :isReadOnly="isReadOnly"
+            :isCreating="flowStore.isCreating"
+            :isReadOnly="flowStore.isReadOnly"
             :canDelete="true"
-            :isAllowedEdit="isAllowedEdit"
-            :haveChange="flowStore.haveChange || tabs.some(t => t.dirty === true)"
-            :flowHaveTasks="Boolean(flowHaveTasks)"
-            :errors="flowErrors"
+            :isAllowedEdit="flowStore.isAllowedEdit"
+            :haveChange="haveChange"
+            :flowHaveTasks="Boolean(flowStore.flowHaveTasks)"
+            :errors="flowStore.flowErrors"
             :warnings="flowWarnings"
             @save="save"
             @copy="
@@ -36,8 +36,12 @@
     </div>
 </template>
 
+<script lang="ts">
+    export const FILES_SAVE_ALL_INJECTION_KEY = Symbol("FILES_SAVE_ALL_INJECTION_KEY") as InjectionKey<() => void>;
+</script>
+
 <script setup lang="ts">
-    import {computed, getCurrentInstance} from "vue";
+    import {computed, inject, InjectionKey} from "vue";
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
@@ -45,45 +49,37 @@
     import ValidationError from "../flows/ValidationError.vue";
 
     import localUtils from "../../utils/utils";
-    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
-    import {useEditorStore} from "../../stores/editor";
     import {useFlowStore} from "../../stores/flow";
+    import {useToast} from "../../utils/toast";
+
+    defineProps<{
+        haveChange: boolean;
+    }>();
 
     const {t} = useI18n();
 
     const exportYaml = () => {
-        const src = flowStore.flowYaml
-        if(!src) {
-            return;
-        }
-        const blob = new Blob([src], {type: "text/yaml"});
-        localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
+        if(!flowStore.flow || !flowStore.flowYaml) return;
+
+        const {id, namespace} = flowStore.flow;
+        const blob = new Blob([flowStore.flowYaml], {type: "text/yaml"});
+
+        localUtils.downloadUrl(window.URL.createObjectURL(blob), `${namespace}.${id}.yaml`);
     };
 
     const flowStore = useFlowStore();
-    const editorStore = useEditorStore();
     const router = useRouter()
     const route = useRoute()
     const routeParams = computed(() => route.params)
 
-    const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
-
     // If playground is not defined, enable it by default
     const isSettingsPlaygroundEnabled = computed(() => localStorage.getItem("editorPlayground") === "false" ? false : true);
 
-    const isCreating = computed(() => flowStore.isCreating === true)
-    const isReadOnly = computed(() => flowStore.isReadOnly)
-    const isAllowedEdit = computed(() => flowStore.isAllowedEdit)
-    const flowHaveTasks = computed(() => flowStore.flowHaveTasks)
-    const flowErrors = computed(() => flowStore.flowErrors?.map(translateError));
-    const flowInfos = computed(() => flowStore.flowInfos)
-    const tabs = computed<{dirty?:boolean}[]>(() => editorStore.tabs)
-    const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
+    const toast = useToast();
     const flowWarnings = computed(() => {
-
         const outdatedWarning =
             flowStore.flowValidation?.outdated && !flowStore.isCreating
-                ? [translateErrorWithKey(flowStore.flowValidation?.constraints ?? "")]
+                ? flowStore.flowValidation?.constraints?.split(", ") ?? []
                 : [];
 
         const deprecationWarnings =
@@ -102,20 +98,33 @@
         return warnings.length === 0 ? undefined : warnings;
     });
 
-    async function save(){
-        const creating = isCreating.value
-        await flowStore.saveAll()
+    const onSaveAll = inject(FILES_SAVE_ALL_INJECTION_KEY);
 
-        if(creating){
-            await router.push({
-                name: "flows/update",
-                params: {
-                    id: flowStore.flow?.id,
-                    namespace: flowStore.flow?.namespace,
-                    tab: "edit",
-                    tenant: routeParams.value.tenant,
-                },
-            });
+    async function save(){
+        try {
+            // Save the isCreating before saving.
+            // saveAll can change its value.
+            const isCreating = flowStore.isCreating
+            await flowStore.saveAll()
+
+            if(isCreating){
+                await router.push({
+                    name: "flows/update",
+                    params: {
+                        id: flowStore.flow?.id,
+                        namespace: flowStore.flow?.namespace,
+                        tab: "edit",
+                        tenant: routeParams.value.tenant,
+                    },
+                });
+            }
+
+            onSaveAll?.();
+        } catch (error: any) {
+            if (error?.status === 401) {
+                toast.error("401 Unauthorized", undefined, {duration: 2000});
+                return;
+            }
         }
     }
 
@@ -144,5 +153,11 @@
         align-items: center;
         margin: .5rem;
         gap: .5rem;
+    }
+    @media screen and (max-width: 768px) {
+        .button-wrapper {
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+        }
     }
 </style>

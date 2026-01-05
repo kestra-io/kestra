@@ -28,6 +28,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.JdbcMapper;
@@ -45,11 +46,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -589,8 +593,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     abstract protected Condition findCondition(Object value, QueryFilter.Op operation);
 
     @Override
-    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return findCondition(value, operation);
+    protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
+        return findCondition(value.getLeft(), operation);
     }
 
     @Override
@@ -633,6 +637,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of());
         select = select.and(this.filter(filters, null, Resource.FLOW));
         return (SelectConditionStep<R>) select;
+    }
+
+    protected Name getColumnName(QueryFilter.Field field){
+        if (QueryFilter.Field.FLOW_ID.equals(field)) {
+            return DSL.quotedName("id");
+        } else {
+            return DSL.quotedName(field.name().toLowerCase());
+        }
     }
 
     abstract protected Condition findSourceCodeCondition(String query);
@@ -799,6 +811,48 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .fetch()
                 .map(record -> record.getValue("namespace", String.class))
             );
+    }
+
+    @Override
+    public Flux<Flow> findAsync(String tenantId, List<QueryFilter> filters) {
+        return this.findAsync(tenantId, filters, Resource.FLOW);
+    }
+
+    protected Flux<Flow> findAsync(String tenantId, @Nullable List<QueryFilter> filters, QueryFilter.Resource resource) {
+        if (filters == null || filters.isEmpty()) {
+            return findAsync(defaultFilter(tenantId), null);
+        }
+        Condition condition = this.filter(filters, null, resource);
+        return findAsync(defaultFilter(tenantId), condition);
+    }
+
+    protected Flux<Flow> findAsync(Condition defaultFilter, Condition condition, OrderField<Flow>... orderByFields) {
+        return Flux.create(emitter -> this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                var select = context
+                    .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                    .from(this.jdbcRepository.getTable())
+                    .where(defaultFilter);
+
+                if (condition != null) {
+                    select = select.and(condition);
+                }
+
+                if (orderByFields != null) {
+                    select.orderBy(orderByFields);
+                }
+
+                try (Stream<Record4<String, String, String, String>> stream =  select.fetchSize(FETCH_SIZE).stream()){
+                    stream
+                        .map(record -> (Flow) jdbcRepository.map(record))
+                        .forEach(emitter::next);
+                } finally {
+                    emitter.complete();
+                }
+            }), FluxSink.OverflowStrategy.BUFFER);
     }
 
     @Override

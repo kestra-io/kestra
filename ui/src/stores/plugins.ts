@@ -1,5 +1,5 @@
 import {defineStore} from "pinia"
-import {ref, computed, toRaw} from "vue";
+import {ref, computed, toRaw, nextTick} from "vue";
 import {trackPluginDocumentationView} from "../utils/tabTracking";
 import {apiUrlWithoutTenants} from "override/utils/route";
 import semver from "semver";
@@ -16,7 +16,10 @@ export interface PluginComponent {
     version?: string;
     description?: string;
     properties?: Record<string, any>;
-    schema: Schemas;
+    schema: {
+        properties: Schemas;
+        outputs: Schemas;
+    };
     markdown?: string;
 }
 
@@ -56,27 +59,71 @@ export function removeRefPrefix(ref?: string): string {
     return ref?.replace(/^#\/definitions\//, "") ?? "";
 }
 
-export const usePluginsStore = defineStore("plugins", () => {
-    const plugin = ref<PluginComponent>();
-    const versions = ref<string[]>();
-    const pluginAllProps = ref<any>();
-    const plugins = ref<Plugin[]>();
+function usePluginsIcons() {
+    const apiStore = useApiStore();
+
+    const iconsLoaded = ref(false)
+
     const apiIcons = ref<Record<string, string>>({});
     const pluginsIcons = ref<Record<string, string>>({});
+    const _iconsPromise = ref<Promise<Record<string, string>>>();
+    const axios = useAxios();
+
     const icons = computed(() => {
         return {
             ...pluginsIcons.value,
             ...apiIcons.value
         }
     })
+
+    function fetchIcons() {
+        if (iconsLoaded.value) {
+            return Promise.resolve(icons.value);
+        }
+
+        if (_iconsPromise.value) {
+            return _iconsPromise.value;
+        }
+
+        const apiPromise = apiStore.pluginIcons().then(async response => {
+            apiIcons.value = response.data ?? {};
+            return response.data;
+        });
+
+        const iconsPromise =
+            axios.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(async response => {
+                pluginsIcons.value = response.data ?? {};
+                return pluginsIcons.value;
+            });
+
+        _iconsPromise.value = Promise.all([apiPromise, iconsPromise]).then(async () => {
+            iconsLoaded.value = true;
+            return icons.value;
+        })
+
+        return _iconsPromise.value;
+    }
+
+    return {
+        icons,
+        iconsLoaded,
+        fetchIcons,
+    }
+}
+
+export const usePluginsStore = defineStore("plugins", () => {
+    const plugin = ref<PluginComponent>();
+    const versions = ref<string[]>();
+    const pluginAllProps = ref<any>();
+    const plugins = ref<Plugin[]>();
+
+
     const pluginsDocumentation = ref<Record<string, PluginComponent>>({});
     const editorPlugin = ref<(PluginComponent & {cls: string})>();
     const inputSchema = ref<any>();
     const inputsType = ref<any>();
     const schemaType = ref<Record<string, any>>();
-    const currentlyLoading = ref<{type?: string; version?: string}>();
     const forceIncludeProperties = ref<string[]>();
-    const _iconsPromise = ref<Promise<Record<string, string>>>();
 
     const axios = useAxios();
 
@@ -164,19 +211,25 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const id = options.version ? `${options.cls}/${options.version}` : options.cls;
-        const cachedPluginDoc = pluginsDocumentation.value[options.hash ? options.hash + id : id];
+        const cacheKey = options.hash ? options.hash + id : id;
+        const cachedPluginDoc = pluginsDocumentation.value[cacheKey];
         if (!options.all && cachedPluginDoc) {
-            plugin.value = cachedPluginDoc;
+            nextTick(() => {
+                plugin.value = cachedPluginDoc;
+            })
             return cachedPluginDoc;
         }
 
-        const baseUrl = options.version ?
+        const url = options.version ?
             `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
             `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
 
-        const url = options.hash ? `${baseUrl}?hash=${options.hash}` : baseUrl;
-
-        const response = await axios.get<PluginComponent>(url);
+        const response = await axios.get<PluginComponent>(url, options.all ? {
+            params: {
+                all: options.all,
+                hash: options.hash,
+            }
+        } : {});
 
         if (options.commit !== false) {
             if (options.all === true) {
@@ -187,10 +240,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         if (!options.all) {
-            pluginsDocumentation.value = {
-                ...pluginsDocumentation.value,
-                [options.hash ? options.hash+id : id]: response.data
-            };
+            pluginsDocumentation.value[cacheKey] = response.data;
         }
 
         return response.data;
@@ -207,45 +257,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         return response.data;
     }
 
-    const iconsLoaded = ref(false)
-
-    function fetchIcons() {
-        if (iconsLoaded.value) {
-            return Promise.resolve(icons.value);
-        }
-
-        if (_iconsPromise.value) {
-            return _iconsPromise.value;
-        }
-
-        const apiStore = useApiStore();
-
-        const apiPromise = apiStore.pluginIcons().then(response => {
-            apiIcons.value = response.data ?? {};
-            return response.data;
-        });
-
-        const iconsPromise =
-            axios.get(`${apiUrlWithoutTenants()}/plugins/icons`, {}).then(response => {
-                pluginsIcons.value = response.data ?? {};
-                return pluginsIcons.value;
-            });
-
-        _iconsPromise.value = Promise.all([apiPromise, iconsPromise]).then(() => {
-            iconsLoaded.value = true;
-            return icons.value;
-        })
-
-        return _iconsPromise.value;
-    }
-
-    function groupIcons() {
-        return axios.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
-        .then(response => {
-            return response.data;
-        });
-    }
-
     function loadInputsType() {
         return axios.get(`${apiUrlWithoutTenants()}/plugins/inputs`, {}).then(response => {
             inputsType.value = response.data;
@@ -260,7 +271,15 @@ export const usePluginsStore = defineStore("plugins", () => {
         });
     }
 
-    function loadSchemaType(options: {type: string} = {type: "flow"}) {
+    function lazyLoadSchemaType(options: {type: string}) {
+        if(schemaType.value?.[options.type]) {
+            return Promise.resolve(schemaType.value[options.type]);
+        }
+
+        return loadSchemaType(options);
+    }
+
+    function loadSchemaType(options: {type: string}) {
         return axios.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
             schemaType.value = schemaType.value || {};
             schemaType.value[options.type] = response.data;
@@ -268,28 +287,30 @@ export const usePluginsStore = defineStore("plugins", () => {
         });
     }
 
-    async function updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean} & Record<string, any>) | undefined) {
-        if (!pluginElement?.type || !allTypes.value.includes(pluginElement.type)) {
+    let currentlyLoading: {cls?: string; version?: string} | undefined = undefined;
+
+    async function updateDocumentation(pluginElement?: (LoadOptions & {forceRefresh?: boolean}) | undefined) {
+        if (!pluginElement?.cls || !allTypes.value.includes(pluginElement.cls)) {
             editorPlugin.value = undefined;
-            currentlyLoading.value = undefined;
+            currentlyLoading = undefined;
             return;
         }
 
-        const {type, version, forceRefresh = false} = pluginElement;
+        const {cls,  version, hash, forceRefresh = false} = pluginElement;
 
-        if (currentlyLoading.value?.type === type &&
-            currentlyLoading.value?.version === version &&
+        if (currentlyLoading?.cls === cls &&
+            currentlyLoading?.version === version &&
             !forceRefresh) {
             return
         }
 
         if (!forceRefresh &&
-            editorPlugin.value?.cls === type &&
+            editorPlugin.value?.cls === cls &&
             editorPlugin.value?.version === version) {
             return;
         }
 
-        let payload: LoadOptions = {cls: type, hash: pluginElement.hash};
+        let payload: LoadOptions = {cls, version, hash}
 
         if (version !== undefined) {
             if (semver.valid(version) !== null ||
@@ -303,21 +324,30 @@ export const usePluginsStore = defineStore("plugins", () => {
             }
         }
 
-        currentlyLoading.value = {
-            type,
+        currentlyLoading = {
+            cls,
             version,
         };
 
-        load(payload).then((pluginData) => {
-            editorPlugin.value = {
-                cls: type,
-                version,
-                ...pluginData,
-            };
+        const pluginData = await load(payload);
 
-            trackPluginDocumentationView(type);
+        editorPlugin.value = {
+            cls,
+            version,
+            ...pluginData,
+        };
 
-            forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version" && k !== "forceRefresh");
+        trackPluginDocumentationView(cls);
+
+        forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "cls" && k !== "version" && k !== "forceRefresh");
+    }
+
+    const {icons, iconsLoaded, fetchIcons} = usePluginsIcons()
+
+    function groupIcons() {
+        return axios.get(`${apiUrlWithoutTenants()}/plugins/icons/groups`, {})
+        .then(response => {
+            return response.data;
         });
     }
 
@@ -327,7 +357,6 @@ export const usePluginsStore = defineStore("plugins", () => {
         versions,
         pluginAllProps,
         plugins,
-        icons,
         pluginsDocumentation,
         editorPlugin,
         inputSchema,
@@ -335,26 +364,30 @@ export const usePluginsStore = defineStore("plugins", () => {
         schemaType,
         currentlyLoading,
         forceIncludeProperties,
-        _iconsPromise,
-        // getters
+
         flowSchema,
         flowDefinitions,
         flowRootSchema,
         flowRootProperties,
         allTypes,
         deprecatedTypes,
-        // actions
+
         resolveRef,
         filteredPlugins,
         list,
         listWithSubgroup,
         load,
         loadVersions,
-        fetchIcons,
-        groupIcons,
         loadInputsType,
         loadInputSchema,
         loadSchemaType,
+        lazyLoadSchemaType,
         updateDocumentation,
+
+        // icons
+        icons,
+        iconsLoaded,
+        fetchIcons,
+        groupIcons,
     };
 });

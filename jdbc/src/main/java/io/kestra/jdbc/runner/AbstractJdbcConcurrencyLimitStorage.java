@@ -5,13 +5,11 @@ import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.ExecutionRunning;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.Insert;
-import org.jooq.SQLDialect;
+import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -24,10 +22,10 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
     }
 
     /**
-     * Fetch the concurrency limit counter then process the count using the consumer function.
-     * It locked the raw and is wrapped in a transaction so the consumer should use the provided dslContext for any database access.
+     * Fetch the concurrency limit counter, then process the count using the consumer function.
+     * It locked the raw and is wrapped in a transaction, so the consumer should use the provided dslContext for any database access.
      * <p>
-     * Note that to avoid a race when no concurrency limit counter exists, it first always try to insert a 0 counter.
+     * Note that to avoid a race when no concurrency limit counter exists, it first always tries to insert a 0 counter.
      */
     public ExecutionRunning countThenProcess(FlowInterface flow, BiFunction<DSLContext, ConcurrencyLimit, Pair<ExecutionRunning, ConcurrencyLimit>> consumer) {
         return this.jdbcRepository
@@ -67,7 +65,7 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
                 });
 
                 var pair = consumer.apply(dslContext, selected);
-                save(dslContext, pair.getRight());
+                update(dslContext, pair.getRight());
                 return pair.getLeft();
             });
     }
@@ -76,15 +74,19 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
      * Decrement the concurrency limit counter.
      * Must only be called when a flow having concurrency limit ends.
      */
-    public void decrement(FlowInterface flow) {
-        this.jdbcRepository
+    public int decrement(FlowInterface flow) {
+        return this.jdbcRepository
             .getDslContextWrapper()
-            .transaction(configuration -> {
+            .transactionResult(configuration -> {
                 var dslContext = DSL.using(configuration);
 
-                fetchOne(dslContext, flow).ifPresent(
-                    concurrencyLimit -> save(dslContext, concurrencyLimit.withRunning(concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1))
-                );
+                return fetchOne(dslContext, flow).map(
+                    concurrencyLimit -> {
+                        int newLimit = concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1;
+                        update(dslContext, concurrencyLimit.withRunning(newLimit));
+                        return newLimit;
+                    }
+                ).orElse(0);
             });
     }
 
@@ -94,8 +96,36 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
      */
     public void increment(DSLContext dslContext, FlowInterface flow) {
         fetchOne(dslContext, flow).ifPresent(
-            concurrencyLimit -> save(dslContext, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1))
+            concurrencyLimit -> update(dslContext, concurrencyLimit.withRunning(concurrencyLimit.getRunning() + 1))
         );
+    }
+
+    /**
+     * Returns all concurrency limits from the database
+     */
+    public List<ConcurrencyLimit> find(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.buildTenantCondition(tenantId));
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    /**
+     * Update a concurrency limit
+     * WARNING: this is inherently unsafe and must only be used for administration purpose
+     */
+    public ConcurrencyLimit update(ConcurrencyLimit concurrencyLimit) {
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(concurrencyLimit);
+        this.jdbcRepository.persist(concurrencyLimit, fields);
+
+        return concurrencyLimit;
     }
 
     private Optional<ConcurrencyLimit> fetchOne(DSLContext dslContext, FlowInterface flow) {
@@ -106,12 +136,26 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
             .and(field("namespace").eq(flow.getNamespace()))
             .and(field("flow_id").eq(flow.getId()));
 
-        return Optional.ofNullable(select.forUpdate().fetchOne())
-            .map(record -> this.jdbcRepository.map(record));
+        return this.jdbcRepository.fetchOne(select.forUpdate());
     }
 
-    private void save(DSLContext dslContext, ConcurrencyLimit concurrencyLimit) {
+    private void update(DSLContext dslContext, ConcurrencyLimit concurrencyLimit) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(concurrencyLimit);
         this.jdbcRepository.persist(concurrencyLimit, dslContext, fields);
+    }
+
+    public Optional<ConcurrencyLimit> findById(String tenantId, String namespace, String flowId) {
+        return jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.buildTenantCondition(tenantId))
+                    .and(field("namespace").eq(namespace))
+                    .and(field("flow_id").eq(flowId));
+                return this.jdbcRepository.fetchOne(select);
+            });
     }
 }

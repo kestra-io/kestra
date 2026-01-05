@@ -1,5 +1,5 @@
 <template>
-    <ContextInfoContent :title="routeInfo.title">
+    <ContextInfoContent :title="routeInfo.title" ref="contextInfoRef">
         <template v-if="isOnline" #back-button>
             <button
                 class="back-button"
@@ -7,7 +7,7 @@
                 @click="goBack"
                 :disabled="!canGoBack"
                 :class="{disabled: !canGoBack}"
-                :aria-label="t('common.back')"
+                :aria-label="$t('common.back')"
             >
                 <span class="back-icon" aria-hidden="true">‹</span>
             </button>
@@ -21,12 +21,12 @@
                     }
                 }"
                 target="_blank"
-                :aria-label="t('common.openInNewTab')"
+                :aria-label="$t('common.openInNewTab')"
             >
                 <OpenInNew class="blank" />
             </router-link>
         </template>
-        <div ref="docWrapper" class="docs-controls">
+        <div class="docs-controls">
             <template v-if="isOnline">
                 <ContextDocsSearch />
                 <DocsMenu />
@@ -42,9 +42,8 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, computed, getCurrentInstance, onUnmounted, onMounted, nextTick} from "vue";
+    import {ref, watch, computed, getCurrentInstance, onUnmounted, onMounted} from "vue";
     import {useDocStore} from "../../stores/doc";
-    import {useI18n} from "vue-i18n";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import {MDCRenderer, getMDCParser} from "@kestra-io/ui-libs";
     import DocsLayout from "./DocsLayout.vue";
@@ -55,28 +54,30 @@
     import ContextInfoContent from "../ContextInfoContent.vue";
     import ContextChildTableOfContents from "./ContextChildTableOfContents.vue";
 
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
     import {useNetwork} from "@vueuse/core"
+    import {useScrollMemory} from "../../composables/useScrollMemory"
     const {isOnline} = useNetwork()
     
     import Markdown from "../../components/layout/Markdown.vue";
     const OFFLINE_MD = "You're seeing this because you are offline.\n\nHere's how to configure the right sidebar in Kestra to include custom links:\n\n```yaml\nkestra:\n  ee:\n    right-sidebar:\n      custom-links:\n        internal-docs:\n          title: \"Internal Docs\"\n          url: \"https://kestra.io/docs/\"\n        support-portal:\n          title: \"Support portal\"\n          url: \"https://kestra.io/support/\"\n```";
 
     const docStore = useDocStore();
-    const {t} = useI18n({useScope: "global"});
 
-    const docWrapper = ref<HTMLDivElement | null>(null);
+    const contextInfoRef = ref<InstanceType<typeof ContextInfoContent> | null>(null);
     const docHistory = ref<string[]>([]);
     const currentHistoryIndex = ref(-1);
     const ast = ref<any>(undefined);
 
     const pageMetadata = computed(() => docStore.pageMetadata);
     const docPath = computed(() => docStore.docPath);
+    
     const routeInfo = computed(() => ({
         title: pageMetadata.value?.title ?? t("docs"),
     }));
     const canGoBack = computed(() => docHistory.value.length > 1 && currentHistoryIndex.value > 0);
-
-
     const addToHistory = (path: string) => {
         // Always store the path, even empty ones
         const pathToAdd = path || "";
@@ -179,8 +180,10 @@
 
         addToHistory(val);
         refreshPage(val);
-        nextTick(() => docWrapper.value?.scrollTo(0, 0));
     }, {immediate: true});
+
+    const scrollableElement = computed(() => contextInfoRef.value?.contentRef ?? null)
+    useScrollMemory(ref("context-panel-docs"), scrollableElement as any)
 </script>
 
 <style scoped lang="scss">

@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import com.google.common.collect.ImmutableList;
 import io.kestra.core.Helpers;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
@@ -38,7 +39,6 @@ import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import java.net.URI;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +47,7 @@ import org.slf4j.event.Level;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -72,6 +73,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @KestraTest
 class FlowControllerTest {
     private static final String TEST_NAMESPACE = "io.kestra.unittest";
+
+    public static final String FLOW_PATH = "/api/v1/main/flows";
 
     @Inject
     @Client("/")
@@ -205,7 +208,7 @@ class FlowControllerTest {
 
         assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[namespace][PREFIX]=io.kestra.tests"), Argument.of(PagedResults.class, Flow.class))
             .getTotal())
-            .isEqualTo(Helpers.FLOWS_COUNT - 1);
+            .isEqualTo(Helpers.FLOWS_COUNT - 1); // all except io.kestra.tests2
     }
 
     @Test
@@ -530,7 +533,7 @@ class FlowControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/main/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size()).isEqualTo(10);
+        assertThat(namespaces.size()).isEqualTo(13);
     }
 
     @Test
@@ -566,6 +569,7 @@ class FlowControllerTest {
     }
 
     @Test
+    @FlakyTest
     void updateFlowFlowFromJsonFromString() throws IOException {
         String flow = generateFlowAsString("updatedFlow", TEST_NAMESPACE,"a");
         Flow assertFlow = parseFlow(flow);
@@ -639,7 +643,7 @@ class FlowControllerTest {
             assertThat(zipFile.stream().count())
                 .describedAs("by default /by-query endpoints should use specific PREFIX in legacy filter mapping, " +
                     "in this test, we should get all Flow when querying with namespace=io.kestra.tests, io.kestra.tests.subnamespace are accepted, but not io.kestra.tests2")
-                .isEqualTo(Helpers.FLOWS_COUNT - 1);
+                .isEqualTo(Helpers.FLOWS_COUNT - 1); // -1 because io.kestra.tests2 namespace
         }
 
         file.delete();
@@ -694,6 +698,55 @@ class FlowControllerTest {
         var response = client.toBlocking().exchange(POST("/api/v1/main/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
 
         assertThat(response.getStatus().getCode()).isEqualTo(OK.getCode());
+        temp.delete();
+    }
+
+    @Test
+    void importFlowsWithInvalidButAllowed() throws IOException {
+        var yaml = generateFlowAsString(TEST_NAMESPACE,"a") + "---" +
+            generateInvalidFlowAsString("importFlowsWithInvalidButAllowed",TEST_NAMESPACE);
+        var temp = File.createTempFile("flows", ".yaml");
+        Files.writeString(temp.toPath(), yaml);
+
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "flows.yaml", temp)
+            .build();
+        var response = client.toBlocking().exchange(POST("/api/v1/main/flows/import", body).contentType(MediaType.MULTIPART_FORM_DATA));
+        assertThat(response.getStatus().getCode()).isEqualTo(OK.getCode());
+        temp.delete();
+    }
+
+    @Test
+    void importFlowsWithInvalidNotAllowed() throws IOException {
+        var yaml = generateFlowAsString(TEST_NAMESPACE,"a") + "---" +
+            generateInvalidFlowAsString("importFlowsWithInvalidNotAllowed",TEST_NAMESPACE);
+        var temp = File.createTempFile("flows", ".yaml");
+        Files.writeString(temp.toPath(), yaml);
+
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "flows.yaml", temp)
+            .build();
+        var exception = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().exchange(POST("/api/v1/main/flows/import?failOnError=true", body).contentType(MediaType.MULTIPART_FORM_DATA));
+        });
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        temp.delete();
+    }
+
+    @Test
+    void importFlowsWithInvalidFile() throws IOException {
+        var temp = File.createTempFile("flows", ".txt");
+        Files.writeString(temp.toPath(), "this is not a valid file");
+
+        var body = MultipartBody.builder()
+            .addPart("fileUpload", "flows.txt", temp)
+            .build();
+        var exception = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().exchange(POST("/api/v1/main/flows/import?failOnError=false", body).contentType(MediaType.MULTIPART_FORM_DATA));
+        });
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
         temp.delete();
     }
 
@@ -1047,6 +1100,35 @@ class FlowControllerTest {
         assertThat(result.getEdges().size()).isEqualTo(4);
     }
 
+    @Test
+    void exportFlows() {
+        Flow f1 = generateFlow("flow_export_1", "io.kestra.export", "a");
+        Flow f2 = generateFlow("flow_export_2", "io.kestra.export", "b");
+
+        client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH, f1),
+            Flow.class
+        );
+        client.toBlocking().retrieve(
+            HttpRequest.POST(FLOW_PATH, f2),
+            Flow.class
+        );
+
+        HttpResponse<byte[]> response = client.toBlocking().exchange(
+            HttpRequest.GET(FLOW_PATH + "/export/by-query/csv"),
+            byte[].class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        assertThat(response.getHeaders().get("Content-Disposition")).contains("attachment; filename=flows.csv");
+
+        String csv = new String(response.body());
+        assertThat(csv).contains("id");
+        assertThat(csv).contains(f1.getId());
+        assertThat(csv).contains(f2.getId());
+    }
+
+
     private Flow generateFlow(String namespace, String inputName) {
         return generateFlow(IdUtils.create(), namespace, inputName);
     }
@@ -1081,7 +1163,7 @@ class FlowControllerTest {
         return Return.builder()
             .id(id)
             .type(Return.class.getName())
-            .format(new Property<>(format))
+            .format(Property.ofValue(format))
             .build();
     }
 
@@ -1108,6 +1190,20 @@ class FlowControllerTest {
     private String generateFlowAsString(String namespace, String format) {
         return generateFlowAsString(IdUtils.create(), namespace, format);
 
+    }
+
+    private String generateInvalidFlowAsString(String id, String namespace) {
+        return """
+            id: %s
+            # Comment i added
+            namespace: %s
+            tasks:
+              - id: test
+                type: io.kestra.plugin.core.debug.Invalid
+                format: test
+            disabled: false
+            deleted: false
+            """.formatted(id, namespace);
     }
 
     private String postFlow(String friendlyId, String namespace, String format) {

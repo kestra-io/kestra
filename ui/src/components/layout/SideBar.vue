@@ -4,7 +4,7 @@
         id="side-menu"
         :menu
         @update:collapsed="onToggleCollapse"
-        width="268px"
+        width="280px"
         :collapsed="collapsed"
         linkComponentName="LeftMenuLink"
         hideToggle
@@ -28,16 +28,11 @@
 </template>
 
 <script setup lang="ts">
-    import {
-        onUpdated,
-        ref,
-        computed, h
-    } from "vue";
+    import {onUpdated, computed, h, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute} from "vue-router";
-
+    import {useMediaQuery} from "@vueuse/core";
     import {SidebarMenu} from "vue-sidebar-menu";
-
     import StarOutline from "vue-material-design-icons/StarOutline.vue";
 
     import Environment from "./Environment.vue";
@@ -123,7 +118,18 @@
         ];
     });
 
-    const collapsed = ref(localStorage.getItem("menuCollapsed") === "true")
+    const collapsed = computed({
+        get: () => layoutStore.sideMenuCollapsed,
+        set: (v: boolean) => layoutStore.setSideMenuCollapsed(v),
+    })
+
+    const isSmallScreen = useMediaQuery("(max-width: 768px)")
+
+    watch(() => $route.name, (newRoute, oldRoute) => {
+        if (newRoute !== oldRoute && isSmallScreen.value && !collapsed.value) {
+            onToggleCollapse(true)
+        }
+    })
 </script>
 
 <style scoped lang="scss">

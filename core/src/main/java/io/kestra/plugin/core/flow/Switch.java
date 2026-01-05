@@ -102,7 +102,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     @Schema(
         title = "The map of keys and a list of tasks to be executed if the conditional `value` matches the key"
     )
-    @PluginProperty
+    @PluginProperty(additionalProperties = Task[].class)
     private Map<String, List<Task>> cases;
 
     @Valid
@@ -123,7 +123,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     }
 
     private String rendererValue(RunContext runContext) throws IllegalVariableEvaluationException {
-        return runContext.render(this.value).as(String.class).orElseThrow();
+        return runContext.render(this.value).skipCache().as(String.class).orElseThrow();
     }
 
     @Override

@@ -4,9 +4,22 @@
             <strong>{{ $t('disabled flow title') }}</strong><br>
             {{ $t('disabled flow desc') }}
         </el-alert>
-
+        <div class="flow-execution-checks-alerts">
+            <el-alert v-for="alert in checks || []" :type="alert.style.toLowerCase()" showIcon :closable="false" :key="alert">
+                {{ alert.message }}
+            </el-alert>
+        </div>
         <el-form labelPosition="top" :model="inputs" ref="form" @submit.prevent="false">
-            <InputsForm :initialInputs="flow.inputs" :selectedTrigger="selectedTrigger" :flow="flow" v-model="inputs" :executeClicked="executeClicked" @confirm="onSubmit($refs.form)" @update:model-value-no-default="values => inputsNoDefaults=values" />
+            <InputsForm
+                :initialInputs="flow.inputs"
+                :selectedTrigger="selectedTrigger"
+                :flow="flow"
+                v-model="inputs"
+                :executeClicked="executeClicked"
+                @confirm="onSubmit($refs.form)"
+                @update:model-value-no-default="values => inputsNoDefaults=values"
+                @update:checks="values => checks=values"
+            />
 
             <el-collapse v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
@@ -46,9 +59,8 @@
                 <div class="right-align">
                     <el-form-item class="submit">
                         <el-button
-                            :data-test-id="buttonTestId"
                             :icon="buttonIcon"
-                            :disabled="!flowCanBeExecuted"
+                            :disabled="!flowCanBeExecuted || hasBlockingChecks()"
                             :class="{'flow-run-trigger-button': true, 'onboarding-glow': coreStore.guidedProperties.tourStarted}"
                             type="primary"
                             nativeType="submit"
@@ -68,7 +80,7 @@
 
 <script setup>
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Flash from "vue-material-design-icons/Flash.vue";
+    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
 </script>
 
 <script>
@@ -99,7 +111,7 @@
             replaySubmit: {type: Function, default: null},
             selectedTrigger: {type: Object, default: undefined},
             buttonText: {type: String, default: "launch execution"},
-            buttonIcon: {type: [Object, Function], default: () => Flash},
+            buttonIcon: {type: [Object, Function], default: () => LightningBolt},
             buttonTestId: {type: String, default: "execute-dialog-button"},
         },
         data() {
@@ -113,6 +125,7 @@
                 collapseName: undefined,
                 newTab: localStorage.getItem(storageKeys.EXECUTE_FLOW_BEHAVIOUR) === executeFlowBehaviours.NEW_TAB,
                 executeClicked: false,
+                checks: []
             };
         },
         emits: ["executionTrigger", "updateInputs", "updateLabels"],
@@ -141,6 +154,9 @@
             }
         },
         methods: {
+            hasBlockingChecks() {
+                return this.checks.filter(check => check.behavior === "BLOCK_EXECUTION").length > 0;
+            },
             getExecutionLabels() {
                 if (!this.execution.labels) {
                     return [];
@@ -174,6 +190,9 @@
             },
             onSubmit(formRef) {
                 if (formRef && this.flowCanBeExecuted) {
+                    this.checks = [];
+                    this.executeClicked = false;
+                    this.coreStore.message = null;
                     formRef.validate((valid) => {
                         if (!valid) {
                             return false;
@@ -184,16 +203,16 @@
                                 formRef,
                                 id: this.flow.id,
                                 namespace: this.flow.namespace,
-                                inputs: this.selectedTrigger?.inputs ? { ...this.selectedTrigger.inputs, ...this.inputsNoDefaults } : this.inputsNoDefaults,
+                                inputs: this.selectedTrigger?.inputs ? {...this.selectedTrigger.inputs, ...this.inputsNoDefaults} : this.inputsNoDefaults,
                                 labels: [...new Set(
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
-                                )],
+                                ), "system.from:ui"],
                                 scheduleDate: this.scheduleDate
                             });
                         } else {
-                            executeTask(this, this.flow, this.selectedTrigger?.inputs ? { ...this.selectedTrigger.inputs, ...this.inputsNoDefaults } : this.inputsNoDefaults, {
+                            executeTask(this, this.flow, this.selectedTrigger?.inputs ? {...this.selectedTrigger.inputs, ...this.inputsNoDefaults} : this.inputsNoDefaults, {
                                 redirect: this.redirect,
                                 newTab: this.newTab,
                                 id: this.flow.id,
@@ -202,11 +221,12 @@
                                     this.executionLabels
                                         .filter(label => label.key && label.value)
                                         .map(label => `${label.key}:${label.value}`)
-                                )],
+                                ), "system.from:ui"],
                                 scheduleDate: this.$moment(this.scheduleDate).tz(localStorage.getItem(storageKeys.TIMEZONE_STORAGE_KEY) ?? moment.tz.guess()).toISOString(true),
                                 nextStep: true,
                             });
                         }
+                        this.executeClicked = true;
                         this.$emit("executionTrigger");
                     });
                 }
@@ -243,6 +263,9 @@
 </script>
 
 <style scoped lang="scss">
+    .flow-execution-checks-alerts {
+        margin-bottom: 1rem;
+    }
     :deep(.el-collapse) {
         border-radius: var(--bs-border-radius-lg);
         border: 1px solid var(--ks-border-primary);

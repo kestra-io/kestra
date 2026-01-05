@@ -162,4 +162,13 @@ public class RetryCaseTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
+    public void retryWithFlowableErrors(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(3);
+        assertThat(execution.getTaskRunList().get(2).getAttempts()).satisfiesExactly(
+            attempt1 -> assertThat(attempt1.getState().getCurrent()).isEqualTo(State.Type.FAILED),
+            attempt2 -> assertThat(attempt2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS)
+        );
+        assertThat(execution.getTaskRunList().get(2).attemptNumber()).isEqualTo(2);
+    }
 }

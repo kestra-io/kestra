@@ -145,7 +145,7 @@ class PluginControllerTest {
         Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
         assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-        assertThat(properties.size()).isEqualTo(18);
+        assertThat(properties.size()).isEqualTo(19);
         assertThat(properties.get("id").size()).isEqualTo(5);
         assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
     }
@@ -211,7 +211,7 @@ class PluginControllerTest {
 
         assertThat(doc.getSchema().getProperties().size()).isEqualTo(3);
         Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
-        assertThat(properties.size()).isEqualTo(8);
+        assertThat(properties.size()).isEqualTo(9);
         assertThat(((Map<String, Object>) properties.get("name")).get("$deprecated")).isEqualTo(true);
     }
 }

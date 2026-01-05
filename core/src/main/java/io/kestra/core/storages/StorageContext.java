@@ -3,7 +3,7 @@ package io.kestra.core.storages;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.utils.Hashing;
 import io.kestra.core.utils.Slugify;
 import jakarta.annotation.Nullable;
@@ -63,9 +63,9 @@ public class StorageContext {
     }
 
     /**
-     * Factory method for constructing a new {@link StorageContext} scoped to a given {@link Flow}.
+     * Factory method for constructing a new {@link StorageContext} scoped to a given {@link FlowId}.
      */
-    public static StorageContext forFlow(Flow flow) {
+    public static StorageContext forFlow(FlowId flow) {
         return new StorageContext(flow.getTenantId(), flow.getNamespace(), flow.getId());
     }
 
@@ -226,7 +226,7 @@ public class StorageContext {
     }
 
     /**
-     * Gets the base storage URI for the current {@link io.kestra.core.models.flows.Flow}.
+     * Gets the base storage URI for the current {@link FlowId}.
      *
      * @return the {@link URI}.
      */

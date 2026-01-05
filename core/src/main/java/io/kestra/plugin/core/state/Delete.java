@@ -17,7 +17,7 @@ import java.io.FileNotFoundException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a state from the state store (Deprecated)."
+    title = "Delete a state from the state store (Deprecated, use KV store instead)."
 )
 @Plugin(
     examples = {
@@ -41,6 +41,7 @@ import java.io.FileNotFoundException;
     },
     aliases = "io.kestra.core.tasks.states.Delete"
 )
+@Deprecated(since = "1.1.0", forRemoval = true)
 public class Delete extends AbstractState implements RunnableTask<Delete.Output> {
     @Schema(
         title = "Raise an error if the state is not found."

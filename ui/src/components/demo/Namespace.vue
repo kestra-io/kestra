@@ -1,7 +1,7 @@
 <template>
     <Layout
-        :title="t(`demos.namespace.${props.tab}.title`)"
-        :image="{source: sourceImg, alt: t(`demos.namespace.${props.tab}.title`)}"
+        :title="$t(`demos.namespace.${props.tab}.title`)"
+        :image="{source: sourceImg, alt: $t(`demos.namespace.${props.tab}.title`)}"
         :video="videoSource"
     >
         <template #message>
@@ -11,13 +11,11 @@
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
     import {computed} from "vue";
     import Layout from "./Layout.vue";
     import {useDocStore} from "../../stores/doc";
     import sourceImg from "../../assets/demo/namespace.png";
 
-    const {t} = useI18n();
     const docStore = useDocStore();
 
     docStore.docId = "namespace.management";

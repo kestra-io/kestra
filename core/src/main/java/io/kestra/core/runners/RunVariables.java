@@ -5,12 +5,11 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -74,7 +73,7 @@ public final class RunVariables {
     }
 
     /**
-     * Creates an immutable map representation of the given {@link Flow}.
+     * Creates an immutable map representation of the given {@link FlowInterface}.
      *
      * @param flow The flow from which to create variables.
      * @return a new immutable {@link Map}.
@@ -100,7 +99,7 @@ public final class RunVariables {
      * @return a new immutable {@link Map}.
      */
     static Map<String, Object> of(final AbstractTrigger trigger) {
-        return ImmutableMap.of(
+        return Map.of(
             "id", trigger.getId(),
             "type", trigger.getType()
         );
@@ -282,12 +281,15 @@ public final class RunVariables {
                 }
 
                 if (flow != null && flow.getInputs() != null) {
+                    // Create a new PropertyContext with 'flow' variables which are required by some pebble expressions.
+                    PropertyContextWithVariables context = new PropertyContextWithVariables(propertyContext, Map.of("flow", RunVariables.of(flow)));
+
                     // we add default inputs value from the flow if not already set, this will be useful for triggers
                     flow.getInputs().stream()
                         .filter(input -> input.getDefaults() != null && !inputs.containsKey(input.getId()))
                         .forEach(input -> {
                             try {
-                                inputs.put(input.getId(), FlowInputOutput.resolveDefaultValue(input, propertyContext));
+                                inputs.put(input.getId(), FlowInputOutput.resolveDefaultValue(input, context));
                             } catch (IllegalVariableEvaluationException e) {
                                 // Silent catch, if an input depends on another input, or a variable that is populated at runtime / input filling time, we can't resolve it here.
                             }
@@ -324,7 +326,7 @@ public final class RunVariables {
                 }
 
                 if (flow == null) {
-                    Flow flowFromExecution = Flow.builder()
+                    FlowInterface flowFromExecution = GenericFlow.builder()
                         .id(execution.getFlowId())
                         .tenantId(execution.getTenantId())
                         .revision(execution.getFlowRevision())
@@ -391,4 +393,20 @@ public final class RunVariables {
     }
 
     private RunVariables(){}
+
+    private record PropertyContextWithVariables(
+        PropertyContext delegate,
+        Map<String, Object> variables
+    ) implements PropertyContext {
+
+        @Override
+        public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+            return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
+        }
+
+        @Override
+        public Map<String, Object> render(Map<String, Object> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
+            return delegate.render(inline, variables.isEmpty() ? this.variables : variables);
+        }
+    }
 }

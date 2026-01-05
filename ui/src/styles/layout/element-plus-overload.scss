@@ -123,7 +123,7 @@
     --el-input-bg-color: var(--ks-background-input);
 }
 
-.el-input, .el-input-number, .el-select, .el-date-editor.el-input {
+.el-input, .el-input-number, .el-date-editor.el-input {
 
     background-color: var(--ks-background-body);
     width: 100%;
@@ -732,9 +732,12 @@ form.ks-horizontal {
 
     &.is-light {
         border: 1px solid var(--ks-border-primary);
-
+        background: var(--ks-dropdown-background);
+        box-shadow: rgba(0, 0, 0, 0.09) 0px 3px 12px;
+        
         .el-popper__arrow::before {
             border: 1px solid var(--ks-border-primary);
+            background-color: var(--ks-dropdown-background);
         }
     }
 
@@ -801,7 +804,7 @@ form.ks-horizontal {
 
     .el-dropdown-menu {
         padding: 0;
-        background-color: transparent;
+        background-color: var(--ks-dropdown-background);
     }
 
     // no longer require focus to get hover effect on dropdowns
@@ -824,7 +827,7 @@ form.ks-horizontal {
         }
 
         &:not(.is-disabled):hover {
-            background-color: var(--el-dropdown-menuItem-hover-fill);
+            background-color: var(--ks-dropdown-background-hover);
         }
     }
 }
@@ -1026,7 +1029,7 @@ form.ks-horizontal {
 
         @include res(lg) {
             width: 35%;
-            min-width: 800px;
+            min-width: auto;
         }
     }
 }
@@ -1085,6 +1088,25 @@ form.ks-horizontal {
     --el-dialog-border-radius: var(--bs-border-radius-lg);
     background-color: var(--ks-background-card);
 
+    &.custom-dialog {
+        background-color: var(--ks-background-panel);
+
+        .el-dialog__header {
+            background: var(--ks-background-panel);
+            margin-bottom: 0;
+
+            .el-dialog__headerbtn {
+                svg {
+                    color: var(--ks-content-secondary);
+                }
+            }
+        }
+        .el-dialog__title {
+            font-size: 1rem;
+            font-weight: 700;
+        }
+    }
+
     .el-dialog__header {
         padding: 1rem;
         margin: -1rem -1rem 1rem;
@@ -1094,15 +1116,23 @@ form.ks-horizontal {
         font-size: var(--font-size-lg);
 
         .el-dialog__headerbtn {
-            height: 62px;
-            width: 62px;
+    height: 62px;
+    width: 62px;
+
+    .el-dialog__close { 
+       
+        color: var(--ks-dialog-headerbtn) !important; 
+        
+       
+        &:hover {
+            color: var(--ks-dialog-headerbtn-hover) !important;
         }
+    }
+}
     }
 
     .el-dialog__title {
-        html.dark & {
-            color: $base-white
-        }
+        color: var(--ks-content-primary);
     }
 
     .bottom-buttons {

@@ -1,4 +1,3 @@
-
 <template>
     <el-form labelPosition="top" class="w-100">
         <template v-if="sortedProperties">
@@ -11,7 +10,7 @@
             </template>
 
             <el-collapse v-model="activeNames" v-if="requiredProperties.length && (optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length)" class="collapse">
-                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="t('no_code.sections.connection')">
+                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
                     <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -20,7 +19,7 @@
                         </Wrapper>
                     </template>
                 </el-collapse-item>
-                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="t('no_code.sections.optional')">
+                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
                     <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -29,8 +28,16 @@
                         </Wrapper>
                     </template>
                 </el-collapse-item>
-
-                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="t('no_code.sections.deprecated')">
+                <el-collapse-item name="general" v-if="generalProperties?.length" :title="$t('no_code.sections.general')">
+                    <template v-for="[fieldKey, fieldSchema] in generalProperties" :key="fieldKey">
+                        <Wrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </Wrapper>
+                    </template>
+                </el-collapse-item>
+                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <Wrapper>
                             <template #tasks>
@@ -45,14 +52,12 @@
         <template v-else-if="typeof modelValue === 'object' && modelValue !== null && !Array.isArray(modelValue)">
             <TaskDict
                 :modelValue
-                :task
                 @update:model-value="
                     (value) => $emit('update:modelValue', value)
                 "
                 :root
                 :schema="schema ?? {}"
                 :required
-                :definitions
             />
         </template>
     </el-form>
@@ -60,7 +65,6 @@
 
 <script setup lang="ts">
     import {computed, inject, ref} from "vue";
-    import {useI18n} from "vue-i18n";
     import TaskDict from "./TaskDict.vue";
     import Wrapper from "./Wrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
@@ -68,7 +72,6 @@
     import {DATA_TYPES_MAP_INJECTION_KEY} from "../../injectionKeys";
 
     defineOptions({
-        name: "TaskObject",
         inheritAttrs: false,
     });
 
@@ -82,9 +85,6 @@
         modelValue?: Model;
         required?: boolean;
         schema?: Schema;
-        definitions?: any;
-        // passed-through by parent in some contexts
-        task?: any;
         root?: string;
     }>();
 
@@ -92,19 +92,23 @@
         (e: "update:modelValue", value: Model): void;
     }>();
 
-    const {t} = useI18n();
-
     const activeNames = ref<string[]>([]);
 
-    const FIRST_FIELDS = ["id", "forced", "on", "type"] as const;
+    const FIRST_FIELDS = ["id", "forced", "on", "field", "type"];
 
     type Entry = [string, any];
 
     function sortProperties(properties: Entry[], required?: string[]): Entry[] {
         if (!properties?.length) return [];
         return properties.slice().sort((a, b) => {
-            if (FIRST_FIELDS.includes(a[0] as any)) return -1;
-            if (FIRST_FIELDS.includes(b[0] as any)) return 1;
+            if (FIRST_FIELDS.includes(a[0]) && !FIRST_FIELDS.includes(b[0])) return -1;
+            if (FIRST_FIELDS.includes(b[0]) && !FIRST_FIELDS.includes(a[0])) return 1;
+
+            const aIndex = FIRST_FIELDS.indexOf(a[0]);
+            const bIndex = FIRST_FIELDS.indexOf(b[0]);
+            if(aIndex !== -1 && bIndex !== -1){
+                return aIndex - bIndex;
+            }
 
             const aRequired = (required || []).includes(a[0]);
             const bRequired = (required || []).includes(b[0]);
@@ -127,6 +131,16 @@
             return value.allOf.some(isDeprecated);
         }
         return value?.$deprecated;
+    }
+
+    function isPartOfGroup(value: any, groups: string[]) {
+        if (value?.allOf) {
+            return value.allOf.some((item: any) => isPartOfGroup(item, groups));
+        }
+        if (value?.anyOf) {
+            return value.anyOf.some((item: any) => isPartOfGroup(item, groups));
+        }
+        return value?.$group && groups.includes(value.$group);
     }
 
     const filteredProperties = computed<Entry[]>(() => {
@@ -163,9 +177,17 @@
     const protectedRequiredProperties = computed<Entry[]>(() => {
         return requiredProperties.value.length ? requiredProperties.value : sortedProperties.value;
     });
+    
+    const connectionProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && isPartOfGroup(v, ["connection"]));
+    });
 
     const optionalProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && v.$group !== "connection");
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && !isPartOfGroup(v, ["core","connection"]));
+    });
+
+    const generalProperties = computed<Entry[]>(() => {
+        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && !isRequired(p) && !isDeprecated(v) && isPartOfGroup(v, ["core"]));
     });
 
     const deprecatedProperties = computed<Entry[]>(() => {
@@ -173,9 +195,6 @@
         return props.merge ? [] : sortedProperties.value.filter(([k, v]) => v && isDeprecated(v) && obj[k] !== undefined);
     });
 
-    const connectionProperties = computed<Entry[]>(() => {
-        return props.merge ? [] : sortedProperties.value.filter(([p, v]) => v && v.$group === "connection" && !isRequired(p));
-    });
 
     function onInput(value: any) {
         emit("update:modelValue", collapseEmptyValues(value));
@@ -196,7 +215,6 @@
             fieldKey: key,
             task: props.modelValue,
             schema: schema,
-            definitions: props.definitions,
             required: props.schema?.required,
         } as const;
     }

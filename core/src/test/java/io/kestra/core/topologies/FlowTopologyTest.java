@@ -1,13 +1,14 @@
 package io.kestra.core.topologies;
 
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowTopology;
-import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 public class FlowTopologyTest {
     @Inject
     private FlowService flowService;
@@ -56,15 +57,8 @@ public class FlowTopologyTest {
 
         // When
         computeAndSaveTopologies(List.of(child, parent, unrelatedFlow));
-        System.out.println();
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         // Then
         assertThat(dependencies.map(FlowTopologyTestData::of))
@@ -123,16 +117,8 @@ public class FlowTopologyTest {
 
         // When
         computeAndSaveTopologies(List.of(subChild, child, superParent, parent, unrelatedFlow));
-        System.out.println();
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
-        System.out.println();
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         // Then
         assertThat(dependencies.map(FlowTopologyTestData::of))
@@ -180,15 +166,7 @@ public class FlowTopologyTest {
         // When
         computeAndSaveTopologies(List.of(triggeredFlowOne, triggeredFlowTwo));
 
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
-
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", triggeredFlowTwo.getId(), false, true).toList();
-
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         // Then
         assertThat(dependencies.stream().map(FlowTopologyTestData::of))
@@ -211,7 +189,7 @@ public class FlowTopologyTest {
                   - id: a
                     type: BOOL
                     defaults: true
-                
+
                   - id: b
                     type: BOOL
                     defaults: "{{ inputs.a == true }}"
@@ -251,21 +229,71 @@ public class FlowTopologyTest {
 
         // When
         computeAndSaveTopologies(List.of(child, parent, unrelatedFlow));
-        System.out.println();
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         var dependencies = flowService.findDependencies(tenantId, "io.kestra.unittest", parent.getId(), false, true);
-        flowTopologyRepository.findAll(tenantId).forEach(topology -> {
-            System.out.println(FlowTopologyTestData.of(topology));
-        });
 
         // Then
         assertThat(dependencies.map(FlowTopologyTestData::of))
             .containsExactlyInAnyOrder(
                 new FlowTopologyTestData(parent, child)
             );
+    }
+
+    @Test
+    void testNamespaceGraph() throws FlowProcessingException {
+        var tenantId = randomTenantId();
+
+        var subChild = flowService.importFlow(tenantId,
+            """
+                id: sub_child
+                namespace: io.kestra.unittest.sub
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: Sub Child
+                """);
+
+        var child = flowService.importFlow(tenantId,
+            """
+                id: child
+                namespace: io.kestra.unittest
+                tasks:
+                  - id: callSub
+                    type: io.kestra.core.tasks.flows.Flow
+                    flowId: sub_child
+                    namespace: io.kestra.unittest.sub
+                """);
+
+        var parent = flowService.importFlow(tenantId,
+            """
+                id: parent
+                namespace: io.kestra.unittest
+                tasks:
+                  - id: callChild
+                    type: io.kestra.core.tasks.flows.Flow
+                    flowId: child
+                    namespace: io.kestra.unittest
+                """);
+
+        var unrelated = flowService.importFlow(tenantId,
+            """
+                id: unrelated
+                namespace: io.kestra.unittest
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: Not part of deps
+                """);
+
+        computeAndSaveTopologies(List.of(subChild, child, parent, unrelated));
+
+        FlowTopologyGraph graph = flowTopologyService.namespaceGraph(tenantId, "io.kestra.unittest");
+
+        assertThat(graph.getNodes())
+            .extracting(FlowNode::getId)
+            .contains("parent", "child", "sub_child", "unrelated");
+
+        assertThat(graph.getEdges().size()).isEqualTo(2);
     }
 
     /**

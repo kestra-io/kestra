@@ -62,13 +62,16 @@ public class MiscController {
     FeatureUsageReport featureUsageReport;
 
     @Inject
-    BasicAuthService basicAuthService;
+    Optional<BasicAuthService> basicAuthService = Optional.empty();
 
     @Inject
     Optional<TemplateRepositoryInterface> templateRepository;
 
     @Inject
     NamespaceUtils namespaceUtils;
+
+    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:P30D}")
+private String chartDefaultDuration;
 
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
@@ -97,6 +100,10 @@ public class MiscController {
     @io.micronaut.context.annotation.Value("${kestra.hidden-labels.prefixes:}")
     private List<String> hiddenLabelsPrefixes;
 
+    @io.micronaut.context.annotation.Value("${kestra.queue.type}")
+    @Nullable
+    protected String queueType;
+
     @Inject
     private PluginRegistry pluginRegistry;
 
@@ -124,11 +131,14 @@ public class MiscController {
                 .max(this.maxPreviewRows)
                 .build())
             .isAiEnabled(applicationContext.containsBean(AiController.class))
-            .isBasicAuthInitialized(basicAuthService.isBasicAuthInitialized())
+            .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
-            .pluginsHash(pluginRegistry.hash());
+            .pluginsHash(pluginRegistry.hash())
+            .chartDefaultDuration(this.chartDefaultDuration)
+            .isConcurrencyViewEnabled(!this.queueType.equals("kafka"))
+            ;
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -160,7 +170,9 @@ public class MiscController {
     public HttpResponse<Void> createBasicAuth(
         @RequestBody @Body BasicAuthCredentials basicAuthCredentials
     ) {
-        basicAuthService.save(basicAuthCredentials);
+        basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
+            .save(basicAuthCredentials);
 
         return HttpResponse.noContent();
     }
@@ -170,7 +182,9 @@ public class MiscController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
     public List<String> getBasicAuthConfigErrors() {
-        return basicAuthService.validationErrors();
+        return basicAuthService
+            .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
+            .validationErrors();
     }
 
     @Getter
@@ -184,6 +198,8 @@ public class MiscController {
         EditionProvider.Edition edition;
 
         String commitId;
+
+        String chartDefaultDuration;
 
         ZonedDateTime commitDate;
 
@@ -214,6 +230,8 @@ public class MiscController {
         Boolean isBasicAuthInitialized;
 
         Long pluginsHash;
+
+        Boolean isConcurrencyViewEnabled;
     }
 
     @Value

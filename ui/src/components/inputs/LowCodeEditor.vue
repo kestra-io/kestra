@@ -89,21 +89,17 @@
 </template>
 
 <script setup lang="ts">
-    // Core
-    import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
+    import {nextTick, onMounted, ref, inject, watch} from "vue";
 
     import {useI18n} from "vue-i18n";
     import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
 
-    // @ts-expect-error no types for SearchField yet
     import SearchField from "../layout/SearchField.vue";
-    // @ts-expect-error no types for LogLevelSelector yet
     import LogLevelSelector from "../logs/LogLevelSelector.vue";
     // @ts-expect-error no types for TaskRunDetails yet
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
-    // @ts-expect-error no types for Collapse yet
     import Collapse from "../layout/Collapse.vue";
     import Drawer from "../Drawer.vue";
     import Markdown from "../layout/Markdown.vue";
@@ -118,6 +114,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useExecutionsStore} from "../../stores/executions";
     import {usePlaygroundStore} from "../../stores/playground";
+    import {useToast} from "../../utils/toast";
 
     const router = useRouter();
 
@@ -129,7 +126,6 @@
     const executionsStore = useExecutionsStore();
     const playgroundStore = usePlaygroundStore();
 
-    // props
     const props = withDefaults(
         defineProps<{
             flowGraph: Record<string, any>;
@@ -163,14 +159,12 @@
         "swapped-task",
     ]);
 
-    // Vue instance variables
     const coreStore = useCoreStore();
-    const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
+    const toast = useToast();
     const {t} = useI18n();
 
     const pluginsStore = usePluginsStore();
 
-    // Components variables
     const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault);
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"));
     const vueFlow = ref<HTMLDivElement>();
@@ -185,7 +179,6 @@
     const isShowConditionOpen = ref(false);
     const selectedTask = ref();
 
-    // Init components
     onMounted(() => {
         // Regenerate graph on window resize
         observeWidth();
@@ -211,7 +204,6 @@
         },
     );
 
-    // Event listeners & Watchers
     const observeWidth = () => {
         if(vueFlow.value){
             const resizeObserver = new ResizeObserver(function () {
@@ -226,12 +218,11 @@
         }
     };
 
-    // Source edit functions
     const onDelete = (event: any) => {
         const flowParsed = YAML_UTILS.parse(props.source);
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
-            () => {
+            async () => {
                 const section = event.section ? event.section.toLowerCase() : SECTIONS.TASKS.toLowerCase();
                 if (
                     section === SECTIONS.TASKS.toLowerCase() &&
@@ -255,8 +246,7 @@
                     updatedYmlSource,
                     true,
                 );
-            },
-            () => {},
+            }
         );
     };
 

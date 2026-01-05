@@ -2,7 +2,7 @@
     <Navbar :title="routeInfo.title">
         <template #additional-right>
             <Action
-                v-if="canCreate"
+                v-if="!isOSS && canCreate"
                 :label="t('create')"
                 :to="{name: 'namespaces/create', params: {tab: 'edit'}}"
             />
@@ -10,9 +10,19 @@
     </Navbar>
 
     <el-row class="p-5">
-        <KestraFilter
-            :placeholder="t('search')"
-            legacyQuery
+        <KSFilter
+            :configuration="namespacesFilter"
+            :prefix="'namespaces-list'"
+            :tableOptions="{
+                chart: {shown: false},
+                columns: {shown: false},
+                refresh: {shown: false}
+            }"
+            :searchInputFullWidth="true"
+            :buttons="{
+                savedFilters: {shown: false},
+                tableOptions: {shown: false}
+            }"
         />
 
         <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
@@ -44,7 +54,7 @@
                         class="node"
                     >
                         <div class="d-flex">
-                            <DotsSquare class="me-2 icon" />
+                            <FolderOpenOutline class="me-2 icon" />
                             <span class="pe-3">
                                 {{ namespaceLabel(data.label) }}
                             </span>
@@ -74,14 +84,19 @@
 
     import Navbar from "../../../components/layout/TopNavBar.vue";
     import Action from "../../../components/namespaces/components/buttons/Action.vue";
-    import KestraFilter from "../../../components/filter/KestraFilter.vue";
-
+    import KSFilter from "../../../components/filter/components/KSFilter.vue";
+    import {useNamespacesFilter} from "../../../components/filter/configurations";
     import permission from "../../../models/permission";
     import action from "../../../models/action";
 
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import useRestoreUrl from "../../../composables/useRestoreUrl";
+
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";
+    
+    const namespacesFilter = useNamespacesFilter();
+    const {saveRestoreUrl} = useRestoreUrl({restoreUrl: true});
 
     interface Node {
         id: string;
@@ -115,14 +130,20 @@
 
     onMounted(() => loadData());
     watch(
-        () => route.query,
-        () => loadData(),
+        () => route.query.q,
+        () => {
+            loadData();
+            saveRestoreUrl();
+        },
+        {immediate: true}
     );
 
     const miscStore = useMiscStore();
     const systemNamespace = computed(
         () => miscStore.configs?.systemNamespace || "system",
     );
+    
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const namespacesHierarchy = computed(() => {
         if (namespaces.value === undefined || namespaces.value.length === 0) {

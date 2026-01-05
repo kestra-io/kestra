@@ -1,23 +1,11 @@
 <template>
-    <el-tooltip
-        effect="light"
-        :persistent="false"
-        transition=""
-        :hideAfter="0"
-        :content="$t('change state tooltip')"
-        rawContent
-        :placement="tooltipPosition"
+    <el-button
+        :disabled="!enabled"
+        :icon="SwapHorizontal"
+        @click="visible = !visible"
     >
-        <component
-            :is="component"
-            :icon="StateMachine"
-            @click="visible = !visible"
-            :disabled="!enabled"
-            class="ms-0 me-1"
-        >
-            {{ $t('change state') }}
-        </component>
-    </el-tooltip>
+        {{ $t('change state') }}
+    </el-button>
 
     <el-dialog v-if="enabled && visible" v-model="visible" :id="uuid" destroyOnClose :appendToBody="true">
         <template #header>
@@ -70,32 +58,19 @@
     import {useRouter, useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
 
-    import StateMachine from "vue-material-design-icons/StateMachine.vue";
+    import SwapHorizontal from "vue-material-design-icons/SwapHorizontal.vue";
 
-    import Status from "../../components/Status.vue";
-
-    import {State} from "@kestra-io/ui-libs";
+    import {State, Status} from "@kestra-io/ui-libs";
     import * as ExecutionUtils from "../../utils/executionUtils";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import {useToast} from "../../utils/toast";
     import {useAxios} from "../../utils/axios";
 
-    import {useExecutionsStore} from "../../stores/executions";
+    import {Execution, useExecutionsStore} from "../../stores/executions";
     import {useAuthStore} from "override/stores/auth";
 
-    const props = defineProps<{
-        component: string;
-        execution: {
-            id: string;
-            namespace: string;
-            flowId: string;
-            state: {
-                current: string;
-            };
-        };
-        tooltipPosition: string;
-    }>();
+    const props = defineProps<{ execution: Execution }>();
 
     const emit = defineEmits<{
         follow: [];

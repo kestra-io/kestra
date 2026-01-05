@@ -28,7 +28,7 @@ public class QueryFilterTest {
         InvalidQueryFiltersException e = assertThrows(
             InvalidQueryFiltersException.class,
             () -> QueryFilter.validateQueryFilters(List.of(filter), resource));
-        assertThat(e.formatedInvalidObjects()).contains("Operation");
+        assertThat(e.getMessage()).contains("Operation");
     }
 
     static Stream<Arguments> validOperationFilters() {
@@ -51,6 +51,9 @@ public class QueryFilterTest {
 
             Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.EQUALS).build(), Resource.FLOW),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.NOT_EQUALS).build(), Resource.FLOW),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.IN).build(), Resource.FLOW),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.NOT_IN).build(), Resource.FLOW),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.CONTAINS).build(), Resource.FLOW),
 
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.EQUALS).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.NOT_EQUALS).build(), Resource.EXECUTION),
@@ -58,6 +61,9 @@ public class QueryFilterTest {
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.ENDS_WITH).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.CONTAINS).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.REGEX).build(), Resource.EXECUTION),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.IN).build(), Resource.EXECUTION),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.NOT_IN).build(), Resource.EXECUTION),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.PREFIX).build(), Resource.EXECUTION),
 
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).operation(Op.EQUALS).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).operation(Op.NOT_EQUALS).build(), Resource.EXECUTION),
@@ -156,11 +162,8 @@ public class QueryFilterTest {
             Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.LESS_THAN).build(), Resource.FLOW),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(), Resource.FLOW),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.LESS_THAN_OR_EQUAL_TO).build(), Resource.FLOW),
-            Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.IN).build(), Resource.FLOW),
-            Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.NOT_IN).build(), Resource.FLOW),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.STARTS_WITH).build(), Resource.FLOW),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.ENDS_WITH).build(), Resource.FLOW),
-            Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.CONTAINS).build(), Resource.FLOW),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.REGEX).build(), Resource.FLOW),
             Arguments.of(QueryFilter.builder().field(Field.LABELS).operation(Op.PREFIX).build(), Resource.FLOW),
 
@@ -168,9 +171,6 @@ public class QueryFilterTest {
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.LESS_THAN).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.GREATER_THAN_OR_EQUAL_TO).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.LESS_THAN_OR_EQUAL_TO).build(), Resource.EXECUTION),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.IN).build(), Resource.EXECUTION),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.NOT_IN).build(), Resource.EXECUTION),
-            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).operation(Op.PREFIX).build(), Resource.EXECUTION),
 
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).operation(Op.IN).build(), Resource.EXECUTION),
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).operation(Op.NOT_IN).build(), Resource.EXECUTION),

@@ -80,8 +80,10 @@
 </template>
 
 <script setup lang="ts">
+    /* eslint-disable vue/enforce-style-attribute */
     import {computed, onMounted, ref, shallowRef, watch} from "vue";
     import {useI18n} from "vue-i18n";
+    import {useThrottleFn} from "@vueuse/core";
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
@@ -93,6 +95,7 @@
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus";
     import MonacoEditor from "./MonacoEditor.vue";
     import type * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+    import {useScrollMemory} from "../../composables/useScrollMemory";
 
     const {t} = useI18n()
 
@@ -122,6 +125,7 @@
         shouldFocus: {type: Boolean, default: true},
         showScroll: {type: Boolean, default: false},
         diffOverviewBar: {type: Boolean, default: true},
+        scrollKey: {type: String, default: undefined},
     })
 
     defineOptions({
@@ -157,13 +161,33 @@
         useDocStore().docId = "flowEditor";
     })
 
-    watch(() => props.modelValue, (value) => {
-        if (isCodeEditor(editor) && editor?.getValue?.() !== value) {
-            preventCursorChange.value = true;
-        } else {
-            preventCursorChange.value = false;
+    watch(
+        () => [props.modelValue, props.lang],
+        ([value, newLang], [, oldLang]) => {
+            preventCursorChange.value = isCodeEditor(editor) && editor?.getValue?.() !== value;
+            if (newLang === oldLang) return;
+            if (isDiff.value || !editor || !isCodeEditor(editor)) return;
+
+            const monacoRef = monacoEditor.value?.monaco;
+            const model = editor.getModel?.();
+            if (!monacoRef || !model) return;
+
+            let lang = "plaintext";
+            if (newLang && typeof newLang === "string" && newLang.trim()) {
+                lang = newLang.includes("json")
+                    ? "json"
+                    : newLang.includes("-")
+                        ? newLang.split("-")[0]
+                        : newLang;
+            }
+            try {
+                monacoRef.editor.setModelLanguage(model, lang);
+            } catch (e) {
+                console.warn("Failed to set model language", e);
+            }
         }
-    })
+    );
+
 
     const themeComputed = computed(() => {
         return useMiscStore().theme;
@@ -181,7 +205,7 @@
         return (
             props.input === true &&
             !props.shouldFocus &&
-            (!props.modelValue || props.modelValue.trim() === "") &&
+            (!props.modelValue || (typeof props.modelValue === "string" && props.modelValue.trim() === "")) &&
             !focus.value
         );
     })
@@ -288,6 +312,8 @@
         return editor?.getEditorType() === monacoEditor.value?.monaco.editor.EditorType.ICodeEditor
     }
 
+    const scrollMemory = props.scrollKey ? useScrollMemory(ref(props.scrollKey)) : null;
+
     function editorDidMount(monacoMounted?: monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor) {
 
         const monacoRef = monacoEditor.value
@@ -299,8 +325,6 @@
             return;
         }
 
-
-
         // avoid double import of monaco editor, use a reference
         const KeyCode = monacoRef.monaco.KeyCode;
         const KeyMod = monacoRef.monaco.KeyMod;
@@ -309,6 +333,29 @@
 
         if(!isCodeEditor(editor)){
             return
+        }
+
+        const codeEditor = editor as monaco.editor.IStandaloneCodeEditor;
+        
+        
+        if (props.scrollKey && scrollMemory) {
+            const savedState = scrollMemory.loadData<monaco.editor.ICodeEditorViewState>("viewState");
+            if (savedState) {
+                codeEditor.restoreViewState(savedState);
+                codeEditor.revealLineInCenterIfOutsideViewport?.(codeEditor.getPosition()?.lineNumber ?? 1);
+            }
+            
+            const top = scrollMemory.loadData<number>("scrollTop", 0);
+            if (typeof top === "number") {
+                codeEditor.setScrollTop(top);
+            }
+            
+            const throttledSave = useThrottleFn(() => {
+                scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
+                scrollMemory.saveData(codeEditor.getScrollTop(), "scrollTop");
+            }, 100);
+            
+            codeEditor.onDidScrollChange?.(throttledSave);
         }
 
         if (!isDiff.value) {
@@ -467,6 +514,10 @@
                         position: position,
                         model: model,
                     });
+                    // Save view state when cursor changes
+                    if (scrollMemory) {
+                        scrollMemory.saveData(codeEditor.saveViewState(), "viewState");
+                    }
                 }, 100) as unknown as number;
                 highlightPebble();
             });
@@ -673,6 +724,7 @@
 :not(.namespace-defaults, .el-drawer__body) > .ks-editor {
     flex-direction: column;
     height: 100%;
+    z-index: 1001;
 }
 
 .el-form .ks-editor {
@@ -682,7 +734,7 @@
 
 .ks-editor {
     display: flex;
-
+    overflow: hidden;
     .top-nav {
         background-color: var(--ks-background-card);
         padding: 0.5rem;

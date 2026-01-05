@@ -2,28 +2,19 @@ import {defineStore} from "pinia";
 import {apiUrl} from "override/utils/route";
 import {ref} from "vue";
 import {useAxios} from "../utils/axios";
+import {Message} from "../components/ErrorToast.vue";
 
 interface GuidedProperties {
     tourStarted: boolean;
     manuallyContinue: boolean;
     template: any;
     saveFlow?: boolean;
-}
-
-interface Message {
-    message?: string;
-    type?: string;
-    title?: string;
-    variant?: string;
-    response?: any;
-    content?: any;
+    glowExecuteButton?: boolean;
 }
 
 export const useCoreStore = defineStore("core", () => {
-
     const message = ref<Message>()
     const error = ref<any>()
-    const unsavedChange = ref(false)
     const guidedProperties = ref<GuidedProperties>({
         tourStarted: false,
         manuallyContinue: false,
@@ -43,7 +34,6 @@ export const useCoreStore = defineStore("core", () => {
     return {
         message,
         error,
-        unsavedChange,
         guidedProperties,
         monacoYamlConfigured,
         tutorialFlows,

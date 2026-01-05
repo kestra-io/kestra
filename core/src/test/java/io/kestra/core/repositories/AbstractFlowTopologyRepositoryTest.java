@@ -3,8 +3,8 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowRelation;
 import io.kestra.core.models.topologies.FlowTopology;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 public abstract class AbstractFlowTopologyRepositoryTest {
     @Inject
     private FlowTopologyRepositoryInterface flowTopologyRepository;
@@ -47,6 +47,32 @@ public abstract class AbstractFlowTopologyRepositoryTest {
         List<FlowTopology> list = flowTopologyRepository.findByFlow(tenant, "io.kestra.tests", "flow-a", false);
 
         assertThat(list.size()).isEqualTo(1);
+    }
+
+    @Test
+    void findByNamespacePrefix() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-a", "flow-b", "io.kestra.tests")
+        );
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-x", "flow-y", "io.kestra.tests.sub")
+        );
+
+        flowTopologyRepository.save(
+            createSimpleFlowTopology(tenant, "flow-p", "flow-q", "io.other.namespace")
+        );
+
+        List<FlowTopology> list = flowTopologyRepository.findByNamespacePrefix(tenant, "io.kestra.tests");
+
+        assertThat(list)
+            .extracting(ft -> ft.getSource().getNamespace())
+            .contains("io.kestra.tests", "io.kestra.tests.sub")
+            .doesNotContain("io.other.namespace");
+
+        assertThat(list.size()).isEqualTo(2);
     }
 
     @Test

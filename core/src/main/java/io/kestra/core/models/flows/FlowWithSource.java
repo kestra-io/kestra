@@ -17,8 +17,6 @@ import java.time.Instant;
 public class FlowWithSource extends Flow {
 
     String source;
-    
-    Instant updatedDate;
 
     @SuppressWarnings("deprecation")
     public Flow toFlow() {

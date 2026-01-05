@@ -114,6 +114,8 @@
     import Restore from "vue-material-design-icons/Restore.vue";
     import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue";
     import Editor from "../../components/inputs/Editor.vue";
+    import Drawer from "../Drawer.vue";
+    import moment from "moment";
 
     import {useToast} from "../../utils/toast";
     import {useFlowStore} from "../../stores/flow";
@@ -225,15 +227,7 @@
     function formatTimestamp(updatedDate?: string): string {
         if (!updatedDate) return "";
 
-        const date = new Date(updatedDate);
-        // Format: YYYY-MM-DD HH:mm (matching GitHub issue example)
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
-        const hours = String(date.getHours()).padStart(2, "0");
-        const minutes = String(date.getMinutes()).padStart(2, "0");
-
-        return `${year}-${month}-${day} ${hours}:${minutes}`;
+        return moment(updatedDate).format("YYYY-MM-DD HH:mm");
     }
 
     function formatRevisionText(revision: number, updatedDate?: string): string {

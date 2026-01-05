@@ -623,6 +623,40 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    protected void shouldReturnUpdatedDateInFindRevisions() {
+        // Given
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            // When: Create a flow with multiple revisions
+            FlowWithSource created = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+            toDelete.add(created);
+
+            FlowWithSource updated = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), created);
+            toDelete.add(updated);
+
+            // Then: findRevisions should return updatedDate for each revision
+            List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId);
+            
+            assertThat(revisions).hasSize(2);
+            
+            // Each revision should have an updatedDate
+            for (FlowWithSource revision : revisions) {
+                assertThat(revision.getUpdatedDate())
+                    .as("Revision %d should have updatedDate", revision.getRevision())
+                    .isNotNull();
+            }
+            
+            // Revisions should be ordered by revision number
+            assertThat(revisions.get(0).getRevision()).isEqualTo(1);
+            assertThat(revisions.get(1).getRevision()).isEqualTo(2);
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
     protected void shouldIncrementRevisionOnUpdateGivenNotEqualSource() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         final List<Flow> toDelete = new ArrayList<>();

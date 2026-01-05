@@ -45,7 +45,7 @@
         <template #header>
             <div class="modal-header">
                 <h3 class="modal-title">
-                    {{ t("Replay Execution") }}
+                    {{ t("replay execution title") }}
                 </h3>
                 <el-divider />
             </div>
@@ -53,26 +53,26 @@
 
         <!-- BODY -->
         <p class="execution-description">
-            {{ t("This will create a new execution based on execution") }}
+            {{ t("replay execution description") }}
         </p>
         <p class="execution-id">
             <strong>{{ execution.id }}</strong>
         </p>
 
         <h4 class="section-title">
-            {{ t("Replay using") }}
+            {{ t("replay using") }}
         </h4>
 
         <!-- CHANGED: revision selection -->
         <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
             <el-radio label="original" class="radio-item">
-                {{ t("Original Flow revision") }}
+                {{ t("flow revision original") }}
             </el-radio>
             <el-radio label="latest" class="radio-item">
-                {{ t("Latest Flow revision") }}
+                {{ t("flow revision latest") }}
             </el-radio>
             <el-radio label="specific" class="radio-item">
-                {{ t("Specific Flow revision") }}
+                {{ t("flow revision specific") }}
             </el-radio>
         </el-radio-group>
 
@@ -93,16 +93,16 @@
         </el-form>
 
         <h4 class="section-title">
-            {{ t("Inputs") }}
+            {{ t("replay inputs") }}
         </h4>
 
         <!-- CHANGED: input selection -->
         <el-radio-group v-model="inputMode" class="radio-vertical">
             <el-radio label="reuse" class="radio-item">
-                {{ t("Reuse original inputs") }}
+                {{ t("reuse original inputs") }}
             </el-radio>
             <el-radio label="modify" class="radio-item">
-                {{ t("Modify inputs") }}
+                {{ t("modify inputs") }}
             </el-radio>
         </el-radio-group>
 

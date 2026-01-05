@@ -1,7 +1,7 @@
 <template>
     <div v-if="usages" class="usage-card">
         <div class="usage-card-header">
-            <span>{{ $t('your usage') }}</span>
+            <span>{{ $t('usage') }}</span>
             <slot name="button" />
         </div>
         <div class="usage-card-body">
@@ -29,9 +29,9 @@
     import TextSearchVariant from "vue-material-design-icons/TextSearchVariant.vue";
     import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import TimelineClockOutline from "vue-material-design-icons/TimelineClockOutline.vue";
+    import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
     import CalendarMonth from "vue-material-design-icons/CalendarMonth.vue";
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import {useI18n} from "vue-i18n";
 
@@ -109,7 +109,7 @@
     const usageItems = computed(() => [
         {
             key: "namespaces",
-            icon: DotsSquare,
+            icon: FolderOpenOutline,
             labelKey: "namespaces",
             value: namespaces.value,
             route: namespaceRoute.value,
@@ -137,7 +137,7 @@
         },
         {
             key: "executions",
-            icon: TimelineClockOutline,
+            icon: PlayOutline,
             labelKey: "executions",
             value: `${executionsOverTwoDays.value} (${t("last 48 hours")})`,
             route: "executions/list",
@@ -155,7 +155,7 @@
 .usage-card {
     background-color: transparent;
     // min-height: 432px;
-    padding: 1.25rem;
+    padding: 1.5rem;
     border: 1px solid var(--ks-border-primary);
     border-radius: 8px;
     box-shadow: 0 2px 4px var(--ks-card-shadow);
@@ -165,11 +165,10 @@
         justify-content: space-between;
         align-items: center;
         width: 100%;
-        padding-bottom: 1rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
 
         span {
-            font-size: 18.4px;
+            font-size: 1.25rem;
             font-weight: 600;
         }
     }
@@ -187,6 +186,13 @@
         min-height: 2rem;
         padding-top: 0.25rem;
         padding-bottom: 0.25rem;
+
+        &:first-child {
+            padding-top: 0;
+        }
+        &:last-child { 
+            padding-bottom: 0;
+        }
 
         .usage-icon {
             display: flex;

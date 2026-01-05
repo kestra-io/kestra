@@ -1,6 +1,12 @@
 import {computed} from "vue";
 
-import {useRoute, useRouter, type RouteRecordNameGeneric} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
+import type {
+    RouteLocationRaw,
+    RouteLocationNamedRaw,
+    RouteRecordNameGeneric,
+} from "vue-router";
+
 import {useI18n} from "vue-i18n";
 
 import {useMiscStore} from "override/stores/misc";
@@ -36,11 +42,7 @@ import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue";
 export type MenuItem = {
     title: string;
     routes?: RouteRecordNameGeneric[];
-    href?: {
-        name: string;
-        params?: Record<string, any>;
-        query?: Record<string, any>;
-    };
+    href?: RouteLocationRaw;
     icon?: {
         element?: any;
         class?: any;
@@ -75,8 +77,23 @@ export function useLeftMenu() {
             .map((r) => r.name);
     }
 
+    /**
+     * Recursively flattens a nested menu structure into a flat array.
+     *
+     * Each item is included in the result. If an item has `child` items,
+     * they are recursively flattened and included immediately after the parent item.
+     *
+     * @param {MenuItem[]} items - The array of menu items to flatten. Each item may have a `child` property containing nested MenuItems.
+     * @returns {MenuItem[]} A flat array of all menu items, preserving the parent-child order.
+     */
+    const flatten = (items: MenuItem[]): MenuItem[] => {
+        return items.flatMap((item) =>
+            item.child ? [item, ...flatten(item.child)] : [item],
+        );
+    };
+
     const menu = computed<MenuItem[]>(() => {
-        return [
+        const generated = [
             {
                 title: t("dashboards.labels.plural"),
                 href: {
@@ -149,7 +166,7 @@ export function useLeftMenu() {
                 title: t("demos.assets.label"),
                 routes: routeStartWith("assets"),
                 href: {
-                    name: "assets/list"
+                    name: "assets/list",
                 },
                 icon: {
                     element: PackageVariantClosed,
@@ -191,7 +208,6 @@ export function useLeftMenu() {
             },
             {
                 title: t("blueprints.title"),
-                routes: routeStartWith("blueprints"),
                 icon: {
                     element: ShapePlusOutline,
                 },
@@ -355,20 +371,28 @@ export function useLeftMenu() {
                     locked: true,
                 },
             },
-        ].map((item: MenuItem) => {
-            if (item.icon?.element) {
-                item.icon.class = "menu-icon"; // Add default class to all menu icons
-            }
+        ];
 
-            if (item.href && item.href?.name === $route.name) {
-                item.href.query = {
-                    ...$route.query,
-                    ...item.href?.query,
-                };
-            }
+        flatten(generated).forEach((item: MenuItem) => {
+            if (item.icon?.element) item.icon.class = "menu-icon";
 
-            return item;
+            if (item.href && typeof item.href !== "string") {
+                const rObject = item.href as RouteLocationNamedRaw;
+
+                // Merge query if route matches
+                if (rObject.name === $route.name) {
+                    rObject.query = {
+                        ...$route.query,
+                        ...rObject.query,
+                    };
+                }
+
+                // Convert object href to string path
+                item.href = $router.resolve(rObject).path;
+            }
         });
+
+        return generated;
     });
 
     return {menu};

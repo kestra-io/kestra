@@ -199,7 +199,7 @@
                             />
                         </el-button-group>
                     </el-row>
-                    <el-button :icon="Plus" @click="addSecretTag" type="primary">
+                    <el-button :icon="Plus" @click="addSecretTag" type="default">
                         {{ $t('secret.addTag') }}
                     </el-button>
                 </el-form-item>

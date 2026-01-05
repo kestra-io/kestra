@@ -668,6 +668,7 @@
       "end_date": "Дата окончания",
       "enter description": "Введите описание фильтра",
       "enter label": "Введите фильтр label",
+      "enter name": "Введите имя фильтра",
       "execution_kind": {
         "playground": "Песочница",
         "playground_description": "Запуски, инициированные из режима Playground",
@@ -714,6 +715,7 @@
         "description": "Фильтр по типу метрики",
         "label": "Метрика"
       },
+      "name": "Имя",
       "namespace": {
         "description": "Фильтр по namespace",
         "label": "Namespace"

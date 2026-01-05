@@ -668,6 +668,7 @@
       "end_date": "समाप्ति तिथि",
       "enter description": "फ़िल्टर विवरण दर्ज करें",
       "enter label": "फ़िल्टर लेबल दर्ज करें",
+      "enter name": "फ़िल्टर नाम दर्ज करें",
       "execution_kind": {
         "playground": "प्लेग्राउंड",
         "playground_description": "प्लेग्राउंड मोड से ट्रिगर की गई Executions",
@@ -714,6 +715,7 @@
         "description": "मेट्रिक प्रकार द्वारा फ़िल्टर करें",
         "label": "मेट्रिक"
       },
+      "name": "नाम",
       "namespace": {
         "description": "namespace द्वारा फ़िल्टर करें",
         "label": "Namespace"

@@ -668,6 +668,7 @@
       "end_date": "종료 날짜",
       "enter description": "필터 설명 입력",
       "enter label": "필터 label 입력",
+      "enter name": "필터 이름 입력",
       "execution_kind": {
         "playground": "플레이그라운드",
         "playground_description": "플레이그라운드 모드에서 트리거된 실행",
@@ -714,6 +715,7 @@
         "description": "메트릭 유형별 필터",
         "label": "메트릭"
       },
+      "name": "이름",
       "namespace": {
         "description": "namespace로 필터링",
         "label": "Namespace"

@@ -668,6 +668,7 @@
       "end_date": "Fecha de finalización",
       "enter description": "Ingrese la descripción del filtro",
       "enter label": "Ingrese etiqueta de filtro",
+      "enter name": "Ingrese el nombre del filtro",
       "execution_kind": {
         "playground": "Área de Pruebas",
         "playground_description": "Ejecuciones activadas desde el modo Playground",
@@ -714,6 +715,7 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
+      "name": "Nombre",
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"

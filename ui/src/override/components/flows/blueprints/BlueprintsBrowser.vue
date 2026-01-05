@@ -56,7 +56,10 @@
                                 <div v-if="!system && blueprint.tags?.length > 0" class="tags-section">
                                     <span v-for="tag in processedTags(blueprint.tags)" :key="tag.original" class="tag-item">{{ tag.display }}</span>
                                 </div>
-                                <div class="text-section">
+                                <div v-if="blueprint.template" class="tags-section">
+                                    <span class="tag-item">{{ $t('template') }}</span>
+                                </div>
+                                <div class="text-section">                                        
                                     <h3 class="title">
                                         {{ blueprint.title ?? blueprint.id }}
                                     </h3>
@@ -66,7 +69,7 @@
                                         <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
                                     </div>
 
-                                    <div class="action-button">
+                                    <div class="d-flex align-items-center gap-2">
                                         <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                             <el-button
                                                 type="primary"
@@ -151,6 +154,7 @@
         id: string;
         tags: string[];
         title?: string;
+        template?: Record<string, any>;
     }[] | undefined>(undefined);
     const error = ref(false);
     const icon = {ContentCopy};

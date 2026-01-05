@@ -57,7 +57,7 @@
                                     type="info"
                                     class="namespace-tag"
                                 >
-                                    <DotsSquare />
+                                    <FolderOpenOutline />
                                     {{ scope.row?.namespace }}
                                 </el-tag>
                             </template>
@@ -156,7 +156,7 @@
                 <el-form-item :label="$t('secret.key')" prop="key">
                     <el-input v-model="secret.key" :disabled="secret.update" required />
                 </el-form-item>
-                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value">
+                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value" required>
                     <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" />
                 </el-form-item>
                 <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
@@ -199,7 +199,7 @@
                             />
                         </el-button-group>
                     </el-row>
-                    <el-button :icon="Plus" @click="addSecretTag" type="primary">
+                    <el-button :icon="Plus" @click="addSecretTag" type="default">
                         {{ $t('secret.addTag') }}
                     </el-button>
                 </el-form-item>
@@ -225,7 +225,7 @@
     import Plus from "vue-material-design-icons/Plus.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import PencilOff from "vue-material-design-icons/PencilOff.vue";
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";

@@ -1,10 +1,10 @@
 package io.kestra.core.tests;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.tests.flow.Assertion;
 import io.kestra.core.tests.flow.AssertionResult;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +15,7 @@ import static io.kestra.core.tests.flow.Assertion.Operator.EQUAL_TO;
 import static io.kestra.core.tests.flow.Assertion.Operator.IS_NOT_NULL;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 class AssertionTest {
 
     @Inject

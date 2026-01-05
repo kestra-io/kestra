@@ -314,6 +314,12 @@
         "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação.",
         "title": "Crie Apps personalizadas com Kestra"
       },
+      "assets": {
+        "header": "Metadados e Observabilidade de Assets",
+        "label": "Ativos",
+        "message": "Ativos conectam metadados de observabilidade, linhagem e propriedade para que as equipes da plataforma possam solucionar problemas mais rapidamente e implantar com confiança.",
+        "title": "Traga todos os datasets, serviços e dependências para a visualização."
+      },
       "audit-logs": {
         "message": "A Kestra Enterprise Edition registra todas as atividades com registros robustos e imutáveis, facilitando o acompanhamento de alterações, a manutenção da conformidade e a resolução de problemas.",
         "title": "Acompanhe Alterações com Audit Logs"
@@ -389,6 +395,7 @@
         "zoom_out": "Reduzir zoom"
       },
       "search": {
+        "asset_placeholder": "Pesquisar por asset, flow ou namespace...",
         "no_results": "Nenhum resultado encontrado para {term}",
         "placeholder": "Pesquisar por flow ou namespace..."
       }
@@ -454,6 +461,10 @@
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo.",
         "title": "Você ainda não tem apps!"
       },
+      "assets": {
+        "content": "Adicione assets para rastrear e gerenciar seus assets de dados, serviços e infraestrutura.",
+        "title": "Você ainda não tem Assets!"
+      },
       "concurrency_executions": {
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Execuções</a></strong> em nossa documentação.",
         "title": "Nenhuma Execução em andamento para este Flow."
@@ -463,6 +474,10 @@
         "title": "Nenhum limite está definido para este Flow."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Este ativo não possui dependências upstream ou downstream com flows ou outros ativos.",
+          "title": "Atualmente, não há dependências."
+        },
         "EXECUTION": {
           "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Dependências de Execução</a> na nossa documentação.",
           "title": "Atualmente, não há dependências."
@@ -653,6 +668,7 @@
       "end_date": "Data de Término",
       "enter description": "Insira a descrição do filtro",
       "enter label": "Insira o filtro de label",
+      "enter name": "Insira o nome do filtro",
       "execution_kind": {
         "playground": "Playground",
         "playground_description": "Execuções acionadas a partir do modo Playground",
@@ -699,6 +715,7 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
+      "name": "Nome",
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"
@@ -882,6 +899,12 @@
       "triggerId_trigger": {
         "description": "Filtrar por trigger ID",
         "label": "ID do Trigger"
+      },
+      "triggerState": {
+        "description": "Filtrar por estado do trigger",
+        "disabled": "Desativado",
+        "enabled": "Habilitado",
+        "label": "Estado do Trigger"
       },
       "update": "Atualizar",
       "value": "Valor",
@@ -1081,6 +1104,7 @@
     "min": "Min",
     "minutes": "Minutos",
     "missingSource": "Fonte ausente",
+    "modify_inputs": "Modificar inputs",
     "monogram": "Monograma",
     "months": "Meses",
     "more_actions": "Mais Ações",
@@ -1220,6 +1244,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Verificações",
           "concurrency": "Concorrência",
           "disabled": "Desativado",
           "labels": "Etiquetas",
@@ -1288,6 +1313,7 @@
     "no_logs_data_description": "Nenhum log encontrado para os filtros selecionados. <br> Tente ajustar seus filtros, alterar o intervalo de tempo ou verificar se o flow foi executado recentemente.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
     "no_results": {
+      "assets": "Nenhum Asset Encontrado",
       "executions": "Nenhuma Execução Encontrada",
       "flows": "Nenhum Flow Encontrado",
       "kv_pairs": "Nenhum par de Key-Value encontrado",
@@ -1307,7 +1333,7 @@
       "next": "Próximo",
       "no_flows": "Não há flows disponíveis no namespace do tutorial.",
       "previous": "Anterior",
-      "skip": "Pular Tutorial",
+      "skip": "Pular Tour do Produto",
       "steps": {
         "0": {
           "content": "Estamos entusiasmados em tê-lo aqui.<br />Vamos criar seu primeiro flow.",
@@ -1467,6 +1493,7 @@
     "resumed confirm": "Tem certeza de que deseja retomar a execução <code>{id}</code>?",
     "resumed done": "Execução foi retomada",
     "resumed title": "Retomar execução <code>{id}</code>",
+    "reuse_original_inputs": "Reutilizar inputs originais",
     "revision": "Revisão",
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
@@ -1820,6 +1847,7 @@
     "update aborted": "atualização abortada",
     "update ok": "está atualizado",
     "updated date": "Data de atualização",
+    "usage": "Uso",
     "use": "Usar",
     "use_dark_background": "Use esta versão ao trabalhar em um fundo escuro para garantir que nosso nome permaneça legível.",
     "validate": "Validar",
@@ -1855,7 +1883,7 @@
     },
     "welcome aboard": "🚀 Bem-vindo ao Kestra!",
     "welcome aboard content": "Use nosso Tour Guiado para criar seu primeiro flow e confira os Blueprints para encontrar mais exemplos.",
-    "welcome button create": "Criar meu primeiro flow",
+    "welcome button create": "Iniciar Tour do Produto",
     "welcome display require": "Execute seu <strong>primeiro flow</strong> para começar",
     "welcome_page": {
       "guide": "Precisa de orientação para executar seu primeiro flow?",
@@ -1871,7 +1899,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Chave ou valor vazio não é permitido em labels",
-    "years": "Anos",
-    "your usage": "Seu uso"
+    "years": "Anos"
   }
 }

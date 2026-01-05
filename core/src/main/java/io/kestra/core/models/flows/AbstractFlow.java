@@ -62,6 +62,7 @@ public abstract class AbstractFlow implements FlowInterface {
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
     @Schema(
         description = "Labels as a list of Label (key/value pairs) or as a map of string to string.",
+        implementation = Object.class,
         oneOf = {
             Label[].class,
             Map.class

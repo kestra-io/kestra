@@ -3,7 +3,7 @@
         <template #additional-right>
             <ul>
                 <li>
-                    <el-button v-if="canCreate" tag="router-link" :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" :icon="Plus" type="primary">
+                    <el-button v-if="canCreate" tag="router-link" :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" :icon="Plus">
                         {{ $t('create_flow') }}
                     </el-button>
                 </li>
@@ -30,7 +30,7 @@
                     <el-button
                         v-if="isOSS"
                         @click="startTour"
-                        :icon="Plus"
+                        :icon="Compass"
                         size="large"
                         type="primary"
                         class="px-3 p-4 section-1-link product-link"
@@ -39,7 +39,7 @@
                     </el-button>
                     <el-button
                         v-else
-                        :icon="Plus"
+                        :icon="Compass"
                         tag="router-link"
                         :to="{name: 'flows/create'}"
                         size="large"
@@ -74,6 +74,7 @@
     import {useCoreStore} from "../../stores/core";
     import {useI18n} from "vue-i18n";
     import Plus from "vue-material-design-icons/Plus.vue";
+    import Compass from "vue-material-design-icons/Compass.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import OnboardingBottom from "override/components/OnboardingBottom.vue";
     import kestraWelcome from "../../assets/onboarding/kestra_welcome.svg";

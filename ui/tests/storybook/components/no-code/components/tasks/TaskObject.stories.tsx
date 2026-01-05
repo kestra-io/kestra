@@ -79,14 +79,15 @@ export const AppTableBlock: Story = {
         fireEvent.input((await canvas.findAllByTestId("monaco-editor-hidden-synced-textarea"))[1], {target: {value: "value2"}})
 
         await waitFor(() => {
-            expect(canvas.getByTestId("resulting-object").innerHTML).toBe(JSON.stringify({
+            expect(JSON.parse(canvas.getByTestId("resulting-object").innerHTML)).toEqual({
+                type: "io.kestra.plugin.ee.apps.core.blocks.Table",
                 data: [
                     {
                         key1: "value1",
                         key2: "value2"
                     }
                 ]
-            }, null, 2));
+            });
         });
 
     }

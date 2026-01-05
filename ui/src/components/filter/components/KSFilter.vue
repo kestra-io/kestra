@@ -17,7 +17,7 @@
     import {useFilters} from "../composables/useFilters";
     import {useSavedFilters} from "../composables/useSavedFilters";
     import {useDataOptions} from "../composables/useDataOptions";
-    
+
     import {
         SavedFilter,
         TableOptions,
@@ -35,7 +35,7 @@
     const props = withDefaults(defineProps<{
         configuration: FilterConfiguration;
         buttons?: {
-            savedFilters?: {shown?: boolean}; 
+            savedFilters?: {shown?: boolean};
             tableOptions?: {shown?: boolean}
         };
         tableOptions?: TableOptions;
@@ -170,7 +170,7 @@
     watch(appliedFilters, (newFilters) => {
         emits("filter", newFilters);
     }, {deep: true});
-    
+
 </script>
 
 <style lang="scss" scoped>
@@ -180,20 +180,15 @@
     margin-bottom: 1rem;
     width: 100%;
     border-radius: 0.5rem;
-    
+
     .top {
         display: flex;
-        align-items: flex-start;
-        flex-wrap: nowrap;
+        align-items: center; /* Aligns buttons nicely */
+        flex-wrap: wrap;     /* Forces buttons to stack if they run out of space */
         gap: 0.5rem;
-        
+
         &.options {
             padding-bottom: 1rem;
         }
-
-        @media (max-width: 768px) {
-            flex-wrap: wrap;
-        }
     }
-}
 </style>

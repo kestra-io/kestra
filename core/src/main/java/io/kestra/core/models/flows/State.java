@@ -149,6 +149,11 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean canBeRestarted() {
+        return this.current.isTerminated() || this.current.isPaused();
+    }
+
+    @JsonIgnore
     public boolean isTerminatedNoFail() {
         return this.current.isTerminatedNoFail();
     }

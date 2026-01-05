@@ -1,11 +1,11 @@
 <template>
     <nav class="d-flex align-items-center w-100 gap-3 top-bar">
+        <SidebarToggleButton
+            v-if="layoutStore.sideMenuCollapsed"
+            @toggle="layoutStore.setSideMenuCollapsed(false)"
+        />
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <div class="d-flex align-items-end gap-2">
-                <SidebarToggleButton
-                    v-if="layoutStore.sideMenuCollapsed"
-                    @toggle="layoutStore.setSideMenuCollapsed(false)"
-                />
                 <div class="d-flex flex-column gap-2">
                     <el-breadcrumb v-if="breadcrumb">
                         <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
@@ -33,6 +33,11 @@
                             @click="onStarClick"
                         />
                     </h1>
+                    <div class="description">
+                        <slot name="description">
+                            {{ longDescription }}
+                        </slot>
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,15 +82,20 @@
     const props = defineProps<{
         title: string;
         description?: string;
-        breadcrumb?: { label: string; link?: RouterLinkTo; disabled?: boolean }[];
+        longDescription?: string;
+        breadcrumb?: {
+            label: string;
+            link?: RouterLinkTo;
+            disabled?: boolean;
+        }[];
         beta?: boolean;
     }>();
 
-    const logsStore = useLogsStore();
-    const bookmarksStore = useBookmarksStore();
-    const flowStore = useFlowStore();
     const route = useRoute();
+    const logsStore = useLogsStore();
+    const flowStore = useFlowStore();
     const layoutStore = useLayoutStore();
+    const bookmarksStore = useBookmarksStore();
 
 
     const shouldDisplayDeleteButton = computed(() => {
@@ -180,6 +190,12 @@
             line-height: 1.6;
             display: flex !important;
             align-items: center;
+        }
+
+        .description {
+            font-size: 0.875rem;
+            margin-top: -0.5rem;
+            color: var(--ks-content-secondary);
         }
 
         .icon {

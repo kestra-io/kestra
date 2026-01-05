@@ -668,6 +668,7 @@
       "end_date": "Enddatum",
       "enter description": "Filterbeschreibung eingeben",
       "enter label": "Filter-Label eingeben",
+      "enter name": "Filtername eingeben",
       "execution_kind": {
         "playground": "Spielplatz",
         "playground_description": "Ausführungen, die im Playground-Modus ausgelöst wurden",
@@ -714,6 +715,7 @@
         "description": "Nach Metriktyp filtern",
         "label": "Metrik"
       },
+      "name": "Name",
       "namespace": {
         "description": "Nach namespace filtern",
         "label": "Namespace"

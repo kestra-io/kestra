@@ -668,6 +668,7 @@
       "end_date": "结束日期",
       "enter description": "输入筛选器描述",
       "enter label": "输入过滤器标签",
+      "enter name": "输入过滤器名称",
       "execution_kind": {
         "playground": "游乐场",
         "playground_description": "从Playground模式触发的执行",
@@ -714,6 +715,7 @@
         "description": "按指标类型筛选",
         "label": "指标"
       },
+      "name": "名称",
       "namespace": {
         "description": "按namespace筛选",
         "label": "命名空间"

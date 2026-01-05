@@ -1110,7 +1110,7 @@ public class DefaultWorker implements Worker {
             () -> {
                 ServiceState serviceState = shutdownState.get();
                 if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {
-                    log.info("All working threads are terminated.");
+                    log.info("All worker threads are terminated");
 
                     // we ensure that last produce message are send
                     closeQueue();
@@ -1118,7 +1118,7 @@ public class DefaultWorker implements Worker {
                 }
 
                 if (this.workerCallableReferences.isEmpty()) {
-                    log.debug("All worker threads is terminated.");
+                    log.debug("All worker threads are terminated");
                 } else {
                     log.warn(
                         "Waiting for all worker threads to terminate (remaining: {}).",

@@ -931,6 +931,10 @@
           "title": "Manage Secrets in a Secure Way",
           "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace, and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
         },
+        "assets": {
+          "title": "Centralize Asset Management",
+          "message": "In Kestra Enterprise Edition, Assets keeps a live inventory of resources that your workflows interact with. These resources can be database tables, virtual machines, files, or any external system you work with."
+        },
         "variables": {
           "title": "Centrally Govern Your Variables",
           "message": "In Kestra Enterprise Edition, you can define and manage namespace-level variables to eliminate repetitive configurations across flows. These variables ensure consistency, simplify configuration updates, and can be easily referenced by any task or trigger for cleaner, more maintainable workflows."
@@ -949,6 +953,7 @@
         }
       }
     },
+    "assets": "Assets",
     "onboarding": {
       "next": "Next",
       "previous": "Previous",

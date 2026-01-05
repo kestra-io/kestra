@@ -49,7 +49,6 @@
         href: string
         title: string
     }>()
-    
     const bookmarksStore = useBookmarksStore();
 
     const editing = ref(false);
@@ -74,8 +73,11 @@
         });
     }
     function renameBookmark() {
-        bookmarksStore.rename({path: props.href, label: updatedTitle.value});
-        editing.value = false;
+        bookmarksStore.rename({
+            path: props.href,
+            label: updatedTitle.value
+        })
+        editing.value = false
     }
 </script>
 

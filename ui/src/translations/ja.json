@@ -668,6 +668,7 @@
       "end_date": "終了日",
       "enter description": "フィルターの説明を入力してください",
       "enter label": "フィルターラベルを入力してください",
+      "enter name": "フィルター名を入力してください",
       "execution_kind": {
         "playground": "プレイグラウンド",
         "playground_description": "Playgroundモードからトリガーされた実行",
@@ -714,6 +715,7 @@
         "description": "メトリックタイプでフィルター",
         "label": "メトリック"
       },
+      "name": "名前",
       "namespace": {
         "description": "namespaceでフィルター",
         "label": "Namespace"

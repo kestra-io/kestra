@@ -338,12 +338,11 @@ public abstract class AbstractJdbcRepository {
             case IN -> DSL.field(columnName).in(ListUtils.convertToList(value));
             case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToList(value));
             case STARTS_WITH -> DSL.field(columnName).like(value + "%");
-
             case ENDS_WITH -> DSL.field(columnName).like("%" + value);
             case CONTAINS -> DSL.field(columnName).like("%" + value + "%");
             case REGEX -> DSL.field(columnName).likeRegex((String) value);
             case PREFIX -> DSL.field(columnName).like(value + ".%")
-                    .or(DSL.field(columnName).eq(value));
+                .or(DSL.field(columnName).eq(value));
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
     }

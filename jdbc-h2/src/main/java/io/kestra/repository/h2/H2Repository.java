@@ -74,6 +74,7 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
         });
     }
 
+    @Override
     public int persistBatch(Map<T, Map<Field<Object>, Object>> itemWithFields) {
         return dslContextWrapper.transactionResult(configuration -> {
             DSLContext dslContext = DSL.using(configuration);

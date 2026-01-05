@@ -72,5 +72,41 @@ class ForEachTest {
         assertThat(seconds).hasSize(2);
         assertThat(seconds.get(0).getIteration()).isEqualTo(0);
         assertThat(seconds.get(1).getIteration()).isEqualTo(1);
+
+        @SuppressWarnings("unchecked")
+        var forEachOutputs = (java.util.Map<String, Object>) execution.outputs().get("foreach");
+        @SuppressWarnings("unchecked")
+        var outputs = (java.util.List<java.util.Map<String, Object>>) forEachOutputs.get("outputs");
+        assertThat(outputs).hasSize(2);
+        assertThat(outputs.get(0)).containsKeys("first", "second");
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/foreach-duplicate-values.yaml")
+    void duplicateValues(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        List<TaskRun> children = execution.findTaskRunsByTaskId("child")
+            .stream()
+            .sorted((a, b) -> Integer.compare(a.getIteration(), b.getIteration()))
+            .toList();
+
+        assertThat(children).hasSize(3);
+        assertThat(children.stream().map(TaskRun::getValue).toList())
+            .containsExactly("dup", "dup", "other");
+        assertThat(children.stream().map(TaskRun::getIteration).toList())
+            .containsExactly(0, 1, 2);
+
+        @SuppressWarnings("unchecked")
+        var forEachOutputs = (java.util.Map<String, Object>) execution.outputs().get("foreach");
+        @SuppressWarnings("unchecked")
+        var iterations = (java.util.List<java.util.Map<String, Object>>) forEachOutputs.get("outputs");
+        assertThat(iterations).hasSize(3);
+        assertThat(iterations.get(0)).isNotNull();
+        assertThat(iterations.get(1)).isNotNull();
+        assertThat(iterations.get(2)).isNotNull();
+        assertThat(((java.util.Map<String, Object>) ((java.util.Map<String, Object>) iterations.get(0).get("child")).get("values")).get("value")).isEqualTo("dup");
+        assertThat(((java.util.Map<String, Object>) ((java.util.Map<String, Object>) iterations.get(1).get("child")).get("values")).get("value")).isEqualTo("dup");
+        assertThat(((java.util.Map<String, Object>) ((java.util.Map<String, Object>) iterations.get(2).get("child")).get("values")).get("value")).isEqualTo("other");
     }
 }

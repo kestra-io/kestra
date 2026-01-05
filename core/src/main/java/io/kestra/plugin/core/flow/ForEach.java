@@ -209,6 +209,20 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
     )
     private Object values;
 
+    @NotNull
+    @Builder.Default
+    @Schema(
+        title = "Whether to deduplicate the `values` list",
+        description = """
+            By default, duplicate values are deduplicated to preserve legacy behavior and avoid output-key collisions when indexing outputs by `taskrun.value`.
+
+            When this task completes, it exposes `outputs.<forEachId>.outputs`, a list of per-iteration outputs (index = `taskrun.iteration`, value can be null if no output was produced).
+
+            Set this to `false` to process duplicate values."""
+    )
+    @PluginProperty
+    private final Boolean deduplicate = true;
+
     @PositiveOrZero
     @NotNull
     @Builder.Default
@@ -245,7 +259,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.values);
+        return FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.values, Boolean.TRUE.equals(this.deduplicate));
     }
 
     @Override
@@ -278,7 +292,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
 
         return FlowableUtils.resolveConcurrentNexts(
             execution,
-            FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.values),
+            FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.values, Boolean.TRUE.equals(this.deduplicate)),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,

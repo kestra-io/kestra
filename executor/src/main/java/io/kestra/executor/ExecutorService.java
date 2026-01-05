@@ -28,6 +28,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.plugin.core.flow.ForEach;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
@@ -277,6 +278,9 @@ public class ExecutorService {
                         // as flowable tasks can save outputs during iterative execution, we must merge the maps here
                         Output outputs = flowableParent.outputs(runContext);
                         Map<String, Object> outputMap = MapUtils.merge(workerTaskResult.getTaskRun().getOutputs(), outputs == null ? null : outputs.toMap());
+                        if (parent instanceof ForEach) {
+                            outputMap = MapUtils.merge(outputMap, forEachIterationOutputs(execution, parentTaskRun));
+                        }
                         variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputMap);
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
@@ -329,6 +333,38 @@ public class ExecutorService {
         }
 
         return Optional.empty();
+    }
+
+    private static Map<String, Object> forEachIterationOutputs(Execution execution, TaskRun parentTaskRun) {
+        if (execution.getTaskRunList() == null) {
+            return Map.of("outputs", List.of());
+        }
+
+        TreeMap<Integer, List<TaskRun>> taskRunsByIteration = execution.getTaskRunList().stream()
+            .filter(tr -> parentTaskRun.getId().equals(tr.getParentTaskRunId()))
+            .filter(tr -> tr.getIteration() != null)
+            .collect(Collectors.groupingBy(TaskRun::getIteration, TreeMap::new, Collectors.toList()));
+
+        int maxIteration = taskRunsByIteration.isEmpty() ? -1 : taskRunsByIteration.lastKey();
+        List<Object> iterations = new ArrayList<>(Collections.nCopies(Math.max(0, maxIteration + 1), null));
+
+        for (Map.Entry<Integer, List<TaskRun>> entry : taskRunsByIteration.entrySet()) {
+            Integer iteration = entry.getKey();
+            if (iteration == null || iteration < 0 || iteration >= iterations.size()) {
+                continue;
+            }
+
+            Map<String, Object> outputs = new HashMap<>();
+            for (TaskRun taskRun : entry.getValue()) {
+                if (!MapUtils.isEmpty(taskRun.getOutputs())) {
+                    outputs.put(taskRun.getTaskId(), taskRun.getOutputs());
+                }
+            }
+
+            iterations.set(iteration, outputs.isEmpty() ? null : outputs);
+        }
+
+        return Map.of("outputs", iterations);
     }
 
     private Optional<WorkerTaskResult> childWorkerTaskTypeToWorkerTask(

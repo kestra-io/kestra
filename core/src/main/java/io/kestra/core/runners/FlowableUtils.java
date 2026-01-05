@@ -494,6 +494,11 @@ public class FlowableUtils {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value) throws IllegalVariableEvaluationException {
+        return resolveEachTasks(runContext, parentTaskRun, tasks, value, true);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static List<ResolvedTask> resolveEachTasks(RunContext runContext, TaskRun parentTaskRun, List<Task> tasks, Object value, boolean deduplicate) throws IllegalVariableEvaluationException {
         List<Object> values;
 
         if (value instanceof String stringValue) {
@@ -523,12 +528,9 @@ public class FlowableUtils {
             throw new IllegalVariableEvaluationException("Unknown value type: " + value.getClass());
         }
 
-        List<Object> distinctValue = values
-            .stream()
-            .distinct()
-            .toList();
+        List<Object> effectiveValues = deduplicate ? values.stream().distinct().toList() : values;
 
-        long nullCount = distinctValue
+        long nullCount = effectiveValues
             .stream()
             .filter(Objects::isNull)
             .count();
@@ -542,7 +544,7 @@ public class FlowableUtils {
         ArrayList<ResolvedTask> result = new ArrayList<>();
 
         int iteration = 0;
-        for (Object current : distinctValue) {
+        for (Object current : effectiveValues) {
             try {
                 String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
                 for (Task task : tasks) {
@@ -570,6 +572,9 @@ public class FlowableUtils {
             ) &&
             (
                 resolvedTask.getValue() == null || resolvedTask.getValue().equals(taskRun.getValue())
+            ) &&
+            (
+                resolvedTask.getIteration() == null || resolvedTask.getIteration().equals(taskRun.getIteration())
             );
     }
 }

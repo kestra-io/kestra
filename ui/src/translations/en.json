@@ -735,7 +735,9 @@
           "title": "Confirm deletion of content",
           "files": "Are you sure you want to delete <code>{count}</code> file(s)?",
           "folders": "Are you sure you want to delete <code>{count}</code> folder(s) and all of its contents?",
-          "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?"
+          "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?",
+          "file_single": "Are you sure you want to delete the file <code>{name}</code>?",
+          "folder_single": "Are you sure you want to delete the folder <code>{name}</code> and all of its contents?"
         }
       },
       "revisions": {

@@ -1,7 +1,7 @@
 <template>
     <div class="wrapper vsm--item" :class="{editing}">
         <div v-if="editing" class="edit-row">
-            <el-input 
+            <el-input
                 class="vsm--input"
                 ref="titleInput"
                 v-model="updatedTitle"
@@ -20,10 +20,16 @@
                     <span>{{ updatedTitle }}</span>
                 </div>
                 <div class="buttons">
-                    <PencilOutline @click.stop.prevent="startEditBookmark" :title="t('edit')" />
-                    <DeleteOutline @click.stop="deleteBookmark" :title="t('delete')" />
+                    <PencilOutline
+                        @click.stop.prevent="startEditBookmark"
+                        :title="t('edit')"
+                    />
+                    <DeleteOutline
+                        @click.stop="deleteBookmark"
+                        :title="t('delete')"
+                    />
                 </div>
-            </a>     
+            </a>
         </template>
     </div>
 </template>
@@ -69,68 +75,67 @@
 </script>
 
 <style scoped>
-    .wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-        padding: 0.25rem 0.5rem;
-        overflow: hidden;
-        border-radius: 0.25rem;
-        box-sizing: border-box; 
-    }
+.wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    overflow: hidden;
+    border-radius: 0.25rem;
+    box-sizing: border-box;
+}
 
-    .buttons {
-        position: absolute;
-        right: 2rem;
-        top: 50%;
-        transform: translateY(-50%);
-        display: flex;
-        gap: 0.25rem;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 0.15s ease;
-        z-index: 10;
-    }
+.buttons {
+    position: absolute;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 0.25rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+    z-index: 10;
+}
 
-    .vsm--input {
-        flex: 1;
-        font-size: 0.875em;
-    }
+.vsm--input {
+    flex: 1;
+    font-size: 0.875em;
+}
 
-    .edit-row {
-        display: flex;
-        align-items: center;
-        width: 100%;
-        gap: 0.5rem;
-    }
+.edit-row {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 0.5rem;
+}
 
-    .save {
-        cursor: pointer;
-        color: var(--ks-content-primary);
-    }
+.save {
+    cursor: pointer;
+    color: var(--ks-content-primary);
+}
 
-    .vsm--link {
-        position: relative;
-        z-index: 1;
-        display: inline-flex; 
-        max-width: 100%;  
-        width: 100%;
-        text-decoration: none;
-        color: var(--ks-content-primary);
-        font-size: 0.875em;
-    }
+.vsm--link {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    max-width: 100%;
+    width: 100%;
+    text-decoration: none;
+    color: var(--ks-content-primary);
+    font-size: 0.875em;
+}
 
-    .wrapper:not(.editing) .vsm--link:hover .buttons {
-        opacity: 1;
-        visibility: visible;
-    }
+.wrapper:not(.editing) .vsm--link:hover .buttons {
+    opacity: 1;
+    visibility: visible;
+}
 
-    .vsm--title {
-        overflow: hidden;
-        white-space: nowrap;
-        padding: 0.25rem 0.5rem;
-        text-overflow: ellipsis;
-        max-width: calc(100% - 2.5rem); 
-    }
+.vsm--title {
+    overflow: hidden;
+    white-space: nowrap;
+    padding: 0.25rem 0.5rem;
+    text-overflow: ellipsis;
+    max-width: calc(100% - 2.5rem);
+}
 </style>
-

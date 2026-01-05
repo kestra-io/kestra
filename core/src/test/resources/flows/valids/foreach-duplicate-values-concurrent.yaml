@@ -1,0 +1,15 @@
+id: foreach-duplicate-values-concurrent
+namespace: io.kestra.tests
+
+tasks:
+  - id: foreach
+    type: io.kestra.plugin.core.flow.ForEach
+    deduplicate: false
+    concurrencyLimit: 2
+    values: ["dup", "dup", "other"]
+    tasks:
+      - id: child
+        type: io.kestra.plugin.core.output.OutputValues
+        values:
+          value: "{{ taskrun.value }}"
+          iteration: "{{ taskrun.iteration }}"

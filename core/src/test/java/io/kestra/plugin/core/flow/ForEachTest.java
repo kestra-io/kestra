@@ -109,4 +109,11 @@ class ForEachTest {
         assertThat(((java.util.Map<String, Object>) ((java.util.Map<String, Object>) iterations.get(1).get("child")).get("values")).get("value")).isEqualTo("dup");
         assertThat(((java.util.Map<String, Object>) ((java.util.Map<String, Object>) iterations.get(2).get("child")).get("values")).get("value")).isEqualTo("other");
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/foreach-duplicate-values-concurrent.yaml")
+    void duplicateValuesConcurrent(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("child")).hasSize(3);
+    }
 }

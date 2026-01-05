@@ -345,7 +345,13 @@ public class FlowableUtils {
 
         Map<String, List<ResolvedTask>> collect = allTasks
             .stream()
-            .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
+            .collect(Collectors.groupingBy(
+                resolvedTask -> resolvedTask.getIteration() != null ?
+                    "i:" + resolvedTask.getIteration() :
+                    "v:" + resolvedTask.getValue(),
+                LinkedHashMap::new,
+                Collectors.toList()
+            ));
 
         long resolvedConcurrency = concurrency == 0 ? Integer.MAX_VALUE : concurrency;
         // if concurrencyLimit > values.size() we limit concurrency to values.size()

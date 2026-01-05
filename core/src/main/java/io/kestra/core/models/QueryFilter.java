@@ -388,6 +388,21 @@ public record QueryFilter(
                     Field.CREATED
                 );
             }
+        },
+        ASSET_LINEAGE_EVENT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.ASSET_ID,
+                    Field.NAMESPACE,
+                    Field.FLOW_ID,
+                    Field.FLOW_REVISION,
+                    Field.EXECUTION_ID,
+                    Field.TASK_ID,
+                    Field.TASK_RUN_ID,
+                    Field.CREATED
+                );
+            }
         };
 
         public abstract List<Field> supportedField();

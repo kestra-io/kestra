@@ -12,7 +12,7 @@
                     size="large"
                     id="input-username"
                     v-model="credentials.username"
-                    :placeholder="t('email')"
+                    :placeholder="$t('email')"
                     required
                 >
                     <template #prepend>
@@ -31,7 +31,7 @@
                     size="large"
                     name="password"
                     id="input-password"
-                    :placeholder="t('password')"
+                    :placeholder="$t('password')"
                     type="password"
                     showPassword
                     required
@@ -56,7 +56,7 @@
                     :disabled="isLoginDisabled"
                     :loading="isLoading"
                 >
-                    {{ t("setup.login") }}
+                    {{ $t("setup.login") }}
                 </el-button>
             </el-form-item>
             <el-form-item>
@@ -66,7 +66,7 @@
                     size="large"
                     @click="openTroubleshootingGuide"
                 >
-                    {{ t("setup.troubleshooting") }}
+                    {{ $t("setup.troubleshooting") }}
                 </el-button>
             </el-form-item>
         </el-form>

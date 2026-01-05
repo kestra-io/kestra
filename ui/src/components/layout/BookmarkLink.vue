@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, nextTick} from "vue";
+    import {nextTick, ref} from "vue"
     import {useI18n} from "vue-i18n";
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
@@ -45,8 +45,13 @@
 
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps<{ href: string; title: string }>();
+    const props = defineProps<{
+        href: string
+        title: string
+    }>()
+    
     const bookmarksStore = useBookmarksStore();
+
     const editing = ref(false);
     const updatedTitle = ref(props.title);
     const titleInput = ref<{ focus: () => void; select: () => void } | null>(null);

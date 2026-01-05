@@ -48,6 +48,15 @@ export function applyDefaultFilters(
         change = true;
     }
 
+    if (!includeScope) {
+        Object.keys(query).forEach(key => {
+            if (key.startsWith(SCOPE_FILTER_PREFIX)) {
+                delete query[key];
+                change = true;
+            }
+        });
+    }
+
     return {query, change};
 }
 

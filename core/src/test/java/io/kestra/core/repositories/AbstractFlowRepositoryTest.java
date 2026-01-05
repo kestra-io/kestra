@@ -637,7 +637,7 @@ public abstract class AbstractFlowRepositoryTest {
             toDelete.add(updated);
 
             // Then: findRevisions should return updatedDate for each revision
-            List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId);
+            List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true);
             
             assertThat(revisions).hasSize(2);
             

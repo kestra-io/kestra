@@ -263,7 +263,7 @@
                     id: route.params.id?.toString() || "",
                     revision: revisionToDelete.toString()
                 });
-                toast.deleted(revisionToDelete.toString());
+                toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}));
                 load()
             } catch (error: any) {
                 toast.error(t("delete revision error", {revision: revisionToDelete, error: error.message || error.toString()}));

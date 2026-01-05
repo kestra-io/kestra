@@ -1,5 +1,6 @@
 <template>
     <Revisions
+        v-if="revisions.length > 0"
         lang="yaml"
         :revisions="flowRevisions"
         :revisionSource="loadRevisionContent"
@@ -55,7 +56,7 @@
         if (!flow.value) {
             return revisions.value;
         }
-        return revisions.value.length ? revisions.value : [...Array(flow.value.revision).keys()].map(idx => ({revision: idx + 1}));
+        return revisions.value.length ? revisions.value : [];
     });
 
     async function restoreRevision(revisionSource: string) {

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,8 +26,7 @@ class PluginInstallCommandTest {
 
             List<Path> files = Files.list(pluginsPath).toList();
 
-            assertThat(files.size()).isEqualTo(1);
-            assertThat(files.getFirst().getFileName().toString()).isEqualTo("io_kestra_plugin__plugin-notifications__0_6_0.jar");
+            assertThat(files.stream().map(f -> f.getFileName().toString())).containsExactly("io_kestra_plugin__plugin-notifications__0_6_0.jar");
         }
     }
 
@@ -41,7 +41,9 @@ class PluginInstallCommandTest {
 
             List<Path> files = Files.list(pluginsPath).toList();
 
-            assertThat(files.size()).isEqualTo(1);
+            assertThat(files.size())
+                .withFailMessage("expected one file, but got: " + files.stream().map(f->f.getFileName().toString()).collect(Collectors.joining()))
+                .isEqualTo(1);
             assertThat(files.getFirst().getFileName().toString()).startsWith("io_kestra_plugin__plugin-notifications__");
             assertThat(files.getFirst().getFileName().toString()).doesNotContain("LATEST");
         }
@@ -59,8 +61,7 @@ class PluginInstallCommandTest {
 
             List<Path> files = Files.list(pluginsPath).toList();
 
-            assertThat(files.size()).isEqualTo(1);
-            assertThat(files.getFirst().getFileName().toString()).isEqualTo("io_kestra_storage__storage-s3__0_12_1.jar");
+            assertThat(files.stream().map(f -> f.getFileName().toString())).containsExactly("io_kestra_storage__storage-s3__0_12_1.jar");
         }
     }
 }

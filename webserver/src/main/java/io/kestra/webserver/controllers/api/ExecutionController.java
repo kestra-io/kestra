@@ -1451,7 +1451,7 @@ public class ExecutionController {
                     "execution",
                     executionId
                 ));
-            } else if (!validateExecutionACL(execution.get())) {
+            } else if (!validateExecutionACL(execution.get(), "killed")) {
                 invalids.add(ManualConstraintViolation.of(
                     "user don't have the authorisation to kill this execution",
                     executionId,
@@ -1609,7 +1609,7 @@ public class ExecutionController {
                     "execution",
                     executionId
                 ));
-            } else if (!validateExecutionACL(execution.get())) {
+            } else if (!validateExecutionACL(execution.get(), "resumed")) {
                 invalids.add(ManualConstraintViolation.of(
                     "user don't have the authorisation to resume this execution",
                     executionId,
@@ -2366,7 +2366,7 @@ public class ExecutionController {
                     "execution",
                     executionId
                 ));
-            } else if (!validateExecutionACL(execution.get())) {
+            } else if (!validateExecutionACL(execution.get(), "force run")) {
                 invalids.add(ManualConstraintViolation.of(
                     "user don't have the authorisation to force run this execution",
                     executionId,
@@ -2710,7 +2710,7 @@ public class ExecutionController {
      * @param execution
      * @return true if the user has the authorization, false else.
      */
-    protected boolean validateExecutionACL(Execution execution) {
+    protected boolean validateExecutionACL(Execution execution, String action) {
         return true;
     }
 

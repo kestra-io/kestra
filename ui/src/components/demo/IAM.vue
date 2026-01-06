@@ -29,8 +29,4 @@
     function isFullScreen() {
         return document.getElementsByTagName("html")[0].classList.contains("full-screen");
     }
-
-
-
-
 </script>

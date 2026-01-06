@@ -4,7 +4,7 @@ import HomeIcon from "vue-material-design-icons/Home.vue";
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
 import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 import CogOutline from "vue-material-design-icons/CogOutline.vue";
-import ViewDashboardVariantOutline from "vue-material-design-icons/ViewDashboardVariantOutline.vue";
+import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
 import ChartBoxOutline from "vue-material-design-icons/ChartBoxOutline.vue";
 import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue";
 import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
@@ -78,7 +78,7 @@ Default.args = {
       title: "Dashboard",
       href: "/dashboard",
       icon: {
-        element: shallowRef(ViewDashboardVariantOutline),
+        element: shallowRef(ChartLineVariant),
         class: "menu-icon"
       },
       child: [

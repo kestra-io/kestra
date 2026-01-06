@@ -294,6 +294,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">यह निष्पादन अभी भी RUNNING है, इसे हटाने से यह बंद नहीं होगा।<br />इसे बंद करने के लिए आपको निष्पादन को kill करना होगा।</div>",
     "delete logs": "Logs हटाएं",
     "delete ok": "हटा दिया गया है",
+    "delete revision confirm": "क्या आप वाकई संशोधन {revision} को हटाना चाहते हैं?",
+    "delete revision error": "त्रुटि {error} के साथ संशोधन {revision} हटाने में त्रुटि",
     "delete task confirm": "क्या आप वाकई Task <code>{taskId}</code> को हटाना चाहते हैं?",
     "delete trigger": "ट्रिगर हटाएं",
     "delete trigger confirmation": "क्या आप वाकई trigger {id} को हटाना चाहते हैं? WARNING: यदि trigger अभी भी किसी flow में सक्रिय है, तो उसे हटाने से duplicate executions हो सकते हैं।",
@@ -668,6 +670,7 @@
       "end_date": "समाप्ति तिथि",
       "enter description": "फ़िल्टर विवरण दर्ज करें",
       "enter label": "फ़िल्टर लेबल दर्ज करें",
+      "enter name": "फ़िल्टर नाम दर्ज करें",
       "execution_kind": {
         "playground": "प्लेग्राउंड",
         "playground_description": "प्लेग्राउंड मोड से ट्रिगर की गई Executions",
@@ -714,6 +717,7 @@
         "description": "मेट्रिक प्रकार द्वारा फ़िल्टर करें",
         "label": "मेट्रिक"
       },
+      "name": "नाम",
       "namespace": {
         "description": "namespace द्वारा फ़िल्टर करें",
         "label": "Namespace"
@@ -1493,6 +1497,7 @@
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
     "reuse_original_inputs": "मूल inputs का पुनः उपयोग करें",
     "revision": "संशोधन",
+    "revision deleted": "समीक्षा {revision} को सफलतापूर्वक हटा दिया गया है",
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
     "run task in playground": "प्लेग्राउंड में task चलाएं",

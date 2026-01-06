@@ -294,6 +294,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">To wykonanie jest nadal w trakcie, usunięcie go nie zatrzyma procesu.<br />Musisz zabić wykonanie, aby je zatrzymać.</div>",
     "delete logs": "Usuń logs",
     "delete ok": "jest usunięty",
+    "delete revision confirm": "Czy na pewno chcesz usunąć wersję {revision}?",
+    "delete revision error": "Błąd usuwania wersji {revision} z błędem {error}",
     "delete task confirm": "Czy chcesz usunąć task <code>{taskId}</code>?",
     "delete trigger": "Usuń trigger",
     "delete trigger confirmation": "Czy na pewno chcesz usunąć trigger {id}? WARNING: usunięcie triggera może prowadzić do zduplikowanych wykonania, jeśli trigger jest nadal aktywny w flow.",
@@ -668,6 +670,7 @@
       "end_date": "Data zakończenia",
       "enter description": "Wprowadź opis filtra",
       "enter label": "Wprowadź filtr label",
+      "enter name": "Wprowadź nazwę filtra",
       "execution_kind": {
         "playground": "Plac zabaw",
         "playground_description": "Wykonania uruchomione z trybu Playground",
@@ -714,6 +717,7 @@
         "description": "Filtruj według typu metryki",
         "label": "Metryka"
       },
+      "name": "Nazwa",
       "namespace": {
         "description": "Filtruj według namespace",
         "label": "Namespace"
@@ -1493,6 +1497,7 @@
     "resumed title": "Wznów wykonanie <code>{id}</code>",
     "reuse_original_inputs": "Ponownie użyj oryginalnych inputów",
     "revision": "Wersja",
+    "revision deleted": "Revision {revision} został pomyślnie usunięty",
     "revisions": "Wersje",
     "row count": "Liczba wierszy",
     "run task in playground": "Uruchom task w playgroundzie",

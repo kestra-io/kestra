@@ -294,6 +294,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta ejecución aún está RUNNING, eliminarla no la detendrá.<br />Necesitas matar la ejecución para detenerla.</div>",
     "delete logs": "Eliminar logs",
     "delete ok": "está eliminado",
+    "delete revision confirm": "¿Está seguro de que desea eliminar la revisión {revision}?",
+    "delete revision error": "Error al eliminar la revisión {revision} con el error {error}",
     "delete task confirm": "¿Quieres eliminar la task <code>{taskId}</code>?",
     "delete trigger": "Eliminar trigger",
     "delete trigger confirmation": "¿Está seguro de que desea eliminar el trigger {id}? WARNING: eliminar un trigger puede llevar a ejecuciones duplicadas si el trigger aún está activo en un flow.",
@@ -668,6 +670,7 @@
       "end_date": "Fecha de finalización",
       "enter description": "Ingrese la descripción del filtro",
       "enter label": "Ingrese etiqueta de filtro",
+      "enter name": "Ingrese el nombre del filtro",
       "execution_kind": {
         "playground": "Área de Pruebas",
         "playground_description": "Ejecuciones activadas desde el modo Playground",
@@ -714,6 +717,7 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
+      "name": "Nombre",
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"
@@ -1493,6 +1497,7 @@
     "resumed title": "Reanudar ejecución <code>{id}</code>",
     "reuse_original_inputs": "Reutilizar inputs originales",
     "revision": "Revisión",
+    "revision deleted": "La revisión {revision} ha sido eliminada con éxito",
     "revisions": "Revisiones",
     "row count": "Recuento de filas",
     "run task in playground": "Ejecutar task en el playground",

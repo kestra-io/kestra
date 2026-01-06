@@ -1,6 +1,7 @@
 package io.kestra.core.models.executions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.FlowInterface;
@@ -23,6 +24,10 @@ import java.util.stream.Stream;
 @Value
 @Builder(toBuilder = true)
 public class LogEntry implements DeletedInterface, TenantInterface {
+    @Hidden
+    @JsonProperty("id")
+    String id;
+
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;

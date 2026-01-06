@@ -10,7 +10,9 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 import org.jooq.Field;
-import org.jooq.impl.DSL;
+import org.jooq.Record;
+import org.slf4j.event.Level;
+import java.time.ZonedDateTime;
 
 import java.util.Date;
 import java.util.List;
@@ -34,5 +36,23 @@ public class H2LogRepository extends AbstractJdbcLogRepository {
     protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType) {
         return H2RepositoryUtils.formatDateField(dateField, groupType);
     }
-}
 
+    public LogEntry map(Record record) {
+        return LogEntry.builder()
+            .id(record.get("id", String.class))
+            .tenantId(record.get("tenant_id", String.class))
+            .namespace(record.get("namespace", String.class))
+            .flowId(record.get("flow_id", String.class))
+            .taskId(record.get("task_id", String.class))
+            .executionId(record.get("execution_id", String.class))
+            .taskRunId(record.get("taskrun_id", String.class))
+            .attemptNumber(record.get("attempt_number", Integer.class))
+            .triggerId(record.get("trigger_id", String.class))
+            .timestamp(record.get("timestamp", ZonedDateTime.class).toInstant())
+            .level(Level.valueOf(record.get("level", String.class)))
+            .thread(record.get("thread", String.class))
+            .message(record.get("message", String.class))
+            .deleted(record.get("deleted", Boolean.class))
+            .build();
+    }
+}

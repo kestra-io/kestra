@@ -198,4 +198,14 @@ public class LogController {
     ) {
         logRepository.deleteByQuery(tenantService.resolveTenant(), namespace, flowId, triggerId);
     }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "/bulk")
+    @Operation(tags = {"Logs"}, summary = "Delete multiple logs")
+    public MutableHttpResponse<?> deleteBulk(
+        @Parameter(description = "The log IDs to delete") @Body List<String> ids
+    ) {
+        Integer count = logRepository.deleteMany(tenantService.resolveTenant(), ids);
+        return HttpResponse.ok(count);
+    }
 }

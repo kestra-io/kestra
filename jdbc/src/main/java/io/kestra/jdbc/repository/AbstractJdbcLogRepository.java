@@ -38,7 +38,6 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                                      QueueService queueService,
                                      JdbcFilterService filterService) {
         super(jdbcRepository, queueService);
-
         this.filterService = filterService;
     }
 
@@ -52,18 +51,18 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     protected final JdbcFilterService filterService;
 
     protected Map<Logs.Fields, String> getFieldsMapping() {
-      return Map.of(
-          Logs.Fields.DATE, DATE_COLUMN,
-          Logs.Fields.NAMESPACE, "namespace",
-          Logs.Fields.FLOW_ID, "flow_id",
-          Logs.Fields.TASK_ID, "task_id",
-          Logs.Fields.EXECUTION_ID, "execution_id",
-          Logs.Fields.TASK_RUN_ID, "taskrun_id",
-          Logs.Fields.ATTEMPT_NUMBER, "attempt_number",
-          Logs.Fields.TRIGGER_ID, "trigger_id",
-          Logs.Fields.LEVEL, "level",
-          Logs.Fields.MESSAGE, "message"
-      );
+        return Map.of(
+            Logs.Fields.DATE, DATE_COLUMN,
+            Logs.Fields.NAMESPACE, "namespace",
+            Logs.Fields.FLOW_ID, "flow_id",
+            Logs.Fields.TASK_ID, "task_id",
+            Logs.Fields.EXECUTION_ID, "execution_id",
+            Logs.Fields.TASK_RUN_ID, "taskrun_id",
+            Logs.Fields.ATTEMPT_NUMBER, "attempt_number",
+            Logs.Fields.TRIGGER_ID, "trigger_id",
+            Logs.Fields.LEVEL, "level",
+            Logs.Fields.MESSAGE, "message"
+        );
     }
 
     protected Map<Logs.Fields, String> getWhereMapping() {
@@ -86,8 +85,47 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters
     ) {
-        var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
-        return findPage(pageable, tenantId, condition);
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+
+            var condition = NORMAL_KIND_CONDITION.and(this.filter(filters, DATE_COLUMN, Resource.LOG));
+
+            long safeOffset = pageable.getOffset();
+            if (pageable.getNumber() >= 1) {
+                safeOffset = Math.max(0, pageable.getOffset() - pageable.getSize());
+            }
+
+            var select = context
+                .select(
+                    DSL.field(DSL.name("key")).as("id"),
+                    DSL.asterisk()
+                )
+                .from(this.jdbcRepository.getTable())
+                .where(condition)
+                .orderBy(field(DATE_COLUMN).desc())
+                .limit(pageable.getSize())
+                .offset(safeOffset);
+
+            int total = context.fetchCount(
+                context.selectOne().from(this.jdbcRepository.getTable()).where(condition)
+            );
+
+            List<LogEntry> data = select.fetchInto(LogEntry.class);
+
+            return new ArrayListTotal<>(data, total);
+        });
+    }
+
+    @Override
+    public Integer deleteMany(String tenantId, List<String> ids) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+
+            return context
+                .delete(this.jdbcRepository.getTable())
+                .where(DSL.field(DSL.name("key")).in(ids))
+                .execute();
+        });
     }
 
     @Override
@@ -343,9 +381,11 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
 
                 var delete = context
                     .delete(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
-                    .and(field(DATE_COLUMN).lessOrEqual(endDate.toOffsetDateTime()));
+                    .where(DSL.trueCondition());
 
+                if (endDate != null) {
+                    delete = delete.and(field(DATE_COLUMN).lessOrEqual(endDate.toOffsetDateTime()));
+                }
                 if (startDate != null) {
                     delete = delete.and(field(DATE_COLUMN).greaterOrEqual(startDate.toOffsetDateTime()));
                 }
@@ -362,7 +402,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                     delete = delete.and(field("execution_id").eq(executionId));
                 }
 
-                if (logLevels != null) {
+                if (logLevels != null && !logLevels.isEmpty()) {
                     delete = delete.and(levelsCondition(logLevels));
                 }
 

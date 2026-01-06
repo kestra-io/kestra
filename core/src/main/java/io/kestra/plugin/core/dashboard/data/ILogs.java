@@ -47,6 +47,7 @@ public interface ILogs extends IData<ILogs.Fields> {
     }
 
     enum Fields {
+        ID,
         NAMESPACE,
         FLOW_ID,
         EXECUTION_ID,

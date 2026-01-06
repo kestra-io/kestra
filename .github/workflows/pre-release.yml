@@ -24,19 +24,13 @@ jobs:
     name: Backend tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    secrets: inherit
 
   frontend-tests:
     name: Frontend tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    secrets: inherit
 
   publish-maven:
     name: Publish Maven

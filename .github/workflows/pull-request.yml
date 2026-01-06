@@ -77,20 +77,14 @@ jobs:
     needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-frontend-tests.yml@main
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    secrets: inherit
 
   backend:
     name: Backend - Tests
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
     uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
-    secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    secrets: inherit
 
   e2e-tests:
     name: E2E - Tests

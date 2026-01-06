@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "앱 블록",
     "apps": "앱",
+    "assets": "자산",
     "attempt": "시도",
     "attempts": "시도 횟수",
     "auditlogs": "감사 Logs",
@@ -337,6 +338,10 @@
         "title": "인스턴스 전반의 인프라 관리"
       },
       "namespace": {
+        "assets": {
+          "message": "Kestra Enterprise Edition에서 Assets는 워크플로우가 상호작용하는 리소스의 실시간 인벤토리를 유지합니다. 이러한 리소스는 데이터베이스 테이블, 가상 머신, 파일 또는 사용 중인 외부 시스템일 수 있습니다.",
+          "title": "자산 관리 중앙화"
+        },
         "audit-logs": {
           "message": "Kestra Enterprise Edition에서는 namespace 수준의 감사 로그를 상세한 차이점과 함께 볼 수 있어, 모든 리소스에 걸쳐 누가 무엇을 언제 변경했는지에 대한 명확한 기록을 제공합니다.",
           "title": "모든 변경 사항을 한 곳에서 추적하기"

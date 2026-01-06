@@ -141,29 +141,24 @@
                     <div
                         class="tree-node-hitbox"
                         @mousedown.stop
-                        @click.stop="onRowClickWrapper(data, node, $event)"
+                        @click.stop="(e) => { if(!selectionMode) onRowClickWrapper(data, node, e) }"
                     >
-                        <el-row
-                            justify="space-between"
-                            class="w-100"
-                        >
-                            <el-col class="w-100">
-                                <Checkbox
-                                    v-if="selectionMode"
-                                    class="me-2"
-                                    :modelValue="selectedNodes.includes(data.id)"
-                                    @update-model-value="checked => toggleCheckboxSelection(checked, node)"
-                                    @mousedown.stop
-                                    @click.stop
-                                />
-                                <TypeIcon
-                                    :name="data.fileName"
-                                    :folder="!data.leaf"
-                                    class="me-2"
-                                />
-                                <span class="filename">{{ data.fileName }}</span>
-                            </el-col>
-                        </el-row>
+                        <div class="item-line">
+                            <Checkbox
+                                v-if="selectionMode"
+                                class="me-2"
+                                :modelValue="selectedNodes.includes(data.id)"
+                                @update-model-value="checked => toggleCheckboxSelection(checked, node)"
+                                @mousedown.stop
+                                @click.stop
+                            />
+                            <TypeIcon
+                                :name="data.fileName"
+                                :folder="!data.leaf"
+                                class="me-2"
+                            />
+                            <span class="filename" @click="(e) => { if(selectionMode) onRowClickWrapper(data, node, e) }">{{ data.fileName }}</span>
+                        </div>
                     </div>
                     <template #dropdown>
                         <el-dropdown-menu>
@@ -1091,5 +1086,9 @@
         align-items: center;
     }
 
+    .item-line{
+        display: flex;  
+        align-items: center;
+    }
 }
 </style>

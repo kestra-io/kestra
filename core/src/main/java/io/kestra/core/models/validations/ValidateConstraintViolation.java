@@ -1,6 +1,7 @@
 package io.kestra.core.models.validations;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.annotation.Introspected;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -39,7 +40,7 @@ public class ValidateConstraintViolation {
     private List<String> infos;
 
     @JsonIgnore
-    public String getIdentity(){
+    public String getIdentity() {
         return flow != null && namespace != null ? getFlowId() : flow != null ? flow : String.valueOf(index);
     }
 
@@ -50,12 +51,17 @@ public class ValidateConstraintViolation {
 
     private String getPath(Path directory) throws IOException {
         try (var files = Files.walk(directory)) {
-            return String.valueOf(files.toList().get(index));
+            return String.valueOf(
+                files.filter(Files::isRegularFile)
+                    .filter(YamlParser::isValidExtension)
+                    .toList()
+                    .get(index)
+            );
         }
     }
 
     @JsonIgnore
-    public String getFlowId(){
-        return namespace+"."+flow;
+    public String getFlowId() {
+        return namespace + "." + flow;
     }
 }

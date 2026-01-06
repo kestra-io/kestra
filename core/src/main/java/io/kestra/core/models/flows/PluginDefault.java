@@ -1,8 +1,10 @@
 package io.kestra.core.models.flows;
 
 import io.kestra.core.validations.PluginDefaultValidation;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,16 +18,15 @@ import java.util.Map;
 @Introspected
 @PluginDefaultValidation
 public class PluginDefault {
+    @Schema(title = "The plugin type.")
+    @PluginProperty
     @NotNull
+    @NotEmpty
     private final String type;
 
     @Builder.Default
     private final boolean forced = false;
 
-    @Schema(
-        type = "object",
-        additionalProperties = Schema.AdditionalPropertiesValue.FALSE
-    )
+    @Schema(type = "object", additionalProperties = Schema.AdditionalPropertiesValue.FALSE)
     private final Map<String, Object> values;
 }
-

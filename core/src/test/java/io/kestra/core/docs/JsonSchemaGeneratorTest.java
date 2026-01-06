@@ -53,6 +53,20 @@ class JsonSchemaGeneratorTest {
     @Inject
     PluginRegistry pluginRegistry;
 
+    @SuppressWarnings("unchecked")
+    @Test
+    void pluginDefault() {
+        Map<String, Object> generate = jsonSchemaGenerator.schemas(io.kestra.core.models.flows.PluginDefault.class);
+        var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
+
+        var pluginDefault = definitions.get(io.kestra.core.models.flows.PluginDefault.class.getName());
+        var properties = (Map<String, Map<String, Object>>) pluginDefault.get("properties");
+
+        assertThat(properties.containsKey("type"), is(true));
+        assertThat(properties.get("type").get("title"), is("The plugin type."));
+        assertThat((List<String>) pluginDefault.get("required"), hasItems("type"));
+    }
+
     @BeforeAll
     public static void beforeAll() {
         Helpers.loadExternalPluginsFromClasspath();
@@ -89,29 +103,35 @@ class JsonSchemaGeneratorTest {
             assertThat((List<String>) flow.get("required"), hasItems("id", "namespace", "tasks"));
 
             Map<String, Object> items = map(
-                properties(flow)
-                    .get("tasks")
-                    .get("items")
-            );
+                    properties(flow)
+                            .get("tasks")
+                            .get("items"));
             assertThat(items.containsKey("anyOf"), is(true));
             assertThat(items.containsKey("oneOf"), is(false));
 
             var log = definitions.get(Log.class.getName());
             assertThat((List<String>) log.get("required"), not(contains("level")));
-            assertThat((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
-            assertThat(((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("message").get("markdownDescription")).contains("can be a string"), is(true));
-            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("type").containsKey("pattern"), is(false));
-            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("description").get("$group"), is(PluginProperty.CORE_GROUP));
-            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("level").containsKey("$group"), is(false));
+            assertThat((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("level")
+                    .get("markdownDescription"), containsString("Default value is : `INFO`"));
+            assertThat(((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("message")
+                    .get("markdownDescription")).contains("can be a string"), is(true));
+            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("type").containsKey("pattern"),
+                    is(false));
+            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("description").get("$group"),
+                    is(PluginProperty.CORE_GROUP));
+            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("level").containsKey("$group"),
+                    is(false));
             assertThat((String) log.get("markdownDescription"), containsString("##### Examples"));
             assertThat((String) log.get("markdownDescription"), containsString("level: DEBUG"));
 
             var logType = definitions.get(Log.class.getName());
             assertThat(logType, is(notNullValue()));
 
-            var requiredWithDefault = definitions.get("io.kestra.core.docs.JsonSchemaGeneratorTest-RequiredWithDefault");
+            var requiredWithDefault = definitions
+                    .get("io.kestra.core.docs.JsonSchemaGeneratorTest-RequiredWithDefault");
             assertThat(requiredWithDefault, is(notNullValue()));
-            assertThat((List<String>) requiredWithDefault.get("required"), not(containsInAnyOrder("requiredWithDefault", "anotherRequiredWithDefault")));
+            assertThat((List<String>) requiredWithDefault.get("required"),
+                    not(containsInAnyOrder("requiredWithDefault", "anotherRequiredWithDefault")));
 
             var properties = (Map<String, Map<String, Object>>) flow.get("properties");
             var listeners = properties.get("listeners");
@@ -169,12 +189,11 @@ class JsonSchemaGeneratorTest {
 
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
             assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
-                Matchers.aMapWithSize(4),
-                hasKey("conditions"),
-                hasKey("stopAfter"),
-                hasKey("type"),
-                hasKey("allowConcurrent")
-            ));
+                    Matchers.aMapWithSize(4),
+                    hasKey("conditions"),
+                    hasKey("stopAfter"),
+                    hasKey("type"),
+                    hasKey("allowConcurrent")));
         });
     }
 
@@ -214,7 +233,7 @@ class JsonSchemaGeneratorTest {
         });
     }
 
-    @SuppressWarnings({"unchecked", "deprecation"})
+    @SuppressWarnings({ "unchecked", "deprecation" })
     @Test
     void echoTask() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) -> {
@@ -234,8 +253,12 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
         assertThat(generate, is(not(nullValue())));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("uri").get("$internalStorageURI"), is(true));
+        assertThat(
+                ((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"),
+                is("default"));
+        assertThat(
+                ((Map<String, Map<String, Object>>) generate.get("properties")).get("uri").get("$internalStorageURI"),
+                is(true));
     }
 
     @SuppressWarnings("unchecked")
@@ -253,32 +276,48 @@ class JsonSchemaGeneratorTest {
     void requiredAreRemovedIfThereIsADefault() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, RequiredWithDefault.class);
         assertThat(generate, is(not(nullValue())));
-        assertThat((List<String>) generate.get("required"), not(containsInAnyOrder("requiredWithDefault", "anotherRequiredWithDefault")));
+        assertThat((List<String>) generate.get("required"),
+                not(containsInAnyOrder("requiredWithDefault", "anotherRequiredWithDefault")));
         assertThat((List<String>) generate.get("required"), containsInAnyOrder("requiredWithNoDefault"));
     }
 
     @SuppressWarnings("unchecked")
     @Test
     void testDocumentation() {
-        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithDynamicDocumentedFields.class);
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class,
+                TaskWithDynamicDocumentedFields.class);
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringProperty").get("title"), is("stringProperty title"));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringProperty").get("description"), is("stringProperty description"));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringProperty").get("$deprecated"), is(true));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringProperty").get("title"),
+                is("stringProperty title"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringProperty")
+                .get("description"), is("stringProperty description"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringProperty")
+                .get("$deprecated"), is(true));
 
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerProperty").get("title"), is("integerProperty title"));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerProperty").get("description"), is("integerProperty description"));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerProperty").get("$deprecated"), is(true));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerProperty").get("title"),
+                is("integerProperty title"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerProperty")
+                .get("description"), is("integerProperty description"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerProperty")
+                .get("$deprecated"), is(true));
 
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault").get("title"), is("stringPropertyWithDefault title"));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault").get("description"), is("stringPropertyWithDefault description"));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault").get("$deprecated"), is(true));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault").get("default"), is("my string"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault")
+                .get("title"), is("stringPropertyWithDefault title"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault")
+                .get("description"), is("stringPropertyWithDefault description"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault")
+                .get("$deprecated"), is(true));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault")
+                .get("default"), is("my string"));
 
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("title"), is("integerPropertyWithDefault title"));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("description"), is("integerPropertyWithDefault description"));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("$deprecated"), is(true));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("default"), is("10000"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault")
+                .get("title"), is("integerPropertyWithDefault title"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault")
+                .get("description"), is("integerPropertyWithDefault description"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault")
+                .get("$deprecated"), is(true));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault")
+                .get("default"), is("10000"));
     }
 
     @SuppressWarnings("unchecked")
@@ -291,36 +330,34 @@ class JsonSchemaGeneratorTest {
 
             String executionTimeSeriesColumnDescriptorExecutionFieldsKey = "io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields__";
             assertThat(
-                properties(definitions.get("io.kestra.plugin.core.dashboard.chart.TimeSeries_io.kestra.plugin.core.dashboard.data.IExecutions-Fields.io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields___"))
-                    .get("data")
-                    .get("$ref"),
-                Matchers.is("#/definitions/" + executionTimeSeriesColumnDescriptorExecutionFieldsKey)
-            );
+                    properties(definitions.get(
+                            "io.kestra.plugin.core.dashboard.chart.TimeSeries_io.kestra.plugin.core.dashboard.data.IExecutions-Fields.io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields___"))
+                            .get("data")
+                            .get("$ref"),
+                    Matchers.is("#/definitions/" + executionTimeSeriesColumnDescriptorExecutionFieldsKey));
 
             String timeseriesColumnDescriptorExecutionFields = "io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields_";
             assertThat(
-                ((Map<String, String>) properties(definitions.get("io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields__"))
-                    .get("columns")
-                    .get("additionalProperties")
-                ).get("$ref"),
-                Matchers.is("#/definitions/" + timeseriesColumnDescriptorExecutionFields)
-            );
+                    ((Map<String, String>) properties(definitions.get(
+                            "io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields__"))
+                            .get("columns")
+                            .get("additionalProperties")).get("$ref"),
+                    Matchers.is("#/definitions/" + timeseriesColumnDescriptorExecutionFields));
 
-            Map<String, Map<String, Object>> executionTimeseriesProps = properties(definitions.get(timeseriesColumnDescriptorExecutionFields));
+            Map<String, Map<String, Object>> executionTimeseriesProps = properties(
+                    definitions.get(timeseriesColumnDescriptorExecutionFields));
 
             // We verify that it holds TimeSeries-specific props
             assertThat(
-                ((List<String>) (
-                    executionTimeseriesProps.get("graphStyle")
-                ).get("enum")).toArray(),
-                Matchers.arrayContainingInAnyOrder(Arrays.stream(GraphStyle.values()).map(Object::toString).toArray())
-            );
+                    ((List<String>) (executionTimeseriesProps.get("graphStyle")).get("enum")).toArray(),
+                    Matchers.arrayContainingInAnyOrder(
+                            Arrays.stream(GraphStyle.values()).map(Object::toString).toArray()));
 
             // We verify that it holds Executions-specific props
             assertThat(
-                ((List<String>) executionTimeseriesProps.get("field").get("enum")).toArray(),
-                Matchers.arrayContainingInAnyOrder(Arrays.stream(Executions.Fields.values()).map(Object::toString).toArray())
-            );
+                    ((List<String>) executionTimeseriesProps.get("field").get("enum")).toArray(),
+                    Matchers.arrayContainingInAnyOrder(
+                            Arrays.stream(Executions.Fields.values()).map(Object::toString).toArray()));
         });
     }
 
@@ -330,14 +367,15 @@ class JsonSchemaGeneratorTest {
         List<RegisteredPlugin> scan = pluginRegistry.externalPlugins();
         Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
 
-        // Assert that properties that are part of type resolution are set as const from their default value
+        // Assert that properties that are part of type resolution are set as const from
+        // their default value
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, cls);
         assertThat(((Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) generate.get("$defs"))
-            .get("io.kestra.core.models.tasks.retrys.Constant")
-            .get("properties"))
-            .get("type")
-            .get("const"),
-            is(new Constant().getType()));
+                .get("io.kestra.core.models.tasks.retrys.Constant")
+                .get("properties"))
+                .get("type")
+                .get("const"),
+                is(new Constant().getType()));
     }
 
     @SuppressWarnings("unchecked")
@@ -363,7 +401,7 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    public static class TaskWithEnum extends ParentClass implements RunnableTask<VoidOutput>  {
+    public static class TaskWithEnum extends ParentClass implements RunnableTask<VoidOutput> {
 
         @PluginProperty
         @Schema(title = "Title from the attribute")
@@ -378,10 +416,7 @@ class JsonSchemaGeneratorTest {
         private String uri;
 
         @PluginProperty
-        @Schema(
-            title = "Title from the attribute",
-            oneOf = {String.class, Example[].class, Example.class}
-        )
+        @Schema(title = "Title from the attribute", oneOf = { String.class, Example[].class, Example.class })
         private Object testObject;
 
         @Override
@@ -407,7 +442,7 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    public static class TaskWithSubTaskAndSubTrigger extends Task implements RunnableTask<VoidOutput>  {
+    public static class TaskWithSubTaskAndSubTrigger extends Task implements RunnableTask<VoidOutput> {
 
         @PluginProperty
         @Schema(title = "Subtask")
@@ -438,9 +473,7 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    @Plugin(
-        beta = true
-    )
+    @Plugin(beta = true)
     public static class BetaTask extends Task {
         @PluginProperty(beta = true)
         private String beta;
@@ -464,12 +497,14 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @NotNull
         @Builder.Default
-        private Property<TaskWithEnum.TestClass> requiredWithDefault = Property.ofValue(TaskWithEnum.TestClass.builder().testProperty("test").build());
+        private Property<TaskWithEnum.TestClass> requiredWithDefault = Property
+                .ofValue(TaskWithEnum.TestClass.builder().testProperty("test").build());
 
         @PluginProperty
         @NotNull
         @Builder.Default
-        private Property<TaskWithEnum.TestClass> anotherRequiredWithDefault = Property.ofValue(TaskWithEnum.TestClass.builder().testProperty("test2").build());
+        private Property<TaskWithEnum.TestClass> anotherRequiredWithDefault = Property
+                .ofValue(TaskWithEnum.TestClass.builder().testProperty("test2").build());
 
         @PluginProperty
         @NotNull
@@ -481,37 +516,24 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    public static class TaskWithDynamicDocumentedFields extends Task implements RunnableTask<VoidOutput>  {
+    public static class TaskWithDynamicDocumentedFields extends Task implements RunnableTask<VoidOutput> {
 
-        @Deprecated(since="deprecation_version_1", forRemoval=true)
-        @Schema(
-            title = "integerPropertyWithDefault title",
-            description = "integerPropertyWithDefault description"
-        )
+        @Deprecated(since = "deprecation_version_1", forRemoval = true)
+        @Schema(title = "integerPropertyWithDefault title", description = "integerPropertyWithDefault description")
         @Builder.Default
         protected Property<Integer> integerPropertyWithDefault = Property.ofValue(10000);
 
-        @Deprecated(since="deprecation_version_1", forRemoval=true)
-        @Schema(
-            title = "stringPropertyWithDefault title",
-            description = "stringPropertyWithDefault description"
-        )
+        @Deprecated(since = "deprecation_version_1", forRemoval = true)
+        @Schema(title = "stringPropertyWithDefault title", description = "stringPropertyWithDefault description")
         @Builder.Default
         protected Property<String> stringPropertyWithDefault = Property.ofValue("my string");
 
-
-        @Deprecated(since="deprecation_version_1", forRemoval=true)
-        @Schema(
-            title = "stringProperty title",
-            description = "stringProperty description"
-        )
+        @Deprecated(since = "deprecation_version_1", forRemoval = true)
+        @Schema(title = "stringProperty title", description = "stringProperty description")
         protected Property<String> stringProperty;
 
-        @Deprecated(since="deprecation_version_1", forRemoval=true)
-        @Schema(
-            title = "integerProperty title",
-            description = "integerProperty description"
-        )
+        @Deprecated(since = "deprecation_version_1", forRemoval = true)
+        @Schema(title = "integerProperty title", description = "integerProperty description")
         protected Property<Integer> integerProperty;
 
         @Override

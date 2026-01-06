@@ -542,7 +542,7 @@
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
-        return namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})
+        return (await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})).content ?? ""
     }
 
     async function restore(source: string) {
@@ -804,10 +804,12 @@
     }
 
     async function exportFile(node: TreeNode, data: {fileName: string}) {
-        const content = await namespacesStore.readFile({
+        const {content} = await namespacesStore.readFile({
             path: filesStore.getPath(node.id) ?? "",
             namespace: namespaceId.value,
         });
+        if(!content?.length) 
+            throw new Error("File is empty or undefined");
         const blob = new Blob([content], {type: "text/plain"});
         Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
     }

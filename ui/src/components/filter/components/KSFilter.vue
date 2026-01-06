@@ -191,4 +191,5 @@
             padding-bottom: 1rem;
         }
     }
+}
 </style>

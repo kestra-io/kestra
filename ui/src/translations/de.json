@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "App-Blöcke",
     "apps": "Apps",
+    "assets": "Vermögenswerte",
     "attempt": "Versuch",
     "attempts": "Versuch(e)",
     "auditlogs": "Audit Logs",
@@ -337,6 +338,10 @@
         "title": "Verwalten Sie die Infrastruktur in Ihrer Instanz"
       },
       "namespace": {
+        "assets": {
+          "message": "In Kestra Enterprise Edition führt Assets ein Live-Inventar der Ressourcen, mit denen Ihre Workflows interagieren. Diese Ressourcen können Datenbanktabellen, virtuelle Maschinen, Dateien oder jedes externe System sein, mit dem Sie arbeiten.",
+          "title": "Zentralisiere Asset-Management"
+        },
         "audit-logs": {
           "message": "In der Kestra Enterprise Edition können Sie Audit-Logs auf Namespace-Ebene mit detaillierten Diffs anzeigen, die Ihnen eine klare Historie darüber geben, wer was und wann an allen Ressourcen geändert hat.",
           "title": "Alle Änderungen an einem Ort verfolgen"

@@ -24,7 +24,7 @@ import lombok.Value;
 import lombok.extern.jackson.Jacksonized;
 import picocli.CommandLine;
 
-public abstract class AbstractApiCommand extends AbstractCommand {
+public abstract class AbstractApiCommand extends AbstractCommand { // FIXME REMOVE
     @CommandLine.Option(names = {"--server"}, description = "Kestra server url", defaultValue = "http://localhost:8080")
     protected URL server;
 

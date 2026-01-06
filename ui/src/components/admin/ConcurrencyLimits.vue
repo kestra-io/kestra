@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="routeInfo.title" />
-    
+
     <section class="container">
         <DataTable
             striped
@@ -12,8 +12,8 @@
                     v-else
                     :data="data?.results"
                 >
-                    <el-table-column 
-                        v-for="k in KEYS" 
+                    <el-table-column
+                        v-for="k in KEYS"
                         :key="k"
                         :prop="k"
                         :label="k"
@@ -74,13 +74,13 @@
         flowId: string,
         running: number
     }
-
+    // FIXME REMOVE
     const KEYS: (keyof ConcurrencyLimit)[] = ["tenantId", "namespace", "flowId", "running"];
 
     const axios = useAxios();
-    const data = ref<{ 
-        total: number; 
-        results: ConcurrencyLimit[] 
+    const data = ref<{
+        total: number;
+        results: ConcurrencyLimit[]
     }>();
 
     async function loadData(){

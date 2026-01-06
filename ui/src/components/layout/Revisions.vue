@@ -1,67 +1,85 @@
 <template>
     <div class="revision" v-if="revisions && revisions.length > 1">
-        <el-select v-model="sideBySide" class="mb-3">
-            <el-option
-                v-for="item in displayTypes"
-                :key="item.value"
-                :label="item.text"
-                :value="item.value"
-            />
-        </el-select>
-        <el-row :gutter="15">
+        <div class="d-flex justify-content-end">
+            <el-select v-model="sideBySide" class="mb-3 display-select">
+                <el-option
+                    v-for="item in displayTypes"
+                    :key="item.value"
+                    :label="item.text"
+                    :value="item.value"
+                />
+            </el-select>
+        </div>
+        <el-row :gutter="15" class="mb-2">
             <el-col :span="12" v-if="revisionLeftIndex !== undefined">
-                <div class="revision-select mb-3">
-                    <el-select v-model="revisionLeftIndex" @change="addQuery">
-                        <el-option
-                            v-for="item in leftOptions"
-                            :key="item.value"
-                            :label="item.text"
-                            :value="item.value"
-                        />
-                    </el-select>
-                    <el-button-group>
-                        <el-button :icon="FileCode" @click="seeRevision(revisionLeftIndex, revisionLeftText)">
-                            <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
-                        </el-button>
-                        <el-button
-                            :icon="Restore"
-                            :disabled="revisionLeftText === currentRevisionWithSource.source"
-                            @click="restoreRevision(revisionLeftIndex, revisionLeftText)"
-                            data-testid="restore-left"
-                        >
-                            <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
-                        </el-button>
-                    </el-button-group>
+                <div class="revision-select-row">
+                    <div class="revision-select">
+                        <el-select v-model="revisionLeftIndex" @change="addQuery">
+                            <el-option
+                                v-for="item in leftOptions"
+                                :key="item.value"
+                                :label="t('revision') + ' '+ item.text"
+                                :value="item.value"
+                                class="revision-option"
+                            >
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span> {{ t("revision") + " " + item.text }}</span>
+                                    <TrashCanOutline
+                                        @mousedown.stop.prevent
+                                        @click.stop.prevent="onDelete(item.value)"
+                                        v-if="currentRevision != item.value"
+                                    />
+                                </div>
+                            </el-option>
+                        </el-select>
+                        <el-button-group>
+                            <el-button
+                                :icon="Restore"
+                                :disabled="revisionLeftText === currentRevisionWithSource.source"
+                                @click="restoreRevision(revisionLeftIndex, revisionLeftText)"
+                                data-testid="restore-left"
+                            >
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ t("restore") }}</span>
+                            </el-button>
+                        </el-button-group>
+                    </div>
+                    <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
                 </div>
-
-                <slot name="crud" :revision="revisionNumber(revisionLeftIndex)" />
             </el-col>
             <el-col :span="12" v-if="revisionRightIndex !== undefined">
-                <div class="revision-select mb-3">
-                    <el-select v-model="revisionRightIndex" @change="addQuery">
-                        <el-option
-                            v-for="item in rightOptions"
-                            :key="item.value"
-                            :label="item.text"
-                            :value="item.value"
-                        />
-                    </el-select>
-                    <el-button-group>
-                        <el-button :icon="FileCode" @click="seeRevision(revisionRightIndex, revisionRightText)">
-                            <span class="d-none d-lg-inline-block">&nbsp;{{ t('see full revision') }}</span>
-                        </el-button>
-                        <el-button
-                            :icon="Restore"
-                            :disabled="revisionRightText === currentRevisionWithSource.source"
-                            @click="restoreRevision(revisionRightIndex, revisionRightText)"
-                            data-testid="restore-right"
-                        >
-                            <span class="d-none d-lg-inline-block">&nbsp;{{ t('restore') }}</span>
-                        </el-button>
-                    </el-button-group>
+                <div class="revision-select-row m">
+                    <div class="revision-select">
+                        <el-select v-model="revisionRightIndex" @change="addQuery">
+                            <el-option
+                                v-for="item in rightOptions"
+                                :key="item.value"
+                                :label="t('revision') + ' '+ item.text"
+                                :value="item.value"
+                                class="revision-option"
+                            >
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span> {{ t("revision") + " " + item.text }}</span>
+                                    <TrashCanOutline
+                                        @mousedown.stop.prevent
+                                        @click.stop.prevent="onDelete(item.value)"
+                                        v-if="currentRevision != revisionNumber(item.value)"
+                                    />
+                                </div>
+                            </el-option>
+                        </el-select>
+                        <el-button-group>
+                            <el-button
+                                :icon="Restore"
+                                :disabled="revisionRightText === currentRevisionWithSource.source"
+                                @click="restoreRevision(revisionRightIndex, revisionRightText)"
+                                data-testid="restore-right"
+                            >
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ t("restore") }}</span>
+                            </el-button>
+                        </el-button-group>
+                    </div>
+                    <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
                 </div>
-
-                <slot name="crud" :revision="revisionNumber(revisionRightIndex)" />
             </el-col>
         </el-row>
 
@@ -79,18 +97,10 @@
         <div v-if="isLoadingRevisions" class="text-center p-4">
             <span class="ml-2">Loading revisions...</span>
         </div>
-
-        <Drawer v-if="isModalOpen" v-model="isModalOpen">
-            <template #header>
-                <h5>{{ t("revision") + `: ` + revision }}</h5>
-            </template>
-
-            <Editor v-model="revisionContent" :lang :fullHeight="false" :input="true" :navbar="false" :readOnly="true" />
-        </Drawer>
     </div>
     <div v-else>
         <el-alert class="mb-0" showIcon :closable="false">
-            {{ t('no revisions found') }}
+            {{ t("no revisions found") }}
         </el-alert>
     </div>
 </template>
@@ -99,12 +109,14 @@
     import {computed, ref, watch} from "vue";
     import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
-    import FileCode from "vue-material-design-icons/FileCode.vue";
     import Restore from "vue-material-design-icons/Restore.vue";
+    import TrashCanOutline from "vue-material-design-icons/TrashCanOutline.vue";
     import Editor from "../../components/inputs/Editor.vue";
-    import Drawer from "../Drawer.vue";
 
     import {useToast} from "../../utils/toast";
+    import {useFlowStore} from "../../stores/flow";
+
+    const flowStore = useFlowStore();
 
     export interface Revision {
         revision: number;
@@ -120,16 +132,12 @@
     const revisionRightIndex = ref();
     const revisionLeftText = ref();
     const revisionRightText = ref();
-    const revision = ref();
-    const revisionId = ref();
-    const revisionContent = ref();
     const sideBySide = ref(true);
     const isLoadingRevisions = ref(false);
     const displayTypes = [
         {value: true, text: t("side-by-side")},
-        {value: false, text:  t("line-by-line")},
+        {value: false, text: t("line-by-line")}
     ];
-    const isModalOpen = ref(false);
 
     const emit = defineEmits<{
         restore: [source: string]
@@ -143,12 +151,12 @@
     }>(), {editRouteQuery: true});
 
     const sortedRevisions = computed(() => {
-        return props.revisions.toSorted((a, b) => a.revision - b.revision)
+        return props.revisions.toSorted((a, b) => a.revision - b.revision);
     });
 
     const currentRevisionWithSource = computed(() => {
         return sortedRevisions.value[sortedRevisions.value.length - 1];
-    })
+    });
 
     function load() {
         const currentRevision = currentRevisionWithSource.value?.revision ?? 1;
@@ -179,18 +187,11 @@
     function revisionIndex(revision: string) {
         const revisionInt = parseInt(revision);
 
-        return sortedRevisions.value.findIndex(rev => rev.revision === revisionInt)
+        return sortedRevisions.value.findIndex(rev => rev.revision === revisionInt);
     }
 
     function revisionNumber(index: number) {
         return sortedRevisions.value[index].revision;
-    }
-
-    function seeRevision(index: number, revisionParam: Revision) {
-        revisionId.value = index
-        revisionContent.value = revisionParam
-        revision.value = revisionNumber(index)
-        isModalOpen.value = true;
     }
 
     function restoreRevision(index: number, revisionSource: string) {
@@ -219,7 +220,10 @@
     function options(excludeRevisionIndex: number | undefined) {
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
-            .map(({revision}) => ({value: revisionIndex(revision.toString()), text: revision + (currentRevisionWithSource.value.revision === revision ? ` (${t("current")})` : "")}));
+            .map(({revision}) => ({
+                value: revisionIndex(revision.toString()),
+                text: revision + (currentRevisionWithSource.value.revision === revision ? ` (${t("current")})` : "")
+            }));
     }
 
     const leftOptions = computed(() => {
@@ -229,6 +233,10 @@
     const rightOptions = computed(() => {
         return options(revisionLeftIndex.value);
     });
+
+    const currentRevision = computed(() => {
+        return currentRevisionWithSource.value?.revision ?? 1
+    })
 
     async function loadRevisionContent(index: number | undefined) {
         if (index === undefined) {
@@ -245,6 +253,23 @@
 
         return source;
     }
+
+    async function onDelete(index: number) {
+        const revisionToDelete = revisionNumber(index);
+        toast.confirm(t("delete revision confirm", {revision: revisionToDelete}), async () => {
+            try {
+                await flowStore.deleteRevision({
+                    namespace: route.params.namespace?.toString() || "",
+                    id: route.params.id?.toString() || "",
+                    revision: revisionToDelete.toString()
+                });
+                toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}));
+                load()
+            } catch (error: any) {
+                toast.error(t("delete revision error", {revision: revisionToDelete, error: error.message || error.toString()}));
+            }
+        });
+    };
 
     watch(revisionLeftIndex, async (newValue) => {
         isLoadingRevisions.value = true;
@@ -264,7 +289,7 @@
         }
     });
 
-    watch (() => route.query.revisionLeft, async (newValue) => {
+    watch(() => route.query.revisionLeft, async (newValue) => {
         if (newValue) {
             const newLeftIndex = revisionIndex(newValue.toString());
             if (newLeftIndex !== revisionLeftIndex.value) {
@@ -286,12 +311,13 @@
         if (revisionNumber(revisionRightIndex.value) === oldRevision) {
             revisionRightIndex.value = revisionIndex(newRevision.toString());
         }
-    })
+    });
 
     load();
 </script>
 
 <style scoped lang="scss">
+
     .revision {
         display: flex;
         flex-direction: column;
@@ -303,13 +329,32 @@
         padding-bottom: 1rem;
     }
 
+    .revision-select-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
     .revision-select {
         display: flex;
+        gap: 0.5rem;
+        align-items: center;
 
         > div {
             &:first-child {
-                flex: 2;
+                min-width: 150px;
+                width: 100%
             }
         }
     }
+
+    .revision-option {
+        padding-right: 0.5rem;
+        min-width: 300px;
+    }
+
+    .display-select {
+        width: 10%;
+    }
+
 </style>

@@ -58,7 +58,7 @@
                             refresh: {shown: true, callback: refresh}
                         }"
                         @update-properties="updateDisplayColumns"
-                        :defaultScope="!route.name?.toString().startsWith('namespaces/')"
+                        :defaultScope="defaultScopeFilter"
                     />
                 </template>
 
@@ -300,7 +300,6 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
     import DataTable from "../layout/DataTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    //@ts-expect-error no declaration file
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
@@ -325,10 +324,12 @@
         topbar?: boolean;
         namespace?: string;
         id?: string | null;
+        defaultScopeFilter: boolean,
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
+        defaultScopeFilter: undefined,
     });
 
     const flowStore = useFlowStore();

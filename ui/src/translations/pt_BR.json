@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "Blocos do App",
     "apps": "Aplicativos",
+    "assets": "Ativos",
     "attempt": "Tentativa",
     "attempts": "Tentativa(s)",
     "auditlogs": "Audit Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta execução ainda está RUNNING, deletá-la não irá pará-la.<br />Você precisa matar a execução para pará-la.</div>",
     "delete logs": "Excluir logs",
     "delete ok": "está deletado",
+    "delete revision confirm": "Tem certeza de que deseja excluir a revisão {revision}?",
+    "delete revision error": "Erro ao excluir a revisão {revision} com erro {error}",
     "delete task confirm": "Deseja Excluir a task <code>{taskId}</code>?",
     "delete trigger": "Excluir trigger",
     "delete trigger confirmation": "Tem certeza de que deseja excluir o trigger {id}? WARNING: excluir um trigger pode levar a execuções duplicadas se o trigger ainda estiver ativo em um flow.",
@@ -335,6 +338,10 @@
         "title": "Gerencie a Infraestrutura em Toda a Sua Instância"
       },
       "namespace": {
+        "assets": {
+          "message": "Na Kestra Enterprise Edition, Assets mantém um inventário ao vivo de recursos com os quais seus workflows interagem. Esses recursos podem ser tabelas de banco de dados, máquinas virtuais, arquivos ou qualquer sistema externo com o qual você trabalhe.",
+          "title": "Centralizar Gerenciamento de Ativos"
+        },
         "audit-logs": {
           "message": "Na Kestra Enterprise Edition, você pode visualizar logs de auditoria no nível do namespace com diferenças detalhadas, fornecendo um histórico claro de quem alterou o quê e quando em todos os recursos.",
           "title": "Acompanhe Todas as Alterações em Um Só Lugar"
@@ -668,6 +675,7 @@
       "end_date": "Data de Término",
       "enter description": "Insira a descrição do filtro",
       "enter label": "Insira o filtro de label",
+      "enter name": "Insira o nome do filtro",
       "execution_kind": {
         "playground": "Playground",
         "playground_description": "Execuções acionadas a partir do modo Playground",
@@ -714,6 +722,7 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
+      "name": "Nome",
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"
@@ -1493,6 +1502,7 @@
     "resumed title": "Retomar execução <code>{id}</code>",
     "reuse_original_inputs": "Reutilizar inputs originais",
     "revision": "Revisão",
+    "revision deleted": "A revisão {revision} foi excluída com sucesso",
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
     "run task in playground": "Executar task no playground",
@@ -1845,6 +1855,7 @@
     "update aborted": "atualização abortada",
     "update ok": "está atualizado",
     "updated date": "Data de atualização",
+    "usage": "Uso",
     "use": "Usar",
     "use_dark_background": "Use esta versão ao trabalhar em um fundo escuro para garantir que nosso nome permaneça legível.",
     "validate": "Validar",
@@ -1896,7 +1907,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Chave ou valor vazio não é permitido em labels",
-    "years": "Anos",
-    "your usage": "Seu uso"
+    "years": "Anos"
   }
 }

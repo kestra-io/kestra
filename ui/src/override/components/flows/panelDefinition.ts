@@ -2,7 +2,7 @@ import {h, markRaw} from "vue";
 import {storageKeys} from "../../../utils/constants";
 
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
-import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
+import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
 import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
@@ -59,7 +59,7 @@ export const EDITOR_ELEMENTS: EditorElement[] = [
     },
     {
         button: {
-            icon: markRaw(DotsSquareIcon),
+            icon: markRaw(FolderOpenOutline),
             label: "Files"
         },
         uid: "files",

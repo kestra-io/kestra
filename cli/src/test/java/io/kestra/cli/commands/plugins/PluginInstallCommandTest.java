@@ -3,7 +3,7 @@ package io.kestra.cli.commands.plugins;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
-import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 import picocli.CommandLine;
 
 import java.io.ByteArrayOutputStream;
@@ -20,7 +20,8 @@ import static org.assertj.core.api.Assertions.fail;
 
 class PluginInstallCommandTest {
 
-    @Test
+    // these tests rely on maven central which can sometimes be unstable, hence the retries
+    @RetryingTest(5)
     void shouldInstallPluginLocallyGivenFixedVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
@@ -35,7 +36,7 @@ class PluginInstallCommandTest {
         }
     }
 
-    @Test
+    @RetryingTest(5)
     void shouldInstallPluginLocallyGivenLatestVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
@@ -54,7 +55,7 @@ class PluginInstallCommandTest {
         }
     }
 
-    @Test
+    @RetryingTest(5)
     void shouldInstallPluginLocallyGivenRangeVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();

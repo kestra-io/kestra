@@ -6,7 +6,7 @@
                     <el-button-group>
                         <el-tooltip
                             effect="light"
-                            :content="t('Fold content lines')"
+                            :content="$t('Fold content lines')"
                             :persistent="false"
                             transition=""
                             :hideAfter="0"
@@ -19,7 +19,7 @@
                         </el-tooltip>
                         <el-tooltip
                             effect="light"
-                            :content="t('Unfold content lines')"
+                            :content="$t('Unfold content lines')"
                             :persistent="false"
                             transition=""
                             :hideAfter="0"

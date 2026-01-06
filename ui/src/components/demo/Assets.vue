@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="routeInfo.title" />
+    <TopNavBar v-if="topbar" :title="routeInfo.title" />
     <Layout
         :title="t(`demos.assets.title`)"
         :image="{
@@ -22,7 +22,14 @@
     import {useI18n} from "vue-i18n";
     import img from "../../assets/demo/assets.png";
     import useRouteContext from "../../composables/useRouteContext";
-    
+
+    defineProps({
+        topbar: {
+            type: Boolean,
+            default: true
+        }
+    });
+
     import Layout from "./Layout.vue";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
 

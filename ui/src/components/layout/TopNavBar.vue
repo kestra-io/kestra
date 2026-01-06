@@ -6,9 +6,38 @@
         />
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <div class="d-flex align-items-end gap-2">
-                <div class="d-flex flex-column gap-2">
+                <div class="d-flex align-items-center">
                     <el-breadcrumb v-if="breadcrumb">
-                        <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
+                        <el-breadcrumb-item v-for="(item, x) in startBreadcrumb" :key="x" :class="{'pe-none': item.disabled}">
+                            <a v-if="item.disabled || !item.link">
+                                {{ item.label }}
+                            </a>
+                            <RouterLink v-else :to="item.link">
+                                {{ item.label }}
+                            </RouterLink>
+                        </el-breadcrumb-item>
+
+                        <el-breadcrumb-item v-if="hiddenBreadcrumb.length">
+                            <el-dropdown placement="bottom-start">
+                                <el-button class="el-button-dropdown">
+                                    ...
+                                </el-button>
+                                <template #dropdown>
+                                    <el-dropdown-menu>
+                                        <el-dropdown-item v-for="(item, x) in hiddenBreadcrumb" :key="x" :class="{'pe-none': item.disabled}">
+                                            <a v-if="item.disabled || !item.link">
+                                                {{ item.label }}
+                                            </a>
+                                            <RouterLink v-else :to="item.link">
+                                                {{ item.label }}
+                                            </RouterLink>
+                                        </el-dropdown-item>
+                                    </el-dropdown-menu>
+                                </template>
+                            </el-dropdown>
+                        </el-breadcrumb-item>
+
+                        <el-breadcrumb-item v-for="(item, x) in endBreadcrumb" :key="x" :class="{'pe-none': item.disabled}">
                             <a v-if="item.disabled || !item.link">
                                 {{ item.label }}
                             </a>
@@ -17,13 +46,17 @@
                             </RouterLink>
                         </el-breadcrumb-item>
                     </el-breadcrumb>
-                    <h1 class="h5 fw-semibold m-0 d-inline-flex">
+
+                    <header class="fw-semibold m-0 d-inline-flex">
+                        <span v-if="breadcrumb && breadcrumb.length > 0" class="m-2">
+                            /
+                        </span>
                         <slot name="title">
                             {{ title }}
                             <el-tooltip v-if="description" :content="description">
                                 <Information class="ms-2 icon" />
                             </el-tooltip>
-                            <Badge v-if="beta" label="Beta" />
+                            <Badge v-if="beta" label="BeAta" />
                         </slot>
                         <el-button
                             class="icon"
@@ -32,8 +65,8 @@
                             circle
                             @click="onStarClick"
                         />
-                    </h1>
-                    <div class="description">
+                    </header>
+                    <div class="description">   
                         <slot name="description">
                             {{ longDescription }}
                         </slot>
@@ -89,8 +122,8 @@
             disabled?: boolean;
         }[];
         beta?: boolean;
-    }>();
-
+    }>();    
+    
     const route = useRoute();
     const logsStore = useLogsStore();
     const flowStore = useFlowStore();
@@ -116,6 +149,27 @@
             );
         }
         return "";
+    });
+
+    const normalizedBreadcrumb = computed(() => props.breadcrumb ?? []);
+
+    const startBreadcrumb = computed(() => {
+        return normalizedBreadcrumb.value.slice(0, 1) ?? [];
+    });
+    
+    const hiddenBreadcrumb = computed(() => {
+        if (!normalizedBreadcrumb.value || normalizedBreadcrumb.value.length <= 2) {
+            return [];
+        }
+        return normalizedBreadcrumb.value.slice(1, -1);
+    });
+
+    const endBreadcrumb = computed(() => {
+        if (!normalizedBreadcrumb.value) {
+            return [];
+        }
+
+        return normalizedBreadcrumb.value.length > 2 ? normalizedBreadcrumb.value.slice(-1) : normalizedBreadcrumb.value.slice(1);
     });
 
     const toast = useToast();
@@ -164,12 +218,20 @@
         border-bottom: 1px solid var(--ks-border-primary);
         background: var(--ks-background-card);
 
-        .top-title, h1, .el-breadcrumb {
+        .top-title, header, .el-breadcrumb {
             white-space: nowrap;
             max-width: 100%;
             text-overflow: ellipsis;
             overflow: hidden;
         }
+
+        .el-button-dropdown {
+            padding: 0 4px;
+            min-height: auto;
+            height: auto;
+            line-height: 1;
+        }
+
 
         .top-title {
             position: relative;
@@ -186,10 +248,12 @@
             }
         }
 
-        h1 {
+        header {
             line-height: 1.6;
             display: flex !important;
             align-items: center;
+            font-size: var(--font-size-small);;
+            font: bold;
         }
 
         .description {
@@ -222,7 +286,7 @@
             text-overflow: ellipsis;
             overflow: hidden;
         }
-
+        
         .side {
             .fixed-buttons {
                 align-items: center;

@@ -227,6 +227,12 @@ subprojects {subProj ->
         def commonTestConfig = { Test t ->
             t.ignoreFailures = true
             t.finalizedBy jacocoTestReport
+            t.doFirst {
+                logger.lifecycle("[TASK START] ${t.path}")
+            }
+            t.doLast {
+                logger.lifecycle("[TASK END]   ${t.path}")
+            }
 
             // set Xmx for test workers
             t.maxHeapSize = '4g'
@@ -315,6 +321,7 @@ subprojects {subProj ->
                 junitXml.outputLocation = layout.buildDirectory.dir("test-results/flakyTest")
             }
             commonTestConfig(t)
+            t.dependsOn("test")// explicit depend to insure they are run before
         }
 
         // test task (default)

@@ -2,7 +2,7 @@
     <TopNavBar :title="routeInfo.title" v-if="!isFullScreen()" />
     <Layout
         :title="$t('demos.IAM.title')"
-        :image="{source: sourceImg, alt: t('demos.IAM.title')}"
+        :image="{source: sourceImg, alt: $t('demos.IAM.title')}"
         :video="{
             source: 'https://www.youtube.com/embed/9I87QZJPl1Y',
         }"
@@ -29,4 +29,8 @@
     function isFullScreen() {
         return document.getElementsByTagName("html")[0].classList.contains("full-screen");
     }
+
+
+
+
 </script>

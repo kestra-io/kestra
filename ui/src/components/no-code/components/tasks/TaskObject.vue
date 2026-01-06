@@ -69,7 +69,7 @@
     import Wrapper from "./Wrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
     import {collapseEmptyValues} from "./MixinTask";
-    import {DATA_TYPES_MAP_INJECTION_KEY} from "../../injectionKeys";
+    import {DATA_TYPES_MAP_INJECTION_KEY, PARENT_PATH_INJECTION_KEY} from "../../injectionKeys";
 
     defineOptions({
         inheritAttrs: false,
@@ -93,6 +93,7 @@
     }>();
 
     const activeNames = ref<string[]>([]);
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
 
     const FIRST_FIELDS = ["id", "forced", "on", "field", "type"];
 
@@ -145,8 +146,9 @@
 
     const filteredProperties = computed<Entry[]>(() => {
         const propertiesProc = (props.properties ?? props.schema?.properties);
-        const isPluginDefaultsContext = props.root?.startsWith("pluginDefaults") || props.root?.startsWith("taskDefaults");
-        const isOutputsContext = props.root?.startsWith("outputs[") || isPluginDefaultsContext || false;
+        const rootPath = (props.root === "root" || props.root === undefined) ? parentPath : props.root;
+        const isPluginDefaultsContext = rootPath?.startsWith("pluginDefaults") || rootPath?.startsWith("taskDefaults");
+        const isOutputsContext = rootPath?.startsWith("outputs[") || isPluginDefaultsContext || false;
         return propertiesProc
             ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => {
                 // Allow "type" field for outputs and plugin defaults context, filter it out for other contexts

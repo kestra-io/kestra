@@ -22,6 +22,7 @@
             v-loading="isLoading || isPluginSchemaLoading"
             v-if="(selectedTaskType || !isTaskDefinitionBasedOnType) && schema"
             name="root"
+            root="root"
             :modelValue="taskModel"
             @update:model-value="onTaskInput"
             :schema

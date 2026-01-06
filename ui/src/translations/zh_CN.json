@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "应用模块",
     "apps": "应用程序",
+    "assets": "资产",
     "attempt": "尝试",
     "attempts": "尝试",
     "auditlogs": "审计日志",
@@ -337,6 +338,10 @@
         "title": "管理您的实例中的基础设施"
       },
       "namespace": {
+        "assets": {
+          "message": "在 Kestra 企业版中，Assets 保持着与您的工作流交互的资源的实时清单。这些资源可以是数据库表、虚拟机、文件或您使用的任何外部系统。",
+          "title": "集中资产管理"
+        },
         "audit-logs": {
           "message": "在 Kestra 企业版中，您可以查看 namespace 级别的审计日志，包含详细的差异，提供所有资源的更改历史，清晰地显示是谁在何时更改了什么。",
           "title": "在一个地方跟踪所有更改"

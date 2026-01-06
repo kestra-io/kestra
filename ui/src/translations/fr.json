@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "Blocs d'application",
     "apps": "Applications",
+    "assets": "Ressources",
     "attempt": "Essai",
     "attempts": "Tentative(s)",
     "auditlogs": "Journaux d'audit",
@@ -337,6 +338,10 @@
         "title": "Gérer l'infrastructure sur votre instance"
       },
       "namespace": {
+        "assets": {
+          "message": "Dans Kestra Enterprise Edition, Assets maintient un inventaire en temps réel des ressources avec lesquelles vos workflows interagissent. Ces ressources peuvent être des tables de base de données, des machines virtuelles, des fichiers ou tout système externe avec lequel vous travaillez.",
+          "title": "Centraliser la gestion des actifs"
+        },
         "audit-logs": {
           "message": "Dans Kestra Enterprise Edition, vous pouvez consulter les logs d'audit au niveau du namespace avec des différences détaillées, vous offrant un historique clair de qui a modifié quoi et quand à travers toutes les ressources.",
           "title": "Suivez tous les changements en un seul endroit"

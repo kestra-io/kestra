@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "アプリブロック",
     "apps": "アプリケーション",
+    "assets": "アセット",
     "attempt": "試行",
     "attempts": "試行回数",
     "auditlogs": "Audit Logs",
@@ -337,6 +338,10 @@
         "title": "インスタンス全体のインフラストラクチャを管理する"
       },
       "namespace": {
+        "assets": {
+          "message": "Kestra Enterprise Editionでは、Assetsはワークフローがやり取りするリソースのライブインベントリを保持します。これらのリソースには、データベーステーブル、仮想マシン、ファイル、または使用する外部システムが含まれます。",
+          "title": "資産管理の集中化"
+        },
         "audit-logs": {
           "message": "Kestra Enterprise Editionでは、namespaceレベルの監査Logを詳細な差分とともに表示でき、すべてのリソースにわたって誰が何をいつ変更したかの履歴を明確に確認できます。",
           "title": "すべての変更を一箇所で追跡"

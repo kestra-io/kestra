@@ -111,20 +111,34 @@ public abstract class AbstractJdbcRepository<T> {
     public int persistBatch(List<T> items) {
         return dslContextWrapper.transactionResult(configuration -> {
             DSLContext dslContext = DSL.using(configuration);
-            var inserts = items.stream().map(item -> {
-                    Map<Field<Object>, Object> finalFields = this.persistFields(item);
-
-                    return dslContext
-                        .insertInto(table)
-                        .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(item))
-                        .set(finalFields)
-                        .onDuplicateKeyUpdate()
-                        .set(finalFields);
-                })
+            var inserts = items.stream()
+                .map(item -> buildInsertRequest(item, this.persistFields(item), dslContext))
                 .toList();
 
             return Arrays.stream(dslContext.batch(inserts).execute()).sum();
         });
+    }
+
+    public int persistBatch(Map<T, Map<Field<Object>, Object>> itemWithFields) {
+        return dslContextWrapper.transactionResult(configuration -> {
+            DSLContext dslContext = DSL.using(configuration);
+            var inserts = itemWithFields.entrySet()
+                .stream().map(entry -> buildInsertRequest(entry.getKey(), entry.getValue(), dslContext))
+                .toList();
+
+            return Arrays.stream(dslContext.batch(inserts).execute()).sum();
+        });
+    }
+
+    protected InsertOnDuplicateSetMoreStep<Record> buildInsertRequest(T entity, Map<Field<Object>, Object> fields,
+            DSLContext dslContext) {
+
+        return dslContext
+            .insertInto(table)
+            .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(entity))
+            .set(fields)
+            .onDuplicateKeyUpdate()
+            .set(fields);
     }
 
     public int delete(T entity) {

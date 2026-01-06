@@ -77,7 +77,7 @@
     const isTask = computed(() => ["task", "tasks"].includes(parentPath.split(".").pop() ?? ""));
 
     const isPluginDefaults = computed(() => {
-        return parentPath.startsWith("pluginDefaults")
+        return parentPath.startsWith("pluginDefaults") || parentPath.startsWith("taskDefaults")
     });
 
     const isPlugin = computed(() => {

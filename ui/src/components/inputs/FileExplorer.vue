@@ -7,7 +7,7 @@
         <div class="flex-row d-flex">
             <el-select
                 v-model="filter"
-                :placeholder="t('namespace files.filter')"
+                :placeholder="$t('namespace files.filter')"
                 filterable
                 remote
                 :remoteMethod="filesStore.searchFilesList"
@@ -27,7 +27,7 @@
             <el-button-group class="d-flex">
                 <el-tooltip
                     effect="light"
-                    :content="t('namespace files.create.file')"
+                    :content="$t('namespace files.create.file')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -39,7 +39,7 @@
                 </el-tooltip>
                 <el-tooltip
                     effect="light"
-                    :content="t('namespace files.create.folder')"
+                    :content="$t('namespace files.create.folder')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -77,19 +77,19 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item @click="filePicker?.click()">
-                                {{ t("namespace files.import.files") }}
+                                {{ $t("namespace files.import.files") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 @click="folderPicker?.click()"
                             >
-                                {{ t("namespace files.import.folder") }}
+                                {{ $t("namespace files.import.folder") }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
                 <el-tooltip
                     effect="light"
-                    :content="t('namespace files.export')"
+                    :content="$t('namespace files.export')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -127,8 +127,8 @@
             <template #empty>
                 <div class="m-4 empty">
                     <img alt="Empty icon" :src="FileExplorerEmpty">
-                    <h3>{{ t("namespace files.no_items.heading") }}</h3>
-                    <p>{{ t("namespace files.no_items.paragraph") }}</p>
+                    <h3>{{ $t("namespace files.no_items.heading") }}</h3>
+                    <p>{{ $t("namespace files.no_items.paragraph") }}</p>
                 </div>
             </template>
             <template #default="{data, node}">
@@ -171,22 +171,22 @@
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'file', node)"
                             >
-                                {{ t("namespace files.create.file") }}
+                                {{ $t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
-                                {{ t("namespace files.create.folder") }}
+                                {{ $t("namespace files.create.folder") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="data.leaf && !multiSelected" @click="showRevisionsHistory(data)">
-                                {{ t("namespace files.revisions.history") }}
+                                {{ $t("namespace files.revisions.history") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
-                                {{ t("namespace files.path.copy") }}
+                                {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
-                                {{ t("namespace files.export_single") }}
+                                {{ $t("namespace files.export_single") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="data.leaf && !multiSelected"
@@ -200,7 +200,7 @@
                                 "
                             >
                                 {{
-                                    t(
+                                    $t(
                                         `namespace files.rename.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
@@ -209,11 +209,11 @@
                             </el-dropdown-item>
                             <el-dropdown-item @click="removeSelectedFiles()">
                                 {{
-                                    selectedNodes.length <= 1 ? t(
+                                    selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
-                                    ) : t(
+                                    ) : $t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folders" : "files"
                                         }`
@@ -231,15 +231,15 @@
             v-model="dialog.visible"
             :title="
                 dialog.type === 'file'
-                    ? t('namespace files.create.file')
-                    : t('namespace files.create.folder')
+                    ? $t('namespace files.create.file')
+                    : $t('namespace files.create.folder')
             "
             width="500"
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
         >
             <div class="pb-1">
                 <span>
-                    {{ t(`namespace files.dialog.name.${dialog.type}`) }}
+                    {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
             </div>
             <el-input
@@ -251,7 +251,7 @@
 
             <div class="py-1">
                 <span>
-                    {{ t("namespace files.dialog.parent_folder") }}
+                    {{ $t("namespace files.dialog.parent_folder") }}
                 </span>
             </div>
             <el-select
@@ -270,14 +270,14 @@
             <template #footer>
                 <div>
                     <el-button @click="toggleDialog(false)">
-                        {{ t("cancel") }}
+                        {{ $t("cancel") }}
                     </el-button>
                     <el-button
                         type="primary"
                         :disabled="!dialog.name"
                         @click="dialogHandler"
                     >
-                        {{ t("namespace files.create.label") }}
+                        {{ $t("namespace files.create.label") }}
                     </el-button>
                 </div>
             </template>
@@ -286,13 +286,13 @@
         <!-- Renaming dialog -->
         <el-dialog
             v-model="renameDialog.visible"
-            :title="t(`namespace files.rename.${renameDialog.type}`)"
+            :title="$t(`namespace files.rename.${renameDialog.type}`)"
             width="500"
             @keydown.enter.prevent="renameItem()"
         >
             <div class="pb-1">
                 <span>
-                    {{ t(`namespace files.rename.new_${renameDialog.type}`) }}
+                    {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
                 </span>
             </div>
             <el-input
@@ -304,14 +304,14 @@
             <template #footer>
                 <div>
                     <el-button @click="toggleRenameDialog(false)">
-                        {{ t("cancel") }}
+                        {{ $t("cancel") }}
                     </el-button>
                     <el-button
                         type="primary"
                         :disabled="!renameDialog.name"
                         @click="renameItem()"
                     >
-                        {{ t("namespace files.rename.label") }}
+                        {{ $t("namespace files.rename.label") }}
                     </el-button>
                 </div>
             </template>
@@ -327,10 +327,10 @@
             <template #footer>
                 <div>
                     <el-button @click="confirmation.visible = false">
-                        {{ t("cancel") }}
+                        {{ $t("cancel") }}
                     </el-button>
                     <el-button type="primary" @click="removeItems()">
-                        {{ t("namespace files.dialog.deletion.confirm") }}
+                        {{ $t("namespace files.dialog.deletion.confirm") }}
                     </el-button>
                 </div>
             </template>
@@ -338,7 +338,7 @@
 
         <el-dialog
             v-model="revisionsHistory.visible"
-            :title="t('namespace files.revisions.history')"
+            :title="$t('namespace files.revisions.history')"
             width="75%"
             top="10vh"
         >
@@ -366,10 +366,10 @@
             class="tabs-context"
         >
             <el-menu-item @click="toggleDialog(true, 'file')">
-                {{ t("namespace files.create.file") }}
+                {{ $t("namespace files.create.file") }}
             </el-menu-item>
             <el-menu-item @click="toggleDialog(true, 'folder')">
-                {{ t("namespace files.create.folder") }}
+                {{ $t("namespace files.create.folder") }}
             </el-menu-item>
         </el-menu>
     </div>

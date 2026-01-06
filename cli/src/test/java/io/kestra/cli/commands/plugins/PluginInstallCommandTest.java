@@ -1,17 +1,22 @@
 package io.kestra.cli.commands.plugins;
 
-import io.micronaut.configuration.picocli.PicocliRunner;
+import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.junit.jupiter.api.Test;
+import picocli.CommandLine;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 class PluginInstallCommandTest {
 
@@ -22,7 +27,7 @@ class PluginInstallCommandTest {
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.plugin:plugin-notifications:0.6.0"};
-            PicocliRunner.call(PluginInstallCommand.class, ctx, args);
+            callPicocliAndFailIfErrors(PluginInstallCommand.class, ctx, args);
 
             List<Path> files = Files.list(pluginsPath).toList();
 
@@ -37,7 +42,7 @@ class PluginInstallCommandTest {
 
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.plugin:plugin-notifications:LATEST"};
-            PicocliRunner.call(PluginInstallCommand.class, ctx, args);
+            callPicocliAndFailIfErrors(PluginInstallCommand.class, ctx, args);
 
             List<Path> files = Files.list(pluginsPath).toList();
 
@@ -57,11 +62,29 @@ class PluginInstallCommandTest {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             // SNAPSHOT are included in the 0.12 range not the 0.13, so to avoid resolving it, we must declare it in the upper excluded bound.
             String[] args = {"--plugins", pluginsPath.toAbsolutePath().toString(), "io.kestra.storage:storage-s3:[0.12,0.13.0-SNAPSHOT)"};
-            PicocliRunner.call(PluginInstallCommand.class, ctx, args);
+            callPicocliAndFailIfErrors(PluginInstallCommand.class, ctx, args);
 
             List<Path> files = Files.list(pluginsPath).toList();
 
             assertThat(files.stream().map(f -> f.getFileName().toString())).containsExactly("io_kestra_storage__storage-s3__0_12_1.jar");
+        }
+    }
+
+    private static void callPicocliAndFailIfErrors(Class clazz, ApplicationContext ctx, String[] args) {
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        ByteArrayOutputStream stderr = new ByteArrayOutputStream();
+
+        CommandLine commandLine = new CommandLine(PluginInstallCommand.class, new MicronautFactory(ctx));
+
+        commandLine.setOut(new PrintWriter(stdout, true));
+        commandLine.setErr(new PrintWriter(stderr, true));
+
+        int exitCode = commandLine.execute(args);
+        if (exitCode != 0) {
+            commandLine.getOut();
+            String out = stdout.toString(StandardCharsets.UTF_8);
+            String err = stderr.toString(StandardCharsets.UTF_8);
+            fail("%s returned non-zero exit code for args: '%s', stderr was: %s", clazz.getName(), String.join(" ", args), err);
         }
     }
 }

@@ -84,12 +84,24 @@ public class State {
         );
     }
 
+    /**
+     * non-terminated execution duration is hard to provide in SQL, so we set it to null when endDate is empty
+     */
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    public Duration getDuration() {
-        return Duration.between(
-            this.histories.getFirst().getDate(),
-            this.histories.size() > 1 ? this.histories.get(this.histories.size() - 1).getDate() : Instant.now()
-        );
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public Optional<Duration> getDuration() {
+        if (this.getEndDate().isPresent()) {
+            return Optional.of(Duration.between(this.getStartDate(), this.getEndDate().get()));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * @return either the Duration persisted in database, or calculate it on the fly for non-terminated executions
+     */
+    public Duration getDurationOrComputeIt() {
+        return this.getDuration().orElseGet(() -> Duration.between(this.getStartDate(), Instant.now()));
     }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
@@ -109,7 +121,7 @@ public class State {
 
     public String humanDuration() {
         try {
-            return DurationFormatUtils.formatDurationHMS(getDuration().toMillis());
+            return DurationFormatUtils.formatDurationHMS(getDurationOrComputeIt().toMillis());
         } catch (Throwable e) {
             return getDuration().toString();
         }

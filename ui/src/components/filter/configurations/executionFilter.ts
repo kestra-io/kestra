@@ -7,6 +7,8 @@ import {useAuthStore} from "override/stores/auth";
 import {useValues} from "../composables/useValues";
 import {useI18n} from "vue-i18n";
 import {useRoute} from "vue-router";
+import {useFlowStore} from "../../../stores/flow";
+
 
 export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
     const {t} = useI18n();
@@ -60,8 +62,23 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         Comparators.CONTAINS,
                         Comparators.STARTS_WITH,
                         Comparators.ENDS_WITH,
+                        Comparators.IN,
+                        Comparators.NOT_IN,
                     ],
-                    valueType: "text",
+                    valueType: "multi-select" as const,
+                    searchable: true,
+                    valueProvider: async (query?: string) => {
+                            const user = useAuthStore().user;
+                            if (user && user.hasAnyAction(permission.FLOW, action.READ)) {
+                                const flowStore = useFlowStore();
+                                const response = await flowStore.loadFlowAutoComplete(query || "");
+                                return response.map((flow: any) => ({
+                                    label: flow.id,
+                                    value: flow.id
+                                }));
+                            }
+                            return [];
+                        }
                 }] : []) as any,
                 {
                     key: "kind",

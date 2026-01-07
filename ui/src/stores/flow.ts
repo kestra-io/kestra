@@ -96,6 +96,7 @@ export const useFlowStore = defineStore("flow", () => {
     const expandedSubflows = ref<string[]>([])
     const metadata = ref<Record<string, any>>()
     const creationId = ref<string>();
+    const autoCompleteFlows = ref<Flow[]>([])
 
     const axios = useAxios();
 
@@ -321,6 +322,23 @@ export const useFlowStore = defineStore("flow", () => {
             }
         })
     }
+
+    async function loadFlowAutoComplete() {
+        let page = 1;
+        const size = 50;
+        let hasMoreFlows = true;
+        while(hasMoreFlows){
+            const response = await findFlows({
+                page:page, 
+                size:size
+            });
+           autoCompleteFlows.value.push(...response.results);
+           hasMoreFlows = autoCompleteFlows.value.length === size;
+           page+=1;
+        }
+        return autoCompleteFlows.value;  
+    }
+
     function searchFlows(options: { [key: string]: any }) {
         const sortString = options.sort ? `?sort=${options.sort}` : ""
         delete options.sort
@@ -921,5 +939,6 @@ function deleteFlowAndDependencies() {
         loadTaskAggregatedMetrics,
         loadTasksWithMetrics,
         getNamespace,
+        loadFlowAutoComplete,
     }
 })

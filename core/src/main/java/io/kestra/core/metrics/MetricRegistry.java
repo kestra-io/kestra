@@ -152,6 +152,13 @@ public class MetricRegistry {
     public static final String TAG_QUEUE_CONSUMER_GROUP = "consumer_group";
     public static final String TAG_QUEUE_TYPE = "queue_type";
     public static final String TAG_LABEL_PREFIX = "label";
+    /**
+     * Sentinel value representing logical absence of label.
+     * <br />
+     * <a href="https://docs.micrometer.io/micrometer/reference/implementations/prometheus.html?utm_source=chatgpt.com#_limitation_on_same_name_with_different_set_of_tag_keys">
+     *     Micrometer - Limitation on same name with different set of tag keys
+     * </a>
+     */
     public static final String TAG_LABEL_PLACEHOLDER = "__none__";
 
     @Inject
@@ -446,19 +453,34 @@ public class MetricRegistry {
         return tenantId == null ? null : new String[]{TAG_TENANT_ID, tenantId};
     }
 
+    /**
+     * Speed-optimized version of {@link Label}s to tags conversion.
+     * @param labels The labels to evaluate against configured keys
+     * @return tags based on matching label keys
+     */
     private String[] getLabelTags(@NonNull List<Label> labels) {
-        return metricConfig.getLabels() == null ? null :
-            metricConfig.getLabels().stream()
-                .flatMap(labelKey -> Stream.of(
-                        "%s_%s".formatted(TAG_LABEL_PREFIX, labelKey),
-                        labels.stream()
-                            .filter(label -> labelKey.equals(label.key()))
-                            .map(Label::value)
-                            .findFirst()
-                            .orElse(TAG_LABEL_PLACEHOLDER)
-                    )
-                )
-                .toArray(String[]::new);
+        final List<String> configuredKeys = metricConfig.getLabels();
+        if (configuredKeys == null) return null;
+
+        int size = configuredKeys.size() * 2;
+        String[] tags = new String[size];
+        int i = 0;
+
+        for(String labelKey : configuredKeys) {
+            tags[i++] = TAG_LABEL_PREFIX + "_" + labelKey;
+            String labelValue = TAG_LABEL_PLACEHOLDER;
+
+            for (Label label : labels) {
+                if (labelKey.equals(label.key())) {
+                    labelValue = label.value();
+                    break;
+                }
+            }
+
+            tags[i++] = labelValue;
+        }
+
+        return tags;
     }
 }
 

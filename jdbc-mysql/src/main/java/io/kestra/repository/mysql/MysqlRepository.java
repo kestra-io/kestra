@@ -49,7 +49,7 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
         String match = Arrays
             .stream(query.split("\\p{IsPunct}"))
             .filter(s -> s.length() >= 3)
-            .map(s -> "+" + s + "*")
+            .map(s -> "*" + s + "*")
             .collect(Collectors.joining(" "));
 
         if (match.isEmpty()) {
@@ -61,7 +61,7 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
 
     @Override
     public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
-        Integer rows = context.fetchCount(select);
+        int rows = context.fetchCount(select);
         Result<R> records = this.pageable(select, pageable).fetch();
         return new ArrayListTotal<>(records.map(mapper), rows);
     }

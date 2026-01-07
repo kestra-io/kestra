@@ -1,13 +1,13 @@
 <template>
     <div
         class="p-2 sidebar"
-        @click="tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
+        @click="onRootClick"
     >
         <div class="flex-row d-flex">
             <el-select
                 v-model="filter"
-                :placeholder="t('namespace files.filter')"
+                :placeholder="$t('namespace files.filter')"
                 filterable
                 remote
                 :remoteMethod="filesStore.searchFilesList"
@@ -27,7 +27,7 @@
             <el-button-group class="d-flex">
                 <el-tooltip
                     effect="light"
-                    :content="t('namespace files.create.file')"
+                    :content="$t('namespace files.create.file')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -39,7 +39,7 @@
                 </el-tooltip>
                 <el-tooltip
                     effect="light"
-                    :content="t('namespace files.create.folder')"
+                    :content="$t('namespace files.create.folder')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -77,19 +77,19 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item @click="filePicker?.click()">
-                                {{ t("namespace files.import.files") }}
+                                {{ $t("namespace files.import.files") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 @click="folderPicker?.click()"
                             >
-                                {{ t("namespace files.import.folder") }}
+                                {{ $t("namespace files.import.folder") }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
                 </el-dropdown>
                 <el-tooltip
                     effect="light"
-                    :content="t('namespace files.export')"
+                    :content="$t('namespace files.export')"
                     transition=""
                     :hideAfter="0"
                     :persistent="false"
@@ -107,7 +107,6 @@
             lazy
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
-            highlightCurrent
             :allowDrop="
                 (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
             "
@@ -128,8 +127,8 @@
             <template #empty>
                 <div class="m-4 empty">
                     <img alt="Empty icon" :src="FileExplorerEmpty">
-                    <h3>{{ t("namespace files.no_items.heading") }}</h3>
-                    <p>{{ t("namespace files.no_items.paragraph") }}</p>
+                    <h3>{{ $t("namespace files.no_items.heading") }}</h3>
+                    <p>{{ $t("namespace files.no_items.paragraph") }}</p>
                 </div>
             </template>
             <template #default="{data, node}">
@@ -139,42 +138,50 @@
                     trigger="contextmenu"
                     class="w-100"
                 >
-                    <el-row
-                        justify="space-between"
-                        class="w-100"
-                        @click="(event: MouseEvent) => handleNodeClick(data, node, event)"
+                    <div
+                        class="tree-node-hitbox"
+                        @mousedown.stop
+                        @click.stop="(e) => { if(!selectionMode) onRowClickWrapper(data, node, e) }"
                     >
-                        <el-col class="w-100">
+                        <div class="item-line">
+                            <Checkbox
+                                v-if="selectionMode"
+                                class="me-2"
+                                :modelValue="selectedNodes.includes(data.id)"
+                                @update-model-value="checked => toggleCheckboxSelection(checked, node)"
+                                @mousedown.stop
+                                @click.stop
+                            />
                             <TypeIcon
                                 :name="data.fileName"
                                 :folder="!data.leaf"
                                 class="me-2"
                             />
-                            <span class="filename"> {{ data.fileName }}</span>
-                        </el-col>
-                    </el-row>
+                            <span class="filename" @click="(e) => { if(selectionMode) onRowClickWrapper(data, node, e) }">{{ data.fileName }}</span>
+                        </div>
+                    </div>
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'file', node)"
                             >
-                                {{ t("namespace files.create.file") }}
+                                {{ $t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
-                                {{ t("namespace files.create.folder") }}
+                                {{ $t("namespace files.create.folder") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="data.leaf && !multiSelected" @click="showRevisionsHistory(data)">
-                                {{ t("namespace files.revisions.history") }}
+                                {{ $t("namespace files.revisions.history") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
-                                {{ t("namespace files.path.copy") }}
+                                {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
                             <el-dropdown-item v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
-                                {{ t("namespace files.export_single") }}
+                                {{ $t("namespace files.export_single") }}
                             </el-dropdown-item>
                             <el-dropdown-item
                                 v-if="data.leaf && !multiSelected"
@@ -188,7 +195,7 @@
                                 "
                             >
                                 {{
-                                    t(
+                                    $t(
                                         `namespace files.rename.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
@@ -197,11 +204,11 @@
                             </el-dropdown-item>
                             <el-dropdown-item @click="removeSelectedFiles()">
                                 {{
-                                    selectedNodes.length <= 1 ? t(
+                                    selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
-                                    ) : t(
+                                    ) : $t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folders" : "files"
                                         }`
@@ -219,15 +226,15 @@
             v-model="dialog.visible"
             :title="
                 dialog.type === 'file'
-                    ? t('namespace files.create.file')
-                    : t('namespace files.create.folder')
+                    ? $t('namespace files.create.file')
+                    : $t('namespace files.create.folder')
             "
             width="500"
             @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
         >
             <div class="pb-1">
                 <span>
-                    {{ t(`namespace files.dialog.name.${dialog.type}`) }}
+                    {{ $t(`namespace files.dialog.name.${dialog.type}`) }}
                 </span>
             </div>
             <el-input
@@ -239,7 +246,7 @@
 
             <div class="py-1">
                 <span>
-                    {{ t("namespace files.dialog.parent_folder") }}
+                    {{ $t("namespace files.dialog.parent_folder") }}
                 </span>
             </div>
             <el-select
@@ -258,14 +265,14 @@
             <template #footer>
                 <div>
                     <el-button @click="toggleDialog(false)">
-                        {{ t("cancel") }}
+                        {{ $t("cancel") }}
                     </el-button>
                     <el-button
                         type="primary"
                         :disabled="!dialog.name"
                         @click="dialogHandler"
                     >
-                        {{ t("namespace files.create.label") }}
+                        {{ $t("namespace files.create.label") }}
                     </el-button>
                 </div>
             </template>
@@ -274,13 +281,13 @@
         <!-- Renaming dialog -->
         <el-dialog
             v-model="renameDialog.visible"
-            :title="t(`namespace files.rename.${renameDialog.type}`)"
+            :title="$t(`namespace files.rename.${renameDialog.type}`)"
             width="500"
             @keydown.enter.prevent="renameItem()"
         >
             <div class="pb-1">
                 <span>
-                    {{ t(`namespace files.rename.new_${renameDialog.type}`) }}
+                    {{ $t(`namespace files.rename.new_${renameDialog.type}`) }}
                 </span>
             </div>
             <el-input
@@ -292,14 +299,14 @@
             <template #footer>
                 <div>
                     <el-button @click="toggleRenameDialog(false)">
-                        {{ t("cancel") }}
+                        {{ $t("cancel") }}
                     </el-button>
                     <el-button
                         type="primary"
                         :disabled="!renameDialog.name"
                         @click="renameItem()"
                     >
-                        {{ t("namespace files.rename.label") }}
+                        {{ $t("namespace files.rename.label") }}
                     </el-button>
                 </div>
             </template>
@@ -315,10 +322,10 @@
             <template #footer>
                 <div>
                     <el-button @click="confirmation.visible = false">
-                        {{ t("cancel") }}
+                        {{ $t("cancel") }}
                     </el-button>
                     <el-button type="primary" @click="removeItems()">
-                        {{ t("namespace files.dialog.deletion.confirm") }}
+                        {{ $t("namespace files.dialog.deletion.confirm") }}
                     </el-button>
                 </div>
             </template>
@@ -326,7 +333,7 @@
 
         <el-dialog
             v-model="revisionsHistory.visible"
-            :title="t('namespace files.revisions.history')"
+            :title="$t('namespace files.revisions.history')"
             width="75%"
             top="10vh"
         >
@@ -354,10 +361,10 @@
             class="tabs-context"
         >
             <el-menu-item @click="toggleDialog(true, 'file')">
-                {{ t("namespace files.create.file") }}
+                {{ $t("namespace files.create.file") }}
             </el-menu-item>
             <el-menu-item @click="toggleDialog(true, 'folder')">
-                {{ t("namespace files.create.folder") }}
+                {{ $t("namespace files.create.folder") }}
             </el-menu-item>
         </el-menu>
     </div>
@@ -372,7 +379,7 @@
 </script>
 
 <script lang="ts" setup>
-    import {ref, computed, onMounted, onBeforeUnmount, nextTick, inject, watch} from "vue";
+    import {ref, computed, nextTick, inject, watch} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
     import Utils from "../../utils/utils";
@@ -395,6 +402,7 @@
     } from "../../stores/fileExplorer";
     import Revisions, {Revision} from "../layout/Revisions.vue";
     import Crud from "override/components/auth/Crud.vue";
+    import Checkbox from "../layout/Checkbox.vue";
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -459,9 +467,17 @@
         path: string;
     }>();
     const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0});
-    const selectedFiles = ref<string[]>([]);
     const selectedNodes = ref<any[]>([]);
+    const selectionMode = computed(() => selectedNodes.value.length > 1);
     const lastClickedIndex = ref<number | null>(null);
+
+    const selectedFiles = computed(() => {
+        return selectedNodes.value.map(id => filesStore.getPath(id)).filter((p): p is string => !!p);
+    });
+
+    const flatTree = computed(() => {
+        return flattenTree(filesStore.fileTree ?? []);
+    });
 
     const {t} = useI18n();
     const toast = useToast();
@@ -501,40 +517,141 @@
 
     function handleNodeClick(data: any, node: ElTreeNode, event: MouseEvent | null = null) {
         const path = filesStore.getPath(node.data.id) ?? "";
-        const flatList = flattenTree(filesStore.fileTree);
+        const flatList = flatTree.value;
         const currentIndex = flatList.findIndex(item => item.path === path);
-        const isCtrl = event && (event.ctrlKey || (event as any).metaKey);
-        const isShift = event && event.shiftKey;
+        if (currentIndex === -1) return;
 
-        if (isShift && lastClickedIndex.value !== null) {
-            const start = Math.min(lastClickedIndex.value, currentIndex);
-            const end = Math.max(lastClickedIndex.value, currentIndex);
-            selectedFiles.value = flatList.slice(start, end + 1).map(item => item.path);
-            selectedNodes.value = flatList.slice(start, end + 1).map(item => item.id);
-        } else if (isCtrl) {
+        const isCtrl = !!event && (event.ctrlKey || event.metaKey);
+        const isShift = !!event && event.shiftKey;
+
+        if (isShift) {
+            let anchorIndex = lastClickedIndex.value;
+
+            if (anchorIndex === null) {
+                if (selectedNodes.value.length === 1) {
+                    const anchorId = selectedNodes.value[0];
+                    const anchorPath = filesStore.getPath(anchorId) ?? "";
+                    const idx = flatList.findIndex(i => i.path === anchorPath);
+                    anchorIndex = idx !== -1 ? idx : currentIndex;
+                } else {
+                    anchorIndex = currentIndex;
+                }
+            }
+
+            const start = Math.min(anchorIndex, currentIndex);
+            const end = Math.max(anchorIndex, currentIndex);
+            const slice = flatList.slice(start, end + 1);
+
+            selectedNodes.value = slice.map(item => item.id);
+
+            if (selectedNodes.value.length == 1){
+                tree.value?.setCurrentKey(selectedNodes.value[0]);
+            }
+            
+            syncTreeCurrentKey();
+            return;
+        }
+
+        if (isCtrl) {
             const isSelected = selectedNodes.value.includes(node.data.id);
+
             if (isSelected) {
-                selectedFiles.value = [...selectedFiles.value.filter(file => file !== path)];
-                selectedNodes.value = [...selectedNodes.value.filter(id => id !== node.data.id)];
+                selectedNodes.value = selectedNodes.value.filter(id => id !== node.data.id);
             } else {
-                selectedFiles.value = [...selectedFiles.value, path];
-                selectedNodes.value = [...selectedNodes.value, node.data.id];
+                selectedNodes.value.push(node.data.id);
             }
             lastClickedIndex.value = currentIndex;
-        } else {
-            selectedFiles.value = [path];
+
+            syncTreeCurrentKey();
+            return;
+        }
+
+        selectedNodes.value = [node.data.id];
+        lastClickedIndex.value = currentIndex;
+        syncTreeCurrentKey();
+
+        if (data.leaf) {
+            openTab?.({
+                name: data.fileName,
+                path,
+                extension: data.fileName.split(".").pop(),
+                flow: false,
+                dirty: false,
+            });
+        }
+    }
+
+    function onRowClickWrapper(data: TreeNode, node: ElTreeNode, event: MouseEvent) {
+
+        const target = event.target as HTMLElement;
+        if (target.closest("input, .neon-checkbox, .checkbox")) {
+            return;
+        }
+        const isCtrl = event.ctrlKey || event.metaKey;
+        const isShift = event.shiftKey;
+        
+        if (selectionMode.value && !isShift && !isCtrl) {
             selectedNodes.value = [node.data.id];
-            lastClickedIndex.value = currentIndex;
+
+            const flatList = flatTree.value;
+            lastClickedIndex.value = flatList.findIndex(
+                i => i.id === node.data.id
+            );
+
+            syncTreeCurrentKey();
+
             if (data.leaf) {
                 openTab?.({
                     name: data.fileName,
-                    path: path,
-                    extension: data.fileName.split(".").pop(),
+                    path: filesStore.getPath(node.data.id) ?? "",
+                    extension: data.fileName.split(".").pop()!,
                     flow: false,
-                    dirty: false
+                    dirty: false,
                 });
             }
+            return;
         }
+        handleNodeClick(data, node, event);
+    }
+
+    function onRootClick(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        if (target.closest(".el-tree-node__content, .el-tree-node, .filename, .neon-checkbox, button, input, .el-input")) {
+            return;
+        }
+        selectedNodes.value = [];
+        lastClickedIndex.value = null;
+        syncTreeCurrentKey();
+    }
+
+    function syncTreeCurrentKey() {
+        const treeRef = tree.value;
+        if (!treeRef) return;
+
+        if (selectedNodes.value.length === 1) {
+            treeRef.setCurrentKey(selectedNodes.value[0]);
+        } else {
+            treeRef.setCurrentKey(null);
+        }
+    }
+
+    function toggleCheckboxSelection(checked: boolean, node: ElTreeNode) {
+        const path = filesStore.getPath(node.data.id) ?? "";
+        const nodeId = node.data.id;
+        if (checked) {
+            if (!selectedNodes.value.includes(nodeId)) {
+                selectedNodes.value.push(nodeId);
+            }
+            const flatList = flatTree.value;
+            lastClickedIndex.value = flatList.findIndex(i => i.path === path);
+            syncTreeCurrentKey();
+            return;
+        }
+        selectedNodes.value = selectedNodes.value.filter(id => id !== nodeId);
+        if(selectedNodes.value.length === 0){
+            lastClickedIndex.value = null;
+        }
+        syncTreeCurrentKey();
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
@@ -587,18 +704,19 @@
     }
 
     function toggleDropdown(id: string) {
-        if(selectedNodes.value.length === 0) {
-            selectedNodes.value.push(id);
-            selectedFiles.value.push(filesStore.getPath(id) ?? "");
+        const path = filesStore.getPath(id) ?? "";
+        if (!selectedNodes.value.includes(id)) {
+            selectedNodes.value = [id];
+            const flatList = flatTree.value;
+            lastClickedIndex.value = flatList.findIndex(i => i.path === path);
         }
 
-        for(const dd in dropdowns.value){
-            if(dd !== id){
+        for (const dd in dropdowns.value) {
+            if (dd !== id) {
                 dropdowns.value[dd].handleClose();
             }
-        };
-
-        dropdowns.value[id]?.handleOpen()
+        }
+        dropdowns.value[id]?.handleOpen();
     }
 
     function dialogHandler() {
@@ -818,20 +936,6 @@
         document.removeEventListener("click", hideTabContextMenu);
     }
 
-    function clearSelection() {
-        selectedFiles.value = [];
-        selectedNodes.value = [];
-        lastClickedIndex.value = null;
-    }
-
-    onMounted(async () => {
-        document.addEventListener("click", clearSelection);
-    });
-
-    onBeforeUnmount(() => {
-        document.removeEventListener("click", clearSelection);
-    });
-
 </script>
 
 <style scoped lang="scss">
@@ -929,11 +1033,12 @@
         }
 
         .node {
-            --el-tree-node-content-height: fit-content;
             --el-tree-node-hover-bg-color: transparent;
         }
 
         .el-tree-node__content {
+            display: flex;
+            align-items: center;
             margin-bottom: 2px !important;
             padding-left: 0 !important;
             border: 1px solid transparent;
@@ -972,6 +1077,18 @@
                 color: var(--ks-button-content-primary);
             }
         }
+    }
+
+    :deep(.tree-node-hitbox) {
+        width: 100%;
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+
+    .item-line{
+        display: flex;  
+        align-items: center;
     }
 }
 </style>

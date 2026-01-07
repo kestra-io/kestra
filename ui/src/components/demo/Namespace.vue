@@ -27,6 +27,8 @@
     const videos = {
         edit: "https://www.youtube.com/embed/As4y2oliD_8",
         secrets: "https://www.youtube.com/embed/u0yuOYG-qMI",
+        //TODO: replace with real video when available for assets
+        assets: "https://www.youtube.com/embed/jMZ9Cs3xxpo",
         variables: "https://www.youtube.com/embed/1iSam2aftKo",
         "plugin-defaults": "https://www.youtube.com/embed/9zQTUeL0KMc",
         history: "https://www.youtube.com/embed/lpHl52Rlvr0",
@@ -34,6 +36,6 @@
     };
 
     const videoSource = computed(() => ({
-        source: videos[props.tab as keyof typeof videos] || "",
+        source: videos[props.tab as keyof typeof videos] ?? "",
     }));
 </script>

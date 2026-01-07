@@ -88,6 +88,11 @@ public class LocalStorage implements StorageInterface {
     public List<URI> allByPrefix(String tenantId, @Nullable String namespace, URI prefix, boolean includeDirectories) throws IOException {
         Path fsPath = getLocalPath(tenantId, prefix);
         List<URI> uris = new ArrayList<>();
+
+        if (!Files.exists(fsPath)) {
+            return List.of();
+        }
+
         Files.walkFileTree(fsPath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {

@@ -3,13 +3,13 @@ package io.kestra.core.runners;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.exceptions.KestraRuntimeException;
+
+import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.FileInput;
@@ -19,7 +19,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
-import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -158,11 +157,7 @@ public class FlowInputOutput {
                             File tempFile = File.createTempFile(prefix, fileExtension);
                             try (var inputStream = fileUpload.getInputStream();
                                  var outputStream = new FileOutputStream(tempFile)) {
-                                long transferredBytes = inputStream.transferTo(outputStream);
-                                if (transferredBytes == 0) {
-                                    sink.error(new KestraRuntimeException("Can't upload file: " + fileUpload.getFilename()));
-                                    return;
-                                }
+                                inputStream.transferTo(outputStream);
                                 URI from = storageInterface.from(execution, inputId, fileName, tempFile);
                                 sink.next(Map.entry(inputId, from.toString()));
                             } finally {
@@ -213,8 +208,8 @@ public class FlowInputOutput {
             .filter(InputAndValue::enabled)
             .map(it -> {
                 //TODO check to return all exception at-once.
-                if (it.exception() != null) {
-                    throw it.exception();
+                if (it.exceptions() != null && !it.exceptions().isEmpty()) {
+                    throw  InputOutputValidationException.merge(it.exceptions());
                 }
                 return new AbstractMap.SimpleEntry<>(it.input().getId(), it.value());
             })
@@ -298,13 +293,9 @@ public class FlowInputOutput {
                 try {
                     isInputEnabled = Boolean.TRUE.equals(runContext.renderTyped(dependsOnCondition.get()));
                 } catch (IllegalVariableEvaluationException e) {
-                    resolvable.resolveWithError(ManualConstraintViolation.toConstraintViolationException(
-                        "Invalid condition: " + e.getMessage(),
-                        input,
-                        (Class<Input>)input.getClass(),
-                        input.getId(),
-                        this
-                    ));
+                    resolvable.resolveWithError(
+                        InputOutputValidationException.of("Invalid condition: " + e.getMessage())
+                    );
                     isInputEnabled = false;
                 }
             }
@@ -337,7 +328,7 @@ public class FlowInputOutput {
             // validate and parse input value
             if (value == null) {
                 if (input.getRequired()) {
-                    resolvable.resolveWithError(input.toConstraintViolationException("missing required input", null));
+                    resolvable.resolveWithError(InputOutputValidationException.of("Missing required input:"  + input.getId()));
                 } else {
                     resolvable.resolveWithValue(null);
                 }
@@ -347,17 +338,18 @@ public class FlowInputOutput {
                     parsedInput.ifPresent(parsed -> ((Input) resolvable.get().input()).validate(parsed.getValue()));
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
-                    ConstraintViolationException exception = e.getConstraintViolations().size() == 1 ?
-                        input.toConstraintViolationException(List.copyOf(e.getConstraintViolations()).getFirst().getMessage(), value) :
-                        input.toConstraintViolationException(e.getMessage(), value);
-                    resolvable.resolveWithError(exception);
+                    Input<?> finalInput = input;
+                  Set<InputOutputValidationException> exceptions =  e.getConstraintViolations().stream()
+                      .map(c-> InputOutputValidationException.of(c.getMessage(), finalInput))
+                      .collect(Collectors.toSet());
+                    resolvable.resolveWithError(exceptions);
                 }
             }
-        } catch (ConstraintViolationException e) {
-            resolvable.resolveWithError(e);
-        } catch (Exception e) {
-            ConstraintViolationException exception = input.toConstraintViolationException(e instanceof IllegalArgumentException ? e.getMessage() : e.toString(), resolvable.get().value());
-            resolvable.resolveWithError(exception);
+        } catch (IllegalArgumentException e){
+            resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage(), input));
+        }
+        catch (Exception e) {
+            resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage()));
         }
 
         return resolvable.get();
@@ -382,11 +374,11 @@ public class FlowInputOutput {
 
     @SuppressWarnings("unchecked")
     private static <T> Object resolveDefaultPropertyAs(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return Property.as((Property<T>) input.getDefaults(), renderer, clazz);
+        return Property.as((Property<T>) input.getDefaults().skipCache(), renderer, clazz);
     }
     @SuppressWarnings("unchecked")
     private static <T> Object resolveDefaultPropertyAsList(Input<?> input, PropertyContext renderer, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return Property.asList((Property<List<T>>) input.getDefaults(), renderer, clazz);
+        return Property.asList((Property<List<T>>) input.getDefaults().skipCache(), renderer, clazz);
     }
 
     private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies, final boolean decryptSecrets) {
@@ -445,8 +437,12 @@ public class FlowInputOutput {
                             }
                             return entry;
                         });
-                } catch (Exception e) {
-                    throw output.toConstraintViolationException(e.getMessage(), current);
+                }
+                catch (IllegalArgumentException e){
+                    throw InputOutputValidationException.of(e.getMessage(), output);
+                }
+                catch (Exception e) {
+                    throw InputOutputValidationException.of(e.getMessage());
                 }
             })
             .filter(Optional::isPresent)
@@ -502,14 +498,14 @@ public class FlowInputOutput {
                         yield storageInterface.from(execution, id, current.toString().substring(current.toString().lastIndexOf("/") + 1), new File(current.toString()));
                     }
                 }
-                case JSON -> JacksonMapper.toObject(current.toString());
-                case YAML -> YAML_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
+                case JSON -> (current instanceof Map || current instanceof Collection<?>) ? current :  JacksonMapper.toObject(current.toString());
+                case YAML -> (current instanceof Map || current instanceof Collection<?>) ? current : YAML_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case URI -> {
                     Matcher matcher = URI_PATTERN.matcher(current.toString());
                     if (matcher.matches()) {
                         yield current.toString();
                     } else {
-                        throw new IllegalArgumentException("Expected `URI` but received `" + current + "`");
+                        throw new IllegalArgumentException("Invalid URI format.");
                     }
                 }
                 case ARRAY, MULTISELECT -> {
@@ -539,32 +535,8 @@ public class FlowInputOutput {
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Throwable e) {
-            throw new Exception("Expected `" + type + "` but received `" + current + "` with errors:\n```\n" + e.getMessage() + "\n```");
+            throw new Exception(" errors:\n```\n" + e.getMessage() + "\n```");
         }
-    }
-
-    public static Map<String, Object> renderFlowOutputs(List<Output> outputs, RunContext runContext) throws IllegalVariableEvaluationException {
-        if (outputs == null) return Map.of();
-
-        // render required outputs
-        Map<String, Object> outputsById = outputs
-            .stream()
-            .filter(output -> output.getRequired() == null || output.getRequired())
-            .collect(HashMap::new, (map, entry) -> map.put(entry.getId(), entry.getValue()), Map::putAll);
-        outputsById = runContext.render(outputsById);
-
-        // render optional outputs one by one to catch, log, and skip any error.
-        for (io.kestra.core.models.flows.Output output : outputs) {
-            if (Boolean.FALSE.equals(output.getRequired())) {
-                try {
-                    outputsById.putAll(runContext.render(Map.of(output.getId(), output.getValue())));
-                } catch (Exception e) {
-                    runContext.logger().warn("Failed to render optional flow output '{}'. Output is ignored.", output.getId(), e);
-                    outputsById.put(output.getId(), null);
-                }
-            }
-        }
-        return outputsById;
     }
 
     /**
@@ -595,26 +567,29 @@ public class FlowInputOutput {
         }
 
         public void isDefault(boolean isDefault) {
-            this.input = new InputAndValue(this.input.input(), this.input.value(), this.input.enabled(), isDefault, this.input.exception());
+            this.input = new InputAndValue(this.input.input(), this.input.value(), this.input.enabled(), isDefault, this.input.exceptions());
         }
 
         public void setInput(final Input<?> input) {
-            this.input = new InputAndValue(input, this.input.value(), this.input.enabled(), this.input.isDefault(), this.input.exception());
+            this.input = new InputAndValue(input, this.input.value(), this.input.enabled(), this.input.isDefault(), this.input.exceptions());
         }
 
         public void resolveWithEnabled(boolean enabled) {
-            this.input = new InputAndValue(this.input.input(), input.value(), enabled, this.input.isDefault(), this.input.exception());
+            this.input = new InputAndValue(this.input.input(), input.value(), enabled, this.input.isDefault(), this.input.exceptions());
             markAsResolved();
         }
 
         public void resolveWithValue(@Nullable Object value) {
-            this.input = new InputAndValue(this.input.input(), value,  this.input.enabled(), this.input.isDefault(), this.input.exception());
+            this.input = new InputAndValue(this.input.input(), value,  this.input.enabled(), this.input.isDefault(), this.input.exceptions());
             markAsResolved();
         }
 
-        public void resolveWithError(@Nullable ConstraintViolationException exception) {
+        public void resolveWithError(@Nullable Set<InputOutputValidationException> exception) {
             this.input = new InputAndValue(this.input.input(),  this.input.value(), this.input.enabled(), this.input.isDefault(), exception);
             markAsResolved();
+        }
+        private void resolveWithError(@Nullable InputOutputValidationException exception){
+            resolveWithError(Collections.singleton(exception));
         }
 
         private void markAsResolved() {

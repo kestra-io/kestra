@@ -1,3 +1,5 @@
+@use "fonts";
+
 @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
 @use 'element-plus/theme-chalk/src/mixins/mixins' as mixin;
 
@@ -240,4 +242,14 @@ body{
     main > section.container:has(.empty-template) {
         padding: 0 0;
     }
+}
+
+#app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+#app main {
+    flex: 1;
+    overflow: auto;
 }

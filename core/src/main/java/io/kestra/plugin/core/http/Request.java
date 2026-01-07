@@ -34,10 +34,11 @@ import java.util.OptionalInt;
 @Schema(
     title = "Make an HTTP API request to a specified URL and store the response as an output.",
     description = """
-                  This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
-                  Kestra offers hundreds of plugins. Before using the generic HTTP task, check if a dedicated plugin fits your use case — it's recommended to use plugins first and only fall back to HTTP when needed.
-                  By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
-                  Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
+        This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
+        Kestra offers hundreds of plugins. Before using the generic HTTP task, check if a dedicated plugin fits your use case — it's recommended to use plugins first and only fall back to HTTP when needed.
+        By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
+        Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead.
+        """
 )
 @Plugin(
     examples = {
@@ -277,42 +278,45 @@ import java.util.OptionalInt;
                 """
         ),
         @Example(
-          title = "Send a multiline JSON message using HTTP POST request and inputs with a pebble expression. We recommend this method to avoid JSON string interpolation",
-          full = true,
-          code = """
-              id: http_multiline_json
-              namespace: company.team
+            title = "Send a multiline JSON message using HTTP POST request and inputs with a pebble expression. We recommend this method to avoid JSON string interpolation",
+            full = true,
+            code = """
+                id: http_multiline_json
+                namespace: company.team
 
-              inputs:
-                - id: title
-                  type: STRING
-                  defaults: This is the title of the request
-                - id: message
-                  type: STRING
-                  defaults: |-
-                    This is my long
-                    multiline message.
-                - id: priority
-                  type: INT
-                  defaults: 5
+                inputs:
+                  - id: title
+                    type: STRING
+                    defaults: This is the title of the request
+                  - id: message
+                    type: STRING
+                    defaults: |-
+                      This is my long
+                      multiline message.
+                  - id: priority
+                    type: INT
+                    defaults: 5
 
-              tasks:
-                - id: send
-                  type: io.kestra.plugin.core.http.Request
-                  uri: "https://reqres.in/api/test-request"
-                  method: "POST"
-                  body: |
-                    {{ {
-                      "title": inputs.title,
-                      "message": inputs.message,
-                      "priority": inputs.priority
-                    } }}
-              """
-      )
+                tasks:
+                  - id: send
+                    type: io.kestra.plugin.core.http.Request
+                    uri: "https://reqres.in/api/test-request"
+                    method: "POST"
+                    body: |
+                      {{ {
+                        "title": inputs.title,
+                        "message": inputs.message,
+                        "priority": inputs.priority
+                      } }}
+                """
+        )
     },
     aliases = "io.kestra.plugin.fs.http.Request"
 )
 public class Request extends AbstractHttp implements RunnableTask<Request.Output> {
+
+    private static final int MAX_OUTPUT_BODY_BYTES = 19 * 1024 * 1024; // ~19MB safety margin
+
     @Builder.Default
     @Schema(
         title = "If true, the HTTP response body will be automatically encrypted and decrypted in the outputs, provided that encryption is configured in your Kestra configuration.",
@@ -329,7 +333,8 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
             String body = null;
 
             if (response.getBody() != null) {
-                body = IOUtils.toString(ArrayUtils.toPrimitive(response.getBody()), StandardCharsets.UTF_8.name());
+                byte[] bytes = getResponseBytes(response);
+                body = IOUtils.toString(bytes, StandardCharsets.UTF_8.name());
             }
 
             // check that the string is a valid Unicode string
@@ -344,6 +349,17 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
 
             return this.output(runContext, request, response, body);
         }
+    }
+
+    private static byte[] getResponseBytes(HttpResponse<Byte[]> response) {
+        byte[] bytes = ArrayUtils.toPrimitive(response.getBody());
+        if (bytes.length > MAX_OUTPUT_BODY_BYTES) {
+            throw new IllegalArgumentException(
+                "Response body is too large to store in task outputs (" + bytes.length + " bytes > max " + MAX_OUTPUT_BODY_BYTES + " bytes). " +
+                    "Use io.kestra.plugin.core.http.Download to fetch large payloads as files instead."
+            );
+        }
+        return bytes;
     }
 
     public Output output(RunContext runContext, HttpRequest request, HttpResponse<Byte[]> response, String body) throws GeneralSecurityException, URISyntaxException, IOException, IllegalVariableEvaluationException {

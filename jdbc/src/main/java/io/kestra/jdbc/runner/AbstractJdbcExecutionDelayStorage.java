@@ -3,34 +3,32 @@ package io.kestra.jdbc.runner;
 import io.kestra.core.runners.ExecutionDelay;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.jooq.Field;
-import org.jooq.Record1;
-import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.Temporal;
 import java.util.Map;
 import java.util.function.Consumer;
 
 public abstract class AbstractJdbcExecutionDelayStorage extends AbstractJdbcRepository {
     protected io.kestra.jdbc.AbstractJdbcRepository<ExecutionDelay> jdbcRepository;
 
+    private static final Field<Object> DATE_FIELD = DSL.field(DSL.quotedName("date"));
+    private static final Field<Object> VALUE_FIELD = DSL.field(DSL.quotedName("value"));
+
     public AbstractJdbcExecutionDelayStorage(io.kestra.jdbc.AbstractJdbcRepository<ExecutionDelay> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
     }
 
     public void get(Consumer<ExecutionDelay> consumer) {
-        ZonedDateTime now = ZonedDateTime.now();
-
         this.jdbcRepository
             .getDslContextWrapper()
             .transaction(configuration -> {
                 var select = DSL
                     .using(configuration)
-                    .select(AbstractJdbcRepository.field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
-                    .where(
-                        AbstractJdbcRepository.field("date").lessOrEqual(now.toOffsetDateTime())
-                    )
+                    .where(DATE_FIELD.lessOrEqual(getNow()))
                     .forUpdate()
                     .skipLocked();
 
@@ -40,6 +38,10 @@ public abstract class AbstractJdbcExecutionDelayStorage extends AbstractJdbcRepo
                         jdbcRepository.delete(executionDelay);
                     });
             });
+    }
+
+    protected Temporal getNow() {
+        return ZonedDateTime.now().toOffsetDateTime();
     }
 
     public void save(ExecutionDelay executionDelay) {

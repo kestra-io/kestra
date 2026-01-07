@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.Output;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.runners.DefaultRunContext;
+import io.kestra.core.runners.InputAndOutput;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.services.VariablesService;
 import io.micronaut.context.ApplicationContext;
@@ -46,11 +47,15 @@ class SubflowTest {
     @Mock
     private ApplicationContext applicationContext;
 
+    @Mock
+    private InputAndOutput inputAndOutput;
+
     @BeforeEach
     void beforeEach() {
         Mockito.when(applicationContext.getBean(VariablesService.class)).thenReturn(new VariablesService());
         Mockito.when(runContext.logger()).thenReturn(LOG);
         Mockito.when(runContext.getApplicationContext()).thenReturn(applicationContext);
+        Mockito.when(runContext.inputAndOutput()).thenReturn(inputAndOutput);
     }
 
     @Test
@@ -118,7 +123,7 @@ class SubflowTest {
 
         Map<String, Object> outputs = Map.of("key", "value");
         Mockito.when(runContext.render(Mockito.anyMap())).thenReturn(outputs);
-
+        Mockito.when(inputAndOutput.renderOutputs(Mockito.anyList())).thenReturn(Map.of("key", "value"));
 
         Subflow subflow = Subflow.builder()
             .outputs(outputs)
@@ -159,6 +164,7 @@ class SubflowTest {
 
         Output output = Output.builder().id("key").value("value").build();
         Mockito.when(runContext.render(Mockito.anyMap())).thenReturn(Map.of(output.getId(), output.getValue()));
+        Mockito.when(inputAndOutput.typedOutputs(Mockito.any(), Mockito.any(), Mockito.anyMap())).thenReturn(Map.of("key", "value"));
         Flow flow = Flow.builder()
             .outputs(List.of(output))
             .build();

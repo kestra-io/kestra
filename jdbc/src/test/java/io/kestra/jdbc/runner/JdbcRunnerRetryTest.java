@@ -92,6 +92,7 @@ public abstract class JdbcRunnerRetryTest {
     }
 
     @Test
+    @FlakyTest(description = "Depending on the load on the CI, this test can have unpredictable number of retries")
     @ExecuteFlow("flows/valids/retry-failed-flow-duration.yml")
     void retryFailedFlowDuration(Execution execution){
         retryCaseTest.retryFailedFlowDuration(execution);

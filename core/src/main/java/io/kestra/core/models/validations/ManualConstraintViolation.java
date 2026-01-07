@@ -67,6 +67,11 @@ public class ManualConstraintViolation<T> implements ConstraintViolation<T> {
             invalidValue
         )));
     }
+    public static <T> ConstraintViolationException toConstraintViolationException(
+        Set<? extends ConstraintViolation<?>> constraintViolations
+    ) {
+        return new ConstraintViolationException(constraintViolations);
+    }
 
     public String getMessageTemplate() {
         return "{messageTemplate}";

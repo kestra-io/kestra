@@ -1,7 +1,6 @@
 package io.kestra.core.repositories;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.QueryFilter.Op;
@@ -14,9 +13,9 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -37,7 +36,7 @@ import static io.kestra.core.models.flows.FlowScope.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest(transactional = false)
 public abstract class AbstractLogRepositoryTest {
     @Inject
     protected LogRepositoryInterface logRepository;
@@ -255,31 +254,33 @@ public abstract class AbstractLogRepositoryTest {
         for (int i = 0; i < 20; i++) {
             logRepository.save(builder.build());
         }
+        // normal kind should also be retrieved
+        logRepository.save(builder.executionKind(ExecutionKind.NORMAL).build());
 
         ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(1, 50));
 
         assertThat(find.size()).isEqualTo(50);
-        assertThat(find.getTotal()).isEqualTo(101L);
+        assertThat(find.getTotal()).isEqualTo(102L);
 
         find = logRepository.findByExecutionId(tenant, executionId, null, Pageable.from(3, 50));
 
-        assertThat(find.size()).isEqualTo(1);
-        assertThat(find.getTotal()).isEqualTo(101L);
+        assertThat(find.size()).isEqualTo(2);
+        assertThat(find.getTotal()).isEqualTo(102L);
 
         find = logRepository.findByExecutionIdAndTaskId(tenant, executionId, logEntry2.getTaskId(), null, Pageable.from(1, 50));
 
-        assertThat(find.size()).isEqualTo(21);
-        assertThat(find.getTotal()).isEqualTo(21L);
+        assertThat(find.size()).isEqualTo(22);
+        assertThat(find.getTotal()).isEqualTo(22L);
 
         find = logRepository.findByExecutionIdAndTaskRunId(tenant, executionId, logEntry2.getTaskRunId(), null, Pageable.from(1, 10));
 
         assertThat(find.size()).isEqualTo(10);
-        assertThat(find.getTotal()).isEqualTo(21L);
+        assertThat(find.getTotal()).isEqualTo(22L);
 
         find = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(tenant, executionId, logEntry2.getTaskRunId(), null, 0, Pageable.from(1, 10));
 
         assertThat(find.size()).isEqualTo(10);
-        assertThat(find.getTotal()).isEqualTo(21L);
+        assertThat(find.getTotal()).isEqualTo(22L);
 
         find = logRepository.findByExecutionIdAndTaskRunId(tenant, executionId, logEntry2.getTaskRunId(), null, Pageable.from(10, 10));
 

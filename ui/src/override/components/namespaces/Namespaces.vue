@@ -2,7 +2,7 @@
     <Navbar :title="routeInfo.title">
         <template #additional-right>
             <Action
-                v-if="canCreate"
+                v-if="!isOSS && canCreate"
                 :label="t('create')"
                 :to="{name: 'namespaces/create', params: {tab: 'edit'}}"
             />
@@ -54,7 +54,7 @@
                         class="node"
                     >
                         <div class="d-flex">
-                            <DotsSquare class="me-2 icon" />
+                            <FolderOpenOutline class="me-2 icon" />
                             <span class="pe-3">
                                 {{ namespaceLabel(data.label) }}
                             </span>
@@ -91,7 +91,7 @@
 
     import useRestoreUrl from "../../../composables/useRestoreUrl";
 
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import {useAuthStore} from "override/stores/auth";
     
@@ -142,6 +142,8 @@
     const systemNamespace = computed(
         () => miscStore.configs?.systemNamespace || "system",
     );
+    
+    const isOSS = computed(() => useMiscStore().configs?.edition === "OSS")
 
     const namespacesHierarchy = computed(() => {
         if (namespaces.value === undefined || namespaces.value.length === 0) {

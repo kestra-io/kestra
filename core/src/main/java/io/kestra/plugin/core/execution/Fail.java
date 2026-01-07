@@ -105,7 +105,7 @@ import lombok.experimental.SuperBuilder;
                 url: "{{ secret('SLACK_WEBHOOK') }}"
                 payload: |
                 {
-                    "text": "Failure alert for flow `{{ flow.namespace }}.{{ flow.id }}` with ID `{{ execution.id }}`. Here is a bit more context about why the execution failed: `{{ errorLogs()[0]['message'] }}`"
+                  "text": "Failure alert for flow `{{ flow.namespace }}.{{ flow.id }}` with ID `{{ execution.id }}`. Here is a bit more context about why the execution failed: `{{ errorLogs()[0]['message'] }}`"
                 }
             """
         )

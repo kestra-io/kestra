@@ -11,6 +11,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Dag;
 
 import java.util.*;
@@ -163,6 +164,35 @@ public class FlowableUtils {
         return Collections.emptyList();
     }
 
+    public static Optional<State.Type> resolveSequentialState(
+        Execution execution,
+        List<ResolvedTask> tasks,
+        List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
+        TaskRun parentTaskRun,
+        RunContext runContext,
+        boolean allowFailure,
+        boolean allowWarning
+    ) {
+        if (ListUtils.emptyOnNull(tasks).stream()
+            .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
+            .findAny()
+            .isEmpty()) {
+            return Optional.of(State.Type.SUCCESS);
+        }
+
+        return resolveState(
+            execution,
+            tasks,
+            errors,
+            _finally,
+            parentTaskRun,
+            runContext,
+            allowFailure,
+            allowWarning
+        );
+    }
+
     public static Optional<State.Type> resolveState(
         Execution execution,
         List<ResolvedTask> tasks,
@@ -218,7 +248,7 @@ public class FlowableUtils {
             }
         } else {
             // first call, the error flow is not ready, we need to notify the parent task that can be failed to init error flows
-            if (execution.hasFailed(tasks, parentTaskRun) || terminalState == State.Type.FAILED) {
+            if (execution.hasFailedNoRetry(tasks, parentTaskRun) || terminalState == State.Type.FAILED) {
                 return Optional.of(execution.guessFinalState(tasks, parentTaskRun, allowFailure, allowWarning, terminalState));
             }
         }

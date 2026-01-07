@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
@@ -10,6 +11,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
@@ -26,16 +28,14 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
-import io.kestra.core.storages.InternalNamespace;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.StorageContext;
-import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.Logs;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.converters.QueryFilterFormat;
@@ -44,7 +44,9 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionDependenciesStreamingService;
 import io.kestra.webserver.services.ExecutionStreamingService;
+import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.kestra.webserver.utils.filepreview.FileRender;
 import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
@@ -71,9 +73,9 @@ import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.extensions.Extension;
 import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -91,6 +93,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.reactivestreams.Publisher;
+import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -130,6 +133,9 @@ public class ExecutionController {
 
     @Inject
     private FlowService flowService;
+
+    @Inject
+    private NamespaceService namespaceService;
 
     @Inject
     protected ExecutionRepositoryInterface executionRepository;
@@ -191,16 +197,19 @@ public class ExecutionController {
     private Optional<OpenTelemetry> openTelemetry;
 
     @Inject
-    private ExecutionStreamingService executionStreamingService;
+    private LocalPathFactory localPathFactory;
 
     @Inject
-    private LocalPathFactory localPathFactory;
+    private NamespaceFactory namespaceFactory;
 
     @Inject
     private SecureVariableRendererFactory secureVariableRendererFactory;
 
     @Value("${" + LocalPath.ENABLE_PREVIEW_CONFIG + ":true}")
     private boolean enableLocalFilePreview;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -545,7 +554,6 @@ public class ExecutionController {
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute a disabled flow");
         }
-
         if (flow instanceof FlowWithException fwe) {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
@@ -579,10 +587,16 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
         }
 
-        var result = execution.get();
+        List<Label> labels = new ArrayList<>();
+        labels.add(new Label(Label.FROM, "trigger"));
         if (flow.getLabels() != null) {
-            result = result.withLabels(LabelService.labelsExcludingSystem(flow));
+            labels.addAll(LabelService.labelsExcludingSystem(flow));
         }
+        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
+            labels.add(new Label(CORRELATION_ID, execution.get().getId()));
+        }
+
+        var result = execution.get().withLabels(labels);
 
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
         var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
@@ -614,7 +628,7 @@ public class ExecutionController {
             }
 
             executionQueue.emit(result);
-            eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
+            eventPublisher.publishEvent(CrudEvent.create(result));
 
             if (webhook.getWait()) {
                 var subscriberId = UUID.randomUUID().toString();
@@ -691,7 +705,11 @@ public class ExecutionController {
         Execution execution = Execution.newExecution(flow, parsedLabels);
         return flowInputOutput
             .validateExecutionInputs(flow.getInputs(), flow, execution, inputs)
-            .map(values -> ApiValidateExecutionInputsResponse.of(id, namespace, values));
+            .map(values -> {
+                Map<String, Object> inputsAsMap = values.stream().collect(HashMap::new, (m,v)->m.put(v.input().getId(), v.value()), HashMap::putAll);
+                List<Check> checks = flowService.getFailedChecks(flow, inputsAsMap);
+                return ApiValidateExecutionInputsResponse.of(id, namespace, checks, values);
+            });
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -729,7 +747,26 @@ public class ExecutionController {
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(executionInputs -> {
-                Execution executionWithInputs = current.withInputs(executionInputs);
+                List<Check> failed = flowService.getFailedChecks(flow, executionInputs);
+                Check.Behavior behavior = Check.resolveBehavior(failed);
+                if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
+                    return Mono.error(new IllegalArgumentException(
+                        "Flow execution blocked: one or more condition checks evaluated to false."
+                        + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(Collectors.joining(", ")
+                    )));
+                }
+
+                final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
+                    .map(exec -> {
+                        if (Check.Behavior.FAIL_EXECUTION.equals(behavior)) {
+                            Logs.logExecution(current, log, Level.WARN, "Flow execution failed because one or more condition checks evaluated to false.");
+                            return exec.withState(State.Type.FAILED);
+                        } else {
+                            return exec;
+                        }
+                    })
+                    .get();
+
                 try {
                     // inject the traceparent into the execution
                     openTelemetry
@@ -740,7 +777,7 @@ public class ExecutionController {
                     executionQueue.emit(executionWithInputs);
                     eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
 
-                    if (!wait) {
+                    if (!wait || executionWithInputs.getState().isFailed()) {
                         return Mono.just(ExecutionResponse.fromExecution(
                             executionWithInputs,
                             executionUrl(executionWithInputs)
@@ -821,15 +858,22 @@ public class ExecutionController {
     }
 
     protected List<Label> parseLabels(List<String> labels) {
-        List<Label> parsedLabels = labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
+        List<Label> parsedLabels = labels == null ? new ArrayList<>() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
-            .toList();
+            .collect(Collectors.toList());
 
-        // check for system labels: none can be passed at execution creation time except system.correlationId
-        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        // check for system labels: none can be passed at execution creation time except system.correlationId and system.from
+        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && !label.key().equals(Label.FROM) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
+
+        // from can be passed by the UI so we only add it if it didn't exist anymore
+        // if we want to be more restrictive, we may want to restrict it to only have the `ui` value
+        if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {
+            parsedLabels.add(new Label(Label.FROM, "api"));
+        }
+
         return parsedLabels;
     }
 
@@ -844,7 +888,7 @@ public class ExecutionController {
         if (Namespace.NAMESPACE_FILE_SCHEME.equals(path.getScheme())) {
             // if there is an authority, it means the namespace file is for another namespace, so we check it
             if (path.getAuthority() != null) {
-                flowService.checkAllowedNamespace(execution.getTenantId(), path.getAuthority(), execution.getTenantId(), execution.getNamespace());
+                namespaceService.checkAllowedNamespace(execution.getTenantId(), path.getAuthority(), execution.getTenantId(), execution.getNamespace());
             }
             return null;
         }
@@ -921,9 +965,9 @@ public class ExecutionController {
         );
     }
 
-    private URI nsFileToInternalStorageURI(URI path, Execution execution) {
-        InternalNamespace internalNamespace = new InternalNamespace(execution.getTenantId(), execution.getNamespace(), storageInterface);
-        return internalNamespace.get(Path.of(path.getPath())).uri();
+    private URI nsFileToInternalStorageURI(URI path, Execution execution) throws IOException {
+        Namespace namespace = namespaceFactory.of(execution.getTenantId(), execution.getNamespace(), storageInterface);
+        return namespace.get(Path.of(path.getPath())).uri();
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -994,9 +1038,9 @@ public class ExecutionController {
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
-            if (execution.isPresent() && !execution.get().getState().isFailed()) {
+            if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in state FAILED",
+                    "execution not in state PAUSED or terminated",
                     executionId,
                     String.class,
                     "execution",
@@ -1457,7 +1501,7 @@ public class ExecutionController {
         Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
         return executionService.validateForResume(execution, flow, inputs)
-            .map(values -> ApiValidateExecutionInputsResponse.of(execution.getFlowId(), execution.getNamespace(), values))
+            .map(values -> ApiValidateExecutionInputsResponse.of(execution.getFlowId(), execution.getNamespace(), List.of(), values))
             // need to consume the inputs in case of error
             .doOnError(t -> Flux.from(inputs).subscribeOn(Schedulers.boundedElastic()).blockLast());
     }
@@ -1484,7 +1528,7 @@ public class ExecutionController {
     }
 
     protected Mono<HttpResponse<?>> resumeFoundExecution(MultipartBody inputs, Execution execution,
-        Flow flow) {
+                                                         Flow flow) {
         Pause.Resumed resumed = createResumed();
 
         return this.executionService.resume(execution, flow, State.Type.RUNNING, inputs, resumed)
@@ -2547,6 +2591,23 @@ public class ExecutionController {
         ).stream().map(LastExecutionResponse::ofExecution).toList();
     }
 
+    @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Executions"}, summary = "Export all executions as a streamed CSV file")
+    @SuppressWarnings("unchecked")
+    public MutableHttpResponse<Flux> exportExecutions(
+        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+    ) {
+
+        return HttpResponse.ok(
+                CSVUtils.toCSVFlux(
+                    executionRepository.findAsync(this.tenantService.resolveTenant(), QueryFilterUtils.replaceTimeRangeWithComputedStartDateFilter(filters))
+                        .map(log -> objectMapper.convertValue(log, Map.class))
+                )
+            )
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=executions.csv");
+    }
+
     @Introspected
     public record LastExecutionResponse(
         @Parameter(description = "The execution's ID") String id,
@@ -2574,7 +2635,8 @@ public class ExecutionController {
         @Parameter(description = "The namespace")
         String namespace,
         @Parameter(description = "The flow's inputs")
-        List<ApiInputAndValue> inputs
+        List<ApiInputAndValue> inputs,
+        List<ApiCheckFailure> checks
     ) {
 
         @Introspected
@@ -2597,10 +2659,25 @@ public class ExecutionController {
             @Parameter(description = "The error message")
             String message
         ) {
-
         }
 
-        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<InputAndValue> inputs) {
+        @Introspected
+        public record ApiCheckFailure(
+            @Parameter(description = "The message")
+            String message,
+            @Parameter(description = "The message style")
+            Check.Style style,
+            @Parameter(description = "The behavior")
+            Check.Behavior behavior
+        ) {
+        }
+
+        public static ApiValidateExecutionInputsResponse of(
+            String id,
+            String namespace,
+            List<Check> checks,
+            List<InputAndValue> inputs
+        ) {
             return new ApiValidateExecutionInputsResponse(
                 id,
                 namespace,
@@ -2609,13 +2686,21 @@ public class ExecutionController {
                     it.value(),
                     it.enabled(),
                     it.isDefault(),
-                    Optional.ofNullable(it.exception()).map(exception ->
-                        exception.getConstraintViolations()
-                            .stream()
-                            .map(cv -> new ApiInputError(cv.getMessage()))
+                    // Map the Set<InputOutputValidationException> to ApiInputError
+                    Optional.ofNullable(it.exceptions())
+                        .map(exSet -> exSet.stream()
+                            .map(e -> new ApiInputError(e.getMessage()))
                             .toList()
-                    ).orElse(List.of())
-                )).toList()
+                        )
+                        .orElse(List.of())
+                )).toList(),
+                checks.stream()
+                    .map(check -> new ApiCheckFailure(
+                        check.getMessage(),
+                        check.getStyle(),
+                        check.getBehavior()
+                    ))
+                    .toList()
             );
         }
     }

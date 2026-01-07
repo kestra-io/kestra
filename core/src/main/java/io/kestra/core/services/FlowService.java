@@ -2,8 +2,10 @@ package io.kestra.core.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
+import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -12,10 +14,13 @@ import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
+import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
 import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +59,9 @@ public class FlowService {
     @Inject
     Optional<FlowTopologyRepositoryInterface> flowTopologyRepository;
 
+    @Inject
+    Provider<RunContextFactory> runContextFactory; // Lazy init: avoid circular dependency error.
+
     /**
      * Validates and creates the given flow.
      * <p>
@@ -83,6 +91,57 @@ public class FlowService {
     private FlowRepositoryInterface repository() {
         return flowRepository
             .orElseThrow(() -> new IllegalStateException("Cannot perform operation on flow. Cause: No FlowRepository"));
+    }
+    private static String formatValidationError(String message) {
+        if (message.startsWith("Illegal flow source:")) {
+            // Already formatted by YamlParser, return as-is
+            return message;
+        }
+        // For other validation errors, provide context
+        return "Validation error: " + message;
+    }
+    /**
+     * Evaluates all checks defined in the given flow using the provided inputs.
+     * <p>
+     * Each check's {@link Check#getCondition()} is evaluated in the context of the flow.
+     * If a condition evaluates to {@code false} or fails to evaluate due to a
+     * variable error, the corresponding {@link Check} is added to the returned list.
+     * </p>
+     *
+     * @param flow   the flow containing the checks to evaluate
+     * @param inputs the input values used when evaluating the conditions
+     * @return a list of checks whose conditions evaluated to {@code false} or failed to evaluate
+     */
+    public List<Check> getFailedChecks(Flow flow, Map<String, Object> inputs) {
+        if (!ListUtils.isEmpty(flow.getChecks())) {
+            RunContext runContext = runContextFactory.get().of(flow, Map.of("inputs", inputs));
+            List<Check> falseConditions = new ArrayList<>();
+            for (Check check : flow.getChecks()) {
+                try {
+                    boolean result = Boolean.TRUE.equals(runContext.renderTyped(check.getCondition()));
+                    if (!result) {
+                        falseConditions.add(check);
+                    }
+                } catch (IllegalVariableEvaluationException e) {
+                    log.debug("[tenant: {}] [namespace: {}] [flow: {}] Failed to evaluate check condition. Cause.: {}",
+                        flow.getTenantId(),
+                        flow.getNamespace(),
+                        flow.getId(),
+                        e.getMessage(),
+                        e
+                    );
+                    falseConditions.add(Check
+                        .builder()
+                            .message("Failed to evaluate check condition. Cause: " + e.getMessage())
+                            .behavior(Check.Behavior.BLOCK_EXECUTION)
+                            .style(Check.Style.ERROR)
+                        .build()
+                    );
+                }
+            }
+            return falseConditions;
+        }
+        return List.of();
     }
 
     /**
@@ -122,10 +181,12 @@ public class FlowService {
                     modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
 
                 } catch (ConstraintViolationException e) {
-                    validateConstraintViolationBuilder.constraints(e.getMessage());
+                    String friendlyMessage = formatValidationError(e.getMessage());
+                    validateConstraintViolationBuilder.constraints(friendlyMessage);
                 } catch (FlowProcessingException e) {
-                    if (e.getCause() instanceof ConstraintViolationException) {
-                        validateConstraintViolationBuilder.constraints(e.getMessage());
+                    if (e.getCause() instanceof ConstraintViolationException cve) {
+                        String friendlyMessage = formatValidationError(cve.getMessage());
+                        validateConstraintViolationBuilder.constraints(friendlyMessage);
                     } else {
                         Throwable cause = e.getCause() != null ? e.getCause() : e;
                         validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
@@ -454,50 +515,6 @@ public class FlowService {
         }
 
         return flowRepository.get().delete(flow);
-    }
-
-    /**
-     * Return true if the namespace is allowed from the namespace denoted by 'fromTenant' and 'fromNamespace'.
-     * As namespace restriction is an EE feature, this will always return true in OSS.
-     */
-    public boolean isAllowedNamespace(String tenant, String namespace, String fromTenant, String fromNamespace) {
-        return true;
-    }
-
-    /**
-     * Check that the namespace is allowed from the namespace denoted by 'fromTenant' and 'fromNamespace'.
-     * If not, throw an IllegalArgumentException.
-     */
-    public void checkAllowedNamespace(String tenant, String namespace, String fromTenant, String fromNamespace) {
-        if (!isAllowedNamespace(tenant, namespace, fromTenant, fromNamespace)) {
-            throw new IllegalArgumentException("Namespace " + namespace + " is not allowed.");
-        }
-    }
-
-    /**
-     * Return true if the namespace is allowed from all the namespace in the 'fromTenant' tenant.
-     * As namespace restriction is an EE feature, this will always return true in OSS.
-     */
-    public boolean areAllowedAllNamespaces(String tenant, String fromTenant, String fromNamespace) {
-        return true;
-    }
-
-    /**
-     * Check that the namespace is allowed from all the namespace in the 'fromTenant' tenant.
-     * If not, throw an IllegalArgumentException.
-     */
-    public void checkAllowedAllNamespaces(String tenant, String fromTenant, String fromNamespace) {
-        if (!areAllowedAllNamespaces(tenant, fromTenant, fromNamespace)) {
-            throw new IllegalArgumentException("All namespaces are not allowed, you should either filter on a namespace or configure all namespaces to allow your namespace.");
-        }
-    }
-
-    /**
-     * Return true if require existing namespace is enabled and the namespace didn't already exist.
-     * As namespace management is an EE feature, this will always return false in OSS.
-     */
-    public boolean requireExistingNamespace(String tenant, String namespace) {
-        return false;
     }
 
     /**

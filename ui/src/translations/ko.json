@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "참고: 현재 AI 제공자로는 Gemini만 지원됩니다.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하십시오.",
+          "footer": "참고: 현재 오픈 소스 에디션에서는 AI 제공자로 Gemini만 지원됩니다. 엔터프라이즈 에디션의 경우, 다른 모델 제공자 구성을 위해 AI Copilot 문서를 참조하십시오.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하십시오.",
           "header": "<b>AI Copilot이 아직 구성되지 않았습니다.</b>\n\nAI Copilot을 활성화하려면, 다음 코드 조각을 Kestra 인스턴스 구성 파일(예: <code>application.yml</code>)에 추가하고 <code>geminiApiKey</code>를 실제 key로 교체하십시오:"
         },
         "generating": "Flow YAML을 생성 중입니다...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "앱 블록",
     "apps": "앱",
+    "assets": "자산",
     "attempt": "시도",
     "attempts": "시도 횟수",
     "auditlogs": "감사 Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">이 실행은 아직 RUNNING 상태입니다. 삭제해도 중지되지 않습니다.<br />실행을 중지하려면 실행을 강제 종료해야 합니다.</div>",
     "delete logs": "Logs 삭제",
     "delete ok": "삭제됨",
+    "delete revision confirm": "{revision} 개정을 삭제하시겠습니까?",
+    "delete revision error": "{error} 오류로 인해 {revision} 수정본 삭제 오류 발생",
     "delete task confirm": "task <code>{taskId}</code>을(를) 삭제하시겠습니까?",
     "delete trigger": "트리거 삭제",
     "delete trigger confirmation": "트리거 {id}를 삭제하시겠습니까? WARNING: 트리거가 flow에서 여전히 활성 상태인 경우 삭제하면 중복 실행이 발생할 수 있습니다.",
@@ -314,6 +317,12 @@
         "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다.",
         "title": "Kestra로 맞춤형 앱 만들기"
       },
+      "assets": {
+        "header": "자산 메타데이터 및 관측 가능성",
+        "label": "자산",
+        "message": "자산은 관측 가능성, 계보, 소유권 메타데이터를 연결하여 플랫폼 팀이 더 빠르게 문제를 해결하고 자신 있게 배포할 수 있도록 합니다.",
+        "title": "모든 데이터셋, 서비스 및 종속성을 한눈에 확인하세요."
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition은 모든 활동을 강력하고 변경 불가능한 기록으로 로그하여 변경 사항을 추적하고, 규정을 준수하며, 문제를 해결하는 것을 쉽게 만듭니다.",
         "title": "변경 사항 추적 - 감사 Log"
@@ -329,6 +338,10 @@
         "title": "인스턴스 전반의 인프라 관리"
       },
       "namespace": {
+        "assets": {
+          "message": "Kestra Enterprise Edition에서 Assets는 워크플로우가 상호작용하는 리소스의 실시간 인벤토리를 유지합니다. 이러한 리소스는 데이터베이스 테이블, 가상 머신, 파일 또는 사용 중인 외부 시스템일 수 있습니다.",
+          "title": "자산 관리 중앙화"
+        },
         "audit-logs": {
           "message": "Kestra Enterprise Edition에서는 namespace 수준의 감사 로그를 상세한 차이점과 함께 볼 수 있어, 모든 리소스에 걸쳐 누가 무엇을 언제 변경했는지에 대한 명확한 기록을 제공합니다.",
           "title": "모든 변경 사항을 한 곳에서 추적하기"
@@ -389,6 +402,7 @@
         "zoom_out": "축소"
       },
       "search": {
+        "asset_placeholder": "자산, flow 또는 namespace로 검색...",
         "no_results": "{term}에 대한 결과가 없습니다.",
         "placeholder": "flow 또는 namespace로 검색..."
       }
@@ -454,6 +468,10 @@
         "content": "Kestra와 외부 세계를 상호작용하는 앱을 만들기 시작하세요.",
         "title": "앱이 아직 없습니다!"
       },
+      "assets": {
+        "content": "데이터 자산, 서비스 및 인프라를 추적하고 관리하기 위해 자산을 추가하세요.",
+        "title": "아직 자산이 없습니다!"
+      },
       "concurrency_executions": {
         "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>에 대한 문서를 참조하세요.",
         "title": "이 Flow에 대한 진행 중인 실행이 없습니다."
@@ -463,6 +481,10 @@
         "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "이 자산은 flow 또는 다른 자산과 상위 또는 하위 종속성이 없습니다.",
+          "title": "현재 종속성이 없습니다."
+        },
         "EXECUTION": {
           "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">실행 종속성</a>에 대한 자세한 내용은 문서를 참조하세요.",
           "title": "현재 종속성이 없습니다."
@@ -507,7 +529,7 @@
     "environment color setting": "환경 색상",
     "environment name setting": "환경 이름",
     "error": "오류",
-    "error detected": "오류 감지됨",
+    "error detected": "오류가 감지되었습니다.",
     "error in editor": "편집기에서 오류가 발견되었습니다",
     "errorLogs": "오류 logs",
     "errors": {
@@ -539,7 +561,7 @@
     "execution": "실행",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
     "execution labels": "실행 라벨",
-    "execution not found": "실행 <code>{executionId}</code>을(를) 찾을 수 없습니다",
+    "execution not found": "<code>{executionId}</code> 실행을 찾을 수 없습니다.",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
     "execution not in state PAUSED": "실행 <code>{executionId}</code>이(가) PAUSED 상태가 아닙니다",
     "execution replay": "이 실행은 다음의 재실행입니다:",
@@ -554,7 +576,7 @@
       "metrics": "메트릭 삭제",
       "storage": "내부 저장소 파일 삭제"
     },
-    "execution_failed": "실행 실패! 마지막 오류는",
+    "execution_failed": "실행 실패!\n마지막 오류는",
     "execution_guide": {
       "get_started": {
         "text": "Quickstart Guide를 따라 Kestra를 설치하고 첫 번째 workflow를 구축하세요.",
@@ -595,6 +617,7 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
+    "export_csv": "CSV로 내보내기",
     "exports": "내보내기 목록",
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",
@@ -642,6 +665,7 @@
       "customize columns": "테이블 열 사용자 정의",
       "customize tooltip": "표시할 필터 사용자 지정",
       "delete filter": "필터 삭제",
+      "delete filter confirm": "이 필터를 제거하시겠습니까?",
       "description": "설명",
       "deselect all": "모두 선택 해제",
       "drag to reorder": "끌어서 순서 변경",
@@ -651,6 +675,7 @@
       "end_date": "종료 날짜",
       "enter description": "필터 설명 입력",
       "enter label": "필터 label 입력",
+      "enter name": "필터 이름 입력",
       "execution_kind": {
         "playground": "플레이그라운드",
         "playground_description": "플레이그라운드 모드에서 트리거된 실행",
@@ -697,6 +722,7 @@
         "description": "메트릭 유형별 필터",
         "label": "메트릭"
       },
+      "name": "이름",
       "namespace": {
         "description": "namespace로 필터링",
         "label": "Namespace"
@@ -706,7 +732,8 @@
       "options": "데이터 옵션",
       "periodic refresh": "주기적 새로 고침",
       "refresh": "데이터 새로 고침",
-      "reset": "모든 필터 재설정",
+      "reset": "모두 지우기",
+      "reset_all": "모든 필터 재설정",
       "reset_tooltip": "기본값으로 재설정",
       "save": "저장",
       "save duplicate": "이 이름을 가진 필터가 이미 존재합니다.",
@@ -774,7 +801,8 @@
           "revision": "이 실행에 사용된 flow의 버전",
           "start-date": "실행이 시작되었을 때",
           "state": "현재 실행 상태",
-          "task-id": "실행에서 마지막 task의 ID"
+          "task-id": "실행에서 마지막 task의 ID",
+          "trigger": "실행을 시작한 Trigger"
         },
         "flow_triggers": {
           "next execution date": "트리거가 다음에 실행될 때",
@@ -879,6 +907,12 @@
         "description": "트리거 ID로 필터링",
         "label": "트리거 ID"
       },
+      "triggerState": {
+        "description": "트리거 상태별 필터링",
+        "disabled": "비활성화됨",
+        "enabled": "사용 가능",
+        "label": "트리거 상태"
+      },
       "update": "업데이트",
       "value": "값",
       "workerId": {
@@ -954,6 +988,7 @@
     "flow": "Flow",
     "flow already exists": "Flow가 이미 존재합니다",
     "flow creation": "Flow 생성",
+    "flow creation denied in namespace": "`{namespace}` namespace에서 flow를 생성할 권한이 없습니다.",
     "flow delete": "<code>{flowCount}</code> 개의 flow를 삭제하시겠습니까?",
     "flow deleted, you can restore it": "Flow가 삭제되었으며 읽기 전용 보기입니다. 여전히 복원할 수 있습니다.",
     "flow disable": "<code>{flowCount}</code> 개의 flow를 비활성화하시겠습니까?",
@@ -1022,8 +1057,8 @@
     "kestra": "Kestra",
     "key": "Key",
     "kill": "종료",
-    "kill only parents": "부모만 종료",
-    "kill parents and subflow": "부모 및 subflows 종료",
+    "kill only parents": "현재 것만 종료",
+    "kill parents and subflow": "현재 및 subflow 종료",
     "killed confirm": "실행 <code>{id}</code>을(를) 종료하시겠습니까?",
     "killed done": "종료 중입니다.",
     "kv": {
@@ -1049,6 +1084,7 @@
     "last modified": "마지막 수정",
     "last trigger date": "마지막 trigger 날짜",
     "last trigger date tooltip": "트리거가 마지막으로 실행된 시점입니다. 백필을 실행할 때 과거일 수 있습니다.",
+    "latest_update": "최신 업데이트",
     "launch execution": "실행",
     "learn_more": "자세히 알아보기",
     "leave page": "페이지 나가기",
@@ -1075,6 +1111,7 @@
     "min": "Min",
     "minutes": "분",
     "missingSource": "소스 누락",
+    "modify_inputs": "입력 수정",
     "monogram": "모노그램",
     "months": "개월",
     "more_actions": "추가 작업",
@@ -1145,6 +1182,12 @@
         "new_file": "확장자를 포함한 새 이름:",
         "new_folder": "새 폴더 이름:"
       },
+      "revisions": {
+        "history": "수정 기록",
+        "restore": {
+          "success": "파일 수정이 성공적으로 복원되었습니다."
+        }
+      },
       "toggle": {
         "hide": "namespace 파일 숨기기",
         "show": "namespace 파일 보기"
@@ -1208,6 +1251,7 @@
       },
       "fields": {
         "general": {
+          "checks": "점검",
           "concurrency": "병행성",
           "disabled": "비활성화됨",
           "labels": "레이블",
@@ -1270,10 +1314,13 @@
     },
     "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
     "no_file_choosen": "파일이 선택되지 않음",
+    "no_flow_outputs": "출력 없음.",
+    "no_inputs": "입력값이 없습니다.",
     "no_logs_data": "데이터 없음",
     "no_logs_data_description": "선택한 필터에 대한 로그가 없습니다. <br> 필터를 조정하거나, 시간 범위를 변경하거나, flow가 최근에 실행되었는지 확인해 주세요.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
     "no_results": {
+      "assets": "자산을 찾을 수 없음",
       "executions": "실행을 찾을 수 없음",
       "flows": "flow를 찾을 수 없음",
       "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
@@ -1283,6 +1330,8 @@
     },
     "no_results_found": "결과를 찾을 수 없습니다",
     "no_tasks_running": "아직 실행 중인 task가 없습니다.",
+    "no_trigger": "사용 가능한 trigger가 없습니다.",
+    "no_variables": "사용 가능한 변수가 없습니다.",
     "now": "지금",
     "of": "의",
     "ok": "확인",
@@ -1291,7 +1340,7 @@
       "next": "다음",
       "no_flows": "튜토리얼 namespace에 사용할 수 있는 flow가 없습니다.",
       "previous": "이전",
-      "skip": "튜토리얼 건너뛰기",
+      "skip": "제품 투어 건너뛰기",
       "steps": {
         "0": {
           "content": "여기 오신 것을 환영합니다.<br />첫 번째 flow를 만들어 봅시다.",
@@ -1417,6 +1466,7 @@
     "reach us": "문의하기",
     "read-more": "자세히 알아보기",
     "readonly property": "읽기 전용 속성",
+    "recent_executions": "최근 실행",
     "refresh": "새로 고침",
     "reject": "거부",
     "relative": "상대적",
@@ -1450,7 +1500,9 @@
     "resumed confirm": "실행 <code>{id}</code>을(를) 재개하시겠습니까?",
     "resumed done": "실행이 재개되었습니다.",
     "resumed title": "실행 <code>{id}</code> 재개",
+    "reuse_original_inputs": "원래 input 재사용",
     "revision": "수정본",
+    "revision deleted": "{revision} 리비전이 성공적으로 삭제되었습니다.",
     "revisions": "수정본들",
     "row count": "행 수",
     "run task in playground": "플레이그라운드에서 task 실행",
@@ -1516,6 +1568,7 @@
     "sequential": "순차적",
     "server type": "서버 유형",
     "services": "서비스",
+    "set_extra_labels": "추가 label 설정",
     "settings": {
       "blocks": {
         "configuration": {
@@ -1595,7 +1648,8 @@
         "email": "이메일",
         "firstName": "이름",
         "lastName": "성씨",
-        "password": "비밀번호"
+        "password": "비밀번호",
+        "password_requirements": "비밀번호는 최소 8자 이상이어야 하며, 최소 1개의 대문자와 1개의 숫자를 포함해야 합니다."
       },
       "login": "로그인",
       "logout": "로그아웃",
@@ -1676,6 +1730,7 @@
     "start datetime": "시작 날짜 및 시간",
     "started date": "시작 날짜",
     "state": "상태",
+    "state_history": "상태 기록",
     "stats": "통계",
     "steps": "단계",
     "stream": "스트림",
@@ -1800,6 +1855,7 @@
     "update aborted": "업데이트 중단됨",
     "update ok": "업데이트됨",
     "updated date": "업데이트 날짜",
+    "usage": "사용량",
     "use": "사용",
     "use_dark_background": "어두운 배경에서 작업할 때는 이 버전을 사용하여 우리의 이름이 읽기 쉽게 유지되도록 하세요.",
     "validate": "유효성 검사",
@@ -1835,7 +1891,7 @@
     },
     "welcome aboard": "🚀 Kestra에 오신 것을 환영합니다!",
     "welcome aboard content": "가이드 투어를 사용하여 첫 번째 flow를 만들고 Blueprints에서 더 많은 예제를 확인하세요.",
-    "welcome button create": "첫 번째 flow 만들기",
+    "welcome button create": "제품 투어 시작",
     "welcome display require": "<strong>첫 번째 flow</strong>를 실행하여 시작하세요",
     "welcome_page": {
       "guide": "첫 번째 flow를 실행하는 데 도움이 필요하신가요?",
@@ -1851,7 +1907,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",
-    "years": "연도",
-    "your usage": "사용량"
+    "years": "연도"
   }
 }

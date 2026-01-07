@@ -1,5 +1,11 @@
 <template>
-    <SideBar v-if="menu" :menu :showLink="showLink" @menu-collapse="onCollapse">
+    <SideBar
+        v-if="menu"
+        :menu
+        :showLink
+        @menu-collapse="onCollapse"
+        :class="{overlay: verticalLayout}"
+    >
         <template #footer>
             <Auth />    
         </template>
@@ -10,6 +16,9 @@
     import {useLeftMenu} from "override/components/useLeftMenu";
     import SideBar from "../../components/layout/SideBar.vue";
     import Auth from "../../override/components/auth/Auth.vue";
+
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
 
     withDefaults(defineProps<{
         showLink?: boolean

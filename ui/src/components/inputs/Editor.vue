@@ -6,7 +6,7 @@
                     <el-button-group>
                         <el-tooltip
                             effect="light"
-                            :content="t('Fold content lines')"
+                            :content="$t('Fold content lines')"
                             :persistent="false"
                             transition=""
                             :hideAfter="0"
@@ -19,7 +19,7 @@
                         </el-tooltip>
                         <el-tooltip
                             effect="light"
-                            :content="t('Unfold content lines')"
+                            :content="$t('Unfold content lines')"
                             :persistent="false"
                             transition=""
                             :hideAfter="0"
@@ -99,7 +99,6 @@
 
     const {t} = useI18n()
 
-
     const props = defineProps({
         modelValue: {type: String, default: ""},
         original: {type: String, default: undefined},
@@ -161,13 +160,33 @@
         useDocStore().docId = "flowEditor";
     })
 
-    watch(() => props.modelValue, (value) => {
-        if (isCodeEditor(editor) && editor?.getValue?.() !== value) {
-            preventCursorChange.value = true;
-        } else {
-            preventCursorChange.value = false;
+    watch(
+        () => [props.modelValue, props.lang],
+        ([value, newLang], [, oldLang]) => {
+            preventCursorChange.value = isCodeEditor(editor) && editor?.getValue?.() !== value;
+            if (newLang === oldLang) return;
+            if (isDiff.value || !editor || !isCodeEditor(editor)) return;
+
+            const monacoRef = monacoEditor.value?.monaco;
+            const model = editor.getModel?.();
+            if (!monacoRef || !model) return;
+
+            let lang = "plaintext";
+            if (newLang && typeof newLang === "string" && newLang.trim()) {
+                lang = newLang.includes("json")
+                    ? "json"
+                    : newLang.includes("-")
+                        ? newLang.split("-")[0]
+                        : newLang;
+            }
+            try {
+                monacoRef.editor.setModelLanguage(model, lang);
+            } catch (e) {
+                console.warn("Failed to set model language", e);
+            }
         }
-    })
+    );
+
 
     const themeComputed = computed(() => {
         return useMiscStore().theme;
@@ -714,7 +733,7 @@
 
 .ks-editor {
     display: flex;
-
+    overflow: hidden;
     .top-nav {
         background-color: var(--ks-background-card);
         padding: 0.5rem;

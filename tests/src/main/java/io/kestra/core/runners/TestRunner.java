@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 @Singleton
 public class TestRunner implements Runnable, AutoCloseable {
-    @Setter private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors()) * 16;
+    @Setter private int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors()) * 4;
     @Setter private boolean schedulerEnabled = true;
     @Setter private boolean workerEnabled = true;
 
@@ -49,7 +49,9 @@ public class TestRunner implements Runnable, AutoCloseable {
         running.set(true);
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
-        poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
+        ExecutorInterface executor = applicationContext.getBean(ExecutorInterface.class);
+        servers.add(executor);
+        poolExecutor.execute(executor);
 
         if (workerEnabled) {
             // FIXME: For backward-compatibility with Kestra 0.15.x and earliest we still used UUID for Worker ID instead of IdUtils

@@ -58,7 +58,7 @@
 
 <style scoped lang="scss">
 .edition-card {
-    padding: 1rem 2rem;
+    padding: 2rem;
     background-color: var(--ks-background-body);
     display: flex;
     flex-direction: column;
@@ -72,7 +72,7 @@
 
         .header-content {
             .title {
-                font-size: 1.125rem;
+                font-size: 1.25rem;
                 display: block;
             }
 

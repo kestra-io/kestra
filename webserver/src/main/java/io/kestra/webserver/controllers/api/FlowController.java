@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -29,14 +30,13 @@ import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.CSVUtils;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
+import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.multipart.CompletedFileUpload;
@@ -55,8 +55,10 @@ import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.*;
@@ -89,6 +91,9 @@ public class FlowController {
 
     @Inject
     private TenantService tenantService;
+
+    @Inject
+    private ObjectMapper objectMapper;
 
 
     @ExecuteOn(TaskExecutors.IO)
@@ -186,9 +191,10 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
     public List<FlowWithSource> listFlowRevisions(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @Parameter(description = "The flow id") @PathVariable String id
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @QueryValue(defaultValue = "false") Boolean allowDelete
     ) {
-        return flowRepository.findRevisions(tenantService.resolveTenant(), namespace, id);
+        return flowRepository.findRevisions(tenantService.resolveTenant(), namespace, id, allowDelete);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -578,6 +584,23 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "{namespace}/{id}/revisions")
+    @Operation(tags = {"Flows"}, summary = "Delete revisions for a flow")
+    public HttpResponse<Void> deleteRevisions(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @QueryValue @NotEmpty List<@Min(1) Integer> revisions
+    ) {
+        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(tenantService.resolveTenant(), namespace, id);
+        if (flow.isPresent()) {
+            flowRepository.deleteRevisions(tenantService.resolveTenant(), namespace, id, revisions);
+            return HttpResponse.status(HttpStatus.NO_CONTENT);
+        } else {
+            return HttpResponse.status(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "distinct-namespaces")
     @Operation(tags = {"Flows"}, summary = "List all distinct namespaces")
     public List<String> listDistinctNamespaces(
@@ -730,7 +753,7 @@ public class FlowController {
         var flows = ids.stream()
             .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .toList();
-        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "." + flow.getId() + ".yml");
+        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "." + flow.getId() + ".yaml");
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
 
@@ -895,6 +918,22 @@ public class FlowController {
             throw new IllegalArgumentException("Following invalids flows were not imported: " + String.join(", ", wrongFiles));
         }
         return HttpResponse.ok(wrongFiles);
+    }
+
+    @Get(uri = "/export/by-query/csv", produces = MediaType.TEXT_CSV)
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Flows"}, summary = "Export all flows as a streamed CSV file")
+    @SuppressWarnings("unchecked")
+    public MutableHttpResponse<Flux> exportFlows(
+        @Parameter(description = "A list of filters", in = ParameterIn.QUERY) @QueryFilterFormat List<QueryFilter> filters
+    ) {
+        return HttpResponse.ok(
+                CSVUtils.toCSVFlux(
+                    flowRepository.findAsync(this.tenantService.resolveTenant(), filters)
+                        .map(log -> objectMapper.convertValue(log, Map.class))
+                )
+            )
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=flows.csv");
     }
 
     protected GenericFlow parseFlowSource(final String source) {

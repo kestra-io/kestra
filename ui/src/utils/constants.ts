@@ -20,6 +20,8 @@ export const storageKeys = {
     DISPLAY_KV_COLUMNS: "displayKvColumns",
     DISPLAY_SECRETS_COLUMNS: "displaySecretsColumns",
     DISPLAY_TRIGGERS_COLUMNS: "displayTriggersColumns",
+    DISPLAY_ASSETS_COLUMNS: "displayAssetsColumns",
+    DISPLAY_ASSET_EXECUTIONS_COLUMNS: "displayAssetExecutionsColumns",
     SELECTED_TENANT: "selectedTenant",
     EXECUTE_FLOW_BEHAVIOUR: "executeFlowBehaviour",
     SHOW_CHART: "showChart",
@@ -35,7 +37,9 @@ export const storageKeys = {
     DATE_FORMAT_STORAGE_KEY: "dateFormat",
     TIMEZONE_STORAGE_KEY: "timezone",
     SAVED_FILTERS_PREFIX: "saved_filters",
+    FILTER_DATA_OPTIONS_PREFIX: "filterDataOptions",
     FILTER_ORDER_PREFIX: "filter-order",
+    LOGS_VIEW_TYPE: "logsViewType",
     SCROLL_MEMORY_PREFIX: "scroll",
 } as const;
 

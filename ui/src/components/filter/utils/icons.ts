@@ -1,6 +1,5 @@
 import AccountCheck from "vue-material-design-icons/AccountCheck.vue";
 import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
-import AutoRenew from "vue-material-design-icons/Autorenew.vue";
 import BookmarkCheckOutline from "vue-material-design-icons/BookmarkCheckOutline.vue";
 import CalendarEndOutline from "vue-material-design-icons/CalendarEndOutline.vue";
 import CalendarRangeOutline from "vue-material-design-icons/CalendarRangeOutline.vue";
@@ -13,7 +12,7 @@ import CogOutline from "vue-material-design-icons/CogOutline.vue";
 import ContentSaveOutline from "vue-material-design-icons/ContentSaveOutline.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
 import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
+import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
 import Drag from "vue-material-design-icons/Drag.vue";
 import Eye from "vue-material-design-icons/Eye.vue";
 import EyeOff from "vue-material-design-icons/EyeOff.vue";
@@ -43,14 +42,12 @@ import Sync from "vue-material-design-icons/Sync.vue";
 import TableColumn from "vue-material-design-icons/TableColumnPlusAfter.vue";
 import TablePlus from "vue-material-design-icons/TablePlus.vue";
 import TagOutline from "vue-material-design-icons/TagOutline.vue";
-import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
 import TuneVerticalVariant from "vue-material-design-icons/TuneVerticalVariant.vue";
 import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
 
 export {
     AccountCheck,
     AccountOutline,
-    AutoRenew,
     BookmarkCheckOutline,
     CalendarEndOutline,
     CalendarRangeOutline,
@@ -63,7 +60,7 @@ export {
     ContentSaveOutline,
     Delete,
     DeleteOutline,
-    DotsSquare,
+    FolderOpenOutline,
     Drag,
     Eye,
     EyeOff,
@@ -93,7 +90,6 @@ export {
     TableColumn,
     TablePlus,
     TagOutline,
-    TimelineTextOutline,
     TuneVerticalVariant,
     ViewDashboardEdit
 };

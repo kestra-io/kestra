@@ -1,5 +1,5 @@
 import {defineStore} from "pinia";
-import {apiUrl} from "override/utils/route";
+import {apiUrlWithoutTenants} from "override/utils/route";
 
 interface Service {
     id: string;
@@ -16,7 +16,7 @@ export const useServiceStore = defineStore("service", {
 
     actions: {
         async findServiceById(options: {id: string}): Promise<Service> {
-            const response = await this.$http.get<Service>(`${apiUrl()}/cluster/services/${options.id}`);
+            const response = await this.$http.get<Service>(`${apiUrlWithoutTenants()}/instance/services/${options.id}`);
             this.service = response.data;
             return response.data;
         }

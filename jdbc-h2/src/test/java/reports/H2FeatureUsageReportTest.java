@@ -1,9 +1,9 @@
 package reports;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.reporter.reports.AbstractFeatureUsageReportTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 
-@KestraTest
+@MicronautTest
 class H2FeatureUsageReportTest extends AbstractFeatureUsageReportTest {
-    
+
 }

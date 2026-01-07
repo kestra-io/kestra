@@ -1,13 +1,15 @@
 package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.VariableRenderer;
-import io.kestra.core.storages.StorageContext;
+import io.kestra.core.storages.Namespace;
+import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +17,9 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Map;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -25,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @Execution(ExecutionMode.SAME_THREAD)
-@KestraTest(rebuildContext = true)
+@MicronautTest(rebuildContext = true)
 class FileExistsFunctionTest {
 
     private static final String NAMESPACE = "my.namespace";
@@ -36,6 +40,9 @@ class FileExistsFunctionTest {
 
     @Inject
     StorageInterface storageInterface;
+
+    @Inject
+    NamespaceFactory namespaceFactory;
 
     private URI getInternalStorageURI(String executionId) {
         return URI.create("/" + NAMESPACE.replace(".", "/") + "/" + FLOW + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
@@ -64,11 +71,10 @@ class FileExistsFunctionTest {
     }
 
     @Test
-    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
+    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException, URISyntaxException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("NOT AN EMPTY FILE".getBytes()));
+        createNsFile(namespace, false, "NOT AN EMPTY FILE");
 
         boolean render = Boolean.parseBoolean(
             variableRenderer.render("{{ fileExists('" + filePath + "', namespace='" + namespace + "') }}",
@@ -156,12 +162,13 @@ class FileExistsFunctionTest {
     }
 
     @Test
-    void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException {
-        URI file = createNsFile(false);
+    void shouldProcessNamespaceFile() throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        URI file = createNsFile(namespace, false, "Hello World");
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "flow",
-                "namespace", "io.kestra.tests",
+                "namespace", namespace,
                 "tenantId", MAIN_TENANT),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
@@ -171,12 +178,13 @@ class FileExistsFunctionTest {
     }
 
     @Test
-    void shouldProcessNamespaceFileFromAnotherNamespace() throws IOException, IllegalVariableEvaluationException {
-        URI file = createNsFile(true);
+    void shouldProcessNamespaceFileFromAnotherNamespace() throws IOException, IllegalVariableEvaluationException, URISyntaxException {
+        String namespace = TestsUtils.randomNamespace();
+        URI file = createNsFile(namespace, true, "Hello World");
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "flow",
-                "namespace", "notme",
+                "namespace", TestsUtils.randomNamespace(),
                 "tenantId", MAIN_TENANT),
             "execution", Map.of("id", "execution"),
             "nsfile", file.toString()
@@ -185,11 +193,10 @@ class FileExistsFunctionTest {
         assertThat(variableRenderer.render("{{ fileExists(nsfile) }}", variables)).isEqualTo("true");
     }
 
-    private URI createNsFile(boolean nsInAuthority) throws IOException {
-        String namespace = "io.kestra.tests";
+    private URI createNsFile(String namespace, boolean nsInAuthority, String value) throws IOException, URISyntaxException {
         String filePath = "file.txt";
-        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello World".getBytes()));
+        Namespace namespaceStorage = namespaceFactory.of(MAIN_TENANT, namespace, storageInterface);
+        namespaceStorage.putFile(Path.of("/" + filePath), new ByteArrayInputStream(value.getBytes()));
         return URI.create("nsfile://" + (nsInAuthority ? namespace : "") + "/" + filePath);
     }
 

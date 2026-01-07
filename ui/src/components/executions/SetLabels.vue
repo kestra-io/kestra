@@ -1,21 +1,11 @@
 <template>
-    <el-tooltip
-        effect="light"
-        :persistent="false"
-        transition=""
-        :hideAfter="0"
-        :content="t('Set labels tooltip')"
-        rawContent
-        placement="bottom"
+    <el-button
+        :disabled="!enabled"
+        :icon="Plus"
+        @click="isOpen = !isOpen"
     >
-        <el-button
-            :icon="LabelMultiple"
-            @click="isOpen = !isOpen"
-            :disabled="!enabled"
-        >
-            {{ t("Set labels") }}
-        </el-button>
-    </el-tooltip>
+        {{ $t("set_extra_labels") }}
+    </el-button>
 
     <el-dialog
         v-if="isOpen"
@@ -24,25 +14,25 @@
         :appendToBody="true"
     >
         <template #header>
-            <h5>{{ t("Set labels") }}</h5>
+            <h5>{{ $t("Set labels") }}</h5>
         </template>
 
         <template #footer>
-            <el-button @click="isOpen = false">
-                {{ t("cancel") }}
+            <el-button @click="onCancel">
+                {{ $t("cancel") }}
             </el-button>
-            <el-button type="primary" @click="setLabels()">
-                {{ t("ok") }}
+            <el-button type="primary" :loading="isSaving" @click="setLabels()">
+                {{ $t("ok") }}
             </el-button>
         </template>
 
-        <p v-html="t('Set labels to execution', {id: execution.id})" />
+        <p v-html="$t('Set labels to execution', {id: execution.id})" />
 
         <el-form>
-            <el-form-item :label="t('execution labels')">
+            <el-form-item :label="$t('execution labels')">
                 <LabelInput
                     v-model:labels="executionLabels"
-                    :existingLabels="execution.labels"
+                    :existingLabels="executionLabels"
                 />
             </el-form-item>
         </el-form>
@@ -74,7 +64,7 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
 
-    import LabelMultiple from "vue-material-design-icons/LabelMultiple.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
 
     interface Label {
         key: string;
@@ -96,6 +86,7 @@
 
     const isOpen = ref(false);
     const executionLabels = ref<Label[]>([]);
+    const isSaving = ref(false);
 
     const enabled = computed(() => {
         if (
@@ -110,6 +101,12 @@
         return !State.isRunning(props.execution.state.current);
     });
 
+    const onCancel = () => {
+        // discard temp and close dialog without mutating parent
+        isOpen.value = false;
+        executionLabels.value = [];
+    };
+
     const setLabels = async () => {
         const filtered = filterValidLabels(executionLabels.value);
 
@@ -118,31 +115,42 @@
             return;
         }
 
-        isOpen.value = false;
+        isSaving.value = true;
         try {
             const response = await executionsStore.setLabels({
                 labels: filtered.labels,
                 executionId: props.execution.id,
             });
-            executionsStore.execution = response.data;
+
+            if (response && response.data) {
+                executionsStore.execution = response.data;
+            }
+
             toast.success(t("Set labels done"));
+
+            // close and clear only after success
+            isOpen.value = false;
+            executionLabels.value = [];
         } catch (err) {
-            console.error(err); // Error handling is done by the store/interceptor
+            console.error(err); // keep dialog open so user can fix / retry
+        } finally {
+            isSaving.value = false;
         }
     };
 
-    watch(isOpen, () => {
-        executionLabels.value = [];
+    // initialize the temp clone only when opening the dialog
+    watch(isOpen, (open) => {
+        if (open) {
+            const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || [];
+            const source = props.execution.labels || [];
 
-        const toIgnore = miscStore.configs?.hiddenLabelsPrefixes || [];
+            // deep clone so child edits never mutate the original
+            executionLabels.value = JSON.parse(JSON.stringify(source || []))
+                .filter((label: Label) => !toIgnore.some((prefix: string) => label.key?.startsWith(prefix)));
 
-        if (props.execution.labels) {
-            executionLabels.value = props.execution.labels.filter(
-                (label) =>
-                    !toIgnore.some((prefix: string) =>
-                        label.key?.startsWith(prefix),
-                    ),
-            );
+        } else {
+            // when dialog closed, clear temp state (safe-guard)
+            executionLabels.value = [];
         }
     });
 </script>

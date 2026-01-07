@@ -77,6 +77,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         flowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
+            .tenantId(TENANT_ID)
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .triggerId("hourly")
@@ -106,7 +107,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
 
                     queueCount.countDown();
                     if (queueCount.getCount() == 0) {
-                        assertThat(ZonedDateTime.parse((String) execution.getTrigger().getVariables().get("date"))).isEqualTo(ZonedDateTime.parse("2022-01-03T00:00:00+01:00"));
+                        assertThat(ZonedDateTime.parse((String) execution.getTrigger().getVariables().get("date")).toInstant()).isEqualTo(ZonedDateTime.parse("2022-01-03T00:00:00Z").toInstant());
                     }
                 }
                 assertThat(execution.getFlowId()).isEqualTo(flow.getId());

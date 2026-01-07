@@ -1,6 +1,6 @@
 <template>
     <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
-    <template v-if="!pluginIsSelected">
+    <template v-if="isPluginList">
         <PluginHome v-if="filteredPlugins" :plugins="filteredPlugins" />
     </template>
     <DocsLayout v-else>
@@ -110,7 +110,6 @@
     const version = ref<string | undefined>(undefined);
     const pluginType = ref<string | undefined>(undefined);
     const filteredPlugins = ref<any[] | undefined>(undefined);
-    const hash = ref<string | undefined>(undefined);
 
     const routeInfo = computed(() => ({
         title: pluginType.value ?? t("plugins.names"),
@@ -125,6 +124,8 @@
                 ],
     }));
 
+    const hash = computed(() => miscStore.configs?.pluginsHash ?? 0);
+
     const pluginName = computed(() => {
         const split = pluginType.value?.split(".");
         return split ? split[split.length - 1] : undefined;
@@ -132,8 +133,9 @@
 
     const releaseNotesUrl = computed(() => getPluginReleaseUrl(pluginType.value));
 
-    const pluginIsSelected = computed(
-        () => pluginType.value !== undefined && pluginsStore.plugin !== undefined
+
+    const isPluginList = computed(
+        () => typeof route.name === "string" && route.name === "plugins/list"
     );
 
     function loadToc() {
@@ -152,13 +154,13 @@
             version.value = route.params.version as string;
         }
 
-        const clsParam = (route.params as Record<string, any>).cls as string | undefined;
+        const clsParam = route.params.cls as string | undefined;
         if (!clsParam) {
             return;
         }
 
         const loadParams = {
-            ...(route.params as Record<string, any>),
+            version: version.value,
             hash: hash.value,
             cls: clsParam,
         };
@@ -166,8 +168,8 @@
         isLoading.value = true;
         try {
             await Promise.all([
-                pluginsStore.load(loadParams as any),
-                pluginsStore.loadVersions(loadParams as any).then((data: any) => {
+                pluginsStore.load(loadParams),
+                pluginsStore.loadVersions(loadParams).then((data) => {
                     if (data.versions?.length > 0) {
                         if (!version.value) version.value = data.versions[0];
                     }
@@ -219,9 +221,8 @@
         {immediate: true}
     );
 
-    onMounted(async () => {
-        const config = await miscStore.loadConfigs();
-        hash.value = config?.pluginsHash;
+    onMounted(() => {
+        miscStore.loadConfigs();
         loadToc();
         loadPlugin();
     });

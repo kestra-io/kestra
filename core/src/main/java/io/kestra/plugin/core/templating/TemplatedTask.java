@@ -6,7 +6,9 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -29,12 +31,11 @@ import lombok.experimental.SuperBuilder;
 @Plugin(
     examples = {
         @Example(
-            code = {
+            code = """
+                spec: |
+                  type: io.kestra.plugin.core.http.Download
+                  {{ task.property }}: {{ task.value }}
                 """
-                    spec: |
-                      type: io.kestra.plugin.core.http.Download
-                      {{ task.property }}: {{ task.value }}"""
-            }
         )
     },
     aliases = "io.kestra.core.tasks.templating.TemplatedTask"

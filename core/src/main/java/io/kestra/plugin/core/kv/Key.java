@@ -17,7 +17,7 @@ import java.util.List;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-public class Key extends PurgeBehavior {
+public class Key extends KvPurgeBehavior {
     @NotNull
     @JsonInclude
     @Builder.Default

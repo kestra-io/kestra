@@ -13,9 +13,9 @@
             />
         </div>
 
-        <div v-if="showStatChart()" class="mb-4">
-            <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault />
-        </div>
+        <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0">
+            <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault class="mb-4" />
+        </template>
 
         <div v-loading="isLoading" class="logs-container">
             <div class="log-header p-2 d-flex align-items-center border-bottom" :class="{'bg-active': selectedLogs.length > 0}">
@@ -44,60 +44,27 @@
             </div>
 
             <template v-if="logsStore.logs && logsStore.logs.length > 0">
-                <div
-                    v-for="log in logsStore.logs"
-                    :key="log.id"
-                    class="log-row d-flex align-items-start p-3 border-bottom font-monospace"
-                    :class="{'bg-selected': selectedLogs.includes(log.id)}"
-                >
-                    <div class="me-3 pt-1">
-                        <ElCheckbox
-                            :modelValue="selectedLogs.includes(log.id)"
-                            @change="(val) => toggleRow(log.id, val)"
+                <div class="logs-wrapper">
+                    <div
+                        v-for="(log, i) in logsStore.logs"
+                        :key="log.id"
+                        class="log-row d-flex align-items-start border-bottom font-monospace"
+                        :class="{'bg-selected': selectedLogs.includes(log.id), 'log-0': i === 0}"
+                    >
+                        <div class="ps-3 pt-2 me-1">
+                            <ElCheckbox
+                                :modelValue="selectedLogs.includes(log.id)"
+                                @change="(val) => toggleRow(log.id, val)"
+                            />
+                        </div>
+
+                        <LogLine
+                            class="flex-grow-1"
+                            level="TRACE"
+                            filter=""
+                            :excludeMetas="isFlowEdit ? ['namespace', 'flowId'] : []"
+                            :log="log"
                         />
-                    </div>
-
-                    <div class="me-3 pt-1">
-                        <span class="badge badge-level" :class="levelClass(log.level)">
-                            {{ log.level }}
-                        </span>
-                    </div>
-
-                    <div class="flex-grow-1 overflow-hidden">
-                        <div class="log-meta mb-1">
-                            <span class="text-muted me-3">{{ formatTimestamp(log.timestamp) }}</span>
-
-                            <span v-if="log.namespace" class="me-3">
-                                <span class="meta-label">namespace:</span>
-                                <span class="meta-value">{{ log.namespace }}</span>
-                            </span>
-
-                            <span v-if="log.flowId" class="me-3">
-                                <span class="meta-label">flowId:</span>
-                                <router-link :to="{name: 'flows/update', params: {namespace: log.namespace, id: log.flowId}}" class="meta-value link">
-                                    {{ log.flowId }}
-                                </router-link>
-                            </span>
-
-                            <span v-if="log.taskId" class="me-3">
-                                <span class="meta-label">taskId:</span>
-                                <span class="meta-value-neutral">{{ log.taskId }}</span>
-                            </span>
-
-                            <span v-if="log.executionId" class="me-3">
-                                <span class="meta-label">executionId:</span>
-                                <router-link
-                                    :to="{name: 'executions/update', params: {namespace: log.namespace, flowId: log.flowId, id: log.executionId}}"
-                                    class="meta-value link"
-                                >
-                                    {{ log.executionId }}
-                                </router-link>
-                            </span>
-                        </div>
-
-                        <div class="log-message">
-                            {{ log.message }}
-                        </div>
                     </div>
                 </div>
             </template>
@@ -132,6 +99,7 @@
 
     import {ElButton, ElMessageBox, ElCheckbox, ElPagination} from "element-plus";
     import Delete from "vue-material-design-icons/Delete.vue";
+    import LogLine from "./LogLine.vue";
 
     import {useLogFilter} from "../filter/configurations";
     import KSFilter from "../filter/components/KSFilter.vue";
@@ -148,7 +116,6 @@
     import {useLogsStore} from "../../stores/logs";
     import {useDataTableActions} from "../../composables/useDataTableActions";
     import useRouteContext from "../../composables/useRouteContext";
-
 
     const props = withDefaults(defineProps<{
         logLevel?: string;
@@ -180,25 +147,6 @@
     const showChart = ref(localStorage.getItem(storageKeys.SHOW_LOGS_CHART) !== "false");
     const dashboardRef = useTemplateRef("dashboard");
 
-    // --- HELPER FUNCTIONS ---
-    const formatTimestamp = (dateString: string) => {
-        return moment(dateString).format("YYYY-MM-DD HH:mm:ss.SSS");
-    };
-
-    const levelClass = (level: string) => {
-        switch (level) {
-        case "ERROR": return "level-error";
-        case "CRITICAL": return "level-error";
-        case "WARN": return "level-warning";
-        case "WARNING": return "level-warning";
-        case "DEBUG": return "level-debug";
-        case "TRACE": return "level-trace";
-        case "INFO": return "level-info";
-        default: return "level-default";
-        }
-    };
-
-    // --- SELECTION LOGIC ---
     const selectedLogs = ref<string[]>([]);
     const isSelectAll = ref(false);
 
@@ -258,7 +206,6 @@
         isSelectAll.value = false;
     };
 
-    // --- DELETE LOGIC ---
     const deleteLogs = () => {
         if (selectedLogs.value.length === 0 && !isSelectAll.value) return;
 
@@ -287,7 +234,6 @@
         });
     };
 
-    // --- STANDARD KESTRA DATA LOGIC ---
     const isFlowEdit = computed(() => route.name === "flows/update");
     const isNamespaceEdit = computed(() => route.name === "namespaces/update");
     const selectedLogLevel = computed(() => {
@@ -410,7 +356,6 @@
             }
         }
 
-        /* --- LOG HEADER --- */
         .log-header {
             background-color: var(--ks-background-table-header);
             min-height: 48px;
@@ -421,8 +366,6 @@
             }
         }
 
-        /* --- HIDE DUPLICATE CHECKBOX IN BULK SELECT --- */
-        /* This deep selector targets the internal checkbox of BulkSelect to prevent duplication */
         .hide-bulk-checkbox :deep(.el-checkbox) {
             display: none !important;
         }
@@ -447,56 +390,6 @@
 
             &.bg-selected {
                 background-color: var(--ks-selection) !important;
-            }
-
-            /* --- BADGES --- */
-            .badge-level {
-                display: inline-block;
-                width: 60px;
-                text-align: center;
-                border-radius: 2px;
-                padding: 3px 0;
-                font-weight: 700;
-                color: #000;
-
-                &.level-debug { background-color: #93c5fd; }
-                &.level-info  { background-color: #86efac; }
-                &.level-warning { background-color: #fde047; }
-                &.level-error { background-color: #fca5a5; }
-                &.level-default { background-color: #e5e7eb; }
-            }
-
-            /* --- METADATA --- */
-            .log-meta {
-                white-space: nowrap;
-                overflow-x: auto;
-
-                .meta-label {
-                    color: var(--ks-content-secondary);
-                    margin-right: 4px;
-                }
-
-                .meta-value {
-                    color: var(--ks-content-link);
-
-                    &.link {
-                        text-decoration: none;
-                        &:hover { text-decoration: underline; }
-                    }
-                }
-
-                .meta-value-neutral {
-                     color: var(--ks-content-primary);
-                }
-            }
-
-            /* --- MESSAGE --- */
-            .log-message {
-                color: var(--ks-content-primary);
-                white-space: pre-wrap;
-                word-break: break-all;
-                line-height: 1.5;
-                margin-top: 2px;
             }
         }
     }

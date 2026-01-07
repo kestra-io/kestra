@@ -4,19 +4,19 @@
             <ul class="header-actions-list">
                 <li>
                     <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
-                        {{ t('export_csv') }}
+                        {{ $t('export_csv') }}
                     </el-button>
                 </li>
                 <li>
                     <el-button :icon="Upload" @click="file?.click()">
-                        {{ t("import") }}
+                        {{ $t("import") }}
                     </el-button>
                     <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
                         <el-button :icon="TextBoxSearch">
-                            {{ t("source search") }}
+                            {{ $t("source search") }}
                         </el-button>
                     </router-link>
                 </li>
@@ -29,7 +29,7 @@
                         v-if="canCreate"
                     >
                         <el-button :icon="Plus" type="primary">
-                            {{ t("create") }}
+                            {{ $t("create") }}
                         </el-button>
                     </router-link>
                 </li>
@@ -87,24 +87,24 @@
                                 @unselect="toggleAllUnselected"
                             >
                                 <el-button v-if="canRead" :icon="Download" @click="exportFlows()">
-                                    {{ t("export") }}
+                                    {{ $t("export") }}
                                 </el-button>
                                 <el-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
-                                    {{ t("delete") }}
+                                    {{ $t("delete") }}
                                 </el-button>
                                 <el-button
                                     v-if="canUpdate && anyFlowDisabled()"
                                     @click="enableFlows"
                                     :icon="FileDocumentCheckOutline"
                                 >
-                                    {{ t("enable") }}
+                                    {{ $t("enable") }}
                                 </el-button>
                                 <el-button
                                     v-if="canUpdate && anyFlowEnabled()"
                                     @click="disableFlows"
                                     :icon="FileDocumentRemoveOutline"
                                 >
-                                    {{ t("disable") }}
+                                    {{ $t("disable") }}
                                 </el-button>
                             </BulkSelect>
                         </template>

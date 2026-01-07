@@ -4,7 +4,7 @@
         :icon="Plus"
         @click="isOpen = !isOpen"
     >
-        {{ t("set_extra_labels") }}
+        {{ $t("set_extra_labels") }}
     </el-button>
 
     <el-dialog
@@ -14,22 +14,22 @@
         :appendToBody="true"
     >
         <template #header>
-            <h5>{{ t("Set labels") }}</h5>
+            <h5>{{ $t("Set labels") }}</h5>
         </template>
 
         <template #footer>
             <el-button @click="onCancel">
-                {{ t("cancel") }}
+                {{ $t("cancel") }}
             </el-button>
             <el-button type="primary" :loading="isSaving" @click="setLabels()">
-                {{ t("ok") }}
+                {{ $t("ok") }}
             </el-button>
         </template>
 
-        <p v-html="t('Set labels to execution', {id: execution.id})" />
+        <p v-html="$t('Set labels to execution', {id: execution.id})" />
 
         <el-form>
-            <el-form-item :label="t('execution labels')">
+            <el-form-item :label="$t('execution labels')">
                 <LabelInput
                     v-model:labels="executionLabels"
                     :existingLabels="executionLabels"

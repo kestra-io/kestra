@@ -45,6 +45,7 @@ export const ORDER = [
     "executions",
     "dependencies",
     "secrets",
+    "assets",
     "variables",
     "plugin-defaults",
     "kv",

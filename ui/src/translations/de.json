@@ -294,6 +294,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Diese Ausführung läuft noch, das Löschen wird sie nicht stoppen.<br />Sie müssen die Ausführung beenden, um sie zu stoppen.</div>",
     "delete logs": "Logs löschen",
     "delete ok": "ist gelöscht",
+    "delete revision confirm": "Möchten Sie die Revision {revision} wirklich löschen?",
+    "delete revision error": "Fehler beim Löschen der Revision {revision} mit Fehler {error}",
     "delete task confirm": "Möchten Sie den Task <code>{taskId}</code> wirklich löschen?",
     "delete trigger": "Trigger löschen",
     "delete trigger confirmation": "Möchten Sie den Trigger {id} wirklich löschen? WARNING: Das Löschen eines Triggers kann zu doppelten Ausführungen führen, wenn der Trigger noch in einem flow aktiv ist.",
@@ -313,6 +315,12 @@
       "apps": {
         "message": "Apps in der Kestra Enterprise Edition ermöglichen es Ihnen, benutzerdefinierte UIs zu erstellen, die mit Kestra-Workflows außerhalb der Plattform interagieren. Diese Funktion erlaubt es Ihnen, Ihre Workflows als Backend für benutzerdefinierte Anwendungen zu nutzen, sodass nicht-technische Benutzer Daten über Formulare einreichen oder pausierte Workflows, die auf eine Genehmigung warten, fortsetzen können.",
         "title": "Erstellen Sie benutzerdefinierte Apps mit Kestra"
+      },
+      "assets": {
+        "header": "Assets-Metadaten und Observability",
+        "label": "Assets",
+        "message": "Assets verbinden Observability-, Lineage- und Ownership-Metadaten, damit Plattformteams schneller Probleme beheben und mit Vertrauen bereitstellen können.",
+        "title": "Bringen Sie jedes Dataset, jeden Service und jede Abhängigkeit in Sicht."
       },
       "audit-logs": {
         "message": "Kestra Enterprise Edition protokolliert jede Aktivität mit robusten, unveränderlichen Aufzeichnungen, was es einfach macht, Änderungen nachzuverfolgen, die Einhaltung von Vorschriften zu gewährleisten und Probleme zu beheben.",
@@ -389,6 +397,7 @@
         "zoom_out": "Rauszoomen"
       },
       "search": {
+        "asset_placeholder": "Suche nach Asset, flow oder namespace...",
         "no_results": "Keine Ergebnisse gefunden für {term}",
         "placeholder": "Suche nach flow oder namespace..."
       }
@@ -454,6 +463,10 @@
         "content": "Beginnen Sie mit dem Erstellen von Apps, um mit Kestra von der Außenwelt zu interagieren.",
         "title": "Sie haben noch keine Apps!"
       },
+      "assets": {
+        "content": "Fügen Sie Assets hinzu, um Ihre Daten-Assets, Dienste und Infrastruktur zu verfolgen und zu verwalten.",
+        "title": "Sie haben noch keine Assets!"
+      },
       "concurrency_executions": {
         "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Ausführungen</a></strong> in unserer Dokumentation.",
         "title": "Keine laufenden Ausführungen für diesen Flow."
@@ -463,6 +476,10 @@
         "title": "Für diesen Flow sind keine Grenzen festgelegt."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Dieses Asset hat keine Upstream- oder Downstream-Abhängigkeiten mit flows oder anderen Assets.",
+          "title": "Derzeit gibt es keine Abhängigkeiten."
+        },
         "EXECUTION": {
           "content": "Erfahren Sie mehr über <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Ausführungsabhängigkeiten</a> in unserer Dokumentation.",
           "title": "Derzeit gibt es keine Abhängigkeiten."
@@ -653,6 +670,7 @@
       "end_date": "Enddatum",
       "enter description": "Filterbeschreibung eingeben",
       "enter label": "Filter-Label eingeben",
+      "enter name": "Filtername eingeben",
       "execution_kind": {
         "playground": "Spielplatz",
         "playground_description": "Ausführungen, die im Playground-Modus ausgelöst wurden",
@@ -699,6 +717,7 @@
         "description": "Nach Metriktyp filtern",
         "label": "Metrik"
       },
+      "name": "Name",
       "namespace": {
         "description": "Nach namespace filtern",
         "label": "Namespace"
@@ -1296,6 +1315,7 @@
     "no_logs_data_description": "Keine Logs für die ausgewählten Filter gefunden. <br> Bitte versuchen Sie, Ihre Filter anzupassen, den Zeitraum zu ändern oder überprüfen Sie, ob der flow kürzlich ausgeführt wurde.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
     "no_results": {
+      "assets": "Keine Assets gefunden",
       "executions": "Keine Ausführungen gefunden",
       "flows": "Keine Flows gefunden",
       "kv_pairs": "Keine Key-Value-Paare gefunden",
@@ -1477,6 +1497,7 @@
     "resumed title": "Ausführung <code>{id}</code> fortsetzen",
     "reuse_original_inputs": "Ursprüngliche Inputs wiederverwenden",
     "revision": "Revision",
+    "revision deleted": "Revision {revision} wurde erfolgreich gelöscht",
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
     "run task in playground": "Task im Playground ausführen",
@@ -1829,6 +1850,7 @@
     "update aborted": "Aktualisierung abgebrochen",
     "update ok": "ist aktualisiert",
     "updated date": "Aktualisierungsdatum",
+    "usage": "Verwendung",
     "use": "Verwenden",
     "use_dark_background": "Verwenden Sie diese Version, wenn Sie auf einem dunklen Hintergrund arbeiten, um sicherzustellen, dass unser Name lesbar bleibt.",
     "validate": "Validieren",
@@ -1880,7 +1902,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",
-    "years": "Jahre",
-    "your usage": "Ihre Nutzung"
+    "years": "Jahre"
   }
 }

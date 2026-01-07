@@ -303,7 +303,7 @@
     "stats": "Stats",
     "concurrency limits": "Concurrency Limits",
     "system overview": "System Overview",
-    "your usage": "Your usage",
+    "usage": "Usage",
     "namespaces": "Namespaces",
     "tasks": "Tasks",
     "executions duration (in minutes)": "Total executions duration (in minutes)",
@@ -896,6 +896,12 @@
         "title": "Ensure Reliability with Every Change",
         "message": "Verify the logic of your flows in isolation, detect regressions early, and maintain confidence in your automations as they change and grow."
       },
+      "assets": {
+        "label": "Assets",
+        "header": "Assets Metadata and Observability",
+        "title": "Bring every dataset, service, and dependency into view.",
+        "message": "Assets connect observability, lineage, and ownership metadata so platform teams can troubleshoot faster and deploy with confidence."
+      },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
         "message": "Kestra Enterprise Edition has built-in IAM capabilities with single sign-on (SSO), SCIM directory sync, and role-based access control (RBAC), integrating with multiple identity providers and letting you assign fine-grained permissions for users and service accounts."
@@ -1370,6 +1376,10 @@
         "title": "You have no Tests yet!",
         "content": "Add tests to validate quality and avoid regressions in your flows."
       },
+      "assets": {
+        "title": "You have no Assets yet!",
+        "content": "Add assets to track and manage your data assets, services, and infrastructure."
+      },
       "concurrency_executions": {
         "title": "No ongoing Executions for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> in our documentation."
@@ -1390,6 +1400,10 @@
         "NAMESPACE": {
           "title": "There are currently no dependencies.",
           "content": "Read more about <a href=\"https://kestra.io/docs/ui/namespaces#dependencies\" target=\"_blank\">Namespace Dependencies</a> in our documentation."
+        },
+        "ASSET": {
+          "title": "There are currently no dependencies.",
+          "content": "This asset has no upstream or downstream dependencies with flows or other assets."
         }
       },
       "plugins": {
@@ -1430,7 +1444,8 @@
       "flows": "No Flows Found",
       "kv_pairs": "No Key-Value pairs Found",
       "secrets": "No Secrets Found",
-      "templates": "No Templates Found"
+      "templates": "No Templates Found",
+      "assets": "No Assets Found"
     },
     "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
     "dashboards": {
@@ -1575,6 +1590,7 @@
       },
       "search": {
         "placeholder": "Search by flow or namespace...",
+        "asset_placeholder": "Search by asset or flow or namespace...",
         "no_results": "No results found for {term}"
       }
     },
@@ -1590,6 +1606,7 @@
         "footer_apply": "Apply",
         "cancel": "Cancel",
         "label": "Label",
+        "name": "Name",
         "description": "Description",
         "columns": "Columns",
         "apply": "Apply filters",
@@ -1614,6 +1631,7 @@
         "select filter": "Select a filter to add",
         "enter description": "Enter filter description",
         "enter label": "Enter filter label",
+        "enter name": "Enter filter name",
         "reset": "Clear all",
         "reset_all": "Reset all filters",
         "reset_tooltip": "Reset to default",
@@ -1881,6 +1899,9 @@
     "bulk success delete triggers": "{count} triggers have been deleted successfully",
     "delete trigger confirmation": "Are you sure you want to delete trigger {id}? WARNING: deleting a trigger may lead to duplicate executions if the trigger is still active in a flow",
     "delete trigger success": "Trigger {id} has been deleted successfully",
-    "delete trigger error": "Error deleting trigger {id}"
+    "delete trigger error": "Error deleting trigger {id}",
+    "revision deleted": "Revision {revision} has been deleted successfully",
+    "delete revision confirm": "Are you sure you want to delete revision {revision}?",
+    "delete revision error": "Error deleting revision {revision} with error {error}"
   }
 }

@@ -294,6 +294,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">この実行はまだRUNNINGです。削除しても停止しません。<br />実行を停止するには、実行をkillする必要があります。</div>",
     "delete logs": "Logsを削除",
     "delete ok": "削除されました",
+    "delete revision confirm": "リビジョン {revision} を削除してもよろしいですか？",
+    "delete revision error": "エラー: リビジョン {revision} の削除中にエラー {error} が発生しました。",
     "delete task confirm": "task<code>{taskId}</code>を削除してもよろしいですか？",
     "delete trigger": "トリガーを削除",
     "delete trigger confirmation": "トリガー {id} を削除してもよろしいですか？WARNING: トリガーがまだflowでアクティブな場合、削除すると重複した実行が発生する可能性があります。",
@@ -313,6 +315,12 @@
       "apps": {
         "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。",
         "title": "Kestraでカスタムアプリを構築する"
+      },
+      "assets": {
+        "header": "アセットメタデータとオブザーバビリティ",
+        "label": "アセット",
+        "message": "アセットは、観測性、系譜、および所有権のメタデータを接続し、プラットフォームチームが迅速にトラブルシューティングを行い、自信を持ってデプロイできるようにします。",
+        "title": "すべてのデータセット、サービス、および依存関係を表示します。"
       },
       "audit-logs": {
         "message": "Kestra Enterprise Editionは、すべてのアクティビティを堅牢で不変の記録としてログに記録し、変更の追跡、コンプライアンスの維持、問題のトラブルシューティングを容易にします。",
@@ -389,6 +397,7 @@
         "zoom_out": "ズームアウト"
       },
       "search": {
+        "asset_placeholder": "アセット、flow、またはnamespaceで検索...",
         "no_results": "{term} に対する結果が見つかりませんでした",
         "placeholder": "flow または namespace で検索..."
       }
@@ -454,6 +463,10 @@
         "content": "外部からKestraと連携するアプリを作成し始めましょう。",
         "title": "まだアプリがありません！"
       },
+      "assets": {
+        "content": "データ資産、サービス、インフラストラクチャを追跡および管理するためのアセットを追加します。",
+        "title": "まだアセットがありません！"
+      },
       "concurrency_executions": {
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには進行中の実行はありません。"
@@ -463,6 +476,10 @@
         "title": "このFlowには制限が設定されていません。"
       },
       "dependencies": {
+        "ASSET": {
+          "content": "このアセットは、flowや他のアセットとの上流または下流の依存関係がありません。",
+          "title": "現在、依存関係はありません。"
+        },
         "EXECUTION": {
           "content": "<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">実行の依存関係</a>についての詳細は、ドキュメントをご覧ください。",
           "title": "現在、依存関係はありません。"
@@ -653,6 +670,7 @@
       "end_date": "終了日",
       "enter description": "フィルターの説明を入力してください",
       "enter label": "フィルターラベルを入力してください",
+      "enter name": "フィルター名を入力してください",
       "execution_kind": {
         "playground": "プレイグラウンド",
         "playground_description": "Playgroundモードからトリガーされた実行",
@@ -699,6 +717,7 @@
         "description": "メトリックタイプでフィルター",
         "label": "メトリック"
       },
+      "name": "名前",
       "namespace": {
         "description": "namespaceでフィルター",
         "label": "Namespace"
@@ -1296,6 +1315,7 @@
     "no_logs_data_description": "選択したフィルターに対してログが見つかりませんでした。<br> フィルターを調整するか、時間範囲を変更するか、flowが最近実行されたかを確認してください。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
     "no_results": {
+      "assets": "アセットが見つかりません",
       "executions": "実行が見つかりません",
       "flows": "フローが見つかりません",
       "kv_pairs": "キー-バリュー ペアが見つかりません",
@@ -1477,6 +1497,7 @@
     "resumed title": "実行<code>{id}</code>を再開",
     "reuse_original_inputs": "元のinputを再利用",
     "revision": "リビジョン",
+    "revision deleted": "リビジョン{revision}が正常に削除されました",
     "revisions": "リビジョン",
     "row count": "行数",
     "run task in playground": "プレイグラウンドでタスクを実行",
@@ -1829,6 +1850,7 @@
     "update aborted": "更新が中止されました",
     "update ok": "更新されました",
     "updated date": "更新日",
+    "usage": "使用",
     "use": "使用",
     "use_dark_background": "暗い背景で作業する際には、このバージョンを使用して、私たちの名前が読みやすい状態を保ってください。",
     "validate": "検証",
@@ -1880,7 +1902,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",
-    "years": "年",
-    "your usage": "あなたの使用状況"
+    "years": "年"
   }
 }

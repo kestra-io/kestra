@@ -83,7 +83,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
     }
 
     @Override
-    protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
+    protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
         var update = ctx.update(DSL.table(table.getName()))
             .set(AbstractJdbcRepository.field("consumer_" + queueType), true)
             .set(AbstractJdbcRepository.field("updated"), LocalDateTime.now())

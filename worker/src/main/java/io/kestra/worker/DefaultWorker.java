@@ -9,6 +9,9 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetsDeclaration;
+import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
@@ -955,6 +958,15 @@ public class DefaultWorker implements Worker {
         try {
             Variables variables = variablesService.of(StorageContext.forTask(taskRun), workerTaskCallable.getTaskOutput());
             taskRun = taskRun.withOutputs(variables);
+            if (workerTask.getTask().getAssets() != null) {
+                List<Asset> outputAssets = runContext.assets().outputs();
+                Optional<AssetsDeclaration> renderedAssetsDeclaration = runContext.render(workerTask.getTask().getAssets()).as(AssetsDeclaration.class);
+                renderedAssetsDeclaration.map(AssetsDeclaration::getOutputs).ifPresent(outputAssets::addAll);
+                taskRun = taskRun.withAssets(new AssetsInOut(
+                    renderedAssetsDeclaration.map(AssetsDeclaration::getInputs).orElse(null),
+                    outputAssets
+                ));
+            }
         } catch (Exception e) {
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
         }
@@ -1098,7 +1110,7 @@ public class DefaultWorker implements Worker {
             () -> {
                 ServiceState serviceState = shutdownState.get();
                 if (serviceState == TERMINATED_FORCED || serviceState == TERMINATED_GRACEFULLY) {
-                    log.info("All working threads are terminated.");
+                    log.info("All worker threads are terminated");
 
                     // we ensure that last produce message are send
                     closeQueue();
@@ -1106,7 +1118,7 @@ public class DefaultWorker implements Worker {
                 }
 
                 if (this.workerCallableReferences.isEmpty()) {
-                    log.debug("All worker threads is terminated.");
+                    log.debug("All worker threads are terminated");
                 } else {
                     log.warn(
                         "Waiting for all worker threads to terminate (remaining: {}).",

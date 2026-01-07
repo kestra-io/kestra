@@ -1,8 +1,8 @@
 <template>
     <div
         class="p-2 sidebar"
-        @click="tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
+        @click="onRootClick"
     >
         <div class="flex-row d-flex">
             <el-select
@@ -107,7 +107,6 @@
             lazy
             :load="filesStore.loadNodes"
             :data="filesStore.fileTree"
-            highlightCurrent
             :allowDrop="
                 (_: any, drop: any, dropType: string) => !drop.data?.leaf || dropType !== 'inner'
             "
@@ -139,20 +138,33 @@
                     trigger="contextmenu"
                     class="w-100"
                 >
-                    <el-row
-                        justify="space-between"
-                        class="w-100"
-                        @click="(event: MouseEvent) => handleNodeClick(data, node, event)"
+                    <div
+                        class="tree-node-hitbox"
+                        @mousedown.stop
+                        @click.stop="onRowClickWrapper(data, node, $event)"
                     >
-                        <el-col class="w-100">
-                            <TypeIcon
-                                :name="data.fileName"
-                                :folder="!data.leaf"
-                                class="me-2"
-                            />
-                            <span class="filename"> {{ data.fileName }}</span>
-                        </el-col>
-                    </el-row>
+                        <el-row
+                            justify="space-between"
+                            class="w-100"
+                        >
+                            <el-col class="w-100">
+                                <Checkbox
+                                    v-if="selectionMode"
+                                    class="me-2"
+                                    :modelValue="selectedNodes.includes(data.id)"
+                                    @update-model-value="checked => toggleCheckboxSelection(checked, node)"
+                                    @mousedown.stop
+                                    @click.stop
+                                />
+                                <TypeIcon
+                                    :name="data.fileName"
+                                    :folder="!data.leaf"
+                                    class="me-2"
+                                />
+                                <span class="filename">{{ data.fileName }}</span>
+                            </el-col>
+                        </el-row>
+                    </div>
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item
@@ -372,7 +384,7 @@
 </script>
 
 <script lang="ts" setup>
-    import {ref, computed, onMounted, onBeforeUnmount, nextTick, inject, watch} from "vue";
+    import {ref, computed, nextTick, inject, watch} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
     import Utils from "../../utils/utils";
@@ -395,6 +407,7 @@
     } from "../../stores/fileExplorer";
     import Revisions, {Revision} from "../layout/Revisions.vue";
     import Crud from "override/components/auth/Crud.vue";
+    import Checkbox from "../layout/Checkbox.vue";
 
     const DIALOG_DEFAULTS:Dialog = {
         visible: false,
@@ -459,9 +472,17 @@
         path: string;
     }>();
     const tabContextMenu = ref<{ visible: boolean; x: number; y: number }>({visible: false, x: 0, y: 0});
-    const selectedFiles = ref<string[]>([]);
     const selectedNodes = ref<any[]>([]);
+    const selectionMode = computed(() => selectedNodes.value.length > 1);
     const lastClickedIndex = ref<number | null>(null);
+
+    const selectedFiles = computed(() => {
+        return selectedNodes.value.map(id => filesStore.getPath(id)).filter((p): p is string => !!p);
+    });
+
+    const flatTree = computed(() => {
+        return flattenTree(filesStore.fileTree ?? []);
+    });
 
     const {t} = useI18n();
     const toast = useToast();
@@ -501,40 +522,141 @@
 
     function handleNodeClick(data: any, node: ElTreeNode, event: MouseEvent | null = null) {
         const path = filesStore.getPath(node.data.id) ?? "";
-        const flatList = flattenTree(filesStore.fileTree);
+        const flatList = flatTree.value;
         const currentIndex = flatList.findIndex(item => item.path === path);
-        const isCtrl = event && (event.ctrlKey || (event as any).metaKey);
-        const isShift = event && event.shiftKey;
+        if (currentIndex === -1) return;
 
-        if (isShift && lastClickedIndex.value !== null) {
-            const start = Math.min(lastClickedIndex.value, currentIndex);
-            const end = Math.max(lastClickedIndex.value, currentIndex);
-            selectedFiles.value = flatList.slice(start, end + 1).map(item => item.path);
-            selectedNodes.value = flatList.slice(start, end + 1).map(item => item.id);
-        } else if (isCtrl) {
+        const isCtrl = !!event && (event.ctrlKey || event.metaKey);
+        const isShift = !!event && event.shiftKey;
+
+        if (isShift) {
+            let anchorIndex = lastClickedIndex.value;
+
+            if (anchorIndex === null) {
+                if (selectedNodes.value.length === 1) {
+                    const anchorId = selectedNodes.value[0];
+                    const anchorPath = filesStore.getPath(anchorId) ?? "";
+                    const idx = flatList.findIndex(i => i.path === anchorPath);
+                    anchorIndex = idx !== -1 ? idx : currentIndex;
+                } else {
+                    anchorIndex = currentIndex;
+                }
+            }
+
+            const start = Math.min(anchorIndex, currentIndex);
+            const end = Math.max(anchorIndex, currentIndex);
+            const slice = flatList.slice(start, end + 1);
+
+            selectedNodes.value = slice.map(item => item.id);
+
+            if (selectedNodes.value.length == 1){
+                tree.value?.setCurrentKey(selectedNodes.value[0]);
+            }
+            
+            syncTreeCurrentKey();
+            return;
+        }
+
+        if (isCtrl) {
             const isSelected = selectedNodes.value.includes(node.data.id);
+
             if (isSelected) {
-                selectedFiles.value = [...selectedFiles.value.filter(file => file !== path)];
-                selectedNodes.value = [...selectedNodes.value.filter(id => id !== node.data.id)];
+                selectedNodes.value = selectedNodes.value.filter(id => id !== node.data.id);
             } else {
-                selectedFiles.value = [...selectedFiles.value, path];
-                selectedNodes.value = [...selectedNodes.value, node.data.id];
+                selectedNodes.value.push(node.data.id);
             }
             lastClickedIndex.value = currentIndex;
-        } else {
-            selectedFiles.value = [path];
+
+            syncTreeCurrentKey();
+            return;
+        }
+
+        selectedNodes.value = [node.data.id];
+        lastClickedIndex.value = currentIndex;
+        syncTreeCurrentKey();
+
+        if (data.leaf) {
+            openTab?.({
+                name: data.fileName,
+                path,
+                extension: data.fileName.split(".").pop(),
+                flow: false,
+                dirty: false,
+            });
+        }
+    }
+
+    function onRowClickWrapper(data: TreeNode, node: ElTreeNode, event: MouseEvent) {
+
+        const target = event.target as HTMLElement;
+        if (target.closest("input, .neon-checkbox, .checkbox")) {
+            return;
+        }
+        const isCtrl = event.ctrlKey || event.metaKey;
+        const isShift = event.shiftKey;
+        
+        if (selectionMode.value && !isShift && !isCtrl) {
             selectedNodes.value = [node.data.id];
-            lastClickedIndex.value = currentIndex;
+
+            const flatList = flatTree.value;
+            lastClickedIndex.value = flatList.findIndex(
+                i => i.id === node.data.id
+            );
+
+            syncTreeCurrentKey();
+
             if (data.leaf) {
                 openTab?.({
                     name: data.fileName,
-                    path: path,
-                    extension: data.fileName.split(".").pop(),
+                    path: filesStore.getPath(node.data.id) ?? "",
+                    extension: data.fileName.split(".").pop()!,
                     flow: false,
-                    dirty: false
+                    dirty: false,
                 });
             }
+            return;
         }
+        handleNodeClick(data, node, event);
+    }
+
+    function onRootClick(event: MouseEvent) {
+        const target = event.target as HTMLElement;
+        if (target.closest(".el-tree-node__content, .el-tree-node, .filename, .neon-checkbox, button, input, .el-input")) {
+            return;
+        }
+        selectedNodes.value = [];
+        lastClickedIndex.value = null;
+        syncTreeCurrentKey();
+    }
+
+    function syncTreeCurrentKey() {
+        const treeRef = tree.value;
+        if (!treeRef) return;
+
+        if (selectedNodes.value.length === 1) {
+            treeRef.setCurrentKey(selectedNodes.value[0]);
+        } else {
+            treeRef.setCurrentKey(null);
+        }
+    }
+
+    function toggleCheckboxSelection(checked: boolean, node: ElTreeNode) {
+        const path = filesStore.getPath(node.data.id) ?? "";
+        const nodeId = node.data.id;
+        if (checked) {
+            if (!selectedNodes.value.includes(nodeId)) {
+                selectedNodes.value.push(nodeId);
+            }
+            const flatList = flatTree.value;
+            lastClickedIndex.value = flatList.findIndex(i => i.path === path);
+            syncTreeCurrentKey();
+            return;
+        }
+        selectedNodes.value = selectedNodes.value.filter(id => id !== nodeId);
+        if(selectedNodes.value.length === 0){
+            lastClickedIndex.value = null;
+        }
+        syncTreeCurrentKey();
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
@@ -587,18 +709,19 @@
     }
 
     function toggleDropdown(id: string) {
-        if(selectedNodes.value.length === 0) {
-            selectedNodes.value.push(id);
-            selectedFiles.value.push(filesStore.getPath(id) ?? "");
+        const path = filesStore.getPath(id) ?? "";
+        if (!selectedNodes.value.includes(id)) {
+            selectedNodes.value = [id];
+            const flatList = flatTree.value;
+            lastClickedIndex.value = flatList.findIndex(i => i.path === path);
         }
 
-        for(const dd in dropdowns.value){
-            if(dd !== id){
+        for (const dd in dropdowns.value) {
+            if (dd !== id) {
                 dropdowns.value[dd].handleClose();
             }
-        };
-
-        dropdowns.value[id]?.handleOpen()
+        }
+        dropdowns.value[id]?.handleOpen();
     }
 
     function dialogHandler() {
@@ -818,20 +941,6 @@
         document.removeEventListener("click", hideTabContextMenu);
     }
 
-    function clearSelection() {
-        selectedFiles.value = [];
-        selectedNodes.value = [];
-        lastClickedIndex.value = null;
-    }
-
-    onMounted(async () => {
-        document.addEventListener("click", clearSelection);
-    });
-
-    onBeforeUnmount(() => {
-        document.removeEventListener("click", clearSelection);
-    });
-
 </script>
 
 <style scoped lang="scss">
@@ -929,11 +1038,12 @@
         }
 
         .node {
-            --el-tree-node-content-height: fit-content;
             --el-tree-node-hover-bg-color: transparent;
         }
 
         .el-tree-node__content {
+            display: flex;
+            align-items: center;
             margin-bottom: 2px !important;
             padding-left: 0 !important;
             border: 1px solid transparent;
@@ -973,5 +1083,13 @@
             }
         }
     }
+
+    :deep(.tree-node-hitbox) {
+        width: 100%;
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+
 }
 </style>

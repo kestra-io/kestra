@@ -6,7 +6,7 @@
                 :configuration="logFilter"
                 :tableOptions="{
                     chart: {shown: true, value: showChart, callback: onShowChartChange},
-                    refresh: {shown: true, callback: refresh},
+                    refresh: {refreshing: isLoading, callback: refresh},
                     columns: {shown: false}
                 }"
                 :defaultScope="false"

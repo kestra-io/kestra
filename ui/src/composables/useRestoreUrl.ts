@@ -31,7 +31,7 @@ export function getRestoredQuery(route: RouteLocation) {
         };
     };
     const query = {...route.query};
-    const local = localStorageValue === null ? {} : {...localStorageValue};
+    const local = {...localStorageValue};
 
     let change = false;
 

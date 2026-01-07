@@ -294,6 +294,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">此执行仍在运行，删除它不会停止它。<br />你需要终止执行以停止它。</div>",
     "delete logs": "删除日志",
     "delete ok": "已删除",
+    "delete revision confirm": "您确定要删除修订版 {revision} 吗？",
+    "delete revision error": "删除修订版 {revision} 时出错，错误信息 {error}",
     "delete task confirm": "确定要删除任务 <code>{taskId}</code> 吗？",
     "delete trigger": "删除 trigger",
     "delete trigger confirmation": "您确定要删除trigger {id}吗？WARNING: 如果trigger仍在flow中激活，删除trigger可能会导致重复执行。",
@@ -313,6 +315,12 @@
       "apps": {
         "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。",
         "title": "使用 Kestra 构建自定义应用程序"
+      },
+      "assets": {
+        "header": "资产元数据和可观测性",
+        "label": "资产",
+        "message": "资产连接可观测性、血缘关系和所有权元数据，使平台团队能够更快地排查问题并自信地部署。",
+        "title": "将每个数据集、服务和依赖项展示出来。"
       },
       "audit-logs": {
         "message": "Kestra Enterprise Edition记录每个活动，提供强大且不可更改的记录，使得跟踪更改、保持合规性和解决问题变得容易。",
@@ -389,6 +397,7 @@
         "zoom_out": "缩小视图"
       },
       "search": {
+        "asset_placeholder": "按资产、flow或namespace搜索...",
         "no_results": "未找到与 {term} 相关的结果",
         "placeholder": "按flow或namespace搜索..."
       }
@@ -454,6 +463,10 @@
         "content": "开始构建应用程序，以便与外部世界的Kestra进行交互。",
         "title": "您还没有应用程序！"
       },
+      "assets": {
+        "content": "添加资产以跟踪和管理您的数据资产、服务和基础设施。",
+        "title": "您还没有资产！"
+      },
       "concurrency_executions": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
         "title": "此 Flow 没有正在进行的 Executions。"
@@ -463,6 +476,10 @@
         "title": "此Flow未设置限制。"
       },
       "dependencies": {
+        "ASSET": {
+          "content": "此资产与flow或其他资产没有上游或下游依赖关系。",
+          "title": "当前没有依赖项。"
+        },
         "EXECUTION": {
           "content": "了解更多关于<a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">执行依赖关系</a>的信息，请参阅我们的文档。",
           "title": "当前没有依赖项。"
@@ -653,6 +670,7 @@
       "end_date": "结束日期",
       "enter description": "输入筛选器描述",
       "enter label": "输入过滤器标签",
+      "enter name": "输入过滤器名称",
       "execution_kind": {
         "playground": "游乐场",
         "playground_description": "从Playground模式触发的执行",
@@ -699,6 +717,7 @@
         "description": "按指标类型筛选",
         "label": "指标"
       },
+      "name": "名称",
       "namespace": {
         "description": "按namespace筛选",
         "label": "命名空间"
@@ -1296,6 +1315,7 @@
     "no_logs_data_description": "未找到所选过滤器的日志。<br>请尝试调整过滤器、更改时间范围，或检查flow最近是否已执行。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
     "no_results": {
+      "assets": "未找到资产",
       "executions": "未找到执行",
       "flows": "未找到Flows",
       "kv_pairs": "未找到Key-Value对",
@@ -1477,6 +1497,7 @@
     "resumed title": "恢复执行 <code>{id}</code>",
     "reuse_original_inputs": "重用原始input",
     "revision": "修订版",
+    "revision deleted": "修订版 {revision} 已成功删除",
     "revisions": "修订版",
     "row count": "行数",
     "run task in playground": "在playground中运行task",
@@ -1829,6 +1850,7 @@
     "update aborted": "更新中止",
     "update ok": "已更新",
     "updated date": "更新日期",
+    "usage": "使用情况",
     "use": "使用",
     "use_dark_background": "在深色背景上工作时使用此版本，以确保我们的名称保持可读。",
     "validate": "验证",
@@ -1880,7 +1902,6 @@
     "workerId": "工作者ID",
     "workers": "工作者",
     "wrong labels": "标签中不允许空键或值",
-    "years": "年",
-    "your usage": "你的使用情况"
+    "years": "年"
   }
 }

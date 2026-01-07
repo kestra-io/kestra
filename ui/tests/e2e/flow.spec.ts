@@ -48,8 +48,7 @@ test.describe("Flow Page", () => {
         await test.step("execute the flow", async () => {
 
             await expect(page.locator("section").getByRole("button", {name: "Execute"})).toBeVisible();
-            await page.locator("section").getByRole("button", {name: "Execute"}).click();
-            const dropdownCaret = page.locator("section button:has-text(\"Execute\") + button");
+            const dropdownCaret = page.locator("section #execute-button .el-dropdown__caret-button");
             await dropdownCaret.click();
             await page.getByRole("menuitem", {name: "Execute with inputs"}).click();
 

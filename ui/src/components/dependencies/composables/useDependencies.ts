@@ -223,7 +223,7 @@ function selectHandler(cy: cytoscape.Core, node: cytoscape.NodeSingular, selecte
     selected.value = id ?? node.id();
 
     // Smoothly center and zoom the viewport on the selected node
-    cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});
+    cy.animate({center: {eles: node}, zoom: 1.2}, {duration: 500});  // codespell:ignore
 }
 
 /**

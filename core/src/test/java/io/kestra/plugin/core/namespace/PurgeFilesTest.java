@@ -82,7 +82,7 @@ public class PurgeFilesTest {
 
         PurgeFiles purgeFiles = PurgeFiles.builder()
             .type(PurgeFiles.class.getName())
-            .namespacePattern(Property.ofValue("*arent*"))
+            .namespacePattern(Property.ofValue("*arent*"))  // codespell:ignore
             .build();
         List<String> namespaces = purgeFiles.findNamespaces(runContextFactory.of(NAMESPACE));
 

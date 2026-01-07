@@ -45,9 +45,9 @@ class EscapeCharFilterTest {
 
     private static Stream<Arguments> provideValidTypes() {
         return Stream.of(
-            Arguments.of("single", "\"L'eau c'est la vie\"", "L\\'eau c\\'est la vie"),
+            Arguments.of("single", "\"L'eau c'est la vie\"", "L\\'eau c\\'est la vie"),  // codespell:ignore
             Arguments.of("double", "'\"Hello\"'", "\\\"Hello\\\""),
-            Arguments.of("shell", "\"L'eau c'est la vie\"", "L'\\''eau c'\\''est la vie"),
+            Arguments.of("shell", "\"L'eau c'est la vie\"", "L'\\''eau c'\\''est la vie"), // codespell:ignore
             Arguments.of("single", "''", ""),
             Arguments.of("double", "''", ""),
             Arguments.of("shell", "''", "")

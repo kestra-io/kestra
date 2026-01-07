@@ -172,8 +172,6 @@
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value?.toString() === "true"));
     const vueFlow = ref<HTMLDivElement>();
     const timer = ref<ReturnType<typeof setTimeout>>();
-    const taskEditData = ref();
-    const taskEditDomElement = ref();
     const isShowLogsOpen = ref(false);
     const logFilter = ref("");
     const logLevel = ref(localStorage.getItem("defaultLogLevel") || "INFO");
@@ -279,12 +277,16 @@
     };
 
     const onAddFlowableError = (event: any) => {
-        taskEditData.value = {
-            action: "add_flowable_error",
-            taskId: event.task.id,
+        topologyClick.value = {
+            action: "edit",
+            params: {
+                section: SECTIONS.TASKS.toLowerCase(),
+                id: event.task.id,
+                blockSchemaPath: "errors"
+            }
         };
-        taskEditDomElement.value.$refs.taskEdit.click();
     };
+
 
     const fitViewOrientation = () => {
         if(vueFlow.value){

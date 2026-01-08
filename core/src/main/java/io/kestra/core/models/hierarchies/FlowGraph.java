@@ -37,7 +37,7 @@ public class FlowGraph {
     }
 
     /**
-     * This method is used to clean the graph for informations
+     * This method is used to clean the graph for information
      * people with only EXECUTION - READ permission should not have access to.
      */
     public FlowGraph forExecution() {

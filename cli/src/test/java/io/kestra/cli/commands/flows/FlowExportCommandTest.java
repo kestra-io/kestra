@@ -58,7 +58,7 @@ class FlowExportCommandTest {
             assertThat(file.exists()).isTrue();
             ZipFile zipFile = new ZipFile(file);
 
-            // When launching the test in a suite, there is 4 flows but when lauching individualy there is only 3
+            // When launching the test in a suite, there is 4 flows but when launching individually there is only 3
             assertThat(zipFile.stream().count()).isGreaterThanOrEqualTo(3L);
 
             file.delete();

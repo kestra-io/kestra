@@ -50,14 +50,14 @@ public class TenantValidationFilterTest {
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
     void should_return_bad_request_for_flow_with_incorrect_tenant() {
-        HttpClientResponseException excetpion = catchThrowableOfType(
+        HttpClientResponseException exception = catchThrowableOfType(
             HttpClientResponseException.class,
             () -> client.toBlocking()
                 .retrieve(
                     HttpRequest.GET("/api/v1/non_main_tenant/flows/" + NAMESPACE + "/inputs"),
                     Flow.class
                 ));
-        assertThat(excetpion.code()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
-        assertThat(excetpion.getMessage()).isEqualTo("Bad Request: Tenant must be 'main' for OSS version");
+        assertThat(exception.code()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        assertThat(exception.getMessage()).isEqualTo("Bad Request: Tenant must be 'main' for OSS version");
     }
 }

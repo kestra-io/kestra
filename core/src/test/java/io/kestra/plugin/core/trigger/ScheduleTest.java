@@ -294,7 +294,7 @@ class ScheduleTest {
             .truncatedTo(ChronoUnit.SECONDS)
             .minusMonths(1);
 
-        ZonedDateTime expexted = date.withMinute(30)
+        ZonedDateTime expected = date.withMinute(30)
             .plusMonths(1);
 
         Optional<Execution> evaluate = trigger.evaluate(
@@ -305,9 +305,9 @@ class ScheduleTest {
         assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getVariables()).containsEntry("custom_var", "VARIABLE VALUE");
         var vars = evaluate.get().getTrigger().getVariables();
-        assertThat(dateFromVars((String) vars.get("date"), expexted)).isEqualTo(expexted);
-        assertThat(dateFromVars((String) vars.get("next"), expexted)).isEqualTo(expexted.plusMonths(1));
-        assertThat(dateFromVars((String) vars.get("previous"), expexted)).isEqualTo(expexted.minusMonths(1));
+        assertThat(dateFromVars((String) vars.get("date"), expected)).isEqualTo(expected);
+        assertThat(dateFromVars((String) vars.get("next"), expected)).isEqualTo(expected.plusMonths(1));
+        assertThat(dateFromVars((String) vars.get("previous"), expected)).isEqualTo(expected.minusMonths(1));
     }
 
     @Test
@@ -644,8 +644,8 @@ class ScheduleTest {
             .build();
     }
 
-    private ZonedDateTime dateFromVars(String date, ZonedDateTime expexted) {
-        return ZonedDateTime.parse(date).withZoneSameInstant(expexted.getZone());
+    private ZonedDateTime dateFromVars(String date, ZonedDateTime expected) {
+        return ZonedDateTime.parse(date).withZoneSameInstant(expected.getZone());
     }
 
     @Test

@@ -85,7 +85,7 @@ class PurgeLogsTest {
                 .message("Hello World")
                 .build(), 0, "The log is too old to be found"),
             Arguments.of(LogEntry.builder()
-                .namespace("uncorrect.namespace")
+                .namespace("incorrect.namespace")
                 .flowId("purgeFlowId")
                 .tenantId(MAIN_TENANT)
                 .timestamp(Instant.now().minusSeconds(10))

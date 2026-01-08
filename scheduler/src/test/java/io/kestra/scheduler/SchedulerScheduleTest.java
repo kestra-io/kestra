@@ -601,10 +601,10 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         }
     }
     @Test
-    void successfulInputsRenderingWithLabels() {
+    void labelsWithScheduleTriggerAndRenderedProperties() {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "successfulLabelRendering", false)
+        Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "scheduleTriggerWithLabels", false)
             .inputs(
                 Map.of("user", Expression.builder()
                     .type(Expression.class.getName())
@@ -650,7 +650,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // to avoid waiting too much before a trigger execution, we add a last trigger with a date now - 1m.
         Trigger lastTrigger = Trigger
             .builder()
-            .triggerId("successfulLabelRendering")
+            .triggerId("scheduleTriggerWithLabels")
             .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())

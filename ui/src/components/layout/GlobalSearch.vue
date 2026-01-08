@@ -142,8 +142,7 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(3px);
+        background: var(--el-overlay-color-lighter);
         z-index: 10000;
         display: flex;
         justify-content: center;
@@ -167,7 +166,6 @@
                 border-radius: var(--el-input-border-radius);
                 
                 input {
-                    height: 48px;
                     color: var(--ks-content-primary);
                 }
 

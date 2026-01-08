@@ -324,12 +324,12 @@
         topbar?: boolean;
         namespace?: string;
         id?: string | null;
-        defaultScopeFilter: boolean,
+        defaultScopeFilter?: boolean,
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
-        defaultScopeFilter: undefined,
+        defaultScopeFilter: true,
     });
 
     const flowStore = useFlowStore();

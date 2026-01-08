@@ -339,6 +339,9 @@ public abstract class AbstractLogRepositoryTest {
     void fetchData() throws IOException {
         logRepository.save(logEntry(Level.INFO).build());
 
+        // test log should not be included in the results
+        logRepository.save(logEntry(Level.INFO).executionKind(ExecutionKind.TEST).build());
+
         var results = logRepository.fetchData(MAIN_TENANT,
             Logs.builder()
                 .type(Logs.class.getName())
@@ -351,6 +354,7 @@ public abstract class AbstractLogRepositoryTest {
             null);
 
         assertThat(results).hasSize(1);
+        assertThat(results.getFirst().get("count")).isIn(1, 1L); // JDBC return an int but ES a long
     }
 
     @Test

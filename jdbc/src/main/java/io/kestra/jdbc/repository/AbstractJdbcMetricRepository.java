@@ -53,7 +53,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         Metrics.Fields.NAMESPACE, "namespace",
         Metrics.Fields.FLOW_ID, "flow_id",
         Metrics.Fields.TASK_ID, "task_id",
-        Metrics.Fields.EXECUTION_ID, "execution_d",
+        Metrics.Fields.EXECUTION_ID, "execution_id",
         Metrics.Fields.TASK_RUN_ID, "taskrun_id",
         Metrics.Fields.NAME, "metric_name",
         Metrics.Fields.VALUE, "metric_value",
@@ -464,7 +464,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping)
+                    .and(NORMAL_KIND_CONDITION);
 
                 List<? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)

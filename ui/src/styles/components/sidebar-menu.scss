@@ -63,8 +63,7 @@
 
         &_active,
         body &_active:hover {
-            background-color: var(--ks-button-background-secondary) !important;
-            color: var(--ks-button-content-primary);
+            background-color: var(--ks-button-background-secondary-active) !important;
             font-weight: normal;
         }
 

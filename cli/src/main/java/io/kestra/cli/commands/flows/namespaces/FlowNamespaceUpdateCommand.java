@@ -2,7 +2,6 @@ package io.kestra.cli.commands.flows.namespaces;
 
 import io.kestra.cli.AbstractValidateCommand;
 import io.kestra.cli.commands.AbstractServiceNamespaceUpdateCommand;
-import io.kestra.cli.commands.flows.IncludeHelperExpander;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.serializers.YamlParser;
 import io.micronaut.core.type.Argument;
@@ -10,16 +9,16 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 
 @CommandLine.Command(
     name = "update",
@@ -35,52 +34,44 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
     @Inject
     private TenantIdSelectorService tenantService;
 
-    @SuppressWarnings("deprecation")
     @Override
     public Integer call() throws Exception {
         super.call();
 
-        try (var files = Files.walk(directory)) {
-            List<String> flows = files
+        try (Stream<Path> files = Files.walk(directory)) {
+            List<Path> flows = files
                 .filter(Files::isRegularFile)
                 .filter(YamlParser::isValidExtension)
-                .map(path -> {
-                    try {
-                        return IncludeHelperExpander.expand(Files.readString(path, Charset.defaultCharset()), path.getParent());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                })
                 .toList();
 
-            String body = "";
+            // At least one flow file is expected for update
             if (flows.isEmpty()) {
-                stdOut("No flow found on '{}'", directory.toFile().getAbsolutePath());
-            } else {
-                body = String.join("\n---\n", flows);
+                stdErr("No flow found in ''{0}''!", directory.toFile().getAbsolutePath());
+                return 1;
             }
-            if (override) {
-                body = body.replaceAll("(?m)^namespace:.+", "namespace: " + namespace);
-            }
-            try(DefaultHttpClient client = client()) {
-                MutableHttpRequest<String> request = HttpRequest
-                    .POST(apiUri("/flows/", tenantService.getTenantIdAndAllowEETenants(tenantId)) + namespace + "?delete=" + delete, body).contentType(MediaType.APPLICATION_YAML);
+
+            // Build multipart body with all available flow files
+            MultipartBody.Builder bodyBuilder = MultipartBody.builder();
+            flows.forEach(flow -> bodyBuilder.addPart("flows", flow.toFile().getName(), MediaType.APPLICATION_YAML_TYPE, flow.toFile()));
+
+            // Call update API
+            try (DefaultHttpClient client = client()) {
+                MutableHttpRequest<MultipartBody> request = HttpRequest.POST(
+                    String.format("%s/%s?override=%s&delete=%s", apiUri("/flows", tenantService.getTenantIdAndAllowEETenants(tenantId)), namespace, override, delete),
+                    bodyBuilder.build()
+                ).contentType(MediaType.MULTIPART_FORM_DATA);
 
                 List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),
                     Argument.listOf(UpdateResult.class)
                 );
 
-                stdOut(updated.size() + " flow(s) for namespace '" + namespace + "' successfully updated !");
-                updated.forEach(flow -> stdOut("- " + flow.getNamespace() + "."  + flow.getId()));
-            } catch (HttpClientResponseException e){
+                stdOut("{0} flow(s) for namespace ''{1}'' successfully updated!", updated.size(), namespace);
+                updated.forEach(flow -> stdOut("- {0}.{1}", flow.getNamespace(), flow.getId()));
+            } catch (HttpClientResponseException e) {
                 AbstractValidateCommand.handleHttpException(e, "flow");
                 return 1;
             }
-        } catch (ConstraintViolationException e) {
-            AbstractValidateCommand.handleException(e, "flow");
-
-            return 1;
         }
 
         return 0;

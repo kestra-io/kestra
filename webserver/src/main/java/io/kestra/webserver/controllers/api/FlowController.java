@@ -58,9 +58,11 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -325,6 +327,38 @@ public class FlowController {
             .stream()
             .map(source -> parseFlowSource(source.trim()))
             .toList();
+
+        return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "{namespace}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Update a complete namespace from yaml source",
+        description = "All flows will be created / updated for this namespace.\n" +
+            "Existing flows missing from `flows` will be deleted if the query delete is `true`"
+    )
+    public List<FlowInterface> updateFlowsInNamespace(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @RequestBody(description = "A list of flow files") @Part("flows") Publisher<CompletedFileUpload> flowsPublisher,
+        @Parameter(description = "If namespace of all provided flows should be overridden") @QueryValue(defaultValue = "false") Boolean override,
+        @Parameter(description = "If missing flows should be deleted") @QueryValue(defaultValue = "true") Boolean delete
+    ) throws ConstraintViolationException, IOException {
+        List<CompletedFileUpload> flows = Flux.from(flowsPublisher)
+            .collectList()
+            .blockOptional()
+            .orElse(Collections.emptyList());
+
+        List<GenericFlow> genericFlows = new ArrayList<>();
+        for (CompletedFileUpload flow : flows) {
+            String source = new String(flow.getBytes(), Charset.defaultCharset()).trim();
+            if (override) {
+                source = source.replaceFirst("(?m)^namespace:.+", "namespace: " + namespace);
+            }
+
+            genericFlows.add(parseFlowSource(source));
+        }
 
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false);
     }

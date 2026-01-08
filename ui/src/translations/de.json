@@ -1145,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Bestätigen",
+          "file_single": "Möchten Sie die Datei <code>{name}</code> wirklich löschen?",
           "files": "Möchten Sie wirklich <code>{count}</code> Datei(en) löschen?",
+          "folder_single": "Möchten Sie den Ordner <code>{name}</code> und alle seine Inhalte wirklich löschen?",
           "folders": "Möchten Sie wirklich <code>{count}</code> Ordner und alle seine Inhalte löschen?",
           "mixed": "Möchten Sie wirklich den Ordner <code>{folders}</code> und die Datei <code>{files}</code> löschen?",
           "title": "Bestätigen Sie das Löschen des Inhalts"

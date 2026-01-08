@@ -211,19 +211,18 @@ public class RunContextInitializer {
         variables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
 
         /**
-         * Adding labels into Run Context earlier is useful when rendering inputs at SchedulableExecutionFactory
+         * Adding labels into Run Context earlier is important for rendering properties of worker and scheduled triggers that uses labels during rendering
          */
-        if(trigger instanceof Schedulable schedulable){
             Map<String, Object> labels = (Map<String, Object>) variables.get("labels");
 
             List<Label> labelsList = labels != null ? Label.toList(labels): new ArrayList<>();
 
-            labelsList.addAll(LabelService.getLabels( schedulable, runContext, triggerContext.getBackfill(), flow));
+            labelsList.addAll(LabelService.getLabels( trigger, runContext, triggerContext.getBackfill(), flow));
             labelsList.add(new Label(Label.CORRELATION_ID, triggerExecutionId));
             labelsList.add(new Label(Label.FROM, "trigger"));
 
             variables.put("labels", Label.toNestedMap(labelsList));
-        }
+
 
         final StorageContext context = StorageContext.forTrigger(
             triggerContext.getTenantId(),

@@ -77,11 +77,11 @@ public final class LabelService {
         return ListUtils.emptyOnNull(labelsThatMustBeIncluded).stream().allMatch(label -> Objects.equals(labelsContainerMap.get(label.key()), label.value()));
     }
 
-    public static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill) throws IllegalVariableEvaluationException{
+    public static List<Label> getLabels(AbstractTrigger trigger, RunContext runContext, Backfill backfill) throws IllegalVariableEvaluationException{
        return getLabels(trigger, runContext, backfill, null);
     }
-    public static List<Label> getLabels(Schedulable trigger, RunContext runContext, Backfill backfill, @Nullable FlowInterface flow) {
-        List<Label> labels = fromTrigger(runContext, flow, (AbstractTrigger) trigger);
+    public static List<Label> getLabels(AbstractTrigger trigger, RunContext runContext, Backfill backfill, @Nullable FlowInterface flow) {
+        List<Label> labels = fromTrigger(runContext, flow, trigger);
 
         if (backfill != null && backfill.getLabels() != null) {
             for (Label label : backfill.getLabels()) {

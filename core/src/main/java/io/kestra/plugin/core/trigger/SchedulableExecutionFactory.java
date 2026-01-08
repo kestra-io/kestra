@@ -31,7 +31,7 @@ import java.util.Optional;
  */
 final class SchedulableExecutionFactory {
 
-    static Execution createFailedExecution(Schedulable trigger, ConditionContext conditionContext, TriggerContext triggerContext) throws IllegalVariableEvaluationException {
+    static Execution createFailedExecution(AbstractTrigger trigger, ConditionContext conditionContext, TriggerContext triggerContext) throws IllegalVariableEvaluationException {
         return Execution.builder()
             .id(conditionContext.getRunContext().getTriggerExecutionId())
             .tenantId(triggerContext.getTenantId())

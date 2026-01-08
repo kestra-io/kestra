@@ -1145,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Potwierdź",
+          "file_single": "Czy na pewno chcesz usunąć plik <code>{name}</code>?",
           "files": "Czy na pewno chcesz usunąć <code>{count}</code> plik(ów)?",
+          "folder_single": "Czy na pewno chcesz usunąć folder <code>{name}</code> i całą jego zawartość?",
           "folders": "Czy na pewno chcesz usunąć <code>{count}</code> folder(y) i całą jego zawartość?",
           "mixed": "Czy na pewno chcesz usunąć folder(y) <code>{folders}</code> i plik(i) <code>{files}</code>?",
           "title": "Potwierdź usunięcie zawartości"

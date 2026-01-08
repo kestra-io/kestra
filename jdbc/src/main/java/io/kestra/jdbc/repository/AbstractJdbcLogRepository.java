@@ -579,7 +579,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), getWhereMapping());
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), getWhereMapping())
+                    .and(NORMAL_KIND_CONDITION);
 
                 List<? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)

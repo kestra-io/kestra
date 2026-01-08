@@ -1,0 +1,16 @@
+id: worker-trigger-with-labels
+namespace: io.kestra.tests
+labels:
+  - key: course
+    value: dsa
+tasks:
+  - id: log_response
+    type: io.kestra.plugin.core.log.Log
+    message: "testing labels with worker triggers"
+triggers:
+  - id: http
+    type: io.kestra.plugin.core.http.Trigger
+    uri: https://api.chucknorris.io/jokes/random
+    responseCondition: "{{ response.statusCode == 200 and labels.course == 'dsa'}}"
+    stopAfter:
+      - SUCCESS

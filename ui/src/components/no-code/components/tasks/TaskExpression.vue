@@ -8,6 +8,7 @@
         :placeholder="`Your ${root || 'value'} here...`"
         @update:model-value="editorInput"
         :largeSuggestions="false"
+        :shouldFocus="false"
     />
 </template>
 <script setup lang="ts">

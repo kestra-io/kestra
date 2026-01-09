@@ -49,7 +49,7 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
         String match = Arrays
             .stream(query.split("\\p{IsPunct}"))
             .filter(s -> s.length() >= 3)
-            .map(s -> "+" + s + "*")
+            .map(s -> "*" + s + "*")
             .collect(Collectors.joining(" "));
 
         if (match.isEmpty()) {

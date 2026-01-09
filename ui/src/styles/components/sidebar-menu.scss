@@ -63,8 +63,7 @@
 
         &_active,
         body &_active:hover {
-            background-color: var(--ks-button-background-primary) !important;
-            color: var(--ks-button-content-primary);
+            background-color: var(--ks-button-background-secondary-active) !important;
             font-weight: normal;
         }
 
@@ -183,35 +182,6 @@
 
     .vsm--mobile-bg {
         border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0;
-    }
-
-    .vsm_collapsed {
-        .logo {
-            >* {
-                left: 10px;
-
-                span.img {
-                    background-size: 207px 55px;
-                }
-            }
-        }
-
-        .vsm--link {
-            padding-left: 13px;
-
-            &.vsm--link_hover {
-                background-color: var(--ks-button-background-primary);
-                color: var(--ks-button-content-primary);
-            }
-        }
-
-        .vsm--item {
-            padding: 0 5px;
-        }
-
-        .el-button {
-            margin-right: 0;
-        }
     }
 
     .el-tooltip__trigger .lock-icon.material-design-icon>.material-design-icon__svg {

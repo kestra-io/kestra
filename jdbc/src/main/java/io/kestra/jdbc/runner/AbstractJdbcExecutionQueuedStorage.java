@@ -31,7 +31,7 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
             .transaction(configuration -> {
                 var dslContext = DSL.using(configuration);
                 var select = dslContext
-                    .select(AbstractJdbcRepository.field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(buildTenantCondition(tenantId))
                     .and(field("namespace").eq(namespace))
@@ -58,7 +58,7 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
             .transactionResult(configuration -> {
                 var select = DSL
                     .using(configuration)
-                    .select(AbstractJdbcRepository.field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable());
 
                 return this.jdbcRepository.fetch(select);
@@ -73,7 +73,7 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
                 .using(configuration)
                 .deleteFrom(this.jdbcRepository.getTable())
                 .where(buildTenantCondition(execution.getTenantId()))
-                .and(field("key").eq(IdUtils.fromParts(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId())))
+                .and(KEY_FIELD.eq(IdUtils.fromParts(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId())))
                 .execute();
             });
     }

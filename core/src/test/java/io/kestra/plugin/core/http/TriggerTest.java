@@ -1,11 +1,13 @@
 package io.kestra.plugin.core.http;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
+import io.kestra.core.runners.WorkerTriggerResult;
 import io.kestra.scheduler.AbstractScheduler;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.IdUtils;
@@ -19,9 +21,11 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(rebuildContext = true)
@@ -35,6 +39,10 @@ class TriggerTest {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     private QueueInterface<Execution> executionQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
+    private QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
 
     @Inject
     private LocalFlowRepositoryLoader repositoryLoader;
@@ -91,6 +99,37 @@ class TriggerTest {
             worker.run();
             scheduler.run();
             repositoryLoader.load(Objects.requireNonNull(TriggerTest.class.getClassLoader().getResource("flows/valids/http-listen-encrypted.yaml")));
+
+            assertTrue(queueCount.await(1, TimeUnit.MINUTES));
+            receive.blockLast();
+        }
+    }
+
+    @Test
+    void failedWorkerTriggerEvaluation() throws Exception {
+        // mock flow listeners
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        // scheduler
+        try (
+            AbstractScheduler scheduler = new JdbcScheduler(
+                this.applicationContext,
+                this.flowListenersService
+            );
+            Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
+        ) {
+            // wait for execution
+            Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, workerTrigger -> {
+                WorkerTriggerResult workerTriggerResult =  workerTrigger.getLeft();
+                Optional<Execution> finalExecution = workerTriggerResult.getExecution();
+                assertThat(finalExecution).isNotNull();
+                assertThat(finalExecution.get().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+                queueCount.countDown();
+            });
+
+            worker.run();
+            scheduler.run();
+            repositoryLoader.load(Objects.requireNonNull(TriggerTest.class.getClassLoader().getResource("flows/invalids/worker-trigger-failure.yaml")));
 
             assertTrue(queueCount.await(1, TimeUnit.MINUTES));
             receive.blockLast();

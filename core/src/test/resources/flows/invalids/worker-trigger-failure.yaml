@@ -1,0 +1,13 @@
+id: worker-trigger-failure
+namespace: io.kestra.tests
+tasks:
+  - id: log_response
+    type: io.kestra.plugin.core.log.Log
+    message: "testing failed worker trigger evaluation"
+triggers:
+  - id: http
+    type: io.kestra.plugin.core.http.Trigger
+    uri: https://api.chucknorris.io/jokes/random
+    responseCondition: "{{ response.statusCode == 200 &!? }}"
+    stopAfter:
+      - SUCCESS

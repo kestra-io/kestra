@@ -82,7 +82,7 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     @Builder.Default
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
-    private boolean failOnTriggerError = false;
+    private boolean failOnTriggerError = true;
 
     @PluginProperty(group = PluginProperty.CORE_GROUP)
     @Schema(

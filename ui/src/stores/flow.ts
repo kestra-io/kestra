@@ -625,9 +625,11 @@ function deleteFlowAndDependencies() {
         window.URL.revokeObjectURL(url);
     }
 
-    function importFlows(options: { file: File, namespace: string, override?: boolean }) {
-        return axios.post(`${apiUrl()}/flows/import`, Utils.toFormData(options), {
-            headers: {"Content-Type": "multipart/form-data"}
+    function importFlows(options: { file: FormData,  failOnError: boolean }) {
+         const {file, failOnError} = options;
+        return axios.post(`${apiUrl()}/flows/import`, file, {
+            headers: {"Content-Type": "multipart/form-data"},
+            params: {failOnError}
         }).then(response => {
             return response;
         });

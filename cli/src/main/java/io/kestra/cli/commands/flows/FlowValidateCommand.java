@@ -16,7 +16,6 @@ import java.util.List;
     description = "Validate a flow"
 )
 public class FlowValidateCommand extends AbstractValidateCommand {
-
     @Inject
     private ModelValidator modelValidator;
 
@@ -26,7 +25,6 @@ public class FlowValidateCommand extends AbstractValidateCommand {
     @Inject
     private TenantIdSelectorService tenantIdSelectorService;
 
-
     @Override
     public Integer call() throws Exception {
         return this.call(
@@ -34,7 +32,7 @@ public class FlowValidateCommand extends AbstractValidateCommand {
             modelValidator,
             (Object object) -> {
                 FlowWithSource flow = (FlowWithSource) object;
-                return flow.getNamespace() + " / " + flow.getId();
+                return flow.getNamespace() + "." + flow.getId();
             },
             (Object object) -> {
                 FlowWithSource flow = (FlowWithSource) object;

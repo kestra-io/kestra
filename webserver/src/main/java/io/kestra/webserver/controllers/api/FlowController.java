@@ -58,6 +58,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -634,6 +635,20 @@ public class FlowController {
         @RequestBody(description = "A list of flows source code in a single string") @Body String flows
     ) {
         return flowService.validate(tenantService.resolveTenant(), flows);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "validate", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
+    public List<ValidateConstraintViolation> validateFlows(
+        @RequestBody(description = "A list of flow files") @Part("flows") Publisher<CompletedFileUpload> flowsPublisher
+    ) {
+        List<CompletedFileUpload> flowFiles = Flux.from(flowsPublisher)
+            .collectList()
+            .blockOptional()
+            .orElse(Collections.emptyList());
+
+        return flowService.validate(tenantService.resolveTenant(), flowFiles);
     }
 
     // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience

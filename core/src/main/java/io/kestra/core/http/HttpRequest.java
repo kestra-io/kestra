@@ -166,6 +166,13 @@ public class HttpRequest {
                     charset = Charset.forName(stripped.substring(stripped.lastIndexOf('=') + 1));
                 }
             }
+
+            if (mimeType.startsWith("multipart/")) {
+                return OmittedRequestBody.builder()
+                    .contentType(mimeType)
+                    .charset(charset)
+                    .build();
+        }
             if (mimeType.equals(ContentType.APPLICATION_OCTET_STREAM.getMimeType())) {
                 return ByteArrayRequestBody.builder()
                     .contentType(mimeType)
@@ -269,6 +276,25 @@ public class HttpRequest {
             }
         }
     }
+
+    @Getter
+    @AllArgsConstructor
+    @SuperBuilder
+    public static class OmittedRequestBody extends RequestBody {
+        private String contentType;
+        private Charset charset;
+
+        @Override
+        public Object getContent() {
+            return "[omitted]";
+        }
+
+        @Override
+        public HttpEntity to() throws IOException {
+            return new StringEntity("[omitted]", this.entityContentType());
+        }
+    }
+
 
     @Getter
     @AllArgsConstructor

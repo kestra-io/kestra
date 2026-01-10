@@ -792,7 +792,7 @@ class FlowControllerTest {
 
         var yaml2 = generateInvalidFlowAsStringForStrictParsing1("invalid_trigger_property", TEST_NAMESPACE )
             + "---" +
-            generateInvalidFlowAsStringForStrictParsing1("missing_uri_property_for_download", TEST_NAMESPACE ) ;
+            generateInvalidFlowAsStringForStrictParsing2("missing_uri_property_for_download", TEST_NAMESPACE ) ;
         var temp2 = File.createTempFile("flows", ".yaml");
         Files.writeString(temp2.toPath(), yaml2);
 

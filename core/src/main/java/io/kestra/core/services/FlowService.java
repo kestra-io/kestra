@@ -229,7 +229,7 @@ public class FlowService {
 
         // Inject default plugin 'version' props before converting
         // to flow to correctly resolve all plugin type.
-        FlowWithSource flowToImport = pluginDefaultService.injectVersionDefaults(flow, false);
+        FlowWithSource flowToImport = pluginDefaultService.injectVersionDefaults(flow, false, true);
 
         if (dryRun) {
             return maybeExisting

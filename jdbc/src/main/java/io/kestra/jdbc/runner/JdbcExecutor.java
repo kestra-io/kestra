@@ -415,7 +415,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             Stream.<FlowTopology>empty() :
                             flowTopologyService
                                 .topology(
-                                    pluginDefaultService.injectVersionDefaults(flow, true),
+                                    pluginDefaultService.injectVersionDefaults(flow, true, false),
                                     this.allFlows.stream().filter(f -> Objects.equals(f.getTenantId(), flow.getTenantId())).toList()
                                 )
                         )

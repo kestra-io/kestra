@@ -731,7 +731,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         // Inject default plugin 'version' props before converting
         // to flow to correctly resolve to plugin type - this is to ensure the flow is parseable before saving.
-        FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
+        FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false, false);
 
         // Check whether existing Flow is equal.
         FlowWithSource nullOrExisting = this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId()).orElse(null);

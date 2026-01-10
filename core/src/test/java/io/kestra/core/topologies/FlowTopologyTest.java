@@ -7,7 +7,9 @@ import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.test.TestSuiteUid;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +31,7 @@ public class FlowTopologyTest {
     @Test
     void should_findDependencies_simpleCase() throws FlowProcessingException {
         // Given
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
         var child = flowService.importFlow(tenantId,
             """
                 id: child
@@ -70,7 +72,7 @@ public class FlowTopologyTest {
     @Test
     void should_findDependencies_subchildAndSuperParent() throws FlowProcessingException {
         // Given
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
         var subChild = flowService.importFlow(tenantId,
             """
                 id: sub_child
@@ -132,7 +134,7 @@ public class FlowTopologyTest {
     @Test
     void should_findDependencies_cyclicTriggers() throws FlowProcessingException {
         // Given
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
         var triggeredFlowOne = flowService.importFlow(tenantId,
             """
                 id: triggered_flow_one
@@ -180,7 +182,7 @@ public class FlowTopologyTest {
     @Test
     void flowTriggerWithTargetFlow() throws FlowProcessingException {
         // Given
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
         var parent = flowService.importFlow(tenantId,
             """
                 id: parent
@@ -241,7 +243,7 @@ public class FlowTopologyTest {
 
     @Test
     void testNamespaceGraph() throws FlowProcessingException {
-        var tenantId = randomTenantId();
+        var tenantId = TestsUtils.randomTenant();
 
         var subChild = flowService.importFlow(tenantId,
             """
@@ -310,9 +312,6 @@ public class FlowTopologyTest {
             );
     }
 
-    private static String randomTenantId() {
-        return FlowTopologyTest.class + IdUtils.create();
-    }
 
 
     record FlowTopologyTestData(String sourceUid, String destinationUid) {

@@ -37,8 +37,9 @@ public class FlowTopologyTest {
                 id: child
                 namespace: io.kestra.unittest
                 tasks:
-                  - id: download
-                    type: io.kestra.plugin.core.http.Download
+                  - id: debug
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "child"
                 """);
         var parent = flowService.importFlow(tenantId, """
             id: parent
@@ -53,8 +54,9 @@ public class FlowTopologyTest {
             id: unrelated_flow
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: debug
+                type: io.kestra.plugin.core.debug.Return
+                format: "unrelated"
             """);
 
         // When
@@ -78,8 +80,9 @@ public class FlowTopologyTest {
                 id: sub_child
                 namespace: io.kestra.unittest
                 tasks:
-                  - id: download
-                    type: io.kestra.plugin.core.http.Download
+                  - id: debug
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "debug"
                 """);
         var child = flowService.importFlow(tenantId,
             """
@@ -113,8 +116,9 @@ public class FlowTopologyTest {
             id: unrelated_flow
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: debug
+                type: io.kestra.plugin.core.debug.Return
+                format: "debug"
             """);
 
         // When
@@ -140,8 +144,9 @@ public class FlowTopologyTest {
                 id: triggered_flow_one
                 namespace: io.kestra.unittest
                 tasks:
-                  - id: download
-                    type: io.kestra.plugin.core.http.Download
+                    - id: debug
+                      type: io.kestra.plugin.core.debug.Return
+                      format: "debug"
                 triggers:
                   - id: listen
                     type: io.kestra.plugin.core.trigger.Flow
@@ -154,8 +159,9 @@ public class FlowTopologyTest {
             id: triggered_flow_two
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: debug
+                type: io.kestra.plugin.core.debug.Return
+                format: "debug"
             triggers:
               - id: listen
                 type: io.kestra.plugin.core.trigger.Flow
@@ -225,8 +231,9 @@ public class FlowTopologyTest {
             id: unrelated_flow
             namespace: io.kestra.unittest
             tasks:
-              - id: download
-                type: io.kestra.plugin.core.http.Download
+              - id: debug
+                type: io.kestra.plugin.core.debug.Return
+                format: "debug"
             """);
 
         // When

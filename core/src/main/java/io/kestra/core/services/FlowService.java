@@ -209,6 +209,14 @@ public class FlowService {
 
     public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) throws FlowProcessingException {
 
+        List<ValidateConstraintViolation> flowValidations = validate(tenantId, source);
+
+        StringBuilder violations = new StringBuilder();
+        flowValidations.forEach(violation -> {
+            if(violation.getConstraints() != null) violations.append(violation.getConstraints());
+        });
+        if(!violations.isEmpty()) throw new FlowProcessingException(violations.toString());
+
         final GenericFlow flow = GenericFlow.fromYaml(tenantId, source);
 
         Optional<FlowWithSource> maybeExisting = repository().findByIdWithSource(

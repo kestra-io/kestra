@@ -11,8 +11,13 @@
             :rowKey
             :emptyText="data.length === 0 ? noDataText : ''"
             @selection-change="selectionChanged"
+            @row-click="onRowClick"
         >
-            <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
+            <el-table-column
+                type="selection"
+                v-if="selectable && showSelection"
+                reserveSelection
+            />
             <slot name="default" />
         </el-table>
     </div>
@@ -45,6 +50,11 @@
     const hasSelection = ref(false);
     const container = ref<HTMLElement>(null);
 
+    /* =======================
+   NEW STATE (MINIMAL)
+======================= */
+    const lastSelectedIndex = ref<number | null>(null);
+
     const toggleRowExpansion = (row: any, expand?: boolean) => {
         table.value?.toggleRowExpansion(row, expand);
     };
@@ -52,6 +62,31 @@
     const selectionChanged = (selection: any[]) => {
         hasSelection.value = selection.length > 0;
         emit("selection-change", selection);
+    };
+
+    /* =======================
+   NEW HANDLER (SHIFT + CLICK)
+======================= */
+    const onRowClick = (row: any, _column: any, event: MouseEvent) => {
+        if (!props.selectable) return;
+
+        const data = props.data ?? [];
+        const currentIndex = data.indexOf(row);
+
+        if (currentIndex === -1) return;
+
+        if (event.shiftKey && lastSelectedIndex.value !== null) {
+            const start = Math.min(lastSelectedIndex.value, currentIndex);
+            const end = Math.max(lastSelectedIndex.value, currentIndex);
+
+            table.value?.clearSelection();
+
+            for (let i = start; i <= end; i++) {
+                table.value?.toggleRowSelection(data[i], true);
+            }
+        }
+
+        lastSelectedIndex.value = currentIndex;
     };
 
     const clearSelection = () => {
@@ -77,7 +112,10 @@
         const tableElement = table.value?.$el;
         if (!tableElement || !container.value) return;
         container.value.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`);
-        container.value.style.setProperty("--table-header-height", `${tableElement.querySelector("thead").clientHeight}px`);
+        container.value.style.setProperty(
+            "--table-header-height",
+            `${tableElement.querySelector("thead").clientHeight}px`
+        );
     };
 
     onMounted(() => {
@@ -96,6 +134,7 @@
         if (props.data.length === 0) {
             hasSelection.value = false;
             table.value?.clearSelection();
+            lastSelectedIndex.value = null;
         } else {
             const currentSelection = table.value?.getSelectionRows() ?? [];
             const validSelection = currentSelection.filter((sel: any) => {
@@ -104,9 +143,11 @@
                     ? props.rowKey(r) === props.rowKey(sel)
                     : r[props.rowKey] === sel[props.rowKey]);
             });
+
             if (validSelection.length !== currentSelection.length) {
                 table.value?.clearSelection();
                 hasSelection.value = false;
+                lastSelectedIndex.value = null;
             } else if (table.value) {
                 selectionChanged(currentSelection);
             }
@@ -122,27 +163,28 @@
         waitTableRender
     });
 </script>
+
 <style scoped lang="scss">
-    .bulk-select-header {
-        z-index: 1;
-        position: absolute;
-        height: var(--table-header-height);
-        width: var(--table-header-width);
-        background-color: var(--ks-background-table-header);
-        border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
-        border-bottom: 1px solid var(--ks-border-primary);
-        overflow-x: auto;
+.bulk-select-header {
+    z-index: 1;
+    position: absolute;
+    height: var(--table-header-height);
+    width: var(--table-header-width);
+    background-color: var(--ks-background-table-header);
+    border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
+    border-bottom: 1px solid var(--ks-border-primary);
+    overflow-x: auto;
 
-        & ~ .el-table {
-            z-index: 0;
-        }
+    & ~ .el-table {
+        z-index: 0;
     }
+}
 
-    @media (max-width: 500px) {
-        :deep(.el-table__empty-text) {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+@media (max-width: 500px) {
+    :deep(.el-table__empty-text) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
+}
 </style>

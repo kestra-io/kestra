@@ -667,8 +667,23 @@ public abstract class AbstractExecutionRepositoryTest {
                 List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
             .taskRunList(List.of())
             .build();
-
         execution = executionRepository.save(execution);
+
+        // test executions should not be returned
+        Execution testExecution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .kind(ExecutionKind.TEST)
+            .build();
+        executionRepository.save(testExecution);
+
 
         var now = ZonedDateTime.now();
         ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(tenantId, Executions.builder()

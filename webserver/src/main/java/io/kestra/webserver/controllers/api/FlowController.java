@@ -352,7 +352,7 @@ public class FlowController {
 
         List<GenericFlow> genericFlows = new ArrayList<>();
         for (CompletedFileUpload flow : flows) {
-            String source = new String(flow.getBytes(), Charset.defaultCharset()).trim();
+            String source = new String(flow.getBytes()).trim();
             if (override) {
                 source = source.replaceFirst("(?m)^namespace:.+", "namespace: " + namespace);
             }

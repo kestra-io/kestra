@@ -59,7 +59,7 @@
             <p class="execution-description">
                 {{ $t("restart change revision") }}
             </p>
-            <el-form-item :label="t('revisions')">
+            <el-form-item :label="$t('revisions')">
                 <el-select v-model="revisionsSelected">
                     <el-option
                         v-for="item in revisionsOptions"
@@ -74,7 +74,7 @@
 
     <el-dialog v-if="isReplayWithInputsOpen" v-model="isReplayWithInputsOpen" destroyOnClose :appendToBody="true" width="60%">
         <template #header>
-            <span v-html="t('replay the execution', {executionId: execution.id, flowId: execution.flowId})" />
+            <span v-html="$t('replay the execution', {executionId: execution.id, flowId: execution.flowId})" />
         </template>
         <ReplayWithInputs
             :execution

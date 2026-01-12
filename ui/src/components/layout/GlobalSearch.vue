@@ -167,6 +167,10 @@
     }
 
     const navItems = computed(() => {
+        if (!isOpen.value) {
+            return [];
+        }
+
         const root = scopeStack.value.length > 0 ? scopeStack.value[scopeStack.value.length - 1].items : menu.value;
         const order = {value: 0};
         // When scoped, we treat the scope root as depth 0 for ordering.

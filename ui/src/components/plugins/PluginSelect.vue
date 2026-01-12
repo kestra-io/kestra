@@ -1,7 +1,7 @@
 <template>
     <el-select
         v-model="modelValue"
-        :placeholder="te(`no_code.select.${blockType}`) ? t(`no_code.select.${blockType}`) : t('no_code.select.default')"
+        :placeholder="te(`no_code.select.${blockType}`) ? $t(`no_code.select.${blockType}`) : $t('no_code.select.default')"
         filterable
     >
         <el-option

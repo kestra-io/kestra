@@ -171,9 +171,7 @@
         emits("filter", newFilters);
     }, {deep: true});
 
-</script>
-
-<style lang="scss" scoped>
+</script><style lang="scss" scoped>
 .filter {
     display: flex;
     flex-direction: column;
@@ -181,11 +179,14 @@
     width: 100%;
     border-radius: 0.5rem;
 
-    .top {
+        .top {
         display: flex;
-        align-items: center; /* Aligns buttons nicely */
-        flex-wrap: wrap;     /* Forces buttons to stack if they run out of space */
+        align-items: center;
+        flex-wrap: wrap;
         gap: 0.5rem;
+        width: 100%;
+        height: auto;
+        min-height: auto;
 
         &.options {
             padding-bottom: 1rem;

@@ -24,9 +24,14 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.utils.*;
+import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.executor.handler.*;
 import io.kestra.core.scheduler.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PostConstruct;
@@ -55,8 +60,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     private QueueInterface<Execution> executionQueue;
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_COMMAND_NAMED)
-    private QueueInterface<ExecutionCommand> executionCommandQueue;
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
     private QueueInterface<ExecutionEvent> executionEventQueue;
@@ -67,17 +71,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    private QueueInterface<ExecutionKilled> killQueue;
+    private BroadcastQueueInterface<ExecutionKilled> killQueue;
     @Inject
-    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
-    private QueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
+    private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
     @Inject
-    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONEND_NAMED)
-    private QueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
+    private DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
     @Inject
-    @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
-    private QueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
+    private DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
     @Inject
     private SkipExecutionService skipExecutionService;
     @Inject
@@ -142,6 +142,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private ScheduledFuture<?> monitorSLAFuture;
 
     private final List<Runnable> receiveCancellations = new ArrayList<>();
+    private final List<QueueSubscriber<?>> queueSubscribers = new ArrayList<>();
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
 
@@ -188,7 +189,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     public void run() {
         // listen to executor related queues
         this.receiveCancellations.addFirst(this.executionQueue.receive(Executor.class, this::executionQueue));
-        this.receiveCancellations.addFirst(this.executionCommandQueue.receive(Executor.class, this::executionCommandQueue));
         this.receiveCancellations.addFirst(this.executionEventQueue.receiveBatch(
             Executor.class,
             executions -> {
@@ -220,10 +220,11 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
             }
         ));
-        this.receiveCancellations.addFirst(this.killQueue.receive(Executor.class, this::killQueue));
-        this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
-        this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));
-        this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
+        this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribe(this::executionCommandQueue));
+        this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
+        this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribe(this::subflowExecutionEndQueue));
+        this.queueSubscribers.addFirst(this.multipleConditionEventQueue.subscriber().subscribe(this::multipleConditionEventQueue));
+        this.queueSubscribers.addFirst(this.killQueue.subscriber().subscribe(this::killQueue));
 
         // Register maintenance listener
         this.receiveCancellations.add(this.maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
@@ -424,12 +425,12 @@ public class DefaultExecutor extends AbstractService implements Executor {
         }
 
         SubflowExecutionEnd message = either.getLeft();
-        if (skipExecutionService.skipExecution(message.getParentExecutionId())) {
-            log.warn(SKIPPING_EXECUTION, message.getParentExecutionId());
+        if (skipExecutionService.skipExecution(message.parentExecutionId())) {
+            log.warn(SKIPPING_EXECUTION, message.parentExecutionId());
             return;
         }
-        if (skipExecutionService.skipExecution(message.getChildExecution())) {
-            log.warn(SKIPPING_EXECUTION, message.getChildExecution().getId());
+        if (skipExecutionService.skipExecution(message.childExecution())) {
+            log.warn(SKIPPING_EXECUTION, message.childExecution().getId());
             return;
         }
 
@@ -570,8 +571,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private void enterMaintenance() {
         this.executionQueue.pause();
         this.workerTaskResultQueue.pause();
-        this.killQueue.pause();
-        this.subflowExecutionResultQueue.pause();
+
+        this.queueSubscribers.forEach(QueueSubscriber::pause);
 
         this.isPaused.set(true);
         this.setState(ServiceState.MAINTENANCE);
@@ -580,8 +581,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private void exitMaintenance() {
         this.executionQueue.resume();
         this.workerTaskResultQueue.resume();
-        this.killQueue.resume();
-        this.subflowExecutionResultQueue.resume();
+
+        this.queueSubscribers.forEach(QueueSubscriber::resume);
 
         this.isPaused.set(false);
         this.setState(ServiceState.RUNNING);
@@ -765,6 +766,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Override
     protected ServiceState doStop() {
         this.receiveCancellations.forEach(Runnable::run);
+        this.queueSubscribers.forEach(QueueSubscriber::close);
         ExecutorsUtils.closeScheduledThreadPool(scheduledExecutorService, Duration.ofSeconds(5), List.of(executionDelayFuture, monitorSLAFuture));
         return ServiceState.TERMINATED_GRACEFULLY;
     }

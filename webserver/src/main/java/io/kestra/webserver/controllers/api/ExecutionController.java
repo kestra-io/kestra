@@ -5,7 +5,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
-import io.kestra.core.events.EventId;
 import io.kestra.core.executor.command.*;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -39,6 +38,8 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.models.api.ApiAsyncEvent;
 import io.kestra.webserver.responses.BulkErrorResponse;
@@ -173,12 +174,10 @@ public class ExecutionController {
     protected QueueInterface<Execution> executionQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    protected QueueInterface<ExecutionKilled> killQueue;
+    protected BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_COMMAND_NAMED)
-    protected QueueInterface<ExecutionCommand> executionCommandQueue;
+    protected DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Inject
     private ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;

@@ -7,6 +7,6 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.PACKAGE, ElementType.TYPE})
-@Requires(property = "kestra.queue.type", value = "jdbc")
+@Requires(property = "kestra.queue.type", pattern = "h2|mysql|postgres")
 public @interface JdbcQueueEnabled {
 }

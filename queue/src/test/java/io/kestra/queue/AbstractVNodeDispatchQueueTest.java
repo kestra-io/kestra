@@ -1,6 +1,7 @@
 package io.kestra.queue;
 
-import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.*;
+import io.kestra.core.queues.event.VNodeDispatchEvent;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;

@@ -18,6 +18,7 @@ import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -50,8 +51,7 @@ class WorkerTest {
     QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    QueueInterface<ExecutionKilled> executionKilledQueue;
+    BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)

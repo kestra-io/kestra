@@ -12,8 +12,6 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
@@ -32,6 +30,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.Logs;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.scheduler.internals.NextEvaluationDate;
 import io.kestra.scheduler.pubsub.TriggerExecutionPublisher;
 import io.kestra.scheduler.stores.FlowMetaStore;
@@ -62,7 +61,7 @@ public class TriggerEventHandler {
     private final TriggerExecutionPublisher triggerExecutionPublisher;
     private final RunContextFactory runContextFactory;
     private final ConditionService conditionService;
-    private final QueueInterface<ExecutionKilled> executionKilledQueue;
+    private final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject
     public TriggerEventHandler(@Named("cached") TriggerStateStore triggerStateStore,
@@ -70,7 +69,7 @@ public class TriggerEventHandler {
                                TriggerExecutionPublisher triggerExecutionPublisher,
                                RunContextFactory runContextFactory,
                                ConditionService conditionService,
-                               @Named(QueueFactoryInterface.KILL_NAMED) QueueInterface<ExecutionKilled> executionKilledQueue) {
+                               BroadcastQueueInterface<ExecutionKilled> executionKilledQueue) {
         this.triggerStateStore = triggerStateStore;
         this.flowStateStore = flowStateStore;
         this.triggerExecutionPublisher = triggerExecutionPublisher;

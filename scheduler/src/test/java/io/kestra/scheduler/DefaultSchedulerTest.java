@@ -2,7 +2,6 @@ package io.kestra.scheduler;
 
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.SchedulerConfiguration;
@@ -19,6 +18,7 @@ import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.utils.ExecutorsUtils;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.scheduler.internals.DefaultSchedulableTriggerFetcher;
 import io.kestra.scheduler.internals.SchedulableEvaluator;
 import io.kestra.scheduler.pubsub.TriggerWorkerJobPublisher;
@@ -294,7 +294,7 @@ class DefaultSchedulerTest {
             triggerExecutionPublisher,
             runContextFactory,
             conditionService,
-            Mockito.mock(QueueInterface.class)
+            Mockito.mock(BroadcastQueueInterface.class)
         );
     }
 

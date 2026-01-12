@@ -2,13 +2,14 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.event.DispatchEvent;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class SubflowExecutionResult {
+public class SubflowExecutionResult implements DispatchEvent {
     @NotNull
     private TaskRun parentTaskRun;
 
@@ -17,4 +18,9 @@ public class SubflowExecutionResult {
 
     @NotNull
     private State.Type state;
+
+    @Override
+    public String key() {
+        return executionId;
+    }
 }

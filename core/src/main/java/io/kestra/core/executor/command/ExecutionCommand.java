@@ -3,6 +3,7 @@ package io.kestra.core.executor.command;
 import com.fasterxml.jackson.annotation.*;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.HasUID;
+import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
 
@@ -25,7 +26,7 @@ import java.util.Map;
     @JsonSubTypes.Type(value = UpdateStatus.class, name = "UPDATE_STATUS"),
     @JsonSubTypes.Type(value = ExecutionCommand.Invalid.class, name = "INVALID"),
 })
-public interface ExecutionCommand extends HasUID {
+public interface ExecutionCommand extends HasUID, DispatchEvent {
     /**
      * @return the tenant id
      */
@@ -72,6 +73,12 @@ public interface ExecutionCommand extends HasUID {
     @Override
     default String uid() {
         return IdUtils.fromParts(this.tenantId(), this.namespace(), this.flowId(), this.executionId());
+    }
+
+    @JsonIgnore
+    @Override
+    default String key() {
+        return uid();
     }
 
     /**

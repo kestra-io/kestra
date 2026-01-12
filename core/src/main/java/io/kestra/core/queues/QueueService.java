@@ -23,8 +23,6 @@ public class QueueService {
             return ((Setting) object).getKey();
         } else if (object.getClass() == MetricEntry.class) {
             return null;
-        } else if (object.getClass() == SubflowExecutionEnd.class) {
-            return ((SubflowExecutionEnd) object).getParentExecutionId();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

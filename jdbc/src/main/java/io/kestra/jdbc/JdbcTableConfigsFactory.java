@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.kv.PersistedKvMetadata;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
@@ -40,7 +41,7 @@ public class JdbcTableConfigsFactory {
     @Bean
     @Named("flows")
     public InstantiableJdbcTableConfig flows() {
-        return new InstantiableJdbcTableConfig("flows", Flow.class, "flows");
+        return new InstantiableJdbcTableConfig("flows", FlowInterface.class, "flows");
     }
 
     @Bean

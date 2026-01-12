@@ -24,6 +24,7 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.executor.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import jakarta.inject.Inject;
@@ -67,8 +68,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
     private QueueInterface<WorkerJob> workerJobQueue;
     @Inject
-    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
-    private QueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
+    private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     private QueueInterface<Execution> executionQueue;
@@ -222,7 +222,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                     // subflow execution results
                     if (!executor.getSubflowExecutionResults().isEmpty()) {
                         executor.getSubflowExecutionResults()
-                            .forEach(throwConsumer(subflowExecutionResult -> subflowExecutionResultQueue.emit(subflowExecutionResult)));
+                            .forEach(throwConsumer(subflowExecutionResult -> {
+                                subflowExecutionResultQueue.emit(subflowExecutionResult);
+                            }));
                     }
 
                     // schedulerDelay

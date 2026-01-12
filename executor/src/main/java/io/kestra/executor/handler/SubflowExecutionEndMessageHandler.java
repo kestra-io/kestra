@@ -8,12 +8,11 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.executor.*;
+import io.kestra.core.runners.SubflowExecutionEnd;
+import io.kestra.core.queues.DispatchQueueInterface;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,8 +32,7 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
     private RunContextFactory runContextFactory;
 
     @Inject
-    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
-    private QueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
+    private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
 
     @Override
     public void handle(SubflowExecutionEnd message) {
@@ -42,24 +40,24 @@ public class SubflowExecutionEndMessageHandler implements MessageHandler<Subflow
             executorService.log(log, true, message);
         }
 
-        executionStateStore.lock(message.getParentExecutionId(), execution -> {
+        executionStateStore.lock(message.parentExecutionId(), execution -> {
             try {
                 FlowWithSource flow = flowMetaStore.findByExecutionThenInjectDefaults(execution).orElseThrow(() -> new FlowNotFoundException(execution));
-                ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.getTaskId());
+                ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.taskId());
                 if (!executableTask.waitForExecution()) {
                     return null;
                 }
 
-                TaskRun taskRun = execution.findTaskRunByTaskRunId(message.getTaskRunId()).withState(message.getState()).withOutputs(message.getOutputs());
-                FlowInterface childFlow = flowMetaStore.findByExecution(message.getChildExecution()).orElseThrow();
+                TaskRun taskRun = execution.findTaskRunByTaskRunId(message.taskRunId()).withState(message.state()).withOutputs(message.outputs());
+                FlowInterface childFlow = flowMetaStore.findByExecution(message.childExecution()).orElseThrow();
                 RunContext runContext = runContextFactory.of(
                     childFlow,
                     (Task) executableTask,
-                    message.getChildExecution(),
+                    message.childExecution(),
                     taskRun
                 );
 
-                SubflowExecutionResult subflowExecutionResult = ExecutableUtils.subflowExecutionResultFromChildExecution(runContext, childFlow, message.getChildExecution(), executableTask, taskRun);
+                SubflowExecutionResult subflowExecutionResult = ExecutableUtils.subflowExecutionResultFromChildExecution(runContext, childFlow, message.childExecution(), executableTask, taskRun);
                 if (subflowExecutionResult != null) {
                     try {
                         this.subflowExecutionResultQueue.emit(subflowExecutionResult);

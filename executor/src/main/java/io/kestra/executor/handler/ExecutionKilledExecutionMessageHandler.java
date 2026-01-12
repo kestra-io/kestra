@@ -7,8 +7,6 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.ExecutionQueuedStateStore;
 import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.services.ExecutionService;
@@ -16,8 +14,8 @@ import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorService;
 import io.kestra.executor.ExecutorMessageHandler;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,8 +41,7 @@ public class ExecutionKilledExecutionMessageHandler implements ExecutorMessageHa
     private FlowMetaStoreInterface flowMetaStore;
 
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    private QueueInterface<ExecutionKilled> killQueue;
+    private BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Override
     public Optional<ExecutorContext> handle(ExecutionKilledExecution message) {

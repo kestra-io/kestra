@@ -28,10 +28,12 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
 import io.kestra.plugin.core.flow.WorkingDirectory;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.micronaut.context.ApplicationContext;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
@@ -63,9 +65,6 @@ public class ExecutorService {
 
     @Inject
     private MetricRegistry metricRegistry;
-    
-    @Inject
-    private FlowInputOutput flowInputOutput;
 
     @Inject
     private WorkerGroupMetaStore workerGroupMetaStore;
@@ -91,8 +90,7 @@ public class ExecutorService {
     private VariablesService variablesService;
 
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    protected QueueInterface<ExecutionKilled> killQueue;
+    protected BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)

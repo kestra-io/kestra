@@ -1,6 +1,6 @@
 package io.kestra.queue;
 
-import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.event.Event;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.CountDownLatch;
@@ -9,7 +9,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public abstract class AbstractSubscriber<T extends Event> implements QueueSubscriber<T> {
+public abstract class AbstractSubscriber<T extends Event> implements io.kestra.core.queues.QueueSubscriber<T> {
     private final CountDownLatch stopped = new CountDownLatch(1);
     private final ReentrantLock pauseLock = new ReentrantLock();
     private final Condition unpaused = pauseLock.newCondition();
@@ -24,7 +24,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
         this.queueService = queueService;
     }
 
-    protected void waitIfPaused() throws QueueException {
+    protected void waitIfPaused() throws InterruptedException {
         // return immediately if not paused.
         if (!this.state.get().equals(State.PAUSED)) {
             return;
@@ -38,11 +38,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
                     log.debug("{} paused, waiting to resume", logPrefix);
                 }
 
-                try {
-                    unpaused.await(); // Wait until resume() signals
-                } catch (InterruptedException e) {
-                    throw new QueueException(this.logPrefix + " interrupted while paused", e);
-                }
+                unpaused.await(); // Wait until resume() signals
 
                 if (log.isDebugEnabled()) {
                     log.debug("{} resumed", logPrefix);

@@ -4,13 +4,11 @@ import io.kestra.cli.AbstractCommand;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.executor.command.Unqueue;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.ExecutionQueued;
 import io.kestra.jdbc.runner.AbstractJdbcExecutionQueuedStateStore;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -28,8 +26,7 @@ public class SubmitQueuedCommand extends AbstractCommand {
     private ApplicationContext applicationContext;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_COMMAND_NAMED)
-    private QueueInterface<ExecutionCommand> executionCommandQueue;
+    private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
 
     @Override
     public Integer call() throws Exception {

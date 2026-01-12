@@ -7,6 +7,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.event.Event;
 import io.kestra.core.scheduler.SchedulerConfiguration;
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.serializers.JacksonMapper;

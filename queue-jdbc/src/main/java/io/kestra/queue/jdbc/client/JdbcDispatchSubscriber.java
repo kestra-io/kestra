@@ -1,6 +1,6 @@
 package io.kestra.queue.jdbc.client;
 
-import io.kestra.queue.Event;
+import io.kestra.core.queues.event.Event;
 import io.kestra.queue.QueueService;
 import lombok.extern.slf4j.Slf4j;
 

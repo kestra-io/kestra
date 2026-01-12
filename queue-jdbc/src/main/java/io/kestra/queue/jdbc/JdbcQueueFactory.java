@@ -1,63 +1,66 @@
 package io.kestra.queue.jdbc;
 
+import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.runners.SubflowExecutionEnd;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.queue.*;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
-import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Context;
-import io.micronaut.inject.qualifiers.Qualifiers;
-import jakarta.annotation.PostConstruct;
+import io.micronaut.context.annotation.Bean;
+import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Context
+@Factory
 @JdbcQueueEnabled
-public class JdbcQueueFactory {
+public class JdbcQueueFactory implements QueueFactoryInterface {
     @Inject
     private QueueService queueService;
 
     @Inject
-    private ApplicationContext applicationContext;
-
-    @Inject
     private JdbcQueueClient jdbcQueueClient;
 
-    @PostConstruct
-    void init() {
-        QueueFactory
-            .listAllEvent(this.getClass().getClassLoader(), DispatchEvent.class)
-            .forEach(event -> applicationContext.registerSingleton(
-                DispatchQueueInterface.class,
-                new JdbcDispatchQueue<>(event, queueService, jdbcQueueClient),
-                Qualifiers.byTypeArguments(event),
-                true
-            ));
+    @Inject
+    private ExecutorsUtils executorsUtils;
 
-        QueueFactory
-            .listAllEvent(this.getClass().getClassLoader(), KeyedDispatchEvent.class)
-            .forEach(event -> applicationContext.registerSingleton(
-                KeyedDispatchQueueInterface.class,
-                new JdbcKeyedDispatchQueue<>(event, queueService, jdbcQueueClient),
-                Qualifiers.byTypeArguments(event),
-                true
-            ));
+    @Bean
+    @Singleton
+    @Override
+    public DispatchQueueInterface<ExecutionCommand> executionCommandQueue() {
+        return new JdbcDispatchQueue<>(ExecutionCommand.class, queueService, jdbcQueueClient, executorsUtils);
+    }
 
-        QueueFactory
-            .listAllEvent(this.getClass().getClassLoader(), BroadcastEvent.class)
-            .forEach(event -> applicationContext.registerSingleton(
-                BroadcastQueueInterface.class,
-                new JdbcBroadcastQueue<>(event, queueService, jdbcQueueClient),
-                Qualifiers.byTypeArguments(event),
-                true
-            ));
+    @Bean
+    @Singleton
+    @Override
+    public BroadcastQueueInterface<ExecutionKilled> killQueue() {
+        return new JdbcBroadcastQueue<>(ExecutionKilled.class, queueService, jdbcQueueClient, executorsUtils);
+    }
 
-        QueueFactory
-            .listAllEvent(this.getClass().getClassLoader(), VNodeDispatchEvent.class)
-            .forEach(event -> applicationContext.registerSingleton(
-                VNodeDispatchQueueInterface.class,
-                new JdbcVNodeDispatchQueue<>(event, queueService, jdbcQueueClient),
-                Qualifiers.byTypeArguments(event),
-                true
-            ));
+    @Bean
+    @Singleton
+    @Override
+    public DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue() {
+        return new JdbcDispatchQueue<>(SubflowExecutionResult.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
+    public DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue() {
+        return new JdbcDispatchQueue<>(SubflowExecutionEnd.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
+    public DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue() {
+        return new JdbcDispatchQueue<>(MultipleConditionEvent.class, queueService, jdbcQueueClient, executorsUtils);
     }
 }

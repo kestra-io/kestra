@@ -8,15 +8,12 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.executor.ConcurrencyLimitStateStore;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 
@@ -58,8 +55,7 @@ public class FlowConcurrencyCaseTest {
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
 
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    protected QueueInterface<ExecutionKilled> killQueue;
+    protected BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     public void flowConcurrencyCancel(String tenantId) throws TimeoutException, QueueException {
         Execution execution1 = runnerUtils.runOneUntilRunning(tenantId, NAMESPACE, "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));

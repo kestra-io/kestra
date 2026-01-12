@@ -34,6 +34,8 @@ import io.kestra.core.utils.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.kestra.core.scheduler.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerReceived;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
@@ -99,8 +101,7 @@ public class DefaultWorker implements Worker {
     private QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    private QueueInterface<ExecutionKilled> executionKilledQueue;
+    private BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject
     @Named(QueueFactoryInterface.METRIC_QUEUE)
@@ -160,6 +161,7 @@ public class DefaultWorker implements Worker {
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
 
     private final List<Runnable> receiveCancellations = new ArrayList<>();
+    private final List<QueueSubscriber<?>> queueSubscribers = new ArrayList<>();
 
     @Getter
     private final Integer numThreads;
@@ -233,7 +235,7 @@ public class DefaultWorker implements Worker {
 
     @Override
     public void run() {
-        this.receiveCancellations.addFirst(this.executionKilledQueue.receive(executionKilled -> {
+        this.queueSubscribers.addFirst(this.executionKilledQueue.subscriber().subscribe(executionKilled -> {
             if (executionKilled == null || !executionKilled.isLeft()) {
                 return;
             }
@@ -325,15 +327,17 @@ public class DefaultWorker implements Worker {
     }
 
     private void enterMaintenance() {
-        this.executionKilledQueue.pause();
         this.workerJobQueue.pause();
+
+        this.queueSubscribers.forEach(QueueSubscriber::pause);
 
         this.setState(ServiceState.MAINTENANCE);
     }
 
     private void exitMaintenance() {
-        this.executionKilledQueue.resume();
         this.workerJobQueue.resume();
+
+        this.queueSubscribers.forEach(QueueSubscriber::resume);
 
         this.setState(ServiceState.RUNNING);
     }
@@ -561,7 +565,7 @@ public class DefaultWorker implements Worker {
         metricRegistry
             .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
             .increment();
-        
+
         triggerEventQueue.send(new TriggerReceived(TriggerId.of(workerTrigger.getTriggerContext()), getId()));
 
         this.metricRegistry

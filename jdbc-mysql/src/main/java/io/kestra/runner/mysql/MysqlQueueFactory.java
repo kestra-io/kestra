@@ -1,8 +1,6 @@
 package io.kestra.runner.mysql;
 
-import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.FlowInterface;
@@ -37,14 +35,6 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<ExecutionEvent> executionEvent() {
         return new MysqlQueue<>(ExecutionEvent.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.EXECUTION_COMMAND_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<ExecutionCommand> executionCommand() {
-        return new MysqlQueue<>(ExecutionCommand.class, applicationContext);
     }
 
     @Override
@@ -97,41 +87,9 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
-    @Named(QueueFactoryInterface.KILL_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<ExecutionKilled> kill() {
-        return new MysqlQueue<>(ExecutionKilled.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
     @Named(QueueFactoryInterface.WORKERJOBRUNNING_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerJobRunning> workerJobRunning() {
         return new MysqlQueue<>(WorkerJobRunning.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONRESULT_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<SubflowExecutionResult> subflowExecutionResult() {
-        return new MysqlQueue<>(SubflowExecutionResult.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONEND_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<SubflowExecutionEnd> subflowExecutionEnd() {
-        return new MysqlQueue<>(SubflowExecutionEnd.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<MultipleConditionEvent> multipleConditionEvent() {
-        return new MysqlQueue<>(MultipleConditionEvent.class, applicationContext);
     }
 }

@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.RealtimeTriggerInterface;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -39,13 +40,13 @@ public class TriggerStateService {
     private final TriggerRepositoryInterface triggerRepository;
     private final FlowRepositoryInterface flowRepository;
     private final TriggerEventQueue triggerEventQueue;
-    private final QueueInterface<ExecutionKilled> executionKilledQueue;
+    private final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject
     public TriggerStateService(final TriggerRepositoryInterface triggerRepository,
                                final FlowRepositoryInterface flowRepository,
                                final TriggerEventQueue triggerEventQueue,
-                               final QueueInterface<ExecutionKilled> executionKilledQueue) {
+                               final BroadcastQueueInterface<ExecutionKilled> executionKilledQueue) {
         this.triggerRepository = triggerRepository;
         this.triggerEventQueue = triggerEventQueue;
         this.executionKilledQueue = executionKilledQueue;
@@ -54,7 +55,7 @@ public class TriggerStateService {
 
     /**
      * Deletes the trigger for the identifier.
-     * 
+     *
      * @param trigger the trigger identifier.
      * @throws NotFoundException if trigger can be found.
      */

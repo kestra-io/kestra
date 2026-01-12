@@ -1,6 +1,7 @@
 package io.kestra.queue;
 
-import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.*;
+import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.core.annotation.Introspected;
 import jakarta.inject.Inject;
@@ -12,7 +13,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -114,7 +114,7 @@ public abstract class AbstractDispatchQueueTest extends AbstractQueueTest {
             .subscribe(e -> {
                 if (e.getLeft().id == 2 && crashed.compareAndSet(false, true)) {
                     countDownLatch.countDown();
-                    throw new Exception("Boom");
+                    throw new RuntimeException("Boom");
                 }
 
                 list.add(e.getLeft().id);

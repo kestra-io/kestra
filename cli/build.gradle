@@ -32,6 +32,7 @@ dependencies {
     implementation project(":jdbc-postgres")
 
     implementation project(":queue")
+    implementation project(":queue-jdbc")
 
     implementation project(":storage-local")
 

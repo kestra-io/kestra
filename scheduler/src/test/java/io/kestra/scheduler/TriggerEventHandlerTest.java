@@ -7,7 +7,6 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.scheduler.SchedulerClock;
 import io.kestra.core.scheduler.events.CreateBackfillTrigger;
@@ -24,6 +23,7 @@ import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.model.TriggerType;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.scheduler.utils.CollectorTriggerExecutionPublisher;
 import io.kestra.scheduler.utils.InMemoryFlowMetaStore;
 import io.kestra.scheduler.utils.InMemoryTriggerStateStore;
@@ -61,7 +61,7 @@ class TriggerEventHandlerTest {
 
     private InMemoryTriggerStateStore triggerStateStore;
     private CollectorTriggerExecutionPublisher triggerExecutionPublisher;
-    private QueueInterface<ExecutionKilled> executionKilledQueue;
+    private BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
 
     @BeforeEach
     void setUp() {
@@ -69,7 +69,7 @@ class TriggerEventHandlerTest {
         triggerStateStore = new InMemoryTriggerStateStore();
         triggerId = Fixtures.triggerId();
         triggerState = TriggerState.of(triggerId, TriggerType.SCHEDULE, null, false, 0);
-        executionKilledQueue = Mockito.mock(QueueInterface.class);
+        executionKilledQueue = Mockito.mock(BroadcastQueueInterface.class);
     }
 
     TriggerEventHandler newTriggerEventHandler(List<FlowWithSource> flows) {

@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.DefaultRunContext;
@@ -86,7 +87,7 @@ public class Exit extends Task implements ExecutionUpdatableTask {
         // if the state is killed, we send a kill event and end here
         if (exitState == State.Type.KILLED) {
             @SuppressWarnings("unchecked")
-            QueueInterface<ExecutionKilled> killQueue = ((DefaultRunContext) runContext).getApplicationContext().getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
+            BroadcastQueueInterface<ExecutionKilled> killQueue = ((DefaultRunContext) runContext).getApplicationContext().getBean(BroadcastQueueInterface.class, Qualifiers.byType(BroadcastQueueInterface.class, ExecutionKilled.class));
             killQueue.emit(ExecutionKilledExecution
                 .builder()
                 .state(ExecutionKilled.State.REQUESTED)

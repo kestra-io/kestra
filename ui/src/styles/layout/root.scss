@@ -91,6 +91,17 @@
     #{--bs-border-danger}: var(--ks-border-error);
     #{--bs-border-warning}: var(--ks-border-warning);
     #{--bs-border-success}: var(--ks-border-success);
+
+    
+    #{--ks-button-background-warning}: $base-orange-500;
+    #{--ks-button-background-warning-hover}: $base-orange-400;
+    #{--ks-button-background-warning-active}: $base-orange-600;
+    #{--ks-button-background-danger}: $base-red-500;
+    #{--ks-button-background-danger-hover}: $base-red-400;
+    #{--ks-button-background-danger-active}: $base-red-600;
+    #{--ks-button-background-info}: $base-blue-500;
+    #{--ks-button-background-info-hover}: $base-blue-400;
+    #{--ks-button-background-info-active}: $base-blue-600;
 }
 
 $logLevels: "trace", "debug", "info", "warn", "error";

@@ -6,8 +6,7 @@
 @use "@kestra-io/ui-libs/src/scss/ks-theme-light.scss";
 @use "@kestra-io/ui-libs/style.css";
 
-// layout (must load after ui-libs to ensure CSS custom properties are available)
-@use "layout/root";
+
 
 // element-plus (must load after root to ensure all variables are available)
 @use "layout/element-plus-overload";
@@ -16,6 +15,7 @@
 @use "vue3-tour/dist/vue3-tour.css";
 
 // layout
+@use "layout/root";
 @use "layout/root-dark";
 @use "layout/html-tag" as *;
 

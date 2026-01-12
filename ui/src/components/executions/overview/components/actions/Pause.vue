@@ -4,16 +4,16 @@
         :icon="Pause"
         @click="click"
     >
-        {{ t('pause') }}
+        {{ $t('pause') }}
     </el-button>
 
     <el-dialog v-if="isDrawerOpen" v-model="isDrawerOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <span v-html="t('pause title', {id: execution.id})" />
+            <span v-html="$t('pause title', {id: execution.id})" />
         </template>
         <template #footer>
             <el-button :icon="Pause" type="primary" @click="pause()" nativeType="submit">
-                {{ t('pause') }}
+                {{ $t('pause') }}
             </el-button>
         </template>
     </el-dialog>

@@ -22,10 +22,10 @@ import org.jooq.impl.DSL;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static io.kestra.core.utils.MathUtils.roundDouble;
 
@@ -33,6 +33,7 @@ import static io.kestra.core.utils.MathUtils.roundDouble;
 public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRepository<Dashboard> implements DashboardRepositoryInterface {
     private final ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher;
     private final List<QueryBuilderInterface<?>> queryBuilders;
+    private final Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new ConcurrentHashMap<>();
 
     public AbstractJdbcDashboardRepository(io.kestra.jdbc.AbstractJdbcRepository<Dashboard> jdbcRepository,
                                            QueueService queueService,
@@ -127,8 +128,6 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
 
     @Override
     public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
-        Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new HashMap<>();
-
         @SuppressWarnings("unchecked")
         QueryBuilderInterface<F> queryBuilder = (QueryBuilderInterface<F>) queryBuilderByHandledFields.computeIfAbsent(
             dataChart.getData().repositoryClass(),
@@ -144,8 +143,6 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
 
     @Override
     public <F extends Enum<F>> List<Map<String, Object>> generateKPI(String tenantId, DataChartKPI<?, DataFilterKPI<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
-        Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new HashMap<>();
-
         @SuppressWarnings("unchecked")
         QueryBuilderInterface<F> queryBuilder = (QueryBuilderInterface<F>) queryBuilderByHandledFields.computeIfAbsent(
             dataChart.getData().repositoryClass(),
@@ -161,7 +158,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
         if (dataChart.getChartOptions() != null && dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
             Double totalValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, false);
             if (totalValue == null || totalValue == 0) return List.of(Map.of("value", 0.0));
-            Double percentageValue = (filteredValue / totalValue) * 100;
+            double percentageValue = (filteredValue / totalValue) * 100;
             return List.of(Map.of("value", roundDouble(percentageValue, 2)));
         }
 

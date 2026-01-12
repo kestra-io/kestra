@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
@@ -59,7 +60,12 @@ class InternalNamespaceTest {
         List<NamespaceFile> namespaceFiles = namespace.putFile(Path.of("/sub/dir/file.txt"), new ByteArrayInputStream("1".getBytes()));
 
         // Then
-        assertThat(namespaceFiles).containsExactlyInAnyOrder(NamespaceFile.of(namespaceId, "", 1), NamespaceFile.of(namespaceId, "sub/", 1), NamespaceFile.of(namespaceId, "sub/dir/", 1), NamespaceFile.of(namespaceId, "sub/dir/file.txt", 1));
+        assertThat(namespaceFiles).containsExactlyInAnyOrder(
+            NamespaceFile.of(namespaceId, "/", 1), 
+            NamespaceFile.of(namespaceId, "sub/", 1),
+            NamespaceFile.of(namespaceId, "sub/dir/", 1), 
+            NamespaceFile.of(namespaceId, "sub/dir/file.txt", 1)
+        );
 
         // Then
         NamespaceFile fileEntry = namespaceFiles.stream().filter(namespaceFile -> namespaceFile.path().endsWith("file.txt")).findFirst().get();
@@ -177,5 +183,19 @@ class InternalNamespaceTest {
         final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
         List<NamespaceFile> namespaceFiles = namespace.findAllFilesMatching((unused) -> true);
         assertThat(namespaceFiles.size()).isZero();
+    }
+    
+    @Test
+    void shouldCreateDirectory() throws IOException {
+        // Given
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+
+        // When
+        NamespaceFile directory = namespace.createDirectory(Path.of("my-directory"));
+
+        // Then
+        assertThat(directory.isDirectory()).isTrue();
+        assertThat(directory.uri().toString()).matches(uri -> uri.endsWith("my-directory/"));
     }
 }

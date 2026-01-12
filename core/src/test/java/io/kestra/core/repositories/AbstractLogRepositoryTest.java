@@ -348,6 +348,9 @@ public abstract class AbstractLogRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         logRepository.save(logEntry(tenant, Level.INFO).build());
 
+        // test log should not be included in the results
+        logRepository.save(logEntry(tenant, Level.INFO).executionKind(ExecutionKind.TEST).build());
+
         var results = logRepository.fetchData(tenant,
             Logs.builder()
                 .type(Logs.class.getName())
@@ -360,6 +363,7 @@ public abstract class AbstractLogRepositoryTest {
             null);
 
         assertThat(results).hasSize(1);
+        assertThat(results.getFirst().get("count")).isIn(1, 1L); // JDBC return an int but ES a long
     }
 
     @Test

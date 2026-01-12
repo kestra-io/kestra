@@ -74,6 +74,17 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
         });
     }
 
+    @Override
+    public int persistBatch(Map<T, Map<Field<Object>, Object>> itemWithFields) {
+        return dslContextWrapper.transactionResult(configuration -> {
+            DSLContext dslContext = DSL.using(configuration);
+            return itemWithFields.entrySet().stream()
+                .map(entry -> this.persistInternal(entry.getKey(), dslContext, entry.getValue()))
+                .mapToInt(i -> i)
+                .sum();
+        });
+    }
+
     public Condition fullTextCondition(List<String> fields, String query) {
         if (query == null || query.equals("*")) {
             return DSL.trueCondition();

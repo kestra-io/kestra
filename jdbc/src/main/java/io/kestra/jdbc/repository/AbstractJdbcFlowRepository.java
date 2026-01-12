@@ -66,6 +66,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     public static final Field<String> VALUE_FIELD = field("value", String.class);
     public static final Field<String> TENANT_FIELD = field("tenant_id", String.class);
     public static final Field<String> SOURCE_FIELD = field("source_code", String.class);
+    public static final Field<Integer> REVISION_FIELD  =  field("revision", Integer.class);
 
     private final QueueInterface<FlowInterface> flowQueue;
     private final QueueInterface<Trigger> triggerQueue;
@@ -153,7 +154,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .where(this.revisionDefaultFilter(tenantId))
                     .and(NAMESPACE_FIELD.eq(namespace))
                     .and(field("id", String.class).eq(id))
-                    .and(field("revision", Integer.class).eq(integer)
+                    .and(REVISION_FIELD.eq(integer)
                     )
                 ).orElseGet(() -> context
                     .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
@@ -182,7 +183,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .where(this.noAclDefaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
-                        .and(field("revision", Integer.class).eq(integer))
+                        .and(REVISION_FIELD.eq(integer))
                     ).orElseGet(() -> context
                         .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
                         .from(fromLastRevision(true))
@@ -230,7 +231,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .where(this.revisionDefaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
-                        .and(field("revision", Integer.class).eq(integer)))
+                        .and(REVISION_FIELD.eq(integer)))
                     .orElseGet(() -> context
                         .select(
                             SOURCE_FIELD,
@@ -272,7 +273,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         .where(this.noAclDefaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
-                        .and(field("revision", Integer.class).eq(integer)))
+                        .and(REVISION_FIELD.eq(integer)))
                     .orElseGet(() -> context
                         .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
                         .from(fromLastRevision(true))
@@ -295,18 +296,27 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    public List<FlowWithSource> findRevisions(String tenantId, String namespace, String id) {
+    public List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted) {
+        return findRevisions(tenantId, namespace, id, allowDeleted, null);
+    }
+
+    @Override
+    public List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions) {
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
+                Condition tenantAndRevisionCondition = Boolean.TRUE.equals(allowDeleted) ? this.revisionDefaultFilter(tenantId) : this.defaultFilter(tenantId);
+                if (!ListUtils.isEmpty(revisions)) {
+                    tenantAndRevisionCondition = tenantAndRevisionCondition.and(REVISION_FIELD.in(revisions));
+                }
                 Select<Record4<String, String, String, String>> select = DSL
                     .using(configuration)
                     .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
                     .from(jdbcRepository.getTable())
-                    .where(this.revisionDefaultFilter(tenantId))
+                    .where(tenantAndRevisionCondition)
                     .and(NAMESPACE_FIELD.eq(namespace))
                     .and(field("id", String.class).eq(id))
-                    .orderBy(field("revision", Integer.class).asc());
+                    .orderBy(REVISION_FIELD.asc());
 
                 return select.fetch()
                     .map(record -> FlowWithSource.of((Flow) jdbcRepository.map(record), record.get(SOURCE_FIELD)));
@@ -579,7 +589,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .join(jdbcRepository.getTable().as("ft"))
             .on(
                 DSL.field(DSL.quotedName("ft", "key")).eq(DSL.field(DSL.field(DSL.quotedName("rev", "key"))))
-                    .and(DSL.field(DSL.quotedName("ft", "revision")).eq(DSL.field(DSL.quotedName("rev", "revision"))))
+                    .and(DSL.field(DSL.quotedName("ft", "revision")).eq(DSL.field(DSL.quotedName("rev",
+                        "revision"))))
             )
             .where(this.defaultFilter(tenantId));
     }
@@ -737,7 +748,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         }
 
         // Update revision
-        List<FlowWithSource> revisions = this.findRevisions(flow.getTenantId(), flow.getNamespace(), flow.getId());
+        List<FlowWithSource> revisions = this.findRevisions(flow.getTenantId(), flow.getNamespace(), flow.getId(), true);
         final int revision = revisions.isEmpty() ? 1 : revisions.getLast().getRevision() + 1;
 
         flow = flow.toBuilder().revision(revision).build();
@@ -757,20 +768,49 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     @Override
     public FlowWithSource delete(FlowInterface flow) {
         Optional<FlowWithSource> existing = this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId(), Optional.ofNullable(flow.getRevision()));
-        if (existing.isEmpty()) {
-            throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
-        }
+        FlowWithSource existingFlow = existing
+            .orElseThrow(() -> new IllegalStateException("Flow " + flow.getId() + " doesn't exists"));
 
         Optional<FlowWithSource> last = this.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId());
         if (last.isEmpty()) {
             throw new IllegalStateException("Flow " + flow.getId() + " doesn't exists");
         }
 
-        if (!last.get().getRevision().equals(existing.get().getRevision())) {
-            throw new IllegalStateException("Trying to deleted old revision, wanted " + existing.get().getRevision() + ", last revision is " + last.get().getRevision());
+        if (!last.get().getRevision().equals(existingFlow.getRevision())) {
+            throw new IllegalStateException("Trying to deleted old revision, wanted " + existingFlow.getRevision() + ", last revision is " + last.get().getRevision());
         }
 
-        FlowWithSource deleted = existing.get().toDeleted();
+        return deleteFlow(flow, existingFlow);
+    }
+
+    @SneakyThrows
+    @Override
+    public void deleteRevisions(String tenantId, String namespace, String id, List<Integer> revisions) {
+        List<FlowWithSource> flows = findRevisions(tenantId, namespace, id, true, revisions);
+        Integer last = lastRevision(tenantId, namespace, id);
+        FlowWithSource lastFlow = null;
+        HashMap<FlowInterface, Map<Field<Object>, Object>> revisionsToDelete = new HashMap<>();
+        for (FlowWithSource flow : flows) {
+            if (Objects.equals(flow.getRevision(), last)) {
+                lastFlow = flow;
+            } else {
+                FlowWithSource toDelete = flow.toBuilder().deleted(true).build();
+                Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(toDelete.toFlow());
+                fields.put(field("source_code"), flow.getSource());
+                revisionsToDelete.put(toDelete, fields);
+            }
+        }
+
+        this.jdbcRepository.persistBatch(revisionsToDelete);
+
+        if (lastFlow != null) {
+            deleteFlow(lastFlow, lastFlow);
+        }
+    }
+
+    private FlowWithSource deleteFlow(FlowInterface flow, FlowWithSource existingFlow)
+        throws QueueException {
+        FlowWithSource deleted = existingFlow.toDeleted();
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted.toFlow());
         fields.put(field("source_code"), deleted.getSource());
@@ -779,7 +819,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         flowQueue.emit(deleted);
         eventPublisher.publishEvent(CrudEvent.delete(flow));
-
         return deleted;
     }
 
@@ -862,7 +901,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .transactionResult(configuration -> DSL
                 .using(configuration)
                 .fetchValue(
-                    DSL.select(field("revision", Integer.class))
+                    DSL.select(REVISION_FIELD)
                         .from(fromLastRevision(true))
                         .where(this.defaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))

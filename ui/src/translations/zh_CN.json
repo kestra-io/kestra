@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "注意：目前，仅支持 Gemini 作为 AI 提供商。\n\n保存配置后重启您的 Kestra 实例。",
+          "footer": "注意：目前，开源版仅支持Gemini作为AI提供商。对于企业版，请参阅AI Copilot文档以获取其他模型提供商的配置。\n\n保存配置后，重新启动您的Kestra实例。",
           "header": "<b>AI Copilot 尚未配置。</b>\n\n要启用 AI Copilot，请将以下代码片段添加到您的 Kestra 实例配置文件中（例如 <code>application.yml</code>），并将 <code>geminiApiKey</code> 替换为您的实际 key："
         },
         "generating": "正在为您生成Flow YAML...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "应用模块",
     "apps": "应用程序",
+    "assets": "资产",
     "attempt": "尝试",
     "attempts": "尝试",
     "auditlogs": "审计日志",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">此执行仍在运行，删除它不会停止它。<br />你需要终止执行以停止它。</div>",
     "delete logs": "删除日志",
     "delete ok": "已删除",
+    "delete revision confirm": "您确定要删除修订版 {revision} 吗？",
+    "delete revision error": "删除修订版 {revision} 时出错，错误信息 {error}",
     "delete task confirm": "确定要删除任务 <code>{taskId}</code> 吗？",
     "delete trigger": "删除 trigger",
     "delete trigger confirmation": "您确定要删除trigger {id}吗？WARNING: 如果trigger仍在flow中激活，删除trigger可能会导致重复执行。",
@@ -335,6 +338,10 @@
         "title": "管理您的实例中的基础设施"
       },
       "namespace": {
+        "assets": {
+          "message": "在 Kestra 企业版中，Assets 保持着与您的工作流交互的资源的实时清单。这些资源可以是数据库表、虚拟机、文件或您使用的任何外部系统。",
+          "title": "集中资产管理"
+        },
         "audit-logs": {
           "message": "在 Kestra 企业版中，您可以查看 namespace 级别的审计日志，包含详细的差异，提供所有资源的更改历史，清晰地显示是谁在何时更改了什么。",
           "title": "在一个地方跟踪所有更改"
@@ -668,6 +675,7 @@
       "end_date": "结束日期",
       "enter description": "输入筛选器描述",
       "enter label": "输入过滤器标签",
+      "enter name": "输入过滤器名称",
       "execution_kind": {
         "playground": "游乐场",
         "playground_description": "从Playground模式触发的执行",
@@ -714,6 +722,7 @@
         "description": "按指标类型筛选",
         "label": "指标"
       },
+      "name": "名称",
       "namespace": {
         "description": "按namespace筛选",
         "label": "命名空间"
@@ -1136,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "确认",
+          "file_single": "您确定要删除文件<code>{name}</code>吗？",
           "files": "您确定要删除 <code>{count}</code> 个文件吗？",
+          "folder_single": "您确定要删除文件夹<code>{name}</code>及其所有内容吗？",
           "folders": "您确定要删除 <code>{count}</code> 个文件夹及其所有内容吗？",
           "mixed": "您确定要删除 <code>{folders}</code> 个文件夹和 <code>{files}</code> 个文件吗？",
           "title": "确认删除内容"
@@ -1493,6 +1504,7 @@
     "resumed title": "恢复执行 <code>{id}</code>",
     "reuse_original_inputs": "重用原始input",
     "revision": "修订版",
+    "revision deleted": "修订版 {revision} 已成功删除",
     "revisions": "修订版",
     "row count": "行数",
     "run task in playground": "在playground中运行task",

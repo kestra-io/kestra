@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Hinweis: Derzeit wird nur Gemini als KI-Anbieter unterstützt.\n\nStarten Sie Ihre Kestra-Instanz neu, nachdem Sie die Konfiguration gespeichert haben.",
+          "footer": "Hinweis: Derzeit wird nur Gemini als KI-Anbieter für die Open Source Edition unterstützt. Für die Enterprise Edition konsultieren Sie bitte die AI Copilot-Dokumentation für die Konfiguration anderer Modellanbieter.\n\nStarten Sie Ihre Kestra-Instanz neu, nachdem Sie die Konfiguration gespeichert haben.",
           "header": "<b>AI Copilot wurde noch nicht konfiguriert.</b>\n\nUm AI Copilot zu aktivieren, fügen Sie den folgenden Ausschnitt in die Konfigurationsdatei Ihrer Kestra-Instanz ein (z. B. <code>application.yml</code>) und ersetzen Sie <code>geminiApiKey</code> durch Ihren tatsächlichen Schlüssel:"
         },
         "generating": "Erzeuge Flow YAML für Sie...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "App-Blöcke",
     "apps": "Apps",
+    "assets": "Vermögenswerte",
     "attempt": "Versuch",
     "attempts": "Versuch(e)",
     "auditlogs": "Audit Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Diese Ausführung läuft noch, das Löschen wird sie nicht stoppen.<br />Sie müssen die Ausführung beenden, um sie zu stoppen.</div>",
     "delete logs": "Logs löschen",
     "delete ok": "ist gelöscht",
+    "delete revision confirm": "Möchten Sie die Revision {revision} wirklich löschen?",
+    "delete revision error": "Fehler beim Löschen der Revision {revision} mit Fehler {error}",
     "delete task confirm": "Möchten Sie den Task <code>{taskId}</code> wirklich löschen?",
     "delete trigger": "Trigger löschen",
     "delete trigger confirmation": "Möchten Sie den Trigger {id} wirklich löschen? WARNING: Das Löschen eines Triggers kann zu doppelten Ausführungen führen, wenn der Trigger noch in einem flow aktiv ist.",
@@ -335,6 +338,10 @@
         "title": "Verwalten Sie die Infrastruktur in Ihrer Instanz"
       },
       "namespace": {
+        "assets": {
+          "message": "In Kestra Enterprise Edition führt Assets ein Live-Inventar der Ressourcen, mit denen Ihre Workflows interagieren. Diese Ressourcen können Datenbanktabellen, virtuelle Maschinen, Dateien oder jedes externe System sein, mit dem Sie arbeiten.",
+          "title": "Zentralisiere Asset-Management"
+        },
         "audit-logs": {
           "message": "In der Kestra Enterprise Edition können Sie Audit-Logs auf Namespace-Ebene mit detaillierten Diffs anzeigen, die Ihnen eine klare Historie darüber geben, wer was und wann an allen Ressourcen geändert hat.",
           "title": "Alle Änderungen an einem Ort verfolgen"
@@ -668,6 +675,7 @@
       "end_date": "Enddatum",
       "enter description": "Filterbeschreibung eingeben",
       "enter label": "Filter-Label eingeben",
+      "enter name": "Filtername eingeben",
       "execution_kind": {
         "playground": "Spielplatz",
         "playground_description": "Ausführungen, die im Playground-Modus ausgelöst wurden",
@@ -714,6 +722,7 @@
         "description": "Nach Metriktyp filtern",
         "label": "Metrik"
       },
+      "name": "Name",
       "namespace": {
         "description": "Nach namespace filtern",
         "label": "Namespace"
@@ -1136,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Bestätigen",
+          "file_single": "Möchten Sie die Datei <code>{name}</code> wirklich löschen?",
           "files": "Möchten Sie wirklich <code>{count}</code> Datei(en) löschen?",
+          "folder_single": "Möchten Sie den Ordner <code>{name}</code> und alle seine Inhalte wirklich löschen?",
           "folders": "Möchten Sie wirklich <code>{count}</code> Ordner und alle seine Inhalte löschen?",
           "mixed": "Möchten Sie wirklich den Ordner <code>{folders}</code> und die Datei <code>{files}</code> löschen?",
           "title": "Bestätigen Sie das Löschen des Inhalts"
@@ -1493,6 +1504,7 @@
     "resumed title": "Ausführung <code>{id}</code> fortsetzen",
     "reuse_original_inputs": "Ursprüngliche Inputs wiederverwenden",
     "revision": "Revision",
+    "revision deleted": "Revision {revision} wurde erfolgreich gelöscht",
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
     "run task in playground": "Task im Playground ausführen",

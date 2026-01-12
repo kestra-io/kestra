@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Nota: Neste momento, apenas a Gemini é suportada como provedor de IA.\n\nReinicie sua instância do Kestra após salvar a configuração.",
+          "footer": "Nota: Neste momento, apenas o Gemini é suportado como provedor de IA para a Open Source Edition. Para a Enterprise Edition, consulte a documentação do AI Copilot para a configuração de outros provedores de modelo.\n\nReinicie sua instância do Kestra após salvar a configuração.",
           "header": "<b>AI Copilot ainda não foi configurado.</b>\n\nPara habilitar o AI Copilot, adicione o seguinte trecho ao arquivo de configuração da sua instância Kestra (por exemplo, <code>application.yml</code>), substituindo <code>geminiApiKey</code> pela sua chave real:"
         },
         "generating": "Gerando Flow YAML para você...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "Blocos do App",
     "apps": "Aplicativos",
+    "assets": "Ativos",
     "attempt": "Tentativa",
     "attempts": "Tentativa(s)",
     "auditlogs": "Audit Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta execução ainda está RUNNING, deletá-la não irá pará-la.<br />Você precisa matar a execução para pará-la.</div>",
     "delete logs": "Deletar logs",
     "delete ok": "está deletado",
+    "delete revision confirm": "Tem certeza de que deseja excluir a revisão {revision}?",
+    "delete revision error": "Erro ao excluir a revisão {revision} com erro {error}",
     "delete task confirm": "Deseja deletar a task <code>{taskId}</code>?",
     "delete trigger": "Excluir trigger",
     "delete trigger confirmation": "Tem certeza de que deseja excluir o trigger {id}? WARNING: excluir um trigger pode levar a execuções duplicadas se o trigger ainda estiver ativo em um flow.",
@@ -335,6 +338,10 @@
         "title": "Gerencie a Infraestrutura em Toda a Sua Instância"
       },
       "namespace": {
+        "assets": {
+          "message": "Na Kestra Enterprise Edition, Assets mantém um inventário ativo de recursos com os quais seus workflows interagem. Esses recursos podem ser tabelas de banco de dados, máquinas virtuais, arquivos ou qualquer sistema externo com o qual você trabalhe.",
+          "title": "Centralizar Gestão de Ativos"
+        },
         "audit-logs": {
           "message": "Na Kestra Enterprise Edition, você pode visualizar logs de auditoria no nível do namespace com diferenças detalhadas, fornecendo um histórico claro de quem alterou o quê e quando em todos os recursos.",
           "title": "Acompanhe Todas as Alterações em Um Só Lugar"
@@ -668,6 +675,7 @@
       "end_date": "Data de Término",
       "enter description": "Insira a descrição do filtro",
       "enter label": "Insira o filtro {label}",
+      "enter name": "Insira o nome do filtro",
       "execution_kind": {
         "playground": "Playground",
         "playground_description": "Execuções acionadas a partir do modo Playground",
@@ -714,6 +722,7 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
+      "name": "Nome",
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"
@@ -1136,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Confirmar",
+          "file_single": "Tem certeza de que deseja excluir o arquivo <code>{name}</code>?",
           "files": "Tem certeza de que deseja excluir <code>{count}</code> arquivo(s)?",
+          "folder_single": "Tem certeza de que deseja excluir a pasta <code>{name}</code> e todo o seu conteúdo?",
           "folders": "Tem certeza de que deseja excluir <code>{count}</code> pasta(s) e todo o seu conteúdo?",
           "mixed": "Tem certeza de que deseja excluir a(s) pasta(s) <code>{folders}</code> e o(s) arquivo(s) <code>{files}</code>?",
           "title": "Confirmar exclusão de conteúdo"
@@ -1493,6 +1504,7 @@
     "resumed title": "Retomar execução <code>{id}</code>",
     "reuse_original_inputs": "Reutilizar inputs originais",
     "revision": "Revisão",
+    "revision deleted": "A revisão {revision} foi excluída com sucesso",
     "revisions": "Revisões",
     "row count": "Contagem de linhas",
     "run task in playground": "Executar task no playground",

@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Nota: En este momento, solo se admite Gemini como proveedor de AI.\n\nReinicia tu instancia de Kestra después de guardar la configuración.",
+          "footer": "Nota: En este momento, solo se admite Gemini como proveedor de AI para la Edición de Código Abierto. Para la Edición Empresarial, consulte la documentación de AI Copilot para la configuración de otros proveedores de modelos.\n\nReinicie su instancia de Kestra después de guardar la configuración.",
           "header": "<b>AI Copilot aún no ha sido configurado.</b>\n\nPara habilitar AI Copilot, añade el siguiente fragmento a tu archivo de configuración de la instancia de Kestra (por ejemplo, <code>application.yml</code>), reemplazando <code>geminiApiKey</code> con tu key real:"
         },
         "generating": "Generando YAML de Flow para ti...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "Bloques de la App",
     "apps": "Aplicaciones",
+    "assets": "Activos",
     "attempt": "Intento",
     "attempts": "Intento(s)",
     "auditlogs": "Audit Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta ejecución aún está RUNNING, eliminarla no la detendrá.<br />Necesitas matar la ejecución para detenerla.</div>",
     "delete logs": "Eliminar logs",
     "delete ok": "está eliminado",
+    "delete revision confirm": "¿Está seguro de que desea eliminar la revisión {revision}?",
+    "delete revision error": "Error al eliminar la revisión {revision} con el error {error}",
     "delete task confirm": "¿Quieres eliminar la task <code>{taskId}</code>?",
     "delete trigger": "Eliminar trigger",
     "delete trigger confirmation": "¿Está seguro de que desea eliminar el trigger {id}? WARNING: eliminar un trigger puede llevar a ejecuciones duplicadas si el trigger aún está activo en un flow.",
@@ -335,6 +338,10 @@
         "title": "Gestionar la Infraestructura en Toda su Instancia"
       },
       "namespace": {
+        "assets": {
+          "message": "En Kestra Enterprise Edition, Assets mantiene un inventario en vivo de los recursos con los que interactúan tus flujos de trabajo. Estos recursos pueden ser tablas de bases de datos, máquinas virtuales, archivos o cualquier sistema externo con el que trabajes.",
+          "title": "Centralizar la Gestión de Activos"
+        },
         "audit-logs": {
           "message": "En la Edición Enterprise de Kestra, puedes ver los logs de auditoría a nivel de namespace con diferencias detalladas, proporcionándote un historial claro de quién cambió qué y cuándo en todos los recursos.",
           "title": "Rastrea todos los cambios en un solo lugar"
@@ -668,6 +675,7 @@
       "end_date": "Fecha de finalización",
       "enter description": "Ingrese la descripción del filtro",
       "enter label": "Ingrese etiqueta de filtro",
+      "enter name": "Ingrese el nombre del filtro",
       "execution_kind": {
         "playground": "Área de Pruebas",
         "playground_description": "Ejecuciones activadas desde el modo Playground",
@@ -714,6 +722,7 @@
         "description": "Filtrar por tipo de métrica",
         "label": "Métrica"
       },
+      "name": "Nombre",
       "namespace": {
         "description": "Filtrar por namespace",
         "label": "Namespace"
@@ -1136,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Confirmar",
+          "file_single": "¿Está seguro de que desea eliminar el archivo <code>{name}</code>?",
           "files": "¿Está seguro de que desea eliminar <code>{count}</code> archivo(s)?",
+          "folder_single": "¿Está seguro de que desea eliminar la carpeta <code>{name}</code> y todo su contenido?",
           "folders": "¿Está seguro de que desea eliminar <code>{count}</code> carpeta(s) y todo su contenido?",
           "mixed": "¿Está seguro de que desea eliminar la(s) carpeta(s) <code>{folders}</code> y el/los archivo(s) <code>{files}</code>?",
           "title": "Confirmar eliminación de contenido"
@@ -1493,6 +1504,7 @@
     "resumed title": "Reanudar ejecución <code>{id}</code>",
     "reuse_original_inputs": "Reutilizar inputs originales",
     "revision": "Revisión",
+    "revision deleted": "La revisión {revision} ha sido eliminada con éxito",
     "revisions": "Revisiones",
     "row count": "Recuento de filas",
     "run task in playground": "Ejecutar task en el playground",

@@ -20,22 +20,22 @@ import java.util.concurrent.locks.ReentrantLock;
  * Class responsible for continuously executing a polling query.
  */
 public final class JdbcQueuePoller implements Runnable {
-    
+
     private static final Logger log = LoggerFactory.getLogger(JdbcQueuePoller.class);
-    
+
     private final JdbcQueueConfiguration configuration;
-    
+
     private final AtomicBoolean running = new AtomicBoolean(true);
-    
+
     private final Callable<Integer> pollingQuery;
-    
+
     // Pause
     private final AtomicBoolean paused = new AtomicBoolean(false);
     private final ReentrantLock pauseLock = new ReentrantLock();
     private final Condition unpaused = pauseLock.newCondition();
-    
+
     private final CountDownLatch stopped = new CountDownLatch(1);
-    
+
     /**
      * Creates a new {@link JdbcQueuePoller} instance.
      *
@@ -47,7 +47,7 @@ public final class JdbcQueuePoller implements Runnable {
         this.configuration = Objects.requireNonNull(configuration);
         this.pollingQuery = Objects.requireNonNull(pollingQuery);
     }
-    
+
     @Override
     public void run() {
         List<JdbcQueueConfiguration.Step> steps = configuration.computeSteps();
@@ -63,32 +63,32 @@ public final class JdbcQueuePoller implements Runnable {
             stopped.countDown();
         }
     }
-    
+
     @VisibleForTesting
     ZonedDateTime pollOnce(ZonedDateTime lastPoll, List<JdbcQueueConfiguration.Step> steps) {
         Duration sleep;
         try {
             // Check pause before starting any query
             waitIfPaused();
-            
+
             // Check if the loop was stopped while being paused
             if (!running.get()) {
                 return null;
             }
-            
+
             Integer count = pollingQuery.call();
             if (count > 0) {
                 lastPoll = ZonedDateTime.now();
                 sleep = configuration.minPollInterval();
                 if (configuration.immediateRepoll()) {
-                    return null;
+                    return lastPoll;
                 } else if (count.equals(configuration.pollSize())) {
                     // Note: this provides better latency on high throughput: when Kestra is a top capacity,
                     // it will not do a sleep and immediately poll again.
                     // We can even have better latency at even higher latency by continuing for positive count,
                     // but at higher database cost.
                     // Current impl balance database cost with latency.
-                    return null;
+                    return lastPoll;
                 }
             } else {
                 ZonedDateTime finalLastPoll = lastPoll;
@@ -99,9 +99,9 @@ public final class JdbcQueuePoller implements Runnable {
                 // then select the last one (longest) or minPoll if all are beyond while means we are under the first interval
                 sleep = selectedSteps.isEmpty() ? configuration.minPollInterval() : selectedSteps.getLast().pollInterval();
             }
-            
+
             Thread.sleep(sleep);
-            
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("Interrupted while waiting. Stopping.");
@@ -115,12 +115,12 @@ public final class JdbcQueuePoller implements Runnable {
         }
         return lastPoll;
     }
-    
+
     private void waitIfPaused() throws InterruptedException {
         if (!paused.get()) {
             return; // return immediately if not paused.
         }
-        
+
         pauseLock.lock();
         try {
             while (paused.get() && running.get()) {
@@ -132,14 +132,14 @@ public final class JdbcQueuePoller implements Runnable {
             pauseLock.unlock();
         }
     }
-    
+
     /**
      * Pauses this poller.
      */
     public void pause() {
         paused.set(true);
     }
-    
+
     /**
      * Resumes this poller if currently paused.
      */
@@ -153,7 +153,7 @@ public final class JdbcQueuePoller implements Runnable {
             pauseLock.unlock();
         }
     }
-    
+
     /**
      * Stops this poller.
      */
@@ -161,9 +161,9 @@ public final class JdbcQueuePoller implements Runnable {
         if (!this.running.compareAndSet(true, false)) {
             return; // already stopped
         }
-        
+
         resume(); // In case it's paused and blocked
-        
+
         try {
             // wait for the poller to be stooped
             stopped.await();

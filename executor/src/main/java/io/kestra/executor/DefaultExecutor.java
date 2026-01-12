@@ -298,7 +298,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
         } else {
             setState(ServiceState.RUNNING);
         }
-        setState(ServiceState.RUNNING);
         log.info("Executor started with {} thread(s)", numberOfThreads);
     }
 

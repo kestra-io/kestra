@@ -101,7 +101,7 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
             .map(s -> field.likeIgnoreCase("%" + s.toUpperCase(Locale.ROOT) + "%"))
             .toList();
 
-        if (match.size() == 0) {
+        if (match.isEmpty()) {
             return DSL.falseCondition();
         }
 
@@ -121,7 +121,7 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
             )
             .fetch();
 
-        Integer totalCount = results.size() > 0 ? results.getFirst().get("total_count", Integer.class) : 0;
+        Integer totalCount = !results.isEmpty() ? results.getFirst().get("total_count", Integer.class) : 0;
 
         List<E> map = results
             .map((Record record) -> mapper.map((R) record));

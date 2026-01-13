@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -169,6 +168,34 @@ public class TestRunnerUtils {
         return this.emitAndAwaitExecution(isRunningExecution(execution), execution, duration);
     }
 
+    public Execution runOneUntil(String tenantId, String namespace, String flowId, Predicate<Execution> predicate)
+        throws QueueException {
+        return this.runOneUntil(tenantId, namespace, flowId, null, null, null, predicate);
+    }
+
+    public Execution runOneUntil(String tenantId, String namespace, String flowId, Integer revision, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration, Predicate<Execution> predicate)
+        throws QueueException {
+        return this.runOneUntil(
+            flowRepository
+                .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+            inputs,
+            duration,
+            predicate
+        );
+    }
+
+    public Execution runOneUntil(Flow flow, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration, Predicate<Execution> predicate)
+        throws QueueException {
+        if (duration == null) {
+            duration = DEFAULT_MAX_WAIT_DURATION;
+        }
+
+        Execution execution = Execution.newExecution(flow, inputs, null, Optional.empty());
+
+        return this.emitAndAwaitExecution(predicate, execution, duration);
+    }
+
     public Execution emitAndAwaitExecution(Predicate<Execution> predicate, Execution execution) throws QueueException {
         return emitAndAwaitExecution(predicate, execution, Duration.ofSeconds(20));
     }
@@ -323,7 +350,6 @@ public class TestRunnerUtils {
         ), execution);
     }
 
-    @VisibleForTesting
     public Execution awaitChildExecution(Flow flow, Execution parentExecution, Execution execution, Duration duration)
         throws QueueException {
         return this.emitAndAwaitExecution(isTerminatedChildExecution(parentExecution, flow), execution, duration);

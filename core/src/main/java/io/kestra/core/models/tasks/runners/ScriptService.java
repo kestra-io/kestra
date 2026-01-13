@@ -226,9 +226,7 @@ public final class ScriptService {
             string = string.substring(0, 63);
         }
 
-        string = StringUtils.stripEnd(string, "-");
-        string = StringUtils.stripEnd(string, ".");
-        string = StringUtils.stripEnd(string, "_");
+        string = StringUtils.stripEnd(string, "-._");
 
         return string;
     }

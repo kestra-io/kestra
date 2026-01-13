@@ -37,9 +37,6 @@ import java.util.stream.Stream;
  * @param <T> the type of the persisted entity.
  */
 public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcRepository {
-    protected static final Field<String> KEY_FIELD = field("key", String.class);
-    protected static final Field<String> VALUE_FIELD = field("value", String.class);
-
     protected io.kestra.jdbc.AbstractJdbcRepository<T> jdbcRepository;
     protected QueueService queueService;
 
@@ -265,7 +262,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
                     select.orderBy(orderByFields);
                 }
 
-                try (Stream<Record1<String>> stream = select.fetchSize(FETCH_SIZE).stream()){
+                try (var stream = select.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
                         .forEach(emitter::next);
                 } finally {
@@ -379,7 +376,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
                     .from(this.jdbcRepository.getTable())
                     .where(defaultFilter);
 
-                try (Stream<Record1<String>> stream = select.fetchSize(FETCH_SIZE).stream()){
+                try (var stream = select.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
                         .forEach(emitter::next);
                 } finally {

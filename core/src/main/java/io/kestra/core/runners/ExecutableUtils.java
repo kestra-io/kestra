@@ -191,7 +191,8 @@ public final class ExecutableUtils {
                     flow,
                     (f, e) -> flowInputOutput.readExecutionInputs(f, e, inputs),
                     newLabels,
-                    Optional.empty())
+                    runContext.render(scheduleDate).as(ZonedDateTime.class),
+                    currentExecution.getKind())
                 .withTrigger(ExecutionTrigger.builder()
                     .id(currentTask.getId())
                     .type(currentTask.getType())

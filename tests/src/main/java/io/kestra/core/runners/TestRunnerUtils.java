@@ -82,7 +82,7 @@ public class TestRunnerUtils {
         return this.runOne(
             flowRepository
                 .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'")),
             inputs,
             duration,
             labels);
@@ -124,7 +124,7 @@ public class TestRunnerUtils {
         return this.runOneUntilPaused(
             flowRepository
                 .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'")),
             inputs,
             duration
         );
@@ -151,7 +151,7 @@ public class TestRunnerUtils {
         return this.runOneUntilRunning(
             flowRepository
                 .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'")),
             inputs,
             duration
         );
@@ -178,7 +178,7 @@ public class TestRunnerUtils {
         return this.runOneUntil(
             flowRepository
                 .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'")),
             inputs,
             duration,
             predicate
@@ -303,7 +303,7 @@ public class TestRunnerUtils {
         Flow flow = flowRepository
             .findById(tenantId, namespace, flowId, Optional.empty())
             .orElseThrow(
-                () -> new IllegalArgumentException("Unable to find flow '" + flowId + "'"));
+                () -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'"));
         try {
             if (duration == null){
                 duration = Duration.ofSeconds(20);

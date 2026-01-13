@@ -485,7 +485,7 @@ public class ExecutorService {
             .toList();
 
         // Remove functional style to avoid (class io.kestra.core.exceptions.IllegalVariableEvaluationException cannot be cast to class java.lang.RuntimeException'
-        ArrayList<TaskRun> result = new ArrayList<>();
+        List<TaskRun> result = new ArrayList<>();
 
         for (TaskRun taskRun : running) {
             result.addAll(this.childNextsTaskRun(executor, taskRun));
@@ -1248,7 +1248,7 @@ public class ExecutorService {
 
     // Note: as the flow is only used in an error branch and it can take time to load, we pass it thought a Supplier
     private Execution addDynamicTaskRun(Execution execution, Supplier<FlowWithSource> flow, WorkerTaskResult workerTaskResult) throws InternalException {
-        ArrayList<TaskRun> taskRuns = new ArrayList<>(ListUtils.emptyOnNull(execution.getTaskRunList()));
+        List<TaskRun> taskRuns = new ArrayList<>(ListUtils.emptyOnNull(execution.getTaskRunList()));
 
         // declared dynamic tasks
         if (!ListUtils.isEmpty(workerTaskResult.getDynamicTaskRuns())) {

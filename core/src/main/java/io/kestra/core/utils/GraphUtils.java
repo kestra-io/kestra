@@ -133,7 +133,7 @@ public class GraphUtils {
             .toList();
     }
 
-    public static Set<AbstractGraph> successors(GraphCluster graphCluster, List<String> taskRunIds) {
+    public static Set<AbstractGraph> successors(GraphCluster graphCluster, Set<String> taskRunIds) {
         List<FlowGraph.Edge> edges = GraphUtils.edges(graphCluster);
         List<AbstractGraph> nodes = GraphUtils.nodes(graphCluster);
 

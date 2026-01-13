@@ -165,9 +165,7 @@
                                     sortable="custom"
                                     :sortOrders="['ascending', 'descending']"
                                     :label="$t('namespace')"
-                                    :formatter="(_: any, __: any, cellValue: string) =>
-                                        FILTERS.invisibleSpace(cellValue)
-                                    "
+                                    :formatter="(_: any, __: any, cellValue: string) => FILTERS.invisibleSpace(cellValue)"
                                 />
 
                                 <el-table-column

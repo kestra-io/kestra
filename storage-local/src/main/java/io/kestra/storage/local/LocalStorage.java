@@ -11,9 +11,9 @@ import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URI;
@@ -33,9 +33,9 @@ import static io.kestra.core.utils.WindowsUtils.windowsToUnixPath;
 @Plugin.Id("local")
 @Getter
 @Setter
+@Slf4j
 @NoArgsConstructor
 public class LocalStorage implements StorageInterface {
-    private static final Logger log = LoggerFactory.getLogger(LocalStorage.class);
     private static final int MAX_OBJECT_NAME_LENGTH = 255;
 
     @PluginProperty
@@ -88,6 +88,11 @@ public class LocalStorage implements StorageInterface {
     public List<URI> allByPrefix(String tenantId, @Nullable String namespace, URI prefix, boolean includeDirectories) throws IOException {
         Path fsPath = getLocalPath(tenantId, prefix);
         List<URI> uris = new ArrayList<>();
+
+        if (!Files.exists(fsPath)) {
+            return List.of();
+        }
+
         Files.walkFileTree(fsPath, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {

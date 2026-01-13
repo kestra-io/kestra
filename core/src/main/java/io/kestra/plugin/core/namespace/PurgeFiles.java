@@ -26,25 +26,28 @@ import java.util.concurrent.atomic.AtomicLong;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete expired keys globally for a specific namespace.",
-    description = "This task will delete expired keys from the Kestra KV store. By default, it will only delete expired keys, but you can choose to delete all keys by setting `expiredOnly` to false. You can also filter keys by a specific pattern and choose to include child namespaces."
+    title = "Purge namespace files for one or multiple namespaces.",
+    description = "This task purges namespace files (and their versions) stored in Kestra. You can restrict the purge to specific namespaces (or a namespace glob pattern), optionally include child namespaces, and filter files by a glob pattern. The purge strategy is controlled via `behavior` (e.g. keep the last N versions and/or delete versions older than a given date)."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Delete expired keys globally for a specific namespace, with or without including child namespaces.",
+            title = "Purge old versions of namespace files for a namespace tree.",
             full = true,
             code = """
-                id: purge_kv_store
+                id: purge_namespace_files
                 namespace: system
-                
+
                 tasks:
-                  - id: purge_kv
-                    type: io.kestra.plugin.core.kv.PurgeKV
-                    expiredOnly: true
+                  - id: purge_files
+                    type: io.kestra.plugin.core.namespace.PurgeFiles
                     namespaces:
                       - company
                     includeChildNamespaces: true
+                    filePattern: "**/*.sql"
+                    behavior:
+                      type: version
+                      before: "2025-01-01T00:00:00Z"
                 """
         )
     }
@@ -116,7 +119,7 @@ public class PurgeFiles extends Task implements PurgeTask<NamespaceFile>, Runnab
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The number of purged KV pairs"
+            title = "The number of purged namespace file versions"
         )
         private Long size;
     }

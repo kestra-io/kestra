@@ -46,17 +46,25 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
             return DSL.trueCondition();
         }
 
-        String match = Arrays
-            .stream(query.split("\\p{IsPunct}"))
-            .filter(s -> s.length() >= 3)
-            .map(s -> "*" + s + "*")
-            .collect(Collectors.joining(" "));
+        // Escape %, _ and \ for LIKE
+        String escaped = escapeForLike(query);
+        String pattern = "%" + escaped + "%";
 
-        if (match.isEmpty()) {
-            return DSL.falseCondition();
+        // OR across all fields
+        Condition condition = DSL.falseCondition();
+        for (String fieldName : fields) {
+            Field<String> f = DSL.field(fieldName, String.class);
+            condition = condition.or(f.like(pattern, '\\'));
         }
 
-        return DSL.condition("MATCH (" + String.join(", ", fields) + ") AGAINST (? IN BOOLEAN MODE)", match);
+        return condition;
+    }
+
+    private static String escapeForLike(String s) {
+        return s
+            .replace("\\", "\\\\")
+            .replace("%", "\\%")
+            .replace("_", "\\_");
     }
 
     @Override

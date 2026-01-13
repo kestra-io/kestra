@@ -1,7 +1,7 @@
 <template>
     <el-select
         v-model="modelValue"
-        :placeholder="te(`no_code.select.${blockType}`) ? t(`no_code.select.${blockType}`) : t('no_code.select.default')"
+        :placeholder="$te(`no_code.select.${blockType}`) ? $t(`no_code.select.${blockType}`) : $t('no_code.select.default')"
         filterable
     >
         <el-option
@@ -26,7 +26,6 @@
 
 <script setup lang="ts">
     import {computed, inject, onBeforeMount, ref} from "vue";
-    import {useI18n} from "vue-i18n";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {removeRefPrefix, usePluginsStore} from "../../stores/plugins";
     import {
@@ -112,8 +111,6 @@
     const hasIcons = computed(() => {
         return pluginsStore.icons && Object.keys(pluginsStore.icons).filter(plugin => taskModels.value.includes(plugin)).length > 0;
     });
-
-    const {t, te} = useI18n();
 
     const modelValue = defineModel({
         type: String,

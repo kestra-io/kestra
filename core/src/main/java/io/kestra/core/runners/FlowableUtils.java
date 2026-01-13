@@ -433,7 +433,9 @@ public class FlowableUtils {
             parentTaskRun
         );
 
-        boolean isTasks = tasks.equals(currentTasks);
+        List<ResolvedTask> resolvedTasks = execution.findTaskDependingFlowState(tasks);
+
+        boolean isTasks = resolvedTasks.equals(currentTasks);
 
         // errors & finally must be run as sequential tasks
         if (!isTasks) {

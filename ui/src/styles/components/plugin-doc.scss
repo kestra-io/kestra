@@ -16,6 +16,12 @@
         min-width: 50px;
     }
 
+    .plugin-version {
+        color: var(--ks-content-secondary);
+        font-size: 0.875rem;
+        white-space: nowrap;
+    }
+
     .plugin-schema {
         :deep(.markdown) {
             display: flex;

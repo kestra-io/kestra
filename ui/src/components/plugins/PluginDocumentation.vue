@@ -11,6 +11,9 @@
                 <h4 class="mb-0 plugin-title text-truncate">
                     {{ pluginName }}
                 </h4>
+                <span v-if="currentPlugin?.version" class="plugin-version">
+                    {{ $t('version') }}: <strong>{{ currentPlugin.version }}</strong>
+                </span>
                 <el-button
                     v-if="releaseNotesUrl"
                     size="small"

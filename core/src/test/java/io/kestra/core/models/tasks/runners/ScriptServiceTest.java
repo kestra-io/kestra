@@ -195,7 +195,6 @@ class ScriptServiceTest {
 
     @Test
     void normalize() {
-        // existing tests
         assertThat(ScriptService.normalize(null)).isNull();
         assertThat(ScriptService.normalize("a-normal-string")).isEqualTo("a-normal-string");
         assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace"))

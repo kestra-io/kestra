@@ -6,6 +6,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,7 @@ public class BearerAuthConfiguration extends AbstractAuthConfiguration {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Getter(AccessLevel.NONE)
     protected AuthType type = AuthType.BEARER;
 
     @Schema(title = "The token for bearer token authentication.")
@@ -34,5 +36,10 @@ public class BearerAuthConfiguration extends AbstractAuthConfiguration {
                 HttpHeaders.AUTHORIZATION,
                 "Bearer " + renderedToken
             )));
+    }
+
+    @Override
+    public AuthType getType() {
+        return this.type;
     }
 }

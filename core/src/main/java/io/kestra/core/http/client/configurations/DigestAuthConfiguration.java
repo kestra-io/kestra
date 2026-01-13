@@ -6,6 +6,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,6 +21,7 @@ public class DigestAuthConfiguration extends AbstractAuthConfiguration {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Getter(AccessLevel.NONE)
     protected AuthType type = AuthType.DIGEST;
 
     @Schema(title = "The username for HTTP Digest authentication.")
@@ -32,5 +34,9 @@ public class DigestAuthConfiguration extends AbstractAuthConfiguration {
     public void configure(HttpClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {
         builder.setTargetAuthenticationStrategy(new DefaultAuthenticationStrategy());
     }
-}
 
+    @Override
+    public AuthType getType() {
+        return this.type;
+    }
+}

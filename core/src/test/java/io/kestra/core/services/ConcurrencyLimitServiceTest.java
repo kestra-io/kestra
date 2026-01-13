@@ -11,7 +11,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -39,17 +39,17 @@ class ConcurrencyLimitServiceTest {
     private static final String CONCURRENCY_LIMIT_SERVICE_TEST_UNQUEUE_EXECUTION_TENANT = "concurrency_limit_service_test_unqueue_execution_tenant";
 
     @Inject
-    private RunnerUtils runnerUtils;
+    private TestRunnerUtils runnerUtils;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
+    private ConcurrencyLimitService concurrencyLimitService;
 
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
 
     @Inject
-    private ConcurrencyLimitService concurrencyLimitService;
+    @Named(QueueFactoryInterface.EXECUTION_NAMED)
+    private QueueInterface<Execution> executionQueue;
 
     @AfterEach
     void tearDown() {
@@ -121,19 +121,16 @@ class ConcurrencyLimitServiceTest {
         assertThat(list.getFirst().getFlowId()).isEqualTo(execution.getFlowId());
     }
 
-    private Execution runUntilQueued(String namespace, String flowId) throws TimeoutException, QueueException {
-        return runUntilQueued(TENANT_ID, namespace, flowId);
-    }
-
-    private Execution runUntilQueued(String tenantId, String namespace, String flowId) throws TimeoutException, QueueException {
+    private Execution runUntilQueued(String tenantId, String namespace, String flowId) throws QueueException {
         return runUntilState(tenantId, namespace, flowId, State.Type.QUEUED);
     }
 
-    private Execution runUntilState(String tenantId, String namespace, String flowId, State.Type state) throws TimeoutException, QueueException {
+    private Execution runUntilState(String tenantId, String namespace, String flowId, State.Type state) throws QueueException {
         Execution execution = this.createExecution(tenantId, namespace, flowId);
+        this.executionQueue.emit(execution);
         return runnerUtils.awaitExecution(
             it -> execution.getId().equals(it.getId()) && it.getState().getCurrent() == state,
-            throwRunnable(() -> this.executionQueue.emit(execution)),
+            execution,
             Duration.ofSeconds(1));
     }
 

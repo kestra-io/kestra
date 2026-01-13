@@ -1,10 +1,11 @@
 package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record1;
@@ -56,7 +57,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        field("end_date").lt(Timestamp.from(now)).and(buildTenantCondition(tenantId))
+                        field("end_date").lt(OffsetDateTime.now(ZoneOffset.UTC)).and(buildTenantCondition(tenantId))
                     );
 
                 return this.jdbcRepository.fetch(select);

@@ -433,7 +433,7 @@ public class FlowableUtils {
             parentTaskRun
         );
 
-        List<ResolvedTask> resolvedTasks = execution.findTaskDependingFlowState(tasks);
+        List<ResolvedTask> resolvedTasks = execution.removeDisabled(tasks);
 
         boolean isTasks = resolvedTasks.equals(currentTasks);
 

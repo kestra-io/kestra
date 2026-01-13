@@ -514,7 +514,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         return resolvedTasks;
     }
 
-    private List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
+    public List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
         if (tasks == null) {
             return null;
         }

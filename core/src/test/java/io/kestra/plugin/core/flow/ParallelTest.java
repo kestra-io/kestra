@@ -69,4 +69,11 @@ class ParallelTest {
             .filter(taskRun -> !"sleep".equals(taskRun.getTaskId()))
             .forEach(run -> assertThat(run.getState().isTerminated()).isTrue());
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/parallel-disabled-tasks.yaml")
+    void parallelDisabledTasks(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(7);
+    }
 }

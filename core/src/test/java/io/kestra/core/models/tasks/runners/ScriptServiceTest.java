@@ -197,7 +197,16 @@ class ScriptServiceTest {
     void normalize() {
         assertThat(ScriptService.normalize(null)).isNull();
         assertThat(ScriptService.normalize("a-normal-string")).isEqualTo("a-normal-string");
-        assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace")).isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
+        assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace"))
+            .isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
+
+        // new tests for the fix
+        assertThat(ScriptService.normalize("abc-_")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc.-")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc_-")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc-._")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc---")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("a-b-c-")).isEqualTo("a-b-c");
     }
 
     private RunContext runContext(RunContextFactory runContextFactory, String namespace) {

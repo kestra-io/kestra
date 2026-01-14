@@ -22,6 +22,7 @@ public class BasicAuthConfiguration extends AbstractAuthConfiguration {
     @NotNull
     @JsonInclude
     @Builder.Default
+    @Getter(AccessLevel.NONE)
     protected AuthType type = AuthType.BASIC;
 
     @Schema(title = "The username for HTTP basic authentication.")
@@ -43,5 +44,10 @@ public class BasicAuthConfiguration extends AbstractAuthConfiguration {
                 HttpHeaders.AUTHORIZATION,
                 "Basic " + new String(encoded, StandardCharsets.UTF_8)
             )));
+    }
+
+    @Override
+    public AuthType getType() {
+        return this.type;
     }
 }

@@ -18,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -54,14 +55,19 @@ class BasicAuthServiceTest {
     @Inject
     private InstanceService instanceService;
 
+    @BeforeEach
+    void setUp() {
+        stubFor(any(urlMatching(".*"))
+            .willReturn(aResponse()
+                .withStatus(404)
+                .withBody("No stub matched")));
+    }
+
     @AfterEach
-    void stopApp() {
-        stubFor(
-            post(urlEqualTo("/v1/reports/events"))
-                .willReturn(aResponse().withStatus(200))
-        );
+    void afterEach() {
         deleteSetting();
     }
+
 
     @Test
     void isBasicAuthInitialized(){
@@ -70,22 +76,22 @@ class BasicAuthServiceTest {
             new BasicAuthConfiguration(USER_NAME, PASSWORD, null, null)
         ).config;
         basicAuthService.init();
-        assertTrue(basicAuthService.isBasicAuthInitialized());
+        assertThat(basicAuthService.isBasicAuthInitialized()).as("isBasicAuthInitialized after init with basic auth configured with user and password").isTrue();
 
         deleteSetting();
-        assertFalse(basicAuthService.isBasicAuthInitialized());
+        assertThat(basicAuthService.isBasicAuthInitialized()).as("not isBasicAuthInitialized when there is no settings").isFalse();
 
         basicAuthService.basicAuthConfiguration = new ConfigWrapper(
             new BasicAuthConfiguration(USER_NAME, null, null, null)
         ).config;
         basicAuthService.init();
-        assertFalse(basicAuthService.isBasicAuthInitialized());
+        assertThat(basicAuthService.isBasicAuthInitialized()).as("not isBasicAuthInitialized when there is settings but only user name").isFalse();
 
         basicAuthService.basicAuthConfiguration = new ConfigWrapper(
             new BasicAuthConfiguration(null, null, null, null)
         ).config;
         basicAuthService.init();
-        assertFalse(basicAuthService.isBasicAuthInitialized());
+        assertThat(basicAuthService.isBasicAuthInitialized()).as("not isBasicAuthInitialized when there is settings but no user and password").isFalse();
     }
 
     @Test
@@ -208,6 +214,11 @@ class BasicAuthServiceTest {
 
     @Test
     void initFromYamlConfig() throws TimeoutException {
+        stubFor(
+            post(urlEqualTo("/v1/reports/events"))
+                .willReturn(aResponse().withStatus(200))
+        );
+
         basicAuthService.basicAuthConfiguration = basicAuthConfiguration;
         basicAuthService.init();
         assertConfigurationMatchesApplicationYaml();
@@ -237,6 +248,11 @@ class BasicAuthServiceTest {
 
     @Test
     void saveValidAuthConfig() throws TimeoutException {
+        stubFor(
+            post(urlEqualTo("/v1/reports/events"))
+                .willReturn(aResponse().withStatus(200))
+        );
+
         basicAuthService.save(new BasicAuthCredentials(null, USER_NAME, PASSWORD));
         awaitOssAuthEventApiCall(USER_NAME);
     }

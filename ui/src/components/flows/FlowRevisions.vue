@@ -5,6 +5,7 @@
         :revisions="flowRevisions"
         :revisionSource="loadRevisionContent"
         @restore="restoreRevision"
+        @deleted="onRevisionDeleted"
         class="flow-revisions"
     >
         <template #crud="{revision}">
@@ -82,6 +83,15 @@
             allowDeleted: true,
             store: false
         })).source;
+    }
+
+    async function onRevisionDeleted(revision: number) {
+        const updatedQuery = {...route.query};
+        for (const key of ["revisionLeft", "revisionRight"]) {
+            if ((updatedQuery as any)[key]?.toString() === `${revision}`) delete (updatedQuery)[key];
+        }
+        await router.push({query: updatedQuery});
+        await fetchRevisions();
     }
 
     watch(() => [route.params.namespace, route.params.id], fetchRevisions);

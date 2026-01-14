@@ -232,7 +232,7 @@ public final class ScriptService {
     }
 
     /**
-     * Create a job name like {namespace}-{flowId}-{taskId}-{random} with random being 5 alphanumerical characters.
+     * Create a job name like {namespace}-{flowId}-{taskId}-{random} with random being 8 alphanumerical characters.
      * The Job name will be normalized based on the DNS Subdomain Names (RFC 1123) with a limit of 63 characters as used by Kubernetes
      */
     @SuppressWarnings("unchecked")
@@ -247,12 +247,12 @@ public final class ScriptService {
             task.get("id")
         ));
         String normalized = normalizeValue(name, true, true);
-        if (normalized.length() > 58) {
-            normalized = normalized.substring(0, 57);
+        if (normalized.length() > 55) {
+            normalized = normalized.substring(0, 54);
         }
 
-        // we add a suffix of 5 chars, this should be enough as it's the standard k8s way
-        String suffix = RandomStringUtils.secure().nextAlphanumeric(5).toLowerCase();
+        // we add a suffix of 8 chars, this is safer for high-concurrency scenarios
+        String suffix = RandomStringUtils.secure().nextAlphanumeric(8).toLowerCase();
         return normalized + "-" + suffix;
     }
 }

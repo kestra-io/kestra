@@ -39,7 +39,7 @@
         "cytoscape": "^3.33.0",
         "dagre": "^0.8.5",
         "dotenv": "^17.2.3",
-        "element-plus": "2.13.0",
+        "element-plus": "2.13.1",
         "humanize-duration": "^3.33.2",
         "js-yaml": "^4.1.1",
         "lodash": "^4.17.21",
@@ -67,7 +67,7 @@
         "vue-axios": "^3.5.2",
         "vue-chartjs": "^5.3.3",
         "vue-gtag": "^3.6.3",
-        "vue-i18n": "^11.2.7",
+        "vue-i18n": "^11.2.8",
         "vue-material-design-icons": "^5.3.1",
         "vue-router": "^4.6.4",
         "vue-sidebar-menu": "^5.9.1",
@@ -120,9 +120,9 @@
         "playwright": "^1.55.0",
         "prettier": "^3.7.4",
         "rimraf": "^6.1.2",
-        "rolldown-vite": "^7.3.0",
+        "rolldown-vite": "^7.3.1",
         "rollup-plugin-copy": "^3.5.0",
-        "sass": "^1.97.1",
+        "sass": "^1.97.2",
         "storybook": "^9.1.17",
         "storybook-vue3-router": "^6.0.2",
         "ts-node": "^10.9.2",
@@ -131,7 +131,7 @@
         "uuid": "^13.0.0",
         "vite": "npm:rolldown-vite@latest",
         "vitest": "^3.2.4",
-        "vue-tsc": "^3.2.1"
+        "vue-tsc": "^3.2.2"
     },
     "optionalDependencies": {
         "@esbuild/darwin-arm64": "^0.27.2",

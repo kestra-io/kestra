@@ -33,9 +33,12 @@
                                         :cls="icons[data.taskId]"
                                         onlyIcon
                                     />
-                                    <span :class="{'ms-3': data.icon}">{{
-                                        data.label
-                                    }}</span>
+                                    <span :class="{'ms-3': data.icon}">
+                                        <span>{{ data.label }}</span>
+                                        <small v-if="data.iterationValue != null">
+                                            {{ data.iterationValue }}
+                                        </small>
+                                    </span>
                                 </div>
                                 <code>
                                     <span
@@ -383,6 +386,7 @@
                 label: task.taskId,
                 value: task.taskId,
                 ...task,
+                iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
                 icon: true,
                 children: task?.outputs
                     ? transform(task.outputs, true, task.taskId)

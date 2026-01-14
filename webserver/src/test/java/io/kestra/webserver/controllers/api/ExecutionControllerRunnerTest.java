@@ -78,7 +78,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpRequest.DELETE;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -481,7 +480,7 @@ class ExecutionControllerRunnerTest {
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
             parentExecution,
-            createdChidExec.withTenantId(TENANT_ID), // the endpoint didn't return the tenantId
+            createdChidExec.withTenantId(tenantId), // the endpoint didn't return the tenantId
             Duration.ofSeconds(15));
 
         assertThat(finishedChildExecution).isNotNull();
@@ -2049,7 +2048,7 @@ class ExecutionControllerRunnerTest {
                 .POST("/api/v1/" + tenantId + "/executions/" + namespace + "/" + flowId + "?labels=a:label-1&labels=b:label-2&labels=url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : "") + (breakpoint != null ? "&breakpoints=" + breakpoint : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
-        ).withTenantId(TENANT_ID); // the endpoint didn't return the tenantId
+        ).withTenantId(tenantId); // the endpoint didn't return the tenantId
     }
 
     private Execution triggerExecutionInputsFlowExecution(String tenantId, Boolean wait) {
@@ -2083,21 +2082,9 @@ class ExecutionControllerRunnerTest {
             .build();
     }
 
-    private Execution runUntilQueued(String tenantId, String namespace, String flowId) throws TimeoutException, QueueException {
-        return runUntilState(tenantId, namespace, flowId, State.Type.QUEUED);
-    }
-
     private Execution createExecution(String tenantId, String namespace, String flowId) {
         Flow flow = flowRepositoryInterface.findById(tenantId, namespace, flowId).orElseThrow();
         return Execution.newExecution(flow, null);
-    }
-
-    private Execution runUntilState(String tenantId, String namespace, String flowId, State.Type state) throws TimeoutException, QueueException {
-        Execution execution = this.createExecution(tenantId, namespace, flowId);
-        return runnerUtils.awaitExecution(
-            it -> execution.getId().equals(it.getId()) && it.getState().getCurrent() == state,
-            throwRunnable(() -> this.executionQueue.emit(execution)),
-            Duration.ofSeconds(1));
     }
 
     @Test
@@ -2157,7 +2144,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows(value = {"flows/valids/minimal.yaml"}, tenantId = "shouldsuspendatbreakpointthenresume")
-    void shouldSuspendAtBreakpointThenResume() throws TimeoutException {
+    void shouldSuspendAtBreakpointThenResume() {
         String tenantId = "shouldsuspendatbreakpointthenresume";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution execution = triggerExecutionExecution(tenantId, TESTS_FLOW_NS, "minimal", null, false, "date");

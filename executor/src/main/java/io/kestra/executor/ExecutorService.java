@@ -68,9 +68,6 @@ public class ExecutorService {
     private ConditionService conditionService;
 
     @Inject
-    private FlowInputOutput flowInputOutput;
-
-    @Inject
     private WorkerGroupExecutorInterface workerGroupExecutorInterface;
 
     @Inject
@@ -583,7 +580,6 @@ public class ExecutorService {
                     Variables variables = variablesService.of(StorageContext.forTask(taskRun), newOutput);
                     TaskRun updatedTaskRun = taskRun.withOutputs(variables);
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(updatedTaskRun), updatedTaskRun);
-                    List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);
                     Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);
                      if (nextDate != null) {
                         executionDelays.add(ExecutionDelay.builder()

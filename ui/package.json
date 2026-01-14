@@ -137,9 +137,9 @@
         "@esbuild/darwin-arm64": "^0.27.2",
         "@esbuild/darwin-x64": "^0.27.2",
         "@esbuild/linux-x64": "^0.27.2",
-        "@rollup/rollup-darwin-arm64": "^4.54.0",
-        "@rollup/rollup-darwin-x64": "^4.54.0",
-        "@rollup/rollup-linux-x64-gnu": "^4.54.0",
+        "@rollup/rollup-darwin-arm64": "^4.55.1",
+        "@rollup/rollup-darwin-x64": "^4.55.1",
+        "@rollup/rollup-linux-x64-gnu": "^4.55.1",
         "@swc/core-darwin-arm64": "^1.15.8",
         "@swc/core-darwin-x64": "^1.15.8",
         "@swc/core-linux-x64-gnu": "^1.15.8"

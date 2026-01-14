@@ -2,9 +2,11 @@
     <el-tooltip
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
+        :enterable="false"
         :persistent="false"
         :hideAfter="0"
         :content="tooltip"
+        popperClass="ks-restart-tooltip--no-pointer"
         rawContent
         transition=""
         effect="light"
@@ -108,7 +110,7 @@
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
-        tooltipPosition: {type: String, default: "bottom"}
+        tooltipPosition: {type: String, default: "bottom"},
     })
 
     const emit = defineEmits(["follow"])
@@ -237,6 +239,12 @@
 
     watch(isOpen, (newValue) => newValue && loadRevision())
 </script>
+
+<style lang="scss">
+    .ks-restart-tooltip--no-pointer {
+        pointer-events: none;
+    }
+</style>
 
 <style scoped lang="scss">
 .execution-description {

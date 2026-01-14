@@ -5,11 +5,11 @@
                 <span class="d-inline-flex title align-items-center">
                     <AiIcon /><span>{{ $t("ai.flow.title") }}</span>
                 </span>
-                <el-button 
-                    class="border-0 ai-close-button" 
-                    size="small" 
-                    :icon="Close" 
-                    @click.stop="emit('close')" 
+                <el-button
+                    class="border-0 ai-close-button"
+                    size="small"
+                    :icon="Close"
+                    @click.stop="emit('close')"
                 />
             </div>
         </template>
@@ -44,15 +44,26 @@
                         <div v-loading="true" />
                         <span>{{ $t('ai.flow.generating') }}</span>
                     </div>
-                    <el-button
-                        v-else
-                        type="primary"
-                        :icon="KeyboardReturn"
-                        :disabled="prompt.length === 0"
-                        @click="submitPrompt"
-                    >
-                        {{ $t('submit') }}
-                    </el-button>
+                    <div v-else class="d-flex align-items-center gap-2">
+                        <el-button
+                            class="ai-mic-button"
+                            :disabled="!speechSupported"
+                            :loading="isListening"
+                            @click="toggleVoiceInput"
+                            :aria-pressed="isListening"
+                            title="Voice input"
+                        >
+                            🎤
+                        </el-button>
+                        <el-button
+                            type="primary"
+                            :icon="KeyboardReturn"
+                            :disabled="prompt.length === 0"
+                            @click="submitPrompt"
+                        >
+                            {{ $t('submit') }}
+                        </el-button>
+                    </div>
                 </div>
             </div>
         </template>
@@ -75,6 +86,11 @@
     }>();
 
     const promptInput = ref<HTMLInputElement>();
+    const prompt = ref(sessionStorage.getItem("kestra-ai-prompt") ?? "");
+    const waitingForReply = ref(false);
+    const speechSupported = ref(false);
+    const isListening = ref(false);
+    const speechRecognition = ref<any | null>(null);
 
     onMounted(() => {
         promptInput.value?.focus();
@@ -82,10 +98,10 @@
 
     onUnmounted(() => {
         sessionStorage.removeItem("kestra-ai-prompt");
+        if (speechRecognition.value) {
+            speechRecognition.value.abort();
+        }
     })
-
-    const prompt = ref(sessionStorage.getItem("kestra-ai-prompt") ?? "");
-    const waitingForReply = ref(false);
 
     watch(prompt, (newValue) => {
         sessionStorage.setItem("kestra-ai-prompt", newValue);
@@ -121,6 +137,60 @@
 
     const miscStore = useMiscStore();
     const configured = computed(() => miscStore.configs?.isAiEnabled);
+
+    onMounted(() => {
+        const SpeechRecognitionConstructor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        speechSupported.value = Boolean(SpeechRecognitionConstructor);
+        if (!SpeechRecognitionConstructor) {
+            return;
+        }
+
+        const recognition = new SpeechRecognitionConstructor();
+        recognition.lang = navigator.language ?? "en-US";
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.onresult = (event: any) => {
+            const transcript = Array.from(event.results)
+                .map((result: any) => result[0]?.transcript ?? "")
+                .join(" ")
+                .trim();
+            if (!transcript) {
+                return;
+            }
+
+            prompt.value = prompt.value.trim().length > 0
+                ? `${prompt.value.trim()} ${transcript}`
+                : transcript;
+            promptInput.value?.focus();
+        };
+        recognition.onend = () => {
+            isListening.value = false;
+        };
+        recognition.onerror = () => {
+            isListening.value = false;
+        };
+
+        speechRecognition.value = recognition;
+    });
+
+    function toggleVoiceInput() {
+        if (!speechRecognition.value) {
+            return;
+        }
+
+        if (isListening.value) {
+            speechRecognition.value.stop();
+            return;
+        }
+
+        try {
+            isListening.value = true;
+            speechRecognition.value.start();
+        } catch (e) {
+            isListening.value = false;
+            console.error(e);
+        }
+    }
 
     onMounted(async () => {
         if (!configured.value) {
@@ -181,12 +251,12 @@
     // Enhanced close button animation
     .ai-close-button {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        
+
         &:hover {
             transform: translateY(-2px);
             opacity: 0.8;
         }
-        
+
         &:active {
             transform: translateY(0);
             opacity: 0.6;

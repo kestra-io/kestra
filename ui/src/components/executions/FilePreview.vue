@@ -234,8 +234,8 @@
         encoding.value = encodingOptions[0].value;
     });
 </script>
-<style lang="scss">
-    .editor-container {
+<style scoped lang="scss">
+    :deep(.editor-container) {
         min-height: 65px !important;
     }
 </style>

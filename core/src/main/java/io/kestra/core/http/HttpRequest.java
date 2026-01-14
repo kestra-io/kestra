@@ -168,8 +168,9 @@ public class HttpRequest {
             }
 
             if (mimeType.startsWith("multipart/")) {
-                return OmittedRequestBody.builder()
-                    .contentType(mimeType)
+                return PassthroughRequestBody.builder()
+                    .entity(entity)
+                    .contentType(entity.getContentType())
                     .charset(charset)
                     .build();
         }
@@ -280,7 +281,8 @@ public class HttpRequest {
     @Getter
     @AllArgsConstructor
     @SuperBuilder
-    public static class OmittedRequestBody extends RequestBody {
+    public static class PassthroughRequestBody extends RequestBody {
+        private HttpEntity entity;
         private String contentType;
         private Charset charset;
 
@@ -290,8 +292,8 @@ public class HttpRequest {
         }
 
         @Override
-        public HttpEntity to() throws IOException {
-            return new StringEntity("[omitted]", this.entityContentType());
+        public HttpEntity to() {
+            return entity;
         }
     }
 

@@ -51,6 +51,9 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 import static org.assertj.core.api.Assertions.assertThat;
 import io.kestra.core.http.client.HttpClientResponseException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
 
 @KestraTest
 @Execution(ExecutionMode.SAME_THREAD)
@@ -536,6 +539,27 @@ class RequestTest {
              Files.deleteIfExists(tmp);
          }
      }
+
+    @Test
+     void multipartFromEntity_doesNotMaterialize_andKeepsEntityForSend() throws Exception {
+         HttpEntity entity = MultipartEntityBuilder.create()
+            .addTextBody("hello", "world")
+            .addBinaryBody(
+            "file",
+            "abc".getBytes(StandardCharsets.UTF_8),
+            ContentType.DEFAULT_BINARY,
+            "a.txt"
+            )
+            .build();
+
+        io.kestra.core.http.HttpRequest.RequestBody body =
+            io.kestra.core.http.HttpRequest.RequestBody.from(entity);
+
+            HttpEntity rebuilt = body.to();
+
+            assertThat(rebuilt).isSameAs(entity);
+        }
+
 
     @Test
     void bytes() {

@@ -65,6 +65,25 @@ import java.util.OptionalInt;
                 """
         ),
         @Example(
+            title = "Make an HTTP request authenticated with Digest auth (RFC 7616).",
+            full = true,
+            code = """
+                id: digest_auth_call
+                namespace: company.team
+
+                tasks:
+                  - id: digest_auth_api
+                    type: io.kestra.plugin.core.http.Request
+                    uri: https://example.com/protected
+                    method: GET
+                    options:
+                      auth:
+                        type: DIGEST
+                        username: "{{ secret('API_USERNAME') }}"
+                        password: "{{ secret('API_PASSWORD') }}"
+                """
+        ),
+        @Example(
             title = "Execute a Kestra flow via an HTTP request authenticated with a Bearer auth token / JWT token.",
             full = true,
             code = """

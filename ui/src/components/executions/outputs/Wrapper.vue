@@ -26,18 +26,18 @@
                                 @click="expandedValue = data.path"
                                 class="w-100 d-flex justify-content-between"
                             >
-                                <div class="pe-5 d-flex task">
+                                <div class="pe-1 d-flex task">
                                     <TaskIcon
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
                                         onlyIcon
                                     />
-                                    <span :class="{'ms-3': data.icon}">
+                                    <span :class="{'ms-3': data.icon}" class="task-label">
                                         <span>{{ data.label }}&nbsp;</span>
-                                        <small v-if="data.iterationValue != null">
+                                        <code v-if="data.iterationValue != null" class="task-iteration-value">
                                             {{ data.iterationValue }}
-                                        </small>
+                                        </code>
                                     </span>
                                 </div>
                                 <code>
@@ -381,12 +381,12 @@
         return result;
     };
     const outputs = computed(() => {
-        const tasks = executionsStore?.execution?.taskRunList?.map((task, index) => {
+        const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
             return {
                 label: task.taskId,
                 value: task.taskId,
                 ...task,
-                ...(index > 0 ? {iterationValue: index} : {}),
+                iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
                 icon: true,
                 children: task?.outputs
                     ? transform(task.outputs, true, task.taskId)
@@ -523,6 +523,25 @@
 
         .el-cascader-node__prefix {
             display: none;
+        }
+
+        .task {
+            width: 100%;
+            max-width: 100%;
+
+            & .task-label {
+                width: 100%;
+                max-width: 100%;
+                
+                & .task-iteration-value {
+                    display: inline-block;
+                    width: 80px;
+                    max-width: 80px;
+                    overflow-x: clip;
+                    text-overflow: ellipsis;
+                    color: var(--ks-content-primary);
+                }
+            }
         }
 
         .task .wrapper {

@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Примечание: В настоящее время поддерживается только Gemini в качестве AI-провайдера.\n\nПерезапустите ваш Kestra instance после сохранения конфигурации.",
+          "footer": "Примечание: В настоящее время только Gemini поддерживается в качестве AI-провайдера для Open Source Edition. Для Enterprise Edition, пожалуйста, обратитесь к документации AI Copilot для настройки других провайдеров моделей.\n\nПерезапустите ваш Kestra instance после сохранения конфигурации.",
           "header": "<b>AI Copilot еще не настроен.</b>\n\nЧтобы включить AI Copilot, добавьте следующий фрагмент в файл конфигурации вашего экземпляра Kestra (например, <code>application.yml</code>), заменив <code>geminiApiKey</code> на ваш фактический ключ:"
         },
         "generating": "Генерация YAML для flow...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "Блоки приложения",
     "apps": "Приложения",
+    "assets": "Активы",
     "attempt": "Попытка",
     "attempts": "Попытка(и)",
     "auditlogs": "Аудиторские логи",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Это выполнение все еще выполняется, удаление его не остановит.<br />Вам нужно убить выполнение, чтобы остановить его.</div>",
     "delete logs": "Удалить логи",
     "delete ok": "удалено",
+    "delete revision confirm": "Вы уверены, что хотите удалить ревизию {revision}?",
+    "delete revision error": "Ошибка при удалении ревизии {revision} с ошибкой {error}",
     "delete task confirm": "Вы хотите удалить task <code>{taskId}</code>?",
     "delete trigger": "Удалить trigger",
     "delete trigger confirmation": "Вы уверены, что хотите удалить trigger {id}? WARNING: удаление trigger может привести к дублированию выполнений, если trigger все еще активен в flow.",
@@ -335,6 +338,10 @@
         "title": "Управление инфраструктурой в вашем экземпляре"
       },
       "namespace": {
+        "assets": {
+          "message": "В Kestra Enterprise Edition, Assets ведет актуальный учет ресурсов, с которыми взаимодействуют ваши workflows. Эти ресурсы могут быть таблицами баз данных, виртуальными машинами, файлами или любой внешней системой, с которой вы работаете.",
+          "title": "Централизованное управление активами"
+        },
         "audit-logs": {
           "message": "В Kestra Enterprise Edition вы можете просматривать audit logs на уровне namespace с подробными различиями, что дает вам четкую историю того, кто, что и когда изменил во всех ресурсах.",
           "title": "Отслеживайте все изменения в одном месте"
@@ -668,6 +675,7 @@
       "end_date": "Дата окончания",
       "enter description": "Введите описание фильтра",
       "enter label": "Введите фильтр label",
+      "enter name": "Введите имя фильтра",
       "execution_kind": {
         "playground": "Песочница",
         "playground_description": "Запуски, инициированные из режима Playground",
@@ -714,6 +722,7 @@
         "description": "Фильтр по типу метрики",
         "label": "Метрика"
       },
+      "name": "Имя",
       "namespace": {
         "description": "Фильтр по namespace",
         "label": "Namespace"
@@ -1136,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Подтвердить",
+          "file_single": "Вы уверены, что хотите удалить файл <code>{name}</code>?",
           "files": "Вы уверены, что хотите удалить <code>{count}</code> файл(ы)?",
+          "folder_single": "Вы уверены, что хотите удалить папку <code>{name}</code> и все её содержимое?",
           "folders": "Вы уверены, что хотите удалить <code>{count}</code> папку(и) и все её содержимое?",
           "mixed": "Вы уверены, что хотите удалить папку(и) <code>{folders}</code> и файл(ы) <code>{files}</code>?",
           "title": "Подтвердите удаление содержимого"
@@ -1493,6 +1504,7 @@
     "resumed title": "Возобновить выполнение <code>{id}</code>",
     "reuse_original_inputs": "Повторно использовать оригинальные inputы",
     "revision": "Редакция",
+    "revision deleted": "Ревизия {revision} была успешно удалена",
     "revisions": "Редакции",
     "row count": "Количество строк",
     "run task in playground": "Запустить task в playground",

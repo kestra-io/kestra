@@ -40,6 +40,7 @@ import Battery40 from "vue-material-design-icons/Battery40.vue";
 import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue";
 
 export type MenuItem = {
+    id?: string; // Generated at the end of menu computation
     title: string;
     routes?: RouteRecordNameGeneric[];
     href?: RouteLocationRaw;
@@ -374,6 +375,8 @@ export function useLeftMenu() {
         ];
 
         flatten(generated).forEach((item: MenuItem) => {
+            item.id = item.title.toLowerCase().replaceAll(" ", "-");
+
             if (item.icon?.element) item.icon.class = "menu-icon";
 
             if (item.href && typeof item.href !== "string") {

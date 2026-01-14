@@ -34,7 +34,7 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Optional<Setting> findByKey(String key) {
-        return findOne(DSL.trueCondition(), field("key").eq(key));
+        return findOne(DSL.trueCondition(), KEY_FIELD.eq(key));
     }
 
     @Override

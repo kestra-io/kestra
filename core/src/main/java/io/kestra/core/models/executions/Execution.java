@@ -157,6 +157,25 @@ public class Execution implements DeletedInterface, TenantInterface {
         final BiFunction<FlowInterface, Execution, Map<String, Object>> inputs,
         final List<Label> labels,
         final Optional<ZonedDateTime> scheduleDate) {
+        return newExecution(flow, inputs, labels, scheduleDate, null);
+    }
+
+    /**
+     * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and
+     * inputs.
+     *
+     * @param flow The Flow.
+     * @param inputs The Flow's inputs.
+     * @param labels The Flow labels.
+     * @param kind The ExecutionKind.
+     *
+     * @return a new {@link Execution}.
+     */
+    public static Execution newExecution(final FlowInterface flow,
+                                         final BiFunction<FlowInterface, Execution, Map<String, Object>> inputs,
+                                         final List<Label> labels,
+                                         final Optional<ZonedDateTime> scheduleDate,
+                                         @Nullable final ExecutionKind kind) {
         Execution execution = builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
@@ -166,6 +185,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .state(new State())
             .scheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
             .variables(flow.getVariables())
+            .kind(kind)
             .build();
 
         List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
@@ -514,7 +534,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         return resolvedTasks;
     }
 
-    private List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
+    public List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
         if (tasks == null) {
             return null;
         }

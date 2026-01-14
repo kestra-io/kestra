@@ -1,9 +1,11 @@
 <template>
     <Revisions
+        v-if="revisions.length > 0"
         lang="yaml"
         :revisions="flowRevisions"
         :revisionSource="loadRevisionContent"
         @restore="restoreRevision"
+        @deleted="onRevisionDeleted"
         class="flow-revisions"
     >
         <template #crud="{revision}">
@@ -13,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, onMounted, ref, watch} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import Crud from "override/components/auth/Crud.vue";
     import Revisions from "../layout/Revisions.vue";
@@ -27,13 +29,36 @@
     const flowStore = useFlowStore();
     const flow = computed(() => flowStore.flow);
 
-    const flowRevisions = computed(() => {
-        if (!flow.value) {
-            return [];
+    const revisions = ref<Array<{revision: number}>>([]);
+
+    async function fetchRevisions() {
+        const namespace = (route.params.namespace as string) ?? "";
+        const id = (route.params.id as string) ?? "";
+        if (!namespace || !id) {
+            revisions.value = [];
+            return;
         }
 
-        return [...Array(flow.value.revision).keys()].map(idx => ({revision: idx + 1}));
-    })
+        try {
+            const loaded = await flowStore.loadRevisions({
+                namespace,
+                id
+            });
+            revisions.value = loaded ?? [];
+        } catch (err) {
+            console.error("Failed to load revisions", err);
+            revisions.value = [];
+        }
+    }
+
+    onMounted(fetchRevisions);
+
+    const flowRevisions = computed(() => {
+        if (!flow.value) {
+            return revisions.value;
+        }
+        return revisions.value.length ? revisions.value : [];
+    });
 
     async function restoreRevision(revisionSource: string) {
         return flowStore.saveFlow({flow: revisionSource})
@@ -59,6 +84,17 @@
             store: false
         })).source;
     }
+
+    async function onRevisionDeleted(revision: number) {
+        const updatedQuery = {...route.query};
+        for (const key of ["revisionLeft", "revisionRight"]) {
+            if ((updatedQuery as any)[key]?.toString() === `${revision}`) delete (updatedQuery)[key];
+        }
+        await router.push({query: updatedQuery});
+        await fetchRevisions();
+    }
+
+    watch(() => [route.params.namespace, route.params.id], fetchRevisions);
 </script>
 
 <style scoped lang="scss">

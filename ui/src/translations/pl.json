@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Uwaga: Obecnie jako dostawca AI obsługiwany jest tylko Gemini.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji.",
+          "footer": "Uwaga: Obecnie tylko Gemini jest obsługiwany jako dostawca AI dla Open Source Edition. W przypadku Enterprise Edition zapoznaj się z dokumentacją AI Copilot dotyczącą konfiguracji innych dostawców modeli.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji.",
           "header": "<b>AI Copilot nie został jeszcze skonfigurowany.</b>\n\nAby włączyć AI Copilot, dodaj poniższy fragment do pliku konfiguracyjnego instancji Kestra (np. <code>application.yml</code>), zastępując <code>geminiApiKey</code> swoim rzeczywistym kluczem:"
         },
         "generating": "Generowanie YAML dla flow...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "Bloki aplikacji",
     "apps": "Aplikacje",
+    "assets": "Zasoby",
     "attempt": "Próba",
     "attempts": "Próba(y)",
     "auditlogs": "Audit Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">To wykonanie jest nadal w trakcie, usunięcie go nie zatrzyma procesu.<br />Musisz zabić wykonanie, aby je zatrzymać.</div>",
     "delete logs": "Usuń logs",
     "delete ok": "jest usunięty",
+    "delete revision confirm": "Czy na pewno chcesz usunąć wersję {revision}?",
+    "delete revision error": "Błąd usuwania wersji {revision} z błędem {error}",
     "delete task confirm": "Czy chcesz usunąć task <code>{taskId}</code>?",
     "delete trigger": "Usuń trigger",
     "delete trigger confirmation": "Czy na pewno chcesz usunąć trigger {id}? WARNING: usunięcie triggera może prowadzić do zduplikowanych wykonania, jeśli trigger jest nadal aktywny w flow.",
@@ -335,6 +338,10 @@
         "title": "Zarządzaj infrastrukturą w całej swojej instancji"
       },
       "namespace": {
+        "assets": {
+          "message": "W Kestra Enterprise Edition, Assets prowadzi bieżący inwentarz zasobów, z którymi współpracują Twoje workflow. Te zasoby mogą być tabelami baz danych, maszynami wirtualnymi, plikami lub dowolnym zewnętrznym systemem, z którym pracujesz.",
+          "title": "Centralizacja zarządzania zasobami"
+        },
         "audit-logs": {
           "message": "W Kestra Enterprise Edition możesz przeglądać dzienniki audytu na poziomie namespace z szczegółowymi różnicami, co daje jasną historię, kto, co i kiedy zmienił we wszystkich zasobach.",
           "title": "Śledź wszystkie zmiany w jednym miejscu"
@@ -668,6 +675,7 @@
       "end_date": "Data zakończenia",
       "enter description": "Wprowadź opis filtra",
       "enter label": "Wprowadź filtr label",
+      "enter name": "Wprowadź nazwę filtra",
       "execution_kind": {
         "playground": "Plac zabaw",
         "playground_description": "Wykonania uruchomione z trybu Playground",
@@ -714,6 +722,7 @@
         "description": "Filtruj według typu metryki",
         "label": "Metryka"
       },
+      "name": "Nazwa",
       "namespace": {
         "description": "Filtruj według namespace",
         "label": "Namespace"
@@ -1136,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Potwierdź",
+          "file_single": "Czy na pewno chcesz usunąć plik <code>{name}</code>?",
           "files": "Czy na pewno chcesz usunąć <code>{count}</code> plik(ów)?",
+          "folder_single": "Czy na pewno chcesz usunąć folder <code>{name}</code> i całą jego zawartość?",
           "folders": "Czy na pewno chcesz usunąć <code>{count}</code> folder(y) i całą jego zawartość?",
           "mixed": "Czy na pewno chcesz usunąć folder(y) <code>{folders}</code> i plik(i) <code>{files}</code>?",
           "title": "Potwierdź usunięcie zawartości"
@@ -1493,6 +1504,7 @@
     "resumed title": "Wznów wykonanie <code>{id}</code>",
     "reuse_original_inputs": "Ponownie użyj oryginalnych inputów",
     "revision": "Wersja",
+    "revision deleted": "Revision {revision} został pomyślnie usunięty",
     "revisions": "Wersje",
     "row count": "Liczba wierszy",
     "run task in playground": "Uruchom task w playgroundzie",

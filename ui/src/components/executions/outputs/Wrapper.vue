@@ -69,7 +69,7 @@
                         >
                             <el-collapse-item name="debug">
                                 <template #title>
-                                    <span>{{ t("eval.title") }}</span>
+                                    <span>{{ $t("eval.title") }}</span>
                                 </template>
 
                                 <div class="d-flex flex-column p-3 debug">
@@ -94,7 +94,7 @@
                                         "
                                         class="mt-3 el-button--wrap"
                                     >
-                                        {{ t("eval.title") }}
+                                        {{ $t("eval.title") }}
                                     </el-button>
 
                                     <Editor
@@ -575,7 +575,7 @@
 
 //Mobile Version
 @media (max-width: 768px) {
-    :deep(.el-splitter) { 
+    :deep(.el-splitter) {
         .outputs-top {
             margin: 10px;
             border: 2px solid var(--ks-border-primary);
@@ -588,7 +588,7 @@
     :deep(.el-splitter-bar){
         height: 4px !important;
         width: auto !important;
-        
+
     }
 }
 </style>

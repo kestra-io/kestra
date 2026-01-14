@@ -24,10 +24,10 @@
                 </template>
             </el-alert>
             <div>
-                <label>{{ $t("filter.label") }}</label>
+                <label>{{ $t("filter.name") }}</label>
                 <el-input
                     v-model="filterName"
-                    :placeholder="$t('filter.enter label')"
+                    :placeholder="$t('filter.enter name')"
                     clearable
                 />
             </div>

@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "注意: 現時点では、AIプロバイダーとしてGeminiのみがサポートされています。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
+          "footer": "注意: 現時点では、オープンソース版のAIプロバイダーとしてGeminiのみがサポートされています。エンタープライズ版については、他のモデルプロバイダーの設定についてAI Copilotのドキュメントを参照してください。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
           "header": "<b>AI Copilotはまだ設定されていません。</b>\n\nAI Copilotを有効にするには、次のスニペットをKestraインスタンスの構成ファイル（例：<code>application.yml</code>）に追加し、<code>geminiApiKey</code>を実際のキーに置き換えてください。"
         },
         "generating": "フローのYAMLを生成しています...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "アプリブロック",
     "apps": "アプリケーション",
+    "assets": "アセット",
     "attempt": "試行",
     "attempts": "試行回数",
     "auditlogs": "Audit Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">この実行はまだRUNNINGです。削除しても停止しません。<br />実行を停止するには、実行をkillする必要があります。</div>",
     "delete logs": "Logsを削除",
     "delete ok": "削除されました",
+    "delete revision confirm": "リビジョン {revision} を削除してもよろしいですか？",
+    "delete revision error": "エラー: リビジョン {revision} の削除中にエラー {error} が発生しました。",
     "delete task confirm": "task<code>{taskId}</code>を削除してもよろしいですか？",
     "delete trigger": "トリガーを削除",
     "delete trigger confirmation": "トリガー {id} を削除してもよろしいですか？WARNING: トリガーがまだflowでアクティブな場合、削除すると重複した実行が発生する可能性があります。",
@@ -335,6 +338,10 @@
         "title": "インスタンス全体のインフラストラクチャを管理する"
       },
       "namespace": {
+        "assets": {
+          "message": "Kestra Enterprise Editionでは、Assetsはワークフローがやり取りするリソースのライブインベントリを保持します。これらのリソースには、データベーステーブル、仮想マシン、ファイル、または使用する外部システムが含まれます。",
+          "title": "資産管理の集中化"
+        },
         "audit-logs": {
           "message": "Kestra Enterprise Editionでは、namespaceレベルの監査Logを詳細な差分とともに表示でき、すべてのリソースにわたって誰が何をいつ変更したかの履歴を明確に確認できます。",
           "title": "すべての変更を一箇所で追跡"
@@ -668,6 +675,7 @@
       "end_date": "終了日",
       "enter description": "フィルターの説明を入力してください",
       "enter label": "フィルターラベルを入力してください",
+      "enter name": "フィルター名を入力してください",
       "execution_kind": {
         "playground": "プレイグラウンド",
         "playground_description": "Playgroundモードからトリガーされた実行",
@@ -714,6 +722,7 @@
         "description": "メトリックタイプでフィルター",
         "label": "メトリック"
       },
+      "name": "名前",
       "namespace": {
         "description": "namespaceでフィルター",
         "label": "Namespace"
@@ -1136,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "確認",
+          "file_single": "ファイル <code>{name}</code> を削除してもよろしいですか？",
           "files": "<code>{count}</code> 個のファイルを削除してもよろしいですか？",
+          "folder_single": "フォルダー<code>{name}</code>とそのすべての内容を削除してもよろしいですか？",
           "folders": "<code>{count}</code> 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
           "mixed": "<code>{folders}</code> フォルダーと <code>{files}</code> ファイルを削除してもよろしいですか？",
           "title": "コンテンツの削除を確認"
@@ -1493,6 +1504,7 @@
     "resumed title": "実行<code>{id}</code>を再開",
     "reuse_original_inputs": "元のinputを再利用",
     "revision": "リビジョン",
+    "revision deleted": "リビジョン{revision}が正常に削除されました",
     "revisions": "リビジョン",
     "row count": "行数",
     "run task in playground": "プレイグラウンドでタスクを実行",

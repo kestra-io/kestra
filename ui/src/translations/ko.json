@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "참고: 현재 AI 제공자로는 Gemini만 지원됩니다.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하십시오.",
+          "footer": "참고: 현재 오픈 소스 에디션에서는 AI 제공자로 Gemini만 지원됩니다. 엔터프라이즈 에디션의 경우, 다른 모델 제공자 구성을 위해 AI Copilot 문서를 참조하십시오.\n\n구성을 저장한 후 Kestra 인스턴스를 재시작하십시오.",
           "header": "<b>AI Copilot이 아직 구성되지 않았습니다.</b>\n\nAI Copilot을 활성화하려면, 다음 코드 조각을 Kestra 인스턴스 구성 파일(예: <code>application.yml</code>)에 추가하고 <code>geminiApiKey</code>를 실제 key로 교체하십시오:"
         },
         "generating": "Flow YAML을 생성 중입니다...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "앱 블록",
     "apps": "앱",
+    "assets": "자산",
     "attempt": "시도",
     "attempts": "시도 횟수",
     "auditlogs": "감사 Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">이 실행은 아직 RUNNING 상태입니다. 삭제해도 중지되지 않습니다.<br />실행을 중지하려면 실행을 강제 종료해야 합니다.</div>",
     "delete logs": "Logs 삭제",
     "delete ok": "삭제됨",
+    "delete revision confirm": "{revision} 개정을 삭제하시겠습니까?",
+    "delete revision error": "{error} 오류로 인해 {revision} 수정본 삭제 오류 발생",
     "delete task confirm": "task <code>{taskId}</code>을(를) 삭제하시겠습니까?",
     "delete trigger": "트리거 삭제",
     "delete trigger confirmation": "트리거 {id}를 삭제하시겠습니까? WARNING: 트리거가 flow에서 여전히 활성 상태인 경우 삭제하면 중복 실행이 발생할 수 있습니다.",
@@ -335,6 +338,10 @@
         "title": "인스턴스 전반의 인프라 관리"
       },
       "namespace": {
+        "assets": {
+          "message": "Kestra Enterprise Edition에서 Assets는 워크플로우가 상호작용하는 리소스의 실시간 인벤토리를 유지합니다. 이러한 리소스는 데이터베이스 테이블, 가상 머신, 파일 또는 사용 중인 외부 시스템일 수 있습니다.",
+          "title": "자산 관리 중앙화"
+        },
         "audit-logs": {
           "message": "Kestra Enterprise Edition에서는 namespace 수준의 감사 로그를 상세한 차이점과 함께 볼 수 있어, 모든 리소스에 걸쳐 누가 무엇을 언제 변경했는지에 대한 명확한 기록을 제공합니다.",
           "title": "모든 변경 사항을 한 곳에서 추적하기"
@@ -668,6 +675,7 @@
       "end_date": "종료 날짜",
       "enter description": "필터 설명 입력",
       "enter label": "필터 label 입력",
+      "enter name": "필터 이름 입력",
       "execution_kind": {
         "playground": "플레이그라운드",
         "playground_description": "플레이그라운드 모드에서 트리거된 실행",
@@ -714,6 +722,7 @@
         "description": "메트릭 유형별 필터",
         "label": "메트릭"
       },
+      "name": "이름",
       "namespace": {
         "description": "namespace로 필터링",
         "label": "Namespace"
@@ -1136,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "확인",
+          "file_single": "파일 <code>{name}</code>을(를) 삭제하시겠습니까?",
           "files": "<code>{count}</code>개의 파일을 삭제하시겠습니까?",
+          "folder_single": "폴더 <code>{name}</code> 및 모든 내용을 삭제하시겠습니까?",
           "folders": "<code>{count}</code>개의 폴더와 모든 내용을 삭제하시겠습니까?",
           "mixed": "<code>{folders}</code> 폴더와 <code>{files}</code> 파일을 삭제하시겠습니까?",
           "title": "콘텐츠 삭제 확인"
@@ -1493,6 +1504,7 @@
     "resumed title": "실행 <code>{id}</code> 재개",
     "reuse_original_inputs": "원래 input 재사용",
     "revision": "수정본",
+    "revision deleted": "{revision} 리비전이 성공적으로 삭제되었습니다.",
     "revisions": "수정본들",
     "row count": "행 수",
     "run task in playground": "플레이그라운드에서 task 실행",

@@ -34,7 +34,7 @@
                                         onlyIcon
                                     />
                                     <span :class="{'ms-3': data.icon}">
-                                        <span>{{ data.label }}</span>
+                                        <span>{{ data.label }}&nbsp;</span>
                                         <small v-if="data.iterationValue != null">
                                             {{ data.iterationValue }}
                                         </small>
@@ -381,12 +381,12 @@
         return result;
     };
     const outputs = computed(() => {
-        const tasks = executionsStore?.execution?.taskRunList?.map((task) => {
+        const tasks = executionsStore?.execution?.taskRunList?.map((task, index) => {
             return {
                 label: task.taskId,
                 value: task.taskId,
                 ...task,
-                iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
+                ...(index > 0 ? {iterationValue: index} : {}),
                 icon: true,
                 children: task?.outputs
                     ? transform(task.outputs, true, task.taskId)

@@ -1,5 +1,6 @@
 <template>
     <div
+        ref="sidebarDropZoneRef"
         class="p-2 sidebar"
         @contextmenu.prevent="onTabContextMenu"
         @click="onRootClick"
@@ -115,13 +116,19 @@
             v-loading="filesStore.fileTree === undefined"
             :props="{class: nodeClass, isLeaf: 'leaf'}"
             class="mt-3"
-            @node-drag-start="
-                nodeBeforeDrag = {
-                    parent: $event.parent.data.id,
-                    path: filesStore.getPath($event.data.id) ?? '',
-                }
-            "
+           @node-drag-start="
+    draggingFromSidebar.value = true;
+    cleanupDragClasses();
+    $event.event?.dataTransfer && ($event.event.dataTransfer.effectAllowed = 'move');
+    nodeBeforeDrag = {
+        parent: $event.parent.data.id,
+        path: filesStore.getPath($event.data.id) ?? '',
+    }
+"
+
+            @node-drag-end="onDocDropOrEnd"
             @node-drop="nodeMoved"
+            
             @keydown.delete.prevent="removeSelectedFiles"
         >
             <template #empty>
@@ -379,7 +386,7 @@
 </script>
 
 <script lang="ts" setup>
-    import {ref, computed, nextTick, inject, watch} from "vue";
+    import {ref, computed, nextTick, inject, watch, onMounted, onBeforeUnmount} from "vue";
     import {useRoute} from "vue-router";
     import {useNamespacesStore} from "override/stores/namespaces";
     import Utils from "../../utils/utils";
@@ -457,6 +464,53 @@
     const dialog = ref<Dialog>({...DIALOG_DEFAULTS});
     const renameDialog = ref<Dialog>({...RENAME_DEFAULTS});
     const tree = ref<any>();
+    const sidebarDropZoneRef = ref<HTMLElement | null>(null);
+
+const draggingFromSidebar = ref(false);
+
+function cleanupDragClasses() {
+    document.body.classList.remove("sidebar-drag--invalid", "sidebar-drag--valid");
+}
+
+function isPointInside(el: HTMLElement, x: number, y: number) {
+    const r = el.getBoundingClientRect();
+    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+function onDocDragOver(e: DragEvent) {
+    if (!draggingFromSidebar.value) return;
+
+    const el = sidebarDropZoneRef.value;
+    if (!el) return;
+
+    const inside = isPointInside(el, e.clientX, e.clientY);
+
+    document.body.classList.toggle("sidebar-drag--valid", inside);
+    document.body.classList.toggle("sidebar-drag--invalid", !inside);
+
+    if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = inside ? "move" : "none";
+    }
+
+    // Only allow dropping when inside the sidebar drop zone. [page:1]
+    if (inside) e.preventDefault();
+}
+
+function onDocDropOrEnd() {
+    draggingFromSidebar.value = false;
+    cleanupDragClasses();
+}
+
+onMounted(() => {
+    document.addEventListener("dragover", onDocDragOver, {capture: true});
+    document.addEventListener("drop", onDocDropOrEnd, {capture: true});
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener("dragover", onDocDragOver, {capture: true} as any);
+    document.removeEventListener("drop", onDocDropOrEnd, {capture: true} as any);
+});
+
     const filePicker = ref<HTMLInputElement>();
     const folderPicker = ref<HTMLInputElement>();
     const dropdowns = ref<Record<string, {handleClose: () => void; handleOpen: () => void}>>({});
@@ -1102,3 +1156,15 @@
     }
 }
 </style>
+<style lang="scss">
+body.sidebar-drag--invalid,
+body.sidebar-drag--invalid * {
+  cursor: not-allowed !important;
+}
+
+body.sidebar-drag--valid,
+body.sidebar-drag--valid * {
+  cursor: grabbing !important;
+}
+</style>
+

@@ -1231,7 +1231,7 @@ public class ExecutionController {
 
         Flow flow = flowRepository.findByExecution(execution.get());
 
-        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.taskRunId(), stateRequest.state());
         List<Label> newLabels = new ArrayList<>(replay.getLabels());
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
@@ -1243,10 +1243,9 @@ public class ExecutionController {
         return replay;
     }
 
-    @lombok.Value
-    public static class StateRequest {
-        String taskRunId;
-        State.Type state;
+    public record StateRequest(
+        String taskRunId,
+        State.Type state) {
     }
 
     @ExecuteOn(TaskExecutors.IO)

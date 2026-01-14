@@ -26,6 +26,8 @@ import java.util.Locale;
 import java.util.Map;
 import jakarta.annotation.Nullable;
 
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
+
 @H2RepositoryEnabled
 @EachBean(JdbcTableConfig.class)
 public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
@@ -49,13 +51,13 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
         int affectedRows = context
             .update(table)
             .set(fields)
-            .where(AbstractJdbcRepository.field("key").eq(key(entity)))
+            .where(KEY_FIELD.eq(key(entity)))
             .execute();
 
         if (affectedRows == 0) {
            return  context
                 .insertInto(table)
-                .set(AbstractJdbcRepository.field("key"), key(entity))
+                .set(KEY_FIELD, key(entity))
                 .set(fields)
                 .execute();
         } else {

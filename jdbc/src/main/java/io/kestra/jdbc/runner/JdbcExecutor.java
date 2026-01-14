@@ -577,7 +577,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             ExecutionDelay executionDelay = ExecutionDelay.builder()
                                 .executionId(executor.getExecution().getId())
                                 .date(execution.getScheduleDate())
-                                .state(State.Type.RUNNING)
+                                .state(State.Type.CREATED)
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                             executionDelayStorage.save(executionDelay);

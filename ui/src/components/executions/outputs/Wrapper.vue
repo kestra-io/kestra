@@ -26,18 +26,18 @@
                                 @click="expandedValue = data.path"
                                 class="w-100 d-flex justify-content-between"
                             >
-                                <div class="pe-5 d-flex task">
+                                <div class="pe-1 d-flex task">
                                     <TaskIcon
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
                                         onlyIcon
                                     />
-                                    <span :class="{'ms-3': data.icon}">
-                                        <span>{{ data.label }}</span>
-                                        <small v-if="data.iterationValue != null">
+                                    <span :class="{'ms-3': data.icon}" class="task-label">
+                                        <span>{{ data.label }}&nbsp;</span>
+                                        <code v-if="data.iterationValue != null" class="task-iteration-value">
                                             {{ data.iterationValue }}
-                                        </small>
+                                        </code>
                                     </span>
                                 </div>
                                 <code>
@@ -523,6 +523,25 @@
 
         .el-cascader-node__prefix {
             display: none;
+        }
+
+        .task {
+            width: 100%;
+            max-width: 100%;
+
+            & .task-label {
+                width: 100%;
+                max-width: 100%;
+                
+                & .task-iteration-value {
+                    display: inline-block;
+                    width: 80px;
+                    max-width: 80px;
+                    overflow-x: clip;
+                    text-overflow: ellipsis;
+                    color: var(--ks-content-primary);
+                }
+            }
         }
 
         .task .wrapper {

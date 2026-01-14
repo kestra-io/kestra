@@ -1,7 +1,6 @@
 package io.kestra.jdbc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.queues.QueueService;
@@ -29,12 +28,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.*;
+
 public abstract class AbstractJdbcRepository<T> {
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
-    protected final QueueService queueService;
-
-    protected final Class<T> cls;
+    private final QueueService queueService;
+    private final Class<T> cls;
 
     @Setter
     protected Function<Record, T> deserializer;
@@ -70,9 +70,9 @@ public abstract class AbstractJdbcRepository<T> {
 
     @SneakyThrows
     public Map<Field<Object>, Object> persistFields(T entity) {
-        return new HashMap<>(ImmutableMap
-            .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), MAPPER.writeValueAsString(entity))
-        );
+        Map<Field<Object>, Object> fields = HashMap.newHashMap(1);
+        fields.put(VALUE_FIELD, MAPPER.writeValueAsString(entity));
+        return fields;
     }
 
     public int count(Condition condition) {
@@ -101,7 +101,7 @@ public abstract class AbstractJdbcRepository<T> {
 
         dslContext
             .insertInto(table)
-            .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(entity))
+            .set(KEY_FIELD, key(entity))
             .set(finalFields)
             .onDuplicateKeyUpdate()
             .set(finalFields)
@@ -135,7 +135,7 @@ public abstract class AbstractJdbcRepository<T> {
 
         return dslContext
             .insertInto(table)
-            .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(entity))
+            .set(KEY_FIELD, key(entity))
             .set(fields)
             .onDuplicateKeyUpdate()
             .set(fields);
@@ -150,7 +150,7 @@ public abstract class AbstractJdbcRepository<T> {
     public int delete(DSLContext dslContext, T entity) {
         DeleteConditionStep<Record> key = dslContext
             .delete(table)
-            .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key").eq(key(entity)));
+            .where(KEY_FIELD.eq(key(entity)));
 
         return key.execute();
     }
@@ -276,7 +276,7 @@ public abstract class AbstractJdbcRepository<T> {
                 .getSort()
                 .getOrderBy()
                 .forEach(order -> {
-                    Field<Object> field = io.kestra.jdbc.repository.AbstractJdbcRepository.field(order.getProperty());
+                    Field<Object> field = field(order.getProperty());
 
                     select.orderBy(order.getDirection() == Sort.Order.Direction.ASC ? field.asc().nullsFirst() : field.desc().nullsLast());
                 });

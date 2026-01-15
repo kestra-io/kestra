@@ -14,8 +14,8 @@ import io.micronaut.retry.RetryState;
 import io.micronaut.retry.annotation.DefaultRetryPredicate;
 import io.micronaut.retry.event.RetryEvent;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -27,8 +27,8 @@ import java.util.Optional;
  * Replace {@link DefaultRetryInterceptor} only to catch Throwable
  */
 @Singleton
+@Slf4j
 public class OverrideRetryInterceptor implements MethodInterceptor<Object, Object> {
-    private static final Logger LOG = LoggerFactory.getLogger(OverrideRetryInterceptor.class);
     private final ApplicationEventPublisher<RetryEvent> eventPublisher;
 
     public OverrideRetryInterceptor(ApplicationEventPublisher<RetryEvent> eventPublisher) {
@@ -97,8 +97,8 @@ public class OverrideRetryInterceptor implements MethodInterceptor<Object, Objec
                 return interceptedMethod.interceptResult(this);
             } catch (Throwable e) {
                 if (!retryState.canRetry(e)) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("Cannot retry anymore. Rethrowing original exception for method: {}", context);
+                    if (log.isDebugEnabled()) {
+                        log.debug("Cannot retry anymore. Rethrowing original exception for method: {}", context);
                     }
                     retryState.close(e);
                     throw e;
@@ -109,11 +109,11 @@ public class OverrideRetryInterceptor implements MethodInterceptor<Object, Objec
                             try {
                                 eventPublisher.publishEvent(new RetryEvent(context, retryState, e));
                             } catch (Exception e1) {
-                                LOG.error("Error occurred publishing RetryEvent: " + e1.getMessage(), e1);
+                                log.error("Error occurred publishing RetryEvent: " + e1.getMessage(), e1);
                             }
                         }
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Retrying execution for method [{}] after delay of {}ms for exception: {}", context, delayMillis, e.getMessage());
+                        if (log.isDebugEnabled()) {
+                            log.debug("Retrying execution for method [{}] after delay of {}ms for exception: {}", context, delayMillis, e.getMessage());
                         }
                         Thread.sleep(delayMillis);
                     } catch (InterruptedException e1) {

@@ -63,8 +63,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
-    public static final Field<String> VALUE_FIELD = field("value", String.class);
-    public static final Field<String> TENANT_FIELD = field("tenant_id", String.class);
     public static final Field<String> SOURCE_FIELD = field("source_code", String.class);
     public static final Field<Integer> REVISION_FIELD  =  field("revision", Integer.class);
 
@@ -72,7 +70,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     private final QueueInterface<Trigger> triggerQueue;
     private final ApplicationEventPublisher<CrudEvent<FlowInterface>> eventPublisher;
     private final ModelValidator modelValidator;
-    private final NamespaceUtils namespaceUtils;
     private final PluginDefaultService pluginDefaultService;
 
     private final JdbcFilterService filterService;
@@ -91,7 +88,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         this.pluginDefaultService = applicationContext.getBean(PluginDefaultService.class);
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
         this.flowQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.FLOW_NAMED));
-        this.namespaceUtils = applicationContext.getBean(NamespaceUtils.class);
         this.jdbcRepository.setDeserializer(record -> {
             String source = record.get("value", String.class);
             String namespace = record.get("namespace", String.class);
@@ -146,10 +142,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                Select<Record3<String, String, String>> from;
 
-                from = revision.map(integer -> context
-                    .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                var from = revision.map(integer -> context
+                    .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                     .from(jdbcRepository.getTable())
                     .where(this.revisionDefaultFilter(tenantId))
                     .and(NAMESPACE_FIELD.eq(namespace))
@@ -157,7 +152,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .and(REVISION_FIELD.eq(integer)
                     )
                 ).orElseGet(() -> context
-                    .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                    .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                     .from(fromLastRevision(true))
                     .where(allowDeleted ? this.revisionDefaultFilter(tenantId) : this.defaultFilter(tenantId))
                     .and(NAMESPACE_FIELD.eq(namespace))
@@ -174,18 +169,17 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                Select<Record3<String, String, String>> from;
 
-                from = revision
+                var from = revision
                     .map(integer -> context
-                        .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                        .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                         .from(jdbcRepository.getTable())
                         .where(this.noAclDefaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(REVISION_FIELD.eq(integer))
                     ).orElseGet(() -> context
-                        .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                        .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                         .from(fromLastRevision(true))
                         .where(this.noAclDefaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
@@ -218,14 +212,13 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                Select<Record4<String, String, String, String>> from;
 
-                from = revision.map(integer -> context
+                var from = revision.map(integer -> context
                         .select(
                             SOURCE_FIELD,
                             VALUE_FIELD,
                             NAMESPACE_FIELD,
-                            TENANT_FIELD
+                            TENANT_ID_FIELD
                         )
                         .from(jdbcRepository.getTable())
                         .where(this.revisionDefaultFilter(tenantId))
@@ -237,14 +230,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                             SOURCE_FIELD,
                             VALUE_FIELD,
                             NAMESPACE_FIELD,
-                            TENANT_FIELD
+                            TENANT_ID_FIELD
                         )
                         .from(fromLastRevision(true))
                         .where(allowDeleted ? this.revisionDefaultFilter(tenantId) : this.defaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id)));
 
-                Record4<String, String, String, String> fetched = from.fetchAny();
+                Record4<String, Object, String, String> fetched = from.fetchAny();
 
                 if (fetched == null) {
                     return Optional.empty();
@@ -265,22 +258,21 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                Select<Record4<String, String, String, String>> from;
 
-                from = revision.map(integer -> context
-                        .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                var from = revision.map(integer -> context
+                        .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                         .from(jdbcRepository.getTable())
                         .where(this.noAclDefaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(REVISION_FIELD.eq(integer)))
                     .orElseGet(() -> context
-                        .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                        .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                         .from(fromLastRevision(true))
                         .where(this.noAclDefaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id)));
-                Record4<String, String, String, String> fetched = from.fetchAny();
+                Record4<String, Object, String, String> fetched = from.fetchAny();
 
                 if (fetched == null) {
                     return Optional.empty();
@@ -309,9 +301,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 if (!ListUtils.isEmpty(revisions)) {
                     tenantAndRevisionCondition = tenantAndRevisionCondition.and(REVISION_FIELD.in(revisions));
                 }
-                Select<Record4<String, String, String, String>> select = DSL
+                Select<Record4<String, Object, String, String>> select = DSL
                     .using(configuration)
-                    .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                    .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                     .from(jdbcRepository.getTable())
                     .where(tenantAndRevisionCondition)
                     .and(NAMESPACE_FIELD.eq(namespace))
@@ -341,12 +333,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<Record3<Object, Object, Object>> select = DSL
+                var  select = DSL
                     .using(configuration)
                     .select(
-                        field("value"),
+                        VALUE_FIELD,
                         field("namespace"),
-                        field("tenant_id")
+                        TENANT_ID_FIELD
                     )
                     .from(fromLastRevision(true))
                     .where(this.defaultFilter(tenantId));
@@ -363,9 +355,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 var select = DSL
                     .using(configuration)
                     .select(
-                        field("value"),
+                        VALUE_FIELD,
                         field("namespace"),
-                        field("tenant_id")
+                        TENANT_ID_FIELD
                     )
                     .from(fromLastRevision(true))
                     .where(this.defaultFilter());
@@ -395,10 +387,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 var select = DSL
                     .using(configuration)
                     .select(
-                        field("value"),
+                        VALUE_FIELD,
                         field("source_code"),
                         field("namespace"),
-                        field("tenant_id")
+                        TENANT_ID_FIELD
                     )
                     .from(fromLastRevision(true))
                     .where(this.defaultFilter(tenantId));
@@ -418,10 +410,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 var select = DSL
                     .using(configuration)
                     .select(
-                        field("value"),
+                        VALUE_FIELD,
                         field("source_code"),
                         field("namespace"),
-                        field("tenant_id")
+                        TENANT_ID_FIELD
                     )
                     .from(fromLastRevision(true))
                     .where(this.noAclDefaultFilter(tenantId));
@@ -441,10 +433,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 var select = DSL
                     .using(configuration)
                     .select(
-                        field("value"),
+                        VALUE_FIELD,
                         field("source_code"),
                         field("namespace"),
-                        field("tenant_id")
+                        TENANT_ID_FIELD
                     )
                     .from(fromLastRevision(true))
                     .where(this.defaultFilter());
@@ -468,7 +460,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<Record3<Object, Object, Object>> select =
+                SelectConditionStep<Record3<Object, Object, String>> select =
                     findByNamespaceSelect(namespace)
                         .and(this.defaultFilter(tenantId));
 
@@ -495,7 +487,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<Record3<Object, Object, Object>> select =
+                SelectConditionStep<Record3<Object, Object, String>> select =
                     findByNamespaceSelect(namespace)
                         .and(this.defaultExecutionFilter(tenantId));
 
@@ -503,12 +495,12 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             }).stream().map(it -> (Flow) it).map(FlowForExecution::of).toList();
     }
 
-    private SelectConditionStep<Record3<Object, Object, Object>> findByNamespaceSelect(String namespace) {
+    private SelectConditionStep<Record3<Object, Object, String>> findByNamespaceSelect(String namespace) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> DSL
                 .using(configuration)
-                .select(field("value"), field("namespace"), field("tenant_id"))
+                .select(VALUE_FIELD, field("namespace"), TENANT_ID_FIELD)
                 .from(fromLastRevision(true))
                 .where(NAMESPACE_FIELD.eq(namespace)));
     }
@@ -528,13 +520,13 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<Record4<String, String, String, String>> select = DSL
+                var select = DSL
                     .using(configuration)
                     .select(
                         SOURCE_FIELD,
                         VALUE_FIELD,
                         NAMESPACE_FIELD,
-                        TENANT_FIELD
+                        TENANT_ID_FIELD
                     )
                     .from(fromLastRevision(true))
                     .where(NAMESPACE_FIELD.eq(namespace))
@@ -552,13 +544,13 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                SelectConditionStep<Record4<String, String, String, String>> select = DSL
+                var select = DSL
                     .using(configuration)
                     .select(
                         SOURCE_FIELD,
                         VALUE_FIELD,
                         NAMESPACE_FIELD,
-                        TENANT_FIELD
+                        TENANT_ID_FIELD
                     )
                     .from(fromLastRevision(true))
                     .where(DSL.or(NAMESPACE_FIELD.eq(namespacePrefix), NAMESPACE_FIELD.likeIgnoreCase(namespacePrefix + ".%")))
@@ -573,10 +565,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @SuppressWarnings("unchecked")
     private <R extends Record, E> SelectConditionStep<R> fullTextSelect(String tenantId, DSLContext context, List<Field<Object>> field) {
-        ArrayList<Field<Object>> fields = new ArrayList<>();
+        ArrayList<Field<?>> fields = new ArrayList<>();
         // add mandatory fields
-        fields.add(field("value"));
-        fields.add(field("tenant_id"));
+        fields.add(VALUE_FIELD);
+        fields.add(TENANT_ID_FIELD);
         fields.add(field("namespace"));
 
         if (field != null) {
@@ -872,7 +864,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 DSLContext context = DSL.using(configuration);
 
                 var select = context
-                    .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                    .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(defaultFilter);
 
@@ -884,7 +876,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     select.orderBy(orderByFields);
                 }
 
-                try (Stream<Record4<String, String, String, String>> stream =  select.fetchSize(FETCH_SIZE).stream()){
+                try (var stream = select.fetchSize(FETCH_SIZE).stream()){
                     stream
                         .map(record -> (Flow) jdbcRepository.map(record))
                         .forEach(emitter::next);
@@ -986,7 +978,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<Flows.Fields> columnDescriptor = dataFilter.getColumns();
-            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {
                 field = filterService.buildAggregation(field, columnDescriptor.getAgg());

@@ -125,7 +125,6 @@ public class InputsTest {
             Execution.builder()
                 .id("test")
                 .namespace(flow.getNamespace())
-                .state(new State())
                 .tenantId(flow.getTenantId())
                 .flowRevision(1)
                 .flowId(flow.getId())

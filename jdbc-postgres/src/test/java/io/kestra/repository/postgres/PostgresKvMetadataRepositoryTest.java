@@ -1,6 +1,6 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.jdbc.repository.AbstractJdbcKvMetadataRepositoryTest;
+import io.kestra.core.repositories.AbstractKvMetadataRepositoryTest;
 
-public class PostgresKvMetadataRepositoryTest extends AbstractJdbcKvMetadataRepositoryTest {
+public class PostgresKvMetadataRepositoryTest extends AbstractKvMetadataRepositoryTest {
 }

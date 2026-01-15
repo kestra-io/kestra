@@ -63,8 +63,7 @@
 
         &_active,
         body &_active:hover {
-            background-color: var(--ks-button-background-secondary) !important;
-            color: var(--ks-button-content-primary);
+            background-color: var(--ks-button-background-secondary-active) !important;
             font-weight: normal;
         }
 
@@ -120,10 +119,6 @@
             color: var(--ks-content-secondary);
         }
 
-        &.vsm--link_active .vsm--icon {
-            color: var(--ks-button-content-primary);
-        }
-
         &:before {
             content: "";
             position: absolute;
@@ -140,14 +135,6 @@
 
     .vsm--title span:first-child {
         flex-grow: 0;
-    }
-
-    .vsm--link_open.vsm--link_active {
-
-        .vsm--title,
-        .vsm--icon {
-            color: var(--ks-button-content-primary);
-        }
     }
 
     .vsm--arrow_default {

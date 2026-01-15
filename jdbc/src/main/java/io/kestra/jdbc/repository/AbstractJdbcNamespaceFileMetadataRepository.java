@@ -51,7 +51,7 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
             .transactionResult(configuration -> {
                 Select<Record1<Object>> from = DSL
                     .using(configuration)
-                    .select(field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId, true))
                     .and(field("namespace").eq(namespace))
@@ -69,7 +69,7 @@ public abstract class AbstractJdbcNamespaceFileMetadataRepository extends Abstra
         FetchVersion fetchBehavior
     ) {
         SelectConditionStep<Record1<Object>> condition = context
-            .select(field("value"))
+            .select(VALUE_FIELD)
             .from(this.jdbcRepository.getTable())
             .where(this.defaultFilter(tenantId, allowDeleted))
             .and(this.filter(filters, "updated", QueryFilter.Resource.NAMESPACE_FILE_METADATA));

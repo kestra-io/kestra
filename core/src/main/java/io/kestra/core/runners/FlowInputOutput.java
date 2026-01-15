@@ -479,7 +479,7 @@ public class FlowInputOutput {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
                     String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
-                    if(execution.getState().isPaused()){
+                    if(execution.getState().getCurrent().isPaused()){
                         yield EncryptedString.from(encrypted);
                     }
                     yield encrypted;

@@ -1089,10 +1089,12 @@ class ExecutionControllerRunnerTest {
         // check that the execution is no more paused
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
 
-        Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
-        assertThat(outputs.get("asked")).isEqualTo("myString");
-        assertThat(outputs.get("secret_pause")).isEqualTo("secret_value");
-        assertThat((String) outputs.get("data")).startsWith("kestra://");
+        Map<String, Object> inputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
+        Map<String, String> secretInputs = (Map<String, String>) inputs.get("secret_pause");
+        assertThat(inputs.get("asked")).isEqualTo("myString");
+        assertThat(secretInputs.get("type")).isEqualTo("io.kestra.datatype:aes_encrypted");
+        assertThat(secretInputs.get("value")).isNotNull();
+        assertThat((String) inputs.get("data")).startsWith("kestra://");
     }
 
     @SuppressWarnings("unchecked")

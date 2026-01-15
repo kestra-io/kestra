@@ -185,19 +185,42 @@ class ScriptServiceTest {
         var runContext = runContext(runContextFactory, "namespace");
         String jobName = ScriptService.jobName(runContext);
         assertThat(jobName).startsWith("namespace-flowid-task-");
-        assertThat(jobName.length()).isEqualTo(27);
+        // base name "namespace-flowid-task" is 21 chars. Plus 1 hyphen and 8 char suffix.
+        assertThat(jobName.length()).isEqualTo(30);
+        assertThat(jobName.substring(jobName.lastIndexOf('-') + 1).length()).isEqualTo(8);
 
         runContext = runContext(runContextFactory, "very.very.very.very.very.very.very.very.very.very.very.very.long.namespace");
         jobName = ScriptService.jobName(runContext);
-        assertThat(jobName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylongnames-");
+
+        // Assert total length is max 63
         assertThat(jobName.length()).isEqualTo(63);
+
+        // Assert the suffix is 8 chars long
+        String suffix = jobName.substring(jobName.lastIndexOf("-") + 1);
+        assertThat(suffix.length()).isEqualTo(8);
+
+        // Assert the base name part is 54 chars long (63 total - 8 suffix - 1 hyphen)
+        String baseName = jobName.substring(0, jobName.lastIndexOf("-"));
+        assertThat(baseName.length()).isEqualTo(54);
+
+        // Assert the truncated prefix is correct
+        assertThat(baseName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylong");
     }
 
     @Test
     void normalize() {
         assertThat(ScriptService.normalize(null)).isNull();
         assertThat(ScriptService.normalize("a-normal-string")).isEqualTo("a-normal-string");
-        assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace")).isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
+        assertThat(ScriptService.normalize("very.very.very.very.very.very.very.very.very.very.very.very.long.namespace"))
+            .isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
+
+        // new tests for the fix
+        assertThat(ScriptService.normalize("abc-_")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc.-")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc_-")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc-._")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("abc---")).isEqualTo("abc");
+        assertThat(ScriptService.normalize("a-b-c-")).isEqualTo("a-b-c");
     }
 
     private RunContext runContext(RunContextFactory runContextFactory, String namespace) {

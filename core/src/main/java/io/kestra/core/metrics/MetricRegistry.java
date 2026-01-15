@@ -1,5 +1,6 @@
 package io.kestra.core.metrics;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.tasks.Task;
@@ -13,6 +14,11 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
+import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
@@ -145,6 +151,15 @@ public class MetricRegistry {
     public static final String TAG_QUEUE_CONSUMER = "consumer";
     public static final String TAG_QUEUE_CONSUMER_GROUP = "consumer_group";
     public static final String TAG_QUEUE_TYPE = "queue_type";
+    public static final String TAG_LABEL_PREFIX = "label";
+    /**
+     * Sentinel value representing logical absence of label.
+     * <br />
+     * <a href="https://docs.micrometer.io/micrometer/reference/implementations/prometheus.html?utm_source=chatgpt.com#_limitation_on_same_name_with_different_set_of_tag_keys">
+     *     Micrometer - Limitation on same name with different set of tag keys
+     * </a>
+     */
+    public static final String TAG_LABEL_PLACEHOLDER = "__none__";
 
     @Inject
     private MeterRegistry meterRegistry;
@@ -360,9 +375,11 @@ public class MetricRegistry {
      * @return tags to apply to metrics
      */
     public String[] tags(AbstractTrigger trigger) {
-        return new String[]{
+        var baseTags = new String[]{
             TAG_TRIGGER_TYPE, trigger.getType(),
         };
+        var labelTags = getLabelTags(trigger.getLabels());
+        return ArrayUtils.addAll(baseTags, labelTags);
     }
 
     /**
@@ -377,7 +394,9 @@ public class MetricRegistry {
             TAG_NAMESPACE_ID, execution.getNamespace(),
             TAG_STATE, execution.getState().getCurrent().name(),
         };
-        return execution.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, execution.getTenantId());
+        var labelTags = getLabelTags(execution.getLabels());
+        var tenantTag = getTenantTag(execution.getTenantId());
+        return ArrayUtils.addAll(ArrayUtils.addAll(baseTags, labelTags), tenantTag);
     }
 
     /**
@@ -428,6 +447,40 @@ public class MetricRegistry {
         } catch (Exception e) {
             log.warn("Error on metrics", e);
         }
+    }
+
+    private String[] getTenantTag(@Nullable String tenantId) {
+        return tenantId == null ? null : new String[]{TAG_TENANT_ID, tenantId};
+    }
+
+    /**
+     * Speed-optimized version of {@link Label}s to tags conversion.
+     * @param labels The labels to evaluate against configured keys
+     * @return tags based on matching label keys
+     */
+    private String[] getLabelTags(@NonNull List<Label> labels) {
+        final List<String> configuredKeys = metricConfig.getLabels();
+        if (configuredKeys == null) return null;
+
+        int size = configuredKeys.size() * 2;
+        String[] tags = new String[size];
+        int i = 0;
+
+        for(String labelKey : configuredKeys) {
+            tags[i++] = TAG_LABEL_PREFIX + "_" + labelKey;
+            String labelValue = TAG_LABEL_PLACEHOLDER;
+
+            for (Label label : labels) {
+                if (labelKey.equals(label.key())) {
+                    labelValue = label.value();
+                    break;
+                }
+            }
+
+            tags[i++] = labelValue;
+        }
+
+        return tags;
     }
 }
 

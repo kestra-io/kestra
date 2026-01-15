@@ -2,9 +2,11 @@
     <el-tooltip
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
+        :enterable="false"
         :persistent="false"
         :hideAfter="0"
         :content="tooltip"
+        popperClass="ks-restart-tooltip--no-pointer"
         rawContent
         transition=""
         effect="light"
@@ -18,7 +20,7 @@
             :class="componentClass"
             @click="isOpen = !isOpen"
         >
-            {{ t(replayOrRestart) }}
+            {{ $t(replayOrRestart) }}
         </component>
         <span v-else-if="component === 'el-dropdown-item'">
             <component
@@ -29,27 +31,27 @@
                 :class="componentClass"
                 @click="isOpen = !isOpen"
             >
-                {{ t(replayOrRestart) }}
+                {{ $t(replayOrRestart) }}
             </component>
         </span>
     </el-tooltip>
     <el-dialog v-if="enabled && isOpen" v-model="isOpen" destroyOnClose :appendToBody="true">
         <template #header>
-            <h5>{{ t("confirmation") }}</h5>
+            <h5>{{ $t("confirmation") }}</h5>
         </template>
 
         <template #footer>
             <el-button @click="isOpen = false">
-                {{ t('cancel') }}
+                {{ $t('cancel') }}
             </el-button>
             <el-button v-if="isReplay && hasInputs" @click="openReplayWithInputsDialog" type="default" :icon="PlayBoxMultiple">
-                {{ t('replay with inputs') }}
+                {{ $t('replay with inputs') }}
             </el-button>
             <el-button @click="restartLastRevision()">
                 {{ buttonText }}
             </el-button>
             <el-button type="primary" @click="restart()">
-                {{ t('ok') }}
+                {{ $t('ok') }}
             </el-button>
         </template>
 
@@ -57,9 +59,9 @@
 
         <el-form v-if="revisionsOptions && revisionsOptions.length > 1">
             <p class="execution-description">
-                {{ t("restart change revision") }}
+                {{ $t("restart change revision") }}
             </p>
-            <el-form-item :label="t('revisions')">
+            <el-form-item :label="$t('revisions')">
                 <el-select v-model="revisionsSelected">
                     <el-option
                         v-for="item in revisionsOptions"
@@ -74,7 +76,7 @@
 
     <el-dialog v-if="isReplayWithInputsOpen" v-model="isReplayWithInputsOpen" destroyOnClose :appendToBody="true" width="60%">
         <template #header>
-            <span v-html="t('replay the execution', {executionId: execution.id, flowId: execution.flowId})" />
+            <span v-html="$t('replay the execution', {executionId: execution.id, flowId: execution.flowId})" />
         </template>
         <ReplayWithInputs
             :execution
@@ -108,7 +110,7 @@
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
-        tooltipPosition: {type: String, default: "bottom"}
+        tooltipPosition: {type: String, default: "bottom"},
     })
 
     const emit = defineEmits(["follow"])
@@ -237,6 +239,12 @@
 
     watch(isOpen, (newValue) => newValue && loadRevision())
 </script>
+
+<style lang="scss">
+    .ks-restart-tooltip--no-pointer {
+        pointer-events: none;
+    }
+</style>
 
 <style scoped lang="scss">
 .execution-description {

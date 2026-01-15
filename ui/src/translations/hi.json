@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "ध्यान दें: इस समय, केवल Gemini को AI प्रदाता के रूप में समर्थन प्राप्त है।\n\nकॉन्फ़िगरेशन सहेजने के बाद अपने Kestra instance को पुनः प्रारंभ करें।",
+          "footer": "ध्यान दें: इस समय, केवल Gemini को Open Source Edition के लिए AI प्रदाता के रूप में समर्थन दिया जाता है। Enterprise Edition के लिए, कृपया अन्य मॉडल प्रदाता कॉन्फ़िगरेशन के लिए AI Copilot दस्तावेज़ देखें।\n\nकॉन्फ़िगरेशन सहेजने के बाद अपनी Kestra instance को पुनः प्रारंभ करें।",
           "header": "<b>AI Copilot अभी तक कॉन्फ़िगर नहीं किया गया है।</b>\n\nAI Copilot को सक्षम करने के लिए, अपने Kestra instance configuration file (जैसे <code>application.yml</code>) में निम्नलिखित स्निपेट जोड़ें, <code>geminiApiKey</code> को अपनी वास्तविक key से बदलें:"
         },
         "generating": "आपके लिए Flow YAML उत्पन्न किया जा रहा है...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "ऐप ब्लॉक्स",
     "apps": "ऐप्स",
+    "assets": "संपत्तियाँ",
     "attempt": "प्रयास",
     "attempts": "प्रयास",
     "auditlogs": "Audit Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">यह निष्पादन अभी भी RUNNING है, इसे हटाने से यह बंद नहीं होगा।<br />इसे बंद करने के लिए आपको निष्पादन को kill करना होगा।</div>",
     "delete logs": "Logs हटाएं",
     "delete ok": "हटा दिया गया है",
+    "delete revision confirm": "क्या आप वाकई संशोधन {revision} को हटाना चाहते हैं?",
+    "delete revision error": "त्रुटि {error} के साथ संशोधन {revision} हटाने में त्रुटि",
     "delete task confirm": "क्या आप वाकई Task <code>{taskId}</code> को हटाना चाहते हैं?",
     "delete trigger": "ट्रिगर हटाएं",
     "delete trigger confirmation": "क्या आप वाकई trigger {id} को हटाना चाहते हैं? WARNING: यदि trigger अभी भी किसी flow में सक्रिय है, तो उसे हटाने से duplicate executions हो सकते हैं।",
@@ -335,6 +338,10 @@
         "title": "अपने इंस्टेंस के पार Infrastructure प्रबंधित करें"
       },
       "namespace": {
+        "assets": {
+          "message": "Kestra एंटरप्राइज एडिशन में, Assets आपके workflows के साथ इंटरैक्ट करने वाले संसाधनों की लाइव इन्वेंट्री रखता है। ये संसाधन डेटाबेस टेबल, वर्चुअल मशीन, फाइलें, या कोई भी बाहरी सिस्टम हो सकते हैं जिनके साथ आप काम करते हैं।",
+          "title": "संपत्ति प्रबंधन को केंद्रीकृत करें"
+        },
         "audit-logs": {
           "message": "Kestra एंटरप्राइज एडिशन में, आप namespace-स्तर के ऑडिट logs को विस्तृत अंतर के साथ देख सकते हैं, जो आपको सभी संसाधनों में किसने क्या और कब बदला, इसका स्पष्ट इतिहास प्रदान करता है।",
           "title": "सभी परिवर्तनों को एक स्थान पर ट्रैक करें"
@@ -668,6 +675,7 @@
       "end_date": "समाप्ति तिथि",
       "enter description": "फ़िल्टर विवरण दर्ज करें",
       "enter label": "फ़िल्टर लेबल दर्ज करें",
+      "enter name": "फ़िल्टर नाम दर्ज करें",
       "execution_kind": {
         "playground": "प्लेग्राउंड",
         "playground_description": "प्लेग्राउंड मोड से ट्रिगर की गई Executions",
@@ -714,6 +722,7 @@
         "description": "मेट्रिक प्रकार द्वारा फ़िल्टर करें",
         "label": "मेट्रिक"
       },
+      "name": "नाम",
       "namespace": {
         "description": "namespace द्वारा फ़िल्टर करें",
         "label": "Namespace"
@@ -1136,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "पुष्टि करें",
+          "file_single": "क्या आप वाकई <code>{name}</code> फ़ाइल को हटाना चाहते हैं?",
           "files": "क्या आप वाकई <code>{count}</code> फ़ाइल(फ़ाइलें) हटाना चाहते हैं?",
+          "folder_single": "क्या आप वाकई <code>{name}</code> फ़ोल्डर और इसकी सभी सामग्री को हटाना चाहते हैं?",
           "folders": "क्या आप वाकई <code>{count}</code> फ़ोल्डर और उसकी सभी सामग्री को हटाना चाहते हैं?",
           "mixed": "क्या आप वाकई <code>{folders}</code> फ़ोल्डर(ओं) और <code>{files}</code> फ़ाइल(ओं) को हटाना चाहते हैं?",
           "title": "सामग्री को हटाने की पुष्टि करें"
@@ -1493,6 +1504,7 @@
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
     "reuse_original_inputs": "मूल inputs का पुनः उपयोग करें",
     "revision": "संशोधन",
+    "revision deleted": "समीक्षा {revision} को सफलतापूर्वक हटा दिया गया है",
     "revisions": "पुनरीक्षण",
     "row count": "पंक्ति संख्या",
     "run task in playground": "प्लेग्राउंड में task चलाएं",

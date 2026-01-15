@@ -53,7 +53,7 @@ public record NamespaceFile(
     public static NamespaceFile fromMetadata(final NamespaceFileMetadata metadata) {
         return of(
             metadata.getNamespace(),
-            Path.of(metadata.getPath()),
+            metadata.getPath(),
             metadata.getVersion()
         );
     }
@@ -142,7 +142,7 @@ public record NamespaceFile(
 
         return new NamespaceFile(
             pathWithoutLeadingSlash,
-            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/")),
+            URI.create(StorageContext.KESTRA_PROTOCOL + namespacePrefixPath.resolve(storagePath).toString().replace("\\", "/") + (isDirectory(path) ? "/" : "")),
             namespace,
             version
         );

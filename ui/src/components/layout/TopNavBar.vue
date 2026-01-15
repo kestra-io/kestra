@@ -52,9 +52,6 @@
                 </el-button>
             </div>
             <slot name="additional-right" />
-            <div class="d-flex fixed-buttons icons">
-                <Impersonating />
-            </div>
         </div>
     </nav>
 </template>
@@ -64,7 +61,6 @@
     import {useI18n} from "vue-i18n";
     import {useRoute, RouterLink} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
-    import Impersonating from "override/components/auth/Impersonating.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
@@ -224,16 +220,6 @@
         }
 
         .side {
-            .fixed-buttons {
-                align-items: center;
-
-                button, :deep(button), a, :deep(a) {
-                    border: none;
-                    font-size: var(--font-size-lg);
-                    padding: .25rem;
-                }
-            }
-
             :slotted(ul), :deep(ul) {
                 display: flex;
                 list-style: none;
@@ -257,11 +243,6 @@
                 grid-template-rows: repeat(2, auto);
                 gap: 10px;
                 overflow: hidden;
-            }
-            .icons {
-                grid-row: 2;
-                grid-column: 2;
-                display: contents;
             }
         }
         @media (max-width: 664px) {

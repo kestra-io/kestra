@@ -12,6 +12,7 @@ import io.kestra.core.runners.InputAndOutput;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.services.VariablesService;
 import io.micronaut.context.ApplicationContext;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -34,9 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
+@Slf4j
 class SubflowTest {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SubflowTest.class);
 
     private static final State DEFAULT_SUCCESS_STATE = State.of(State.Type.SUCCESS, List.of(new State.History(State.Type.CREATED, Instant.now()), new State.History(State.Type.RUNNING, Instant.now()), new State.History(State.Type.SUCCESS, Instant.now())));
     public static final String EXECUTION_ID = "executionId";
@@ -53,7 +52,7 @@ class SubflowTest {
     @BeforeEach
     void beforeEach() {
         Mockito.when(applicationContext.getBean(VariablesService.class)).thenReturn(new VariablesService());
-        Mockito.when(runContext.logger()).thenReturn(LOG);
+        Mockito.when(runContext.logger()).thenReturn(log);
         Mockito.when(runContext.getApplicationContext()).thenReturn(applicationContext);
         Mockito.when(runContext.inputAndOutput()).thenReturn(inputAndOutput);
     }

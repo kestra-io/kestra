@@ -585,7 +585,7 @@ function deleteFlowAndDependencies() {
             .then(response => response.data)
     }
 
-    function loadRevisions(options: { namespace: string, id: string, store?: boolean }) {
+    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }) {
         return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
             if (options.store !== false) {
                 revisions.value = response.data
@@ -763,6 +763,10 @@ function deleteFlowAndDependencies() {
         flow.value = {...flowVar}
     }
 
+    function deleteRevision(options: { namespace: string, id: string, revision: string }) {
+        return axios.delete(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions?revisions=${options.revision}`);
+    }
+
     const authStore = useAuthStore()
 
     const isAllowedEdit = computed((): boolean => {
@@ -921,5 +925,6 @@ function deleteFlowAndDependencies() {
         loadTaskAggregatedMetrics,
         loadTasksWithMetrics,
         getNamespace,
+        deleteRevision
     }
 })

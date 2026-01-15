@@ -373,7 +373,7 @@ public class ExecutionService {
 
         Execution newExecution = execution.withMetadata(execution.getMetadata().nextAttempt());
 
-        final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false );
+        final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
 
         for (String s : taskRunToRestart) {
             TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);

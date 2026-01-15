@@ -2,7 +2,7 @@
     <div class="outputs">
         <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
             <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
-                <div class="d-flex flex-column overflow-x-auto left">
+                <div class="d-flex flex-column overflow-auto left">
                     <el-cascader-panel
                         ref="cascader"
                         v-model="selected"
@@ -26,16 +26,19 @@
                                 @click="expandedValue = data.path"
                                 class="w-100 d-flex justify-content-between"
                             >
-                                <div class="pe-5 d-flex task">
+                                <div class="pe-1 d-flex task">
                                     <TaskIcon
                                         v-if="data.icon"
                                         :icons="pluginsStore.icons"
                                         :cls="icons[data.taskId]"
                                         onlyIcon
                                     />
-                                    <span :class="{'ms-3': data.icon}">{{
-                                        data.label
-                                    }}</span>
+                                    <span :class="{'ms-3': data.icon}" class="task-label">
+                                        <span>{{ data.label }}&nbsp;</span>
+                                        <code v-if="data.iterationValue != null" class="task-iteration-value">
+                                            {{ data.iterationValue }}
+                                        </code>
+                                    </span>
                                 </div>
                                 <code>
                                     <span
@@ -383,6 +386,7 @@
                 label: task.taskId,
                 value: task.taskId,
                 ...task,
+                iterationValue: task.value, // For ForEach tasks, store the iteration value separately to display like Gantt view
                 icon: true,
                 children: task?.outputs
                     ? transform(task.outputs, true, task.taskId)
@@ -460,7 +464,10 @@
 }
 
 :deep(.el-cascader-menu__list) {
-    min-height: 100vh;
+    /* Let the cascader list be constrained by its parent container
+       so it can scroll independently instead of forcing page height */
+    min-height: 0;
+    height: 100%;
 }
 
 :deep(.el-cascader-panel) {
@@ -483,6 +490,20 @@
     background: var(--ks-background-card);
     position: relative;
     z-index: 1;
+}
+
+/* Left column container: take full splitter-panel height and scroll internally */
+.outputs .left {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Right panel: make wrapper fill height and allow content to scroll independently */
+.right.wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 :deep(.el-cascader-menu) {
@@ -521,6 +542,25 @@
             display: none;
         }
 
+        .task {
+            width: 100%;
+            max-width: 100%;
+
+            & .task-label {
+                width: 100%;
+                max-width: 100%;
+                
+                & .task-iteration-value {
+                    display: inline-block;
+                    width: 80px;
+                    max-width: 80px;
+                    overflow-x: clip;
+                    text-overflow: ellipsis;
+                    color: var(--ks-content-primary);
+                }
+            }
+        }
+
         .task .wrapper {
             align-self: center;
             height: var(--el-font-size-small);
@@ -533,14 +573,24 @@
     }
 }
 .content-container {
-    height: calc(100vh - 0px);
-    overflow-y: scroll;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
     overflow-x: hidden;
     scrollbar-gutter: stable;
     word-wrap: break-word;
     word-break: break-word;
     position: relative;
     z-index: 0;
+}
+
+/* Hide the visual scrollbar on the right panel but keep scrolling usable */
+.content-container {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.content-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
 }
 
 :deep(.el-collapse) {

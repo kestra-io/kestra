@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
-public class SecretInput extends Input<Object> {
+public class SecretInput extends Input<EncryptedString> {
     @Schema(
         title = "Regular expression validating the value."
     )
@@ -23,9 +23,8 @@ public class SecretInput extends Input<Object> {
     String validator;
 
     @Override
-    public void validate(Object input) throws ConstraintViolationException {
-        String value = input instanceof EncryptedString ? ((EncryptedString) input).getValue(): (String) input;
-        if (validator != null && !Pattern.matches(validator, value)) {
+    public void validate(EncryptedString input) throws ConstraintViolationException {
+        if (validator != null && !Pattern.matches(validator, input.getValue())) {
             throw ManualConstraintViolation.toConstraintViolationException(
                 "it must match the pattern `" + validator + "`",
                 this,

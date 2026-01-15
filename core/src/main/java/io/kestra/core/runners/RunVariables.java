@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.Schedule;
@@ -383,7 +384,8 @@ public final class RunVariables {
                 decodeInput(secret, restOfId, (Map<String, Object>) inputs.get(nestedId));
             } else if (inputs.containsKey(id)) {
                 try {
-                    String decoded = secret.decrypt(((String) inputs.get(id)));
+                    Map<String, String> encryptedString = (Map<String,String>) inputs.get(id);
+                    String decoded = secret.decrypt(encryptedString.get("value"));
                     inputs.put(id, decoded);
                 } catch (GeneralSecurityException e) {
                     throw new RuntimeException(e);

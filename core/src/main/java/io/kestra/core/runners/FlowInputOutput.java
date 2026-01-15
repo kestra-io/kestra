@@ -6,12 +6,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 
 import io.kestra.core.exceptions.InputOutputValidationException;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.Data;
-import io.kestra.core.models.flows.DependsOn;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.RenderableInput;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
@@ -427,16 +422,7 @@ public class FlowInputOutput {
                     if (current == null && Boolean.FALSE.equals(output.getRequired())) {
                         return Optional.of(new AbstractMap.SimpleEntry<>(output.getId(), null));
                     }
-                    return parseData(execution, output, current)
-                        .map(entry -> {
-                            if (output.getType().equals(Type.SECRET)) {
-                                return new AbstractMap.SimpleEntry<>(
-                                    entry.getKey(),
-                                    EncryptedString.from(entry.getValue().toString())
-                                );
-                            }
-                            return entry;
-                        });
+                    return parseData(execution, output, current);
                 }
                 catch (IllegalArgumentException e){
                     throw InputOutputValidationException.of(e.getMessage(), output);
@@ -479,10 +465,7 @@ public class FlowInputOutput {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
                     String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
-                    if(execution.getState().getCurrent().isPaused()){
-                        yield EncryptedString.from(encrypted);
-                    }
-                    yield encrypted;
+                    yield  EncryptedString.from(encrypted);
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation

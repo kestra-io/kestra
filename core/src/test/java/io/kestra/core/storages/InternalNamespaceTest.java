@@ -5,14 +5,15 @@ import io.kestra.core.utils.PathMatcherPredicate;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
@@ -21,9 +22,8 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
+@Slf4j
 class InternalNamespaceTest {
-
-    private static final Logger logger = LoggerFactory.getLogger(InternalNamespaceTest.class);
 
     @Inject
     private StorageInterface storageInterface;
@@ -35,7 +35,7 @@ class InternalNamespaceTest {
     void shouldGetAllNamespaceFiles() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();
-        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
 
         // When
         namespace.putFile(Path.of("/sub/dir/file1.txt"), new ByteArrayInputStream("1".getBytes()));
@@ -53,13 +53,18 @@ class InternalNamespaceTest {
     void shouldPutFileGivenNoTenant() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();
-        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
 
         // When
         List<NamespaceFile> namespaceFiles = namespace.putFile(Path.of("/sub/dir/file.txt"), new ByteArrayInputStream("1".getBytes()));
 
         // Then
-        assertThat(namespaceFiles).containsExactlyInAnyOrder(NamespaceFile.of(namespaceId, "", 1), NamespaceFile.of(namespaceId, "sub/", 1), NamespaceFile.of(namespaceId, "sub/dir/", 1), NamespaceFile.of(namespaceId, "sub/dir/file.txt", 1));
+        assertThat(namespaceFiles).containsExactlyInAnyOrder(
+            NamespaceFile.of(namespaceId, "/", 1), 
+            NamespaceFile.of(namespaceId, "sub/", 1),
+            NamespaceFile.of(namespaceId, "sub/dir/", 1), 
+            NamespaceFile.of(namespaceId, "sub/dir/file.txt", 1)
+        );
 
         // Then
         NamespaceFile fileEntry = namespaceFiles.stream().filter(namespaceFile -> namespaceFile.path().endsWith("file.txt")).findFirst().get();
@@ -72,7 +77,7 @@ class InternalNamespaceTest {
     void shouldSucceedPutFileGivenExistingFileForConflictOverwrite() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();
-        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
 
         NamespaceFile namespaceFile = namespace.get(Path.of("/sub/dir/file.txt"));
 
@@ -91,7 +96,7 @@ class InternalNamespaceTest {
     void shouldFailPutFileGivenExistingFileForError() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();
-        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
 
         NamespaceFile namespaceFile = namespace.get(Path.of("/sub/dir/file.txt"));
 
@@ -108,7 +113,7 @@ class InternalNamespaceTest {
     void shouldIgnorePutFileGivenExistingFileForSkip() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();
-        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
 
         NamespaceFile namespaceFile = namespace.get(Path.of("/sub/dir/file.txt"));
 
@@ -127,7 +132,7 @@ class InternalNamespaceTest {
     void shouldFindAllMatchingGivenNoTenant() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();
-        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
 
         // When
         namespace.putFile(Path.of("/a/b/c/1.sql"), new ByteArrayInputStream("1".getBytes()));
@@ -150,12 +155,12 @@ class InternalNamespaceTest {
     void shouldFindAllGivenTenant() throws IOException, URISyntaxException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();
-        final InternalNamespace namespaceTenant1 = new InternalNamespace(logger, "tenant1", namespaceId, storageInterface, namespaceFileMetadataRepository);
+        final InternalNamespace namespaceTenant1 = new InternalNamespace(log, "tenant1", namespaceId, storageInterface, namespaceFileMetadataRepository);
         NamespaceFile namespaceFile1 = namespaceTenant1.putFile(Path.of("/a/b/c/test.txt"), new ByteArrayInputStream("1".getBytes())).stream()
             .filter(namespaceFile -> namespaceFile.path().endsWith("test.txt"))
             .findFirst().get();
 
-        final InternalNamespace namespaceTenant2 = new InternalNamespace(logger, "tenant2", namespaceId, storageInterface, namespaceFileMetadataRepository);
+        final InternalNamespace namespaceTenant2 = new InternalNamespace(log, "tenant2", namespaceId, storageInterface, namespaceFileMetadataRepository);
         NamespaceFile namespaceFile2 = namespaceTenant2.putFile(Path.of("/a/b/c/test.txt"), new ByteArrayInputStream("1".getBytes())).stream()
             .filter(namespaceFile -> namespaceFile.path().endsWith("test.txt"))
             .findFirst().get();
@@ -174,8 +179,22 @@ class InternalNamespaceTest {
     void shouldReturnNoNamespaceFileForEmptyNamespace() throws IOException {
         // Given
         final String namespaceId = TestsUtils.randomNamespace();
-        final InternalNamespace namespace = new InternalNamespace(logger, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
         List<NamespaceFile> namespaceFiles = namespace.findAllFilesMatching((unused) -> true);
         assertThat(namespaceFiles.size()).isZero();
+    }
+    
+    @Test
+    void shouldCreateDirectory() throws IOException {
+        // Given
+        final String namespaceId = TestsUtils.randomNamespace();
+        final InternalNamespace namespace = new InternalNamespace(log, MAIN_TENANT, namespaceId, storageInterface, namespaceFileMetadataRepository);
+
+        // When
+        NamespaceFile directory = namespace.createDirectory(Path.of("my-directory"));
+
+        // Then
+        assertThat(directory.isDirectory()).isTrue();
+        assertThat(directory.uri().toString()).matches(uri -> uri.endsWith("my-directory/"));
     }
 }

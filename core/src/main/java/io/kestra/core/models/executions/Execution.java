@@ -157,6 +157,25 @@ public class Execution implements DeletedInterface, TenantInterface {
         final BiFunction<FlowInterface, Execution, Map<String, Object>> inputs,
         final List<Label> labels,
         final Optional<ZonedDateTime> scheduleDate) {
+        return newExecution(flow, inputs, labels, scheduleDate, null);
+    }
+
+    /**
+     * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and
+     * inputs.
+     *
+     * @param flow The Flow.
+     * @param inputs The Flow's inputs.
+     * @param labels The Flow labels.
+     * @param kind The ExecutionKind.
+     *
+     * @return a new {@link Execution}.
+     */
+    public static Execution newExecution(final FlowInterface flow,
+                                         final BiFunction<FlowInterface, Execution, Map<String, Object>> inputs,
+                                         final List<Label> labels,
+                                         final Optional<ZonedDateTime> scheduleDate,
+                                         @Nullable final ExecutionKind kind) {
         Execution execution = builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
@@ -166,6 +185,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .state(new State())
             .scheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
             .variables(flow.getVariables())
+            .kind(kind)
             .build();
 
         List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));
@@ -276,7 +296,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {
-        ArrayList<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
+        List<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
 
         boolean b = Collections.replaceAll(
             newTaskRunList,
@@ -508,13 +528,10 @@ public class Execution implements DeletedInterface, TenantInterface {
         return resolvedTasks;
     }
 
-    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks) {
-        resolvedTasks = removeDisabled(resolvedTasks);
-
-        return resolvedTasks;
-    }
-
-    private List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
+    /**
+     * Remove disabled tasks from the list of resolved tasks.
+     */
+    public List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
         if (tasks == null) {
             return null;
         }
@@ -1009,7 +1026,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         Collections.reverse(parents);
 
         for (TaskRun childTaskRun : parents) {
-            HashMap<String, Object> current = new HashMap<>();
+            Map<String, Object> current = HashMap.newHashMap(2);
 
             if (childTaskRun.getValue() != null) {
                 current.put("taskrun", Map.of("value", childTaskRun.getValue()));
@@ -1040,7 +1057,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             return Collections.emptyList();
         }
 
-        ArrayList<TaskRun> result = new ArrayList<>();
+        List<TaskRun> result = new ArrayList<>();
         boolean ended = false;
         while (!ended) {
             final TaskRun finalTaskRun = taskRun;
@@ -1072,7 +1089,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             return Collections.emptyList();
         }
 
-        ArrayList<TaskRun> result = new ArrayList<>();
+        List<TaskRun> result = new ArrayList<>();
         boolean ended = false;
         while (!ended) {
             final TaskRun finalTaskRun = taskRun;

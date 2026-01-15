@@ -1145,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "확인",
+          "file_single": "파일 <code>{name}</code>을(를) 삭제하시겠습니까?",
           "files": "<code>{count}</code>개의 파일을 삭제하시겠습니까?",
+          "folder_single": "폴더 <code>{name}</code> 및 모든 내용을 삭제하시겠습니까?",
           "folders": "<code>{count}</code>개의 폴더와 모든 내용을 삭제하시겠습니까?",
           "mixed": "<code>{folders}</code> 폴더와 <code>{files}</code> 파일을 삭제하시겠습니까?",
           "title": "콘텐츠 삭제 확인"

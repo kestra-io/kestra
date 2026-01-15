@@ -1145,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Confirmer",
+          "file_single": "Êtes-vous sûr de vouloir supprimer le fichier <code>{name}</code> ?",
           "files": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> fichier(s) ?",
+          "folder_single": "Êtes-vous sûr de vouloir supprimer le dossier <code>{name}</code> et tout son contenu ?",
           "folders": "Êtes-vous sûr de vouloir supprimer <code>{count}</code> dossier(s) et tout son contenu ?",
           "mixed": "Êtes-vous sûr de vouloir supprimer le(s) dossier(s) <code>{folders}</code> et le(s) fichier(s) <code>{files}</code> ?",
           "title": "Confirmer la suppression du contenu"

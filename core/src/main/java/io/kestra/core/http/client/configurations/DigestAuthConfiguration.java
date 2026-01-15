@@ -11,31 +11,28 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.apache.hc.client5.http.impl.DefaultAuthenticationStrategy;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.apache.hc.core5.http.HttpHeaders;
-import org.apache.hc.core5.http.message.BasicHeader;
 
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-public class BearerAuthConfiguration extends AbstractAuthConfiguration {
+public class DigestAuthConfiguration extends AbstractAuthConfiguration {
     @NotNull
     @JsonInclude
     @Builder.Default
     @Getter(AccessLevel.NONE)
-    protected AuthType type = AuthType.BEARER;
+    protected AuthType type = AuthType.DIGEST;
 
-    @Schema(title = "The token for bearer token authentication.")
-    private Property<String> token;
+    @Schema(title = "The username for HTTP Digest authentication.")
+    private Property<String> username;
+
+    @Schema(title = "The password for HTTP Digest authentication.")
+    private Property<String> password;
 
     @Override
     public void configure(HttpClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {
-        var renderedToken = runContext.render(this.token).as(String.class).orElse(null);
-        builder.addRequestInterceptorFirst((request, entity, context) -> request
-            .setHeader(new BasicHeader(
-                HttpHeaders.AUTHORIZATION,
-                "Bearer " + renderedToken
-            )));
+        builder.setTargetAuthenticationStrategy(new DefaultAuthenticationStrategy());
     }
 
     @Override

@@ -202,7 +202,7 @@
                                     )
                                 }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="removeSelectedFiles()">
+                            <el-dropdown-item @click="removeSelectedFiles(data, node)">
                                 {{
                                     selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
@@ -487,12 +487,16 @@
     const multiSelected = computed(() => selectedNodes.value.length > 1);
 
     const confirmationLabels = computed(() => {
-        const files = confirmation.value.nodes?.filter(n => n.type === "File").length ?? 0;
-        const foldersCount = confirmation.value.nodes?.filter(n => n.type === "Directory").length ?? 0;
+        const files = confirmation.value.nodes?.filter(n => n.type === "File");
+        const filesCount = files?.length ?? 0;
+        const folders = confirmation.value.nodes?.filter(n => n.type === "Directory");
+        const foldersCount = folders?.length ?? 0;
         const labels = {title: t("namespace files.dialog.deletion.title"), message: ""};
-        if (foldersCount > 0 && files > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files});
+        if (foldersCount === 1) labels.message = t("namespace files.dialog.deletion.folder_single", {name: folders?.[0].fileName});
+        else if (filesCount === 1) labels.message = t("namespace files.dialog.deletion.file_single", {name: files?.[0].fileName});
+        else if (foldersCount > 0 && filesCount > 0) labels.message = t("namespace files.dialog.deletion.mixed", {folders: foldersCount, files: filesCount});
         else if (foldersCount > 0) labels.message = t("namespace files.dialog.deletion.folders", {count: foldersCount});
-        else labels.message = t("namespace files.dialog.deletion.files", {count: files});
+        else labels.message = t("namespace files.dialog.deletion.files", {count: filesCount});
         return labels;
     });
 
@@ -655,7 +659,7 @@
     }
 
     async function fetchRevisionSource(revision: number): Promise<string> {
-        return namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})
+        return (await namespacesStore.readFile({namespace: namespaceId.value, path: revisionsHistory.value.path, revision})).content ?? ""
     }
 
     async function restore(source: string) {
@@ -683,7 +687,11 @@
         }];
     }
 
-    async function removeSelectedFiles() {
+    async function removeSelectedFiles(_data?: any, node?: ElTreeNode) {
+        if (selectedFiles.value.length <= 1 && node) {
+            const path = filesStore.getPath(node.data.id)
+            selectedFiles.value = path ? [path] : [];
+        }
         const nodes = selectedFiles.value.map((filePath) => {
             return filesStore.findNodeByPath(filePath);
         });
@@ -711,9 +719,9 @@
             lastClickedIndex.value = flatList.findIndex(i => i.path === path);
         }
 
-        for (const dd in dropdowns.value) {
-            if (dd !== id) {
-                dropdowns.value[dd].handleClose();
+        for(const dd in dropdowns.value){
+            if(dd !== id){
+                dropdowns.value[dd]?.handleClose();
             }
         }
         dropdowns.value[id]?.handleOpen();
@@ -914,10 +922,12 @@
     }
 
     async function exportFile(node: TreeNode, data: {fileName: string}) {
-        const content = await namespacesStore.readFile({
+        const {content} = await namespacesStore.readFile({
             path: filesStore.getPath(node.id) ?? "",
             namespace: namespaceId.value,
         });
+        if(!content?.length) 
+            throw new Error("File is empty or undefined");
         const blob = new Blob([content], {type: "text/plain"});
         Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
     }

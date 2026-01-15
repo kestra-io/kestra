@@ -1,6 +1,6 @@
 <template>
     <div>
-        <canvas id="pdf" />
+        <canvas ref="canvasRef" />
 
         <nav v-if="rendered">
             <el-tooltip :content="$t('page.previous')" effect="light" :showAfter="1500">
@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted} from "vue";
+    import {ref, shallowRef, computed, onMounted} from "vue";
     import * as pdfjs from "pdfjs-dist";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
@@ -35,19 +35,17 @@
         }
     });
 
-    const pdfDoc = ref<pdfjs.PDFDocumentProxy | undefined>(undefined);
+    const pdfDoc = shallowRef<pdfjs.PDFDocumentProxy | undefined>(undefined);
+    const canvasRef = ref<HTMLCanvasElement | null>(null);
+
     const pageNum = ref(1);
     const rendered = ref(false);
     const pageRendering = ref(false);
     const pageNumPending = ref<number | undefined>(undefined);
     const scale = ref(1.5);
 
-    const canvas = computed(() => {
-        return document.getElementById("pdf") as HTMLCanvasElement;
-    });
-
     const context = computed(() => {
-        return canvas.value?.getContext("2d") as CanvasRenderingContext2D;
+        return canvasRef.value?.getContext("2d") as CanvasRenderingContext2D;
     });
 
     const getWorkerUrl = (): string => {
@@ -62,14 +60,15 @@
 
         pdfDoc.value?.getPage(pageNum).then((page) => {
             const viewport = page.getViewport({scale: scale.value});
-            if (canvas.value) {
-                canvas.value.height = viewport.height;
-                canvas.value.width = viewport.width;
+            
+            if (canvasRef.value) {
+                canvasRef.value.height = viewport.height;
+                canvasRef.value.width = viewport.width;
 
                 const renderContext = {
                     canvasContext: context.value,
                     viewport: viewport,
-                    canvas: canvas.value
+                    canvas: canvasRef.value
                 };
                 const renderTask = page.render(renderContext);
 
@@ -87,12 +86,18 @@
     };
 
     const initRender = (): void => {
-        pdfjs.getDocument({data: atob(props.source)}).promise.then((pdf) => {
+        const binaryString = atob(props.source);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        pdfjs.getDocument({data: bytes}).promise.then((pdf) => {
             pdfDoc.value = pdf;
             renderPage(pageNum.value);
-        }, () => {
-            // PDF loading error
-            console.error("Failed to render PDF");
+        }, (error) => {
+            console.error("Failed to render PDF", error);
         });
     };
 

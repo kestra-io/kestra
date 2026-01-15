@@ -1,9 +1,26 @@
 <template>
     <div class="trigger-flow-wrapper">
-        <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
+        <el-button
+            v-if="playgroundStore.enabled"
+            id="run-all-button"
+            :icon="icon.Play"
+            class="el-button--playground"
+            :disabled="isDisabled() || !playgroundStore.readyToStart"
+            @click="playgroundStore.runUntilTask()"
+        >
             {{ $t("playground.run_all_tasks") }}
         </el-button>
-        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-button
+            v-else
+            id="execute-button"
+            :class="{
+                'onboarding-glow': coreStore.guidedProperties.glowExecuteButton,
+            }"
+            :icon="icon.LightningBolt"
+            :type="type"
+            :disabled="isDisabled()"
+            @click="onClick()"
+        >
             {{ $t("execute") }}
         </el-button>
         <el-dialog
@@ -18,7 +35,10 @@
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+            <FlowRun
+                @execution-trigger="handleExecutionStart"
+                :redirect="!playgroundStore.enabled"
+            />
         </el-dialog>
         <el-dialog
             v-if="isSelectFlowOpen"
@@ -28,13 +48,9 @@
             :appendToBody="true"
             :width="dialogWidth"
         >
-            <el-form
-                labelPosition="top"
-            >
+            <el-form labelPosition="top">
                 <el-form-item :label="$t('namespace')">
-                    <el-select
-                        v-model="localNamespace"
-                    >
+                    <el-select v-model="localNamespace">
                         <el-option
                             v-for="np in executionsStore.namespaces"
                             :key="np"
@@ -44,13 +60,13 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item
-                    v-if="localNamespace && executionsStore.flowsExecutable.length > 0"
+                    v-if="
+                        localNamespace &&
+                            executionsStore.flowsExecutable.length > 0
+                    "
                     :label="$t('flow')"
                 >
-                    <el-select
-                        v-model="localFlow"
-                        valueKey="id"
-                    >
+                    <el-select v-model="localFlow" valueKey="id">
                         <el-option
                             v-for="exFlow in executionsStore.flowsExecutable"
                             :key="exFlow.id"
@@ -61,14 +77,16 @@
                 </el-form-item>
                 <el-form-item v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
-                        <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+                        <FlowRun
+                            @execution-trigger="handleExecutionStart"
+                            :redirect="!playgroundStore.enabled"
+                        />
                     </div>
                 </el-form-item>
             </el-form>
         </el-dialog>
     </div>
 </template>
-
 
 <script>
     import FlowRun from "./FlowRun.vue";
@@ -87,29 +105,29 @@
 
     export default {
         components: {
-            FlowRun
+            FlowRun,
         },
         props: {
             flowId: {
                 type: String,
-                default: undefined
+                default: undefined,
             },
             namespace: {
                 type: String,
-                default: undefined
+                default: undefined,
             },
             disabled: {
                 type: Boolean,
-                default: false
+                default: false,
             },
             type: {
                 type: String,
-                default: "primary"
+                default: "primary",
             },
             flowSource: {
                 type: String,
-                default: null
-            }
+                default: null,
+            },
         },
         data() {
             return {
@@ -120,11 +138,15 @@
                 isLargeScreen: useMediaQuery("(min-width: 768px)"),
                 icon: {
                     LightningBolt: shallowRef(LightningBolt),
-                    Play: shallowRef(Play)
-                }
+                    Play: shallowRef(Play),
+                },
             };
         },
         methods: {
+            async handleExecutionStart() {
+                this.closeModal();
+                this.$toast().success("Execution has started");
+            },
             onClick() {
                 if (this.$tours["guidedTour"]?.isRunning?.value) {
                     this.$tours["guidedTour"]?.nextStep();
@@ -133,20 +155,25 @@
                         onboarding: {
                             step: this.$tours["guidedTour"]?.currentStep?._value,
                             action: "next",
-                            template: this.coreStore.guidedProperties.template
+                            template: this.coreStore.guidedProperties.template,
                         },
-                        page: pageFromRoute(this.$router.currentRoute.value)
+                        page: pageFromRoute(this.$router.currentRoute.value),
                     });
-                    this.toggleModal()
+                    this.toggleModal();
                     return;
-                }
-                else if (this.checkForTrigger) {
-                    this.$toast().confirm(FlowWarningDialog, () => (this.toggleModal()), true, null);
-                }
-                else if (this.computedNamespace !== undefined && this.computedFlowId !== undefined) {
-                    this.toggleModal(true)
-                }
-                else {
+                } else if (this.checkForTrigger) {
+                    this.$toast().confirm(
+                        FlowWarningDialog,
+                        () => this.toggleModal(),
+                        true,
+                        null,
+                    );
+                } else if (
+                    this.computedNamespace !== undefined &&
+                    this.computedFlowId !== undefined
+                ) {
+                    this.toggleModal(true);
+                } else {
                     this.executionsStore.loadNamespaces();
                     this.isSelectFlowOpen = !this.isSelectFlowOpen;
                 }
@@ -171,8 +198,9 @@
                 await this.executionsStore.loadFlowForExecution({
                     flowId: this.flowId,
                     namespace: this.namespace,
-                    store: true
+                    store: true,
                 });
+                await this.$nextTick();
             },
             reset() {
                 this.isOpen = false;
@@ -180,15 +208,21 @@
                 this.localFlow = undefined;
                 this.localNamespace = undefined;
             },
-            beforeClose(done){
-                if(this.coreStore.guidedProperties.tourStarted) return;
+            beforeClose(done) {
+                if (this.coreStore.guidedProperties.tourStarted) return;
 
                 this.reset();
-                done()
-            }
+                done();
+            },
         },
         computed: {
-            ...mapStores(useApiStore, useCoreStore, useExecutionsStore, usePlaygroundStore, useFlowStore),
+            ...mapStores(
+                useApiStore,
+                useCoreStore,
+                useExecutionsStore,
+                usePlaygroundStore,
+                useFlowStore,
+            ),
             dialogWidth() {
                 return this.isLargeScreen ? "50%" : "90%";
             },
@@ -200,11 +234,12 @@
             },
             checkForTrigger() {
                 if (this.flowSource) {
-                    const triggerRegex = /\{\{\s*\(?\s*(\|\||&&)?\s*trigger\s*(\.\w+|\|\s*\w+)?\s*\}\}/;
+                    const triggerRegex =
+                        /\{\{\s*\(?\s*(\|\||&&)?\s*trigger\s*(\.\w+|\|\s*\w+)?\s*\}\}/;
                     return triggerRegex.test(this.flowSource);
                 }
                 return false;
-            }
+            },
         },
         watch: {
             "coreStore.guidedProperties": {
@@ -213,7 +248,7 @@
                         this.onClick();
                     }
                 },
-                deep: true
+                deep: true,
             },
             "flowStore.executeFlow": {
                 handler(value) {
@@ -221,7 +256,7 @@
                         this.flowStore.executeFlow = false;
                         this.onClick();
                     }
-                }
+                },
             },
             flowId: {
                 handler() {
@@ -231,7 +266,7 @@
 
                     this.loadDefinition();
                 },
-                immediate: true
+                immediate: true,
             },
             localNamespace: {
                 handler() {
@@ -239,10 +274,10 @@
                         return;
                     }
                     this.executionsStore.loadFlowsExecutable({
-                        namespace: this.localNamespace
+                        namespace: this.localNamespace,
                     });
                 },
-                immediate: true
+                immediate: true,
             },
             localFlow: {
                 handler() {
@@ -251,28 +286,27 @@
                     }
                     this.executionsStore.flow = this.localFlow;
                 },
-                immediate: true
-            }
-        }
+                immediate: true,
+            },
+        },
     };
 </script>
 
 <style scoped>
-    .trigger-flow-wrapper {
-        display: inline;
+.trigger-flow-wrapper {
+    display: inline;
+}
+
+.onboarding-glow {
+    animation: glowAnimation 1s infinite alternate;
+}
+
+@keyframes glowAnimation {
+    0% {
+        box-shadow: 0px 0px 0px 0px #8405ff;
     }
-    
-    .onboarding-glow {
-        animation: glowAnimation 1s infinite alternate;
+    100% {
+        box-shadow: 0px 0px 50px 2px #8405ff;
     }
-    
-    
-    @keyframes glowAnimation {
-        0% {
-            box-shadow: 0px 0px 0px 0px #8405FF;
-        }
-        100% {
-            box-shadow: 0px 0px 50px 2px #8405FF;
-        }
-    }
+}
 </style>

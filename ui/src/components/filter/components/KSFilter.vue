@@ -105,8 +105,6 @@
         savedFilter.filters.forEach((filter) => {
             addFilter(filter);
         });
-
-        searchQuery.value = savedFilter.searchQuery ?? "";
     };
 
     const refreshData = () => {

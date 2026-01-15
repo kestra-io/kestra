@@ -9,8 +9,8 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.HttpClient;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -29,9 +29,8 @@ import java.util.stream.Collectors;
 /**
  * Services for retrieving available plugin artifacts for Kestra.
  */
+@Slf4j
 public class PluginCatalogService {
-
-    private static final Logger log = LoggerFactory.getLogger(PluginCatalogService.class);
 
     private static final Duration MAX_CACHE_DURATION = Duration.ofHours(1);
 

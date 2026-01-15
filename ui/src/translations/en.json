@@ -735,7 +735,9 @@
           "title": "Confirm deletion of content",
           "files": "Are you sure you want to delete <code>{count}</code> file(s)?",
           "folders": "Are you sure you want to delete <code>{count}</code> folder(s) and all of its contents?",
-          "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?"
+          "mixed": "Are you sure you want to delete <code>{folders}</code> folder(s) and <code>{files}</code> file(s)?",
+          "file_single": "Are you sure you want to delete the file <code>{name}</code>?",
+          "folder_single": "Are you sure you want to delete the folder <code>{name}</code> and all of its contents?"
         }
       },
       "revisions": {
@@ -1555,7 +1557,7 @@
         "generating": "Generating Flow YAML for you...",
         "enable_instructions": {
             "header":"<b>AI Copilot hasn't been configured yet.</b>\n\nTo enable AI Copilot, add the following snippet to your Kestra instance configuration file (e.g. <code>application.yml</code>), replacing <code>geminiApiKey</code> with your actual key:",
-            "footer": "Note: At this time, only Gemini is supported as the AI provider.\n\nRestart your Kestra instance after saving the configuration."
+            "footer": "Note: At this time, only Gemini is supported as the AI provider for Open Source Edition. For Enterprise Edition, please refer to the AI Copilot documentation for other model provider configuration.\n\nRestart your Kestra instance after saving the configuration."
         }
       }
     },

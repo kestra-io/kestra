@@ -30,6 +30,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -147,7 +148,7 @@ class WorkerTest {
         DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
         worker.run();
 
-        List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
+        List<WorkerTaskResult> workerTaskResult = new CopyOnWriteArrayList<>();
         Flux<WorkerTaskResult> receiveWorkerTaskResults = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResult.add(either.getLeft()));
 
         WorkerTask workerTask = workerTask(999000);

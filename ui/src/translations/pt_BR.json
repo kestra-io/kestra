@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Nota: Neste momento, apenas a Gemini é suportada como provedor de IA.\n\nReinicie sua instância do Kestra após salvar a configuração.",
+          "footer": "Nota: Neste momento, apenas o Gemini é suportado como provedor de IA para a Open Source Edition. Para a Enterprise Edition, consulte a documentação do AI Copilot para a configuração de outros provedores de modelo.\n\nReinicie sua instância do Kestra após salvar a configuração.",
           "header": "<b>AI Copilot ainda não foi configurado.</b>\n\nPara habilitar o AI Copilot, adicione o seguinte trecho ao arquivo de configuração da sua instância Kestra (por exemplo, <code>application.yml</code>), substituindo <code>geminiApiKey</code> pela sua chave real:"
         },
         "generating": "Gerando Flow YAML para você...",
@@ -1145,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Confirmar",
+          "file_single": "Tem certeza de que deseja excluir o arquivo <code>{name}</code>?",
           "files": "Tem certeza de que deseja excluir <code>{count}</code> arquivo(s)?",
+          "folder_single": "Tem certeza de que deseja excluir a pasta <code>{name}</code> e todo o seu conteúdo?",
           "folders": "Tem certeza de que deseja excluir <code>{count}</code> pasta(s) e todo o seu conteúdo?",
           "mixed": "Tem certeza de que deseja excluir a(s) pasta(s) <code>{folders}</code> e o(s) arquivo(s) <code>{files}</code>?",
           "title": "Confirmar exclusão de conteúdo"

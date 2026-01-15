@@ -4,19 +4,19 @@
             <ul class="header-actions-list">
                 <li>
                     <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
-                        {{ t('export_csv') }}
+                        {{ $t('export_csv') }}
                     </el-button>
                 </li>
                 <li>
                     <el-button :icon="Upload" @click="file?.click()">
-                        {{ t("import") }}
+                        {{ $t("import") }}
                     </el-button>
                     <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
                         <el-button :icon="TextBoxSearch">
-                            {{ t("source search") }}
+                            {{ $t("source search") }}
                         </el-button>
                     </router-link>
                 </li>
@@ -29,7 +29,7 @@
                         v-if="canCreate"
                     >
                         <el-button :icon="Plus" type="primary">
-                            {{ t("create") }}
+                            {{ $t("create") }}
                         </el-button>
                     </router-link>
                 </li>
@@ -74,7 +74,7 @@
                         :rowClassName="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
-                        :no-data-text="t('no_results.flows')"
+                        :no-data-text="$t('no_results.flows')"
                         class="flows-table"
                         :rowKey="(row: any) => `${row.namespace}-${row.id}`"
                     >
@@ -87,24 +87,24 @@
                                 @unselect="toggleAllUnselected"
                             >
                                 <el-button v-if="canRead" :icon="Download" @click="exportFlows()">
-                                    {{ t("export") }}
+                                    {{ $t("export") }}
                                 </el-button>
                                 <el-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
-                                    {{ t("delete") }}
+                                    {{ $t("delete") }}
                                 </el-button>
                                 <el-button
                                     v-if="canUpdate && anyFlowDisabled()"
                                     @click="enableFlows"
                                     :icon="FileDocumentCheckOutline"
                                 >
-                                    {{ t("enable") }}
+                                    {{ $t("enable") }}
                                 </el-button>
                                 <el-button
                                     v-if="canUpdate && anyFlowEnabled()"
                                     @click="disableFlows"
                                     :icon="FileDocumentRemoveOutline"
                                 >
-                                    {{ t("disable") }}
+                                    {{ $t("disable") }}
                                 </el-button>
                             </BulkSelect>
                         </template>
@@ -113,7 +113,7 @@
                                 prop="id"
                                 sortable="custom"
                                 :sortOrders="['ascending', 'descending']"
-                                :label="t('id')"
+                                :label="$t('id')"
                             >
                                 <template #default="scope">
                                     <div class="flow-id">
@@ -152,7 +152,7 @@
                             <template v-for="colProp in displayColumns" :key="colProp">
                                 <el-table-column
                                     v-if="colProp === 'labels'"
-                                    :label="t('labels')"
+                                    :label="$t('labels')"
                                 >
                                     <template #default="scope">
                                         <Labels :labels="scope.row.labels" />
@@ -164,7 +164,7 @@
                                     prop="namespace"
                                     sortable="custom"
                                     :sortOrders="['ascending', 'descending']"
-                                    :label="t('namespace')"
+                                    :label="$t('namespace')"
                                     :formatter="(_: any, __: any, cellValue: string) =>
                                         FILTERS.invisibleSpace(cellValue)
                                     "
@@ -173,7 +173,7 @@
                                 <el-table-column
                                     v-else-if="colProp === 'state.startDate' && user.hasAny(permission.EXECUTION)"
                                     prop="state.startDate"
-                                    :label="t('last execution date')"
+                                    :label="$t('last execution date')"
                                 >
                                     <template #default="scope">
                                         <router-link
@@ -196,7 +196,7 @@
                                 <el-table-column
                                     v-else-if="colProp === 'state.current' && user.hasAny(permission.EXECUTION)"
                                     prop="state.current"
-                                    :label="t('last execution status')"
+                                    :label="$t('last execution status')"
                                 >
                                     <template #default="scope">
                                         <div
@@ -223,7 +223,7 @@
                                 <el-table-column
                                     v-else-if="colProp === 'state' && user.hasAny(permission.EXECUTION)"
                                     prop="state"
-                                    :label="t('execution statistics')"
+                                    :label="$t('execution statistics')"
                                     className="row-graph"
                                 >
                                     <template #default="scope">
@@ -240,7 +240,7 @@
 
                                 <el-table-column
                                     v-else-if="colProp === 'triggers'"
-                                    :label="t('triggers')"
+                                    :label="$t('triggers')"
                                     className="row-action"
                                 >
                                     <template #default="scope">
@@ -249,7 +249,7 @@
                                 </el-table-column>
                             </template>
 
-                            <el-table-column columnKey="action" className="row-action" :label="t('actions')">
+                            <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
                                     <router-link
                                         :to="{
@@ -260,7 +260,7 @@
                                             },
                                         }"
                                     >
-                                        <Kicon :tooltip="t('details')" placement="left">
+                                        <Kicon :tooltip="$t('details')" placement="left">
                                             <TextSearch />
                                         </Kicon>
                                     </router-link>
@@ -324,12 +324,12 @@
         topbar?: boolean;
         namespace?: string;
         id?: string | null;
-        defaultScopeFilter: boolean,
+        defaultScopeFilter?: boolean,
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
-        defaultScopeFilter: undefined,
+        defaultScopeFilter: true,
     });
 
     const flowStore = useFlowStore();

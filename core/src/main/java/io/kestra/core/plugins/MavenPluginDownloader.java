@@ -8,6 +8,7 @@ import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
@@ -26,7 +27,6 @@ import org.eclipse.aether.resolution.VersionRangeResult;
 import org.eclipse.aether.supplier.RepositorySystemSupplier;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
@@ -40,9 +40,8 @@ import java.util.List;
  * Service for resolving plugins from a Maven repository.
  */
 @Singleton
+@Slf4j
 public class MavenPluginDownloader implements Closeable {
-
-    private static final Logger log = LoggerFactory.getLogger(MavenPluginDownloader.class);
     private static final String DEFAULT_LOCAL_REPOSITORY_PREFIX = "kestra-plugins-m2-repository";
     private static final String DEFAULT_REPOSITORY_TYPE = "default";
     public static final String LATEST = "latest";

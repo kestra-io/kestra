@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "注意: 現時点では、AIプロバイダーとしてGeminiのみがサポートされています。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
+          "footer": "注意: 現時点では、オープンソース版のAIプロバイダーとしてGeminiのみがサポートされています。エンタープライズ版については、他のモデルプロバイダーの設定についてAI Copilotのドキュメントを参照してください。\n\n設定を保存した後、Kestraインスタンスを再起動してください。",
           "header": "<b>AI Copilotはまだ設定されていません。</b>\n\nAI Copilotを有効にするには、次のスニペットをKestraインスタンスの構成ファイル（例：<code>application.yml</code>）に追加し、<code>geminiApiKey</code>を実際のキーに置き換えてください。"
         },
         "generating": "フローのYAMLを生成しています...",
@@ -1145,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "確認",
+          "file_single": "ファイル <code>{name}</code> を削除してもよろしいですか？",
           "files": "<code>{count}</code> 個のファイルを削除してもよろしいですか？",
+          "folder_single": "フォルダー<code>{name}</code>とそのすべての内容を削除してもよろしいですか？",
           "folders": "<code>{count}</code> 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
           "mixed": "<code>{folders}</code> フォルダーと <code>{files}</code> ファイルを削除してもよろしいですか？",
           "title": "コンテンツの削除を確認"

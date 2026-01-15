@@ -4,6 +4,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.convert.format.MapFormat;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.Map;
 
 @ConfigurationProperties("kestra.metrics")
@@ -13,5 +14,10 @@ public class MetricConfig {
 
     @MapFormat(transformation = MapFormat.MapTransformation.FLAT)
     Map<String, String> tags;
+
+    /**
+     * {@link io.kestra.core.models.Label} keys included to metrics.
+     */
+    List<String> labels;
 }
 

@@ -14,7 +14,7 @@
                 <el-text size="small" class="usage-value">
                     {{ item.value }}
                 </el-text>
-                <router-link :to="{name: item.route}">
+                <router-link v-if="$route.params.type !== 'instance'" :to="{name: item.route}">
                     <el-button class="wh-15" :icon="TextSearchVariant" link />
                 </router-link>
             </div>
@@ -23,7 +23,7 @@
     </div>
 </template>
 <script setup lang="ts">
-    import {ref, computed, onBeforeMount} from "vue";
+    import {ref, computed, watch} from "vue";
     import {useRouter} from "vue-router";
     import {useMiscStore} from "override/stores/misc";
     import TextSearchVariant from "vue-material-design-icons/TextSearchVariant.vue";
@@ -47,14 +47,14 @@
 
     const usages = ref<Record<string, any> | undefined>(undefined);
 
-    onBeforeMount(async () => {
-        if (props.fetchedUsages) {
-            usages.value = props.fetchedUsages;
-        } else {
-            usages.value = await miscStore.loadAllUsages();
-        }
-        emit("loaded");
-    });
+    watch(
+        () => props.fetchedUsages,
+        async (newVal) => {
+            usages.value = newVal ?? await miscStore.loadAllUsages();
+            emit("loaded");
+        },
+        {immediate: true}
+    );
 
     function aggregateValues(object: any) {
         return aggregateValuesFromList(object ? Object.values(object) : object);

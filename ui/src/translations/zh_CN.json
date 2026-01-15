@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "注意：目前，仅支持 Gemini 作为 AI 提供商。\n\n保存配置后重启您的 Kestra 实例。",
+          "footer": "注意：目前，开源版仅支持Gemini作为AI提供商。对于企业版，请参阅AI Copilot文档以获取其他模型提供商的配置。\n\n保存配置后，重新启动您的Kestra实例。",
           "header": "<b>AI Copilot 尚未配置。</b>\n\n要启用 AI Copilot，请将以下代码片段添加到您的 Kestra 实例配置文件中（例如 <code>application.yml</code>），并将 <code>geminiApiKey</code> 替换为您的实际 key："
         },
         "generating": "正在为您生成Flow YAML...",
@@ -1145,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "确认",
+          "file_single": "您确定要删除文件<code>{name}</code>吗？",
           "files": "您确定要删除 <code>{count}</code> 个文件吗？",
+          "folder_single": "您确定要删除文件夹<code>{name}</code>及其所有内容吗？",
           "folders": "您确定要删除 <code>{count}</code> 个文件夹及其所有内容吗？",
           "mixed": "您确定要删除 <code>{folders}</code> 个文件夹和 <code>{files}</code> 个文件吗？",
           "title": "确认删除内容"

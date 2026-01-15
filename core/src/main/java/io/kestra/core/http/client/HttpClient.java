@@ -5,6 +5,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.http.client.apache.*;
+import io.kestra.core.http.client.configurations.DigestAuthConfiguration;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
@@ -55,6 +56,7 @@ import javax.net.ssl.SSLHandshakeException;
 @Slf4j
 public class HttpClient implements Closeable {
     private transient CloseableHttpClient client;
+    private transient BasicCredentialsProvider defaultCredentialsProvider;
     private final RunContext runContext;
     private final HttpConfiguration configuration;
     private ObservationRegistry observationRegistry;
@@ -104,7 +106,7 @@ public class HttpClient implements Closeable {
         // Object dependencies
         PoolingHttpClientConnectionManagerBuilder connectionManagerBuilder = PoolingHttpClientConnectionManagerBuilder.create();
         ConnectionConfig.Builder connectionConfig = ConnectionConfig.custom();
-        BasicCredentialsProvider credentialsStore = new BasicCredentialsProvider();
+        this.defaultCredentialsProvider = new BasicCredentialsProvider();
 
         // Timeout
         if (this.configuration.getTimeout() != null) {
@@ -143,7 +145,7 @@ public class HttpClient implements Closeable {
                 if (this.configuration.getProxy().getUsername() != null && this.configuration.getProxy().getPassword() != null) {
                     builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
 
-                    credentialsStore.setCredentials(
+                    this.defaultCredentialsProvider.setCredentials(
                         new AuthScope(proxyAddress, port),
                         new UsernamePasswordCredentials(
                             runContext.render(this.configuration.getProxy().getUsername()).as(String.class).orElseThrow(),
@@ -171,24 +173,12 @@ public class HttpClient implements Closeable {
             builder.disableRedirectHandling();
         }
 
-        if (!runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow()) {
-            builder.addResponseInterceptorLast(new FailedResponseInterceptor());
-        }
-
-        if (this.configuration.getAllowedResponseCodes() != null) {
-            List<Integer> list = runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class);
-
-            if (!list.isEmpty()) {
-                builder.addResponseInterceptorLast(new FailedResponseInterceptor(list));
-            }
-        }
-
         builder.addResponseInterceptorLast(new RunContextResponseInterceptor(this.runContext));
 
         // builder object
         connectionManagerBuilder.setDefaultConnectionConfig(connectionConfig.build());
         builder.setConnectionManager(connectionManagerBuilder.build());
-        builder.setDefaultCredentialsProvider(credentialsStore);
+        builder.setDefaultCredentialsProvider(this.defaultCredentialsProvider);
 
         this.client = builder.build();
 
@@ -217,9 +207,14 @@ public class HttpClient implements Closeable {
      * @return the response
      */
     public <T> HttpResponse<T> request(HttpRequest request, Class<T> cls) throws HttpClientException, IllegalVariableEvaluationException {
+        boolean allowFailed = runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow();
+        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ?
+            runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class) :
+            null;
         HttpClientContext httpClientContext = this.clientContext(request);
 
         return this.request(request, httpClientContext, r -> {
+            this.throwIfResponseNotAllowed(r, httpClientContext, allowFailed, allowedResponseCodes);
             T body = bodyHandler(cls, r.getEntity());
 
             return HttpResponse.from(r, body, request, httpClientContext);
@@ -234,9 +229,14 @@ public class HttpClient implements Closeable {
      * @return the response without the body
      */
     public HttpResponse<Void> request(HttpRequest request, Consumer<HttpResponse<InputStream>> consumer) throws HttpClientException, IllegalVariableEvaluationException {
+        boolean allowFailed = runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow();
+        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ?
+            runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class) :
+            null;
         HttpClientContext httpClientContext = this.clientContext(request);
 
         return this.request(request, httpClientContext, r -> {
+            this.throwIfResponseNotAllowed(r, httpClientContext, allowFailed, allowedResponseCodes);
             HttpResponse<InputStream> from = HttpResponse.from(
                 r,
                 r.getEntity() != null ? r.getEntity().getContent() : null,
@@ -258,19 +258,74 @@ public class HttpClient implements Closeable {
      * @return the response
      */
     public <T> HttpResponse<T> request(HttpRequest request) throws HttpClientException, IllegalVariableEvaluationException {
+        boolean allowFailed = runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow();
+        List<Integer> allowedResponseCodes = this.configuration.getAllowedResponseCodes() != null ?
+            runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class) :
+            null;
         HttpClientContext httpClientContext = this.clientContext(request);
 
         return this.request(request, httpClientContext, response -> {
+            this.throwIfResponseNotAllowed(response, httpClientContext, allowFailed, allowedResponseCodes);
             T body = JacksonMapper.ofJson().readValue(response.getEntity().getContent(), new TypeReference<>() {});
 
             return HttpResponse.from(response, body, request, httpClientContext);
         });
     }
 
-    private HttpClientContext clientContext(HttpRequest request) {
-        ContextBuilder contextBuilder = ContextBuilder.create();
+    private HttpClientContext clientContext(HttpRequest request) throws IllegalVariableEvaluationException {
+        HttpClientContext httpClientContext = ContextBuilder.create().build();
 
-        return contextBuilder.build();
+        if (this.configuration.getAuth() instanceof DigestAuthConfiguration digestAuthConfiguration) {
+            String username = runContext.render(digestAuthConfiguration.getUsername()).as(String.class).orElse(null);
+            String password = runContext.render(digestAuthConfiguration.getPassword()).as(String.class).orElse(null);
+
+            if (StringUtils.isEmpty(username) || password == null) {
+                throw new IllegalArgumentException("Digest authentication requires both `username` and `password`.");
+            }
+
+            URI uri = request.getUri();
+            if (uri == null || uri.getHost() == null) {
+                throw new IllegalArgumentException("Digest authentication requires an absolute URI with a host.");
+            }
+
+            int port = uri.getPort() != -1 ? uri.getPort() : ("https".equalsIgnoreCase(uri.getScheme()) ? 443 : 80);
+            AuthScope digestScope = new AuthScope(uri.getHost(), port);
+            UsernamePasswordCredentials digestCredentials = new UsernamePasswordCredentials(username, password.toCharArray());
+
+            httpClientContext.setCredentialsProvider((authScope, context) -> {
+                if (digestScope.match(authScope) >= 0) {
+                    return digestCredentials;
+                }
+                return this.defaultCredentialsProvider.getCredentials(authScope, context);
+            });
+        }
+
+        return httpClientContext;
+    }
+
+    private void throwIfResponseNotAllowed(
+        org.apache.hc.core5.http.HttpResponse response,
+        HttpClientContext context,
+        boolean allowFailed,
+        List<Integer> allowedResponseCodes
+    ) throws IOException {
+        if (isAllowedStatusCode(response.getCode(), allowFailed, allowedResponseCodes)) {
+            return;
+        }
+
+        throw new IOException(HttpResponseFailure.exception(response, context));
+    }
+
+    private static boolean isAllowedStatusCode(int statusCode, boolean allowFailed, List<Integer> allowedResponseCodes) {
+        if (allowedResponseCodes != null && !allowedResponseCodes.isEmpty()) {
+            return allowedResponseCodes.contains(statusCode);
+        }
+
+        if (allowFailed) {
+            return true;
+        }
+
+        return statusCode < 400;
     }
 
     private <T> HttpResponse<T> request(

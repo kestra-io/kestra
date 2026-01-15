@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Uwaga: Obecnie jako dostawca AI obsługiwany jest tylko Gemini.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji.",
+          "footer": "Uwaga: Obecnie tylko Gemini jest obsługiwany jako dostawca AI dla Open Source Edition. W przypadku Enterprise Edition zapoznaj się z dokumentacją AI Copilot dotyczącą konfiguracji innych dostawców modeli.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji.",
           "header": "<b>AI Copilot nie został jeszcze skonfigurowany.</b>\n\nAby włączyć AI Copilot, dodaj poniższy fragment do pliku konfiguracyjnego instancji Kestra (np. <code>application.yml</code>), zastępując <code>geminiApiKey</code> swoim rzeczywistym kluczem:"
         },
         "generating": "Generowanie YAML dla flow...",
@@ -1145,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Potwierdź",
+          "file_single": "Czy na pewno chcesz usunąć plik <code>{name}</code>?",
           "files": "Czy na pewno chcesz usunąć <code>{count}</code> plik(ów)?",
+          "folder_single": "Czy na pewno chcesz usunąć folder <code>{name}</code> i całą jego zawartość?",
           "folders": "Czy na pewno chcesz usunąć <code>{count}</code> folder(y) i całą jego zawartość?",
           "mixed": "Czy na pewno chcesz usunąć folder(y) <code>{folders}</code> i plik(i) <code>{files}</code>?",
           "title": "Potwierdź usunięcie zawartości"

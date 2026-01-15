@@ -959,7 +959,7 @@
     width: 20%;
 
     :deep(.revision-history-dialog-body) {
-        // We substract the dialog margins and title height (78px)
+        // We subtract the dialog margins and title height (78px)
         height: calc(100vh - (var(--el-dialog-margin-top) * 2) - 78px);
     }
 

@@ -119,10 +119,6 @@ public class JdbcExecutor implements ExecutorInterface {
     private QueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.CLUSTER_EVENT_NAMED)
-    private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
-
-    @Inject
     @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
     private QueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
 
@@ -330,7 +326,17 @@ public class JdbcExecutor implements ExecutorInterface {
         this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));
         this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
-        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        this.receiveCancellations.addFirst(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
+            @Override
+            public void onMaintenanceModeEnter() {
+                JdbcExecutor.this.enterMaintenance();
+            }
+
+            @Override
+            public void onMaintenanceModeExit() {
+                JdbcExecutor.this.exitMaintenance();
+            }
+        })::dispose);
 
         executionDelayFuture = scheduledDelay.scheduleAtFixedRate(
             this::executionDelaySend,
@@ -447,20 +453,6 @@ public class JdbcExecutor implements ExecutorInterface {
                     log.error("Unable to emit the execution {}", exec.getId(), e);
                 }
             });
-    }
-
-    private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a cluster event: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ClusterEvent clusterEvent = either.getLeft();
-        log.info("Cluster event received: {}", clusterEvent);
-        switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> enterMaintenance();
-            case MAINTENANCE_EXIT -> exitMaintenance();
-        }
     }
 
     private void enterMaintenance() {
@@ -1220,7 +1212,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
                     boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
                         && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
-                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitionned from KILLING to KILLED
+                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
                     boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
                     if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
                         int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());

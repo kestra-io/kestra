@@ -47,7 +47,7 @@ class LocalFilesTest {
     @Test
     void run() throws Exception {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        var runContext = runContextFactory.of("namesapce", tenant, Map.of("toto", "tata"));
+        var runContext = runContextFactory.of("namespace", tenant, Map.of("toto", "tata"));
         var storageFile = internalFiles(tenant);
 
         var task = LocalFiles.builder()
@@ -76,7 +76,7 @@ class LocalFilesTest {
     @Test
     void recursive() throws Exception {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        var runContext = runContextFactory.of("namesapce", tenant, Map.of("toto", "tata"));
+        var runContext = runContextFactory.of("namespace", tenant, Map.of("toto", "tata"));
         var storageFile = internalFiles(tenant);
 
         var task = LocalFiles.builder()

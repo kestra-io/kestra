@@ -81,7 +81,7 @@ public class PurgeKVTest {
 
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
-            .namespacePattern(Property.ofValue("*arent*"))
+            .namespacePattern(Property.ofValue("*arent*"))  // codespell:ignore
             .build();
         List<String> namespaces = purgeKV.findNamespaces(runContextFactory.of(NAMESPACE));
 

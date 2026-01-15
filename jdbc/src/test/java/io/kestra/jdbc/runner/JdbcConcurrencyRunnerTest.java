@@ -61,4 +61,30 @@ public abstract class JdbcConcurrencyRunnerTest extends AbstractRunnerConcurrenc
         // we manually reset the concurrency count to avoid messing with any other tests
         concurrencyLimitStorage.update(concurrencyLimit.withRunning(concurrencyLimit.getRunning() - 1));
     }
+
+    @Test
+    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml"}, tenantId = "flow-concurrency-scheduled")
+    void flowConcurrencyScheduled() throws QueueException, InterruptedException {
+        Execution execution1 = runnerUtils.runOneUntilRunning("flow-concurrency-scheduled", NAMESPACE, "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
+        assertThat(execution1.getState().isRunning()).isTrue();
+
+        Flow flow = flowRepository
+            .findById("flow-concurrency-scheduled", NAMESPACE, "flow-concurrency-queue", Optional.empty())
+            .orElseThrow();
+
+        Execution scheduledExecution = Execution.newExecution(flow, null, null, Optional.empty())
+            .withScheduleDate(java.time.Instant.now().plusSeconds(1));
+
+        Execution execution2 = runnerUtils.emitAndAwaitExecution(
+            e -> e.getState().getCurrent().equals(State.Type.QUEUED) || e.getState().getCurrent().equals(State.Type.RUNNING),
+            scheduledExecution,
+            Duration.ofSeconds(10)
+        );
+
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.QUEUED);
+
+        // cleanup
+        runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(State.Type.SUCCESS), execution1);
+        runnerUtils.awaitExecution(e -> e.getState().getCurrent().equals(State.Type.SUCCESS), execution2);
+    }
 }

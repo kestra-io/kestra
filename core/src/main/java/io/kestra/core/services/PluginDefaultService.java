@@ -321,6 +321,10 @@ public class PluginDefaultService {
         return result;
     }
 
+    public  FlowWithSource injectVersionDefaults(final FlowInterface flow, final boolean safe) throws FlowProcessingException {
+        return injectVersionDefaults(flow, safe, false);
+    }
+
     public Map<String, Object> injectVersionDefaults(@Nullable final String tenantId,
                                                      final String namespace,
                                                      final Map<String, Object> mapFlow) throws FlowProcessingException {

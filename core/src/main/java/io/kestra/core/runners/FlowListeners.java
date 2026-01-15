@@ -56,7 +56,7 @@ public class FlowListeners implements FlowListenersInterface {
                         flow = FlowWithException.from(either.getRight().getRecord(), either.getRight(), log).orElse(null);
                     } else {
                         try {
-                            flow = pluginDefaultService.injectVersionDefaults(either.getLeft(), true, false);
+                            flow = pluginDefaultService.injectVersionDefaults(either.getLeft(), true);
                         } catch (FlowProcessingException ignore) {
                             // should not occur, safe = true...
                             flow = null;

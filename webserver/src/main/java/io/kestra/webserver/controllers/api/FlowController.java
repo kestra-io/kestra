@@ -357,7 +357,7 @@ public class FlowController {
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false).stream()
             .map(Rethrow.throwFunction(flow -> {
                 try {
-                    return pluginDefaultService.injectVersionDefaults(flow, false, false).toFlow();
+                    return pluginDefaultService.injectVersionDefaults(flow, false).toFlow();
                 } catch (FlowProcessingException e) {
                     if (e.getCause() instanceof ConstraintViolationException cve) {
                         throw cve;
@@ -465,7 +465,7 @@ public class FlowController {
         // Inject default plugin 'version' props before converting
         // to flow to correctly resolve to plugin type.
         try {
-            FlowWithSource flow = pluginDefaultService.injectVersionDefaults(genericFlow, false, false);
+            FlowWithSource flow = pluginDefaultService.injectVersionDefaults(genericFlow, false);
             flowService.checkValidSubflows(flow, tenantId);
 
             // Persist

@@ -373,7 +373,7 @@ public class ExecutionService {
 
         Execution newExecution = execution.withMetadata(execution.getMetadata().nextAttempt());
 
-        final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false , false);
+        final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false );
 
         for (String s : taskRunToRestart) {
             TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);
@@ -617,7 +617,7 @@ public class ExecutionService {
     private Mono<Optional<Task>> getFirstPausedTaskOr(Execution execution, FlowInterface flow){
         return Mono.create(sink -> {
             try {
-                final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false, false);
+                final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
                 var runningTaskRun = execution
                     .findFirstByState(State.Type.PAUSED)
                     .map(throwFunction(task -> flowWithSource.findTaskByTaskId(task.getTaskId())));

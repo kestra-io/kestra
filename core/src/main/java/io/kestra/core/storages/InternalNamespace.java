@@ -7,9 +7,9 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,9 +30,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  * @see Storage#namespace()
  * @see Storage#namespace(String)
  */
+@Slf4j
 public class InternalNamespace implements Namespace {
-
-    private static final Logger LOG = LoggerFactory.getLogger(InternalNamespace.class);
 
     private final String namespace;
     private final String tenant;
@@ -47,7 +46,7 @@ public class InternalNamespace implements Namespace {
      * @param storage   The storage.
      */
     public InternalNamespace(@Nullable final String tenant, final String namespace, final StorageInterface storage, final NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository) {
-        this(LOG, tenant, namespace, storage, namespaceFileMetadataRepository);
+        this(log, tenant, namespace, storage, namespaceFileMetadataRepository);
     }
 
     /**
@@ -433,7 +432,7 @@ public class InternalNamespace implements Namespace {
             .count();
 
         if (actualDeletedEntries != purgedMetadataCount) {
-            LOG.warn("Namespace Files Metadata purge reported {} deleted entries, but {} values were actually deleted from storage", purgedMetadataCount, actualDeletedEntries);
+            log.warn("Namespace Files Metadata purge reported {} deleted entries, but {} values were actually deleted from storage", purgedMetadataCount, actualDeletedEntries);
         }
 
         return purgedMetadataCount;

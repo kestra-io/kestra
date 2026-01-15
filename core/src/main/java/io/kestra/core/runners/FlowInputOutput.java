@@ -478,7 +478,11 @@ public class FlowInputOutput {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
-                    yield EncryptionService.encrypt(secretKey.get(), current.toString());
+                    String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
+                    if(execution.getState().isPaused()){
+                        yield EncryptedString.from(encrypted);
+                    }
+                    yield encrypted;
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation

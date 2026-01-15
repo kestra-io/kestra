@@ -915,7 +915,7 @@ public class FlowController {
             return HttpResponse.badRequest();
         }
         if (failOnError && !wrongFiles.isEmpty()) {
-            throw new IllegalArgumentException("Following invalids flows were not imported: " + String.join(", ", wrongFiles));
+            throw new IllegalArgumentException("Following invalid flows were not imported: " + String.join(", ", wrongFiles));
         }
         return HttpResponse.ok(wrongFiles);
     }

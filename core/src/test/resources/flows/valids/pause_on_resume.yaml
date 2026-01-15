@@ -10,9 +10,13 @@ tasks:
       - id: data
         type: FILE
         required: false
+      - id: secret_pause
+        type: SECRET
+
 
   - id: last
     type: io.kestra.plugin.core.output.OutputValues
     values:
       asked: "{{outputs.pause.onResume.asked}}"
       data: "{{outputs.pause.onResume.data}}"
+      secret_pause: "{{outputs.pause.onResume.secret_pause}}"

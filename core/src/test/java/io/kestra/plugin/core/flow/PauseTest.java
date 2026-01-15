@@ -297,16 +297,17 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(1);
 
             CompletedPart part1 = new NettyCompletedAttribute(new MemoryAttribute("asked", "restarted"));
+            CompletedPart part2 = new NettyCompletedAttribute(new MemoryAttribute("secret_pause", "secret_value"));
             byte[] data = executionId.getBytes();
             HttpDataFactory httpDataFactory = new MicronautHttpData.Factory(new HttpServerConfiguration.MultipartConfiguration(), null);
             FileUpload fileUpload = httpDataFactory.createFileUpload(null, "files", "data", MediaType.TEXT_PLAIN, null, Charset.defaultCharset(), data.length);
             fileUpload.addContent(Unpooled.copiedBuffer(data), true);
-            CompletedPart part2 = new NettyCompletedFileUpload(fileUpload);
+            CompletedPart part3 = new NettyCompletedFileUpload(fileUpload);
             Execution restarted = executionService.resume(
                 execution,
                 flow,
                 State.Type.RUNNING,
-                Flux.just(part1, part2),
+                Flux.just(part1, part2, part3),
                 null
             ).block();
 
@@ -319,6 +320,7 @@ public class PauseTest {
 
             Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
             assertThat(outputs.get("asked")).isEqualTo("restarted");
+            assertThat(outputs.get("secret_pause")).isEqualTo("secret_value");
             assertThat((String) outputs.get("data")).startsWith("kestra://");
             assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, URI.create((String) outputs.get("data")))))).isEqualTo(executionId);
         }

@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount} from "vue";
-    import {useRoute, onBeforeRouteLeave} from "vue-router";
+    import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
@@ -102,9 +102,6 @@ tasks:
 
     onBeforeUnmount(() => {
         flowStore.flowValidation = undefined;
-    });
-
-    onBeforeRouteLeave(() => {
         flowStore.flow = undefined;
     });
 </script>

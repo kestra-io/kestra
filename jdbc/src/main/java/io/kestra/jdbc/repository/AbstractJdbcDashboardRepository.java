@@ -51,17 +51,16 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                Select<Record2<String, String>> from;
 
-                from = context
+                var from = context
                         .select(
                             field("source_code", String.class),
-                            field("value", String.class)
+                            VALUE_FIELD
                         )
                         .from(jdbcRepository.getTable())
                         .where(this.defaultFilter(tenantId))
                         .and(field("id", String.class).eq(id));
-                Record2<String, String> fetched = from.fetchAny();
+                Record2<String, Object> fetched = from.fetchAny();
 
                 if (fetched == null) {
                     return Optional.empty();

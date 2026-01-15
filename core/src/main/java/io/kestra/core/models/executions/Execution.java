@@ -296,7 +296,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     }
 
     public Execution withTaskRun(TaskRun taskRun) throws InternalException {
-        ArrayList<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
+        List<TaskRun> newTaskRunList = this.taskRunList == null ? new ArrayList<>() : new ArrayList<>(this.taskRunList);
 
         boolean b = Collections.replaceAll(
             newTaskRunList,
@@ -528,12 +528,9 @@ public class Execution implements DeletedInterface, TenantInterface {
         return resolvedTasks;
     }
 
-    public List<ResolvedTask> findTaskDependingFlowState(List<ResolvedTask> resolvedTasks) {
-        resolvedTasks = removeDisabled(resolvedTasks);
-
-        return resolvedTasks;
-    }
-
+    /**
+     * Remove disabled tasks from the list of resolved tasks.
+     */
     public List<ResolvedTask> removeDisabled(List<ResolvedTask> tasks) {
         if (tasks == null) {
             return null;
@@ -1029,7 +1026,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         Collections.reverse(parents);
 
         for (TaskRun childTaskRun : parents) {
-            HashMap<String, Object> current = new HashMap<>();
+            Map<String, Object> current = HashMap.newHashMap(2);
 
             if (childTaskRun.getValue() != null) {
                 current.put("taskrun", Map.of("value", childTaskRun.getValue()));
@@ -1060,7 +1057,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             return Collections.emptyList();
         }
 
-        ArrayList<TaskRun> result = new ArrayList<>();
+        List<TaskRun> result = new ArrayList<>();
         boolean ended = false;
         while (!ended) {
             final TaskRun finalTaskRun = taskRun;
@@ -1092,7 +1089,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             return Collections.emptyList();
         }
 
-        ArrayList<TaskRun> result = new ArrayList<>();
+        List<TaskRun> result = new ArrayList<>();
         boolean ended = false;
         while (!ended) {
             final TaskRun finalTaskRun = taskRun;

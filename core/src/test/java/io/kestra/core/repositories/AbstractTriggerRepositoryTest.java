@@ -228,4 +228,43 @@ public abstract class AbstractTriggerRepositoryTest {
             triggerRepository.delete(savedB);
         }
     }
+
+    @Test
+    void should_find_exact_prefix_suffix() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Trigger trigger = generateDefaultTrigger(tenant).toBuilder().flowId("some_search_trigger").build();
+        triggerRepository.save(trigger);
+
+        // exact match
+        ArrayListTotal<Trigger> entries = triggerRepository.find(
+            Pageable.UNPAGED,
+            tenant,
+            List.of(QueryFilter.builder().field(Field.QUERY).value("some_search_trigger").operation(Op.EQUALS).build())
+        );
+        assertThat(entries).hasSize(1);
+
+        // prefix match
+        entries = triggerRepository.find(
+            Pageable.UNPAGED,
+            tenant,
+            List.of(QueryFilter.builder().field(Field.QUERY).value("some_search").operation(Op.EQUALS).build())
+        );
+        assertThat(entries).hasSize(1);
+
+        // suffix match
+        entries = triggerRepository.find(
+            Pageable.UNPAGED,
+            tenant,
+            List.of(QueryFilter.builder().field(Field.QUERY).value("search_trigger").operation(Op.EQUALS).build())
+        );
+        assertThat(entries).hasSize(1);
+
+        // no match
+        entries = triggerRepository.find(
+            Pageable.UNPAGED,
+            tenant,
+            List.of(QueryFilter.builder().field(Field.QUERY).value("nothing").operation(Op.EQUALS).build())
+        );
+        assertThat(entries).hasSize(0);
+    }
 }

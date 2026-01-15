@@ -1034,6 +1034,7 @@ class ExecutionControllerRunnerTest {
 
         MultipartBody multipartBody = MultipartBody.builder()
             .addPart("asked", "myString")
+            .addPart("secret_pause", "secret_value")
             .addPart("files", "data", MediaType.TEXT_PLAIN_TYPE, applicationFile)
             .build();
 
@@ -1049,6 +1050,7 @@ class ExecutionControllerRunnerTest {
 
         Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
         assertThat(outputs.get("asked")).isEqualTo("myString");
+        assertThat(outputs.get("secret_pause")).isEqualTo("secret_value");
         assertThat((String) outputs.get("data")).startsWith("kestra://");
     }
 

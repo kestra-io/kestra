@@ -1145,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "確認",
+          "file_single": "ファイル <code>{name}</code> を削除してもよろしいですか？",
           "files": "<code>{count}</code> 個のファイルを削除してもよろしいですか？",
+          "folder_single": "フォルダー<code>{name}</code>とそのすべての内容を削除してもよろしいですか？",
           "folders": "<code>{count}</code> 個のフォルダーとそのすべての内容を削除してもよろしいですか？",
           "mixed": "<code>{folders}</code> フォルダーと <code>{files}</code> ファイルを削除してもよろしいですか？",
           "title": "コンテンツの削除を確認"

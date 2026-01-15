@@ -37,6 +37,10 @@ import java.util.stream.Stream;
 import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
 
 public abstract class AbstractJdbcRepository {
+    public static final Field<Boolean> DELETED_FIELD = field("deleted", Boolean.class);
+    public static final Field<String> TENANT_ID_FIELD = field("tenant_id", String.class);
+    public static final Field<String> KEY_FIELD = field("key", String.class);
+    public static final Field<Object> VALUE_FIELD = field("value", Object.class);
 
     protected static final int FETCH_SIZE = 100;
 
@@ -44,16 +48,14 @@ public abstract class AbstractJdbcRepository {
     @Value("${kestra.system-flows.namespace:" + SYSTEM_FLOWS_DEFAULT_NAMESPACE + "}")
     private String systemFlowNamespace;
 
-    private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
-
     protected Condition defaultFilter() {
-        return field("deleted", Boolean.class).eq(false);
+        return DELETED_FIELD.eq(false);
     }
 
     protected Condition defaultFilter(Boolean allowDeleted) {
         return allowDeleted ?
-            field("deleted", Boolean.class).in(true, false) :
-            field("deleted", Boolean.class).eq(false);
+            DELETED_FIELD.in(true, false) :
+            DELETED_FIELD.eq(false);
     }
 
     protected Condition defaultFilter(String tenantId) {
@@ -65,8 +67,8 @@ public abstract class AbstractJdbcRepository {
 
         // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
         return allowDeleted ?
-            tenant.and(field("deleted", Boolean.class).in(true, false)) :
-            tenant.and(field("deleted", Boolean.class).eq(false));
+            tenant.and(DELETED_FIELD.in(true, false)) :
+            tenant.and(DELETED_FIELD.eq(false));
     }
 
     protected Condition defaultFilterWithNoACL(String tenantId) {
@@ -78,12 +80,12 @@ public abstract class AbstractJdbcRepository {
 
         // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
         return deleted ?
-            tenant.and(field("deleted", Boolean.class).in(true, false)) :
-            tenant.and(field("deleted", Boolean.class).eq(false));
+            tenant.and(DELETED_FIELD.in(true, false)) :
+            tenant.and(DELETED_FIELD.eq(false));
     }
 
     protected Condition buildTenantCondition(String tenantId) {
-        return tenantId == null ? field("tenant_id").isNull() : field("tenant_id").eq(tenantId);
+        return tenantId == null ? TENANT_ID_FIELD.isNull() : TENANT_ID_FIELD.eq(tenantId);
     }
 
     public static Field<Object> field(String name) {
@@ -214,16 +216,12 @@ public abstract class AbstractJdbcRepository {
      * @return the select step with the applied ordering
      */
     protected <F extends Enum<F>> SelectSeekStepN<Record> orderBy(SelectHavingStep<Record> selectHavingStep, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors) {
-        List<SortField<?>> orderFields = new ArrayList<>();
-        if (!ListUtils.isEmpty(descriptors.getOrderBy())) {
-            orderFields = descriptors.getOrderBy().stream()
-                .map(orderBy -> {
-                    Field<?> field = field(orderBy.getColumn());
-                    return orderBy.getOrder() == Order.ASC ? field.asc() : field.desc();
-                })
-                .toList();
-
-        }
+        List<SortField<?>> orderFields = ListUtils.emptyOnNull(descriptors.getOrderBy()).stream()
+            .map(orderBy -> {
+                Field<?> field = field(orderBy.getColumn());
+                return orderBy.getOrder() == Order.ASC ? field.asc() : field.desc();
+            })
+            .toList();
 
         return selectHavingStep.orderBy(orderFields);
     }
@@ -357,12 +355,7 @@ public abstract class AbstractJdbcRepository {
         if (o == null) return null;
 
         if (o instanceof Boolean
-            || o instanceof Byte
-            || o instanceof Short
-            || o instanceof Integer
-            || o instanceof Long
-            || o instanceof Float
-            || o instanceof Double
+            || o instanceof Number
             || o instanceof Character
             || o instanceof String) {
             return o;

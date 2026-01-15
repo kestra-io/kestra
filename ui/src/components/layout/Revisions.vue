@@ -27,7 +27,7 @@
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
-                                        v-if="currentRevision != item.value"
+                                        v-if="item.value !== undefined && currentRevision != item.value"
                                     />
                                 </div>
                             </el-option>
@@ -62,7 +62,7 @@
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
-                                        v-if="currentRevision != revisionNumber(item.value)"
+                                        v-if="item.value !== undefined && currentRevision != revisionNumber(item.value)"
                                     />
                                 </div>
                             </el-option>
@@ -140,7 +140,8 @@
     ];
 
     const emit = defineEmits<{
-        restore: [source: string]
+        restore: [source: string],
+        deleted: [revision: number]
     }>();
 
     const props = withDefaults(defineProps<{
@@ -167,6 +168,7 @@
             );
             if (
                 !route.query.revisionLeft &&
+                revisionRightIndex.value !== undefined &&
                 revisionRightIndex.value > 0
             ) {
                 revisionLeftIndex.value = revisionRightIndex.value - 1;
@@ -179,15 +181,15 @@
             revisionLeftIndex.value = revisionIndex(
                 route.query.revisionLeft.toString()
             );
-        } else if (revisionRightIndex.value && revisionRightIndex.value > 0) {
+        } else if (revisionRightIndex.value !== undefined && revisionRightIndex.value > 0) {
             revisionLeftIndex.value = revisionRightIndex.value - 1;
         }
     }
 
     function revisionIndex(revision: string) {
         const revisionInt = parseInt(revision);
-
-        return sortedRevisions.value.findIndex(rev => rev.revision === revisionInt);
+        const idx = sortedRevisions.value.findIndex(rev => rev.revision === revisionInt);
+        return idx === -1 ? undefined : idx;
     }
 
     function revisionNumber(index: number) {
@@ -264,7 +266,8 @@
                     revision: revisionToDelete.toString()
                 });
                 toast.deleted(t("revision deleted", {revision: revisionToDelete.toString()}));
-                load()
+                emit("deleted", revisionToDelete);
+                load();
             } catch (error: any) {
                 toast.error(t("delete revision error", {revision: revisionToDelete, error: error.message || error.toString()}));
             }

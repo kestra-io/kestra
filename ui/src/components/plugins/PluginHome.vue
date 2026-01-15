@@ -31,14 +31,14 @@
                             :key="elementType"
                         >
                             <p
-                                v-if="elements.filter(t => t.toLowerCase().includes(searchInput)).length > 0"
+                                v-if="elements.length > 0"
                                 class="mb-0"
                             >
                                 {{ $t(elementType) }}
                             </p>
                             <ul>
                                 <li
-                                    v-for="element in elements.filter(t => t.toLowerCase().includes(searchInput))"
+                                    v-for="element in elements"
                                     :key="element"
                                 >
                                     <span @click="openPlugin(element)">{{ element }}</span>

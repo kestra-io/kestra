@@ -617,7 +617,7 @@
         const formData = new FormData();
         if (file.value && file.value.files && file.value.files[0]) {
             formData.append("fileUpload", file.value.files[0]);
-            flowStore.importFlows(formData as any).then((res: any) => {
+            flowStore.importFlows({file: formData, failOnError: true}).then((res: any) => {
                 if (res.data.length > 0) {
                     toast.warning(t("flows not imported") + ": " + res.data.join(", "));
                 } else {

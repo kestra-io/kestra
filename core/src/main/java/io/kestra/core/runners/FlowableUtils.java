@@ -24,7 +24,7 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks);
+        List<ResolvedTask> currentTasks = execution.removeDisabled(tasks);
 
         return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, null);
     }

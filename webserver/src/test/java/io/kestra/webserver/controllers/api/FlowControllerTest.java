@@ -775,20 +775,36 @@ class FlowControllerTest {
 
     @Test
     void importFlowsWithInvalidNotAllowed() throws IOException {
-        var yaml = generateFlowAsString(TEST_NAMESPACE,"a") + "---" +
+        var yaml1 = generateFlowAsString(TEST_NAMESPACE,"a") + "---" +
             generateInvalidFlowAsString("importFlowsWithInvalidNotAllowed",TEST_NAMESPACE);
-        var temp = File.createTempFile("flows", ".yaml");
-        Files.writeString(temp.toPath(), yaml);
+        var temp1 = File.createTempFile("flows", ".yaml");
+        Files.writeString(temp1.toPath(), yaml1);
 
-        var body = MultipartBody.builder()
-            .addPart("fileUpload", "flows.yaml", temp)
+        var body1 = MultipartBody.builder()
+            .addPart("fileUpload", "flows.yaml", temp1)
             .build();
-        var exception = assertThrows(HttpClientResponseException.class, () -> {
-            client.toBlocking().exchange(POST("/api/v1/main/flows/import?failOnError=true", body).contentType(MediaType.MULTIPART_FORM_DATA));
+        var exception1 = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().exchange(POST("/api/v1/main/flows/import?failOnError=true", body1).contentType(MediaType.MULTIPART_FORM_DATA));
         });
 
-        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
-        temp.delete();
+        assertThat(exception1.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        temp1.delete();
+
+        var yaml2 = generateInvalidFlowAsStringForStrictParsing1("invalid_trigger_property", TEST_NAMESPACE )
+            + "---" +
+            generateInvalidFlowAsStringForStrictParsing2("missing_uri_property_for_download", TEST_NAMESPACE ) ;
+        var temp2 = File.createTempFile("flows", ".yaml");
+        Files.writeString(temp2.toPath(), yaml2);
+
+        var body2 = MultipartBody.builder()
+            .addPart("fileUpload", "flows.yaml", temp2)
+            .build();
+        var exception2 = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().exchange(POST("/api/v1/main/flows/import?failOnError=true", body2).contentType(MediaType.MULTIPART_FORM_DATA));
+        });
+
+        assertThat(exception2.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+        temp2.delete();
     }
 
     @Test
@@ -1303,6 +1319,39 @@ class FlowControllerTest {
             deleted: false
             """.formatted(id, namespace);
     }
+
+    private String generateInvalidFlowAsStringForStrictParsing1(String id, String namespace) {
+        return """
+            id: %s
+            namespace: %s
+
+            tasks:
+              - id: updateTargetTable
+                type: io.kestra.plugin.core.log.Log
+                message: "Test"
+
+            triggers:
+              - id: dailyEvery1Hour
+                type: io.kestra.plugin.core.trigger.Schedule
+                cron: "10 */1 * * *"
+                recoverMissedSchedules: LAST
+                # 'mergeMethod' is not a trigger property
+                mergeMethod: "{{ now().hour == 0 ? 3 : 2 }}"\s
+            """.formatted(id, namespace);
+    }
+
+    private String generateInvalidFlowAsStringForStrictParsing2(String id, String namespace) {
+        return """
+            id: %s
+            namespace: %s
+            tasks:
+                - id: download
+                  type: io.kestra.plugin.core.http.Download
+                  # Missing uri property for Download
+            """.formatted(id, namespace);
+    }
+
+
 
     private String postFlow(String friendlyId, String namespace, String format) {
         return client.toBlocking().retrieve(POST("/api/v1/main/flows", generateFlow(friendlyId, namespace, format)), String.class);

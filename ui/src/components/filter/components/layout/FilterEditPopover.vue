@@ -1,19 +1,9 @@
 <template>
-    <div class="edit-container">
-        <el-button
-            v-if="!!filterKey"
-            ref="buttonRef"
-            link
-            size="small"
-            :icon="PencilOutline"
-            class="edit-button"
-            @click.stop="toggleDialog"
-        />
-
+    <div ref="containerRef" class="edit-container">
         <Teleport to="body">
             <Transition name="filter-popup" appear>
                 <div
-                    v-if="isDialogVisible"
+                    v-if="isDialogVisible && !!filterKey"
                     class="edit-overlay"
                     @click="closeDialog"
                 >
@@ -40,7 +30,6 @@
 
 <script setup lang="ts">
     import {nextTick, onMounted, onUnmounted, ref} from "vue";
-    import {PencilOutline} from "../../utils/icons";
     import {AppliedFilter, FilterKeyConfig} from "../../utils/filterTypes";
     import FilterEditPopper from "./FilterEditPopper.vue";
 
@@ -55,18 +44,16 @@
         remove: [filterId: string];
     }>();
 
-    const buttonRef = ref<any>();
+    const containerRef = ref<HTMLElement | null>(null);
     const positionStyle = ref({});
     const isDialogVisible = ref(false);
 
     const updatePosition = () => {
-        if (!buttonRef.value) return;
+        if (!containerRef.value) return;
 
-        const buttonElement = buttonRef.value.$el || buttonRef.value;
-        const chipElement = buttonElement.closest(".chip");
-        
+        const chipElement = containerRef.value.closest(".chip");
         if (!chipElement) return;
-        
+
         const chipRect = chipElement.getBoundingClientRect();
         const scrollY = window.scrollY;
         const scrollX = window.scrollX;
@@ -117,24 +104,7 @@
 </script>
 <style lang="scss" scoped>
 .edit-container {
-    position: relative;
-    display: inline-block;
-
-    .edit-button {
-        border: none;
-        background: none;
-        cursor: pointer;
-        padding: 0;
-        color: var(--ks-content-tertiary);
-
-        &:hover {
-            color: var(--ks-content-secondary);
-        }
-
-        :deep(svg) {
-            font-size: 14px;
-        }
-    }
+    display: contents;
 }
 
 .edit-overlay {

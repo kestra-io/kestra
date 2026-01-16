@@ -236,7 +236,7 @@ public class DefaultRunContext extends RunContext {
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
         runContext.secretInputs = this.secretInputs;
-        if (this.isInitialized()) {
+        if (isInitialized.get()) {
             //Inject all services
             runContext.init(applicationContext);
         }
@@ -584,17 +584,12 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public String version() {
-        return this.isInitialized() ? version.getVersion() : null;
+        return isInitialized.get() ? version.getVersion() : null;
     }
 
     @Override
     public KVStore namespaceKv(String namespace) {
         return kvStoreService.get(this.flowInfo().tenantId(), namespace, this.flowInfo().namespace());
-    }
-
-    @Override
-    public boolean isInitialized() {
-        return isInitialized.get();
     }
 
     @Override

@@ -11,9 +11,7 @@ import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
-import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.ExecutionStatistics;
-import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
@@ -655,113 +653,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
             ));
 
         return build;
-    }
-
-    @Override
-    public List<ExecutionCount> executionCounts(
-        @Nullable String tenantId,
-        List<Flow> flows,
-        @Nullable List<State.Type> states,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable List<String> namespaces) {
-        ZonedDateTime finalStartDate = startDate == null ? ZonedDateTime.now().minusDays(30) : startDate;
-        ZonedDateTime finalEndDate = endDate == null ? ZonedDateTime.now() : endDate;
-
-        List<ExecutionCount> result = this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext dslContext = DSL.using(configuration);
-
-                SelectConditionStep<?> select = dslContext
-                    .select(List.of(
-                        field("namespace"),
-                        field("flow_id"),
-                        DSL.count().as("count")
-                    ))
-                    .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId))
-                    .and(NORMAL_KIND_CONDITION);
-
-                select = select.and(START_DATE_FIELD.greaterOrEqual(finalStartDate.toOffsetDateTime()));
-                select = select.and(START_DATE_FIELD.lessOrEqual(finalEndDate.toOffsetDateTime()));
-
-                if (!ListUtils.isEmpty(states)) {
-                    select = select.and(this.statesFilter(states));
-                }
-
-                List<Condition> orConditions = new ArrayList<>();
-                orConditions.addAll(ListUtils.emptyOnNull(flows)
-                    .stream()
-                    .map(flow -> DSL.and(
-                        field("namespace").eq(flow.getNamespace()),
-                        field("flow_id").eq(flow.getFlowId())
-                    ))
-                    .toList());
-
-                orConditions.addAll(
-                    ListUtils.emptyOnNull(namespaces)
-                        .stream()
-                        .map(np -> field("namespace").eq(np))
-                        .toList()
-                );
-
-                // add flows filters
-                select = select.and(DSL.or(orConditions));
-
-                // map result to flow
-                return select
-                    .groupBy(List.of(
-                        field("namespace"),
-                        field("flow_id")
-                    ))
-                    .fetchMany()
-                    .resultsOrRows()
-                    .getFirst()
-                    .result()
-                    .stream()
-                    .map(record -> new ExecutionCount(
-                        record.getValue("namespace", String.class),
-                        record.getValue("flow_id", String.class),
-                        record.getValue("count", Long.class)
-                    ))
-                    .toList();
-            });
-
-        List<ExecutionCount> counts = new ArrayList<>();
-        // fill missing with count at 0
-        if (!ListUtils.isEmpty(flows)) {
-            counts.addAll(flows
-                .stream()
-                .map(flow -> result
-                    .stream()
-                    .filter(executionCount -> executionCount.getNamespace().equals(flow.getNamespace()) &&
-                        executionCount.getFlowId().equals(flow.getFlowId())
-                    )
-                    .findFirst()
-                    .orElse(new ExecutionCount(
-                        flow.getNamespace(),
-                        flow.getFlowId(),
-                        0L
-                    ))
-                )
-                .toList());
-        }
-
-        if (!ListUtils.isEmpty(namespaces)) {
-            Map<String, Long> groupedByNamespace = result.stream()
-                .collect(Collectors.groupingBy(
-                    ExecutionCount::getNamespace,
-                    Collectors.summingLong(ExecutionCount::getCount)
-                ));
-
-            counts.addAll(groupedByNamespace.entrySet()
-                .stream()
-                .map(entry -> new ExecutionCount(entry.getKey(), null, entry.getValue()))
-                .toList());
-        }
-
-        return counts;
     }
 
     @Override

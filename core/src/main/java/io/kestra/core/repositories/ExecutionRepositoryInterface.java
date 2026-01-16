@@ -4,8 +4,6 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
-import io.kestra.core.models.executions.statistics.ExecutionCount;
-import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
@@ -145,14 +143,6 @@ public interface ExecutionRepositoryInterface extends QueryBuilderInterface<Exec
         @NotNull
         private String id;
     }
-
-    List<ExecutionCount> executionCounts(
-        @Nullable String tenantId,
-        @Nullable List<Flow> flows,
-        @Nullable List<State.Type> states,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable List<String> namespaces);
 
     /**
      * WARNING: this method is only intended to be used in tests or inside the BackupService.

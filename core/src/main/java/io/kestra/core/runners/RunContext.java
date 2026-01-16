@@ -194,12 +194,6 @@ public abstract class RunContext implements PropertyContext {
     }
 
     /**
-     * @deprecated there is no legitimate use case of this method outside the run context internal self-usage, so it should not be part of the interface
-     */
-    @Deprecated(since = "1.2.0", forRemoval = true)
-    public abstract boolean isInitialized();
-
-    /**
      * Get access to the ACL checker.
      * Plugins are responsible for using the ACL checker when they access restricted resources, for example,
      * when Namespace ACLs are used (EE).

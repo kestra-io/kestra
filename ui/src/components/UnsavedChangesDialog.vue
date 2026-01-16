@@ -1,6 +1,6 @@
 <template>
     <el-dialog
-        v-model="isDialogVisible"
+        v-model="unsavedChangesStore.isDialogVisible"
         :title="$t('unsaved changes')"
         width="500px"
         alignCenter
@@ -13,10 +13,10 @@
         </div>
         <template #footer>
             <div class="dialog-footer">
-                <el-button @click="handleCancel">
+                <el-button @click="unsavedChangesStore.handleCancel">
                     {{ $t('cancel') }}
                 </el-button>
-                <el-button type="primary" @click="handleLeave">
+                <el-button type="primary" @click="unsavedChangesStore.handleLeave">
                     {{ $t('leave page') }}
                 </el-button>
             </div>
@@ -24,10 +24,10 @@
     </el-dialog>
 </template>
 
-<script setup>
-    import {useUnsavedChangesDialog} from "../composables/useUnsavedChangesDialog";
+<script lang="ts" setup>
+    import {useUnsavedChangesStore} from "../stores/unsavedChanges";
 
-    const {isDialogVisible, handleLeave, handleCancel} = useUnsavedChangesDialog();
+    const unsavedChangesStore = useUnsavedChangesStore();
 </script>
 
 <style scoped lang="scss">

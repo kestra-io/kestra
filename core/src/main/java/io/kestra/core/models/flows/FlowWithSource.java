@@ -1,14 +1,12 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.Objects;
-import java.util.regex.Pattern;
 
 @SuperBuilder(toBuilder = true)
 @Getter
@@ -43,11 +41,12 @@ public class FlowWithSource extends Flow {
             .concurrency(this.concurrency)
             .retry(this.retry)
             .sla(this.sla)
+            .checks(this.checks)
             .build();
     }
 
     @Override
-    @JsonIgnore(value = false)
+    @Schema(hidden = false)
     public String getSource() {
         return this.source;
     }
@@ -85,6 +84,7 @@ public class FlowWithSource extends Flow {
             .concurrency(flow.concurrency)
             .retry(flow.retry)
             .sla(flow.sla)
+            .checks(flow.checks)
             .build();
     }
 }

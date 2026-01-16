@@ -11,7 +11,7 @@
         remote
         remoteShowSuffix
         :remoteMethod="onSearch"
-        :placeholder="t('namespaces')"
+        :placeholder="$t('namespaces')"
         :suffixIcon="readOnly ? Lock : undefined"
     >
         <template #tag>
@@ -22,7 +22,7 @@
                 closable
                 @close="modelValue = (modelValue as string[]).filter(v => v !== value)"
             >
-                <DotsSquare class="tag-icon" />
+                <FolderOpenOutline class="tag-icon" />
                 {{ value }}
             </el-tag>
         </template>
@@ -37,13 +37,10 @@
 
 <script setup lang="ts">
     import {computed, onMounted} from "vue"
-    import {useI18n} from "vue-i18n"
     import {useNamespacesStore} from "override/stores/namespaces"
-    import DotsSquare from "vue-material-design-icons/DotsSquare.vue"
+    import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
     import {defaultNamespace} from "../../../composables/useNamespaces";
-
-    const {t} = useI18n();
 
     withDefaults(defineProps<{
         multiple?: boolean,

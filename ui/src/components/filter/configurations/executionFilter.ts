@@ -85,7 +85,8 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         return VALUES.EXECUTION_STATES;
                     },
                     showComparatorSelection: true,
-                    searchable: true
+                    searchable: true,
+                    visibleByDefault: true
                 },
                 {
                     key: "scope",
@@ -126,7 +127,7 @@ export const useExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     label: t("filter.labels_execution.label"),
                     description: t("filter.labels_execution.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-                    valueType: "text",
+                    valueType: "key-value",
                 },
                 {
                     key: "triggerExecutionId",

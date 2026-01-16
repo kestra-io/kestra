@@ -5,9 +5,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -65,9 +63,7 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElseThrow();
-
-        FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
+        runContext.acl().allowNamespace(renderedNamespace).check();
 
         String renderedKey = runContext.render(this.key).as(String.class).orElseThrow();
 

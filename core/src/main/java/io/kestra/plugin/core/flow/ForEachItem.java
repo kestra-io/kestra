@@ -23,7 +23,6 @@ import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.StorageService;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.StorageContext;
-import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageSplitInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.validations.NoSystemLabelValidation;
@@ -540,7 +539,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                     .numberOfBatches((Integer) taskRun.getOutputs().get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES));
 
                 try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-                    FileSerde.write(bos, FlowInputOutput.renderFlowOutputs(flow.getOutputs(), runContext));
+                    FileSerde.write(bos, runContext.inputAndOutput().renderOutputs(flow.getOutputs()));
                     URI uri = runContext.storage().putFile(
                         new ByteArrayInputStream(bos.toByteArray()),
                         URI.create((String) taskRun.getOutputs().get("uri"))
@@ -602,9 +601,8 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             String subflowOutputsBase = (String) taskOutput.get(ExecutableUtils.TASK_VARIABLE_SUBFLOW_OUTPUTS_BASE_URI);
             URI subflowOutputsBaseUri = URI.create(StorageContext.KESTRA_PROTOCOL + subflowOutputsBase + "/");
 
-            StorageInterface storage = ((DefaultRunContext) runContext).getApplicationContext().getBean(StorageInterface.class);
-            if (storage.exists(runContext.flowInfo().tenantId(), runContext.flowInfo().namespace(), subflowOutputsBaseUri)) {
-                List<FileAttributes> list = storage.list(runContext.flowInfo().tenantId(), runContext.flowInfo().namespace(), subflowOutputsBaseUri);
+            if (runContext.storage().isFileExist(subflowOutputsBaseUri)) {
+                List<FileAttributes> list = runContext.storage().list(subflowOutputsBaseUri);;
 
                 if (!list.isEmpty()) {
                     // Merge outputs from each sub-flow into a single stored in the internal storage.

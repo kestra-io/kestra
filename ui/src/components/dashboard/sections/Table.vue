@@ -1,5 +1,5 @@
 <template>
-    <section v-if="data" id="table">
+    <section v-if="data?.results?.length" id="table">
         <el-table
             :id="containerID"
             :data="data.results"
@@ -39,7 +39,7 @@
 
     import type {RouteLocation} from "vue-router";
 
-    import type {Chart} from "../composables/useDashboards";
+    import type {Chart} from "../types.ts";
     import {getDashboard, isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
 
     import Date from "./table/columns/Date.vue";
@@ -88,11 +88,11 @@
             return {field: row[key]};
         case "STATE":
             return {
-                size: "small", 
+                size: "small",
                 status: row[key].toString(),
             };
         case "DURATION":
-            return {field: row[key]};
+            return {field: row[key], startDate: row["start_date"]};
         default:
             if (field.toLowerCase().includes("date")) {
                 return {field: row[key]};

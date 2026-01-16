@@ -1,14 +1,12 @@
 import {RouteLocation, Router} from "vue-router";
-import {useCoreStore} from "../stores/core";
-import {useUnsavedChangesDialog} from "../composables/useUnsavedChangesDialog";
+import {useUnsavedChangesStore} from "../stores/unsavedChanges";
 
 export default (app: any, router: Router) => {
     const confirmationMessage = app.config.globalProperties.$t("unsaved changed ?");
-    const coreStore = useCoreStore();
-    const {showDialog} = useUnsavedChangesDialog();
+    const unsavedChangesStore = useUnsavedChangesStore();
 
     window.addEventListener("beforeunload", (e) => {
-        if (coreStore.unsavedChange) {
+        if (unsavedChangesStore.unsavedChange) {
             (e || window.event).returnValue = confirmationMessage; //Gecko + IE
             return confirmationMessage; //Gecko + Webkit, Safari, Chrome etc.
         }
@@ -34,14 +32,15 @@ export default (app: any, router: Router) => {
     }
 
     router.beforeEach(async (to, from, next) => {
-        if (coreStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
-            const shouldLeave = await showDialog();
+        if (unsavedChangesStore.unsavedChange && !routeEqualsExceptHash(from, to)) {
+            const shouldLeave = await unsavedChangesStore.showDialog();
             if (shouldLeave) {
-                coreStore.unsavedChange = false;
+                unsavedChangesStore.unsavedChange = false;
                 next()
                 return;
             } else {
-                return false;
+                next(false);
+                return;
             }
         }
         next();

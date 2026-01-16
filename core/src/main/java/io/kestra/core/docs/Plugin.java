@@ -3,6 +3,7 @@ package io.kestra.core.docs;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.micronaut.core.annotation.Nullable;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -117,10 +118,17 @@ public class Plugin {
             .filter(not(io.kestra.core.models.Plugin::isInternal))
             .filter(clazzFilter)
             .filter(c -> !c.getName().startsWith("org.kestra."))
-            .map(c -> new PluginElementMetadata(c.getName(), io.kestra.core.models.Plugin.isDeprecated(c) ? true : null))
+            .map(c -> {
+                Schema schema = c.getAnnotation(Schema.class);
+
+                var title = Optional.ofNullable(schema).map(Schema::title).filter(t -> !t.isEmpty()).orElse(null);
+                var description = Optional.ofNullable(schema).map(Schema::description).filter(d -> !d.isEmpty()).orElse(null);
+                var deprecated = io.kestra.core.models.Plugin.isDeprecated(c) ? true : null;
+
+                return new PluginElementMetadata(c.getName(), deprecated, title, description);
+            })
             .toList();
     }
 
-    public record PluginElementMetadata(String cls, Boolean deprecated) {
-    }
+    public record PluginElementMetadata(String cls, Boolean deprecated, String title, String description) {}
 }

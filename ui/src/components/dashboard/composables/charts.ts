@@ -3,6 +3,8 @@ import Utils from "../../../utils/utils";
 import {cssVariable, State} from "@kestra-io/ui-libs";
 import {getSchemeValue} from "../../../utils/scheme";
 
+import {useMiscStore} from "override/stores/misc";
+
 export function tooltip(tooltipModel: {
     title?: string[];
     body?: { lines: string[] }[];
@@ -115,7 +117,7 @@ export function extractState(value: any) {
     return value;
 }
 
-export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label") {
+export function chartClick(moment: any, router: any, route: any, event: any, parsedData: any, elements: any, type = "label", filters: Record<string, any> = {}) {
     const query: Record<string, any> = {};
 
     if (elements && parsedData) {
@@ -192,7 +194,11 @@ export function chartClick(moment: any, router: any, route: any, event: any, par
             params: {
                 tenant: route.params.tenant,
             },
-            query: query,
+            query: {
+                ...query,
+                ...filters,
+                "filters[timeRange][EQUALS]":useMiscStore()?.configs?.chartDefaultDuration ?? "P30D"
+            },
         });
     }
 }

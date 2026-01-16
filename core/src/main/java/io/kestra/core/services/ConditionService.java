@@ -4,7 +4,6 @@ import com.cronutils.utils.VisibleForTesting;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
@@ -63,16 +62,6 @@ public class ConditionService {
         List<Condition> conditions = trigger.getConditions() == null ? new ArrayList<>() : trigger.getConditions();
 
         return this.valid(flow, conditions, conditionContext);
-    }
-
-    /**
-     * Check that all conditions are valid.
-     * Warning, this method throws if a condition cannot be evaluated.
-     */
-    public boolean isValid(List<ScheduleCondition> conditions, ConditionContext conditionContext) throws InternalException {
-        return conditions
-            .stream()
-            .allMatch(throwPredicate(condition -> condition.test(conditionContext)));
     }
 
     /**

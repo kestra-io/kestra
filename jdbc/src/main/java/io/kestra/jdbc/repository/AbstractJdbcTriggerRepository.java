@@ -59,7 +59,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Triggers.Fields dateFilterField() {
-        return null;
+        return Triggers.Fields.NEXT_EXECUTION_DATE;
     }
 
     public AbstractJdbcTriggerRepository(io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository,
@@ -72,19 +72,19 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Optional<Trigger> findLast(TriggerContext trigger) {
-        return findOne(DSL.trueCondition(), field("key").eq(trigger.uid()));
+        return findByUid(trigger.uid());
     }
 
     @Override
-    public Optional<Trigger> findByExecution(Execution execution) {
-        return findOne(execution.getTenantId(), field("execution_id").eq(execution.getId()));
+    public Optional<Trigger> findByUid(String uid) {
+        return findOne(DSL.trueCondition(), KEY_FIELD.eq(uid));
     }
 
     public List<Trigger> findByNextExecutionDateReadyForAllTenants(ZonedDateTime now, ScheduleContextInterface scheduleContextInterface) {
         JdbcSchedulerContext jdbcSchedulerContext = (JdbcSchedulerContext) scheduleContextInterface;
-        
+
         return jdbcSchedulerContext.getContext()
-            .select(field("value"))
+            .select(VALUE_FIELD)
             .from(this.jdbcRepository.getTable())
             .where(
                 (field("next_execution_date").lessThan(toNextExecutionTime(now))
@@ -98,12 +98,12 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             .fetch()
             .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
     }
-    
+
     public List<Trigger> findByNextExecutionDateReadyButLockedTriggers(ZonedDateTime now) {
-        
+
         return this.jdbcRepository.getDslContextWrapper()
             .transactionResult(configuration -> DSL.using(configuration)
-                .select(field("value"))
+                .select(VALUE_FIELD)
                 .from(this.jdbcRepository.getTable())
                 .where(
                     (field("next_execution_date").lessThan(toNextExecutionTime(now))
@@ -115,7 +115,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
                 .fetch()
                 .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class))));
     }
-    
+
     protected Temporal toNextExecutionTime(ZonedDateTime now) {
         return now.toOffsetDateTime();
     }
@@ -134,7 +134,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             .transactionResult(configuration -> {
                 DSL.using(configuration)
                     .insertInto(this.jdbcRepository.getTable())
-                    .set(AbstractJdbcRepository.field("key"), this.jdbcRepository.key(trigger))
+                    .set(KEY_FIELD, this.jdbcRepository.key(trigger))
                     .set(this.jdbcRepository.persistFields(trigger))
                     .execute();
 
@@ -157,9 +157,9 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             .transactionResult(configuration -> {
                 Optional<Trigger> lastTrigger = this.jdbcRepository.fetchOne(DSL
                     .using(configuration)
-                    .select(field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
-                    .where(field("key").eq(Trigger.uid(flow, abstractTrigger)))
+                    .where(KEY_FIELD.eq(Trigger.uid(flow, abstractTrigger)))
                     .forUpdate()
                 );
 
@@ -168,7 +168,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
                 DSL.using(configuration)
                     .update(this.jdbcRepository.getTable())
                     .set(this.jdbcRepository.persistFields(updatedTrigger))
-                    .where(field("key").eq(updatedTrigger.uid()))
+                    .where(KEY_FIELD.eq(updatedTrigger.uid()))
                     .execute();
 
                 return updatedTrigger;
@@ -181,10 +181,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                Optional<Trigger> optionalTrigger = this.jdbcRepository.fetchOne(context.select(field("value"))
+                Optional<Trigger> optionalTrigger = this.jdbcRepository.fetchOne(context.select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        field("key").eq(triggerUid)
+                        KEY_FIELD.eq(triggerUid)
                     ).forUpdate());
 
                 if (optionalTrigger.isPresent()) {
@@ -199,7 +199,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
     @Override
     public ArrayListTotal<Trigger> find(Pageable pageable, String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, "next_execution_date", Resource.TRIGGER);
+        var condition = filter(filters, fieldsMapping.get(dateFilterField()), Resource.TRIGGER);
         return findPage(pageable, tenantId, condition);
     }
 
@@ -223,11 +223,13 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         return findPage(pageable, tenantId, condition);
     }
 
-    /** {@inheritDoc} */
     @Override
-    public Flux<Trigger> find(String tenantId, List<QueryFilter> filters) {
-        var condition = filter(filters, "next_execution_date", Resource.TRIGGER);
-        return findAsync(tenantId, condition);
+    public Flux<Trigger> findAsync(String tenantId, List<QueryFilter> filters) {
+        if (filters == null || filters.isEmpty()) {
+            return findAllAsync(tenantId);
+        }
+        Condition condition = this.filter(filters, fieldsMapping.get(dateFilterField()), Resource.TRIGGER);
+        return findAsync(defaultFilter(tenantId), condition);
     }
 
     protected Condition fullTextCondition(String query) {
@@ -323,7 +325,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<ITriggers.Fields> columnDescriptor = dataFilter.getColumns();
-            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
             Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
             if (columnDescriptor.getAgg() != null) {
                 field = filterService.buildAggregation(field, columnDescriptor.getAgg());

@@ -5,7 +5,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
-import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.exceptions.InvalidTriggerConfigurationException;
 import io.kestra.core.metrics.MetricRegistry;
@@ -27,7 +26,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
@@ -39,7 +37,6 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -74,8 +71,6 @@ public abstract class AbstractScheduler implements Scheduler {
     private final QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     private final QueueInterface<LogEntry> logQueue;
-    @SuppressWarnings("rawtypes")
-    private final Optional<QueueInterface> clusterEventQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final RunContextInitializer runContextInitializer;
@@ -83,7 +78,6 @@ public abstract class AbstractScheduler implements Scheduler {
     private final ConditionService conditionService;
     private final PluginDefaultService pluginDefaultService;
     private final WorkerGroupService workerGroupService;
-    private final LogService logService;
     protected SchedulerExecutionStateInterface executionState;
     private final WorkerGroupExecutorInterface workerGroupExecutorInterface;
     private final MaintenanceService maintenanceService;
@@ -127,7 +121,6 @@ public abstract class AbstractScheduler implements Scheduler {
         this.workerJobQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
         this.executionKilledQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
         this.workerTriggerResultQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
-        this.clusterEventQueue = applicationContext.findBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.CLUSTER_EVENT_NAMED));
         this.logQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERTASKLOG_NAMED));
         this.flowListeners = flowListeners;
         this.runContextFactory = applicationContext.getBean(RunContextFactory.class);
@@ -136,7 +129,6 @@ public abstract class AbstractScheduler implements Scheduler {
         this.conditionService = applicationContext.getBean(ConditionService.class);
         this.pluginDefaultService = applicationContext.getBean(PluginDefaultService.class);
         this.workerGroupService = applicationContext.getBean(WorkerGroupService.class);
-        this.logService = applicationContext.getBean(LogService.class);
         this.serviceStateEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.executionEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.workerGroupExecutorInterface = applicationContext.getBean(WorkerGroupExecutorInterface.class);
@@ -291,7 +283,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         disableInvalidTrigger(workerTriggerResult.getTriggerContext(), e);
                         return;
                     }
-                    this.handleEvaluateWorkerTriggerResult(triggerExecution, nextExecutionDate);
+                    this.handleEvaluateWorkerTriggerResult(triggerExecution, nextExecutionDate, workerTriggerResult.getTrigger());
                 } else {
                     ZonedDateTime nextExecutionDate;
                     try {
@@ -306,7 +298,18 @@ public abstract class AbstractScheduler implements Scheduler {
         ));
 
         // listen to cluster events
-        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(((QueueInterface<ClusterEvent>) clusterEventQueueInterface).receive(this::clusterEventQueue)));
+        this.receiveCancellations.addFirst(this.maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
+            @Override
+            public void onMaintenanceModeEnter() {
+                AbstractScheduler.this.enterMaintenance();
+            }
+
+            @Override
+            public void onMaintenanceModeExit() {
+                AbstractScheduler.this.exitMaintenance();
+            }
+        })::dispose);
+
         if (this.maintenanceService.isInMaintenanceMode()) {
             enterMaintenance();
         } else {
@@ -415,20 +418,6 @@ public abstract class AbstractScheduler implements Scheduler {
         }
 
         this.isReady = true;
-    }
-
-    private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a cluster event: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ClusterEvent clusterEvent = either.getLeft();
-        log.info("Cluster event received: {}", clusterEvent);
-        switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> enterMaintenance();
-            case MAINTENANCE_EXIT -> exitMaintenance();
-        }
     }
 
     private void enterMaintenance() {
@@ -703,7 +692,7 @@ public abstract class AbstractScheduler implements Scheduler {
                                     this.triggerState.save(triggerRunning, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/polling");
                                     this.sendWorkerTriggerToWorker(flowWithTrigger);
                                 } catch (InternalException e) {
-                                    logService.logTrigger(
+                                    Logs.logTrigger(
                                         f.getTriggerContext(),
                                         logger,
                                         Level.ERROR,
@@ -718,7 +707,8 @@ public abstract class AbstractScheduler implements Scheduler {
                                 Optional<SchedulerExecutionWithTrigger> schedulerExecutionWithTrigger = evaluateScheduleTrigger(f);
                                 if (schedulerExecutionWithTrigger.isPresent()) {
                                     this.handleEvaluateSchedulingTriggerResult(schedule, schedulerExecutionWithTrigger.get(), f.getConditionContext(), scheduleContext);
-                                } else {
+                                }
+                                else{
                                     // compute next date and save the trigger to avoid evaluating it each second
                                     Trigger trigger = Trigger.fromEvaluateFailed(
                                         f.getTriggerContext(),
@@ -728,7 +718,7 @@ public abstract class AbstractScheduler implements Scheduler {
                                     this.triggerState.save(trigger, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/schedule");
                                 }
                             } else {
-                                logService.logTrigger(
+                                Logs.logTrigger(
                                     f.getTriggerContext(),
                                     logger,
                                     Level.ERROR,
@@ -753,26 +743,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         // validate schedule condition can fail to render variables
                         // in this case, we send a failed execution so the trigger is not evaluated each second.
                         logger.error("Unable to evaluate the trigger '{}'", f.getAbstractTrigger().getId(), ie);
-                        Execution execution = Execution.builder()
-                            .id(IdUtils.create())
-                            .tenantId(f.getTriggerContext().getTenantId())
-                            .namespace(f.getTriggerContext().getNamespace())
-                            .flowId(f.getTriggerContext().getFlowId())
-                            .flowRevision(f.getFlow().getRevision())
-                            .labels(LabelService.labelsExcludingSystem(f.getFlow()))
-                            .state(new State().withState(State.Type.FAILED))
-                            .build();
-                        ZonedDateTime nextExecutionDate;
-                        try {
-                            nextExecutionDate = this.nextEvaluationDate(f.getAbstractTrigger());
-                        } catch (InvalidTriggerConfigurationException e2) {
-                            logError(f, e2);
-                            disableInvalidTrigger(f, e2);
-                            return;
-                        }
-
-                        var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
-                        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handle/save/on-error"));
+                       handleFailedEvaluatedTrigger(f, scheduleContext, ie);
                     }
                 });
         });
@@ -789,7 +760,7 @@ public abstract class AbstractScheduler implements Scheduler {
     }
 
     private void handleEvaluateWorkerTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime
-        nextExecutionDate) {
+        nextExecutionDate, AbstractTrigger abstractTrigger) {
         Optional.ofNullable(result)
             .ifPresent(executionWithTrigger -> {
                     log(executionWithTrigger);
@@ -800,6 +771,12 @@ public abstract class AbstractScheduler implements Scheduler {
                         nextExecutionDate
                     );
 
+                    // if the trigger is allowed to run concurrently we do not attached the executio-id to the trigger state
+                    // i.e., the trigger will not be locked
+                    if (abstractTrigger.isAllowConcurrent()) {
+                        trigger = trigger.toBuilder().executionId(null).build();
+                    }
+                
                     // Worker triggers result is evaluated in another thread with the workerTriggerResultQueue.
                     // We can then update the trigger directly.
                     this.saveLastTriggerAndEmitExecution(executionWithTrigger.getExecution(), trigger, triggerToSave -> this.triggerState.update(triggerToSave));
@@ -820,6 +797,12 @@ public abstract class AbstractScheduler implements Scheduler {
         // if the execution is already failed due to failed execution, we reset the trigger now
         if (result.getExecution().getState().getCurrent() == State.Type.FAILED) {
             trigger = trigger.resetExecution(State.Type.FAILED);
+        }
+        
+        // if the trigger is allowed to run concurrently we do not attached the executio-id to the trigger state
+        // i.e., the trigger will not be locked
+        if (((AbstractTrigger)schedule).isAllowConcurrent()) {
+            trigger = trigger.toBuilder().executionId(null).build();
         }
 
         // Schedule triggers are being executed directly from the handle method within the context where triggers are locked.
@@ -879,7 +862,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
                     }
                     if (lastTrigger.getUpdatedDate() == null || lastTrigger.getUpdatedDate().plusSeconds(60).isBefore(Instant.now())) {
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             lastTrigger,
                             Level.WARN,
                             "Execution '{}' is not found, schedule is blocked since '{}'",
@@ -895,7 +878,7 @@ public abstract class AbstractScheduler implements Scheduler {
                         .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
                 }
                 if (log.isDebugEnabled()) {
-                    logService.logTrigger(
+                    Logs.logTrigger(
                         lastTrigger,
                         Level.DEBUG,
                         "Execution '{}' is still '{}', updated at '{}'",
@@ -936,7 +919,7 @@ public abstract class AbstractScheduler implements Scheduler {
             }
         }
 
-        logService.logTrigger(
+        Logs.logTrigger(
             executionWithTrigger.getTriggerContext(),
             Level.INFO,
             "Scheduled execution {} at '{}' started at '{}'",
@@ -969,7 +952,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     );
 
                     if (log.isDebugEnabled()) {
-                        logService.logTrigger(
+                        Logs.logTrigger(
                             flowWithTrigger.getTriggerContext(),
                             Level.DEBUG,
                             "[type: {}] {}",
@@ -986,15 +969,47 @@ public abstract class AbstractScheduler implements Scheduler {
                     ));
                 } catch (Exception e) {
                     logError(flowWithTrigger, e);
+                    Execution failedExecution =  createFailedExecution( flowWithTrigger, e);
+                    this.emitExecution(failedExecution, flowWithTrigger.getTriggerContext());
                     return Optional.empty();
                 }
             });
     }
+    private Execution createFailedExecution(FlowWithWorkerTrigger flowWithTrigger, Throwable e){
+        Execution execution = Execution.builder()
+            .id(IdUtils.create())
+            .tenantId(flowWithTrigger.getTriggerContext().getTenantId())
+            .namespace(flowWithTrigger.getTriggerContext().getNamespace())
+            .flowId(flowWithTrigger.getTriggerContext().getFlowId())
+            .flowRevision(flowWithTrigger.getFlow().getRevision())
+            .labels(LabelService.labelsExcludingSystem(flowWithTrigger.getFlow()))
+            .state(new State().withState(State.Type.FAILED))
+            .build();
+        Logger logger = runContextFactory.of(flowWithTrigger.getFlow(), execution).logger();
+        logger.error("[trigger: {}] [date: {}] Evaluate Failed with error '{}'" , flowWithTrigger.getAbstractTrigger().getId(), now(), e.getMessage());
+        return execution;
+    }
+   private void handleFailedEvaluatedTrigger(FlowWithWorkerTrigger flowWithTrigger, ScheduleContextInterface scheduleContext, Throwable e ){
 
+        Execution execution = createFailedExecution(flowWithTrigger, e);
+        ZonedDateTime nextExecutionDate;
+        try {
+            nextExecutionDate = this.nextEvaluationDate(flowWithTrigger.getAbstractTrigger());
+        } catch (InvalidTriggerConfigurationException e2) {
+            logError(flowWithTrigger, e2);
+            disableInvalidTrigger(flowWithTrigger, e2);
+            return;
+        }
+
+        var trigger = flowWithTrigger.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
+        trigger = trigger.checkBackfill();
+        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handle/save/on-error"));
+
+    }
     private void logError(FlowWithWorkerTrigger flowWithWorkerTriggerNextDate, Throwable e) {
         Logger logger = flowWithWorkerTriggerNextDate.getConditionContext().getRunContext().logger();
 
-        logService.logTrigger(
+        Logs.logTrigger(
             flowWithWorkerTriggerNextDate.getTriggerContext(),
             logger,
             Level.WARN,
@@ -1013,7 +1028,7 @@ public abstract class AbstractScheduler implements Scheduler {
         trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
 
-        logService.logExecution(
+        Logs.logExecution(
             flow,
             logger,
             Level.ERROR,
@@ -1027,7 +1042,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
     private void sendWorkerTriggerToWorker(FlowWithWorkerTrigger flowWithTrigger) throws InternalException {
         if (log.isDebugEnabled()) {
-            logService.logTrigger(
+            Logs.logTrigger(
                 flowWithTrigger.getTriggerContext(),
                 Level.DEBUG,
                 "[date: {}] Scheduling evaluation to the worker",

@@ -3,10 +3,7 @@
         <OnboardingCard
             v-for="card in cards"
             :key="card.title"
-            :title="card.title"
-            :content="card.content"
-            :category="card.category"
-            :link="card.link"
+            v-bind="card"
             @click="handleCardClick(card)"
         />
     </div>
@@ -15,20 +12,13 @@
     import {computed, getCurrentInstance} from "vue";
     import {useI18n} from "vue-i18n";
     import {useCoreStore} from "../../stores/core";
-    import OnboardingCard from "../../components/onboarding/OnboardingCard.vue";
+    import OnboardingCard, {OnboardingCardModel} from "../../components/onboarding/OnboardingCard.vue";
 
     const {t} = useI18n();
     const coreStore = useCoreStore();
     const instance = getCurrentInstance();
 
-    interface Card {
-        title: string;
-        category: string;
-        content?: string;
-        link?: string;
-    }
-
-    const cards = computed((): Card[] => [
+    const cards = computed((): OnboardingCardModel[] => [
         {title: t("welcome.tour.title"), category: "tour"},
         {title: t("welcome.tutorial.title"), category: "tutorial"},
         {title: t("welcome.help.title"), category: "help"}
@@ -42,7 +32,7 @@
         (instance?.proxy as any)?.$tours["guidedTour"]?.start();
     };
 
-    const handleCardClick = (card: Card) => {
+    const handleCardClick = (card: OnboardingCardModel) => {
         if (card.category === "tour") startTour();
         else if (card.category === "help") window.open("https://kestra.io/slack", "_blank");
     };

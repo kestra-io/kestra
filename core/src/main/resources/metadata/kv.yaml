@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.kv
+name: "kv"
+title: "KV"
+description: "Tasks that manage key-value pairs in Kestra's KV store."
+body: "Set, get, list, version, and delete namespaced keys to share state across flows; specify the key path, value for writes, and optional namespace or TTL to control how data is stored, retrieved, and purged."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

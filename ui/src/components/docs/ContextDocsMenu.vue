@@ -1,7 +1,7 @@
 <template>
     <div class="docsMenuWrapper">
         <el-button @click="menuOpen = !menuOpen" class="menuOpener">
-            {{ t("documentationMenu") }} <MenuDown class="expandIcon" />
+            {{ $t("documentationMenu") }} <MenuDown class="expandIcon" />
         </el-button>
         <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
             <template v-if="rawStructure">
@@ -33,9 +33,6 @@
 <script setup lang="ts">
     import {ref, computed, watch} from "vue";
     import {useDocStore} from "../../stores/doc";
-    import {useI18n} from "vue-i18n";
-
-    const {t} = useI18n({useScope: "global"});
 
     import MenuDown from "vue-material-design-icons/MenuDown.vue";
 

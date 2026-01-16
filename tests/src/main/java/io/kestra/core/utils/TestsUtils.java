@@ -74,13 +74,13 @@ abstract public class TestsUtils {
      * @param prefix
      * @return
      */
-    private static String randomString(String... prefix) {
+    public static String randomString(String... prefix) {
         if (prefix.length == 0) {
             prefix = new String[]{String.join("-", stackTraceToParts())};
         }
         var tenantRegex = "^[a-z0-9][a-z0-9_-]*";
         var validTenantPrefixes = Arrays.stream(prefix)
-            .map(s -> s.replace(".", "-").replace("$", "-"))
+            .map(s -> s.replaceAll("[.$<>]", "-"))
             .map(String::toLowerCase)
             .peek(p -> {
                 if (!p.matches(tenantRegex)) {

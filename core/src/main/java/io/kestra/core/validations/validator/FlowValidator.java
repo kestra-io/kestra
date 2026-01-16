@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.NamespaceService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -18,15 +19,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -52,6 +45,9 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
     @Inject
     private FlowService flowService;
 
+    @Inject
+    private NamespaceService namespaceService;
+
     @Override
     public boolean isValid(
         @Nullable Flow value,
@@ -67,7 +63,7 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             violations.add("Flow id is a reserved keyword: " + value.getId() + ". List of reserved keywords: " + String.join(", ", RESERVED_FLOW_IDS));
         }
 
-        if (flowService.requireExistingNamespace(value.getTenantId(), value.getNamespace())) {
+        if (namespaceService.requireExistingNamespace(value.getTenantId(), value.getNamespace())) {
             violations.add("Namespace '" + value.getNamespace() + "' does not exist but is required to exist before a flow can be created in it.");
         }
 
@@ -151,6 +147,8 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             .map(task -> task.getId())
             .collect(Collectors.toList());
 
+        violations.addAll(assetsViolations(allTasks));
+
         if (!invalidTasks.isEmpty()) {
             violations.add("Invalid output reference: use outputs[key-name] instead of outputs.key-name — keys with dashes require bracket notation, offending tasks:" +
                 " [" + String.join(", ", invalidTasks) + "]");
@@ -175,6 +173,12 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         } else {
             return true;
         }
+    }
+
+    protected List<String> assetsViolations(List<Task> allTasks) {
+        return allTasks.stream().filter(task -> task.getAssets() != null)
+            .map(taskWithAssets -> "Task '" + taskWithAssets.getId() + "' can't have any `assets` because assets are only available in Enterprise Edition.")
+            .toList();
     }
 
     private static boolean checkObjectFieldsWithPatterns(Object object, List<Pattern> patterns) {

@@ -7,7 +7,6 @@ import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.services.FlowService;
 import jakarta.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -215,8 +214,7 @@ abstract public class PluginUtilsService {
                 realNamespace = runContext.render(namespace);
                 realFlowId = runContext.render(flowId);
                 // validate that the flow exists: a.k.a access is authorized by this namespace
-                FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
-                flowService.checkAllowedNamespace(flowInfo.tenantId(), realNamespace, flowInfo.tenantId(), flowInfo.namespace());
+                runContext.acl().allowNamespace(realNamespace).check();
             } else if (namespace != null || flowId != null) {
                 throw new IllegalArgumentException("Both `namespace` and `flowId` must be set when `executionId` is set.");
             } else {

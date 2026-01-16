@@ -173,7 +173,7 @@
 </template>
 
 <script>
-    import Restart from "./Restart.vue";
+    import Restart from "./overview/components/actions/Restart.vue";
     import Metrics from "./Metrics.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import ChangeStatus from "./ChangeStatus.vue";

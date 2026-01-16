@@ -7,14 +7,14 @@
         v-if="deleted"
         type="default"
         :icon="BackupRestore"
-        :label="t('restore')"
+        :label="$t('restore')"
         @click="restoreFlow"
     />
     <Action
         v-if="canEdit && !deleted && tab !== 'edit'"
         type="default"
         :icon="Pencil"
-        :label="t('edit flow')"
+        :label="$t('edit flow')"
         @click="editFlow"
     />
     <TriggerFlow
@@ -28,9 +28,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
-    import {useCoreStore} from "../../../stores/core";
     import {useFlowStore} from "../../../stores/flow";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -43,8 +41,7 @@
     import permission from "../../../models/permission";
     import action from "../../../models/action";
     import {useAuthStore} from "override/stores/auth";
-
-    const {t} = useI18n();
+    import {useUnsavedChangesStore} from "../../../stores/unsavedChanges";
 
     const onSelectDashboard = (value: any) => {
         router.replace({
@@ -52,7 +49,7 @@
         });
     };
 
-    const coreStore = useCoreStore();
+    const unsavedChangesStore = useUnsavedChangesStore();
     const flowStore = useFlowStore();
     const router = useRouter();
     const route = useRoute();
@@ -87,7 +84,7 @@
         flowStore.createFlow({
             flow: YAML_UTILS.deleteMetadata(flow.value?.source, "deleted"),
         }).then(() => {
-            coreStore.unsavedChange = false;
+            unsavedChangesStore.unsavedChange = false;
             router.go(0);
         });
     };

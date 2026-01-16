@@ -2,6 +2,7 @@ import {defineComponent, ref} from "vue";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import {vueRouter} from "storybook-vue3-router";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
+import {useAxios} from "../../../../src/utils/axios.js";
 
 const meta = {
     title: "inputs/InputsForm",
@@ -20,10 +21,27 @@ const meta = {
 export default meta;
 
 const Sut = defineComponent((props) => {
+    const axios = useAxios()
+
+    axios.post = (uri) => {
+        if (!uri.endsWith("/validate")) {
+            return {data: []}
+        }
+        return  Promise.resolve({data: {
+                "inputs": props.inputs.map(x => ({
+                    input: x,
+                    enabled: true,
+                    isDefault: false,
+                    errors: []
+                }))
+            }
+        })}
+
+
     const values = ref({});
     return () => (<>
         <el-form label-position="top">
-            <InputsForm initialInputs={props.inputs} modelValue={values.value}
+            <InputsForm initialInputs={props.inputs} modelValue={values.value} flow={{namespace: "ns1", id: "flowid1"}}
                         onUpdate:modelValue={(value) => values.value = value}
             />
         </el-form>
@@ -45,10 +63,9 @@ export const InputTypes = {
 
         const MonacoEditor = await waitFor(function MonacoEditorReady() {
             const editor = can.getByTestId("input-form-email").querySelector(".ks-monaco-editor");
-            // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-            expect(editor).to.exist;
+            expect(editor).toBeTruthy();
             return editor;
-        }, {timeout: 2000, interval: 100});
+        }, {timeout: 5000, interval: 100});
         // wait for the setup to finish
         await waitFor(() => expect(typeof MonacoEditor.__setValueInTests).toBe("function"));
         MonacoEditor.__setValueInTests("foo@example.com");
@@ -112,6 +129,37 @@ export const InputTypes = {
                 type: "DURATION",
                 displayName: "Duration select input",
             }]}
+        />;
+    }
+};
+
+/**
+ * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
+ */
+export const InputSelect = {
+    async play({canvasElement}) {
+        const can = within(canvasElement);
+        await waitFor(function testDefaultSelectValue() {
+           expect(can.getByTestId("test-content")).toHaveTextContent("Second value");
+        });
+    },
+    render() {
+        return <Sut inputs={[
+            {
+                id: "resource_type",
+                type: "SELECT",
+                required: false,
+                defaults: "Second value",
+                displayName: "Single select input",
+                values: [
+                    "First value",
+                    "Second value",
+                    "Third value",
+                    "Fourth value"
+                ],
+                allowCustomValue: false
+            },
+           ]}
         />;
     }
 };

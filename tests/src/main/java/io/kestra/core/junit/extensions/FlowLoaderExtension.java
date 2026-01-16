@@ -22,18 +22,14 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallback {
-
-    private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(
-        KestraTestExtension.class);
-
     private ApplicationContext applicationContext;
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
         if (applicationContext == null) {
-            extensionContext.getRoot().getStore(NAMESPACE).put("test", "bla");
+            extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get())).put("test", "bla");
 
-            applicationContext = extensionContext.getRoot().getStore(NAMESPACE)
+            applicationContext = extensionContext.getRoot().getStore(ExtensionContext.Namespace.create(KestraTestExtension.class, extensionContext.getTestClass().get()))
                 .get(ApplicationContext.class, ApplicationContext.class);
 
             if (applicationContext == null) {

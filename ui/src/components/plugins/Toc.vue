@@ -13,14 +13,14 @@
                     :name="plugin.group"
                     :title="plugin.title?.capitalize()"
                     :key="plugin.group"
-                    :ref="`plugin-${plugin.group}`"
+                    :ref="(el) => pluginRefs[plugin.group] = el"                
                 >
                     <ul class="toc-h3">
                         <li v-for="(types, namespace) in group(plugin)" :key="namespace">
                             <h6>{{ namespace }}</h6>
                             <ul class="toc-h4">
                                 <li v-for="(classes, type) in types" :key="type + '-' + namespace">
-                                    <h6>{{ $filters.cap(type) }}</h6>
+                                    <h6>{{ cap(type) }}</h6>
                                     <ul class="section-nav toc-h5">
                                         <li v-for="cls in classes" :key="cls">
                                             <router-link
@@ -35,7 +35,7 @@
                                                     />
                                                 </div>
                                                 <span
-                                                    :class="$route.params.cls === (namespace + '.' + cls) ? 'selected mx-2' : 'mx-2'"
+                                                    :class="route.params.cls === (namespace + '.' + cls) ? 'selected mx-2' : 'mx-2'"
                                                 >{{
                                                     cls
                                                 }}</span>
@@ -52,142 +52,137 @@
     </div>
 </template>
 
-<script>
-    import {isEntryAPluginElementPredicate, TaskIcon} from "@kestra-io/ui-libs";
-    import {mapStores} from "pinia";
+<script setup lang="ts">
+    import {ref, computed, watch, nextTick, reactive} from "vue";
+    import {useRoute} from "vue-router";
+    import {isEntryAPluginElementPredicate, TaskIcon, type Plugin, type PluginElement} from "@kestra-io/ui-libs";
     import {usePluginsStore} from "../../stores/plugins";
+    import {cap} from "../../utils/filters";
 
-    export default {
-        emits: ["routerChange"],
-        data() {
-            return {
-                offset: 0,
-                activeNames: [],
-                searchInput: ""
+    const props = defineProps<{
+        plugins: Plugin[];
+    }>();
+
+    defineEmits<{
+        routerChange: [];
+    }>();
+
+    const route = useRoute();
+    const pluginsStore = usePluginsStore();
+
+    const pluginRefs = reactive({});
+    const activeNames = ref<string[]>([]);
+    const searchInput = ref<string>("");
+
+    const countPlugin = computed(() => {
+        return new Set(props.plugins.flatMap(plugin => pluginElements(plugin))).size;
+    });
+
+    const pluginElements = (plugin: Plugin) => {
+        return Object.entries(plugin)
+            .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+            .flatMap(([_, value]) => (value as PluginElement[])
+                .filter(({deprecated}) => !deprecated)
+                .map(({cls}) => cls)
+            );
+    };
+
+    const scrollToActivePlugin = () => {
+        const activePlugin = localStorage.getItem("activePlugin");
+        if (activePlugin) {
+            const pluginElement = pluginRefs[activePlugin];
+            if (pluginElement) {
+                pluginElement.$el.scrollIntoView({behavior: "smooth", block: "start"});
             }
-        },
-        watch: {
-            $route: {
-                handler() {
-                    this.plugins.forEach(plugin => {
-                        if (Object.entries(plugin).some(([key, value]) => isEntryAPluginElementPredicate(key, value) && value.map(({cls}) => cls).includes(this.$route.params.cls))) {
-                            this.activeNames = [plugin.group]
-                            localStorage.setItem("activePlugin", plugin.group);
-                        }
-                    })
-                    this.scrollToActivePlugin();
-                },
-                immediate: true
-            }
-        },
-        components: {
-            TaskIcon
-        },
-        props: {
-            plugins: {
-                type: Array,
-                required: true
-            }
-        },
-        computed: {
-            ...mapStores(usePluginsStore),
-            countPlugin() {
-                return new Set(this.plugins.flatMap(plugin => this.pluginElements(plugin))).size
-            },
-            pluginsList() {
-                return this.plugins
-                    // remove duplicate
-                    .filter((plugin, index, self) => {
-                        return index === self.findIndex((t) => (
-                            t.title === plugin.title && t.group === plugin.group
-                        ));
-                    })
-                    // find plugin that match search input
-                    .filter(plugin => {
-                        return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
-                            this.pluginElements(plugin).some(element => element.toLowerCase().includes(this.searchInput.toLowerCase()))
-                    })
-                    // keep only task that match search input
-                    .map(plugin => {
-                        return {
-                            ...plugin,
-                            ...Object.fromEntries(
-                                Object.entries(plugin)
-                                    .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-                                    .map(([elementType, elements]) => [
-                                        elementType,
-                                        elements.filter(({deprecated}) => !deprecated)
-                                            .filter(({cls}) => cls.toLowerCase().includes(this.searchInput.toLowerCase()))
-                                    ])
-                            )
-                        }
-                    })
-            }
-        },
-        methods: {
-            pluginElements(plugin) {
-                return Object.entries(plugin)
-                    .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-                    .flatMap(([_, value]) => value
-                        .filter(({deprecated}) => !deprecated)
-                        .map(({cls}) => cls)
-                    )
-            },
-            scrollToActivePlugin() {
-                const activePlugin = localStorage.getItem("activePlugin");
-                if (activePlugin) {
-                    // Use Vue's $refs to scroll to the specific plugin group
-                    this.$nextTick(() => {
-                        const pluginElement = this.$refs[`plugin-${activePlugin}`];
-                        if (pluginElement && pluginElement[0]) {
-                            pluginElement[0].$el.scrollIntoView({behavior: "smooth", block: "start"});
-                        }
-                    });
-                }
-            },
-            // When user navigates to a different plugin, save the new plugin group to localStorage
-            handlePluginChange(pluginGroup) {
-                this.activeNames = [pluginGroup];
-                localStorage.setItem("activePlugin", pluginGroup); // Save to localStorage
-            },
-            sortedPlugins(plugins) {
-                return plugins
-                    .sort((a, b) => {
-                        const nameA = (a.title ? a.title.toLowerCase() : ""),
-                              nameB = (b.title ? b.title.toLowerCase() : "");
-
-                        return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
-                    })
-            },
-            group(plugin) {
-                return Object.entries(plugin)
-                    .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
-                    .flatMap(([type, value]) => {
-                        return value.filter(({deprecated}) => !deprecated)
-                            .map(({cls}) => {
-                                const namespace = cls.substring(0, cls.lastIndexOf("."));
-
-                                return {
-                                    type,
-                                    namespace: namespace,
-                                    cls: cls.substring(cls.lastIndexOf(".") + 1)
-                                };
-                            });
-                    })
-                    .reduce((accumulator, value) => {
-                        accumulator[value.namespace] = accumulator[value.namespace] || {};
-                        accumulator[value.namespace][value.type] = accumulator[value.namespace][value.type] || [];
-                        accumulator[value.namespace][value.type].push(value.cls);
-
-                        return accumulator;
-                    }, Object.create(null))
-
-            },
-            isVisible(plugin) {
-                return this.pluginElements(plugin).length > 0
-            },
         }
-    }
+    };
+
+    const pluginsList = computed(() => {
+        return props.plugins
+            .filter((plugin, index, self) => {
+                return index === self.findIndex((t) => (
+                    t.title === plugin.title && t.group === plugin.group
+                ));
+            })
+            .filter(plugin => {
+                return plugin.title?.toLowerCase().includes(searchInput.value.toLowerCase()) ||
+                    pluginElements(plugin).some(element => element.toLowerCase().includes(searchInput.value.toLowerCase()));
+            })
+            .map(plugin => {
+                return {
+                    ...plugin,
+                    ...Object.fromEntries(
+                        Object.entries(plugin)
+                            .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+                            .map(([elementType, elements]) => [
+                                elementType,
+                                (elements as PluginElement[]).filter(({deprecated}) => !deprecated)
+                                    .filter(({cls}) => cls.toLowerCase().includes(searchInput.value.toLowerCase()))
+                            ])
+                    )
+                };
+            });
+    });
+
+    watch(route, () => {
+        props.plugins.forEach(plugin => {
+            if (Object.entries(plugin).some(([key, value]) => {
+                if (isEntryAPluginElementPredicate(key, value)) {
+                    return (value as PluginElement[]).some(({cls}) => cls === route.params.cls);
+                }
+                return false;
+            })) {
+                activeNames.value = [plugin.group];
+                localStorage.setItem("activePlugin", plugin.group);
+            }
+        });
+        nextTick(() => {
+            scrollToActivePlugin();
+        });
+    }, {immediate: true});
+
+    const handlePluginChange = (pluginGroup: string) => {
+        activeNames.value = [pluginGroup];
+        localStorage.setItem("activePlugin", pluginGroup);
+    };
+
+    const sortedPlugins = (plugins: Plugin[]) => {
+        return plugins
+            .sort((a, b) => {
+                const nameA = (a.title ? a.title.toLowerCase() : ""),
+                      nameB = (b.title ? b.title.toLowerCase() : "");
+
+                return (nameA < nameB ? -1 : (nameA > nameB ? 1 : 0));
+            });
+    };
+
+    const group = (plugin: Plugin) => {
+        return Object.entries(plugin)
+            .filter(([key, value]) => isEntryAPluginElementPredicate(key, value))
+            .flatMap(([type, value]) => {
+                return (value as PluginElement[]).filter(({deprecated}) => !deprecated)
+                    .map(({cls}) => {
+                        const namespace = cls.substring(0, cls.lastIndexOf("."));
+
+                        return {
+                            type,
+                            namespace: namespace,
+                            cls: cls.substring(cls.lastIndexOf(".") + 1)
+                        };
+                    });
+            })
+            .reduce((accumulator, value) => {
+                accumulator[value.namespace] = accumulator[value.namespace] || {};
+                accumulator[value.namespace][value.type] = accumulator[value.namespace][value.type] || [];
+                accumulator[value.namespace][value.type].push(value.cls);
+
+                return accumulator;
+            }, {} as Record<string, Record<string, string[]>>);
+    };
+
+    const isVisible = (plugin: Plugin) => {
+        return pluginElements(plugin).length > 0;
+    };
 </script>
 
 <style lang="scss" scoped>

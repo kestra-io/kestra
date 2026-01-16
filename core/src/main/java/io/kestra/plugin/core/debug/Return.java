@@ -48,11 +48,11 @@ import java.util.Optional;
                 id: compute_header
                 type: io.kestra.plugin.core.debug.Return
                 format: >-
-                    {%- if inputs.token is not empty -%}
-                    Bearer {{ inputs.token }}
-                    {%- elseif inputs.username is not empty and inputs.password is not empty -%}
-                    Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
-                    {%- endif -%}
+                  {%- if inputs.token is not empty -%}
+                  Bearer {{ inputs.token }}
+                  {%- elseif inputs.username is not empty and inputs.password is not empty -%}
+                  Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
+                  {%- endif -%}
                 """
         )
     },

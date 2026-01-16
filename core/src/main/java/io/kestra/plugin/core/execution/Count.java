@@ -13,7 +13,6 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -32,7 +31,9 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @NoArgsConstructor
 @Schema(
     title = "List execution counts for a list of flows.",
-    description = "This can be used to send an alert if a condition is met about execution counts."
+    description = """
+        **This task is deprecated**, please use the `io.kestra.plugin.kestra.executions.Count` task instead.
+        This can be used to send an alert if a condition is met about execution counts."""
 )
 @Plugin(
     examples = {
@@ -76,6 +77,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
     },
     aliases = "io.kestra.core.tasks.executions.Counts"
 )
+@Deprecated(since = "1.2", forRemoval = true)
 public class Count extends Task implements RunnableTask<Count.Output> {
     @Schema(
         title = "A list of flows to be filtered",
@@ -127,14 +129,13 @@ public class Count extends Task implements RunnableTask<Count.Output> {
         var flowInfo = runContext.flowInfo();
 
         // check that all flows are allowed
-        FlowService flowService = ((DefaultRunContext)runContext).getApplicationContext().getBean(FlowService.class);
         if (flows != null) {
-            flows.forEach(flow -> flowService.checkAllowedNamespace(flowInfo.tenantId(), flow.getNamespace(), flowInfo.tenantId(), flowInfo.namespace()));
+            flows.forEach(flow -> runContext.acl().allowNamespace(flow.getNamespace()).check());
         }
 
         if (namespaces != null) {
             var renderedNamespaces = runContext.render(this.namespaces).asList(String.class);
-            renderedNamespaces.forEach(namespace -> flowService.checkAllowedNamespace(flowInfo.tenantId(), namespace, flowInfo.tenantId(), flowInfo.namespace()));
+            renderedNamespaces.forEach(namespace -> runContext.acl().allowNamespace(namespace).check());
         }
 
         List<ExecutionCount> executionCounts = executionRepository.executionCounts(

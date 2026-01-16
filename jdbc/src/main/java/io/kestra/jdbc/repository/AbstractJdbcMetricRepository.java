@@ -5,6 +5,7 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
@@ -32,7 +33,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepository<MetricEntry> implements MetricRepositoryInterface {
-    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull();
+    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull().or(field("execution_kind").eq(ExecutionKind.NORMAL.name()));
 
     public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository,
                                         QueueService queueService,
@@ -50,7 +51,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
         Metrics.Fields.NAMESPACE, "namespace",
         Metrics.Fields.FLOW_ID, "flow_id",
         Metrics.Fields.TASK_ID, "task_id",
-        Metrics.Fields.EXECUTION_ID, "execution_d",
+        Metrics.Fields.EXECUTION_ID, "execution_id",
         Metrics.Fields.TASK_RUN_ID, "taskrun_id",
         Metrics.Fields.NAME, "metric_name",
         Metrics.Fields.VALUE, "metric_value",
@@ -406,7 +407,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcCrudRepos
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping)
+                    .and(NORMAL_KIND_CONDITION);
 
                 List<? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)

@@ -1,6 +1,10 @@
 package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.dashboards.AggregationType;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.MetricEntry;
@@ -9,19 +13,23 @@ import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.MetricAggregations;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.dashboard.data.IMetrics;
+import io.kestra.plugin.core.dashboard.data.Logs;
+import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.micronaut.data.model.Pageable;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.slf4j.event.Level;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 public abstract class AbstractMetricRepositoryTest {
     @Inject
     protected MetricRepositoryInterface metricRepository;
@@ -33,20 +41,22 @@ public abstract class AbstractMetricRepositoryTest {
         TaskRun taskRun1 = taskRun(tenant, executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
+        MetricEntry normalCounter = MetricEntry.of(taskRun1, counter("normal"), ExecutionKind.NORMAL);
         TaskRun taskRun2 = taskRun(tenant, executionId, "task");
         MetricEntry timer = MetricEntry.of(taskRun2, timer(), null);
         metricRepository.save(counter);
         metricRepository.save(testCounter); // should only be retrieved by execution id
+        metricRepository.save(normalCounter);
         metricRepository.save(timer);
 
         List<MetricEntry> results = metricRepository.findByExecutionId(tenant, executionId, Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(3);
+        assertThat(results.size()).isEqualTo(4);
 
         results = metricRepository.findByExecutionIdAndTaskId(tenant, executionId, taskRun1.getTaskId(), Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(3);
+        assertThat(results.size()).isEqualTo(4);
 
         results = metricRepository.findByExecutionIdAndTaskRunId(tenant, executionId, taskRun1.getId(), Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(2);
+        assertThat(results.size()).isEqualTo(3);
 
         MetricAggregations aggregationResults = metricRepository.aggregateByFlowId(
             tenant,
@@ -131,6 +141,29 @@ public abstract class AbstractMetricRepositoryTest {
 
         var result = metricRepository.purge(List.of(Execution.builder().id("execution1").build(), Execution.builder().id("execution2").build()));
         assertThat(result).isEqualTo(4);
+    }
+
+    @Test
+    protected void fetchData() throws IOException {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
+        MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
+        metricRepository.save(counter);
+        metricRepository.save(testCounter);
+
+        var results = metricRepository.fetchData(tenant,
+            Metrics.builder().type(Metrics.class.getName()).columns(Map.of(
+                "count", ColumnDescriptor.<Metrics.Fields>builder().field(Metrics.Fields.EXECUTION_ID).agg(AggregationType.COUNT).build()
+            )).build(),
+            null,
+            null,
+            Pageable.UNPAGED
+        );
+
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst().get("count")).isIn(1, 1L); // JDBC return an int but ES a long
     }
 
     private Counter counter(String metricName) {

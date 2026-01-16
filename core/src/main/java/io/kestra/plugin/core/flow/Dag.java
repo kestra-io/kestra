@@ -8,6 +8,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.property.Property;
@@ -15,6 +16,7 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.DagTaskValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -173,6 +175,22 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
             parentTaskRun,
             runContext.render(this.concurrent).as(Integer.class).orElseThrow(),
             this.tasks
+        );
+    }
+
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
+
+        return FlowableUtils.resolveSequentialState(
+            execution,
+            childTasks,
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+            parentTaskRun,
+            runContext,
+            this.isAllowFailure(),
+            this.isAllowWarning()
         );
     }
 

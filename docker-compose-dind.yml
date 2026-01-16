@@ -44,6 +44,8 @@ services:
   kestra:
     image: kestra/kestra:latest
     pull_policy: always
+    # Kestra, by default, has a termination grace period of 5m. We need to wait a little more to be sure no active tasks are running.
+    stop_grace_period: 6m
     # Note that this is meant for development only. Refer to the documentation for production deployments of Kestra which runs without a root user.
     user: "root"
     command: server standalone

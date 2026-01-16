@@ -40,11 +40,11 @@ charts:
           values:
             - FAILED
 
-  - id: kpi_in_progress_ratio
+  - id: kpi_in_progress
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
-      displayName: Running Ratio
-      numberType: PERCENTAGE
+      displayName: In Progress
+      numberType: FLAT
       width: 3
     data:
       type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI
@@ -61,11 +61,11 @@ charts:
             - RETRYING
             - RESTARTED
 
-  - id: kpi_pending_ratio
+  - id: kpi_pending
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
-      displayName: Pending Ratio
-      numberType: PERCENTAGE
+      displayName: Pending
+      numberType: FLAT
       width: 3
     data:
       type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI

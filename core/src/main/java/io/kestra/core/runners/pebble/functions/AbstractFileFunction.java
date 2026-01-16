@@ -1,12 +1,10 @@
 package io.kestra.core.runners.pebble.functions;
 
+import com.cronutils.utils.VisibleForTesting;
 import io.kestra.core.runners.LocalPath;
 import io.kestra.core.runners.LocalPathFactory;
-import io.kestra.core.services.FlowService;
-import io.kestra.core.storages.InternalNamespace;
-import io.kestra.core.storages.Namespace;
-import io.kestra.core.storages.StorageContext;
-import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.services.NamespaceService;
+import io.kestra.core.storages.*;
 import io.kestra.core.utils.Slugify;
 import io.micronaut.context.annotation.Value;
 import io.pebbletemplates.pebble.error.PebbleException;
@@ -36,13 +34,16 @@ abstract class AbstractFileFunction implements Function {
     private static final Pattern EXECUTION_FILE = Pattern.compile(".*/.*/executions/.*/tasks/.*/.*");
 
     @Inject
-    protected FlowService flowService;
+    protected NamespaceService namespaceService;
 
     @Inject
     protected StorageInterface storageInterface;
 
     @Inject
     protected LocalPathFactory localPathFactory;
+
+    @Inject
+    protected NamespaceFactory namespaceFactory;
 
     @Value("${" + LocalPath.ENABLE_FILE_FUNCTIONS_CONFIG + ":true}")
     protected boolean enableFileProtocol;
@@ -81,23 +82,21 @@ abstract class AbstractFileFunction implements Function {
                 } else if (str.startsWith(LocalPath.FILE_PROTOCOL)) {
                     fileUri = URI.create(str);
                     namespace = checkEnabledLocalFileAndReturnNamespace(args, flow);
-                } else if(str.startsWith(Namespace.NAMESPACE_FILE_SCHEME)) {
-                    URI nsFileUri = URI.create(str);
-                    namespace = checkedAllowedNamespaceAndReturnNamespace(args, nsFileUri, tenantId, flow);
-                    InternalNamespace internalNamespace = new InternalNamespace(flow.get(TENANT_ID), namespace, storageInterface);
-                    fileUri = internalNamespace.get(Path.of(nsFileUri.getPath())).uri();
+                } else if (str.startsWith(Namespace.NAMESPACE_FILE_SCHEME)) {
+                    fileUri = URI.create(str);
+                    namespace = checkedAllowedNamespaceAndReturnNamespace(args, fileUri, tenantId, flow);
                 } else if (URI_PATTERN.matcher(str).matches()) {
                     // it is an unsupported URI
                     throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(str));
                 } else {
+                    fileUri = URI.create(Namespace.NAMESPACE_FILE_SCHEME + ":///" + str);
                     namespace = (String) Optional.ofNullable(args.get(NAMESPACE)).orElse(flow.get(NAMESPACE));
-                    fileUri = URI.create(StorageContext.KESTRA_PROTOCOL + StorageContext.namespaceFilePrefix(namespace) + "/" + str);
-                    flowService.checkAllowedNamespace(tenantId, namespace, tenantId, flow.get(NAMESPACE));
+                    namespaceService.checkAllowedNamespace(tenantId, namespace, tenantId, flow.get(NAMESPACE));
                 }
             } else {
                 throw new PebbleException(null, "Unable to read the file " + path, lineNumber, self.getName());
             }
-            return fileFunction(context, fileUri, namespace, tenantId);
+            return fileFunction(context, fileUri, namespace, tenantId, args);
         } catch (IOException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
@@ -110,7 +109,7 @@ abstract class AbstractFileFunction implements Function {
 
     protected abstract String getErrorMessage();
 
-    protected abstract Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId) throws IOException;
+    protected abstract Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId, Map<String, Object> args) throws IOException;
 
     boolean isFileUriValid(String namespace, String flowId, String executionId, URI path) {
         // Internal storage URI should be: kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion or kestra:///$namespace/$flowId/executions/$executionId/trigger/$triggerName/$random.ion
@@ -157,31 +156,11 @@ abstract class AbstractFileFunction implements Function {
     }
 
     private String checkIfFileFromAllowedNamespaceAndReturnIt(URI path, String tenantId, String fromNamespace) {
-        // Extract namespace from the path, it should be of the form: kestra:///({tenantId}/){namespace}/{flowId}/executions/{executionId}/tasks/{taskId}/{taskRunId}/{fileName}'
-        // To extract the namespace, we must do it step by step as tenantId, namespace and taskId can contain the words 'executions' and 'tasks'
-        String namespace = path.toString().substring(KESTRA_SCHEME.length());
-        if (!EXECUTION_FILE.matcher(namespace).matches()) {
-            throw new IllegalArgumentException("Unable to read the file '" + path + "' as it is not an execution file");
-        }
 
-        // 1. remove the tenantId if existing
-        if (tenantId != null) {
-            namespace = namespace.substring(tenantId.length() + 1);
-        }
-        // 2. remove everything after tasks
-        namespace = namespace.substring(0, namespace.lastIndexOf("/tasks/"));
-        // 3. remove everything after executions
-        namespace = namespace.substring(0, namespace.lastIndexOf("/executions/"));
-        // 4. remove the flowId
-        namespace = namespace.substring(0, namespace.lastIndexOf('/'));
-        // 5. replace '/' with '.'
-        namespace = namespace.replace("/", ".");
-
-        flowService.checkAllowedNamespace(tenantId, namespace, tenantId, fromNamespace);
-
+        String namespace = extractNamespace(path);
+        namespaceService.checkAllowedNamespace(tenantId, namespace, tenantId, fromNamespace);
         return namespace;
     }
-
     private String checkEnabledLocalFileAndReturnNamespace(Map<String, Object> args, Map<String, String> flow) {
         if (!enableFileProtocol) {
             throw new SecurityException("The file:// protocol has been disabled inside the Kestra configuration.");
@@ -198,8 +177,28 @@ abstract class AbstractFileFunction implements Function {
         // we will transform nsfile URI into a kestra URI so it is handled seamlessly by all functions
         String customNs = Optional.ofNullable((String) args.get(NAMESPACE)).orElse(nsFileUri.getAuthority());
         if (customNs != null) {
-            flowService.checkAllowedNamespace(tenantId, customNs, tenantId, flow.get(NAMESPACE));
+            namespaceService.checkAllowedNamespace(tenantId, customNs, tenantId, flow.get(NAMESPACE));
         }
         return Optional.ofNullable(customNs).orElse(flow.get(NAMESPACE));
+    }
+
+    @VisibleForTesting
+    String extractNamespace( URI path){
+        // Extract namespace from the path, it should be of the form: kestra:///{namespace}/{flowId}/executions/{executionId}/tasks/{taskId}/{taskRunId}/{fileName}'
+        // To extract the namespace, we must do it step by step as namespace and taskId can contain the words 'executions' and 'tasks'
+        String namespace = path.toString().substring(KESTRA_SCHEME.length());
+        if (!EXECUTION_FILE.matcher(namespace).matches()) {
+            throw new IllegalArgumentException("Unable to read the file '" + path + "' as it is not an execution file");
+        }
+        // 1. remove everything after tasks
+        namespace = namespace.substring(0, namespace.lastIndexOf("/tasks/"));
+        // 2. remove everything after executions
+        namespace = namespace.substring(0, namespace.lastIndexOf("/executions/"));
+        // 3. remove the flowId
+        namespace = namespace.substring(0, namespace.lastIndexOf('/'));
+        // 4. replace '/' with '.'
+        namespace = namespace.replace("/", ".");
+
+        return namespace;
     }
 }

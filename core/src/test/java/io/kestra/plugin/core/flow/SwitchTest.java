@@ -1,9 +1,11 @@
 package io.kestra.plugin.core.flow;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -99,5 +101,15 @@ class SwitchTest {
         );
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/switch-in-concurrent-loop.yaml")
+    void switchInConcurrentLoop(Execution execution) {
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        // we check that OOMCRM_EB_DD_000 and OOMCRM_EB_DD_001 have been processed once
+        assertThat(execution.getTaskRunList().stream().filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_000")).count()).isEqualTo(1);
+        assertThat(execution.getTaskRunList().stream().filter(t -> t.getTaskId().equals("OOMCRM_EB_DD_001")).count()).isEqualTo(1);
     }
 }

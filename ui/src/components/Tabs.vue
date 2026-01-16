@@ -8,7 +8,7 @@
             :disabled="tab.disabled"
         >
             <template #label>
-                <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
+                <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)">
                     <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
                         <span><strong>{{ tab.title }}</strong></span>
                     </el-tooltip>
@@ -20,7 +20,7 @@
             </template>
         </el-tab-pane>
     </el-tabs>
-    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized}">
+    <section v-if="isEditorActiveTab || activeTab.component" ref="container" v-bind="$attrs" :class="{...containerClass, 'maximized': activeTab.maximized, 'no-overflow': activeTab.noOverflow}">
         <BlueprintDetail
             v-if="selectedBlueprintId"
             :blueprintId="selectedBlueprintId"
@@ -47,7 +47,7 @@
     import {ref, computed, watch, onMounted, nextTick, useAttrs} from "vue";
     import {useRoute} from "vue-router";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
-    import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
+    import BlueprintDetail from "../override/components/flows/blueprints/BlueprintDetail.vue";
 
     interface Tab {
         name?: string;
@@ -60,6 +60,7 @@
         query?: any;
         component?: any;
         maximized?: boolean;
+        noOverflow?: boolean;
         "v-on"?: any;
     }
 
@@ -198,6 +199,10 @@ section.container.mt-4:has(> section.empty) {
     margin: 0 !important;
     padding: 0;
     flex-grow: 1;
+}
+
+.no-overflow {
+    overflow: hidden;
 }
 
 .editor-splitter {

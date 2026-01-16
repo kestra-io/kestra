@@ -679,6 +679,7 @@
   border: 1px solid var(--ks-border-primary);
   border-radius: var(--el-border-radius-base);
   margin-top: 0.75rem;
+  overflow-x: scroll;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 :deep(details.doc-collapsible[open]) {
@@ -723,11 +724,15 @@
 
 /* Card grid + card */
 :deep(.doc-card-grid) {
+  container-type: inline-size;
   display: grid;
   gap: var(--spacer, 1rem);
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  // single column when component is narrow, otherwise auto-fit with a ma of 2 columns
+  // 45% is the min-size of a column when 2 fit side by side with gap
+  grid-template-columns: repeat(auto-fit, minmax(max(260px, 45%), 1fr));
   align-items: start;
 }
+
 :deep(.doc-card) {
   background: var(--ks-background-panel);
   border: 1px solid var(--ks-border-primary);
@@ -738,6 +743,7 @@
   flex-direction: column;
   gap: 0;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-width: 0;
 }
 :deep(.doc-card.is-hidden) {
   display: none;
@@ -748,6 +754,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   width: 100%;
+  min-width: 0;
   background: none;
   border: none;
   color: var(--ks-content-primary);
@@ -768,9 +775,11 @@
 }
 :deep(.doc-card__title) {
   flex: 1 1 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 :deep(.doc-card__indicator) {
   width: 0.85rem;

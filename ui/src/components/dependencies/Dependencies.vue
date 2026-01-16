@@ -1,35 +1,35 @@
 <template>
     <div v-if="!TESTING && isLoading" v-loading="true" class="h-100" />
-    <Empty v-if="!TESTING && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
-    <el-splitter class="dependencies">
+    <Empty v-else-if="!TESTING && !getElements().length" :type="`dependencies.${SUBTYPE}`" />
+    <el-splitter v-else class="dependencies">
         <el-splitter-panel id="graph" v-bind="PANEL">
             <div v-loading="isRendering" ref="container" />
 
             <div class="controls">
                 <el-button
                     size="small"
-                    :title="t('dependency.controls.zoom_in')"
+                    :title="$t('dependency.controls.zoom_in')"
                     @click="handlers.zoomIn"
                 >
                     <Plus />
                 </el-button>
                 <el-button
                     size="small"
-                    :title="t('dependency.controls.zoom_out')"
+                    :title="$t('dependency.controls.zoom_out')"
                     @click="handlers.zoomOut"
                 >
                     <Minus />
                 </el-button>
                 <el-button
                     size="small"
-                    :title="t('dependency.controls.clear_selection')"
+                    :title="$t('dependency.controls.clear_selection')"
                     @click="handlers.clearSelection"
                 >
                     <SelectionRemove />
                 </el-button>
                 <el-button
                     size="small"
-                    :title="t('dependency.controls.fit_view')"
+                    :title="$t('dependency.controls.fit_view')"
                     @click="handlers.fit"
                 >
                     <FitToScreenOutline />
@@ -42,6 +42,7 @@
                 :elements="getElements()"
                 @select="selectNode"
                 :selected="selectedNodeID"
+                :subtype="SUBTYPE"
             />
         </el-splitter-panel>
     </el-splitter>
@@ -54,28 +55,39 @@
     import Empty from "../layout/empty/Empty.vue";
 
     import {useDependencies} from "./composables/useDependencies";
-    import {FLOW, EXECUTION, NAMESPACE} from "./utils/types";
+    import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types";
 
     const PANEL = {size: "70%", min: "30%", max: "80%"};
 
     import {useRoute} from "vue-router";
     const route = useRoute();
 
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
     import Plus from "vue-material-design-icons/Plus.vue";
     import Minus from "vue-material-design-icons/Minus.vue";
     import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
 
-    const SUBTYPE = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : EXECUTION;
+    const props = defineProps<{
+        fetchAssetDependencies?: () => Promise<{
+            data: any[];
+            count: number;
+        }>;
+    }>();
+
+    const SUBTYPE = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION;
 
     const container = ref(null);
-    const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE ? String(route.params.id) : String(route.params.flowId);
+    const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId);
     const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
 
-    const {getElements, isLoading, isRendering, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING);
+    const {
+        getElements,
+        isLoading,
+        isRendering,
+        selectedNodeID,
+        selectNode,
+        handlers,
+    } = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING, props.fetchAssetDependencies);
 </script>
 
 <style scoped lang="scss">
@@ -98,7 +110,7 @@
 
         & .controls {
             position: absolute;
-            bottom: 10px;
+            bottom: 16px;
             left: 10px;
             display: flex;
             flex-direction: column;

@@ -17,7 +17,6 @@
     import TopNavBar from "../layout/TopNavBar.vue";
     import Actions from "override/components/namespaces/Actions.vue";
     import {useMiscStore} from "override/stores/misc";
-    // @ts-expect-error no types in Tabs yet
     import Tabs from "../Tabs.vue";
 
     const {tabs} = useTabs();

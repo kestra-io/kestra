@@ -1,7 +1,7 @@
 <template>
     <div :id="containerID" />
     <el-tooltip
-        v-if="generated !== undefined"
+        v-if="generated?.total > 0"
         effect="light"
         placement="top"
         :persistent="false"
@@ -15,12 +15,12 @@
                 :data="parsedData"
                 :options
                 :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
-                :class="props.short ? 'short-chart' : 'chart'"
+                :class="props.short ? 'short-chart' : props.execution ? 'execution-chart' : 'chart'"
                 class="chart"
             />
         </div>
     </el-tooltip>
-    <NoData v-else-if="!props.short" />
+    <NoData v-else-if="!props.short || (props.execution && generated?.total === 0)" />
 </template>
 
 <script setup lang="ts">
@@ -36,6 +36,9 @@
     import KestraUtils, {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n();
 
@@ -48,6 +51,9 @@
         filters: {type: Array as PropType<FilterObject[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
+        execution: {type: Boolean, default: false},
+        flow: {type: String, default: undefined},
+        namespace: {type: String, default: undefined},
     });
 
 
@@ -79,8 +85,8 @@
     const options = computed(() => {
         return defaultConfig({
             skipNull: true,
-            barThickness: props.short ? 8 : 12,
-            maxBarThickness: props.short ? 8 : 12,
+            barThickness: props.short ? 8 : props.execution ? 24: 12,
+            maxBarThickness: props.short ? 8 : props.execution ? 24: 12,
             categoryPercentage: props.short ? 1.0 : 0.8,
             barPercentage: props.short ? 1.0 : 0.9,
             borderSkipped: false,
@@ -112,7 +118,7 @@
             scales: {
                 x: {
                     title: {
-                        display: props.short ? false : true,
+                        display: props.short || props.execution ? false : true,
                         text: data.columns[chartOptions.column].displayName ?? chartOptions.column,
                     },
                     position: "bottom",
@@ -121,12 +127,12 @@
                 },
                 y: {
                     title: {
-                        display: props.short ? false : true,
+                        display: props.short || props.execution ? false : true,
                         text: aggregator.value[0]?.[1]?.displayName ?? aggregator.value[0]?.[0],
                     },
                     position: "left",
                     ...DEFAULTS,
-                    display: props.short ? false : true,
+                    display: verticalLayout.value ? false : (props.short || props.execution ? false : true),
                     ticks: {
                         ...DEFAULTS.ticks,
                         callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
@@ -140,7 +146,7 @@
                         },
                         position: "right",
                         ...DEFAULTS,
-                        display: props.short ? false : true,
+                        display: verticalLayout.value ? false : (props.short ? false : true),
                         ticks: {
                             ...DEFAULTS.ticks,
                             callback: (value: any) => isDuration(aggregator.value[1]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
@@ -149,10 +155,13 @@
                 }),
             },
             onClick: (e, elements) => {
-                if (data.type === "io.kestra.plugin.core.dashboard.data.Logs") {
+                if (data.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) {
                     return;
                 }
-                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
+                chartClick(moment, router, route, {}, parsedData.value, elements, "label", {
+                    ...(props.namespace ? {"filters[namespace][IN]": props.namespace} : {}),
+                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {})              
+                });
             },
         }, theme.value);
     });
@@ -294,8 +303,8 @@
     });
     const {data: generated, generate} = useChartGenerator(props);
 
-    function refresh() {
-        return generate(getDashboard(route, "id")!);
+    function refresh(customFilters?: FilterObject[]) {
+        return generate(getDashboard(route, "id")!, undefined, customFilters);
     }
 
     defineExpose({
@@ -322,6 +331,15 @@
 .short-chart {
     &:not(.with-legend) {
         #{--chart-height}: 40px;
+    }
+
+    min-height: var(--chart-height);
+    max-height: var(--chart-height);
+}
+
+.execution-chart {
+    &:not(.with-legend) {
+        #{--chart-height}: 120px;
     }
 
     min-height: var(--chart-height);

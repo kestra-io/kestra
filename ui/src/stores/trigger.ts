@@ -155,5 +155,17 @@ export const useTriggerStore = defineStore("trigger", {
             const response = await this.$http.delete(`${apiUrl()}/triggers/delete/by-triggers`, {data: options});
             return response.data;
         },
+
+        async exportTriggersAsCSV(options: any) {
+            const response = await this.$http.get(`${apiUrl()}/triggers/export/by-query/csv`, {params: options, responseType: "blob"});
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", "triggers.csv");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        },
     }
 });

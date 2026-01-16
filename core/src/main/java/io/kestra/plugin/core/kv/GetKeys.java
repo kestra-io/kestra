@@ -5,9 +5,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.kv.KVEntry;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -18,7 +16,6 @@ import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Slf4j
@@ -63,9 +60,7 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
     @Override
     public Output run(RunContext runContext) throws Exception {
         String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
-
-        FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
-        flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
+        runContext.acl().allowNamespace(renderedNamespace).check();
 
         String renderedPrefix = runContext.render(this.prefix).as(String.class).orElse(null);
         Predicate<String> filter = renderedPrefix == null ? key -> true : key -> key.startsWith(renderedPrefix);

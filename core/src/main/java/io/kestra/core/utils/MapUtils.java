@@ -120,7 +120,10 @@ public class MapUtils {
     private static Collection<?> mergeCollections(Collection<?> colA, Collection<?> colB) {
         List<Object> merged = new ArrayList<>(colA.size() + colB.size());
         merged.addAll(colA);
-        merged.addAll(colB);
+        if (!colB.isEmpty()) {
+            List<?> filtered = colB.stream().filter(it -> !colA.contains(it)).toList();
+            merged.addAll(filtered);
+        }
         return merged;
     }
 

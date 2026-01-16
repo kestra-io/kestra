@@ -10,8 +10,8 @@
     import {RouteLocationGeneric, useRoute, useRouter} from "vue-router"
     import {useI18n} from "vue-i18n"
     import {useDashboardStore} from "../../../stores/dashboard"
-    import {useCoreStore} from "../../../stores/core"
     import {useBlueprintsStore} from "../../../stores/blueprints"
+    import {useUnsavedChangesStore} from "../../../stores/unsavedChanges"
     import {useToast} from "../../../utils/toast"
     import {getRandomID} from "../../../../scripts/id"
     import {getDashboard, processFlowYaml} from "../../../components/dashboard/composables/useDashboards"
@@ -28,9 +28,9 @@
     const {t} = useI18n({useScope: "global"})
 
     const toast = useToast()
-    const coreStore = useCoreStore()
     const dashboardStore = useDashboardStore()
     const blueprintsStore = useBlueprintsStore()
+    const unsavedChangesStore = useUnsavedChangesStore()
 
     const context = ref({title: t("dashboards.creation.label")})
 
@@ -43,20 +43,22 @@
         const response = await dashboardStore.create(source)
 
         toast.success(t("dashboards.creation.confirmation", {title: response.title}));
-        coreStore.unsavedChange = false;
+        unsavedChangesStore.unsavedChange = false;
 
         const name = route.query.name as string
         const params = route.query.params as string;
 
-        const key = getDashboard({
-            name,
-            params: JSON.parse(params)
-        } as RouteLocationGeneric, "key")
-        if(key){
-            localStorage.setItem(key, response.id)
-        }
+        const key = getDashboard({name, ...(params ? JSON.parse(params) : {})} as RouteLocationGeneric, "key")
+        if(key) localStorage.setItem(key, response.id)
 
-        router.push({name, params: {...JSON.parse(params), ...(name === "home" ? {dashboard: response.id!} : {})}, query: {created: String(true)}})
+        router.push({
+            name,
+            params: {
+                ...(params ? JSON.parse(params) : {}),
+                ...(name === "home" ? {dashboard: response.id!} : {})
+            },
+            query: {created: String(true)}
+        })
     }
 
     onMounted(async () => {

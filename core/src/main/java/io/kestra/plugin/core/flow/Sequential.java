@@ -8,6 +8,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.AbstractGraph;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
@@ -23,6 +24,7 @@ import lombok.experimental.SuperBuilder;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @SuperBuilder
@@ -111,6 +113,22 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         return FlowableUtils.resolveTasks(this.getTasks(), parentTaskRun);
+    }
+
+    @Override
+    public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
+        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
+
+        return FlowableUtils.resolveSequentialState(
+            execution,
+            childTasks,
+            FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
+            parentTaskRun,
+            runContext,
+            this.isAllowFailure(),
+            this.isAllowWarning()
+        );
     }
 
     @Override

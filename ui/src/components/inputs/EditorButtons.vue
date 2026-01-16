@@ -3,7 +3,7 @@
         <el-dropdown>
             <el-button type="default" :disabled="isReadOnly">
                 <DotsVertical title="" />
-                {{ t("actions") }}
+                {{ $t("actions") }}
             </el-button>
             <template #dropdown>
                 <el-dropdown-menu class="m-dropdown-menu">
@@ -13,7 +13,7 @@
                         size="large"
                         @click="forwardEvent('export')"
                     >
-                        {{ t("flow_export") }}
+                        {{ $t("flow_export") }}
                     </el-dropdown-item>
                     <el-dropdown-item
                         v-if="!isCreating && canDelete"
@@ -21,7 +21,7 @@
                         size="large"
                         @click="forwardEvent('delete-flow', $event)"
                     >
-                        {{ t("delete") }}
+                        {{ $t("delete") }}
                     </el-dropdown-item>
 
                     <el-dropdown-item
@@ -30,7 +30,7 @@
                         size="large"
                         @click="forwardEvent('copy', $event)"
                     >
-                        {{ t("copy") }}
+                        {{ $t("copy") }}
                     </el-dropdown-item>
                 </el-dropdown-menu>
             </template>
@@ -46,14 +46,13 @@
             :disabled="hasErrors || !canSave"
             class="edit-flow-save-button"
         >
-            {{ t("save") }}
+            {{ $t("save") }}
         </el-button>
     </div>
 </template>
 <script setup lang="ts">
     import {computed} from "vue";
 
-    import {useI18n} from "vue-i18n";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
 
     import Delete from "vue-material-design-icons/Delete.vue";
@@ -63,8 +62,6 @@
     import {usePlaygroundStore} from "../../stores/playground";
 
     const playgroundStore = usePlaygroundStore();
-
-    const {t} = useI18n();
 
     const props = defineProps<{
         isCreating: boolean;

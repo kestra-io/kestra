@@ -4,49 +4,45 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionTrigger;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TimeWindow;
+import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.services.LabelService;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.core.validations.PreconditionFilterValidation;
+import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Schema;
-
-import java.util.*;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionTrigger;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.TriggerOutput;
-import io.kestra.core.utils.IdUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.stream.Streams;
 import org.slf4j.Logger;
 
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import io.micronaut.core.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 import static io.kestra.core.models.flows.State.Type.PAUSED;
 import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
@@ -255,11 +251,12 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                       id: flow_a
                         id: flow_a
                         where:
-                            - id: label_filter
-                              filters:
-                                - field: EXPRESSION
-                                  type: IS_TRUE
-                                  value: "{{ labels.type == 'orchestration' }}"""
+                          - id: label_filter
+                            filters:
+                              - field: EXPRESSION
+                                type: IS_TRUE
+                                value: "{{ labels.type == 'orchestration' }}
+                """
         )
 
     },
@@ -382,7 +379,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     public static class Preconditions implements MultipleCondition {
         @NotNull
         @NotBlank
-        @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")
+        @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9_-]*")
         @Schema(title = "A unique id for the preconditions")
         @PluginProperty
         private String id;
@@ -404,9 +401,9 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Schema(
             title = "Whether to reset the evaluation results of preconditions after a first successful evaluation within the given time window",
             description = """
-            By default, after a successful evaluation of the set of preconditions, the evaluation result is reset. This means the same set of conditions needs to be successfully evaluated again within the same time window to trigger a new execution.
-            In this setup, to create multiple executions, the same set of conditions must be evaluated to `true` multiple times within the defined window.
-            You can disable this by setting this property to `false`, so that within the same window, each time one of the conditions is satisfied again after a successful evaluation, it will trigger a new execution."""
+                By default, after a successful evaluation of the set of preconditions, the evaluation result is reset. This means the same set of conditions needs to be successfully evaluated again within the same time window to trigger a new execution.
+                In this setup, to create multiple executions, the same set of conditions must be evaluated to `true` multiple times within the defined window.
+                You can disable this by setting this property to `false`, so that within the same window, each time one of the conditions is satisfied again after a successful evaluation, it will trigger a new execution."""
         )
         @PluginProperty
         @Builder.Default

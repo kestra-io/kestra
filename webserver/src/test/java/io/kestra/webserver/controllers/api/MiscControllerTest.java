@@ -64,6 +64,7 @@ class MiscControllerTest {
         assertThat(response.getIsAnonymousUsageEnabled()).isTrue();
         assertThat(response.getIsAiEnabled()).isTrue();
         assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
+        assertThat(response.getIsConcurrencyViewEnabled()).isTrue();
     }
 
     @Test

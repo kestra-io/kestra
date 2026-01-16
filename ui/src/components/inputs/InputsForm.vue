@@ -28,7 +28,7 @@
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-testid="`input-form-${input.id}`"
-                v-model="selectedTriggerLocal[input.id]"
+                v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 :allowCreate="input.allowCustomValue"
                 filterable
@@ -239,7 +239,6 @@
             />
             <DurationPicker
                 v-if="input.type === 'DURATION'"
-                :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             />
@@ -264,7 +263,7 @@
 <script lang="ts">
     import {ElMessage} from "element-plus";
     import ValidationError from "../flows/ValidationError.vue";
-    import {toRaw} from "vue";
+    import {markRaw, toRaw} from "vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
     import debounce from "lodash/debounce";
@@ -334,23 +333,23 @@
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
                 debouncedValidation: () => {},
-                selectedTriggerLocal: {},
                 editingArrayId: null,
                 editableItems: {},
                 // expose icon components to the template so linters and the template can resolve them
-                DeleteOutline,
-                Pencil,
-                Plus,
-                ContentSave,
+                DeleteOutline: markRaw(DeleteOutline),
+                Pencil:markRaw(Pencil),
+                Plus:markRaw(Plus),
+                ContentSave:markRaw(ContentSave)
             };
         },
-        emits: ["update:modelValue", "update:modelValueNoDefault", "confirm", "validation"],
+        emits: ["update:modelValue", "update:modelValueNoDefault", "update:checks", "confirm", "validation"],
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
             this.debouncedValidation = debounce(this.validateInputs, 500)
 
-            if(this.selectedTrigger?.inputs) this.selectedTriggerLocal = toRaw(this.selectedTrigger.inputs);
-            else this.selectedTriggerLocal = this.inputsValues;
+            if(this.selectedTrigger?.inputs){
+                this.inputsValues = toRaw(this.selectedTrigger.inputs);
+            }
 
             this.validateInputs().then(() => {
                 this.$watch("inputsValues", {
@@ -367,6 +366,10 @@
                     },
                     deep: true
                 });
+
+                // on first load default values need to be sent to the parent
+                // since they are part of the actual value
+                this.$emit("update:modelValue", this.inputsValues)
             });
         },
         mounted() {
@@ -391,6 +394,7 @@
             document.removeEventListener("keydown", this._keyListener);
         },
         methods: {
+
             normalizeJSON(value) {
                 try {
                     // Step 1: Remove trailing commas in objects and arrays
@@ -423,10 +427,11 @@
             },
             updateDefaults() {
                 for (const input of this.inputsMetaData || []) {
-                    const {type, id, value} = input;
+                    const {type, id, value, defaults} = input;
+                    const valueOrDefault = value ?? defaults;
                     if (this.inputsValues[id] === undefined || this.inputsValues[id] === null || input.isDefault) {
                         if (type === "MULTISELECT") {
-                            this.multiSelectInputs[id] = value;
+                            this.multiSelectInputs[id] = valueOrDefault;
                         } else if(type === "JSON" && value == undefined && input.isDefault) {
                             /*
                             * Handle multiline JSON default values
@@ -434,7 +439,7 @@
                             */
                             this.inputsValues[id] = Inputs.normalize(type, this.normalizeJSON(input.defaults));
                         } else {
-                            this.inputsValues[id] = Inputs.normalize(type, value);
+                            this.inputsValues[id] = Inputs.normalize(type, valueOrDefault);
                         }
                     }
                 }
@@ -468,24 +473,24 @@
                 }
 
                 const file = files[0];
-                
+
                 // Sanitize the filename: remove spaces and special characters
                 const sanitizedName = file.name
                     .replace(/[^a-zA-Z0-9.-]/g, "_") // Replace special chars with underscore
                     .replace(/\s+/g, "_");           // Replace spaces with underscore
-                
+
                 // Create a new File object with the sanitized name
                 const sanitizedFile = new File([file], sanitizedName, {
                     type: file.type,
                     lastModified: file.lastModified,
                 });
-                
+
                 const acceptedTypes = this.getAcceptedFileTypes(input);
                 if (acceptedTypes) {
                     const allowedTypes = acceptedTypes.toLowerCase().split(",");
                     const fileName = sanitizedName.toLowerCase();
                     const fileType = file.type.toLowerCase();
-                    
+
                     const isAllowed = allowedTypes.some(type => {
                         type = type.trim();
                         if (type.startsWith(".")) {
@@ -494,7 +499,7 @@
                             return fileType === type;
                         }
                     });
-                    
+
                     if (!isAllowed) {
                         ElMessage.error(this.$t("fileTypeNotAllowed", {types: acceptedTypes}));
                         e.target.value = "";
@@ -531,12 +536,13 @@
                 if (this.inputsMetaData === undefined || this.inputsMetaData.length === 0) {
                     return;
                 }
-              
+
                 const inputsValuesWithNoDefault = this.inputsValuesWithNoDefault();
-                
+
                 const formData = inputsToFormData(this, this.inputsMetaData, inputsValuesWithNoDefault);
 
                 const metadataCallback = (response) => {
+                    this.$emit("update:checks", response.checks || []);
                     this.inputsMetaData = response.inputs.reduce((acc,it) => {
                         if(it.enabled){
                             acc.push({...it.input, errors: it.errors, value: it.value || it.input.prefill, isDefault: it.isDefault});
@@ -560,6 +566,7 @@
                 } else {
                     this.$emit("validation", {
                         formData: formData,
+                        inputsMetaData: this.inputsMetaData,
                         callback: (response) => {
                             metadataCallback(response);
                         }

@@ -7,11 +7,11 @@
     import {useApiStore} from "../stores/api";
     import {useRoute} from "vue-router";
 
-    interface Message {
+    export interface Message {
         title?: string;
         message?: string;
         content?: {
-            message: string;
+            message?: string;
             _embedded?: {
                 errors?: any[];
             };
@@ -19,8 +19,8 @@
         response?: {
             status: number;
             config: {
-                url: string;
-                method: string;
+                url?: string;
+                method?: string;
             };
         };
         variant?: "success" | "warning" | "info" | "error" | "primary";
@@ -96,14 +96,14 @@
 
         if (props.message.response) {
             error.error.response = {};
-            error.error.request = {};
+            error.error.request = {
+                method: props.message.response.config.method ?? "GET",
+                url: props.message.response.config.url ?? "unknown url",
+            };
 
             if (props.message.response.status) {
                 error.error.response.status = props.message.response.status;
             }
-
-            error.error.request.url = props.message.response.config.url;
-            error.error.request.method = props.message.response.config.method;
         }
 
         apiStore.events(error);
@@ -111,7 +111,11 @@
         notifications.value = ElNotification({
             title: title.value || "Error",
             message: h(ErrorToastContainer, {
-                message: props.message,
+                message: {
+                    content:{
+                        message: props.message?.content?.message ?? ""
+                    }
+                },
                 items: items.value,
                 onClose: () => close()
             }),

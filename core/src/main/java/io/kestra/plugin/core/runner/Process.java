@@ -1,9 +1,7 @@
 package io.kestra.plugin.core.runner;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
@@ -16,15 +14,12 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-
 
 @Introspected
 @SuperBuilder
@@ -64,31 +59,31 @@ import java.util.Map;
         @Example(
             title = "Install custom Python packages before executing a Python script. Note how we use the `--break-system-packages` flag to avoid conflicts with the system packages. Make sure to use this flag if you see errors similar to `error: externally-managed-environment`.",
             code = """
-id: before_commands_example
-namespace: company.team
+                id: before_commands_example
+                namespace: company.team
 
-inputs:
-  - id: url
-    type: URI
-    defaults: https://jsonplaceholder.typicode.com/todos/1
+                inputs:
+                  - id: url
+                    type: URI
+                    defaults: https://jsonplaceholder.typicode.com/todos/1
 
-tasks:
-  - id: transform
-    type: io.kestra.plugin.scripts.python.Script
-    taskRunner:
-      type: io.kestra.plugin.core.runner.Process
-    beforeCommands:
-      - pip install kestra requests --break-system-packages
-    script: |
-      import requests
-      from kestra import Kestra
+                tasks:
+                  - id: transform
+                    type: io.kestra.plugin.scripts.python.Script
+                    taskRunner:
+                      type: io.kestra.plugin.core.runner.Process
+                    beforeCommands:
+                      - pip install kestra requests --break-system-packages
+                    script: |
+                      import requests
+                      from kestra import Kestra
 
-      url = "{{ inputs.url }}"
+                      url = "{{ inputs.url }}"
 
-      response = requests.get(url)
-      print('Status Code:', response.status_code)
-      Kestra.outputs(response.json())
-""",
+                      response = requests.get(url)
+                      print('Status Code:', response.status_code)
+                      Kestra.outputs(response.json())
+                """,
             full = true
         ),
         @Example(

@@ -24,4 +24,8 @@ public class Concurrency {
     public enum Behavior {
         QUEUE, CANCEL, FAIL;
     }
+
+    public static boolean possibleTransitions(State.Type type) {
+        return type.equals(State.Type.CANCELLED) || type.equals(State.Type.FAILED);
+    }
 }

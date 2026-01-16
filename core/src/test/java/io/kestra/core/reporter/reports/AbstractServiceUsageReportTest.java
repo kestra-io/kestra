@@ -1,6 +1,5 @@
 package io.kestra.core.reporter.reports;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.collectors.ServiceUsage;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
@@ -8,6 +7,7 @@ import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@KestraTest
+@MicronautTest
 public abstract class AbstractServiceUsageReportTest {
 
     @Inject

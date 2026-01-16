@@ -21,7 +21,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -302,6 +300,21 @@ class KVControllerTest {
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
     }
+
+    @Test
+    void jsonFallback() throws IOException, ResourceExpiredException {
+
+        client.toBlocking().exchange(
+                HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "1.2.3")
+                        .contentType(MediaType.TEXT_PLAIN)
+        );
+
+        KVStore kvStore = kvStore();
+        Object stored = kvStore.getValue("my-key").orElseThrow().value();
+        assertThat(stored).isInstanceOf(String.class);
+        assertThat(stored).isEqualTo("1.2.3");
+    }
+
 
     private URI toKVUri(String namespace, String key) {
         String slashLedKey;

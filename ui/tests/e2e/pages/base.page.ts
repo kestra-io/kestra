@@ -11,6 +11,8 @@ export class BasePage {
         await this.page.getByRole("textbox", {name: "Password"}).fill(shared.password);
         await this.page.getByRole("button", {name: "Login"}).click();
 
+        await this.page.goto("/");
+
         await expect(this.page.getByRole("heading", {name: "Overview"})).toBeVisible();
     }
 

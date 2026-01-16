@@ -1,10 +1,12 @@
 package io.kestra.core.runners;
 
-import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -36,6 +38,10 @@ public class TestRunnerUtils {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.KILL_NAMED)
+    protected QueueInterface<ExecutionKilled> killQueue;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -76,7 +82,7 @@ public class TestRunnerUtils {
         return this.runOne(
             flowRepository
                 .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'")),
             inputs,
             duration,
             labels);
@@ -118,7 +124,7 @@ public class TestRunnerUtils {
         return this.runOneUntilPaused(
             flowRepository
                 .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'")),
             inputs,
             duration
         );
@@ -145,7 +151,7 @@ public class TestRunnerUtils {
         return this.runOneUntilRunning(
             flowRepository
                 .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
-                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + flowId + "'")),
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'")),
             inputs,
             duration
         );
@@ -162,6 +168,34 @@ public class TestRunnerUtils {
         return this.emitAndAwaitExecution(isRunningExecution(execution), execution, duration);
     }
 
+    public Execution runOneUntil(String tenantId, String namespace, String flowId, Predicate<Execution> predicate)
+        throws QueueException {
+        return this.runOneUntil(tenantId, namespace, flowId, null, null, null, predicate);
+    }
+
+    public Execution runOneUntil(String tenantId, String namespace, String flowId, Integer revision, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration, Predicate<Execution> predicate)
+        throws QueueException {
+        return this.runOneUntil(
+            flowRepository
+                .findById(tenantId, namespace, flowId, revision != null ? Optional.of(revision) : Optional.empty())
+                .orElseThrow(() -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'")),
+            inputs,
+            duration,
+            predicate
+        );
+    }
+
+    public Execution runOneUntil(Flow flow, BiFunction<FlowInterface, Execution, Map<String, Object>> inputs, Duration duration, Predicate<Execution> predicate)
+        throws QueueException {
+        if (duration == null) {
+            duration = DEFAULT_MAX_WAIT_DURATION;
+        }
+
+        Execution execution = Execution.newExecution(flow, inputs, null, Optional.empty());
+
+        return this.emitAndAwaitExecution(predicate, execution, duration);
+    }
+
     public Execution emitAndAwaitExecution(Predicate<Execution> predicate, Execution execution) throws QueueException {
         return emitAndAwaitExecution(predicate, execution, Duration.ofSeconds(20));
     }
@@ -175,7 +209,7 @@ public class TestRunnerUtils {
         throws QueueException, InterruptedException {
         //We need to wait before restarting to make sure the execution is cleaned before we restart.
         Thread.sleep(100L);
-        return emitAndAwaitExecution(predicate, execution, duration);
+        return emitAndAwaitExecution(seenExecution -> predicate.test(seenExecution) && seenExecution.getState().getHistories().stream().map(State.History::getState).anyMatch(State.Type.RESTARTED::equals), execution, duration);
     }
 
     public Execution emitAndAwaitExecution(Predicate<Execution> predicate, Execution execution, Duration duration)
@@ -269,7 +303,7 @@ public class TestRunnerUtils {
         Flow flow = flowRepository
             .findById(tenantId, namespace, flowId, Optional.empty())
             .orElseThrow(
-                () -> new IllegalArgumentException("Unable to find flow '" + flowId + "'"));
+                () -> new IllegalArgumentException("Unable to find flow '" + namespace + "." + flowId + "'"));
         try {
             if (duration == null){
                 duration = Duration.ofSeconds(20);
@@ -300,7 +334,22 @@ public class TestRunnerUtils {
         return receive.get();
     }
 
-    @VisibleForTesting
+    public Execution killExecution(Execution execution) throws QueueException {
+        killQueue.emit(ExecutionKilledExecution.builder()
+            .executionId(execution.getId())
+            .isOnKillCascade(true)
+            .state(ExecutionKilled.State.REQUESTED)
+            .tenantId(execution.getTenantId())
+            .build());
+
+        return awaitExecution(isTerminatedExecution(
+            execution,
+            flowRepository
+                .findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.ofNullable(execution.getFlowRevision()))
+                .orElse(null)
+        ), execution);
+    }
+
     public Execution awaitChildExecution(Flow flow, Execution parentExecution, Execution execution, Duration duration)
         throws QueueException {
         return this.emitAndAwaitExecution(isTerminatedChildExecution(parentExecution, flow), execution, duration);

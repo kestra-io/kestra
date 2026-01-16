@@ -1,0 +1,1 @@
+ALTER TABLE kv_metadata ADD COLUMN "created" TIMESTAMPTZ NOT NULL GENERATED ALWAYS AS (PARSE_ISO8601_DATETIME(COALESCE(value ->> 'created', value ->> 'updated'))) STORED;

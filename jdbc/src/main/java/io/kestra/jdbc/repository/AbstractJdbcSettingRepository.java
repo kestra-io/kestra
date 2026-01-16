@@ -34,7 +34,7 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Optional<Setting> findByKey(String key) {
-        return findOne(DSL.trueCondition(), field("key").eq(key));
+        return findOne(DSL.trueCondition(), KEY_FIELD.eq(key));
     }
 
     @Override
@@ -44,9 +44,15 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
 
     @Override
     public Setting save(Setting setting) {
+        this.eventPublisher.publishEvent(new CrudEvent<>(setting, CrudEventType.UPDATE));
+
+        return internalSave(setting);
+    }
+
+    @Override
+    public Setting internalSave(Setting setting) {
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(setting);
         this.jdbcRepository.persist(setting, fields);
-        this.eventPublisher.publishEvent(new CrudEvent<>(setting, CrudEventType.UPDATE));
 
         return setting;
     }

@@ -8,6 +8,7 @@ import io.kestra.plugin.core.dashboard.data.Flows;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.validation.ConstraintViolationException;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Optional;
@@ -96,7 +97,9 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
 
     Optional<FlowWithSource> findByIdWithSourceWithoutAcl(String tenantId, String namespace, String id, Optional<Integer> revision);
 
-    List<FlowWithSource> findRevisions(String tenantId, String namespace, String id);
+    List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted);
+
+    List<FlowWithSource> findRevisions(String tenantId, String namespace, String id, Boolean allowDeleted, List<Integer> revisions);
 
     Integer lastRevision(String tenantId, String namespace, String id);
 
@@ -158,11 +161,15 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
             .toList();
     }
 
+    Flux<Flow> findAsync(String tenantId, List<QueryFilter> filters);
+
     FlowWithSource create(GenericFlow flow);
 
     FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException;
 
     FlowWithSource delete(FlowInterface flow);
+
+    void deleteRevisions(String tenantId, String namespace, String id, List<Integer> revisions);
 
     Boolean existAnyNoAcl(String tenantId);
 }

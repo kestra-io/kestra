@@ -11,7 +11,7 @@ export interface TreeNodeBase {
     leaf: boolean;
 }
 
-export interface TreeNodeFile{
+export interface TreeNodeFile {
     id: string;
     fileName: string;
     type: "File";
@@ -20,7 +20,7 @@ export interface TreeNodeFile{
     extension?: string;
 }
 
-export interface TreeNodeDirectory{
+export interface TreeNodeDirectory {
     id: string;
     fileName: string;
     type: "Directory";
@@ -69,7 +69,7 @@ function readFile(file: File): Promise<ArrayBuffer> {
 
 
 
-function isNotRootTreeNode(node: ElTreeNode | {level: 0}): node is ElTreeNode {
+function isNotRootTreeNode(node: ElTreeNode | { level: 0 }): node is ElTreeNode {
     return node.level > 0;
 }
 
@@ -113,17 +113,17 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
 
     async function addFolder(folder: {
         parentPath?: string,
-        fileName: string, 
+        fileName: string,
         children?: TreeNode[]
     }, creation?: boolean) {
-        if(!namespaceId.value) return
+        if (!namespaceId.value) return
         const {fileName, parentPath = ""} = folder
         const NEW = folderNode(fileName, folder?.children ?? []);
         const path = parentPath ? `${parentPath}/${fileName}` : fileName;
         if (creation) {
             try {
                 await namespacesStore.readDirectory({
-                    namespace: namespaceId.value, 
+                    namespace: namespaceId.value,
                     path
                 });
                 toast.error(t("namespace files.create.folder_already_exists"));
@@ -145,7 +145,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 toast.error(t("namespace files.create.folder_error"));
                 return;
             }
-            
+
             return;
         }
         if (!parentPath) {
@@ -172,7 +172,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
 
     function renderNodes(itemsArr: TreeNode[]) {
         fileTree.value = [];
-        
+
         for (const {type, fileName} of itemsArr) {
             if (type === "Directory") {
                 addFolder({fileName});
@@ -180,7 +180,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 const [fileFileName, extension] = getFileNameWithExtension(fileName);
                 addFile({
                     fileName: fileFileName,
-                    extension, 
+                    extension,
                     leaf: true
                 });
             }
@@ -188,7 +188,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     }
 
     async function addFile(file: Omit<TreeNodeFile, "id" | "type">, parentPath?: string, creation: boolean = false): Promise<{ path?: string; file?: TreeNodeFile; }> {
-        if(!namespaceId.value) return {}
+        if (!namespaceId.value) return {}
         const {fileName, extension, content = "", leaf} = file;
         const NAME = `${fileName}${extension ? `.${extension}` : ""}`;
 
@@ -216,37 +216,14 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             fileTree.value.push(NEW);
             fileTree.value = sorted(fileTree.value);
         } else {
-            (function pushItemToFolder(basePath: string = "", array: TreeNode[], pathParts: string[]): boolean {
-                for (const item of array) {
-                    const folderPath = `${basePath}${item.fileName}`;
-                    if (folderPath === parentPath && isDirectory(item)) {
-                        item.children = sorted([...(item.children ?? []), NEW]);
-                        return true;
-                    }
-                    if (isDirectory(item) && pushItemToFolder(`${folderPath}/`, item.children ?? [], pathParts.slice(1))) {
-                        return true;
-                    }
-                }
-                if (pathParts && pathParts.length > 0 && pathParts[0]) {
-                    const folderPath = `${basePath}${pathParts[0]}`;
-                    if (folderPath === parentPath) {
-                        const newFolder = folderNode(pathParts[0], [NEW]);
-                        array.push(newFolder);
-                        array = sorted(array);
-                        return true;
-                    }
-                    const newFolder = folderNode(pathParts[0], []);
-                    array.push(newFolder);
-                    array = sorted(array);
-                    return newFolder.children ? pushItemToFolder(`${basePath}${pathParts[0]}/`, newFolder.children, pathParts.slice(1)) : false;
-                }
-                return false;
-            })(undefined, fileTree.value, path.split("/"));
+
+            pushToParentFolder(parentPath, NEW);
+
         }
         return {path, file: NEW};
     }
 
-    function getPath(uid: string ) {
+    function getPath(uid: string) {
         // first, use the node unique id to find it in all the subtrees of the fileTree
         const findPath = (array: TreeNode[], currentPath = ""): string | undefined => {
             if (!Array.isArray(array)) return undefined;
@@ -268,7 +245,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     }
 
     async function loadNodes(
-        node: ElTreeNode | {level: 0} = {level: 0},
+        node: ElTreeNode | { level: 0 } = {level: 0},
         resolve?: (children: TreeNode[]) => void
     ) {
         if (namespaceId.value === undefined) return;
@@ -280,7 +257,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
             resolve?.(fileTree.value);
         } else if (isNotRootTreeNode(node)) {
             const payload = {
-                namespace: namespaceId.value, 
+                namespace: namespaceId.value,
                 path: getPath(node.data.id),
             };
             let children = await namespacesStore.readDirectory<TreeNode>(payload);
@@ -292,8 +269,8 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 } as TreeNode))
             );
             const updateChildren = (itemsArr: TreeNode[], path: string, newChildren: TreeNode[]) => {
-                for(const item of itemsArr){
-                    if(!isDirectory(item)) return;
+                for (const item of itemsArr) {
+                    if (!isDirectory(item)) return;
                     if (getPath(item.id) === path) {
                         item.children = newChildren;
                     } else if (Array.isArray(item.children)) {
@@ -302,9 +279,9 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 }
             };
             const rootNodePath = getPath(node.data.id);
-            if(rootNodePath){
+            if (rootNodePath) {
                 updateChildren(fileTree.value!, rootNodePath, children);
-            } 
+            }
             resolve?.(children);
         }
     }
@@ -340,7 +317,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
     }
 
     async function importFiles(importedFiles: FileList) {
-        if(!namespaceId.value) return
+        if (!namespaceId.value) return
         for (const file of Array.from(importedFiles)) {
             if ((file as any).webkitRelativePath) {
                 const filePath: string = (file as any).webkitRelativePath;
@@ -350,7 +327,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                 for (let i = 0; i < pathParts.length - 1; i++) {
                     const folderName = pathParts[i];
                     folderPath.push(folderName);
-                    if(!currentFolder) continue
+                    if (!currentFolder) continue
                     const folderIndex = currentFolder.findIndex(
                         (item: any) => typeof item === "object" && item.fileName === folderName,
                     );
@@ -392,7 +369,7 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
                     content,
                     path: file.name,
                 });
-                
+
                 fileTree.value.push({
                     id: Utils.uid(),
                     fileName: `${name}${extension ? `.${extension}` : ""}`,
@@ -418,4 +395,3 @@ export const useFileExplorerStore = defineStore("fileExplorer", () => {
         searchResults,
     };
 })
-  

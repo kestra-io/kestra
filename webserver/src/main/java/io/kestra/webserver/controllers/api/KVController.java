@@ -5,12 +5,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.kv.KVType;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -80,7 +80,7 @@ public class KVController {
     public List<KVEntry> listKeysWithInheritence(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
-        List<String> namespaces = NamespaceUtils.asTree(namespace).stream()
+        List<String> namespaces = NamespaceInterface.asTree(namespace).stream()
             .filter(ns -> !ns.equals(namespace))
             .toList();
         return getKvEntriesWithInheritance(namespaces);

@@ -1,9 +1,9 @@
 package io.kestra.webserver.services;
 
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.annotation.WebServerEnabled;
 import io.kestra.webserver.controllers.api.BlueprintController.ApiBlueprintItem;
@@ -17,11 +17,11 @@ import io.micronaut.http.client.annotation.Client;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
 import reactor.core.publisher.Mono;
 
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 /**
  * Service for automatically loading initial flows from the community blueprints at server startup.
@@ -32,6 +32,8 @@ import java.util.function.Function;
 @Requires(property = "kestra.tutorial-flows.enabled", value = "true", defaultValue = "true")
 public class FlowAutoLoaderService {
 
+    public static final Pattern NAMESPACE_FROM_FLOW_SOURCE_PATTERN = Pattern.compile("^namespace: \\S*", Pattern.MULTILINE);
+    
     public static final String PURGE_SYSTEM_FLOW_BLUEPRINT_ID = "234";
 
     @Inject
@@ -40,10 +42,10 @@ public class FlowAutoLoaderService {
     @Inject
     @Client("api")
     protected HttpClient httpClient;
-
-    @Inject
-    private NamespaceUtils namespaceUtils;
-
+    
+    @Inject 
+    protected KestraConfig kestraConfig;
+    
     @Inject
     private VersionProvider versionProvider;
     @Inject
@@ -67,7 +69,7 @@ public class FlowAutoLoaderService {
                     )).mapNotNull(response -> {
                         String body = response.body();
                         if (it.getId().equals(PURGE_SYSTEM_FLOW_BLUEPRINT_ID)) {
-                            return NamespaceUtils.NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + namespaceUtils.getSystemFlowNamespace());
+                            return NAMESPACE_FROM_FLOW_SOURCE_PATTERN.matcher(Objects.requireNonNull(body)).replaceFirst("namespace: " + kestraConfig.getSystemFlowNamespace());
                         }
                         return body;
                     })

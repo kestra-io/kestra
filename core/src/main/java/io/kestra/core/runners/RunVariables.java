@@ -303,9 +303,18 @@ public final class RunVariables {
                     // if a secret input is used, add it to the list of secrets to mask on the logger
                     if (logger != null && !ListUtils.isEmpty(secretInputs)) {
                         for (String secretInput : secretInputs) {
-                            String secret = (String) inputs.get(secretInput);
-                            if (secret != null) {
-                                logger.usedSecret(secret);
+                            String secret;
+                            Object secretValue = inputs.get(secretInput);
+                            if(secretValue != null) {
+                                // if decryptVariables = false secret input is not decoded and would be still a map of type and value
+                                if (secretValue instanceof Map<?, ?> map) {
+                                    secret = String.valueOf(map.get("value"));
+                                } else {
+                                    secret = secretValue.toString();
+                                }
+                                if (secret != null) {
+                                    logger.usedSecret(secret);
+                                }
                             }
                         }
                     }

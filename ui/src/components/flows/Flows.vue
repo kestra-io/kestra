@@ -299,7 +299,7 @@
             <FlowRun
                 v-if="showRunModal && executionsStore.flow"
                 :redirect="false"
-                @execution-trigger="showRunModal = false"
+                @execution-trigger="() => { showRunModal = false; $message.success('Execution has started'); }"
             />
         </el-dialog>
     </section>

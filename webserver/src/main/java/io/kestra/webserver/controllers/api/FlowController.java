@@ -517,7 +517,7 @@ public class FlowController {
                       "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
     )
     public List<FlowInterface> bulkUpdateFlows(
-        @RequestBody(description = "A list of flows source code splitted with \"---\"") @Body @Nullable String flows,
+        @RequestBody(description = "A list of flows source code split with \"---\"") @Body @Nullable String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete,
         @Parameter(description = "The namespace where to update flows") @QueryValue @Nullable String namespace,
         @Parameter(description = "If namespace child should are allowed to be updated") @QueryValue(defaultValue = "false") Boolean allowNamespaceChild
@@ -915,7 +915,7 @@ public class FlowController {
             return HttpResponse.badRequest();
         }
         if (failOnError && !wrongFiles.isEmpty()) {
-            throw new IllegalArgumentException("Following invalids flows were not imported: " + String.join(", ", wrongFiles));
+            throw new IllegalArgumentException("Following invalid flows were not imported: " + String.join(", ", wrongFiles));
         }
         return HttpResponse.ok(wrongFiles);
     }

@@ -858,7 +858,7 @@ public class JsonSchemaGenerator {
         Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
         if (Modifier.isAbstract(baseCls.getModifiers())) {
             // we must retrieve the instance class that leads to this field in this abstract class.
-            // there is no direct way, so we use the hierarchy of classes and get the first one that is not a mixin (not overriden)
+            // there is no direct way, so we use the hierarchy of classes and get the first one that is not a mixin (not overridden)
             Optional<HierarchicType> concreteCls = target.getDeclaringTypeMembers().mainTypeAndOverrides()
                 .stream()
                 .filter(type -> !type.isMixin())

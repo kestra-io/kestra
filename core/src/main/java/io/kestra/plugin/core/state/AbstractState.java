@@ -92,7 +92,7 @@ public abstract class AbstractState extends Task {
     }
 
     private String taskRunValue(RunContext runContext) throws IllegalVariableEvaluationException {
-        return Boolean.TRUE.equals(runContext.render(this.taskrunValue).as(Boolean.class).orElseThrow()) ?
+        return runContext.render(this.taskrunValue).as(Boolean.class).orElseThrow() ?
             runContext.storage().getTaskStorageContext().map(StorageContext.Task::getTaskRunValue).orElse(null) : null;
     }
 }

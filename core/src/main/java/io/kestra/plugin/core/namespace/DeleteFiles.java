@@ -115,14 +115,14 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
         var deleteParent = runContext.render(this.deleteParentFolder).as(Boolean.class).orElseThrow();
 
         List<NamespaceFile> matched = namespace.findAllFilesMatching(PathMatcherPredicate.matches(renderedFiles));
-        Set<String> parentFolders = Boolean.TRUE.equals(deleteParent) ? new TreeSet<>() : null;
+        Set<String> parentFolders = deleteParent ? new TreeSet<>() : null;
         long count = matched
             .stream()
             .map(Rethrow.throwFunction(file -> {
                 if (!namespace.delete(Path.of(file.path().replace("\\", "/"))).isEmpty()) {
                     logger.debug(String.format("Deleted %s", (file.path())));
 
-                    if (Boolean.TRUE.equals(deleteParent)) {
+                    if (deleteParent) {
                         trackParentFolder(file, parentFolders);
                     }
                     return true;

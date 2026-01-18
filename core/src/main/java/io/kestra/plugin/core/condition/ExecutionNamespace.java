@@ -82,7 +82,7 @@ public class ExecutionNamespace extends Condition {
         var renderedNamespace = runContext.render(this.namespace).as(String.class).orElseThrow();
 
         return runContext.render(this.comparison).as(Comparison.class)
-            .orElse(Boolean.TRUE.equals(renderedPrefix) ? Comparison.PREFIX : Comparison.EQUALS)
+            .orElse(renderedPrefix ? Comparison.PREFIX : Comparison.EQUALS)
             .test(conditionContext.getExecution().getNamespace(), renderedNamespace);
     }
 

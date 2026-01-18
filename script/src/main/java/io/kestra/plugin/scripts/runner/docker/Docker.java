@@ -377,8 +377,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         try (DockerClient dockerClient = dockerClient(runContext, image, resolvedHost)) {
             // evaluate resume (task property overrides plugin configuration if set)
-            Boolean resumeProp = runContext.render(this.resume).as(Boolean.class).orElse(Boolean.FALSE);
-            boolean resumeEnabled = Boolean.TRUE.equals(resumeProp);
+            boolean resumeEnabled = runContext.render(this.resume).as(Boolean.class).orElse(Boolean.FALSE);
 
             String containerId = null;
 
@@ -513,7 +512,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
             final String runContainerId = containerId;
 
-            if (!Boolean.TRUE.equals(runContext.render(wait).as(Boolean.class).orElseThrow())) {
+            if (!runContext.render(wait).as(Boolean.class).orElseThrow()) {
                 return TaskRunnerResult.<DockerTaskRunnerDetailResult>builder()
                     .exitCode(0)
                     .logConsumer(defaultLogConsumer)
@@ -614,7 +613,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     // come to a normal end.
                     kill();
 
-                    if (Boolean.TRUE.equals(renderedDelete)) {
+                    if (renderedDelete) {
                         dockerClient.removeContainerCmd(runContainerId).exec();
                         if (logger.isTraceEnabled()) {
                             logger.trace("Container deleted: {}", runContainerId);

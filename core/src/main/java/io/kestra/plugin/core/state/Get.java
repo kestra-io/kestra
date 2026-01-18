@@ -57,7 +57,7 @@ public class Get extends AbstractState implements RunnableTask<Get.Output> {
         try {
             data = this.get(runContext);
         } catch (FileNotFoundException e) {
-            if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow())) {
+            if (runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) {
                 throw e;
             }
 

@@ -54,7 +54,7 @@ public class Delete extends AbstractState implements RunnableTask<Delete.Output>
 
         boolean delete = this.delete(runContext);
 
-        if (Boolean.TRUE.equals(runContext.render(errorOnMissing).as(Boolean.class).orElseThrow()) && !delete) {
+        if (runContext.render(errorOnMissing).as(Boolean.class).orElseThrow() && !delete) {
             throw new FileNotFoundException("Unable to find the state file '" + runContext.render(this.name).as(String.class).orElseThrow() + "'");
         }
 

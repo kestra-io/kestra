@@ -83,7 +83,7 @@ public class Get extends Task implements RunnableTask<Get.Output> {
             value = runContext.namespaceKv(renderedNamespace).getValue(renderedKey);
         }
 
-        if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && value.isEmpty()) {
+        if (runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow() && value.isEmpty()) {
             throw new NoSuchElementException("No value found for key '" + renderedKey + "' in namespace '" + renderedNamespace + "' and `errorOnMissing` is set to true");
         }
 

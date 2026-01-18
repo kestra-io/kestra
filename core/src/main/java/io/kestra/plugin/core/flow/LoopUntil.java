@@ -205,7 +205,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
         if (childTaskExecuted
             && this.reachedMaximums(runContext, execution, parentTaskRun, true)
-            && Boolean.TRUE.equals(runContext.render(this.failOnMaxReached).as(Boolean.class).orElseThrow())
+            && runContext.render(this.failOnMaxReached).as(Boolean.class).orElseThrow()
         ) {
             return Optional.of(State.Type.FAILED);
         }

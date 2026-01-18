@@ -68,7 +68,7 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
         String renderedKey = runContext.render(this.key).as(String.class).orElseThrow();
 
         boolean deleted = runContext.namespaceKv(renderedNamespace).delete(renderedKey);
-        if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow()) && !deleted) {
+        if (runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow() && !deleted) {
             throw new NoSuchElementException("No value found for key '" + renderedKey + "' in namespace '" + renderedNamespace + "' and `errorOnMissing` is set to true");
         }
 

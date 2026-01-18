@@ -495,7 +495,7 @@ public class Execution implements DeletedInterface, TenantInterface {
         List<TaskRun> errorsFlow = this.findTaskRunByTasks(resolvedErrors, parentTaskRun);
         List<TaskRun> finallyFlow = this.findTaskRunByTasks(resolvedFinally, parentTaskRun);
 
-        // finally is already started, just continue theses finally
+        // finally is already started, just continue these finally
         if (!finallyFlow.isEmpty()) {
             return resolvedFinally == null ? Collections.emptyList() : resolvedFinally;
         }

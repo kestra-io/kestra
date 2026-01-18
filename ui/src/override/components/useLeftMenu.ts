@@ -391,7 +391,7 @@ export function useLeftMenu() {
                 }
 
                 // Convert object href to string path
-                item.href = $router.resolve(rObject).path;
+                item.href = $router.resolve(rObject).fullPath;
             }
         });
 

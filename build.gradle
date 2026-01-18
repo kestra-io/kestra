@@ -37,7 +37,7 @@ plugins {
     id "com.vanniktech.maven.publish" version "0.35.0"
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.1.9" apply false
+    id "org.owasp.dependencycheck" version "12.2.0" apply false
 }
 
 idea {

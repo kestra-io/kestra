@@ -17,7 +17,7 @@ function gotoRoute(event: MouseEvent, route: any, router: Router) {
 }
 
 /**
- * Tranform router-md elements in an html element use 
+ * Transform router-md elements in an html element use 
  * the vue-router methods instead of natural links 
  * @param element 
  */

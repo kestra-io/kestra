@@ -2452,7 +2452,7 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/flow")
     @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
     public FlowForExecution getFlowFromExecutionById(
-        @Parameter(description = "The execution that you want flow informations") String executionId
+        @Parameter(description = "The execution that you want flow information") String executionId
     ) {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 

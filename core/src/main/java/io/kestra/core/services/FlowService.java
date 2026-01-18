@@ -19,7 +19,6 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
-import io.micronaut.http.multipart.CompletedFileUpload;
 import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
@@ -28,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -149,81 +147,22 @@ public class FlowService {
     }
 
     /**
-     * Validates the given flow source.
-     * <p>
-     * the YAML source can contain one or many objects.
+     * Validates the given flow sources.
      *
-     * @param tenantId The tenant identifier.
-     * @param flows    The YAML source.
-     * @return The list validation constraint violations.
-     */
-    public List<ValidateConstraintViolation> validate(final String tenantId, final String flows) {
-        AtomicInteger index = new AtomicInteger(0);
-        return Stream
-            .of(flows.split("\\n+---\\n*?"))
-            .map(source -> {
-                ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
-                validateConstraintViolationBuilder.index(index.getAndIncrement());
-
-                try {
-                    FlowWithSource flow = pluginDefaultService.parseFlowWithVersionDefaults(tenantId, source, true);
-                    Integer sentRevision = flow.getRevision();
-                    if (sentRevision != null) {
-                        Integer lastRevision = Optional.ofNullable(repository().lastRevision(tenantId, flow.getNamespace(), flow.getId()))
-                            .orElse(0);
-                        validateConstraintViolationBuilder.outdated(!sentRevision.equals(lastRevision + 1));
-                    }
-
-                    validateConstraintViolationBuilder.deprecationPaths(deprecationPaths(flow));
-                    validateConstraintViolationBuilder.warnings(warnings(flow, tenantId));
-                    validateConstraintViolationBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
-                    validateConstraintViolationBuilder.flow(flow.getId());
-                    validateConstraintViolationBuilder.namespace(flow.getNamespace());
-
-                    // Do not perform a strict parsing validation to ignore unknown
-                    // properties that might be injecting through default values.
-                    modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
-
-                } catch (ConstraintViolationException e) {
-                    String friendlyMessage = formatValidationError(e.getMessage());
-                    validateConstraintViolationBuilder.constraints(friendlyMessage);
-                } catch (FlowProcessingException e) {
-                    if (e.getCause() instanceof ConstraintViolationException cve) {
-                        String friendlyMessage = formatValidationError(cve.getMessage());
-                        validateConstraintViolationBuilder.constraints(friendlyMessage);
-                    } else {
-                        Throwable cause = e.getCause() != null ? e.getCause() : e;
-                        validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
-                    }
-                } catch (RuntimeException re) {
-                    // In case of any error, we add a validation violation so the error is displayed in the UI.
-                    // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
-                    // in dev like incompatible plugin versions.
-                    log.error("Unable to validate the flow", re);
-                    validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + re.getMessage());
-                }
-                return validateConstraintViolationBuilder.build();
-            })
-            .collect(Collectors.toList());
-    }
-
-    /**
-     * Validates the given flow files.
-     *
-     * @param tenantId  The tenant identifier.
-     * @param flowFiles The YAML files to validate.
+     * @param tenantId    The tenant identifier.
+     * @param flowSources The flow sources to validate.
      * @return The list of validation constraint violations.
      */
-    public List<ValidateConstraintViolation> validate(final String tenantId, final List<CompletedFileUpload> flowFiles) {
+    public List<ValidateConstraintViolation> validate(final String tenantId, final List<FlowSource> flowSources) {
         AtomicInteger index = new AtomicInteger(0);
         List<ValidateConstraintViolation> constraints = new ArrayList<>();
-        flowFiles.forEach(flowFile -> {
+        flowSources.forEach(flowSource -> {
             ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> constraintsBuilder = ValidateConstraintViolation.builder();
             constraintsBuilder.index(index.getAndIncrement());
-            constraintsBuilder.filename(flowFile.getFilename());
+            constraintsBuilder.filename(flowSource.filename());
 
             try {
-                String source = new String(flowFile.getBytes()).trim();
+                String source = flowSource.content();
                 FlowWithSource flow = pluginDefaultService.parseFlowWithVersionDefaults(tenantId, source, true);
 
                 Integer sentRevision = flow.getRevision();
@@ -252,8 +191,6 @@ public class FlowService {
                     Throwable cause = e.getCause() != null ? e.getCause() : e;
                     constraintsBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             } catch (RuntimeException e) {
                 // In case of any error, we add a validation violation so the error is displayed in the UI.
                 // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases

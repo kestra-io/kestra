@@ -2,11 +2,7 @@ package io.kestra.core.services;
 
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
@@ -75,7 +71,7 @@ class FlowServiceTest {
                   uri: https://kestra.io
             """;
         // When
-        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
         // Then
         assertThat(results).hasSize(1);
@@ -385,7 +381,7 @@ class FlowServiceTest {
             """;
 
         // When
-        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
         // Then
         assertThat(results).hasSize(1);
@@ -401,15 +397,15 @@ class FlowServiceTest {
     void shouldReturnValidationErrorForReservedFlowId() {
         // Given
         String source = """
-        id: pause
-        namespace: io.kestra.unittest
-        tasks:
-          - id: task
-            type: io.kestra.plugin.core.log.Log
-            message: Reserved id test
-        """;
+            id: pause
+            namespace: io.kestra.unittest
+            tasks:
+              - id: task
+                type: io.kestra.plugin.core.log.Log
+                message: Reserved id test
+            """;
         // When
-        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
         // Then
         assertThat(results).hasSize(1);

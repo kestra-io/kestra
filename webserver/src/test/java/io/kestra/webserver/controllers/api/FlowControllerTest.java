@@ -67,9 +67,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
 class FlowControllerTest {
@@ -327,6 +325,106 @@ class FlowControllerTest {
                     .contentType(MediaType.APPLICATION_YAML),
                 Argument.listOf(FlowWithSource.class)
             );
+        assertThat(updated.size()).isEqualTo(3);
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/flow1"));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/flow2"));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/flow3"));
+    }
+
+    @Test
+    void updateFlowInNamespaceUsingMultipart() throws IOException {
+        // Create one flow file
+        String flow = generateFlowAsString("flow1", "io.kestra.updatenamespace", "a");
+        File flowFile = File.createTempFile("flow1", ".yaml");
+        Files.writeString(flowFile.toPath(), flow);
+
+        // Construct request body
+        MultipartBody body = MultipartBody.builder()
+            .addPart("flows", flowFile.getName(), MediaType.APPLICATION_YAML_TYPE, flowFile)
+            .build();
+
+        // Send request
+        List<FlowWithSource> updated = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/flows/io.kestra.updatenamespace", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA),
+            Argument.listOf(FlowWithSource.class)
+        );
+
+        assertThat(updated.size()).isEqualTo(1);
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/flow1"));
+    }
+
+    @Test
+    void updateFlowsInNamespaceUsingMultipart() throws IOException {
+        // Create multiple flow files and add them to body
+        MultipartBody.Builder bodyBuilder = MultipartBody.builder();
+        for (int i = 1; i <= 3; i++) {
+            String flow = generateFlowAsString("flow" + i, "io.kestra.updatenamespace", "a");
+            File flowFile = File.createTempFile("flow" + i, ".yaml");
+            Files.writeString(flowFile.toPath(), flow);
+
+            bodyBuilder.addPart("flows", flowFile.getName(), MediaType.APPLICATION_YAML_TYPE, flowFile);
+        }
+
+        // Send request
+        List<FlowWithSource> updated = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/flows/io.kestra.updatenamespace", bodyBuilder.build())
+                .contentType(MediaType.MULTIPART_FORM_DATA),
+            Argument.listOf(FlowWithSource.class)
+        );
+
+        assertThat(updated.size()).isEqualTo(3);
+
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/flow1"));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/flow2"));
+        client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/flow3"));
+    }
+
+    @Test
+    void updateFlowsInIncorrectNamespaceUsingMultipart() throws IOException {
+        // Create multiple flow files and add them to body
+        MultipartBody.Builder bodyBuilder = MultipartBody.builder();
+        for (int i = 1; i <= 3; i++) {
+            String flow = generateFlowAsString("flow" + i, "io.kestra.randomnamespace", "a");
+            File flowFile = File.createTempFile("flow" + i, ".yaml");
+            Files.writeString(flowFile.toPath(), flow);
+
+            bodyBuilder.addPart("flows", flowFile.getName(), MediaType.APPLICATION_YAML_TYPE, flowFile);
+        }
+
+        // Send request and catch exception
+        HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/main/flows/io.kestra.updatenamespace", bodyBuilder.build())
+                    .contentType(MediaType.MULTIPART_FORM_DATA),
+                Argument.listOf(FlowWithSource.class)
+            )
+        );
+
+        assertTrue(exception.getMessage().contains("flow namespace is invalid"));
+    }
+
+    @Test
+    void updateFlowsInNamespaceWithOverrideUsingMultipart() throws IOException {
+        // Create multiple flow files and add them to body
+        MultipartBody.Builder bodyBuilder = MultipartBody.builder();
+        for (int i = 1; i <= 3; i++) {
+            String flow = generateFlowAsString("flow" + i, "io.kestra.randomnamespace", "a");
+            File flowFile = File.createTempFile("flow" + i, ".yaml");
+            Files.writeString(flowFile.toPath(), flow);
+
+            bodyBuilder.addPart("flows", flowFile.getName(), MediaType.APPLICATION_YAML_TYPE, flowFile);
+        }
+
+        // Send request
+        List<FlowWithSource> updated = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/main/flows/io.kestra.updatenamespace?override=true", bodyBuilder.build())
+                .contentType(MediaType.MULTIPART_FORM_DATA),
+            Argument.listOf(FlowWithSource.class)
+        );
+
         assertThat(updated.size()).isEqualTo(3);
 
         client.toBlocking().exchange(DELETE("/api/v1/main/flows/io.kestra.updatenamespace/flow1"));

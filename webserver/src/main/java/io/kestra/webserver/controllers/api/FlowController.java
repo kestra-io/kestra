@@ -344,14 +344,14 @@ public class FlowController {
         @Parameter(description = "If namespace of all provided flows should be overridden") @QueryValue(defaultValue = "false") Boolean override,
         @Parameter(description = "If missing flows should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException, IOException {
-        List<CompletedFileUpload> flows = Flux.from(flowsPublisher)
+        List<CompletedFileUpload> flowFiles = Flux.from(flowsPublisher)
             .collectList()
             .blockOptional()
             .orElse(Collections.emptyList());
 
         List<GenericFlow> genericFlows = new ArrayList<>();
-        for (CompletedFileUpload flow : flows) {
-            String source = new String(flow.getBytes()).trim();
+        for (CompletedFileUpload flowFile : flowFiles) {
+            String source = new String(flowFile.getBytes()).trim();
             if (override) {
                 source = source.replaceFirst("(?m)^namespace:.+", "namespace: " + namespace);
             }

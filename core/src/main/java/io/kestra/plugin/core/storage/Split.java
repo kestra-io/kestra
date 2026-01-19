@@ -61,7 +61,6 @@ import java.util.List;
                     type: io.kestra.plugin.core.storage.Split
                     from: "{{ outputs.download.uri }}"
                     rows: 10
-
             """
         ),
         @Example(

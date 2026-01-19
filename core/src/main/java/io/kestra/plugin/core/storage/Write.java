@@ -33,7 +33,7 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
             title = "Write data to a file in the internal storage.",
             full = true,
             code = """
-                id: write
+                id: write_file
                 namespace: company.team
 
                 tasks:

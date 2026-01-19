@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 
 public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRepository {
+    protected static final Field<String> VALUE_FIELD = field("value", String.class);
     protected io.kestra.jdbc.AbstractJdbcRepository<ExecutionQueued> jdbcRepository;
 
     public AbstractJdbcExecutionQueuedStorage(io.kestra.jdbc.AbstractJdbcRepository<ExecutionQueued> jdbcRepository) {

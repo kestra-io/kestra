@@ -29,31 +29,79 @@ import java.util.List;
     examples = {
         @Example(
             title = "Split a file by size.",
-            code = {
-                "from: \"kestra://long/url/file1.txt\"",
-                "bytes: 10MB"
-            }
+            full = true,
+            code = """
+                id: split_bytes
+                namespace: company.team
+
+                tasks:
+                  - id: download
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+                  - id: split
+                    type: io.kestra.plugin.core.storage.Split
+                    from: "{{ outputs.download.uri }}"
+                    bytes: "5KB"
+            """
         ),
         @Example(
             title = "Split a file by rows count.",
-            code = {
-                "from: \"kestra://long/url/file1.txt\"",
-                "rows: 1000"
-            }
+            full = true,
+            code = """
+                id: split_rows
+                namespace: company.team
+
+                tasks:
+                  - id: download
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+                  - id: split
+                    type: io.kestra.plugin.core.storage.Split
+                    from: "{{ outputs.download.uri }}"
+                    rows: 10
+
+            """
         ),
         @Example(
             title = "Split a file in a defined number of partitions.",
-            code = {
-                "from: \"kestra://long/url/file1.txt\"",
-                "partitions: 8"
-            }
+            full = true,
+            code = """
+                id: split_partitions
+                namespace: company.team
+
+                tasks:
+                  - id: download
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+                  - id: split
+                    type: io.kestra.plugin.core.storage.Split
+                    from: "{{ outputs.download.uri }}"
+                    partitions: 4
+            """
         ),
         @Example(
-            title = "Split a file by regex pattern - group lines by captured value.",
-            code = {
-                "from: \"kestra://long/url/logs.txt\"",
-                "regexPattern: \"\\\\[(\\\\w+)\\\\]\""
-            }
+            title = "Split a file by regex pattern - group lines by log level.",
+            full = true,
+            code = """
+                id: storage_tasks
+                namespace: company.team
+
+                tasks:
+                  - id: generate_logs
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    commands:
+                      - echo "INFO - wow\nERROR - no\nINFO - ok" > logs.txt
+                    outputFiles:
+                      - logs.txt
+
+                  - id: split
+                    type: io.kestra.plugin.core.storage.Split
+                    from: "{{ outputs.echo.outputFiles['logs.txt'] }}"
+                    regexPattern: "^(\\w+)"
+            """
         ),
     },
     aliases = "io.kestra.core.tasks.storages.Split"

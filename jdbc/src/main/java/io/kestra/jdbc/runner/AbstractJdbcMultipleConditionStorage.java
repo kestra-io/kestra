@@ -4,8 +4,7 @@ import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record1;
@@ -47,8 +46,6 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
 
     @Override
     public List<MultipleConditionWindow> expired(String tenantId) {
-        Instant now = Instant.now();
-
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -57,11 +54,15 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
                     .select(field("value"))
                     .from(this.jdbcRepository.getTable())
                     .where(
-                        field("end_date").lt(OffsetDateTime.now(ZoneOffset.UTC)).and(buildTenantCondition(tenantId))
+                        getEndDataCondition().and(buildTenantCondition(tenantId))
                     );
 
                 return this.jdbcRepository.fetch(select);
             });
+    }
+
+    protected Condition getEndDataCondition(){
+        return field("end_date").lt(Timestamp.from(Instant.now()));
     }
 
     @Override

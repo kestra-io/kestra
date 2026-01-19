@@ -37,10 +37,11 @@ import static io.kestra.core.utils.Rethrow.throwSupplier;
                 namespace: company.team
 
                 tasks:
-                - id: write
-                  type: io.kestra.plugin.core.storage.Write
-                  content: Hello World
-                  extension: .txt"""
+                  - id: write
+                    type: io.kestra.plugin.core.storage.Write
+                    content: Hello World
+                    extension: .txt
+                """
         )
     }
 )

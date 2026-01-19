@@ -646,7 +646,32 @@ public class FlowController {
     public List<ValidateConstraintViolation> validateFlows(
         @RequestBody(description = "A list of flows source code in a single string") @Body String flows
     ) {
-        return flowService.validate(tenantService.resolveTenant(), flows);
+        List<FlowSource> flowSources = Arrays.stream(flows.split("\\n+---\\n*?"))
+            .map(flow -> new FlowSource(null, flow))
+            .toList();
+
+        return flowService.validate(tenantService.resolveTenant(), flowSources);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "validate", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
+    public List<ValidateConstraintViolation> validateFlows(
+        @RequestBody(description = "A list of flow files") @Part("flows") Publisher<CompletedFileUpload> flowsPublisher
+    ) throws IOException {
+        List<CompletedFileUpload> flowFiles = Flux.from(flowsPublisher)
+            .collectList()
+            .blockOptional()
+            .orElse(Collections.emptyList());
+
+        List<FlowSource> flowSources = new ArrayList<>();
+        for (CompletedFileUpload flowFile : flowFiles) {
+            String source = new String(flowFile.getBytes()).trim();
+
+            flowSources.add(new FlowSource(flowFile.getFilename(), source));
+        }
+
+        return flowService.validate(tenantService.resolveTenant(), flowSources);
     }
 
     // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience

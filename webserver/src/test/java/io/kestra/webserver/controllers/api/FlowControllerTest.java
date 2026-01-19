@@ -4,10 +4,7 @@ import com.google.common.collect.ImmutableList;
 import io.kestra.core.Helpers;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.property.Property;
@@ -960,6 +957,178 @@ class FlowControllerTest {
         assertThat(body.getFirst().getDeprecationPaths().getFirst()).isEqualTo("tasks[0]");
         assertThat(body.getFirst().getInfos().size()).isEqualTo(1);
         assertThat(body.getFirst().getInfos().getFirst()).isEqualTo("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log");
+    }
+
+    @Test
+    void validateFlowsUsingMultipart() throws URISyntaxException, IOException {
+        // Load first valid flow file
+        URL validResource1 = TestsUtils.class.getClassLoader().getResource("flows/validate/validFlow1.yaml");
+        File validFlowFile1 = new File(Objects.requireNonNull(validResource1).toURI());
+
+        // Save first flow to check outdated status
+        jdbcFlowRepository.create(GenericFlow.fromYaml("main", Files.readString(validFlowFile1.toPath())));
+
+        // Load second valid flow file
+        URL validResource2 = TestsUtils.class.getClassLoader().getResource("flows/validate/validFlow2.yaml");
+        File validFlowFile2 = new File(Objects.requireNonNull(validResource2).toURI());
+
+        // Construct request body
+        MultipartBody body = MultipartBody.builder()
+            .addPart("flows", validFlowFile1.getName(), MediaType.APPLICATION_YAML_TYPE, validFlowFile1)
+            .addPart("flows", validFlowFile2.getName(), MediaType.APPLICATION_YAML_TYPE, validFlowFile2)
+            .build();
+
+        // Send request
+        HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(
+            POST("/api/v1/main/flows/validate", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA),
+            Argument.listOf(ValidateConstraintViolation.class)
+        );
+
+        List<ValidateConstraintViolation> violations = response.body();
+        assertEquals(2, violations.size());
+
+        // Validate first valid flow
+        assertEquals("validFlow1.yaml", violations.getFirst().getFilename());
+        // We don't send any revision while the flow already exists so it's outdated
+        assertTrue(violations.getFirst().isOutdated());
+        assertEquals(3, violations.getFirst().getDeprecationPaths().size());
+        assertThat(violations.getFirst().getDeprecationPaths()).containsExactlyInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners");
+        assertTrue(violations.getFirst().getWarnings().isEmpty());
+        assertTrue(violations.getFirst().getInfos().isEmpty());
+
+        // Validate second valid flow
+        assertEquals("validFlow2.yaml", violations.get(1).getFilename());
+        assertFalse(violations.get(1).isOutdated());
+        assertEquals(2, violations.get(1).getDeprecationPaths().size());
+        assertThat(violations.get(1).getDeprecationPaths()).containsExactlyInAnyOrder("tasks[0]", "tasks[1]");
+        assertTrue(violations.get(1).getWarnings().isEmpty());
+        assertTrue(violations.get(1).getInfos().isEmpty());
+
+        assertThat(violations).extracting("constraints").containsOnlyNulls();
+    }
+
+    @Test
+    void validateFlowsWithInvalidUsingMultipart() throws URISyntaxException, IOException {
+        // Load valid flow file
+        URL validResource = TestsUtils.class.getClassLoader().getResource("flows/validate/validFlow1.yaml");
+        File validFlowFile = new File(Objects.requireNonNull(validResource).toURI());
+
+        // Save first flow to check outdated status
+        jdbcFlowRepository.create(GenericFlow.fromYaml("main", Files.readString(validFlowFile.toPath())));
+
+        // Load invalid flow file
+        URL invalidResource = TestsUtils.class.getClassLoader().getResource("flows/validate/invalidFlow1.yaml");
+        File invalidFlowFile = new File(Objects.requireNonNull(invalidResource).toURI());
+
+        // Construct request body
+        MultipartBody body = MultipartBody.builder()
+            .addPart("flows", validFlowFile.getName(), MediaType.APPLICATION_YAML_TYPE, validFlowFile)
+            .addPart("flows", invalidFlowFile.getName(), MediaType.APPLICATION_YAML_TYPE, invalidFlowFile)
+            .build();
+
+        // Send request
+        HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(
+            POST("/api/v1/main/flows/validate", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA),
+            Argument.listOf(ValidateConstraintViolation.class)
+        );
+
+        List<ValidateConstraintViolation> violations = response.body();
+        assertEquals(2, violations.size());
+
+        // Validate first valid flow
+        assertEquals("validFlow1.yaml", violations.getFirst().getFilename());
+        // We don't send any revision while the flow already exists so it's outdated
+        assertTrue(violations.getFirst().isOutdated());
+        assertEquals(3, violations.getFirst().getDeprecationPaths().size());
+        assertThat(violations.getFirst().getDeprecationPaths()).containsExactlyInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners");
+        assertTrue(violations.getFirst().getWarnings().isEmpty());
+        assertTrue(violations.getFirst().getInfos().isEmpty());
+
+        // Second flow is invalid, so most properties should be null or have default values
+        assertEquals("invalidFlow1.yaml", violations.get(1).getFilename());
+        assertFalse(violations.get(1).isOutdated());
+        assertNull(violations.get(1).getDeprecationPaths());
+        assertNull(violations.get(1).getWarnings());
+        assertNull(violations.get(1).getInfos());
+
+        assertNull(violations.getFirst().getConstraints());
+        assertThat(violations.get(1).getConstraints()).contains("Unrecognized field \"unknownProp\"");
+    }
+
+    @Test
+    void validateInvalidFlowsUsingMultipart() throws URISyntaxException, IOException {
+        // Load first invalid flow file
+        URL invalidResource1 = TestsUtils.class.getClassLoader().getResource("flows/validate/invalidFlow1.yaml");
+        File invalidFlowFile1 = new File(Objects.requireNonNull(invalidResource1).toURI());
+
+        // Save first flow to check outdated status
+        jdbcFlowRepository.create(GenericFlow.fromYaml("main", Files.readString(invalidFlowFile1.toPath())));
+
+        // Load second invalid flow file
+        URL invalidResource2 = TestsUtils.class.getClassLoader().getResource("flows/validate/invalidFlow2.yaml");
+        File invalidFlowFile2 = new File(Objects.requireNonNull(invalidResource2).toURI());
+
+        // Construct request body
+        MultipartBody body = MultipartBody.builder()
+            .addPart("flows", invalidFlowFile1.getName(), MediaType.APPLICATION_YAML_TYPE, invalidFlowFile1)
+            .addPart("flows", invalidFlowFile2.getName(), MediaType.APPLICATION_YAML_TYPE, invalidFlowFile2)
+            .build();
+
+        // Send request
+        HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(
+            POST("/api/v1/main/flows/validate", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA),
+            Argument.listOf(ValidateConstraintViolation.class)
+        );
+
+        List<ValidateConstraintViolation> violations = response.body();
+        assertEquals(2, violations.size());
+
+        // First flow is invalid, so most properties should be null or have default values
+        assertEquals("invalidFlow1.yaml", violations.getFirst().getFilename());
+        assertFalse(violations.getFirst().isOutdated());
+        assertNull(violations.getFirst().getDeprecationPaths());
+        assertNull(violations.getFirst().getWarnings());
+        assertNull(violations.getFirst().getInfos());
+
+        // Second flow is also invalid, so most properties should be null or have default values
+        assertEquals("invalidFlow2.yaml", violations.get(1).getFilename());
+        assertFalse(violations.get(1).isOutdated());
+        assertNull(violations.get(1).getDeprecationPaths());
+        assertNull(violations.get(1).getWarnings());
+        assertNull(violations.get(1).getInfos());
+
+        assertThat(violations.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        assertThat(violations.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
+    }
+
+    @Test
+    void shouldValidateFlowWithWarningsAndInfosUsingMultipart() throws URISyntaxException {
+        // Load flow file
+        URL resource = TestsUtils.class.getClassLoader().getResource("flows/warningsAndInfos.yaml");
+        File flowFile = new File(Objects.requireNonNull(resource).toURI());
+
+        // Construct request body
+        MultipartBody body = MultipartBody.builder()
+            .addPart("flows", flowFile.getName(), MediaType.APPLICATION_YAML_TYPE, flowFile)
+            .build();
+
+        // Send request
+        HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(
+            POST("/api/v1/main/flows/validate", body)
+                .contentType(MediaType.MULTIPART_FORM_DATA),
+            Argument.listOf(ValidateConstraintViolation.class)
+        );
+
+        List<ValidateConstraintViolation> violations = response.body();
+        assertEquals(1, violations.size());
+        assertEquals("warningsAndInfos.yaml", violations.getFirst().getFilename());
+        assertEquals(1, violations.getFirst().getDeprecationPaths().size());
+        assertEquals("tasks[0]", violations.getFirst().getDeprecationPaths().getFirst());
+        assertEquals(1, violations.getFirst().getInfos().size());
+        assertEquals("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log", violations.getFirst().getInfos().getFirst());
     }
 
     @Test

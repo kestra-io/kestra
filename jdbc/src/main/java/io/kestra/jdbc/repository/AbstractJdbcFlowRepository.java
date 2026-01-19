@@ -30,7 +30,6 @@ import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Flows;

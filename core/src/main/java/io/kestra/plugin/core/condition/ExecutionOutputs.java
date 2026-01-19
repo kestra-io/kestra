@@ -3,14 +3,11 @@ package io.kestra.plugin.core.condition;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -84,7 +81,7 @@ import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
     },
     aliases = {"io.kestra.core.models.conditions.types.ExecutionOutputsCondition", "io.kestra.plugin.core.condition.ExecutionOutputsCondition"}
 )
-public class ExecutionOutputs extends Condition implements ScheduleCondition {
+public class ExecutionOutputs extends Condition {
 
     private static final String TRIGGER_VAR = "trigger";
     private static final String OUTPUTS_VAR = "outputs";

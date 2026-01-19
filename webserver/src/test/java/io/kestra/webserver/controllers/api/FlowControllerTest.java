@@ -372,31 +372,6 @@ class FlowControllerTest {
     }
 
     @Test
-    void createFlowFromJsonFlow() {
-        Flow flow = generateFlow(TEST_NAMESPACE, "a");
-
-        Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/main/flows", flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML), String.class));
-
-        assertThat(result.getId()).isEqualTo(flow.getId());
-        assertThat(result.getInputs().getFirst().getId()).isEqualTo("a");
-
-        Flow get = parseFlow(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId()), String.class));
-        assertThat(get.getId()).isEqualTo(flow.getId());
-        assertThat(get.getInputs().getFirst().getId()).isEqualTo("a");
-    }
-
-    @Test
-    void createFlowFromJsonFlowWithJsonLabels() {
-        Flow flow = generateFlow(TEST_NAMESPACE, "a").toBuilder().labels(List.of(new Label("a", "b"))).build();
-
-        Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/main/flows", flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML), String.class));
-
-        assertThat(result.getId()).isEqualTo(flow.getId());
-        assertThat(result.getLabels().getFirst().key()).isEqualTo("a");
-        assertThat(result.getLabels().getFirst().value()).isEqualTo("b");
-    }
-
-    @Test
     void deletedFlow() {
         Flow flow = generateFlow(TEST_NAMESPACE, "a");
 

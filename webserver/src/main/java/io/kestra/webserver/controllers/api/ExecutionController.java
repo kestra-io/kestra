@@ -38,9 +38,6 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.trigger.Webhook;
-import io.kestra.webserver.controllers.api.ExecutionController.ApiValidateExecutionInputsResponse;
-import io.kestra.webserver.controllers.api.ExecutionController.ApiValidateExecutionInputsResponse.ApiCheckFailure;
-import io.kestra.webserver.controllers.api.ExecutionController.ExecutionResponse;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -590,21 +587,16 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
         }
 
-        var result = execution.get();
+        List<Label> labels = new ArrayList<>();
+        labels.add(new Label(Label.FROM, "trigger"));
         if (flow.getLabels() != null) {
-            result = result.withLabels(LabelService.labelsExcludingSystem(flow));
+            labels.addAll(LabelService.labelsExcludingSystem(flow));
+        }
+        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
+            labels.add(new Label(CORRELATION_ID, execution.get().getId()));
         }
 
-        List<Label> labels = ListUtils.emptyOnNull(result.getLabels());
-
-        boolean hasCorrelationId = labels.stream()
-            .anyMatch(label -> label.key().equals(CORRELATION_ID));
-
-        if (!hasCorrelationId) {
-            List<Label> newLabels = new ArrayList<>(labels);
-            newLabels.add(new Label(CORRELATION_ID, result.getId()));
-            result = result.withLabels(newLabels);
-        }
+        var result = execution.get().withLabels(labels);
 
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
         var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
@@ -636,7 +628,7 @@ public class ExecutionController {
             }
 
             executionQueue.emit(result);
-            eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
+            eventPublisher.publishEvent(CrudEvent.create(result));
 
             if (webhook.getWait()) {
                 var subscriberId = UUID.randomUUID().toString();
@@ -755,11 +747,13 @@ public class ExecutionController {
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(executionInputs -> {
-                Check.Behavior behavior = Check.resolveBehavior(flowService.getFailedChecks(flow, executionInputs));
+                List<Check> failed = flowService.getFailedChecks(flow, executionInputs);
+                Check.Behavior behavior = Check.resolveBehavior(failed);
                 if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
                     return Mono.error(new IllegalArgumentException(
                         "Flow execution blocked: one or more condition checks evaluated to false."
-                    ));
+                        + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(Collectors.joining(", ")
+                    )));
                 }
 
                 final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
@@ -864,15 +858,22 @@ public class ExecutionController {
     }
 
     protected List<Label> parseLabels(List<String> labels) {
-        List<Label> parsedLabels = labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
+        List<Label> parsedLabels = labels == null ? new ArrayList<>() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
-            .toList();
+            .collect(Collectors.toList());
 
-        // check for system labels: none can be passed at execution creation time except system.correlationId
-        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        // check for system labels: none can be passed at execution creation time except system.correlationId and system.from
+        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && !label.key().equals(Label.FROM) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
+
+        // from can be passed by the UI so we only add it if it didn't exist anymore
+        // if we want to be more restrictive, we may want to restrict it to only have the `ui` value
+        if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {
+            parsedLabels.add(new Label(Label.FROM, "api"));
+        }
+
         return parsedLabels;
     }
 
@@ -1037,9 +1038,9 @@ public class ExecutionController {
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
-            if (execution.isPresent() && !execution.get().getState().isFailed()) {
+            if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in state FAILED",
+                    "execution not in state PAUSED or terminated",
                     executionId,
                     String.class,
                     "execution",
@@ -2451,7 +2452,7 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/flow")
     @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
     public FlowForExecution getFlowFromExecutionById(
-        @Parameter(description = "The execution that you want flow informations") String executionId
+        @Parameter(description = "The execution that you want flow information") String executionId
     ) {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 
@@ -2671,7 +2672,12 @@ public class ExecutionController {
         ) {
         }
 
-        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<Check> checks, List<InputAndValue> inputs) {
+        public static ApiValidateExecutionInputsResponse of(
+            String id,
+            String namespace,
+            List<Check> checks,
+            List<InputAndValue> inputs
+        ) {
             return new ApiValidateExecutionInputsResponse(
                 id,
                 namespace,
@@ -2680,14 +2686,21 @@ public class ExecutionController {
                     it.value(),
                     it.enabled(),
                     it.isDefault(),
-                    Optional.ofNullable(it.exception()).map(exception ->
-                        exception.getConstraintViolations()
-                            .stream()
-                            .map(cv -> new ApiInputError(cv.getMessage()))
+                    // Map the Set<InputOutputValidationException> to ApiInputError
+                    Optional.ofNullable(it.exceptions())
+                        .map(exSet -> exSet.stream()
+                            .map(e -> new ApiInputError(e.getMessage()))
                             .toList()
-                    ).orElse(List.of())
+                        )
+                        .orElse(List.of())
                 )).toList(),
-                checks.stream().map(check -> new ApiCheckFailure(check.getMessage(), check.getStyle(), check.getBehavior())).toList()
+                checks.stream()
+                    .map(check -> new ApiCheckFailure(
+                        check.getMessage(),
+                        check.getStyle(),
+                        check.getBehavior()
+                    ))
+                    .toList()
             );
         }
     }

@@ -147,7 +147,7 @@ class RequestUtilsTest {
             null, null, null, null, null, null, null, null, null, null, null, null
         );
 
-        assertTrue(filters.size() == 0, "Filters should be empty.");
+        assertTrue(filters.isEmpty(), "Filters should be empty.");
     }
 
     @Test

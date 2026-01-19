@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
@@ -26,6 +25,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
@@ -49,7 +49,7 @@ import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
-@KestraTest
+@MicronautTest(transactional = false)
 public abstract class AbstractFlowRepositoryTest {
     public static final String TEST_NAMESPACE = "io.kestra.unittest";
     public static final String TEST_FLOW_ID = "test";
@@ -288,8 +288,35 @@ public abstract class AbstractFlowRepositoryTest {
         assertThat(flowRepository.findById(tenant, flow.getNamespace(), flow.getId()).isPresent()).isFalse();
         assertThat(flowRepository.findById(tenant, flow.getNamespace(), flow.getId(), Optional.of(save.getRevision())).isPresent()).isTrue();
 
-        List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, flow.getNamespace(), flow.getId());
+        List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, flow.getNamespace(), flow.getId(), true);
         assertThat(revisions.getLast().getRevision()).isEqualTo(delete.getRevision());
+    }
+
+    @Test
+    protected void shouldDeleteRevisions() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            FlowWithSource revision1 = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+            toDelete.add(revision1);
+
+            FlowWithSource revision2 = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), revision1);
+            toDelete.add(revision2);
+
+            FlowWithSource revision3 = flowRepository.update(createTestingLogFlow(tenant, flowId, "third"), revision2);
+            toDelete.add(revision3);
+
+            flowRepository.deleteRevisions(tenant, TEST_NAMESPACE, flowId, List.of(1, 2));
+
+            List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, false);
+
+            assertThat(revisions).hasSize(1);
+            assertThat(revisions.getFirst()).usingRecursiveComparison().ignoringFields("triggers").isEqualTo(revision3);
+
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
     }
 
     @Test
@@ -436,13 +463,13 @@ public abstract class AbstractFlowRepositoryTest {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         final String flowId = IdUtils.create();
         FlowWithSource created = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
-        assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId).size()).isEqualTo(1);
+        assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true).size()).isEqualTo(1);
 
         // When
         flowRepository.delete(created);
 
         // Then
-        assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId).size()).isEqualTo(2);
+        assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true).size()).isEqualTo(2);
     }
 
     @Test
@@ -461,7 +488,7 @@ public abstract class AbstractFlowRepositoryTest {
             toDelete.add(flowRepository.create(createTestingLogFlow(tenant, flowId, "second")));
 
             // Then
-            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId).size()).isEqualTo(3);
+            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true).size()).isEqualTo(3);
             assertThat(flowRepository.lastRevision(tenant, TEST_NAMESPACE, flowId)).isEqualTo(3);
         } finally {
             toDelete.forEach(this::deleteFlow);
@@ -512,7 +539,39 @@ public abstract class AbstractFlowRepositoryTest {
 
             // Then
             assertThat(flowRepository.findById(tenant, TEST_NAMESPACE, flowId, Optional.empty())).isEqualTo(Optional.empty());
-            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId).size()).isEqualTo(3);
+            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true).size()).isEqualTo(3);
+            assertThat(flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, false).size()).isEqualTo(2);
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    protected void shouldFindRevisions() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            FlowWithSource revision1 = flowRepository.create(createTestingLogFlow(tenant, flowId, "first"));
+            toDelete.add(revision1);
+
+            FlowWithSource revision2 = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), revision1);
+            toDelete.add(revision2);
+
+            FlowWithSource revision3 = flowRepository.update(createTestingLogFlow(tenant, flowId, "third"), revision2);
+            toDelete.add(revision3);
+
+            FlowWithSource revision4 = flowRepository.update(createTestingLogFlow(tenant, flowId, "fourth"), revision3);
+            toDelete.add(revision4);
+
+            List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE,
+                flowId, null, List.of(1, 3, 4));
+
+            assertThat(revisions).hasSize(3);
+            assertThat(revisions.get(0)).usingRecursiveComparison().ignoringFields("triggers").isEqualTo(revision1);
+            assertThat(revisions.get(1)).usingRecursiveComparison().ignoringFields("triggers").isEqualTo(revision3);
+            assertThat(revisions.get(2)).usingRecursiveComparison().ignoringFields("triggers").isEqualTo(revision4);
+
         } finally {
             toDelete.forEach(this::deleteFlow);
         }
@@ -769,7 +828,7 @@ public abstract class AbstractFlowRepositoryTest {
         }
     }
 
-    private static GenericFlow createTestingLogFlow(String tenantId, String id, String logMessage) {
+    protected static GenericFlow createTestingLogFlow(String tenantId, String id, String logMessage) {
         String source = """
                id: %s
                namespace: %s

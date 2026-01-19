@@ -12,6 +12,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,7 +29,7 @@ import static io.kestra.core.models.flows.FlowScope.USER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@MicronautTest(transactional = false)
 public abstract class AbstractTriggerRepositoryTest {
     private static final String TEST_NAMESPACE = "io.kestra.unittest";
 
@@ -226,5 +227,44 @@ public abstract class AbstractTriggerRepositoryTest {
             triggerRepository.delete(savedA);
             triggerRepository.delete(savedB);
         }
+    }
+
+    @Test
+    void should_find_exact_prefix_suffix() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        Trigger trigger = generateDefaultTrigger(tenant).toBuilder().flowId("some_search_trigger").build();
+        triggerRepository.save(trigger);
+
+        // exact match
+        ArrayListTotal<Trigger> entries = triggerRepository.find(
+            Pageable.UNPAGED,
+            tenant,
+            List.of(QueryFilter.builder().field(Field.QUERY).value("some_search_trigger").operation(Op.EQUALS).build())
+        );
+        assertThat(entries).hasSize(1);
+
+        // prefix match
+        entries = triggerRepository.find(
+            Pageable.UNPAGED,
+            tenant,
+            List.of(QueryFilter.builder().field(Field.QUERY).value("some_search").operation(Op.EQUALS).build())
+        );
+        assertThat(entries).hasSize(1);
+
+        // suffix match
+        entries = triggerRepository.find(
+            Pageable.UNPAGED,
+            tenant,
+            List.of(QueryFilter.builder().field(Field.QUERY).value("search_trigger").operation(Op.EQUALS).build())
+        );
+        assertThat(entries).hasSize(1);
+
+        // no match
+        entries = triggerRepository.find(
+            Pageable.UNPAGED,
+            tenant,
+            List.of(QueryFilter.builder().field(Field.QUERY).value("nothing").operation(Op.EQUALS).build())
+        );
+        assertThat(entries).hasSize(0);
     }
 }

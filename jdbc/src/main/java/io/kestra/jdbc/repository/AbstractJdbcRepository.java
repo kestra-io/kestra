@@ -37,6 +37,10 @@ import java.util.stream.Stream;
 import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
 
 public abstract class AbstractJdbcRepository {
+    public static final Field<Boolean> DELETED_FIELD = field("deleted", Boolean.class);
+    public static final Field<String> TENANT_ID_FIELD = field("tenant_id", String.class);
+    public static final Field<String> KEY_FIELD = field("key", String.class);
+    public static final Field<Object> VALUE_FIELD = field("value", Object.class);
 
     protected static final int FETCH_SIZE = 100;
 
@@ -44,16 +48,14 @@ public abstract class AbstractJdbcRepository {
     @Value("${kestra.system-flows.namespace:" + SYSTEM_FLOWS_DEFAULT_NAMESPACE + "}")
     private String systemFlowNamespace;
 
-    private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
-
     protected Condition defaultFilter() {
-        return field("deleted", Boolean.class).eq(false);
+        return DELETED_FIELD.eq(false);
     }
 
     protected Condition defaultFilter(Boolean allowDeleted) {
         return allowDeleted ?
-            field("deleted", Boolean.class).in(true, false) :
-            field("deleted", Boolean.class).eq(false);
+            DELETED_FIELD.in(true, false) :
+            DELETED_FIELD.eq(false);
     }
 
     protected Condition defaultFilter(String tenantId) {
@@ -65,8 +67,8 @@ public abstract class AbstractJdbcRepository {
 
         // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
         return allowDeleted ?
-            tenant.and(field("deleted", Boolean.class).in(true, false)) :
-            tenant.and(field("deleted", Boolean.class).eq(false));
+            tenant.and(DELETED_FIELD.in(true, false)) :
+            tenant.and(DELETED_FIELD.eq(false));
     }
 
     protected Condition defaultFilterWithNoACL(String tenantId) {
@@ -78,12 +80,12 @@ public abstract class AbstractJdbcRepository {
 
         // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
         return deleted ?
-            tenant.and(field("deleted", Boolean.class).in(true, false)) :
-            tenant.and(field("deleted", Boolean.class).eq(false));
+            tenant.and(DELETED_FIELD.in(true, false)) :
+            tenant.and(DELETED_FIELD.eq(false));
     }
 
     protected Condition buildTenantCondition(String tenantId) {
-        return tenantId == null ? field("tenant_id").isNull() : field("tenant_id").eq(tenantId);
+        return tenantId == null ? TENANT_ID_FIELD.isNull() : TENANT_ID_FIELD.eq(tenantId);
     }
 
     public static Field<Object> field(String name) {
@@ -214,16 +216,12 @@ public abstract class AbstractJdbcRepository {
      * @return the select step with the applied ordering
      */
     protected <F extends Enum<F>> SelectSeekStepN<Record> orderBy(SelectHavingStep<Record> selectHavingStep, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors) {
-        List<SortField<?>> orderFields = new ArrayList<>();
-        if (!ListUtils.isEmpty(descriptors.getOrderBy())) {
-            orderFields = descriptors.getOrderBy().stream()
-                .map(orderBy -> {
-                    Field<?> field = field(orderBy.getColumn());
-                    return orderBy.getOrder() == Order.ASC ? field.asc() : field.desc();
-                })
-                .toList();
-
-        }
+        List<SortField<?>> orderFields = ListUtils.emptyOnNull(descriptors.getOrderBy()).stream()
+            .map(orderBy -> {
+                Field<?> field = field(orderBy.getColumn());
+                return orderBy.getOrder() == Order.ASC ? field.asc() : field.desc();
+            })
+            .toList();
 
         return selectHavingStep.orderBy(orderFields);
     }
@@ -300,7 +298,7 @@ public abstract class AbstractJdbcRepository {
         }
 
         // Special handling for START_DATE and END_DATE
-        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED) {
+        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED || field == QueryFilter.Field.CREATED) {
             if(dateColumn == null){
                 throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
@@ -324,6 +322,14 @@ public abstract class AbstractJdbcRepository {
             }
         }
 
+        if(field == QueryFilter.Field.TRIGGER_STATE){
+            return applyTriggerStateCondition(value, operation);
+        }
+
+        if (field.equals(QueryFilter.Field.METADATA)) {
+            return findMetadataCondition((Map<?, ?>) value, operation);
+        }
+
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -336,12 +342,11 @@ public abstract class AbstractJdbcRepository {
             case IN -> DSL.field(columnName).in(ListUtils.convertToListString(value));
             case NOT_IN -> DSL.field(columnName).notIn(ListUtils.convertToListString(value));
             case STARTS_WITH -> DSL.field(columnName).like(value + "%");
-
             case ENDS_WITH -> DSL.field(columnName).like("%" + value);
             case CONTAINS -> DSL.field(columnName).like("%" + value + "%");
             case REGEX -> DSL.field(columnName).likeRegex((String) value);
-            case PREFIX -> DSL.field(columnName).like(value + "%")
-                    .or(DSL.field(columnName).eq(value));
+            case PREFIX -> DSL.field(columnName).like(value + ".%")
+                .or(DSL.field(columnName).eq(value));
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
     }
@@ -350,12 +355,7 @@ public abstract class AbstractJdbcRepository {
         if (o == null) return null;
 
         if (o instanceof Boolean
-            || o instanceof Byte
-            || o instanceof Short
-            || o instanceof Integer
-            || o instanceof Long
-            || o instanceof Float
-            || o instanceof Double
+            || o instanceof Number
             || o instanceof Character
             || o instanceof String) {
             return o;
@@ -373,6 +373,10 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
+    }
+
+    protected Condition findMetadataCondition(Map<?, ?> metadata, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
@@ -466,6 +470,23 @@ public abstract class AbstractJdbcRepository {
             case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
             case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
+        };
+    }
+
+    private Condition applyTriggerStateCondition(Object value, QueryFilter.Op operation) {
+        String triggerState =  value.toString();
+        Boolean isDisabled = switch (triggerState) {
+            case "disabled" -> true;
+            case "enabled" -> false;
+            default -> null;
+        };
+        if (isDisabled == null) {
+            return DSL.noCondition();
+        }
+        return switch (operation) {
+            case EQUALS -> field("disabled").eq(isDisabled);
+            case NOT_EQUALS -> field("disabled").ne(isDisabled);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for Trigger State: " + operation);
         };
     }
 

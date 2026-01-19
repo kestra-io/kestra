@@ -1,8 +1,8 @@
 package io.kestra.core.reporter.reports;
 
-import io.kestra.core.junit.annotations.KestraTest;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 
-@KestraTest
+@MicronautTest
 class PostgresServiceUsageReportTest extends AbstractServiceUsageReportTest {
-    
+
 }

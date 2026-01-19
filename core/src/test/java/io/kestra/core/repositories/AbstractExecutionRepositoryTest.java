@@ -4,7 +4,6 @@ import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.junit.annotations.FlakyTest;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
@@ -33,6 +32,7 @@ import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -58,7 +58,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
-@KestraTest
+@MicronautTest
 public abstract class AbstractExecutionRepositoryTest {
     public static final String NAMESPACE = "io.kestra.unittest";
     public static final String FLOW = "full";
@@ -667,8 +667,23 @@ public abstract class AbstractExecutionRepositoryTest {
                 List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
             .taskRunList(List.of())
             .build();
-
         execution = executionRepository.save(execution);
+
+        // test executions should not be returned
+        Execution testExecution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .kind(ExecutionKind.TEST)
+            .build();
+        executionRepository.save(testExecution);
+
 
         var now = ZonedDateTime.now();
         ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(tenantId, Executions.builder()

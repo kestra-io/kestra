@@ -5,13 +5,13 @@
                 <Logo style="width: 14rem;" />
             </div>
             <el-steps :space="60" direction="vertical" :active="activeStep" finishStatus="success">
-                <el-step :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="t('setup.steps.user')" :class="{'primary-icon': activeStep <= 0}" />
+                <el-step :icon="activeStep > 0 ? CheckBold : AccountPlus" :title="$t('setup.steps.user')" :class="{'primary-icon': activeStep <= 0}" />
                 <el-step
                     :icon="activeStep > 1 ? CheckBold : MessageOutline"
-                    :title="t('setup.steps.survey')"
+                    :title="$t('setup.steps.survey')"
                     :class="{'primary-icon': activeStep <= 1}"
                 />
-                <el-step :icon="LightningBolt" :title="t('setup.steps.complete')" class="primary-icon" />
+                <el-step :icon="LightningBolt" :title="$t('setup.steps.complete')" class="primary-icon" />
             </el-steps>
         </el-col>
         <el-col :xs="24" :md="16" class="setup-main">
@@ -19,16 +19,16 @@
                 <template #header v-if="activeStep !== 2">
                     <div class="card-header">
                         <el-text size="large" class="header-title" v-if="activeStep === 0">
-                            {{ t('setup.titles.user') }}
+                            {{ $t('setup.titles.user') }}
                         </el-text>
                         <el-text size="large" class="header-title" v-else-if="activeStep === 1">
-                            {{ t('setup.titles.survey') }}
+                            {{ $t('setup.titles.survey') }}
                         </el-text>
                         <el-text class="d-block mt-4">
                             {{ subtitles[activeStep] }}
                         </el-text>
                         <el-button v-if="activeStep === 1" class="skip-button" @click="handleSurveySkip()">
-                            {{ t('setup.survey.skip') }}
+                            {{ $t('setup.survey.skip') }}
                         </el-button>
                     </div>
                 </template>
@@ -36,8 +36,8 @@
                 <div class="setup-card-body">
                     <div v-if="activeStep === 0">
                         <el-form ref="userForm" labelPosition="top" :rules="userRules" :model="formData" :showMessage="false" @submit.prevent="handleUserFormSubmit()">
-                            <el-form-item :label="t('setup.form.email')" prop="username">
-                                <el-input v-model="userFormData.username" :placeholder="t('setup.form.email')" type="email">
+                            <el-form-item :label="$t('setup.form.email')" prop="username">
+                                <el-input v-model="userFormData.username" :placeholder="$t('setup.form.email')" type="email">
                                     <template #suffix v-if="getFieldError('username')">
                                         <el-tooltip placement="top" :content="getFieldError('username')">
                                             <InformationOutline class="validation-icon error" />
@@ -45,8 +45,8 @@
                                     </template>
                                 </el-input>
                             </el-form-item>
-                            <el-form-item :label="t('setup.form.firstName')" prop="firstName">
-                                <el-input v-model="userFormData.firstName" :placeholder="t('setup.form.firstName')">
+                            <el-form-item :label="$t('setup.form.firstName')" prop="firstName">
+                                <el-input v-model="userFormData.firstName" :placeholder="$t('setup.form.firstName')">
                                     <template #suffix v-if="getFieldError('firstName')">
                                         <el-tooltip placement="top" :content="getFieldError('firstName')">
                                             <InformationOutline class="validation-icon error" />
@@ -54,8 +54,8 @@
                                     </template>
                                 </el-input>
                             </el-form-item>
-                            <el-form-item :label="t('setup.form.lastName')" prop="lastName">
-                                <el-input v-model="userFormData.lastName" :placeholder="t('setup.form.lastName')">
+                            <el-form-item :label="$t('setup.form.lastName')" prop="lastName">
+                                <el-input v-model="userFormData.lastName" :placeholder="$t('setup.form.lastName')">
                                     <template #suffix v-if="getFieldError('lastName')">
                                         <el-tooltip placement="top" :content="getFieldError('lastName')">
                                             <InformationOutline class="validation-icon error" />
@@ -63,12 +63,12 @@
                                     </template>
                                 </el-input>
                             </el-form-item>
-                            <el-form-item :label="t('setup.form.password')" prop="password" class="mb-2">
+                            <el-form-item :label="$t('setup.form.password')" prop="password" class="mb-2">
                                 <el-input
                                     type="password"
                                     showPassword
                                     v-model="userFormData.password"
-                                    :placeholder="t('setup.form.password')"
+                                    :placeholder="$t('setup.form.password')"
                                 >
                                     <template #suffix v-if="getFieldError('password')">
                                         <el-tooltip placement="top" :content="getFieldError('password')">
@@ -79,20 +79,20 @@
                             </el-form-item>
                             <div class="password-requirements mb-4">
                                 <el-text>     
-                                    {{ t('setup.form.password_requirements') }}
+                                    {{ $t('setup.form.password_requirements') }}
                                 </el-text>
                             </div>
                         </el-form>
                         <div class="d-flex gap-1">
                             <el-button type="primary" @click="handleUserFormSubmit()" :disabled="!isUserStepValid">
-                                {{ t("setup.confirm.confirm") }}
+                                {{ $t("setup.confirm.confirm") }}
                             </el-button>
                         </div>
                     </div>
 
                     <div v-else-if="activeStep === 1">
                         <el-form ref="surveyForm" labelPosition="top" :model="surveyData" :showMessage="false">
-                            <el-form-item :label="t('setup.survey.company_size')">
+                            <el-form-item :label="$t('setup.survey.company_size')">
                                 <el-radio-group v-model="surveyData.companySize" class="survey-radio-group">
                                     <el-radio
                                         v-for="option in companySizeOptions"
@@ -106,7 +106,7 @@
 
                             <el-divider class="my-4" />
 
-                            <el-form-item :label="t('setup.survey.use_case')">
+                            <el-form-item :label="$t('setup.survey.use_case')">
                                 <div class="use-case-checkboxes">
                                     <el-checkbox-group v-model="surveyData.useCases">
                                         <el-checkbox
@@ -125,14 +125,14 @@
 
                             <el-form-item>
                                 <el-checkbox v-model="surveyData.newsletter" class="newsletter-checkbox">
-                                    <span v-html="t('setup.survey.newsletter')" />
+                                    <span v-html="$t('setup.survey.newsletter')" />
                                 </el-checkbox>
                             </el-form-item>
                         </el-form>
 
                         <div class="d-flex">
                             <el-button type="primary" @click="handleSurveyContinue()">
-                                {{ t("setup.survey.continue") }}
+                                {{ $t("setup.survey.continue") }}
                             </el-button>
                         </div>
                     </div>
@@ -141,14 +141,14 @@
                         <img :src="success" alt="success" class="success-img">
                         <div class="success-content">
                             <h1 class="success-title">
-                                {{ t('setup.success.title') }}
+                                {{ $t('setup.success.title') }}
                             </h1>
                             <p class="success-subtitle">
-                                {{ t('setup.success.subtitle') }}
+                                {{ $t('setup.success.subtitle') }}
                             </p>
                         </div>
                         <el-button @click="completeSetup()" type="primary" class="success-button">
-                            {{ t('setup.steps.complete') }}
+                            {{ $t('setup.steps.complete') }}
                         </el-button>
                     </div>
                 </div>

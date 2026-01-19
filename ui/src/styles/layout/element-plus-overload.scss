@@ -805,6 +805,7 @@ form.ks-horizontal {
     .el-dropdown-menu {
         padding: 0;
         background-color: var(--ks-dropdown-background);
+        border-radius: 0.5rem;
     }
 
     // no longer require focus to get hover effect on dropdowns

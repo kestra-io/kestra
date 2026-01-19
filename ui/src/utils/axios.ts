@@ -14,7 +14,7 @@ let requestsTotal = 0
 let requestsCompleted = 0
 const latencyThreshold = 0
 
-const JWT_REFRESHED_QUERY = "__jwt_refreshed__"
+const REFRESHED_HEADER = "X-JWT-Refreshed"
 
 const progressComplete = () => {
     pendingRoute = false
@@ -169,13 +169,10 @@ export const createAxios = (
                 }
 
                 if (!refreshing) {
-                    const originalRequestData = typeof originalRequest.data === "string"
-                        ? JSON.parse(originalRequest.data || "{}")
-                        : (originalRequest.data ?? {})
 
                     // if we already tried refreshing the token,
                     // the user simply does not have access to this feature
-                    if (originalRequestData[JWT_REFRESHED_QUERY] === 1) {
+                    if (originalRequest.headers[REFRESHED_HEADER] === "1") {
                         return Promise.reject(errorResponse)
                     }
 
@@ -200,8 +197,7 @@ export const createAxios = (
                         refreshing = false
 
                         // Retry original request
-                        originalRequestData[JWT_REFRESHED_QUERY] = 1
-                        originalRequest.data = originalRequest.data ? JSON.stringify(originalRequestData) : undefined
+                        originalRequest.headers[REFRESHED_HEADER] = "1"
 
                         return instance(originalRequest)
 
@@ -301,7 +297,7 @@ export const useAxios = () => {
 
     const miscStore = useMiscStore();
     const {edition} = miscStore.configs || {};
-        
+
     if (!axiosInstance) {
         axiosInstance = createAxios(router, edition === "OSS");
     }

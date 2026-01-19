@@ -25,7 +25,7 @@ public class ConcurrencyLimitController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
-    @Operation(tags = {"Flows", "Executions"}, summary = "Search for flow concurrency limits")
+    @Operation(tags = {"Flows"}, summary = "Search for flow concurrency limits")
     public PagedResults<ConcurrencyLimit> searchConcurrencyLimits() {
         var results = concurrencyLimitService.find(tenantService.resolveTenant());
         return PagedResults.of(new ArrayListTotal<>(results, results.size()));
@@ -33,7 +33,7 @@ public class ConcurrencyLimitController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Put("/{namespace}/{flowId}")
-    @Operation(tags = {"Flows", "Executions"}, summary = "Update a flow concurrency limit")
+    @Operation(tags = {"Flows"}, summary = "Update a flow concurrency limit")
     public HttpResponse<ConcurrencyLimit> updateConcurrencyLimit(@Body ConcurrencyLimit concurrencyLimit) {
         var existing = concurrencyLimitService.findById(concurrencyLimit.getTenantId(), concurrencyLimit.getNamespace(), concurrencyLimit.getFlowId());
         if (existing.isEmpty()) {

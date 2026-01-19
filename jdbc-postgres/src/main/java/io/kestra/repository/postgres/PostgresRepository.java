@@ -1,12 +1,9 @@
 package io.kestra.repository.postgres;
 
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.model.Pageable;
@@ -15,6 +12,7 @@ import lombok.SneakyThrows;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
+import org.jooq.InsertOnDuplicateSetMoreStep;
 import org.jooq.JSONB;
 import org.jooq.Record;
 import org.jooq.RecordMapper;
@@ -22,11 +20,13 @@ import org.jooq.Result;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.annotation.Nullable;
+
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
 
 @PostgresRepositoryEnabled
 @EachBean(JdbcTableConfig.class)
@@ -55,10 +55,10 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     @SneakyThrows
     @Override
     public Map<Field<Object>, Object> persistFields(T entity) {
-        String json = JdbcMapper.of().writeValueAsString(entity);
-        return new HashMap<>(ImmutableMap
-            .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), DSL.val(JSONB.valueOf(json)))
-        );
+        String json = MAPPER.writeValueAsString(entity);
+        Map<Field<Object>, Object> fields = HashMap.newHashMap(1);
+        fields.put(VALUE_FIELD, DSL.val(JSONB.valueOf(json)));
+        return fields;
     }
 
     @SneakyThrows
@@ -68,33 +68,25 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
 
         context
             .insertInto(table)
-            .set(AbstractJdbcRepository.field("key"), key(entity))
+            .set(KEY_FIELD, key(entity))
             .set(finalFields)
-            .onConflict(AbstractJdbcRepository.field("key"))
+            .onConflict(KEY_FIELD)
             .doUpdate()
             .set(finalFields)
             .execute();
     }
 
     @Override
-    public int persistBatch(List<T> items) {
-        return dslContextWrapper.transactionResult(configuration -> {
-            DSLContext dslContext = DSL.using(configuration);
-            var inserts = items.stream().map(item -> {
-                    Map<Field<Object>, Object> finalFields = this.persistFields(item);
+    protected InsertOnDuplicateSetMoreStep<Record> buildInsertRequest(T entity, Map<Field<Object>, Object> fields,
+        DSLContext dslContext) {
 
-                    return dslContext
-                        .insertInto(table)
-                        .set(AbstractJdbcRepository.field("key"), key(item))
-                        .set(finalFields)
-                        .onConflict(AbstractJdbcRepository.field("key"))
-                        .doUpdate()
-                        .set(finalFields);
-                })
-                .toList();
-
-            return Arrays.stream(dslContext.batch(inserts).execute()).sum();
-        });
+        return dslContext
+            .insertInto(table)
+            .set(KEY_FIELD, key(entity))
+            .set(fields)
+            .onConflict(KEY_FIELD)
+            .doUpdate()
+            .set(fields);
     }
 
     @SuppressWarnings("unchecked")
@@ -111,7 +103,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
         )
             .fetch();
 
-        Integer totalCount = results.size() > 0 ? results.getFirst().get("total_count", Integer.class) : 0;
+        Integer totalCount = !results.isEmpty() ? results.getFirst().get("total_count", Integer.class) : 0;
 
         List<E> map = results
             .map((Record record) -> mapper.map((R) record));

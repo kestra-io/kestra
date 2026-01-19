@@ -138,7 +138,7 @@ public class KVController {
             JsonNode jsonNode = JacksonMapper.ofIon().readTree(value);
             kvStore(namespace).put(key, new KVValueAndMetadata(metadata, jsonNode));
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Invalid JSON value for: " + value);
+            kvStore(namespace).put(key, new KVValueAndMetadata(metadata, value));
         }
     }
 

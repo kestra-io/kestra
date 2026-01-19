@@ -7,6 +7,7 @@ import io.kestra.core.exceptions.FlowNotFoundException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.executions.Execution.FailedExecutionWithLog;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.sla.*;
 import io.kestra.core.models.tasks.ExecutableTask;
@@ -116,10 +117,6 @@ public class JdbcExecutor implements ExecutorInterface {
     @Inject
     @Named(QueueFactoryInterface.SUBFLOWEXECUTIONEND_NAMED)
     private QueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
-
-    @Inject
-    @Named(QueueFactoryInterface.CLUSTER_EVENT_NAMED)
-    private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
 
     @Inject
     @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
@@ -297,10 +294,23 @@ public class JdbcExecutor implements ExecutorInterface {
         this.receiveCancellations.addFirst(((JdbcQueue<Execution>) this.executionQueue).receiveBatch(
             Executor.class,
             executions -> {
-                List<CompletableFuture<Void>> futures = executions.stream()
-                    .map(execution -> CompletableFuture.runAsync(() -> executionQueue(execution), executionExecutorService))
+                // process execution message grouped by executionId to avoid concurrency as the execution level as it would
+                List<CompletableFuture<Void>> perExecutionFutures = executions.stream()
+                    .filter(Either::isLeft)
+                    .collect(Collectors.groupingBy(either -> either.getLeft().getId()))
+                    .values()
+                    .stream()
+                    .map(eithers -> CompletableFuture.runAsync(() -> {
+                        eithers.forEach(this::executionQueue);
+                    }, executionExecutorService))
                     .toList();
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+                // directly process deserialization issues as most of the time there will be none
+                executions.stream()
+                    .filter(Either::isRight)
+                    .forEach(either -> executionQueue(either));
+
+                CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
             }
         ));
         this.receiveCancellations.addFirst(((JdbcQueue<WorkerTaskResult>) this.workerTaskResultQueue).receiveBatch(
@@ -316,7 +326,17 @@ public class JdbcExecutor implements ExecutorInterface {
         this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));
         this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
-        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        this.receiveCancellations.addFirst(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
+            @Override
+            public void onMaintenanceModeEnter() {
+                JdbcExecutor.this.enterMaintenance();
+            }
+
+            @Override
+            public void onMaintenanceModeExit() {
+                JdbcExecutor.this.exitMaintenance();
+            }
+        })::dispose);
 
         executionDelayFuture = scheduledDelay.scheduleAtFixedRate(
             this::executionDelaySend,
@@ -435,20 +455,6 @@ public class JdbcExecutor implements ExecutorInterface {
             });
     }
 
-    private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a cluster event: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ClusterEvent clusterEvent = either.getLeft();
-        log.info("Cluster event received: {}", clusterEvent);
-        switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> enterMaintenance();
-            case MAINTENANCE_EXIT -> exitMaintenance();
-        }
-    }
-
     private void enterMaintenance() {
         this.executionQueue.pause();
         this.workerTaskResultQueue.pause();
@@ -563,7 +569,7 @@ public class JdbcExecutor implements ExecutorInterface {
                             ExecutionDelay executionDelay = ExecutionDelay.builder()
                                 .executionId(executor.getExecution().getId())
                                 .date(execution.getScheduleDate())
-                                .state(State.Type.RUNNING)
+                                .state(State.Type.CREATED)
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                             executionDelayStorage.save(executionDelay);
@@ -744,7 +750,7 @@ public class JdbcExecutor implements ExecutorInterface {
                         // avoid infinite loop
                         if (!executor.getExecution().getState().getCurrent().isFailed()) {
                             return Pair.of(
-                                handleFailedExecutionFromExecutor(executor, e),
+                                failExecutionFromExecutor(executor, e),
                                 executorState
                             );
                         }
@@ -1206,7 +1212,7 @@ public class JdbcExecutor implements ExecutorInterface {
                     // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
                     boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
                         && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
-                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitionned from KILLING to KILLED
+                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
                     boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
                     if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
                         int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());
@@ -1497,9 +1503,24 @@ public class JdbcExecutor implements ExecutorInterface {
         return taskRun.getId() + (taskRun.getAttempts() != null ? "-" + taskRun.getAttempts().size() : "") + (taskRun.getIteration() == null ? "" : "-" + taskRun.getIteration());
     }
 
+    private Executor failExecutionFromExecutor(Executor executor, Exception e) {
+        Execution.FailedExecutionWithLog failedExecutionWithLog;
+        if (!executor.getExecution().hasFailed()) {
+            failedExecutionWithLog = executor.getExecution().withState(State.Type.FAILED).failedExecutionFromExecutor(e);
+        } else {
+            failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
+        }
+
+        return handleFailedExecutionFromExecutor(executor, failedExecutionWithLog);
+    }
+
     private Executor handleFailedExecutionFromExecutor(Executor executor, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
 
+        return handleFailedExecutionFromExecutor(executor, failedExecutionWithLog);
+    }
+
+    private Executor handleFailedExecutionFromExecutor(Executor executor, FailedExecutionWithLog failedExecutionWithLog) {
         try {
             logQueue.emitAsync(failedExecutionWithLog.getLogs());
         } catch (QueueException ex) {

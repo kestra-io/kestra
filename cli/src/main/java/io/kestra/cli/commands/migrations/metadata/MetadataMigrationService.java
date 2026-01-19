@@ -81,7 +81,7 @@ public class MetadataMigrationService {
             }));
     }
 
-    public void nsFilesMigration() throws IOException {
+    public void nsFilesMigration(boolean verbose) throws IOException {
         this.namespacesPerTenant().entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
             .flatMap(throwFunction(namespaceForTenant -> {
@@ -92,6 +92,9 @@ public class MetadataMigrationService {
             .forEach(throwConsumer(nsFileMetadata -> {
                 if (namespaceFileMetadataRepository.findByPath(nsFileMetadata.getTenantId(), nsFileMetadata.getNamespace(), nsFileMetadata.getPath()).isEmpty()) {
                     namespaceFileMetadataRepository.save(nsFileMetadata);
+                    if (verbose) {
+                        System.out.println("Migrated namespace file metadata: " + nsFileMetadata.getNamespace() + " - " + nsFileMetadata.getPath());
+                    }
                 }
             }));
     }
@@ -103,9 +106,6 @@ public class MetadataMigrationService {
     private static List<PathAndAttributes> listAllFromStorage(StorageInterface storage, Function<String, String> prefixFunction, String tenant, String namespace) throws IOException {
         try {
             String prefix = prefixFunction.apply(namespace);
-            if (!storage.exists(tenant, namespace, URI.create(StorageContext.KESTRA_PROTOCOL + prefix))) {
-                return Collections.emptyList();
-            }
 
             return storage.allByPrefix(tenant, namespace, URI.create(StorageContext.KESTRA_PROTOCOL + prefix + "/"), true).stream()
                 .map(throwFunction(uri -> new PathAndAttributes(uri.getPath().substring(prefix.length()), storage.getAttributes(tenant, namespace, uri))))

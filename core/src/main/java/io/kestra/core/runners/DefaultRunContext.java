@@ -6,11 +6,13 @@ import com.google.common.base.CaseFormat;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.assets.AssetManagerFactory;
 import io.kestra.core.plugins.PluginConfigurations;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
@@ -54,6 +56,7 @@ public class DefaultRunContext extends RunContext {
     private MetricRegistry meterRegistry;
     private VersionProvider version;
     private KVStoreService kvStoreService;
+    private AssetManagerFactory assetManagerFactory;
     private Optional<String> secretKey;
     private WorkingDir workingDir;
     private Validator validator;
@@ -72,6 +75,8 @@ public class DefaultRunContext extends RunContext {
     // those are only used to validate dynamic properties inside the RunContextProperty
     private Task task;
     private AbstractTrigger trigger;
+
+    private volatile AssetEmitter assetEmitter;
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
@@ -161,6 +166,7 @@ public class DefaultRunContext extends RunContext {
             this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
             this.validator = applicationContext.getBean(Validator.class);
             this.localPath = applicationContext.getBean(LocalPathFactory.class).createLocalPath(this);
+            this.assetManagerFactory = applicationContext.getBean(AssetManagerFactory.class);
         }
     }
 
@@ -541,16 +547,28 @@ public class DefaultRunContext extends RunContext {
      * {@inheritDoc}
      */
     @Override
+    public TaskRunInfo taskRunInfo() {
+        Optional<Map<String, Object>> maybeTaskRunMap = Optional.ofNullable(this.getVariables().get("taskrun"))
+            .map(Map.class::cast);
+        return new TaskRunInfo(
+            (String) this.getVariables().get("executionId"),
+            (String) this.getVariables().get("taskId"),
+            maybeTaskRunMap.map(m -> (String) m.get("id"))
+                .orElse(null),
+            maybeTaskRunMap.map(m -> (String) m.get("value"))
+                .orElse(null)
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     @SuppressWarnings("unchecked")
     public FlowInfo flowInfo() {
         Map<String, Object> flow = (Map<String, Object>) this.getVariables().get("flow");
         // normally only tests should not have the flow variable
-        return flow == null ? new FlowInfo(null, null, null, null) : new FlowInfo(
-            (String) flow.get("tenantId"),
-            (String) flow.get("namespace"),
-            (String) flow.get("id"),
-            (Integer) flow.get("revision")
-        );
+        return flow == null ? new FlowInfo(null, null, null, null) : FlowInfo.from(flow);
     }
 
     /**
@@ -592,6 +610,25 @@ public class DefaultRunContext extends RunContext {
     @Override
     public AclChecker acl() {
         return new AclCheckerImpl(this.applicationContext, flowInfo());
+    }
+
+    @Override
+    public AssetEmitter assets() throws IllegalVariableEvaluationException {
+        if (this.assetEmitter == null) {
+            synchronized (this) {
+                if (this.assetEmitter == null) {
+                    this.assetEmitter = assetManagerFactory.of(
+                        Optional.ofNullable(task).map(Task::getAssets)
+                            .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets))
+                            .flatMap(throwFunction(asset -> this.render(asset).as(AssetsDeclaration.class)))
+                            .map(AssetsDeclaration::isEnableAuto)
+                            .orElse(false)
+                    );
+                }
+            }
+        }
+
+        return this.assetEmitter;
     }
 
     @Override

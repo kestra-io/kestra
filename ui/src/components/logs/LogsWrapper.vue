@@ -13,9 +13,9 @@
                         }"
                         :defaultScope="false"
                     />
-                </template>xx
+                </template>
 
-                <template v-if="showStatChart()" #top>
+                <template v-if="showStatChart() && logsStore.logs && logsStore.logs.length > 0" #top>
                     <Sections ref="dashboard" :charts :dashboard="{id: 'default', charts: []}" showDefault class="mb-4" />
                 </template>
 

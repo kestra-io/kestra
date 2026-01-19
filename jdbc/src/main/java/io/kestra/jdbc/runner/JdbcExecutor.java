@@ -1215,30 +1215,28 @@ public class JdbcExecutor implements ExecutorInterface {
                     // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
                     boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
                     if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
-                        int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());
-
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                             var finalFlow = executor.getFlow();
 
-                            if (newLimit < finalFlow.getConcurrency().getLimit()) {
-                                executionQueuedStorage.pop(executor.getFlow().getTenantId(),
-                                    executor.getFlow().getNamespace(),
-                                    executor.getFlow().getId(),
-                                    throwBiConsumer((dslContext, queued) -> {
-                                        var newExecution = queued.withState(State.Type.RUNNING);
-                                        concurrencyLimitStorage.increment(dslContext, finalFlow);
-                                        executionQueue.emit(newExecution);
-                                        metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                            // Pop the next queued execution atomically with decrement/increment to avoid race conditions
+                            // that could leave executions stuck in the queue indefinitely (see issue #13785)
+                            concurrencyLimitStorage.decrementAndPop(
+                                finalFlow,
+                                executionQueuedStorage,
+                                throwBiConsumer((dslContext, queued) -> {
+                                    var newExecution = queued.withState(State.Type.RUNNING);
+                                    executionQueue.emit(newExecution);
+                                    metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
 
-                                        // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                                        processFlowTriggers(newExecution);
-                                    })
-                                );
-                            } else {
-                                log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. No new executions will be dequeued.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
+                                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                                    processFlowTriggers(newExecution);
+                                })
+                            );
+                        } else {
+                            int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());
+                            if (newLimit >= executor.getFlow().getConcurrency().getLimit()) {
+                                log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
                             }
-                        } else if (newLimit >= executor.getFlow().getConcurrency().getLimit()) {
-                            log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
                         }
                     }
                 }

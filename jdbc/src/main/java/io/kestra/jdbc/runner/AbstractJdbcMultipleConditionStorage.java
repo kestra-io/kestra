@@ -31,7 +31,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(
                         field("namespace").eq(flow.getNamespace())
@@ -51,7 +51,7 @@ public abstract class AbstractJdbcMultipleConditionStorage extends AbstractJdbcR
             .transactionResult(configuration -> {
                 SelectConditionStep<Record1<Object>> select = DSL
                     .using(configuration)
-                    .select(field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(
                         getEndDataCondition().and(buildTenantCondition(tenantId))

@@ -27,6 +27,7 @@ import java.util.function.Predicate;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 @Singleton
+@Deprecated(since = "1.3.0", forRemoval = true)
 public class RunnerUtils {
     public static final Duration DEFAULT_MAX_WAIT_DURATION = Duration.ofSeconds(15);
 

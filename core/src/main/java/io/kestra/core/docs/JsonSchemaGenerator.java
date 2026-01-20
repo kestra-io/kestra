@@ -595,9 +595,46 @@ public class JsonSchemaGenerator {
             if (pluginAnnotation != null) {
                 ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
                 if (properties != null) {
-                    properties.set("type", context.getGeneratorConfig().createObjectNode()
-                        .put("const", pluginType.getName())
-                    );
+                    LinkedHashSet<String> allowedTypeValues = new LinkedHashSet<>();
+                    allowedTypeValues.add(pluginType.getName());
+
+                    try {
+                        Set<String> annotationAliases = io.kestra.core.models.Plugin.getAliases(pluginType);
+                        if (annotationAliases != null) {
+                            allowedTypeValues.addAll(annotationAliases.stream().filter(Objects::nonNull).toList());
+                        }
+                    } catch (Exception ignored) {
+                    }
+
+                    if (this.pluginRegistry != null) {
+                        for (RegisteredPlugin rp : this.getRegisteredPlugins()) {
+                            if (rp.getAliases() == null || rp.getAliases().isEmpty()) {
+                                continue;
+                            }
+
+                            for (Map.Entry<String, Class<?>> aliasEntry : rp.getAliases().values()) {
+                                if (aliasEntry == null || aliasEntry.getValue() == null || aliasEntry.getKey() == null) {
+                                    continue;
+                                }
+                                if (aliasEntry.getValue().equals(pluginType)) {
+                                    allowedTypeValues.add(aliasEntry.getKey());
+                                }
+                            }
+                        }
+                    }
+
+                    if (allowedTypeValues.size() == 1) {
+                        properties.set("type", context.getGeneratorConfig().createObjectNode()
+                            .put("const", allowedTypeValues.iterator().next())
+                        );
+                    } else {
+                        ArrayNode enumNode = context.getGeneratorConfig().createArrayNode();
+                        allowedTypeValues.forEach(enumNode::add);
+
+                        ObjectNode typeNode = context.getGeneratorConfig().createObjectNode();
+                        typeNode.set("enum", enumNode);
+                        properties.set("type", typeNode);
+                    }
                 }
             }
         });

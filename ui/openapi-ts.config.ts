@@ -14,12 +14,9 @@ export default defineConfig({
   input: "../webserver/build/classes/java/main/META-INF/swagger/kestra.yml",
   output: {
     path: "./src/generated/kestra-api",
+    postProcess: ["eslint"],
   },
-  postProcess: {
-    eslint: {
-      enabled: true,
-    },
-  },
+  
   plugins: [
     {
         name: "@hey-api/client-axios",

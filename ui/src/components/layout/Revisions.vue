@@ -18,12 +18,12 @@
                             <el-option
                                 v-for="item in leftOptions"
                                 :key="item.value"
-                                :label="t('revision') + ' '+ item.text"
+                                :label="$t('revision') + ' '+ item.text"
                                 :value="item.value"
                                 class="revision-option"
                             >
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span> {{ t("revision") + " " + item.text }}</span>
+                                    <span> {{ $t("revision") + " " + item.text }}</span>
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
@@ -39,7 +39,7 @@
                                 @click="restoreRevision(revisionLeftIndex, revisionLeftText)"
                                 data-testid="restore-left"
                             >
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ t("restore") }}</span>
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
                             </el-button>
                         </el-button-group>
                     </div>
@@ -53,12 +53,12 @@
                             <el-option
                                 v-for="item in rightOptions"
                                 :key="item.value"
-                                :label="t('revision') + ' '+ item.text"
+                                :label="$t('revision') + ' '+ item.text"
                                 :value="item.value"
                                 class="revision-option"
                             >
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span> {{ t("revision") + " " + item.text }}</span>
+                                    <span> {{ $t("revision") + " " + item.text }}</span>
                                     <TrashCanOutline
                                         @mousedown.stop.prevent
                                         @click.stop.prevent="onDelete(item.value)"
@@ -74,7 +74,7 @@
                                 @click="restoreRevision(revisionRightIndex, revisionRightText)"
                                 data-testid="restore-right"
                             >
-                                <span class="d-none d-lg-inline-block">&nbsp;{{ t("restore") }}</span>
+                                <span class="d-none d-lg-inline-block">&nbsp;{{ $t("restore") }}</span>
                             </el-button>
                         </el-button-group>
                     </div>
@@ -100,7 +100,7 @@
     </div>
     <div v-else>
         <el-alert class="mb-0" showIcon :closable="false">
-            {{ t("no revisions found") }}
+            {{ $t("no revisions found") }}
         </el-alert>
     </div>
 </template>

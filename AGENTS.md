@@ -17,7 +17,6 @@ This file provides guidance for AI coding agents working on the Kestra project. 
 - **`model/`**: Data models and Data Transfer Objects
 - **`platform/`**: Platform-specific implementations
 - **`tests/`**: Integration test framework
-- **`e2e-tests/`**: End-to-end testing suite
 
 ## Development Environment
 

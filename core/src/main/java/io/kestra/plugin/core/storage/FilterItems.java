@@ -35,16 +35,27 @@ import java.util.Map;
 @Plugin(
     examples = {
         @Example(
+            title = "Filter a CSV file and retain rows with a product ID equal to 20.",
             full = true,
             code = {
                 """
+                id: filter_items
+                namespace: company.team
+
                 tasks:
-                   - id: filter
-                     type: io.kestra.plugin.core.storage.FilterItems
-                     from: "{{ inputs.file }}"
-                     filterCondition: " {{ value == null }}"
-                     filterType: EXCLUDE
-                     errorOrNullBehavior: EXCLUDE
+                  - id: download
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+                  - id: csv_to_ion
+                    type: io.kestra.plugin.serdes.csv.CsvToIon
+                    from: "{{ outputs.download.uri }}"
+                  
+                  - id: filter
+                    type: io.kestra.plugin.core.storage.FilterItems
+                    from: "{{ outputs.download.uri }}"
+                    filterCondition: "{{ (product_id | number) == 20 }}"
+                    filterType: INCLUDE
                 """
             }
         )

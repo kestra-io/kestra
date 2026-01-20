@@ -113,7 +113,7 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
                 int newLimit = fetchOne(dslContext, flow).map(
                     concurrencyLimit -> {
                         int decremented = concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1;
-                        save(dslContext, concurrencyLimit.withRunning(decremented));
+                        update(dslContext, concurrencyLimit.withRunning(decremented));
                         return decremented;
                     }
                 ).orElse(0);

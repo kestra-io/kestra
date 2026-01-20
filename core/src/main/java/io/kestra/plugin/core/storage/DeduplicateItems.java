@@ -88,7 +88,7 @@ public class DeduplicateItems extends Task implements RunnableTask<DeduplicateIt
 
     @Schema(
         title = "The Pebble expression to extract the deduplication key from each item",
-        description = "The 'pebble' expression can be used for constructing a composite key."
+        description = "Headers from the file can be referenced directly e.g. `{{ customer_email }}`"
     )
     @PluginProperty
     @NotNull

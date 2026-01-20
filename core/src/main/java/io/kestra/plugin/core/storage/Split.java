@@ -42,7 +42,7 @@ import java.util.List;
                   - id: split
                     type: io.kestra.plugin.core.storage.Split
                     from: "{{ outputs.download.uri }}"
-                    bytes: "5KB"
+                    bytes: 5KB
             """
         ),
         @Example(
@@ -121,7 +121,9 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
 
     @Schema(
         title = "Split file by regex pattern. Lines are grouped by the first capture group value.",
-        description = "A regular expression pattern with a capture group. Lines matching this pattern will be grouped by the captured value. For example, `\\[(\\w+)\\]` will group lines by log level (ERROR, WARN, INFO) extracted from log entries."
+        description = """
+        A regular expression pattern with a capture group. Lines matching this pattern will be grouped by the captured value. For example, `^(\\w+)` will group lines by the first word extracted from the file.
+        """
     )
     @PluginProperty(dynamic = true)
     private Property<String> regexPattern;

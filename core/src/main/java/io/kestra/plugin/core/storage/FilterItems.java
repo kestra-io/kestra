@@ -77,8 +77,8 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
     private Property<String> from;
 
     @Schema(
-        title = "The 'pebble' expression used to match items to be included or excluded",
-        description = "The 'pebble' expression should return a BOOLEAN value (i.e. `true` or `false`). Values `0`, `-0`, and `\"\"` are interpreted as `false`. " +
+        title = "The expression used to match items to be included or excluded",
+        description = "Headers from the file can be referenced directly e.g. `{{ product_id }}` but will be rendered as a string unless paired with a function e.g. `product_id | number`. The Pebble expression should return a BOOLEAN value (i.e. `true` or `false`). Values `0`, `-0`, and `\"\"` are interpreted as `false`. " +
             "Otherwise, any non empty value will be interpreted as `true`."
     )
     @PluginProperty

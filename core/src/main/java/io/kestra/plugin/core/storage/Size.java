@@ -37,7 +37,7 @@ import java.net.URI;
                     commands:
                       - echo "Hello John" > name.txt
                     outputFiles:
-                      - "*.txt"
+                      - "name.txt"
 
                   - id: get_size
                     type: io.kestra.plugin.core.storage.Size

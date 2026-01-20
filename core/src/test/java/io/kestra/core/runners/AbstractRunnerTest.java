@@ -438,37 +438,37 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows(value = {"flows/valids/waitfor.yaml"}, tenantId = "waitfor")
     void waitFor() throws Exception {
-        loopUntilTestCaseTest.waitfor("waitFor");
+        loopUntilTestCaseTest.waitfor("waitfor");
     }
 
     @Test
     @LoadFlows(value = {"flows/valids/waitfor-max-iterations.yaml"}, tenantId = "waitformaxiterations")
     void waitforMaxIterations() throws Exception {
-        loopUntilTestCaseTest.waitforMaxIterations("waitforMaxIterations");
+        loopUntilTestCaseTest.waitforMaxIterations("waitformaxiterations");
     }
 
     @Test
     @LoadFlows(value = {"flows/valids/waitfor-max-duration.yaml"}, tenantId = "waitformaxduration")
     void waitforMaxDuration() throws Exception {
-        loopUntilTestCaseTest.waitforMaxDuration("waitforMaxDuration");
+        loopUntilTestCaseTest.waitforMaxDuration("waitformaxduration");
     }
 
     @Test
     @LoadFlows(value = {"flows/valids/waitfor-no-success.yaml"}, tenantId = "waitfornosuccess")
     void waitforNoSuccess() throws Exception {
-        loopUntilTestCaseTest.waitforNoSuccess("waitforNoSuccess");
+        loopUntilTestCaseTest.waitforNoSuccess("waitfornosuccess");
     }
 
     @Test
     @LoadFlows(value = {"flows/valids/waitfor-multiple-tasks.yaml"}, tenantId = "waitformultipletasks")
     void waitforMultipleTasks() throws Exception {
-        loopUntilTestCaseTest.waitforMultipleTasks("waitforMultipleTasks");
+        loopUntilTestCaseTest.waitforMultipleTasks("waitformultipletasks");
     }
 
     @Test
     @LoadFlows(value = {"flows/valids/waitfor-multiple-tasks-failed.yaml"}, tenantId = "waitformultipletasksfailed")
     void waitforMultipleTasksFailed() throws Exception {
-        loopUntilTestCaseTest.waitforMultipleTasksFailed("waitforMultipleTasksFailed");
+        loopUntilTestCaseTest.waitforMultipleTasksFailed("waitformultipletasksfailed");
     }
 
     @Test

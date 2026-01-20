@@ -47,7 +47,7 @@ import java.nio.charset.StandardCharsets;
                     commands:
                       - echo "1\n2\n3" > numbers.txt
                     outputFiles:
-                      - "*.txt"
+                      - "numbers.txt"
 
                   - id: reverse
                     type: io.kestra.plugin.core.storage.Reverse

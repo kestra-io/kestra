@@ -78,7 +78,7 @@ export const handler: KestraSdkPlugin["Handler"] = ({plugin}) => {
 
         const optionsId = "options"
 
-        // find a cleaner way to do that (expose parameters symbol from operation ?)
+        // FIXME: find a cleaner way to do that (expose parameters symbol from operation ?)
         const parametersWithoutTenant = sym.node?.value._params[0]._type._exprInput["~ref"].props.filter((p: any) => p.name !== "tenant") as any
 
         if(parametersWithoutTenant.length === 0) {

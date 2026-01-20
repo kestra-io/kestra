@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -26,7 +27,6 @@ import io.kestra.core.runners.ExecutorState;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -71,7 +71,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     protected final AbstractJdbcExecutorStateStorage executorStateStorage;
 
     private QueueInterface<Execution> executionQueue;
-    private final NamespaceUtils namespaceUtils;
+    private final KestraConfig kestraConfig;
 
     private final JdbcFilterService filterService;
 
@@ -109,7 +109,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         super(jdbcRepository, queueService);
         this.executorStateStorage = executorStateStorage;
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
-        this.namespaceUtils = applicationContext.getBean(NamespaceUtils.class);
+        this.kestraConfig = applicationContext.getBean(KestraConfig.class);
 
         // we inject ApplicationContext in order to get the ExecutionQueue lazy to avoid StackOverflowError
         this.applicationContext = applicationContext;
@@ -522,9 +522,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     ) {
         if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
             if (scope.contains(FlowScope.USER)) {
-                select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
+                select = select.and(field("namespace").ne(kestraConfig.getSystemFlowNamespace()));
             } else if (scope.contains(FlowScope.SYSTEM)) {
-                select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
+                select = select.and(field("namespace").eq(kestraConfig.getSystemFlowNamespace()));
             }
         }
 

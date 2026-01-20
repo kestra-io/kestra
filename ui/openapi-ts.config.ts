@@ -14,9 +14,12 @@ export default defineConfig({
   input: "../webserver/build/classes/java/main/META-INF/swagger/kestra.yml",
   output: {
     path: "./src/generated/kestra-api",
-    lint: "eslint"
   },
-
+  postProcess: {
+    eslint: {
+      enabled: true,
+    },
+  },
   plugins: [
     {
         name: "@hey-api/client-axios",
@@ -24,8 +27,10 @@ export default defineConfig({
     {
         name: "@hey-api/sdk",
         paramsStructure: "flat",
-        methodNameBuilder(operation) {
-            return `__${generateHash(operation.id)}__`
+        operations: {
+            methodName(operation) {
+                return `__${generateHash(operation)}__`
+            },
         }
     },
     defineKestraHeyConfig({

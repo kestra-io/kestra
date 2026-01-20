@@ -137,10 +137,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 
                   - id: concat_foreach_manual
                     type: io.kestra.plugin.core.storage.Concat
-                    files:
-                      - "{{ outputs.start_api_call.value1.outputFiles['data.txt'] }}"
-                      - "{{ outputs.start_api_call.value2.outputFiles['data.txt'] }}"
-                      - "{{ outputs.start_api_call.value3.outputFiles['data.txt'] }}"
+                    files: "{{ outputs.start_api_call | jq('.[].outputFiles.generated') }}"
                 """
         )
     },

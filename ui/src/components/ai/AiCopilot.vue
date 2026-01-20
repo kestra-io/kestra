@@ -64,11 +64,11 @@
     import Close from "vue-material-design-icons/Close.vue";
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
-    import {useAiStore} from "../../stores/ai";
+    import {AI} from "../../generated/kestra-api/ks-sdk.gen";
     import Utils from "../../utils/utils";
     import {useMiscStore} from "override/stores/misc";
 
-    const aiStore = useAiStore();
+
     const emit = defineEmits<{
         close: [];
         generatedYaml: [string];
@@ -104,12 +104,14 @@
 
         let aiResponse;
         try {
-            aiResponse = await aiStore.generateFlow({
-                userPrompt: prompt.value,
-                flowYaml: props.flow,
-                conversationId: props.conversationId
-            }) as string;
-            emit("generatedYaml", aiResponse);
+            aiResponse = await AI.generateFlow({
+                flowGenerationPrompt: {
+                    userPrompt: prompt.value,
+                    flowYaml: props.flow,
+                    conversationId: props.conversationId
+                }
+            });
+            emit("generatedYaml", aiResponse.data ?? "");
         } catch (e: any) {
             error.value = e.response?.data?.message as string ?? e;
         }

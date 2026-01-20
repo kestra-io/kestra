@@ -351,7 +351,7 @@ class JsonSchemaGeneratorTest {
     void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions.size(), is(30));
+        assertThat(definitions.size(), is(32));
     }
 
     @SuppressWarnings("unchecked")

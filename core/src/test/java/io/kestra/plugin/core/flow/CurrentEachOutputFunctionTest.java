@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 public class CurrentEachOutputFunctionTest {
     @SuppressWarnings("unchecked")
     @Test
-    @ExecuteFlow("flows/valids/current-output.yaml")
+    @ExecuteFlow(value = "flows/valids/current-output.yaml", tenantId = "parallel")
     void parallel(Execution execution) {
         var output1 = (Map<String, Object>) execution.outputs().get("1-1-1_return");
         var outputv11 = (Map<String, Object>) output1.get("v11");

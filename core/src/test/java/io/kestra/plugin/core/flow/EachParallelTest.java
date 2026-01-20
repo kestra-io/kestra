@@ -12,27 +12,27 @@ import org.junit.jupiter.api.Test;
 public class EachParallelTest {
 
     @Test
-    @ExecuteFlow("flows/valids/each-parallel.yaml")
+    @ExecuteFlow(value = "flows/valids/each-parallel.yaml", tenantId = "parallel")
     void parallel(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(8);
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-parallel-nested.yaml")
+    @ExecuteFlow(value = "flows/valids/each-parallel-nested.yaml", tenantId = "parallelnested")
     void parallelNested(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(11);
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-parallel-Integer.yml")
+    @ExecuteFlow(value = "flows/valids/each-parallel-Integer.yml", tenantId = "parallelinteger")
     void parallelInteger(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-parallel-disabled-tasks.yaml")
+    @ExecuteFlow(value = "flows/valids/each-parallel-disabled-tasks.yaml", tenantId = "disabledtasks")
     void disabledTasks(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);

@@ -205,6 +205,12 @@ class JsonSchemaGeneratorTest {
             var metrics = (List<Object>) returnTask.get("$metrics");
             assertThat(metrics.size(), is(2));
 
+            var properties = (Map<String, Object>) returnTask.get("properties");
+            var typeProperty = (Map<String, Object>) properties.get("type");
+            assertThat(typeProperty, is(notNullValue()));
+            var enumList = (List<?>) typeProperty.get("enum");
+            assertThat(enumList.size(), is(2));
+
             var firstMetric = (Map<String, Object>) metrics.getFirst();
             assertThat(firstMetric.get("name"), is("length"));
             assertThat(firstMetric.get("type"), is("counter"));

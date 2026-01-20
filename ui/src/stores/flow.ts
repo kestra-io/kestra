@@ -17,7 +17,7 @@ import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
 import {Flow, FlowWithSource} from "../generated/kestra-api";
-import * as sdk from "../generated/kestra-api/ks-sdk.gen";
+import * as flowSdk from "../generated/kestra-api/sdk/ks-Flows.gen";
 import {InputType} from "../utils/inputs";
 
 const textYamlHeader = {
@@ -238,7 +238,7 @@ export const useFlowStore = defineStore("flow", () => {
 
         const isCreatingBackup = isCreating.value;
         if (isCreating.value && !overrideFlow) {
-            await createFlow({flow: flowSource ?? ""})
+            await flowSdk.createFlow({body: flowSource ?? ""})
                 .then((response) => {
                     if(!response){
                         return;
@@ -292,8 +292,8 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function findFlows(options: Parameters<typeof sdk.flowsSearchFlows>[0] & { onlyTotal?: boolean }) {
-        return sdk.flowsSearchFlows(options).then(response => {
+    function findFlows(options: Parameters<typeof flowSdk.searchFlows>[0] & { onlyTotal?: boolean }) {
+        return flowSdk.searchFlows(options).then(response => {
             if(!response.data){
                 return undefined
             }

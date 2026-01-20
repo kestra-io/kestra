@@ -1,7 +1,9 @@
 package io.kestra.cli.commands.migrations.metadata;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.models.kv.PersistedKvMetadata;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
@@ -12,9 +14,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.InternalKVStore;
 import io.kestra.core.storages.kv.KVEntry;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.NamespaceUtils;
 import jakarta.inject.Singleton;
-import lombok.AllArgsConstructor;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -30,22 +30,36 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
-@AllArgsConstructor
 public class MetadataMigrationService {
     protected FlowRepositoryInterface flowRepository;
     protected TenantService tenantService;
     protected KvMetadataRepositoryInterface kvMetadataRepository;
     protected NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository;
     protected StorageInterface storageInterface;
-    protected NamespaceUtils namespaceUtils;
+    protected KestraConfig kestraConfig;
+
+    @Singleton
+    public MetadataMigrationService(FlowRepositoryInterface flowRepository, 
+                                    TenantService tenantService,
+                                    KvMetadataRepositoryInterface kvMetadataRepository, 
+                                    NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository, 
+                                    StorageInterface storageInterface, 
+                                    KestraConfig kestraConfig) {
+        this.flowRepository = flowRepository;
+        this.tenantService = tenantService;
+        this.kvMetadataRepository = kvMetadataRepository;
+        this.namespaceFileMetadataRepository = namespaceFileMetadataRepository;
+        this.storageInterface = storageInterface;
+        this.kestraConfig = kestraConfig;
+    }
 
     @VisibleForTesting
     public Map<String, List<String>> namespacesPerTenant() {
         String tenantId = tenantService.resolveTenant();
         return Map.of(tenantId, Stream.concat(
-            Stream.of(namespaceUtils.getSystemFlowNamespace()),
+            Stream.of(kestraConfig.getSystemFlowNamespace()),
             flowRepository.findDistinctNamespace(tenantId).stream()
-        ).map(NamespaceUtils::asTree).flatMap(Collection::stream).distinct().toList());
+        ).map(NamespaceInterface::asTree).flatMap(Collection::stream).distinct().toList());
     }
 
     public void kvMigration() throws IOException {
@@ -81,7 +95,7 @@ public class MetadataMigrationService {
             }));
     }
 
-    public void nsFilesMigration() throws IOException {
+    public void nsFilesMigration(boolean verbose) throws IOException {
         this.namespacesPerTenant().entrySet().stream()
             .flatMap(namespacesForTenant -> namespacesForTenant.getValue().stream().map(namespace -> Map.entry(namespacesForTenant.getKey(), namespace)))
             .flatMap(throwFunction(namespaceForTenant -> {
@@ -92,6 +106,9 @@ public class MetadataMigrationService {
             .forEach(throwConsumer(nsFileMetadata -> {
                 if (namespaceFileMetadataRepository.findByPath(nsFileMetadata.getTenantId(), nsFileMetadata.getNamespace(), nsFileMetadata.getPath()).isEmpty()) {
                     namespaceFileMetadataRepository.save(nsFileMetadata);
+                    if (verbose) {
+                        System.out.println("Migrated namespace file metadata: " + nsFileMetadata.getNamespace() + " - " + nsFileMetadata.getPath());
+                    }
                 }
             }));
     }
@@ -103,9 +120,6 @@ public class MetadataMigrationService {
     private static List<PathAndAttributes> listAllFromStorage(StorageInterface storage, Function<String, String> prefixFunction, String tenant, String namespace) throws IOException {
         try {
             String prefix = prefixFunction.apply(namespace);
-            if (!storage.exists(tenant, namespace, URI.create(StorageContext.KESTRA_PROTOCOL + prefix))) {
-                return Collections.emptyList();
-            }
 
             return storage.allByPrefix(tenant, namespace, URI.create(StorageContext.KESTRA_PROTOCOL + prefix + "/"), true).stream()
                 .map(throwFunction(uri -> new PathAndAttributes(uri.getPath().substring(prefix.length()), storage.getAttributes(tenant, namespace, uri))))

@@ -4,10 +4,11 @@
         id="side-menu"
         :menu
         @update:collapsed="onToggleCollapse"
-        width="268px"
+        width="280px"
         :collapsed="collapsed"
         linkComponentName="LeftMenuLink"
         hideToggle
+        showOneChild
     >
         <template #header>
             <SidebarToggleButton

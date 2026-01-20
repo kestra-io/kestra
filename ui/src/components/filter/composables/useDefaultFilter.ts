@@ -4,7 +4,7 @@ import {useMiscStore} from "override/stores/misc";
 import {defaultNamespace} from "../../../composables/useNamespaces";
 
 interface DefaultFilterOptions {
-    namespace?: string;
+    namespace?: string | null;
     includeTimeRange?: boolean;
     includeScope?: boolean;
     legacyQuery?: boolean;
@@ -29,7 +29,8 @@ export function applyDefaultFilters(
     const query = {...currentQuery};
     let change = false;
    
-    if (namespace === undefined && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
+
+    if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
         query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
         change = true;
     }
@@ -45,6 +46,15 @@ export function applyDefaultFilters(
         const defaultDuration = useMiscStore().configs?.chartDefaultDuration ?? "P30D";
         query[legacyQuery ? "timeRange" : `${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = defaultDuration;
         change = true;
+    }
+
+    if (!includeScope) {
+        Object.keys(query).forEach(key => {
+            if (key.startsWith(SCOPE_FILTER_PREFIX)) {
+                delete query[key];
+                change = true;
+            }
+        });
     }
 
     return {query, change};

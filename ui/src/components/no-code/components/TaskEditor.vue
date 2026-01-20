@@ -7,7 +7,7 @@
             <template #label>
                 <div class="type-div">
                     <span class="asterisk">*</span>
-                    <code>{{ t("type") }}</code>
+                    <code>{{ $t("type") }}</code>
                 </div>
             </template>
             <PluginSelect
@@ -32,7 +32,6 @@
 
 <script setup lang="ts">
     import {computed, inject, onActivated, provide, ref, toRaw, watch} from "vue";
-    import {useI18n} from "vue-i18n";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../plugins/PluginSelect.vue";
@@ -52,8 +51,6 @@
     import PlaygroundRunTaskButton from "../../inputs/PlaygroundRunTaskButton.vue";
     import isEqual from "lodash/isEqual";
     import {useMiscStore} from "../../../override/stores/misc";
-
-    const {t} = useI18n();
 
     defineOptions({
         name: "TaskEditor",

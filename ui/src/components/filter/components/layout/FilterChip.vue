@@ -126,6 +126,7 @@
     border-radius: 4px;
     cursor: pointer;
     max-width: 300px;
+    min-height: 32px;
     max-height: 32px;
     user-select: none;
 
@@ -152,6 +153,8 @@
             font-size: 12px;
             color: var(--ks-content-primary);
             white-space: nowrap;
+            display: flex;
+            align-items: center;
         }
         .value {
             font-weight: 700;
@@ -178,12 +181,14 @@
         background: none;
         cursor: pointer;
         padding: 0;
+        margin: 0;
         color: var(--ks-content-tertiary);
+        font-size: 1rem;
         &:hover {
             color: var(--ks-content-secondary);
         }
-        :deep(svg){
-            font-size: 14px;
+        :deep(svg) {
+            font-size: 1rem;
         }
     }
 

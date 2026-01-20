@@ -5,7 +5,7 @@
                 <template v-if="$route.name === 'executions/list'">
                     <li>
                         <el-button :icon="Download" @click="exportExecutionsAsStream()">
-                            {{ t('export_csv') }}
+                            {{ $t('export_csv') }}
                         </el-button>
                     </li>
                     <li>
@@ -478,7 +478,7 @@
         hidden: null,
         flowId: undefined,
         namespace: undefined,
-        defaultScopeFilter: undefined
+        defaultScopeFilter: true
     });
 
     const emit = defineEmits<{

@@ -31,7 +31,9 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @NoArgsConstructor
 @Schema(
     title = "List execution counts for a list of flows.",
-    description = "This can be used to send an alert if a condition is met about execution counts."
+    description = """
+        **This task is deprecated**, please use the `io.kestra.plugin.kestra.executions.Count` task instead.
+        This can be used to send an alert if a condition is met about execution counts."""
 )
 @Plugin(
     examples = {
@@ -75,6 +77,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
     },
     aliases = "io.kestra.core.tasks.executions.Counts"
 )
+@Deprecated(since = "1.2", forRemoval = true)
 public class Count extends Task implements RunnableTask<Count.Output> {
     @Schema(
         title = "A list of flows to be filtered",

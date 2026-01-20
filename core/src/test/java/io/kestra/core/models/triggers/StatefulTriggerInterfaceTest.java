@@ -1,9 +1,8 @@
 package io.kestra.core.models.triggers;
 
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.RunContextFactory;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +16,7 @@ import static io.kestra.core.models.triggers.StatefulTriggerService.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@KestraTest
+@MicronautTest
 class StatefulTriggerInterfaceTest {
     @Inject
     RunContextFactory runContextFactory;

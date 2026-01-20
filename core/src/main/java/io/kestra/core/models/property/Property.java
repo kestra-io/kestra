@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.runners.RunContextProperty;
 import io.kestra.core.serializers.JacksonMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -156,9 +157,9 @@ public class Property<T> {
     /**
      * Render a property, then convert it to its target type.<br>
      * <p>
-     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     * This method is designed to be used only by the {@link RunContextProperty}.
      *
-     * @see io.kestra.core.runners.RunContextProperty#as(Class)
+     * @see RunContextProperty#as(Class)
      */
     public static <T> T as(Property<T> property, PropertyContext context, Class<T> clazz) throws IllegalVariableEvaluationException {
         return as(property, context, clazz, Map.of());
@@ -167,25 +168,57 @@ public class Property<T> {
     /**
      * Render a property with additional variables, then convert it to its target type.<br>
      * <p>
-     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     * This method is designed to be used only by the {@link RunContextProperty}.
      *
-     * @see io.kestra.core.runners.RunContextProperty#as(Class, Map)
+     * @see RunContextProperty#as(Class, Map)
      */
     public static <T> T as(Property<T> property, PropertyContext context, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.skipCache || property.value == null) {
             String rendered = context.render(property.expression, variables);
-            property.value = MAPPER.convertValue(rendered, clazz);
+            property.value = deserialize(rendered, clazz);
         }
 
         return property.value;
     }
 
+    private static <T> T deserialize(Object rendered, Class<T> clazz) throws IllegalVariableEvaluationException {
+        try {
+            return MAPPER.convertValue(rendered, clazz);
+        } catch (IllegalArgumentException e) {
+            if (rendered instanceof String str) {
+                try {
+                    return MAPPER.readValue(str, clazz);
+                } catch (JsonProcessingException ex) {
+                    throw new IllegalVariableEvaluationException(ex);
+                }
+            }
+
+            throw new IllegalVariableEvaluationException(e);
+        }
+    }
+
+    private static <T> T deserialize(Object rendered, JavaType type) throws IllegalVariableEvaluationException {
+        try {
+            return MAPPER.convertValue(rendered, type);
+        } catch (IllegalArgumentException e) {
+            if (rendered instanceof String str) {
+                try {
+                    return MAPPER.readValue(str, type);
+                } catch (JsonProcessingException ex) {
+                    throw new IllegalVariableEvaluationException(ex);
+                }
+            }
+
+            throw new IllegalVariableEvaluationException(e);
+        }
+    }
+
     /**
      * Render a property then convert it as a list of target type.<br>
      * <p>
-     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     * This method is designed to be used only by the {@link RunContextProperty}.
      *
-     * @see io.kestra.core.runners.RunContextProperty#asList(Class)
+     * @see RunContextProperty#asList(Class)
      */
     public static <T, I> T asList(Property<T> property, PropertyContext context, Class<I> itemClazz) throws IllegalVariableEvaluationException {
         return asList(property, context, itemClazz, Map.of());
@@ -194,37 +227,39 @@ public class Property<T> {
     /**
      * Render a property with additional variables, then convert it as a list of target type.<br>
      * <p>
-     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     * This method is designed to be used only by the {@link RunContextProperty}.
      *
-     * @see io.kestra.core.runners.RunContextProperty#asList(Class, Map)
+     * @see RunContextProperty#asList(Class, Map)
      */
     @SuppressWarnings("unchecked")
     public static <T, I> T asList(Property<T> property, PropertyContext context, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.skipCache || property.value == null) {
             JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
-            try {
-                String trimmedExpression = property.expression.trim();
-                // We need to detect if the expression is already a list or if it's a pebble expression (for eg. referencing a variable containing a list).
-                // Doing that allows us to, if it's an expression, first render then read it as a list.
-                if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
-                    property.value = MAPPER.readValue(context.render(property.expression, variables), type);
-                }
-                // Otherwise, if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
-                else {
-                    List<?> asRawList = MAPPER.readValue(property.expression, List.class);
-                    property.value = (T) asRawList.stream()
-                        .map(throwFunction(item -> {
-                            if (item instanceof String str) {
-                                return MAPPER.convertValue(context.render(str, variables), itemClazz);
-                            } else if (item instanceof Map map) {
-                                return MAPPER.convertValue(context.render(map, variables), itemClazz);
-                            }
-                            return item;
-                        }))
-                        .toList();
-                }
-            } catch (JsonProcessingException e) {
-                throw new IllegalVariableEvaluationException(e);
+            String trimmedExpression = property.expression.trim();
+            // We need to detect if the expression is already a list or if it's a pebble expression (for eg. referencing a variable containing a list).
+            // Doing that allows us to, if it's an expression, first render then read it as a list.
+            if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
+                property.value = deserialize(context.render(property.expression, variables), type);
+            }
+            // Otherwise, if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
+            else {
+                List<?> asRawList = deserialize(property.expression, List.class);
+                property.value = (T) asRawList.stream()
+                    .map(throwFunction(item -> {
+                        Object rendered = null;
+                        if (item instanceof String str) {
+                            rendered = context.render(str, variables);
+                        } else if (item instanceof Map map) {
+                            rendered = context.render(map, variables);
+                        }
+
+                        if (rendered != null) {
+                            return deserialize(rendered, itemClazz);
+                        }
+
+                        return item;
+                    }))
+                    .toList();
             }
         }
 
@@ -234,9 +269,9 @@ public class Property<T> {
     /**
      * Render a property then convert it as a map of target types.<br>
      * <p>
-     * This method is designed to be used only by the {@link io.kestra.core.runners.RunContextProperty}.
+     * This method is designed to be used only by the {@link RunContextProperty}.
      *
-     * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class)
+     * @see RunContextProperty#asMap(Class, Class)
      */
     public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
         return asMap(property, runContext, keyClass, valueClass, Map.of());
@@ -248,7 +283,7 @@ public class Property<T> {
      * This method is safe to be used as many times as you want as the rendering and conversion will be cached.
      * Warning, due to the caching mechanism, this method is not thread-safe.
      *
-     * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class, Map)
+     * @see RunContextProperty#asMap(Class, Class, Map)
      */
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static <T, K, V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
@@ -260,12 +295,12 @@ public class Property<T> {
                 // We need to detect if the expression is already a map or if it's a pebble expression (for eg. referencing a variable containing a map).
                 // Doing that allows us to, if it's an expression, first render then read it as a map.
                 if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
-                    property.value = MAPPER.readValue(runContext.render(property.expression, variables), targetMapType);
+                    property.value = deserialize(runContext.render(property.expression, variables), targetMapType);
                 }
                 // Otherwise if it's already a map we read it as a map first then render it from run context which handle map rendering by rendering each entry of the map (otherwise it will fail with nested expressions in values for eg.)
                 else {
                     Map asRawMap = MAPPER.readValue(property.expression, Map.class);
-                    property.value = MAPPER.convertValue(runContext.render(asRawMap, variables), targetMapType);
+                    property.value = deserialize(runContext.render(asRawMap, variables), targetMapType);
                 }
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);

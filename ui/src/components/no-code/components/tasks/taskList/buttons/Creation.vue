@@ -1,5 +1,5 @@
 <template>
-    <el-button @click.prevent.stop="handleClick()" type="primary" :icon="Plus">
+    <el-button @click.prevent.stop="handleClick()" type="default" :icon="Plus">
         {{ $t("add") }}
     </el-button>
 </template>

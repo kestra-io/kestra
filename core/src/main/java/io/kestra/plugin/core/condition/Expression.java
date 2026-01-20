@@ -53,7 +53,7 @@ import jakarta.validation.constraints.NotNull;
     },
     aliases = {"io.kestra.core.models.conditions.types.VariableCondition", "io.kestra.plugin.core.condition.ExpressionCondition"}
 )
-public class Expression extends Condition implements ScheduleCondition {
+public class Expression extends Condition {
     @NotNull
     private Property<String> expression;
 

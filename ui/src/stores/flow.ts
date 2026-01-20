@@ -39,7 +39,7 @@ interface Task {
     type: string
 }
 
-interface Input {
+export interface Input {
     id: string;
     type: InputType;
     required?: boolean;
@@ -585,7 +585,7 @@ function deleteFlowAndDependencies() {
             .then(response => response.data)
     }
 
-    function loadRevisions(options: { namespace: string, id: string, store?: boolean }) {
+    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }) {
         return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
             if (options.store !== false) {
                 revisions.value = response.data
@@ -625,9 +625,11 @@ function deleteFlowAndDependencies() {
         window.URL.revokeObjectURL(url);
     }
 
-    function importFlows(options: { file: File, namespace: string, override?: boolean }) {
-        return axios.post(`${apiUrl()}/flows/import`, Utils.toFormData(options), {
-            headers: {"Content-Type": "multipart/form-data"}
+    function importFlows(options: { file: FormData,  failOnError: boolean }) {
+         const {file, failOnError} = options;
+        return axios.post(`${apiUrl()}/flows/import`, file, {
+            headers: {"Content-Type": "multipart/form-data"},
+            params: {failOnError}
         }).then(response => {
             return response;
         });
@@ -761,6 +763,10 @@ function deleteFlowAndDependencies() {
         flowVar.triggers.push(trigger)
 
         flow.value = {...flowVar}
+    }
+
+    function deleteRevision(options: { namespace: string, id: string, revision: string }) {
+        return axios.delete(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions?revisions=${options.revision}`);
     }
 
     const authStore = useAuthStore()
@@ -921,5 +927,6 @@ function deleteFlowAndDependencies() {
         loadTaskAggregatedMetrics,
         loadTasksWithMetrics,
         getNamespace,
+        deleteRevision
     }
 })

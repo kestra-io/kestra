@@ -772,11 +772,11 @@ public class JdbcExecutor implements ExecutorInterface {
     private Execution fail(Execution message, Exception e) {
         var failedExecution = message.failedExecutionFromExecutor(e);
         try {
-            logQueue.emitAsync(failedExecution.getLogs());
+            logQueue.emitAsync(failedExecution.logs());
         } catch (QueueException ex) {
             // fail silently
         }
-        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() : failedExecution.getExecution().withState(State.Type.FAILED);
+        return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -1520,12 +1520,12 @@ public class JdbcExecutor implements ExecutorInterface {
 
     private Executor handleFailedExecutionFromExecutor(Executor executor, FailedExecutionWithLog failedExecutionWithLog) {
         try {
-            logQueue.emitAsync(failedExecutionWithLog.getLogs());
+            logQueue.emitAsync(failedExecutionWithLog.logs());
         } catch (QueueException ex) {
             // fail silently
         }
 
-        return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
+        return executor.withExecution(failedExecutionWithLog.execution(), "exception");
     }
 
     /**

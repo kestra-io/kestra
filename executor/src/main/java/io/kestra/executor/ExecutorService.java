@@ -137,12 +137,12 @@ public class ExecutorService {
                 case FAIL -> {
                     var failedExecution = executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded"));
                     try {
-                        logQueue.emitAsync(failedExecution.getLogs());
+                        logQueue.emitAsync(failedExecution.logs());
                     } catch (QueueException ex) {
                         // fail silently
                     }
                     yield executionRunning
-                        .withExecution(failedExecution.getExecution())
+                        .withExecution(failedExecution.execution())
                         .withConcurrencyState(ExecutionRunning.ConcurrencyState.FAILED);
                 }
 

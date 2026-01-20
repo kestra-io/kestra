@@ -113,9 +113,8 @@ public class ExecutorService {
                     Logs.logExecution(
                         executionRunning.getExecution(),
                         Level.INFO,
-                        "Execution is queued due to concurrency limit exceeded, {} running(s), {} waiting in queue",
-                        runningCount,
-                        0
+                        "Execution is queued due to concurrency limit exceeded, {} running(s)",
+                        runningCount
                     );
                     var newExecution = executionRunning.getExecution().withState(State.Type.QUEUED);
                     metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();

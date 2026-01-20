@@ -5,12 +5,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.kv.KVType;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.*;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -31,6 +31,7 @@ import jakarta.inject.Inject;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 @Validated
@@ -80,7 +81,7 @@ public class KVController {
     public List<KVEntry> listKeysWithInheritence(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IOException {
-        List<String> namespaces = NamespaceUtils.asTree(namespace).stream()
+        List<String> namespaces = NamespaceInterface.asTree(namespace).stream()
             .filter(ns -> !ns.equals(namespace))
             .toList();
         return getKvEntriesWithInheritance(namespaces);
@@ -107,18 +108,23 @@ public class KVController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/namespaces/{namespace}/kv/{key}")
     @Operation(tags = {"KV"}, summary = "Get value for a key")
-    public TypedValue getKeyValue(
+    public KvDetail getKeyValue(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key
     ) throws IOException, ResourceExpiredException {
-        KVValue wrapper = kvStore(namespace)
+        KVStore nsKvStore = kvStore(namespace);
+        KVValue wrapper = nsKvStore
             .getValue(key)
             .orElseThrow(() -> new NoSuchElementException("No value found for key '" + key + "' in namespace '" + namespace + "'"));
         Object value = wrapper.value();
         if (value instanceof byte[] bytesValue) {
             value = new String(bytesValue);
         }
-        return new TypedValue(KVType.from(value), value);
+
+        // Should never throw as the above verifies the KV entry existence
+        KVEntry kvEntry = nsKvStore.get(key).orElseThrow();
+
+        return new KvDetail(KVType.from(value), value, kvEntry.version(), kvEntry.updateDate());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -222,12 +228,18 @@ public class KVController {
         return new InternalKVStore(tenantService.resolveTenant(), namespace, storageInterface, kvMetadataRepository);
     }
 
-    public record TypedValue(
+    public record KvDetail(
         @Parameter(description = "The type of the KV entry.")
         KVType type,
 
         @Parameter(description = "The value of the KV entry.")
-        Object value
+        Object value,
+
+        @Parameter(description = "The revision of the KV entry.")
+        Integer revision,
+
+        @Parameter(description = "The last time the KV entry was updated.")
+        Instant updated
     ) {
     }
 }

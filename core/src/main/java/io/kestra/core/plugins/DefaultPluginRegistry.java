@@ -4,8 +4,8 @@ import io.kestra.core.models.Plugin;
 import io.kestra.core.models.assets.Asset;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -36,9 +36,8 @@ import static java.util.Objects.requireNonNull;
  * @see io.kestra.core.plugins.serdes.PluginDeserializer
  * @see PluginScanner
  */
+@Slf4j
 public class DefaultPluginRegistry implements PluginRegistry {
-
-    private static final Logger log = LoggerFactory.getLogger(DefaultPluginRegistry.class);
 
     private static class LazyHolder {
         static final DefaultPluginRegistry INSTANCE = new DefaultPluginRegistry();

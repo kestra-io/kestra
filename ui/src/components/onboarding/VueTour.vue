@@ -40,7 +40,7 @@
                                     :class="{jump: currentStep(tour).jump}"
                                 >
                             </div>
-                            <span v-html="tour.currentStep === 1 && !flows.length ? t('onboarding.no_flows') : currentStep(tour).title" />
+                            <span v-html="tour.currentStep === 1 && !flows.length ? $t('onboarding.no_flows') : currentStep(tour).title" />
                         </div>
                     </template>
                     <template #content>

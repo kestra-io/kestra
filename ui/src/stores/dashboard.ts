@@ -203,7 +203,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
             errors.value = undefined;
         }
 
-        if (dbId !== undefined && YAML_UTILS.parse(sourceCode.value).id !== dbId) {
+        if (!isCreating.value && dbId !== undefined && YAML_UTILS.parse(sourceCode.value).id !== dbId) {
             coreStore.message = {
                 variant: "error",
                 title: t("readonly property"),

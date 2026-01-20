@@ -27,7 +27,7 @@ public class HttpConfiguration {
     @PluginProperty
     private ProxyConfiguration proxy;
 
-    @Schema(title = "The authentification to use.")
+    @Schema(title = "The authentication to use.")
     private AbstractAuthConfiguration auth;
 
     @Setter

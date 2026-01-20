@@ -75,7 +75,7 @@ public class LocalPathFactory {
 
         /**
          * Check the URI then return it as a Path.
-         * Based on the available context, implementors should:
+         * Based on the available context, implementers should:
          * - check if the file is inside the working directory
          * - check globally allowed paths
          * - check if plugin allowed paths

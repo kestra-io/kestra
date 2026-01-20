@@ -1,0 +1,33 @@
+id: parallel-disabled-tasks
+namespace: io.kestra.tests
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: sequence1
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+          - id: task1
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{ task.id }}"
+
+          - id: task2
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{ task.id }}"
+
+      - id: sequence2
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+          - id: task3
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{ task.id }}"
+
+          - id: task4
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{ task.id }}"
+
+      - id: task5
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+        disabled: true

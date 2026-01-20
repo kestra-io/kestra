@@ -12,14 +12,11 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.runners.QueueIndexerRepository;
-import io.kestra.core.runners.TransactionContext;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.scheduler.store.TriggerStateStore;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JdbcMapper;
-import io.kestra.jdbc.runner.JdbcTransactionContext;
 import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.ITriggers;
 import io.kestra.plugin.core.dashboard.data.Triggers;
@@ -36,7 +33,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepository<TriggerState> implements TriggerRepositoryInterface, QueueIndexerRepository<TriggerState>, TriggerStateStore {
+public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepository<TriggerState> implements TriggerRepositoryInterface, TriggerStateStore {
 
     private static final Field<Object> NAMESPACE_FIELD = field("namespace");
     private static final Field<Long> NEXT_EVALUATION_EPOCH_FIELD = field("next_evaluation_epoch", Long.class);
@@ -109,21 +106,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
 
                 return this.jdbcRepository.fetch(select);
             });
-    }
-
-    @Override
-    public TriggerState save(TransactionContext txContext, TriggerState trigger) {
-        return save(txContext.unwrap(JdbcTransactionContext.class).getDslContext(), trigger);
-    }
-
-    @Override
-    public <TX extends TransactionContext> boolean supports(Class<TX> clazz) {
-        return JdbcTransactionContext.class.isAssignableFrom(clazz);
-    }
-
-    @Override
-    public Class<TriggerState> getItemClass() {
-        return TriggerState.class;
     }
 
     @Override

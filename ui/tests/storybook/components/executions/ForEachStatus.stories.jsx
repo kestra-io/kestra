@@ -25,9 +25,11 @@ export const Default = {
     render(){
         return ( <div style={{border: "1px solid lightgray", padding: "1rem", width: "600px"}}>
             <ForEachStatus executionId={"123123"} subflowsStatus={{
-                RUNNING:555,
-                WARNING:222,
-                FAILED:100
+                QUEUED:333,
+                RUNNING:222,
+                WARNING:111,
+                FAILED:100,
+                SUCCESS:234
             }} max={1000} />
         </div>)
     }

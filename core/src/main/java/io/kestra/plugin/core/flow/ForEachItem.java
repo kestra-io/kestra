@@ -654,7 +654,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
             title = "The counter of iterations for each subflow execution state",
-            description = "This output will be updated in real-time based on the state of subflow executions.\n It will contain one counter by subflow execution state."
+            description = "This output will be updated in real-time based on the state of subflow executions.\n It will contain one counter by subflow execution state, including CREATED, QUEUED, RUNNING, SUCCESS, FAILED, WARNING, and KILLED."
         )
         private final Map<State.Type, Integer> iterations;
 

@@ -18,7 +18,11 @@
                 {{ $t("all executions") }} <span class="counter">{{ max }}</span>
             </router-link>
             <div v-for="state in State.arrayAllStates()" :key="state.name">
-                <router-link :to="goToExecutionsList(state.name)" class="el-button count-button" v-if="localSubflowStatus[state.name] >= 0">
+                <router-link 
+                    v-if="localSubflowStatus[state.name] > 0"
+                    :to="goToExecutionsList(state.name)" 
+                    class="el-button count-button"
+                >
                     {{ capitalizeFirstLetter(getStateToBeDisplayed(state.name)) }}
                     <span class="counter">{{ localSubflowStatus[state.name] }}</span>
                     <div class="dot rounded-5" :class="`bg-${state.colorClass}`" />

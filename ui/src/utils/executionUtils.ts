@@ -40,6 +40,15 @@ export function findTaskRunsByState(execution: Execution, state: string)  {
     return execution.taskRunList.filter((taskRun) => taskRun.state.current === state);
 }
 
+export function countTaskRunsByState(execution: Execution): Record<string, number> {
+    const counts: Record<string, number> = {};
+    execution.taskRunList.forEach((taskRun) => {
+        const state = taskRun.state.current;
+        counts[state] = (counts[state] || 0) + 1;
+    });
+    return counts;
+}
+
 export function statePredicate(execution: Execution, current: {state: {histories: any[]}}) {
     return current.state.histories.length >= execution.state.histories.length
 }

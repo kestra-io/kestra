@@ -44,29 +44,32 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
         @Example(
             title = "Add labels based on a webhook payload",
             full = true,
-            code = {
-                "id: webhook_based_labels",
-                "namespace: company.team",
-                "tasks:",
-                "  - id: update_labels_with_map",
-                "    type: io.kestra.plugin.core.execution.Labels",
-                "    labels:",
-                "      customerId: \"{{ trigger.body.customerId }}\"",
-                "  - id: by_list",
-                "    type: io.kestra.plugin.core.execution.Labels",
-                "    labels:",
-                "      - key: order_id",
-                "        value: \"{{ trigger.body.orderId }}\"",
-                "      - key: order_type",
-                "        value: \"{{ trigger.body.orderType }}\"",
-                "triggers:",
-                "  - id: webhook",
-                "    key: order_webhook",
-                "    type: io.kestra.plugin.core.trigger.Webhook",
-                "    conditions:",
-                "      - type: io.kestra.plugin.core.condition.Expression",
-                "        expression: \"{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}\""
-            }
+            code = """
+                id: webhook_based_labels
+                namespace: company.team
+
+                tasks:
+                  - id: update_labels_with_map
+                    type: io.kestra.plugin.core.execution.Labels
+                    labels:
+                      customerId: "{{ trigger.body.customerId }}"
+                      
+                  - id: by_list
+                    type: io.kestra.plugin.core.execution.Labels
+                    labels:
+                      - key: order_id
+                        value: "{{ trigger.body.orderId }}"
+                      - key: order_type
+                        value: "{{ trigger.body.orderType }}"
+                        
+                triggers:
+                  - id: webhook
+                    key: order_webhook
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.Expression
+                        expression: "{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}"
+            """
         )
     },
     aliases = "io.kestra.core.tasks.executions.Labels"

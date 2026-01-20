@@ -279,7 +279,7 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows(value = {"flows/valids/each-null.yaml"}, tenantId = "eachwithnull")
     void eachWithNull() throws Exception {
-        EachSequentialTest.eachNullTest("eachWithNull", runnerUtils, logsQueue);
+        EachSequentialTest.eachNullTest("eachwithnull", runnerUtils, logsQueue);
     }
 
     @Test

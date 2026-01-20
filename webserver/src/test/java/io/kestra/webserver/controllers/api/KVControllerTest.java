@@ -38,6 +38,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -175,11 +177,29 @@ class KVControllerTest {
     @ParameterizedTest
     @MethodSource("kvGetKeyValueArgs")
     void getKeyValue(Object value, KVType expectedType, String expectedValue) throws IOException {
+        Instant beforeInsertion = Instant.now();
         kvStore().put("my-key", new KVValueAndMetadata(new KVMetadata(null, Instant.now().plus(Duration.ofMinutes(5))), value));
+        Instant afterInsertion = Instant.now();
 
         String res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key"), String.class);
         assertThat(res).contains("\"type\":\"" + expectedType + "\"");
         assertThat(res).contains("\"value\":" + expectedValue);
+        assertThat(res).contains("\"revision\":" + 1);
+        Pattern updatedDateFinder = Pattern.compile("\"updated\":\\s*\"([^\"]+)\"");
+        Matcher matcher = updatedDateFinder.matcher(res);
+        matcher.find();
+        assertThat(Instant.parse(matcher.group(1))).isBetween(beforeInsertion, afterInsertion);
+
+        beforeInsertion = Instant.now();
+        // Test that revision and update date are properly updated
+        kvStore().put("my-key", new KVValueAndMetadata(new KVMetadata("some description", Instant.now().plus(Duration.ofMinutes(5))), value));
+        afterInsertion = Instant.now();
+
+        res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key"), String.class);
+        assertThat(res).contains("\"revision\":" + 2);
+        matcher = updatedDateFinder.matcher(res);
+        matcher.find();
+        assertThat(Instant.parse(matcher.group(1))).isBetween(beforeInsertion, afterInsertion);
     }
 
     @Test

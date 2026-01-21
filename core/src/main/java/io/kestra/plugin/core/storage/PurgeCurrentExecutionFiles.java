@@ -2,6 +2,7 @@ package io.kestra.plugin.core.storage;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -28,29 +29,42 @@ import java.util.List;
 @Plugin(
     examples = {
         @Example(
-            title = "Purge all files created by this execution.",
-            full = true,
-            code = """
-                id: purge_execution_files
-                namespace: company.team
-
-                tasks:
-                  - id: download
-                    type: io.kestra.plugin.core.http.Download
-                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/json/user_events.json
-
-                  - id: purge
-                    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
-            """
+            title = "Purge all files for the current execution",
+            code = {
+            }
+        ),
+        @Example(
+            title = "Purge files including child executions and state files",
+            code = {
+                "includeChildExecutions: true",
+                "includeStates: true"
+            }
         )
     },
     aliases = {"io.kestra.core.tasks.storages.PurgeExecution", "io.kestra.plugin.core.storage.PurgeExecution"}
 )
 public class PurgeCurrentExecutionFiles extends Task implements RunnableTask<PurgeCurrentExecutionFiles.Output> {
+    @Schema(
+        title = "Whether to purge files from child executions (subflows)",
+        description = "When set to true, this will also purge files from all child executions triggered by subflow tasks."
+    )
+    @Builder.Default
+    private Property<Boolean> includeChildExecutions = Property.ofValue(false);
+
+    @Schema(
+        title = "Whether to purge state files created by Set tasks",
+        description = "When set to true, this will also purge state files created by io.kestra.plugin.core.state.Set tasks."
+    )
+    @Builder.Default
+    private Property<Boolean> includeStates = Property.ofValue(false);
+
     @Override
     public PurgeCurrentExecutionFiles.Output run(RunContext runContext) throws Exception {
+        boolean purgeChildExecutions = runContext.render(includeChildExecutions).as(Boolean.class).orElse(false);
+        boolean purgeStates = runContext.render(includeStates).as(Boolean.class).orElse(false);
+        
         return Output.builder()
-            .uris(runContext.storage().deleteExecutionFiles())
+            .uris(runContext.storage().deleteExecutionFiles(purgeChildExecutions, purgeStates))
             .build();
     }
 

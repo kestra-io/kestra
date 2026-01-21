@@ -77,6 +77,13 @@ class SanityCheckTest {
     }
 
     @Test
+    @ExecuteFlow("sanity-checks/purge_current_execution_files_with_children.yaml")
+    void qaPurgeExecutionFilesWithChildren(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
+
+    @Test
     @ExecuteFlow("sanity-checks/return.yaml")
     void qaReturn(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(2);

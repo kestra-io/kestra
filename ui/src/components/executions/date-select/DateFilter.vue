@@ -72,11 +72,11 @@
         },
         props: {
             absolute: {
-                type: Boolean, 
+                type: Boolean,
                 default: false
             },
             wrap: {
-                type: Boolean, 
+                type: Boolean,
                 default: false
             }
         },
@@ -107,7 +107,7 @@
             timeRange() {
                 return this.$route.query.timeRange
                     ? this.$route.query.timeRange
-                    : "P30D";
+                    : "PT24H";
             },
             startDate() {
                 return this.$route.query.startDate

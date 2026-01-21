@@ -11,9 +11,9 @@ import DemoTests from "../components/demo/Tests.vue"
 function maybeAddTimeRangeFilter(to) {
     const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
-    // Default to the last 7 days if no time range is set
+    // Default to the last 24 hours if no time range is set
     if (!Object.keys(to.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-        to.query["filters[timeRange][EQUALS]"] = "PT168H";
+        to.query["filters[timeRange][EQUALS]"] = "PT24H";
 
         return true;
     }

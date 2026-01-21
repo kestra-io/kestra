@@ -2,7 +2,7 @@ title: Overview
 description: Default Namespace Overview
 
 timeWindow:
-  default: P30D
+  default: PT24H
   max: P365D
 
 charts:

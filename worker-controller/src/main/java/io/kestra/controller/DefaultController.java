@@ -3,7 +3,10 @@ package io.kestra.controller;
 import io.grpc.Grpc;
 import io.grpc.InsecureServerCredentials;
 import io.grpc.Server;
-import io.kestra.controller.config.GrpcChannelConfiguration;
+import io.grpc.ServerBuilder;
+import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
+import io.grpc.protobuf.services.HealthStatusManager;
+import io.kestra.controller.config.ControllerConfiguration;
 import io.kestra.controller.grpc.server.GrpcConnectControllerService;
 import io.kestra.controller.grpc.server.GrpcLivenessControllerService;
 import io.kestra.controller.grpc.server.GrpcWorkerControllerService;
@@ -20,8 +23,11 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.concurrent.TimeUnit;
+
 /**
  * The Controller service that manages worker nodes.
+ *
+ * @see <a href="https://github.com/grpc/grpc-java/blob/master/examples/src/main/java/io/grpc/examples/healthservice/HealthServiceServer.java">.HealthServiceServer</a>
  */
 @Singleton
 @Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
@@ -29,25 +35,33 @@ public class DefaultController extends AbstractService implements Controller {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultController.class);
 
+    /**
+     * Service name used for health checks.
+     */
+    protected static final String HEALTH_SERVICE_NAME = "kestra.controller";
+
     private Server server;
 
     protected final GrpcWorkerControllerService workerControllerService;
     protected final GrpcLivenessControllerService livenessControllerService;
     protected final GrpcConnectControllerService connectControllerService;
-    private final GrpcChannelConfiguration grpcChannelConfiguration;
+    protected final HealthStatusManager healthStatusManager;
+
+    protected final ControllerConfiguration controllerConfiguration;
 
     @Inject
     public DefaultController(
         GrpcWorkerControllerService workerControllerService,
         GrpcLivenessControllerService livenessControllerService,
         GrpcConnectControllerService connectControllerService,
-        GrpcChannelConfiguration grpcChannelConfiguration,
+        ControllerConfiguration controllerConfiguration,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
         super(ServiceType.CONTROLLER, eventPublisher);
         this.workerControllerService = workerControllerService;
         this.livenessControllerService = livenessControllerService;
         this.connectControllerService = connectControllerService;
-        this.grpcChannelConfiguration = grpcChannelConfiguration;
+        this.controllerConfiguration = controllerConfiguration;
+        this.healthStatusManager = new HealthStatusManager();
     }
 
     /**
@@ -60,10 +74,12 @@ public class DefaultController extends AbstractService implements Controller {
         }
 
         LOG.info("Starting Controller");
-        /* The port on which the server should run */
-        int port = grpcChannelConfiguration.port();
+        int port = controllerConfiguration.port();
         try {
             server = buildServer(port);
+            // Mark as serving after server starts
+            healthStatusManager.setStatus(HEALTH_SERVICE_NAME, ServingStatus.SERVING);
+            healthStatusManager.setStatus("", ServingStatus.SERVING);
         } catch (IOException e) {
             throw new UncheckedIOException("Error while building gRPC server", e);
         }
@@ -72,12 +88,13 @@ public class DefaultController extends AbstractService implements Controller {
     }
 
     protected Server buildServer(int port) throws IOException {
-        return Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
+        ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
             .addService(workerControllerService)
             .addService(livenessControllerService)
             .addService(connectControllerService)
-            .build()
-            .start();
+            .addService(healthStatusManager.getHealthService());
+
+        return serverBuilder.build().start();
     }
 
     /**
@@ -85,6 +102,11 @@ public class DefaultController extends AbstractService implements Controller {
      */
     @Override
     protected ServiceState doStop() throws InterruptedException {
+        // Mark health service as not serving before shutdown
+        LOG.info("Marking controller as NOT_SERVING");
+        healthStatusManager.setStatus(HEALTH_SERVICE_NAME, ServingStatus.NOT_SERVING);
+        healthStatusManager.setStatus("", ServingStatus.NOT_SERVING);
+
         if (server != null && !server.isTerminated()) {
             shutdownServerAndWait();
         }

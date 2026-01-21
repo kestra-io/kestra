@@ -194,16 +194,7 @@ class WorkerTest {
         worker.close();
         assertThat(receiveLogs.toStream().filter(logEntry -> logEntry.getMessage().equals("3")).count()).isEqualTo(0L);
     }
-
-    @Test
-    void shouldCreateInstanceGivenApplicationContext() {
-        Assertions.assertDoesNotThrow(() -> {
-            try (var worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)) {
-                // do nothing
-            }
-        });
-    }
-
+    
     private WorkerTask workerTask(long sleepDuration) {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())

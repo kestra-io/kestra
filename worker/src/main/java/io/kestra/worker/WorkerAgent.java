@@ -10,6 +10,7 @@ import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.MaintenanceService;
 import io.kestra.core.utils.Disposable;
+import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.senders.WorkerIOSender;
 import io.kestra.worker.services.WorkerConnectionService;
@@ -138,7 +139,7 @@ public class WorkerAgent extends AbstractService implements Worker {
         // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
         this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION, numThreads, tags);
 
-        io.kestra.core.worker.models.WorkerContext workerContext = new io.kestra.core.worker.models.WorkerContext(getId(), workerGroup, numThreads);
+        WorkerContext workerContext = new WorkerContext(getId(), workerGroup, numThreads);
 
         disposables.add(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
             @Override

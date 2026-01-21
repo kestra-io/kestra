@@ -2,11 +2,11 @@ package io.kestra.core.runners;
 
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.services.MaintenanceService;
-import io.kestra.core.services.WorkerGroupService;
 import io.kestra.worker.WorkerAgent;
 import io.kestra.worker.WorkerJobExecutor;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.senders.WorkerIOSender;
+import io.kestra.worker.services.WorkerConnectionService;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 
@@ -20,13 +20,13 @@ import java.util.List;
 public class TestMethodScopedWorker extends WorkerAgent {
     @Inject
     public TestMethodScopedWorker(ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
-                                  WorkerGroupService workerGroupService,
+                                  WorkerConnectionService workerConnectionService,
                                   WorkerJobExecutor workerJobExecutor,
                                   WorkerJobFetcher workerJobFetcher,
                                   List<WorkerIOSender> workerIOSenders,
                                   MaintenanceService maintenanceService
     ) {
-        super(eventPublisher, workerGroupService, workerJobExecutor, workerJobFetcher, workerIOSenders, maintenanceService);
+        super(eventPublisher, workerConnectionService, workerJobExecutor, workerJobFetcher, workerIOSenders, maintenanceService);
     }
 
     /**

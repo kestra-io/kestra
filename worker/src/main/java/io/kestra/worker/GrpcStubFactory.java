@@ -25,24 +25,24 @@ public class GrpcStubFactory {
     @Bean
     @Singleton
     public WorkerControllerServiceBlockingStub blockingWorkerServiceStub() {
-        return WorkerControllerServiceGrpc.newBlockingStub(grpcChannelManager.createOrGetDefault());
+        return WorkerControllerServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
     }
 
     @Bean
     @Singleton
     public WorkerControllerServiceStub asyncWorkerServiceStub() {
-        return WorkerControllerServiceGrpc.newStub(grpcChannelManager.createOrGetDefault());
+        return WorkerControllerServiceGrpc.newStub(grpcChannelManager.getDefaultChannel());
     }
 
     @Bean
     @Singleton
     public LivenessControllerServiceBlockingStub workerServiceStub() {
-        return LivenessControllerServiceGrpc.newBlockingStub(grpcChannelManager.createOrGetDefault());
+        return LivenessControllerServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
     }
 
     @Bean
     @Singleton
     public ConnectControllerServiceBlockingStub connectControllerServiceBlockingStub() {
-        return ConnectControllerServiceGrpc.newBlockingStub(grpcChannelManager.createOrGetDefault());
+        return ConnectControllerServiceGrpc.newBlockingStub(grpcChannelManager.getDefaultChannel());
     }
 }

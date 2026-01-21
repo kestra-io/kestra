@@ -33,6 +33,7 @@ dependencies {
     // gRPC
     implementation("io.micronaut.grpc:micronaut-grpc-server-runtime")
     implementation("io.micronaut.grpc:micronaut-grpc-client-runtime")
+    implementation("io.grpc:grpc-services:$grpcVersion")
 }
 
 protobuf {

@@ -206,7 +206,15 @@ kestra:
         initial-delay: 1h
         fixed-delay: 1d
         retention: 30d
-
+  
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: 9096
+  
   jdbc:
     queues:
       min-poll-interval: 25ms

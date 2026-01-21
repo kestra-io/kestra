@@ -75,9 +75,9 @@
 
         // If no date filtering is set, we add one
         if (!Object.keys(route.query).some(key => dateTimeKeys.some(dateTimeKey => key.includes(dateTimeKey)))) {
-            // query last 7 days
+            // query last 24 hours
             router.push({
-                query: {...route.query, "filters[timeRange][EQUALS]":"PT168H"}
+                query: {...route.query, "filters[timeRange][EQUALS]":"PT24H"}
             })
         }
         const filters = [];

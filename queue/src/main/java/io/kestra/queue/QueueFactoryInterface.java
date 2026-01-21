@@ -1,6 +1,7 @@
 package io.kestra.queue;
 
 import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -18,4 +19,6 @@ public interface QueueFactoryInterface {
     DispatchQueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue();
 
     DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue();
+
+    DispatchQueueInterface<FlowInterface> flowQueue();
 }

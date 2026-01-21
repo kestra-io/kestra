@@ -3,7 +3,6 @@ package io.kestra.runner.h2;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
@@ -76,14 +75,6 @@ public class H2QueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<MetricEntry> metricEntry() {
         return new H2Queue<>(MetricEntry.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<FlowInterface> flow() {
-        return new H2Queue<>(FlowInterface.class, applicationContext);
     }
 
     @Override

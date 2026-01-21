@@ -1,19 +1,27 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.context.annotation.Replaces;
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.junit.jupiter.params.shadow.com.univocity.parsers.annotations.Replace;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -222,8 +230,7 @@ public class DeserializationIssuesCaseTest {
     protected QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    protected QueueInterface<FlowInterface> flowQueue;
+    protected DispatchQueueInterface<FlowInterface> flowQueue;
 
     public record QueueMessage(Class<?> type, String key, String value) {}
 
@@ -269,14 +276,21 @@ public class DeserializationIssuesCaseTest {
 
     public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        flowQueue.receive(either -> {
-            if (either.isLeft() && either.getLeft().uid().equals("company.team_hello-world_2")) {
-                countDownLatch.countDown();
+        var subscriber = flowQueue.subscriber().subscribe(either -> {
+            if (either.isLeft()) {
+                FlowInterface flowInterface = either.getLeft();
+                if (flowInterface.uid().equals("company.team_hello-world_2")) {
+                    countDownLatch.countDown();
+                }
             }
         });
 
-        sendToQueue.accept(new QueueMessage(FlowInterface.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
+        try {
+            sendToQueue.accept(new QueueMessage(FlowInterface.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
 
-        assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+            assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        } finally {
+            subscriber.close();
+        }
     }
 }

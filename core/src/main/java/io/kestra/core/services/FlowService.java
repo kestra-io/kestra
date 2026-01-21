@@ -11,9 +11,8 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.WorkerTriggerInterface;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.RunContext;
@@ -28,14 +27,12 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.ListUtils;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -69,8 +66,7 @@ public class FlowService {
     private FlowTopologyService flowTopologyService;
 
     @Inject
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    private QueueInterface<FlowInterface> flowQueue;
+    private DispatchQueueInterface<FlowInterface> flowQueue;
 
     @Inject
     private TriggerEventQueue triggerEventQueue;

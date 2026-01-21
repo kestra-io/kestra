@@ -3,7 +3,6 @@ package io.kestra.runner.mysql;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
@@ -75,14 +74,6 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<MetricEntry> metricEntry() {
         return new MysqlQueue<>(MetricEntry.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<FlowInterface> flow() {
-        return new MysqlQueue<>(FlowInterface.class, applicationContext);
     }
 
     @Override

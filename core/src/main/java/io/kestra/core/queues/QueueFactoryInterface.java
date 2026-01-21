@@ -3,7 +3,6 @@ package io.kestra.core.queues;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.*;
 
 public interface QueueFactoryInterface {
@@ -12,11 +11,9 @@ public interface QueueFactoryInterface {
     String WORKERJOB_NAMED = "workerJobQueue";
     String WORKERTASKRESULT_NAMED = "workerTaskResultQueue";
     String WORKERTRIGGERRESULT_NAMED = "workerTriggerResultQueue";
-    String FLOW_NAMED = "flowQueue";
     String WORKERTASKLOG_NAMED = "workerTaskLogQueue";
     String METRIC_QUEUE = "workerTaskMetricQueue";
     String WORKERJOBRUNNING_NAMED = "workerJobRunningQueue";
-    String CLUSTER_EVENT_NAMED = "clusterEventQueue";
 
     QueueInterface<Execution> execution();
 
@@ -31,8 +28,6 @@ public interface QueueFactoryInterface {
     QueueInterface<LogEntry> logEntry();
 
     QueueInterface<MetricEntry> metricEntry();
-
-    QueueInterface<FlowInterface> flow();
 
     QueueInterface<WorkerJobRunning> workerJobRunning();
 }

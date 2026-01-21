@@ -1,6 +1,7 @@
 package io.kestra.queue.jdbc;
 
 import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -14,9 +15,7 @@ import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @Factory
 @JdbcQueueEnabled
 public class JdbcQueueFactory implements QueueFactoryInterface {
@@ -62,5 +61,12 @@ public class JdbcQueueFactory implements QueueFactoryInterface {
     @Override
     public DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue() {
         return new JdbcDispatchQueue<>(MultipleConditionEvent.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
+    public DispatchQueueInterface<FlowInterface> flowQueue() {
+        return new JdbcDispatchQueue<>(FlowInterface.class, queueService, jdbcQueueClient, executorsUtils);
     }
 }

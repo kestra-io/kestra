@@ -5,13 +5,10 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import com.github.javaparser.utils.Log;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.*;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TenantMigrationInterface;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -27,8 +24,7 @@ public class TenantMigrationService {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    private QueueInterface<FlowInterface> flowQueue;
+    private DispatchQueueInterface<FlowInterface> flowQueue;
 
     public void migrateTenant(String tenantId, String tenantName, boolean dryRun) {
         if (StringUtils.isNotBlank(tenantId) && !MAIN_TENANT.equals(tenantId)){

@@ -6,8 +6,7 @@ import io.kestra.core.models.flows.FlowWithPath;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.PluginDefaultService;
@@ -16,7 +15,6 @@ import io.micronaut.scheduling.io.watch.FileWatchConfiguration;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -53,7 +51,7 @@ public class FileChangedEventListener {
     private ModelValidator modelValidator;
 
     @Inject
-    @Named(QueueFactoryInterface.FLOW_NAMED) private QueueInterface<FlowInterface> flowQueue;
+    private DispatchQueueInterface<FlowInterface> flowQueue;
 
     private FlowFilesManager flowFilesManager;
     private Runnable cancellation;
@@ -79,27 +77,22 @@ public class FileChangedEventListener {
             });
 
             // Listen for new/updated/deleted flows
-            flowQueue.receive(either -> {
-                if (either.isRight()) {
-                    log.error("Unable to deserialize a flow event: {}", either.getRight().getMessage());
+            flowQueue.addListener(current -> {
+                // If deleted
+                if (current.isDeleted()) {
+                    this.flows.stream().filter(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision())).findFirst()
+                        .ifPresent(flowWithPath -> {
+                            deleteFile(Paths.get(flowWithPath.getPath()));
+                        });
+                    this.flows.removeIf(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision()));
                 } else {
-                    FlowInterface current = either.getLeft();
-                    // If deleted
-                    if (current.isDeleted()) {
-                        this.flows.stream().filter(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision())).findFirst()
-                            .ifPresent(flowWithPath -> {
-                                deleteFile(Paths.get(flowWithPath.getPath()));
-                            });
-                        this.flows.removeIf(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision()));
+                    // if updated/created
+                    Optional<FlowWithPath> flowWithPath = this.flows.stream().filter(fwp -> fwp.uidWithoutRevision().equals(current.uidWithoutRevision())).findFirst();
+                    if (flowWithPath.isPresent()) {
+                        flowToFile(current, Paths.get(flowWithPath.get().getPath()));
                     } else {
-                        // if updated/created
-                        Optional<FlowWithPath> flowWithPath = this.flows.stream().filter(fwp -> fwp.uidWithoutRevision().equals(current.uidWithoutRevision())).findFirst();
-                        if (flowWithPath.isPresent()) {
-                            flowToFile(current, Paths.get(flowWithPath.get().getPath()));
-                        } else {
-                            flows.add(FlowWithPath.of(current, this.buildPath(current).toString()));
-                            flowToFile(current, null);
-                        }
+                        flows.add(FlowWithPath.of(current, this.buildPath(current).toString()));
+                        flowToFile(current, null);
                     }
                 }
             });

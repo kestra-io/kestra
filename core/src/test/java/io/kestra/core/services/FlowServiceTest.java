@@ -10,9 +10,8 @@ import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.scheduler.TriggerEventQueue;
@@ -24,7 +23,6 @@ import io.kestra.plugin.core.trigger.Schedule;
 import io.micronaut.context.annotation.Replaces;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -54,8 +52,7 @@ class FlowServiceTest {
     @Inject
     private FlowTopologyRepositoryInterface flowTopologyRepository;
     @Inject
-    @Named(QueueFactoryInterface.FLOW_NAMED)
-    private QueueInterface<FlowInterface> flowQueue;
+    private DispatchQueueInterface<FlowInterface> flowQueue;
     @Inject
     private TriggerEventQueue triggerEventQueue;
 
@@ -382,11 +379,9 @@ class FlowServiceTest {
             .build();
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Runnable cancellation = flowQueue.receive(either -> {
-            if (either.isLeft()) {
-                if (either.getLeft().getId().equals(flow.getId())) {
-                    countDownLatch.countDown();
-                }
+        flowQueue.addListener(f -> {
+            if (f.getId().equals(flow.getId())) {
+                countDownLatch.countDown();
             }
         });
 
@@ -414,7 +409,6 @@ class FlowServiceTest {
 
         // check that the flow has been sent to the queue
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
-        cancellation.run();
     }
 
     @Test
@@ -433,11 +427,9 @@ class FlowServiceTest {
             .build();
 
         CountDownLatch countDownLatch = new CountDownLatch(2);
-        Runnable cancellation = flowQueue.receive(either -> {
-            if (either.isLeft()) {
-                if (either.getLeft().getId().equals(flow.getId())) {
-                    countDownLatch.countDown();
-                }
+        flowQueue.addListener(f -> {
+            if (f.getId().equals(flow.getId())) {
+                countDownLatch.countDown();
             }
         });
 
@@ -470,7 +462,6 @@ class FlowServiceTest {
 
         // check that the flow has been sent to the queue 2x
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
-        cancellation.run();
     }
 
     @Test
@@ -490,11 +481,9 @@ class FlowServiceTest {
             .build();
 
         CountDownLatch countDownLatch = new CountDownLatch(2);
-        Runnable cancellation = flowQueue.receive(either -> {
-            if (either.isLeft()) {
-                if (either.getLeft().getId().equals(flow.getId())) {
-                    countDownLatch.countDown();
-                }
+        flowQueue.addListener(f -> {
+            if (f.getId().equals(flow.getId())) {
+                countDownLatch.countDown();
             }
         });
 
@@ -524,7 +513,6 @@ class FlowServiceTest {
 
         // check that the flow has been sent to the queue 2x
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
-        cancellation.run();
     }
 
     @MockBean

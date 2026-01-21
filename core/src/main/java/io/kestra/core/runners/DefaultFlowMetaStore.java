@@ -6,14 +6,12 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.PluginDefaultService;
-import io.kestra.core.utils.Disposable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,11 +25,11 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     private final FlowRepositoryInterface flowRepository;
     private final PluginDefaultService pluginDefaultService;
     private final ConcurrentHashMap<String, FlowWithSource> cache = new ConcurrentHashMap<>();
-    private final QueueInterface<FlowInterface> flowQueue;
+    private final DispatchQueueInterface<FlowInterface> flowQueue;
 
-    private Disposable cancellation;
+    private QueueSubscriber<FlowInterface> subscriber;
 
-    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService, @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<FlowInterface> flowQueue) {
+    public DefaultFlowMetaStore(FlowRepositoryInterface flowRepository, PluginDefaultService pluginDefaultService, DispatchQueueInterface<FlowInterface> flowQueue) {
         this.flowRepository = flowRepository;
         this.pluginDefaultService = pluginDefaultService;
         this.flowQueue = flowQueue;
@@ -47,7 +45,7 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     @PostConstruct
     void start() {
         // listen to flow updates from the flow queue
-        this.cancellation = Disposable.of(this.flowQueue.receive(either -> {
+        this.subscriber = this.flowQueue.subscriber().subscribe(either -> {
             if (either.isRight()) {
                 log.error("Unable to deserialize a flow event: {}", either.getRight().getMessage());
             } else {
@@ -64,12 +62,12 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
                     }
                 }
             }
-        }));
+        });
     }
 
     @PreDestroy
     void close() {
-        this.cancellation.dispose();
+        this.subscriber.close();
     }
 
     @Override

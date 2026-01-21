@@ -186,7 +186,10 @@ public class ExecutionService {
         return execution.withTaskRun(updateFlowableTaskRun.withState(State.Type.PAUSED)).withState(State.Type.PAUSED);
     }
 
-    public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
+    public Execution restart(final Execution givenExecution, @Nullable Integer revision) throws Exception {
+
+        Execution execution = revision != null ? givenExecution.withFlowRevision(revision) : givenExecution;
+
         if (!execution.getState().canBeRestarted()) {
             throw new IllegalStateException("Execution must be terminated to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
@@ -248,7 +251,7 @@ public class ExecutionService {
         }
         newExecution = newExecution.withMetadata(execution.getMetadata().nextAttempt()).withLabels(newLabels);
 
-        return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
+        return newExecution;
     }
 
     private Set<String> taskRunToRestart(Execution execution, Predicate<TaskRun> predicate) {

@@ -93,7 +93,13 @@ public final class ExecutableUtils {
                 Optional<Execution> existingSubflowExecution = Optional.empty();
                 if (currentTaskRun.getOutputs() != null && currentTaskRun.getOutputs().containsKey("executionId")) {
                     // we know which execution to restart; this should be the case for Subflow tasks
-                    existingSubflowExecution = executionRepository.findById(currentExecution.getTenantId(), (String) currentTaskRun.getOutputs().get("executionId"));
+                    Optional<Execution> subflowExecution = executionRepository.findById(currentExecution.getTenantId(), (String) currentTaskRun.getOutputs().get("executionId"));
+                    if(subflowExecution.isPresent()
+                        && currentTask.subflowId().flowId().equals(subflowExecution.get().getFlowId())
+                        && currentTask.subflowId().namespace().equals(subflowExecution.get().getNamespace())){
+                        existingSubflowExecution = subflowExecution;
+                    }
+
                 }
 
                 if (existingSubflowExecution.isEmpty()) {

@@ -15,6 +15,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -358,13 +359,18 @@ class ExecutionControllerRunnerTest {
         } catch (JsonProcessingException e) {
             throw new AssertionError("Evaluation result is not a map. Probably due to output decryption being performed while it shouldn't for such feature.");
         }
-        assertThat(resultMap.get("type")).isEqualTo("io.kestra.datatype:aes_encrypted");
+        assertThat(resultMap.get("type")).isEqualTo(EncryptedString.TYPE);
         assertThat(resultMap.get("value")).isNotNull();
 
         execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         result = this.evalTaskRunExpression(execution, "{{inputs.secret}}", 0);
-        assertThat(result.getResult()).isNotEqualTo(inputs.get("secret"));
+        try {
+            resultMap = JacksonMapper.toMap(result.getResult());
+        } catch (JsonProcessingException e) {
+            throw new AssertionError("Evaluation result is not a map. Probably due to output decryption being performed while it shouldn't for such feature.");
+        }
+        assertThat(resultMap.get("value")).isNotEqualTo(inputs.get("secret"));
     }
 
     @Test
@@ -1034,6 +1040,7 @@ class ExecutionControllerRunnerTest {
 
         MultipartBody multipartBody = MultipartBody.builder()
             .addPart("asked", "myString")
+            .addPart("secret_pause", "secret_value")
             .addPart("files", "data", MediaType.TEXT_PLAIN_TYPE, applicationFile)
             .build();
 
@@ -1047,9 +1054,12 @@ class ExecutionControllerRunnerTest {
         // check that the execution is no more paused
         Execution execution = awaitExecution(pausedExecution.getId(), exec -> !exec.getState().isPaused());
 
-        Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
-        assertThat(outputs.get("asked")).isEqualTo("myString");
-        assertThat((String) outputs.get("data")).startsWith("kestra://");
+        Map<String, Object> inputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
+        Map<String, String> secretInputs = (Map<String, String>) inputs.get("secret_pause");
+        assertThat(inputs.get("asked")).isEqualTo("myString");
+        assertThat(secretInputs.get("type")).isEqualTo(EncryptedString.TYPE);
+        assertThat(secretInputs.get("value")).isNotNull();
+        assertThat((String) inputs.get("data")).startsWith("kestra://");
     }
 
     @SuppressWarnings("unchecked")

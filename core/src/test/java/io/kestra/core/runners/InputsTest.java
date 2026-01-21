@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -146,7 +147,7 @@ public class InputsTest {
     @LoadFlows({"flows/valids/inputs.yaml"})
     void allValidInputs() throws URISyntaxException, IOException {
         Map<String, Object> typeds = typedInputs(inputs);
-
+        EncryptedString encrypted = (EncryptedString) typeds.get("secret");
         assertThat(typeds.get("string")).isEqualTo("myString");
         assertThat(typeds.get("int")).isEqualTo(42);
         assertThat(typeds.get("float")).isEqualTo(42.42F);
@@ -169,7 +170,8 @@ public class InputsTest {
         assertThat(typeds.get("validatedDuration")).isEqualTo(Duration.parse("PT15S"));
         assertThat(typeds.get("validatedFloat")).isEqualTo(0.42F);
         assertThat(typeds.get("validatedTime")).isEqualTo(LocalTime.parse("11:27:49"));
-        assertThat(typeds.get("secret")).isNotEqualTo("secret"); // secret inputs are encrypted
+        assertThat(encrypted.getType()).isEqualTo(EncryptedString.TYPE);
+        assertThat(encrypted.getValue()).isNotEqualTo("secret"); // secret should be encrypted
         assertThat(typeds.get("array")).isInstanceOf(List.class);
         assertThat((List<Integer>) typeds.get("array")).hasSize(3);
         assertThat((List<Integer>) typeds.get("array")).isEqualTo(List.of(1, 2, 3));

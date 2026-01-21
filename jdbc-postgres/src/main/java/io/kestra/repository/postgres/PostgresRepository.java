@@ -1,5 +1,6 @@
 package io.kestra.repository.postgres;
 
+import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.JdbcTableConfig;
@@ -34,9 +35,8 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
 
     @Inject
     public PostgresRepository(@Parameter JdbcTableConfig jdbcTableConfig,
-                              QueueService queueService,
                               JooqDSLContextWrapper dslContextWrapper) {
-        super(jdbcTableConfig, queueService, dslContextWrapper);
+        super(jdbcTableConfig, dslContextWrapper);
     }
 
     @Override

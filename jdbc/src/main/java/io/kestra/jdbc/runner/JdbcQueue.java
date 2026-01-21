@@ -531,8 +531,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Integer switchSteps = 5;
 
         public List<Step> computeSteps() {
-            if (this.maxPollInterval.compareTo(this.minPollInterval) <= 0) {
-                throw new IllegalArgumentException("'maxPollInterval' (" + this.maxPollInterval + ") must be greater than 'minPollInterval' (" + this.minPollInterval + ")");
+            if (this.maxPollInterval.compareTo(this.minPollInterval) < 0) {
+                throw new IllegalArgumentException("'maxPollInterval' (" + this.maxPollInterval + ") must be greater than or equal to 'minPollInterval' (" + this.minPollInterval + ")");
+            }
+
+            if (this.maxPollInterval.equals(this.minPollInterval)) {
+                return List.of(new Step(this.minPollInterval, Duration.ZERO));
             }
 
             List<Step> steps = new ArrayList<>();

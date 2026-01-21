@@ -137,12 +137,12 @@
         "@esbuild/darwin-arm64": "^0.27.2",
         "@esbuild/darwin-x64": "^0.27.2",
         "@esbuild/linux-x64": "^0.27.2",
-        "@rollup/rollup-darwin-arm64": "^4.55.1",
-        "@rollup/rollup-darwin-x64": "^4.55.1",
-        "@rollup/rollup-linux-x64-gnu": "^4.55.1",
-        "@swc/core-darwin-arm64": "^1.15.8",
-        "@swc/core-darwin-x64": "^1.15.8",
-        "@swc/core-linux-x64-gnu": "^1.15.8"
+        "@rollup/rollup-darwin-arm64": "^4.55.3",
+        "@rollup/rollup-darwin-x64": "^4.55.3",
+        "@rollup/rollup-linux-x64-gnu": "^4.55.3",
+        "@swc/core-darwin-arm64": "^1.15.10",
+        "@swc/core-darwin-x64": "^1.15.10",
+        "@swc/core-linux-x64-gnu": "^1.15.10"
     },
     "overrides": {
         "bootstrap": {

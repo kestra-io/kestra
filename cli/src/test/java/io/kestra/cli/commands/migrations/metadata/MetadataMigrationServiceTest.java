@@ -1,8 +1,9 @@
 package io.kestra.cli.commands.migrations.metadata;
 
+import io.kestra.core.contexts.KestraConfig;
+import io.kestra.core.models.namespaces.NamespaceInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.TestsUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -32,7 +33,7 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
                 Stream.concat(
                     Stream.of(SYSTEM_NAMESPACE),
                     namespaces.stream()
-                ).map(NamespaceUtils::asTree).flatMap(Collection::stream).distinct().toList()
+                ).map(NamespaceInterface::asTree).flatMap(Collection::stream).distinct().toList()
             );
         });
     }
@@ -44,14 +45,14 @@ public class MetadataMigrationServiceTest<T extends MetadataMigrationService> {
     protected T metadataMigrationService(Map<String, List<String>> namespacesPerTenant) {
         FlowRepositoryInterface mockedFlowRepository = Mockito.mock(FlowRepositoryInterface.class);
         Mockito.doAnswer((params) -> namespacesPerTenant.get(params.getArgument(0).toString())).when(mockedFlowRepository).findDistinctNamespace(Mockito.anyString());
-        NamespaceUtils namespaceUtils = Mockito.mock(NamespaceUtils.class);
-        Mockito.when(namespaceUtils.getSystemFlowNamespace()).thenReturn(SYSTEM_NAMESPACE);
+        KestraConfig kestraConfig = Mockito.mock(KestraConfig.class);
+        Mockito.when(kestraConfig.getSystemFlowNamespace()).thenReturn(SYSTEM_NAMESPACE);
         //noinspection unchecked
         return ((T) new MetadataMigrationService(mockedFlowRepository, new TenantService() {
             @Override
             public String resolveTenant() {
                 return TENANT_ID;
             }
-        }, null, null, null, namespaceUtils));
+        }, null, null, null, kestraConfig));
     }
 }

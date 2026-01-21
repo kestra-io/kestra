@@ -808,7 +808,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     /**
      * Convert an exception on Executor and add log to the current {@code RUNNING} taskRun, on the
      * lastAttempts. If no Attempt is found, we create one (must be nominal case). The executor will
-     * catch the {@code FAILED} taskRun emitted and will failed the execution. In the worst case, we
+     * catch the {@code FAILED} taskRun emitted and will fail the execution. In the worst case, we
      * FAILED the execution (only from {@link io.kestra.plugin.core.trigger.Flow}).
      *
      * @param e the exception throw from Executor
@@ -840,8 +840,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             .map(t -> {
                 try {
                     return new FailedExecutionWithLog(
-                        this.withTaskRun(t.getTaskRun()),
-                        t.getLogs()
+                        this.withTaskRun(t.taskRun()),
+                        t.logs()
                     );
                 } catch (InternalException ex) {
                     return null;
@@ -911,19 +911,14 @@ public class Execution implements DeletedInterface, TenantInterface {
         );
     }
 
-    @Value
-    public static class FailedTaskRunWithLog {
-
-        private TaskRun taskRun;
-        private List<LogEntry> logs;
+    public record FailedTaskRunWithLog(
+        TaskRun taskRun,
+        List<LogEntry> logs) {
     }
 
-    @Value
-    @Builder
-    public static class FailedExecutionWithLog {
-
-        private Execution execution;
-        private List<LogEntry> logs;
+    public record FailedExecutionWithLog(
+        Execution execution,
+        List<LogEntry> logs) {
     }
 
     /**

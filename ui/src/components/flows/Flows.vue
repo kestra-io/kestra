@@ -686,10 +686,6 @@
 
 .flow-id {
     min-width: 200px;
-
-    & a {
-        color: var(--bs-code-color)
-    }
 }
 
 .flows-table .el-table__cell {

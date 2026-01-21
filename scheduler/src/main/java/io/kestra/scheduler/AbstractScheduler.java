@@ -836,11 +836,11 @@ public abstract class AbstractScheduler implements Scheduler {
     private Execution fail(Execution message, Exception e) {
         var failedExecution = message.failedExecutionFromExecutor(e);
         try {
-            logQueue.emitAsync(failedExecution.getLogs());
+            logQueue.emitAsync(failedExecution.logs());
         } catch (QueueException ex) {
             // fail silently
         }
-        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() :  failedExecution.getExecution().withState(State.Type.FAILED);
+        return failedExecution.execution().getState().isFailed() ? failedExecution.execution() :  failedExecution.execution().withState(State.Type.FAILED);
     }
 
     private void executionMonitor() {

@@ -34,7 +34,7 @@ plugins {
     id 'net.researchgate.release' version '3.1.0'
     id "com.gorylenko.gradle-git-properties" version "2.5.4"
     id 'signing'
-    id "com.vanniktech.maven.publish" version "0.35.0"
+    id "com.vanniktech.maven.publish" version "0.36.0"
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.2.0" apply false
@@ -250,13 +250,14 @@ subprojects {subProj ->
             t.environment 'ENV_TEST2', "Pass by env"
 
 
-//            if (subProj.name == 'core' || subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
-//                // JUnit 5 parallel settings
-//                t.systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
-//                t.systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
-//                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
-//                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
-//            }
+            // these modules tests were battle tested by @nkwiatkowski so we can allow to try to enable parallel testing on them
+            if (subProj.name == 'jdbc-h2' || subProj.name == 'jdbc-mysql' || subProj.name == 'jdbc-postgres') {
+                // JUnit 5 parallel settings
+                t.systemProperty 'junit.jupiter.execution.parallel.enabled', 'true'
+                t.systemProperty 'junit.jupiter.execution.parallel.mode.default', 'concurrent'
+                t.systemProperty 'junit.jupiter.execution.parallel.mode.classes.default', 'same_thread'
+                t.systemProperty 'junit.jupiter.execution.parallel.config.strategy', 'dynamic'
+            }
         }
 
         tasks.register('integrationTest', Test) { Test t ->

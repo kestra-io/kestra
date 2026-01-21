@@ -46,6 +46,8 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
             }))
             .toList()
         );
+
+        listeners().forEach(l -> messages.forEach(l::accept));
     }
 
     @Override

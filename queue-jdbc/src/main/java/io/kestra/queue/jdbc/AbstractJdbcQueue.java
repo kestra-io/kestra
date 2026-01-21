@@ -49,7 +49,7 @@ public abstract class AbstractJdbcQueue<T extends Event> extends AbstractQueue<T
             .toList()
         );
 
-        listeners().forEach(l -> messages.forEach(l::accept));
+        listeners().forEach(l -> messages.forEach(l));
     }
 
     protected CompletionStage<Void> internalAsyncEmit(@Nullable String routingKey, T message) {

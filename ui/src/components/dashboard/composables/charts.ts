@@ -197,7 +197,7 @@ export function chartClick(moment: any, router: any, route: any, event: any, par
             query: {
                 ...query,
                 ...filters,
-                "filters[timeRange][EQUALS]":useMiscStore()?.configs?.chartDefaultDuration ?? "P30D"
+                "filters[timeRange][EQUALS]":useMiscStore()?.configs?.chartDefaultDuration ?? "PT24H"
             },
         });
     }

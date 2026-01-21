@@ -70,7 +70,7 @@ public class MiscController {
     @Inject
     NamespaceUtils namespaceUtils;
 
-    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:P30D}")
+    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
 private String chartDefaultDuration;
 
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")

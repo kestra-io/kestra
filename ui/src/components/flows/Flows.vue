@@ -659,7 +659,7 @@
     }
 
     function chartFilters() {
-        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "P30D";
+        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H";
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,

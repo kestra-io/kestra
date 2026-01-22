@@ -10,10 +10,12 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.FileInput;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.flows.input.ItemTypeInterface;
+import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
@@ -450,19 +452,33 @@ public class FlowInputOutput {
 
         final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
 
+        if(elementType != null && !elementType.isAllowedAsItemType()){
+                throw new IllegalArgumentException("Type "+ elementType.name()+ " can't be used as item type");
+        }
+
         return Optional.of(new AbstractMap.SimpleEntry<>(
             data.getId(),
-            parseType(execution, data.getType(), data.getId(), elementType, current)
+            parseType(execution, data.getType(), data.getId(), elementType, current, data)
         ));
     }
 
-    private Object parseType(Execution execution, Type type, String id, Type elementType, Object current) throws Exception {
+    private Object parseType(Execution execution, Type type, String id, Type elementType, Object current, Data data) throws Exception {
         try {
             return switch (type) {
                 case SELECT, ENUM, STRING, EMAIL -> current.toString();
                 case SECRET -> {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
+                    }
+                    SecretInput secretInput = (SecretInput) data;
+                    if (secretInput.getValidator() != null && !Pattern.matches(secretInput.getValidator(), current.toString())) {
+                        throw ManualConstraintViolation.toConstraintViolationException(
+                            "it must match the pattern `" + secretInput.getValidator() + "`",
+                            secretInput,
+                            SecretInput.class,
+                            secretInput.getId(),
+                            current.toString()
+                        );
                     }
                     String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
                     yield  EncryptedString.from(encrypted);
@@ -508,7 +524,7 @@ public class FlowInputOutput {
                         yield asList.stream()
                             .map(throwFunction(element -> {
                                 try {
-                                    return parseType(execution, elementType, id, null, element);
+                                    return parseType(execution, elementType, id, null, element, null);
                                 } catch (Throwable e) {
                                     throw new IllegalArgumentException("Unable to parse array element as `" + elementType + "` on `" + element + "`", e);
                                 }

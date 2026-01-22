@@ -42,7 +42,7 @@
         "element-plus": "2.13.1",
         "humanize-duration": "^3.33.2",
         "js-yaml": "^4.1.1",
-        "lodash": "^4.17.21",
+        "lodash": "^4.17.23",
         "mailchecker": "^6.0.19",
         "markdown-it": "^14.1.0",
         "markdown-it-anchor": "^9.2.0",

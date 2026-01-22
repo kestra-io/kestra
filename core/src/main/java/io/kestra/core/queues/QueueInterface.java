@@ -27,6 +27,13 @@ public interface QueueInterface<T> extends Closeable, Pauseable {
         emitAsync(null, messages);
     }
 
+    default void emitOnly(T message) throws QueueException {
+        emitOnly(null, message);
+    }
+
+    void emitOnly(String consumerGroup, T message) throws QueueException;
+
+
     void emitAsync(String consumerGroup, List<T> messages) throws QueueException;
 
     default void delete(T message) throws QueueException {

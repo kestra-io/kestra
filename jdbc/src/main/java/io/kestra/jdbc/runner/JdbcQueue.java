@@ -170,6 +170,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             .increment();
     }
 
+    @Override
     public void emitOnly(String consumerGroup, T message) throws QueueException{
         this.produce(consumerGroup, queueService.key(message), message, true);
     }

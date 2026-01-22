@@ -16,7 +16,7 @@ import io.micronaut.context.annotation.Factory;
 import jakarta.inject.Inject;
 
 @Factory
-public class TestQueueFactory {
+public class JdbcTestQueueFactory {
     @Inject
     private QueueService queueService;
 

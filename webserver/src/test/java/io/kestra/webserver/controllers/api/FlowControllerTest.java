@@ -403,13 +403,13 @@ class FlowControllerTest {
         String flowId = IdUtils.create();
 
         Flow flow = generateFlow(flowId, TEST_NAMESPACE, "a");
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Flow.class);
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/main/flows", flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE), Flow.class);
         assertThat(result.getId()).isEqualTo(flow.getId());
         assertThat(result.getRevision()).isEqualTo(1);
 
         flow = generateFlow(flowId, TEST_NAMESPACE, "b");
         result = client.toBlocking().retrieve(
-            PUT("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId(), flow),
+            PUT("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId(), flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE),
             Flow.class
         );
         assertThat(result.getId()).isEqualTo(flow.getId());
@@ -417,7 +417,7 @@ class FlowControllerTest {
 
         flow = generateFlow(flowId, TEST_NAMESPACE, "c");
         result = client.toBlocking().retrieve(
-            PUT("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId(), flow),
+            PUT("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId(), flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE),
             Flow.class
         );
         assertThat(result.getId()).isEqualTo(flow.getId());
@@ -942,7 +942,7 @@ class FlowControllerTest {
 
         Flow flow = generateFlow(TEST_NAMESPACE, "a").toBuilder().labels(List.of(new Label("project", "foo,bar"), new Label("status", "test"))).build();
 
-        parseFlow(client.toBlocking().retrieve(POST("/api/v1/main/flows", flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML), String.class));
+        client.toBlocking().retrieve(POST("/api/v1/main/flows", flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML), String.class);
 
         var flows = client.toBlocking().retrieve(GET("/api/v1/main/flows/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal()).isEqualTo(1L);
@@ -1129,13 +1129,13 @@ class FlowControllerTest {
         String flowId = IdUtils.create();
 
         Flow flow = generateFlow(flowId, TEST_NAMESPACE, "a");
-        Flow result = client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Flow.class);
+        Flow result = client.toBlocking().retrieve(POST("/api/v1/main/flows", flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE), Flow.class);
         assertThat(result.getId()).isEqualTo(flow.getId());
         assertThat(result.getRevision()).isEqualTo(1);
 
         flow = generateFlow(flowId, TEST_NAMESPACE, "b");
         result = client.toBlocking().retrieve(
-            PUT("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId(), flow),
+            PUT("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId(), flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE),
             Flow.class
         );
         assertThat(result.getId()).isEqualTo(flow.getId());
@@ -1143,7 +1143,7 @@ class FlowControllerTest {
 
         client.toBlocking().exchange(DELETE("/api/v1/main/flows/" + flow.getNamespace() + "/" + flow.getId()));
 
-        result = client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Flow.class);
+        result = client.toBlocking().retrieve(POST("/api/v1/main/flows", flow.sourceOrGenerateIfNull()).contentType(MediaType.APPLICATION_YAML_TYPE), Flow.class);
         assertThat(result.getId()).isEqualTo(flow.getId());
         assertThat(result.getRevision()).isEqualTo(4);
 

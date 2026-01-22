@@ -3,9 +3,17 @@
         <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
-        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-dropdown placement="bottom-end" splitButton :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :type="type" :disabled="isDisabled()" @click="onClick()">
+            <component :is="icon.LightningBolt" />
             {{ $t("execute") }}
-        </el-button>
+            <template #dropdown>
+                <el-dropdown-menu>
+                    <el-dropdown-item @click="onClickExecuteWithInputs">
+                        {{ $t("Execute with inputs") }}
+                    </el-dropdown-item>
+                </el-dropdown-menu> 
+            </template>
+        </el-dropdown>
         <el-dialog
             id="execute-flow-dialog"
             v-model="isOpen"
@@ -150,6 +158,9 @@
                     this.executionsStore.loadNamespaces();
                     this.isSelectFlowOpen = !this.isSelectFlowOpen;
                 }
+            },
+            onClickExecuteWithInputs() {
+               
             },
             async toggleModal(newValue) {
                 if (newValue === undefined) {

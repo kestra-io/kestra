@@ -558,6 +558,7 @@
     "execute flow behaviour": "Den Flow ausführen",
     "execute flow now ?": "Möchten Sie diesen Flow ausführen?",
     "execute the flow": "Den Flow <code>{id}</code> ausführen",
+    "execute with inputs": "Mit Eingaben ausführen",
     "execution": "Ausführung",
     "execution already finished": "Ausführung <code>{executionId}</code> bereits abgeschlossen",
     "execution labels": "Ausführungs-Labels",

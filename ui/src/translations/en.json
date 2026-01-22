@@ -403,6 +403,7 @@
     "sub flow": "Subflow",
     "execute": "Execute",
     "execute flow behaviour": "Execute the flow",
+    "execute with inputs": "Execute with inputs",
     "open in same tab": "In the same tab",
     "open in new tab": "In a new tab",
     "execute the flow": "Execute the flow <code>{id}</code>",

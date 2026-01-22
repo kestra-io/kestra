@@ -352,7 +352,7 @@ public class DefaultWorker implements Worker {
                 if ("task".equals(type)) {
                     // try to deserialize the taskRun to fail it
                     var taskRun = MAPPER.treeToValue(json.get("taskRun"), TaskRun.class);
-                    this.workerTaskResultQueue.emitOnly(new WorkerTaskResult(taskRun.fail()));
+                    this.workerTaskResultQueue.emit(new WorkerTaskResult(taskRun.fail()));
                 } else if ("trigger".equals(type)) {
                     // try to deserialize the triggerContext to fail it
                     var triggerContext = MAPPER.treeToValue(json.get("triggerContext"), TriggerContext.class);
@@ -382,7 +382,7 @@ public class DefaultWorker implements Worker {
                     workingDirectoryRunContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
                     WorkerTask failed = workerTask.withTaskRun(workerTask.fail());
                     try {
-                        this.workerTaskResultQueue.emitOnly(new WorkerTaskResult(failed.getTaskRun()));
+                        this.workerTaskResultQueue.emit(new WorkerTaskResult(failed.getTaskRun()));
                     } catch (QueueException ex) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", failed.getTask().getId(), failed.getTaskRun().getId(), e);
                     }
@@ -406,7 +406,7 @@ public class DefaultWorker implements Worker {
                     try {
                         if (!TruthUtils.isTruthy(runContext.render(currentWorkerTask.getTask().getRunIf()))) {
                             workerTaskResult = new WorkerTaskResult(currentWorkerTask.getTaskRun().withState(SKIPPED).addAttempt(TaskRunAttempt.builder().workerId(this.id).state(new State().withState(SKIPPED)).build()));
-                            this.workerTaskResultQueue.emitOnly(workerTaskResult);
+                            this.workerTaskResultQueue.emit(workerTaskResult);
                         } else {
                             workerTaskResult = this.run(currentWorkerTask, false);
                         }
@@ -414,7 +414,7 @@ public class DefaultWorker implements Worker {
                         RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
                         contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
                         try {
-                            this.workerTaskResultQueue.emitOnly(new WorkerTaskResult(workerTask.fail()));
+                            this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.fail()));
                         } catch (QueueException ex) {
                             log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
                         }
@@ -436,7 +436,7 @@ public class DefaultWorker implements Worker {
                 } catch (Exception e) {
                     workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
                     try {
-                        this.workerTaskResultQueue.emitOnly(new WorkerTaskResult(workerTask.fail()));
+                        this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.fail()));
                     } catch (QueueException ex) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
                     }
@@ -658,7 +658,7 @@ public class DefaultWorker implements Worker {
         if (! Boolean.TRUE.equals(workerTask.getTaskRun().getForceExecution()) && killedExecution.contains(workerTask.getTaskRun().getExecutionId())) {
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun().withState(KILLED));
             try {
-                this.workerTaskResultQueue.emitOnly(workerTaskResult);
+                this.workerTaskResultQueue.emit(workerTaskResult);
             } catch (QueueException ex) {
                 log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), ex);
             }
@@ -703,7 +703,7 @@ public class DefaultWorker implements Worker {
                                 List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
                                 TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts).withOutputs(variables).withState(SUCCESS);
                                 WorkerTaskResult workerTaskResult = new WorkerTaskResult(taskRun);
-                                this.workerTaskResultQueue.emitOnly(workerTaskResult);
+                                this.workerTaskResultQueue.emit(workerTaskResult);
                                 return workerTaskResult;
                             }
                         }
@@ -760,7 +760,7 @@ public class DefaultWorker implements Worker {
 
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(workerTask.getTaskRun(), dynamicTaskRuns);
 
-            this.workerTaskResultQueue.emitOnly(workerTaskResult);
+            this.workerTaskResultQueue.emit(workerTaskResult);
 
             // upload the cache file, hash may not be present if we didn't succeed in computing it
             if (workerTask.getTask().getTaskCache() != null && workerTask.getTask().getTaskCache().getEnabled() && hash.isPresent() &&
@@ -800,7 +800,7 @@ public class DefaultWorker implements Worker {
             RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask);
             contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);
             try {
-                this.workerTaskResultQueue.emitOnly(workerTaskResult);
+                this.workerTaskResultQueue.emit(workerTaskResult);
             } catch (QueueException ex) {
                 log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
             }
@@ -912,7 +912,7 @@ public class DefaultWorker implements Worker {
             .workerId(this.id);
 
         // emit the attempt so the execution knows that the task is in RUNNING
-        this.workerTaskResultQueue.emitOnly(new WorkerTaskResult(
+        this.workerTaskResultQueue.emit(new WorkerTaskResult(
                 workerTask.getTaskRun()
                     .withAttempts(this.addAttempt(workerTask, builder.build()))
             )

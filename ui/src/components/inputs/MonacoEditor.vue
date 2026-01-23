@@ -1,7 +1,7 @@
 <template>
     <div>
         <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
-        <div ref="datePickerWrapper" v-show="datePickerShown">
+        <div ref="datePickerWrapper" v-show="datePickerShown" class="z-3">
             <el-date-picker
                 ref="datePicker"
                 type="datetime"
@@ -12,7 +12,6 @@
                 @keydown.esc.prevent="editorResolved?.focus()"
                 @keydown.enter.prevent="datePickerCallback"
                 :clearable="false"
-                class="z-3"
             />
         </div>
 

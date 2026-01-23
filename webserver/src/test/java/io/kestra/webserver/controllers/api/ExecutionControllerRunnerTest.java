@@ -2398,6 +2398,32 @@ class ExecutionControllerRunnerTest {
         assertThat(outputs).containsKey("executionId");
     }
 
+    @Test
+    @LoadFlows("flows/valids/webhook-plaintext.yaml")
+    void webhookWithPlainTextResponseContentType() {
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS + "/webhook-plaintext/webhook-plaintext"),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(200);
+        assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("text/plain");
+        assertThat(response.body()).isEqualTo("hello-world");
+    }
+
+    @Test
+    @LoadFlows("flows/valids/webhook-plaintext.yaml")
+    void webhookWithPlainTextValidationToken() {
+        HttpResponse<String> response = client.toBlocking().exchange(
+            GET("/api/v1/main/executions/webhook/" + ExecutionControllerTest.TESTS_FLOW_NS + "/webhook-plaintext/webhook-plaintext?validationToken=abc123"),
+            String.class
+        );
+
+        assertThat(response.getStatus().getCode()).isEqualTo(200);
+        assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("text/plain");
+        assertThat(response.body()).isEqualTo("abc123");
+    }
+
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {
         return labels == null ? List.of() :
             labels.stream()

@@ -644,8 +644,8 @@ public class ExecutionController {
                     .last()
                     .map(event -> {
                         if (webhook.getReturnOutputs()) {
-                            return HttpResponse.ok(event.getData().getOutputs());
-
+                            // Only apply custom responseContentType when returnOutputs is true
+                            return buildWebhookResponse(event.getData().getOutputs(), webhook.getResponseContentType());
                         } else {
                             return (HttpResponse<?>) HttpResponse.ok(WebhookResponse.fromExecution(
                                 event.getData(),
@@ -655,6 +655,7 @@ public class ExecutionController {
                     })
                     .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
             } else {
+                // Without wait, always return JSON (responseContentType only applies with returnOutputs)
                 return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));
             }
         } catch (QueueException e) {
@@ -669,6 +670,27 @@ public class ExecutionController {
         public static WebhookResponse fromExecution(Execution execution, URI url) {
             return new WebhookResponse(execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getTrigger(), execution.getOutputs(), execution.getLabels(), execution.getState(), url);
         }
+    }
+
+    /**
+     * Build webhook response with optional custom content type.
+     * When responseContentType is set, the response will use that content type instead of the default application/json.
+     */
+    private HttpResponse<?> buildWebhookResponse(Object body, String responseContentType) {
+        if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN)) {
+            String responseBody;
+            if (body instanceof String) {
+                responseBody = (String) body;
+            } else if (body instanceof Map<?, ?> map && map.size() == 1) {
+                // Extract single value from outputs map for plain text response
+                responseBody = String.valueOf(map.values().iterator().next());
+            } else {
+                responseBody = String.valueOf(body);
+            }
+            return HttpResponse.ok(responseBody).contentType(MediaType.TEXT_PLAIN_TYPE);
+        }
+        // Default: application/json (or no responseContentType set)
+        return HttpResponse.ok(body);
     }
 
     @ExecuteOn(TaskExecutors.IO)

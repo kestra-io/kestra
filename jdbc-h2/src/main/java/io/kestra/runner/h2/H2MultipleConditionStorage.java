@@ -5,9 +5,6 @@ import io.kestra.jdbc.runner.AbstractJdbcMultipleConditionStorage;
 import io.kestra.repository.h2.H2Repository;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import org.jooq.Condition;
 
 @Singleton
 @H2QueueEnabled
@@ -16,7 +13,4 @@ public class H2MultipleConditionStorage extends AbstractJdbcMultipleConditionSto
         super(repository);
     }
 
-    protected Condition getEndDataCondition(){
-        return field("end_date").lt(OffsetDateTime.now(ZoneOffset.UTC));
-    }
 }

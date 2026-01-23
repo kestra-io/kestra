@@ -484,6 +484,59 @@ public class InputsTest {
             "Invalid value for input `multi`. Cause: value `H` doesn't match the values `[A, B, C]`"
         );
     }
+
+    @Test
+    @LoadFlows(value = "flows/valids/secret-input-validation.yaml")
+    void secretInputValidation(){
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "secret-input-validation").get();
+        InputOutputValidationException ex = assertThrows(InputOutputValidationException.class, ()-> flowIO.readExecutionInputs(
+            flow,
+            Execution.builder()
+                .id("test")
+                .namespace(flow.getNamespace())
+                .tenantId(flow.getTenantId())
+                .flowRevision(1)
+                .flowId(flow.getId())
+                .build(),
+            Map.of("input1", "any")
+        ));
+        assertThat(ex.getMessage()).isEqualTo("Invalid value for input `input1`. Cause: input1: it must match the pattern `(?=.{8,})(?=.*[A-Z])(?=.*[0-9]).*`");
+
+        Map< String , Object> resolvedInputs = flowIO.readExecutionInputs(
+            flow,
+            Execution.builder()
+                .id("test")
+                .namespace(flow.getNamespace())
+                .tenantId(flow.getTenantId())
+                .flowRevision(1)
+                .flowId(flow.getId())
+                .build(),
+            Map.of("input1", "1245Abc@$Zk")
+        );
+        EncryptedString encryptedString = (EncryptedString) resolvedInputs.get("input1");
+        assertThat(encryptedString).isNotNull();
+
+    }
+
+    @Test
+    @LoadFlows(value = "flows/invalids/secret-input-as-item-type.yaml")
+    void notAllowedSecretInputAsItemType(){
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "secret-input-as-item-type").get();
+        InputOutputValidationException ex = assertThrows(InputOutputValidationException.class, ()-> flowIO.readExecutionInputs(
+            flow,
+            Execution.builder()
+                .id("test")
+                .namespace(flow.getNamespace())
+                .tenantId(flow.getTenantId())
+                .flowRevision(1)
+                .flowId(flow.getId())
+                .build(),
+            Map.of("input1", "1245Abc@$Zk")
+        ));
+        assertThat(ex.getMessage()).isEqualTo("Type 'SECRET' cannot be used as an item type");
+    }
+
+
     private URI createFile() throws IOException {
         File tempFile = File.createTempFile("file", ".txt");
         Files.write(tempFile.toPath(), "Hello World".getBytes());

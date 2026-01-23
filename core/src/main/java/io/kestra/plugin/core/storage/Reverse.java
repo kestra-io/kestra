@@ -54,7 +54,7 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
         title = "The separator used to join the file into chunks. By default, it's a newline `\\n` character. If you are on Windows, you might want to use `\\r\\n` instead."
     )
     @Builder.Default
-    private Property<String> separator = Property.ofValue("\n");
+    private Property<String> separator = Property.ofValue("\\n");
 
     @Schema(
         title = "The name of a supported charset"

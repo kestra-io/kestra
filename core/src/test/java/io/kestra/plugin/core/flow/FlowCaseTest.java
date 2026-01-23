@@ -22,8 +22,8 @@ public class FlowCaseTest {
     @Inject
     protected TestRunnerUtils runnerUtils;
 
-    public void waitSuccess() throws Exception {
-        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", true);
+    public void waitSuccess(String tenantId) throws Exception {
+        this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", true, tenantId);
     }
 
     public void waitFailed(String tenantId) throws Exception {
@@ -38,15 +38,15 @@ public class FlowCaseTest {
         this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", false, tenantId);
     }
 
-    public void oldTaskName() throws Exception {
+    public void oldTaskName(String tenantId) throws Exception {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            tenantId,
             "io.kestra.tests",
             "subflow-old-task-name"
         );
 
         Execution triggered = runnerUtils.awaitFlowExecution(
-            e -> e.getState().getCurrent().isTerminated(), MAIN_TENANT, "io.kestra.tests",
+            e -> e.getState().getCurrent().isTerminated(), tenantId, "io.kestra.tests",
             "minimal");
 
         assertThat(execution.getTaskRunList()).hasSize(1);
@@ -56,11 +56,6 @@ public class FlowCaseTest {
         assertThat(triggered.getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
         assertThat(triggered.getTrigger().getVariables().get("flowId")).isEqualTo(execution.getFlowId());
         assertThat(triggered.getTrigger().getVariables().get("namespace")).isEqualTo(execution.getNamespace());
-    }
-
-    void run(String input, State.Type fromState, State.Type triggerState, int count, String outputs, boolean testInherited)
-        throws Exception {
-        run(input, fromState, triggerState, count, outputs, testInherited, MAIN_TENANT);
     }
 
     @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})

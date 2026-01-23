@@ -2,9 +2,11 @@
     <el-tooltip
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
+        :enterable="false"
         :persistent="false"
         :hideAfter="0"
         :content="tooltip"
+        popperClass="ks-restart-tooltip--no-pointer"
         rawContent
         transition=""
         effect="light"
@@ -59,7 +61,7 @@
             <p class="execution-description">
                 {{ $t("restart change revision") }}
             </p>
-            <el-form-item :label="t('revisions')">
+            <el-form-item :label="$t('revisions')">
                 <el-select v-model="revisionsSelected">
                     <el-option
                         v-for="item in revisionsOptions"
@@ -74,7 +76,7 @@
 
     <el-dialog v-if="isReplayWithInputsOpen" v-model="isReplayWithInputsOpen" destroyOnClose :appendToBody="true" width="60%">
         <template #header>
-            <span v-html="t('replay the execution', {executionId: execution.id, flowId: execution.flowId})" />
+            <span v-html="$t('replay the execution', {executionId: execution.id, flowId: execution.flowId})" />
         </template>
         <ReplayWithInputs
             :execution
@@ -108,7 +110,7 @@
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
-        tooltipPosition: {type: String, default: "bottom"}
+        tooltipPosition: {type: String, default: "bottom"},
     })
 
     const emit = defineEmits(["follow"])
@@ -237,6 +239,12 @@
 
     watch(isOpen, (newValue) => newValue && loadRevision())
 </script>
+
+<style lang="scss">
+    .ks-restart-tooltip--no-pointer {
+        pointer-events: none;
+    }
+</style>
 
 <style scoped lang="scss">
 .execution-description {

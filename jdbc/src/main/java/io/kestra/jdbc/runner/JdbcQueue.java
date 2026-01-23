@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -42,11 +41,17 @@ import java.util.function.Supplier;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
 
 @Slf4j
 public abstract class JdbcQueue<T> implements QueueInterface<T> {
-    private static final int MAX_ASYNC_THREADS = Runtime.getRuntime().availableProcessors();
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
+
+    private static final int MAX_ASYNC_THREADS = Runtime.getRuntime().availableProcessors();
+    private static final Field<Object> KEY_FIELD = AbstractJdbcRepository.field("key");
+    private static final Field<Object> OFFSET_FIELD = AbstractJdbcRepository.field("offset");
+    private static final Field<Object> CONSUMER_GROUP_FIELD = AbstractJdbcRepository.field("consumer_group");
+    private static final Field<Object> TYPE_FIELD = AbstractJdbcRepository.field("type");
 
     private final ExecutorService poolExecutor;
     private final ExecutorService asyncPoolExecutor;
@@ -117,13 +122,13 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         }
 
 
-        Map<Field<Object>, Object> fields = new HashMap<>();
-        fields.put(AbstractJdbcRepository.field("type"), queueType());
-        fields.put(AbstractJdbcRepository.field("key"), key != null ? key : IdUtils.create());
-        fields.put(AbstractJdbcRepository.field("value"), JSONB.valueOf(new String(bytes)));
+        Map<Field<Object>, Object> fields = HashMap.newHashMap(4);
+        fields.put(TYPE_FIELD, queueType());
+        fields.put(KEY_FIELD, key != null ? key : IdUtils.create());
+        fields.put(VALUE_FIELD, JSONB.valueOf(new String(bytes)));
 
         if (consumerGroup != null) {
-            fields.put(AbstractJdbcRepository.field("consumer_group"), consumerGroup);
+            fields.put(CONSUMER_GROUP_FIELD, consumerGroup);
         }
 
         return fields;
@@ -165,6 +170,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             .increment();
     }
 
+    @Override
     public void emitOnly(String consumerGroup, T message) throws QueueException{
         this.produce(consumerGroup, queueService.key(message), message, true);
     }
@@ -196,7 +202,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 .using(configuration)
                 .delete(this.table)
                 .where(buildTypeCondition(queueType()))
-                .and(AbstractJdbcRepository.field("key").eq(key))
+                .and(KEY_FIELD.eq(key))
                 .execute();
             log.debug("Cleaned {} records for key {}", deleted, key);
         });
@@ -211,14 +217,14 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
      * This is used to purge a queue for specific keys.
      */
     public void deleteByKeys(List<String> keys) throws QueueException {
-        // process in batches of 100 items to avoid too big IN clausecQueue
+        // process in batches of 100 items to avoid too big IN clause
         Iterables.partition(keys, 100).forEach(batch -> {
             dslContextWrapper.transaction(configuration -> {
                 int deleted = DSL
                     .using(configuration)
                     .delete(this.table)
                     .where(buildTypeCondition(queueType()))
-                    .and(AbstractJdbcRepository.field("key").in(batch))
+                    .and(KEY_FIELD.in(batch))
                     .execute();
                 log.debug("Cleaned {} records for keys {}", deleted, batch);
             });
@@ -231,24 +237,24 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset, boolean forUpdate) {
         var select = ctx.select(
-                AbstractJdbcRepository.field("value"),
-                AbstractJdbcRepository.field("offset")
+                VALUE_FIELD,
+                OFFSET_FIELD
             )
             .from(this.table)
             .where(buildTypeCondition(queueType()));
 
         if (offset != 0) {
-            select = select.and(AbstractJdbcRepository.field("offset").gt(offset));
+            select = select.and(OFFSET_FIELD.gt(offset));
         }
 
         if (consumerGroup != null) {
-            select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+            select = select.and(CONSUMER_GROUP_FIELD.eq(consumerGroup));
         } else {
-            select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
+            select = select.and(CONSUMER_GROUP_FIELD.isNull());
         }
 
         var limitSelect = select
-            .orderBy(AbstractJdbcRepository.field("offset").asc())
+            .orderBy(OFFSET_FIELD.asc())
             .limit(configuration.getPollSize());
         ResultQuery<Record2<Object, Object>> configuredSelect = limitSelect;
 
@@ -291,13 +297,13 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         dslContextWrapper.transaction(configuration -> {
             var select = DSL
                 .using(configuration)
-                .select(DSL.max(AbstractJdbcRepository.field("offset")).as("max"))
+                .select(DSL.max(OFFSET_FIELD).as("max"))
                 .from(table)
                 .where(buildTypeCondition(queueType()));
             if (consumerGroup != null) {
-                select = select.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));
+                select = select.and(CONSUMER_GROUP_FIELD.eq(consumerGroup));
             } else {
-                select = select.and(AbstractJdbcRepository.field("consumer_group").isNull());
+                select = select.and(CONSUMER_GROUP_FIELD.isNull());
             }
 
             Integer integer = select.fetchAny("max", Integer.class);
@@ -315,9 +321,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
 
                 if (!result.isEmpty()) {
-                    List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
-
-                    maxOffset.set(offsets.getLast());
+                    maxOffset.set(result.getLast().get("offset", Integer.class));
                 }
 
                 return result;
@@ -528,8 +532,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Integer switchSteps = 5;
 
         public List<Step> computeSteps() {
-            if (this.maxPollInterval.compareTo(this.minPollInterval) <= 0) {
-                throw new IllegalArgumentException("'maxPollInterval' (" + this.maxPollInterval + ") must be greater than 'minPollInterval' (" + this.minPollInterval + ")");
+            if (this.maxPollInterval.compareTo(this.minPollInterval) < 0) {
+                throw new IllegalArgumentException("'maxPollInterval' (" + this.maxPollInterval + ") must be greater than or equal to 'minPollInterval' (" + this.minPollInterval + ")");
+            }
+
+            if (this.maxPollInterval.equals(this.minPollInterval)) {
+                return List.of(new Step(this.minPollInterval, Duration.ZERO));
             }
 
             List<Step> steps = new ArrayList<>();

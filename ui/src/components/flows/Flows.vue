@@ -617,7 +617,7 @@
         const formData = new FormData();
         if (file.value && file.value.files && file.value.files[0]) {
             formData.append("fileUpload", file.value.files[0]);
-            flowStore.importFlows(formData as any).then((res: any) => {
+            flowStore.importFlows({file: formData, failOnError: true}).then((res: any) => {
                 if (res.data.length > 0) {
                     toast.warning(t("flows not imported") + ": " + res.data.join(", "));
                 } else {
@@ -659,7 +659,7 @@
     }
 
     function chartFilters() {
-        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "P30D";
+        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H";
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,
@@ -686,10 +686,6 @@
 
 .flow-id {
     min-width: 200px;
-
-    & a {
-        color: var(--bs-code-color)
-    }
 }
 
 .flows-table .el-table__cell {

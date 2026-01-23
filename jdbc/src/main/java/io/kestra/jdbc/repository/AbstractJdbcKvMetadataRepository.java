@@ -4,7 +4,6 @@ import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.TenantAndNamespace;
 import io.kestra.core.models.kv.PersistedKvMetadata;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.micronaut.data.model.Pageable;
@@ -21,10 +20,9 @@ import java.util.stream.Stream;
 public abstract class AbstractJdbcKvMetadataRepository extends AbstractJdbcCrudRepository<PersistedKvMetadata> implements KvMetadataRepositoryInterface {
 
     public AbstractJdbcKvMetadataRepository(
-        io.kestra.jdbc.AbstractJdbcRepository<PersistedKvMetadata> jdbcRepository,
-        QueueService queueService
+        io.kestra.jdbc.AbstractJdbcRepository<PersistedKvMetadata> jdbcRepository
     ) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
     }
 
     private static Condition lastCondition(boolean isLast) {

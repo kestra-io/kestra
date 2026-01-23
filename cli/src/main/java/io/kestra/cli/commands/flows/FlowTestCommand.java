@@ -3,14 +3,19 @@ package io.kestra.cli.commands.flows;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.FlowInputOutput;
-import io.kestra.core.runners.RunnerUtils;
 import io.kestra.cli.StandAloneRunner;
 import io.micronaut.context.ApplicationContext;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -20,11 +25,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeoutException;
+
+import static org.awaitility.Awaitility.await;
 
 @CommandLine.Command(
     name = "test",
@@ -74,9 +78,10 @@ public class FlowTestCommand extends AbstractApiCommand {
 
         LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
+        ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
-        RunnerUtils runnerUtils = applicationContext.getBean(RunnerUtils.class);
         TenantIdSelectorService tenantService =  applicationContext.getBean(TenantIdSelectorService.class);
+        QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
 
         Map<String, Object> inputs = new HashMap<>();
 
@@ -97,11 +102,13 @@ public class FlowTestCommand extends AbstractApiCommand {
                 throw new IllegalArgumentException("Too many flow found, need 1, found " + all.size());
             }
 
-            runnerUtils.runOne(
-                all.getFirst(),
-                (flow, execution) -> flowInputOutput.readExecutionInputs(flow, execution, inputs),
-                Duration.ofHours(1)
+            Execution execution = Execution.newExecution(all.getFirst(), (f, e) -> flowInputOutput.readExecutionInputs(f, e, inputs), Collections.emptyList(), Optional.empty());
+            executionQueue.emit(execution);
+            Execution terminated = await().atMost(Duration.ofHours(1)).until(
+                () -> executionRepository.findById(tenantService.getTenantId(tenantId), execution.getId()).orElse(null),
+                e -> e != null && e.getState().isTerminated()
             );
+            stdOut("Successfully executed the flow with execution %s in state %s", terminated.getId(), terminated.getState().getCurrent());
         } catch (ConstraintViolationException e) {
             throw new CommandLine.ParameterException(this.spec.commandLine(), e.getMessage());
         } catch (IOException | TimeoutException e) {

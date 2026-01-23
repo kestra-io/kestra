@@ -1,6 +1,5 @@
 package io.kestra.plugin.core.flow;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -39,7 +38,7 @@ public class DagTest {
     private FlowInputOutput flowIO;
 
     @Test
-    @ExecuteFlow("flows/valids/dag.yaml")
+    @ExecuteFlow(value = "flows/valids/dag.yaml", tenantId = "dag")
     void dag(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList().size()).isEqualTo(7);
@@ -68,10 +67,10 @@ public class DagTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/finally-dag.yaml"})
+    @LoadFlows(value = {"flows/valids/finally-dag.yaml"}, tenantId = "errors")
     void errors() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(
-            MAIN_TENANT,
+            "errors",
             "io.kestra.tests", "finally-dag", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, Map.of("failed", true)),
             Duration.ofSeconds(60)

@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.encryption.EncryptionService;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 
 import io.kestra.core.exceptions.InputOutputValidationException;
@@ -336,13 +337,13 @@ public class FlowInputOutput {
                     parsedInput.ifPresent(typed -> resolvable.resolveWithValue(typed.getValue()));
                 } catch (ConstraintViolationException e) {
                     Input<?> finalInput = input;
-                  Set<InputOutputValidationException> exceptions =  e.getConstraintViolations().stream()
+                    Set<InputOutputValidationException> exceptions =  e.getConstraintViolations().stream()
                       .map(c-> InputOutputValidationException.of(c.getMessage(), finalInput))
                       .collect(Collectors.toSet());
                     resolvable.resolveWithError(exceptions);
                 }
             }
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException | ConstraintViolationException e){
             resolvable.resolveWithError(InputOutputValidationException.of(e.getMessage(), input));
         }
         catch (Exception e) {
@@ -426,7 +427,7 @@ public class FlowInputOutput {
                     }
                     return parseData(execution, output, current);
                 }
-                catch (IllegalArgumentException e){
+                catch (IllegalArgumentException | ConstraintViolationException e){
                     throw InputOutputValidationException.of(e.getMessage(), output);
                 }
                 catch (Exception e) {
@@ -449,11 +450,14 @@ public class FlowInputOutput {
         if (data.getType() == null) {
             return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
         }
-
-        final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
-
-        if(elementType != null && !elementType.isAllowedAsItemType()){
-                throw new IllegalArgumentException("Type "+ elementType.name()+ " can't be used as item type");
+        Type elementType = null;
+        if (data instanceof ItemTypeInterface itemType) {
+            elementType = itemType.getItemType();
+            if (!elementType.isAllowedAsItemType()) {
+                throw new FlowProcessingException(
+                    "Type '" + elementType + "' cannot be used as an item type"
+                );
+            }
         }
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
@@ -535,7 +539,7 @@ public class FlowInputOutput {
                     }
                 }
             };
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | ConstraintViolationException e) {
             throw e;
         } catch (Throwable e) {
             throw new Exception(" errors:\n```\n" + e.getMessage() + "\n```");

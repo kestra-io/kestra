@@ -43,7 +43,9 @@
         BLOCK_SCHEMA_PATH_INJECTION_KEY,
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
         CREATE_TASK_FUNCTION_INJECTION_KEY,
+        CREATING_FLOW_INJECTION_KEY,
         CREATING_TASK_INJECTION_KEY,
+        DEFAULT_NAMESPACE_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         EDITING_TASK_INJECTION_KEY,
         FIELDNAME_INJECTION_KEY,
@@ -55,7 +57,7 @@
         REF_PATH_INJECTION_KEY,
         ROOT_SCHEMA_INJECTION_KEY,
         SCHEMA_DEFINITIONS_INJECTION_KEY,
-        UPDATE_TASK_FUNCTION_INJECTION_KEY,
+        UPDATE_YAML_FUNCTION_INJECTION_KEY,
     } from "./injectionKeys";
     import {useFlowFields, SECTIONS_IDS} from "./utils/useFlowFields";
     import debounce from "lodash/debounce";
@@ -65,6 +67,7 @@
     import {useKeyboardSave} from "./utils/useKeyboardSave";
     import {deepEqual} from "../../utils/utils";
     import {useScrollMemory} from "../../composables/useScrollMemory";
+    import {defaultNamespace} from "../../composables/useNamespaces";
 
 
     const props = defineProps<NoCodeProps>();
@@ -166,6 +169,8 @@
     provide(REF_PATH_INJECTION_KEY, props.refPath);
     provide(PANEL_INJECTION_KEY, panel)
     provide(POSITION_INJECTION_KEY, props.position ?? "after");
+    provide(CREATING_FLOW_INJECTION_KEY, flowStore.isCreating ?? false);
+    provide(DEFAULT_NAMESPACE_INJECTION_KEY, computed(() => flowStore.flow?.namespace ?? defaultNamespace() ?? "company.team"));
     provide(CREATING_TASK_INJECTION_KEY, props.creatingTask);
     provide(EDITING_TASK_INJECTION_KEY, props.editingTask);
     provide(FIELDNAME_INJECTION_KEY, props.fieldName);
@@ -184,7 +189,7 @@
         emit("closeTask")
     })
 
-    provide(UPDATE_TASK_FUNCTION_INJECTION_KEY, (yaml) => {
+    provide(UPDATE_YAML_FUNCTION_INJECTION_KEY, (yaml) => {
         editorUpdate(yaml)
     })
 

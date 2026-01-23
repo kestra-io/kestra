@@ -13,6 +13,7 @@ import Gantt from "../Gantt.vue";
 import Topology from "../Topology.vue";
 import Overview from "../overview/Overview.vue";
 import DemoAuditLogs from "../../demo/AuditLogs.vue";
+import DemoAssets from "../../demo/Assets.vue";
 import ExecutionMetric from "../ExecutionMetric.vue";
 import ExecutionOutput from "../outputs/Wrapper.vue";
 import Dependencies from "../../dependencies/Dependencies.vue";
@@ -40,12 +41,9 @@ export function useExecutionRoot() {
             title: route.params.id as string,
             breadcrumb: [
                 {
-                    label: t("flows"),
+                    label: t("executions"),
                     link: {
-                        name: "flows/list",
-                        query: {
-                            namespace: ns
-                        }
+                        name: "executions/list"
                     }
                 },
                 {
@@ -55,17 +53,6 @@ export function useExecutionRoot() {
                         params: {
                             namespace: ns,
                             id: flowId
-                        }
-                    }
-                },
-                {
-                    label: t("executions"),
-                    link: {
-                        name: "flows/update",
-                        params: {
-                            namespace: ns,
-                            id: flowId,
-                            tab: "executions"
                         }
                     }
                 }
@@ -135,6 +122,16 @@ export function useExecutionRoot() {
                 title: t("auditlogs"),
                 maximized: true,
                 locked: true
+            },
+            {
+                name: "assets",
+                component: DemoAssets,
+                title: t("assets"),
+                maximized: true,
+                locked: true,
+                props: {
+                    topbar: false
+                }
             }
         ];
     };

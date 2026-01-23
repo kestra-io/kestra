@@ -91,6 +91,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
             assertThat(queueCount.getCount()).isEqualTo(0L);
             assertThat(last.get()).isNotNull();
             assertTrue(last.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
+            assertTrue(last.get().getLabels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
         }
     }
 
@@ -136,6 +137,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
             assertThat(queueCount.getCount()).isEqualTo(0L);
             assertThat(last.get()).isNotNull();
             assertTrue(last.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
+            assertTrue(last.get().getLabels().stream().anyMatch(label -> label.equals(new Label(Label.FROM, "trigger"))));
 
             // Assert that the trigger is now disabled.
             // It needs to await on assertion as it will be disabled AFTER we receive a success execution.

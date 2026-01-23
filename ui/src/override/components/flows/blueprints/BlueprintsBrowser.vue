@@ -33,7 +33,7 @@
                         <KSFilter
                             :configuration="blueprintFilter"
                             :buttons="{
-                                savedFilters: {shown: false}, 
+                                savedFilters: {shown: false},
                                 tableOptions: {shown: false}
                             }"
                             :searchInputFullWidth="true"
@@ -56,7 +56,10 @@
                                 <div v-if="!system && blueprint.tags?.length > 0" class="tags-section">
                                     <span v-for="tag in processedTags(blueprint.tags)" :key="tag.original" class="tag-item">{{ tag.display }}</span>
                                 </div>
-                                <div class="text-section">
+                                <div v-if="blueprint.template" class="tags-section">
+                                    <span class="tag-item">{{ $t('template') }}</span>
+                                </div>
+                                <div class="text-section">                                        
                                     <h3 class="title">
                                         {{ blueprint.title ?? blueprint.id }}
                                     </h3>
@@ -66,7 +69,7 @@
                                         <TaskIcon v-for="task in [...new Set(blueprint.includedTasks)]" :key="task" :cls="task" :icons="pluginsStore.icons" />
                                     </div>
 
-                                    <div class="action-button">
+                                    <div class="d-flex align-items-center gap-2">
                                         <el-tooltip v-if="embed && !system" trigger="click" content="Copied" placement="left" :autoClose="2000" effect="light">
                                             <el-button
                                                 type="primary"
@@ -76,9 +79,11 @@
                                                 class="p-2"
                                             />
                                         </el-tooltip>
-                                        <el-button v-else-if="userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
-                                            {{ $t('use') }}
-                                        </el-button>
+                                        <slot name="buttons" :blueprint="{...blueprint, kind: props.blueprintKind, type: props.blueprintType}">
+                                            <el-button v-if="!embed && userCanCreate" type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
+                                                {{ $t('use') }}
+                                            </el-button>
+                                        </slot>
                                     </div>
                                 </div>
                             </div>
@@ -108,7 +113,7 @@
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {useDataTableActions} from "../../../../composables/useDataTableActions";
     import {useBlueprintFilter} from "../../../../components/filter/configurations";
-    
+
     const blueprintFilter = useBlueprintFilter();
 
     const props = withDefaults(defineProps<{
@@ -149,6 +154,7 @@
         id: string;
         tags: string[];
         title?: string;
+        template?: Record<string, any>;
     }[] | undefined>(undefined);
     const error = ref(false);
     const icon = {ContentCopy};
@@ -399,7 +405,7 @@
         display: flex;
         flex-wrap: wrap;
         gap: 0.25rem;
-        
+
         .tag-item {
             border: 1px solid var(--ks-border-primary);
             color: var(--ks-content-primary);
@@ -411,9 +417,9 @@
     }
 
     .text-section {
-        flex-grow: 1; 
+        flex-grow: 1;
         margin-top: 0.75rem;
-        
+
         .title {
             font-size: 1rem;
             font-weight: 600;

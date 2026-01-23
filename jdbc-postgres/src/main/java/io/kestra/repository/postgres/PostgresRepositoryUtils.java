@@ -16,7 +16,7 @@ public final class PostgresRepositoryUtils {
             case MONTH:
                 return DSL.field("TO_CHAR({0}, 'YYYY-MM')", Date.class, DSL.field(dateField));
             case WEEK:
-                return DSL.field("TO_CHAR({0}, 'IYYY-IW')", Date.class, DSL.field(dateField));
+                return DSL.field("DATE_TRUNC('week', {0})", Date.class, DSL.field(dateField));
             case DAY:
                 return DSL.field("DATE({0})", Date.class, DSL.field(dateField));
             case HOUR:

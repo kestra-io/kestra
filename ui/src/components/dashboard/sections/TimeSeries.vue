@@ -36,6 +36,9 @@
     import KestraUtils, {useTheme} from "../../../utils/utils";
     import {FilterObject} from "../../../utils/filters";
 
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
+
     import {useI18n} from "vue-i18n";
     const {t} = useI18n();
 
@@ -49,6 +52,8 @@
         showDefault: {type: Boolean, default: false},
         short: {type: Boolean, default: false},
         execution: {type: Boolean, default: false},
+        flow: {type: String, default: undefined},
+        namespace: {type: String, default: undefined},
     });
 
 
@@ -127,7 +132,7 @@
                     },
                     position: "left",
                     ...DEFAULTS,
-                    display: props.short || props.execution ? false : true,
+                    display: verticalLayout.value ? false : (props.short || props.execution ? false : true),
                     ticks: {
                         ...DEFAULTS.ticks,
                         callback: (value: any) => isDuration(aggregator.value[0]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
@@ -141,7 +146,7 @@
                         },
                         position: "right",
                         ...DEFAULTS,
-                        display: props.short ? false : true,
+                        display: verticalLayout.value ? false : (props.short ? false : true),
                         ticks: {
                             ...DEFAULTS.ticks,
                             callback: (value: any) => isDuration(aggregator.value[1]?.[1]?.field) ? KestraUtils.humanDuration(value) : value
@@ -153,7 +158,10 @@
                 if (data.type === "io.kestra.plugin.core.dashboard.data.Logs" || props.execution) {
                     return;
                 }
-                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
+                chartClick(moment, router, route, {}, parsedData.value, elements, "label", {
+                    ...(props.namespace ? {"filters[namespace][IN]": props.namespace} : {}),
+                    ...(props.flow ? {"filters[flowId][EQUALS]": props.flow} : {})              
+                });
             },
         }, theme.value);
     });

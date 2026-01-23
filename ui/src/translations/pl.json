@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Uwaga: Obecnie jako dostawca AI obsługiwany jest tylko Gemini.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji.",
+          "footer": "Uwaga: Obecnie tylko Gemini jest obsługiwany jako dostawca AI dla Open Source Edition. W przypadku Enterprise Edition zapoznaj się z dokumentacją AI Copilot dotyczącą konfiguracji innych dostawców modeli.\n\nUruchom ponownie instancję Kestra po zapisaniu konfiguracji.",
           "header": "<b>AI Copilot nie został jeszcze skonfigurowany.</b>\n\nAby włączyć AI Copilot, dodaj poniższy fragment do pliku konfiguracyjnego instancji Kestra (np. <code>application.yml</code>), zastępując <code>geminiApiKey</code> swoim rzeczywistym kluczem:"
         },
         "generating": "Generowanie YAML dla flow...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "Bloki aplikacji",
     "apps": "Aplikacje",
+    "assets": "Zasoby",
     "attempt": "Próba",
     "attempts": "Próba(y)",
     "auditlogs": "Audit Logs",
@@ -294,6 +295,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">To wykonanie jest nadal w trakcie, usunięcie go nie zatrzyma procesu.<br />Musisz zabić wykonanie, aby je zatrzymać.</div>",
     "delete logs": "Usuń logs",
     "delete ok": "jest usunięty",
+    "delete revision confirm": "Czy na pewno chcesz usunąć wersję {revision}?",
+    "delete revision error": "Błąd usuwania wersji {revision} z błędem {error}",
     "delete task confirm": "Czy chcesz usunąć task <code>{taskId}</code>?",
     "delete trigger": "Usuń trigger",
     "delete trigger confirmation": "Czy na pewno chcesz usunąć trigger {id}? WARNING: usunięcie triggera może prowadzić do zduplikowanych wykonania, jeśli trigger jest nadal aktywny w flow.",
@@ -314,6 +317,12 @@
         "message": "Aplikacje w Kestra Enterprise Edition umożliwiają tworzenie niestandardowych interfejsów użytkownika, które współdziałają z workflowami Kestra spoza platformy. Ta funkcja pozwala używać workflowów jako backendu dla niestandardowych aplikacji, umożliwiając użytkownikom nietechnicznym przesyłanie danych za pomocą formularzy lub wznawianie PAUSED workflowów oczekujących na zatwierdzenie.",
         "title": "Twórz własne aplikacje z Kestra"
       },
+      "assets": {
+        "header": "Metadane zasobów i obserwowalność",
+        "label": "Zasoby",
+        "message": "Zasoby łączą metadane dotyczące obserwowalności, pochodzenia i własności, aby zespoły platformowe mogły szybciej rozwiązywać problemy i wdrażać z pewnością.",
+        "title": "Przenieś każdy zestaw danych, usługę i zależność do widoku."
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition rejestruje każdą aktywność za pomocą solidnych, niezmiennych zapisów, co ułatwia śledzenie zmian, utrzymanie zgodności oraz rozwiązywanie problemów.",
         "title": "Śledź zmiany za pomocą Audit Logs"
@@ -329,6 +338,10 @@
         "title": "Zarządzaj infrastrukturą w całej swojej instancji"
       },
       "namespace": {
+        "assets": {
+          "message": "W Kestra Enterprise Edition, Assets prowadzi bieżący inwentarz zasobów, z którymi współpracują Twoje workflow. Te zasoby mogą być tabelami baz danych, maszynami wirtualnymi, plikami lub dowolnym zewnętrznym systemem, z którym pracujesz.",
+          "title": "Centralizacja zarządzania zasobami"
+        },
         "audit-logs": {
           "message": "W Kestra Enterprise Edition możesz przeglądać dzienniki audytu na poziomie namespace z szczegółowymi różnicami, co daje jasną historię, kto, co i kiedy zmienił we wszystkich zasobach.",
           "title": "Śledź wszystkie zmiany w jednym miejscu"
@@ -389,6 +402,7 @@
         "zoom_out": "Oddal"
       },
       "search": {
+        "asset_placeholder": "Szukaj według asset, flow lub namespace...",
         "no_results": "Nie znaleziono wyników dla {term}",
         "placeholder": "Szukaj według flow lub namespace..."
       }
@@ -454,6 +468,10 @@
         "content": "Rozpocznij tworzenie aplikacji do interakcji z Kestra ze świata zewnętrznego.",
         "title": "Nie masz jeszcze aplikacji!"
       },
+      "assets": {
+        "content": "Dodaj zasoby, aby śledzić i zarządzać swoimi zasobami danych, usługami i infrastrukturą.",
+        "title": "Nie masz jeszcze zasobów!"
+      },
       "concurrency_executions": {
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> w naszej dokumentacji.",
         "title": "Brak trwających Executions dla tego flow."
@@ -463,6 +481,10 @@
         "title": "Dla tego flow nie ustawiono żadnych limitów."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Ten zasób nie ma zależności w górę ani w dół z flow lub innymi zasobami.",
+          "title": "Obecnie brak zależności."
+        },
         "EXECUTION": {
           "content": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">zależnościach wykonania</a> w naszej dokumentacji.",
           "title": "Obecnie brak zależności."
@@ -653,6 +675,7 @@
       "end_date": "Data zakończenia",
       "enter description": "Wprowadź opis filtra",
       "enter label": "Wprowadź filtr label",
+      "enter name": "Wprowadź nazwę filtra",
       "execution_kind": {
         "playground": "Plac zabaw",
         "playground_description": "Wykonania uruchomione z trybu Playground",
@@ -699,6 +722,7 @@
         "description": "Filtruj według typu metryki",
         "label": "Metryka"
       },
+      "name": "Nazwa",
       "namespace": {
         "description": "Filtruj według namespace",
         "label": "Namespace"
@@ -883,6 +907,12 @@
         "description": "Filtruj według trigger ID",
         "label": "Identyfikator Trigger"
       },
+      "triggerState": {
+        "description": "Filtruj według stanu triggera",
+        "disabled": "Wyłączone",
+        "enabled": "Włączone",
+        "label": "Stan Trigger"
+      },
       "update": "Aktualizuj",
       "value": "Wartość",
       "workerId": {
@@ -958,6 +988,7 @@
     "flow": "Flow",
     "flow already exists": "Flow już istnieje",
     "flow creation": "Utworzenie flow",
+    "flow creation denied in namespace": "Nie masz uprawnień do tworzenia flow w namespace `{namespace}`.",
     "flow delete": "Czy na pewno chcesz usunąć <code>{flowCount}</code> flow(s)?",
     "flow deleted, you can restore it": "Flow został usunięty i jest to widok tylko do odczytu. Nadal możesz go przywrócić.",
     "flow disable": "Czy na pewno chcesz wyłączyć <code>{flowCount}</code> flow(s)?",
@@ -1026,8 +1057,8 @@
     "kestra": "Kestra",
     "key": "Klucz",
     "kill": "Zakończ",
-    "kill only parents": "Zakończ tylko rodziców",
-    "kill parents and subflow": "Zakończ rodziców i subflows",
+    "kill only parents": "Zabij tylko bieżący",
+    "kill parents and subflow": "Zatrzymaj bieżący flow i subflow",
     "killed confirm": "Czy na pewno chcesz zakończyć wykonanie <code>{id}</code>?",
     "killed done": "Wykonanie jest w kolejce do zakończenia",
     "kv": {
@@ -1080,6 +1111,7 @@
     "min": "Min",
     "minutes": "Minuty",
     "missingSource": "Brak źródła",
+    "modify_inputs": "Modyfikuj inputy",
     "monogram": "Monogram",
     "months": "Miesiące",
     "more_actions": "Więcej akcji",
@@ -1113,7 +1145,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Potwierdź",
+          "file_single": "Czy na pewno chcesz usunąć plik <code>{name}</code>?",
           "files": "Czy na pewno chcesz usunąć <code>{count}</code> plik(ów)?",
+          "folder_single": "Czy na pewno chcesz usunąć folder <code>{name}</code> i całą jego zawartość?",
           "folders": "Czy na pewno chcesz usunąć <code>{count}</code> folder(y) i całą jego zawartość?",
           "mixed": "Czy na pewno chcesz usunąć folder(y) <code>{folders}</code> i plik(i) <code>{files}</code>?",
           "title": "Potwierdź usunięcie zawartości"
@@ -1219,6 +1253,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Kontrole",
           "concurrency": "Współbieżność",
           "disabled": "Wyłączony",
           "labels": "Etykiety",
@@ -1287,6 +1322,7 @@
     "no_logs_data_description": "Nie znaleziono logów dla wybranych filtrów. <br> Spróbuj dostosować filtry, zmienić zakres czasu lub sprawdź, czy flow został ostatnio wykonany.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
     "no_results": {
+      "assets": "Nie znaleziono zasobów",
       "executions": "Nie znaleziono wykonania",
       "flows": "Nie znaleziono flowów",
       "kv_pairs": "Nie znaleziono par klucz-wartość",
@@ -1306,7 +1342,7 @@
       "next": "Następny",
       "no_flows": "Brak flowów w namespace o nazwie tutorial.",
       "previous": "Poprzedni",
-      "skip": "Pomiń samouczek",
+      "skip": "Pomiń Przewodnik po Produkcie",
       "steps": {
         "0": {
           "content": "Jesteśmy zachwyceni, że jesteś tutaj.<br />Stwórzmy twój pierwszy flow.",
@@ -1466,7 +1502,9 @@
     "resumed confirm": "Czy na pewno chcesz wznowić wykonanie <code>{id}</code>?",
     "resumed done": "Wykonanie zostało wznowione",
     "resumed title": "Wznów wykonanie <code>{id}</code>",
+    "reuse_original_inputs": "Ponownie użyj oryginalnych inputów",
     "revision": "Wersja",
+    "revision deleted": "Revision {revision} został pomyślnie usunięty",
     "revisions": "Wersje",
     "row count": "Liczba wierszy",
     "run task in playground": "Uruchom task w playgroundzie",
@@ -1612,7 +1650,8 @@
         "email": "Email",
         "firstName": "Imię",
         "lastName": "Nazwisko",
-        "password": "Hasło"
+        "password": "Hasło",
+        "password_requirements": "Hasło musi mieć co najmniej 8 znaków i zawierać co najmniej 1 wielką literę oraz 1 cyfrę."
       },
       "login": "Zaloguj się",
       "logout": "Wyloguj się",
@@ -1818,6 +1857,7 @@
     "update aborted": "aktualizacja przerwana",
     "update ok": "jest zaktualizowany",
     "updated date": "Data aktualizacji",
+    "usage": "Użycie",
     "use": "Użyj",
     "use_dark_background": "Użyj tej wersji podczas pracy na ciemnym tle, aby zapewnić, że nasza nazwa pozostanie czytelna.",
     "validate": "Zatwierdź",
@@ -1853,7 +1893,7 @@
     },
     "welcome aboard": "🚀 Witamy w Kestra!",
     "welcome aboard content": "Skorzystaj z naszego Przewodnika, aby stworzyć swój pierwszy flow i sprawdź Blueprints, aby znaleźć więcej przykładów.",
-    "welcome button create": "Stwórz mój pierwszy flow",
+    "welcome button create": "Rozpocznij Przewodnik po Produkcie",
     "welcome display require": "Uruchom swój <strong>pierwszy flow</strong>, aby rozpocząć",
     "welcome_page": {
       "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",
@@ -1869,7 +1909,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach",
-    "years": "Lata",
-    "your usage": "Twoje użycie"
+    "years": "Lata"
   }
 }

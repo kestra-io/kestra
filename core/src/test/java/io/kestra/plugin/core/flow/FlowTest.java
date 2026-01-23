@@ -12,41 +12,41 @@ class FlowTest {
     FlowCaseTest flowCaseTest;
 
     @Test
-    @LoadFlows({"flows/valids/task-flow.yaml",
+    @LoadFlows(value = {"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"})
+        "flows/valids/switch.yaml"}, tenantId = "waitsuccess")
     void waitSuccess() throws Exception {
-        flowCaseTest.waitSuccess();
+        flowCaseTest.waitSuccess("waitsuccess");
     }
 
     @Test
     @LoadFlows(value = {"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"}, tenantId = "tenant1")
+        "flows/valids/switch.yaml"}, tenantId = "waitfailed")
     void waitFailed() throws Exception {
-        flowCaseTest.waitFailed("tenant1");
+        flowCaseTest.waitFailed("waitfailed");
     }
 
     @Test
     @LoadFlows(value = {"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"}, tenantId = "tenant2")
+        "flows/valids/switch.yaml"}, tenantId = "invalidoutputs")
     void invalidOutputs() throws Exception {
-        flowCaseTest.invalidOutputs("tenant2");
+        flowCaseTest.invalidOutputs("invalidoutputs");
     }
 
     @Test
     @LoadFlows(value = {"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
-        "flows/valids/switch.yaml"}, tenantId = "tenant3")
+        "flows/valids/switch.yaml"}, tenantId = "nolabels")
     void noLabels() throws Exception {
-        flowCaseTest.noLabels("tenant3");
+        flowCaseTest.noLabels("nolabels");
     }
 
     @Test
-    @LoadFlows({"flows/valids/subflow-old-task-name.yaml",
-        "flows/valids/minimal.yaml"})
+    @LoadFlows(value = {"flows/valids/subflow-old-task-name.yaml",
+        "flows/valids/minimal.yaml"}, tenantId = "oldtaskname")
     void oldTaskName() throws Exception {
-        flowCaseTest.oldTaskName();
+        flowCaseTest.oldTaskName("oldtaskname");
     }
 }

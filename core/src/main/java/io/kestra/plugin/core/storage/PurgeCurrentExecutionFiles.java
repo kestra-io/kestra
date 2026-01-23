@@ -28,8 +28,20 @@ import java.util.List;
 @Plugin(
     examples = {
         @Example(
-            code = {
-            }
+            title = "Purge all files created by this execution.",
+            full = true,
+            code = """
+                id: purge_execution_files
+                namespace: company.team
+
+                tasks:
+                  - id: download
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/json/user_events.json
+
+                  - id: purge
+                    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles
+            """
         )
     },
     aliases = {"io.kestra.core.tasks.storages.PurgeExecution", "io.kestra.plugin.core.storage.PurgeExecution"}

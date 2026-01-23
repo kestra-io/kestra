@@ -11,12 +11,14 @@ const VARIABLES: {node: { background: States; border: States }; edge: States;} =
             faded: "--ks-dependencies-node-background-faded",
             selected: "--ks-dependencies-node-background-selected",
             hovered: "--ks-dependencies-node-background-hovered",
+            assets: "--ks-dependencies-node-background-assets",
         },
         border: {
             default: "--ks-dependencies-node-border-default",
             faded: "--ks-dependencies-node-border-faded",
             selected: "--ks-dependencies-node-border-selected",
             hovered: "--ks-dependencies-node-border-hovered",
+            assets: "--ks-dependencies-node-border-assets",
         },
     },
     edge: {
@@ -80,6 +82,10 @@ export const getStyle = (): cytoscape.StylesheetJson => [
     {
         selector: "node.selected",
         style: {...nodeBase(), ...nodeColors("selected")},
+    },
+    {
+        selector: "node[metadata.subtype = \"ASSET\"]",
+        style: {...nodeBase(), ...nodeColors("assets")},
     },
     {
         selector: "node.hovered",

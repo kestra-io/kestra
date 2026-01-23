@@ -171,14 +171,16 @@ public class RunContextFactory {
             .build();
     }
 
-
-    @VisibleForTesting
     public RunContext of(final FlowInterface flow, final Map<String, Object> variables) {
         RunContextLogger runContextLogger = new RunContextLogger();
         return newBuilder()
             .withLogger(runContextLogger)
             .withStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forFlow(flow), storageInterface, namespaceService, namespaceFactory))
-            .withVariables(variables)
+            .withVariables(newRunVariablesBuilder()
+                .withFlow(flow)
+                .withVariables(variables)
+                .build(runContextLogger, PropertyContext.create(this.variableRenderer))
+            )
             .withSecretInputs(secretInputsFromFlow(flow))
             .build();
     }

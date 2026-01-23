@@ -25,10 +25,6 @@ const handleAuthError = (error, to) => {
 
 initApp(app, routes, null, en).then(({router, piniaStore}) => {
     router.beforeEach(async (to, from, next) => {
-        if (to.meta?.anonymous === true) {
-            return next();
-        }
-
         if(to.path === from.path && to.query === from.query) {
             return next(); // Prevent navigation if the path and query are the same
         }
@@ -45,11 +41,26 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
                 if (validationErrors?.length > 0) {
                     // Creds exist in config but failed validation
                     // Route to login to show errors
+                    if (to.name === "login") {
+                        return next();
+                    }
+
                     return next({name: "login"})
                 } else {
                     // No creds in config - redirect to set it up
+                    if (to.name === "setup") {
+                        return next();
+                    }
+
                     return next({name: "setup"})
                 }
+            }
+
+            if (to.meta?.anonymous === true) {
+                if (to.name === "setup") {
+                    return next({name: "login"});
+                }
+                return next();
             }
 
             const hasCredentials = BasicAuth.isLoggedIn()
@@ -92,6 +103,6 @@ initApp(app, routes, null, en).then(({router, piniaStore}) => {
     }, null, router, true);
 
     // mount
-    app.mount("#app")
+    router.isReady().then(() => app.mount("#app"))
 });
 

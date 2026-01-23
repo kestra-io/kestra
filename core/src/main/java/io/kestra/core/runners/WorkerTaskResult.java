@@ -21,8 +21,7 @@ public class WorkerTaskResult implements HasUID {
     List<TaskRun> dynamicTaskRuns;
 
     public WorkerTaskResult(TaskRun taskRun) {
-        this.taskRun = taskRun;
-        this.dynamicTaskRuns = new ArrayList<>();
+        this(taskRun, new ArrayList<>(1)); // there are usually very few dynamic task runs, so we init the list with a capacity of 1
     }
 
     /**

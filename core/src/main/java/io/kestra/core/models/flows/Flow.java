@@ -1,6 +1,5 @@
 package io.kestra.core.models.flows;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -130,7 +129,7 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     @PluginProperty
     List<SLA> sla;
-    
+
     @Schema(
         title = "Conditions evaluated before the flow is executed.",
         description = "A list of conditions that are evaluated before the flow is executed.  If no checks are defined, the flow executes normally."
@@ -355,7 +354,7 @@ public class Flow extends AbstractFlow implements HasUID {
      * To be conservative a flow MUST not return any source.
      */
     @Override
-    @JsonIgnore
+    @Schema(hidden = true)
     public String getSource() {
         return null;
     }

@@ -1,13 +1,8 @@
 package io.kestra.core.services;
 
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.GenericFlow;
-import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.check.Check;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
@@ -25,7 +20,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -77,11 +71,37 @@ class FlowServiceTest {
                   uri: https://kestra.io
             """;
         // When
-        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
         // Then
         assertThat(results).hasSize(1);
-        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation("test", "io.kestra.unittest", 0, null, false, List.of(), List.of(), List.of()));
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, null, "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of()));
+    }
+
+    @Test
+    void shouldReturnTrueWhenValidatingFlowWithFilenameGivenDefaults() {
+        // Given
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: download
+                type: io.kestra.plugin.core.http.Download
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: This is a message
+            pluginDefaults:
+              - type: io.kestra.plugin.core
+                values:
+                  level: WARN
+                  uri: https://kestra.io
+            """;
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource("flow.yaml", source)));
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation(0, "flow.yaml", "io.kestra.unittest", "test", null, false, List.of(), List.of(), List.of()));
     }
 
     @Test
@@ -387,7 +407,7 @@ class FlowServiceTest {
             """;
 
         // When
-        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
         // Then
         assertThat(results).hasSize(1);
@@ -403,15 +423,15 @@ class FlowServiceTest {
     void shouldReturnValidationErrorForReservedFlowId() {
         // Given
         String source = """
-        id: pause
-        namespace: io.kestra.unittest
-        tasks:
-          - id: task
-            type: io.kestra.plugin.core.log.Log
-            message: Reserved id test
-        """;
+            id: pause
+            namespace: io.kestra.unittest
+            tasks:
+              - id: task
+                type: io.kestra.plugin.core.log.Log
+                message: Reserved id test
+            """;
         // When
-        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", List.of(new FlowSource(null, source)));
 
         // Then
         assertThat(results).hasSize(1);
@@ -518,5 +538,22 @@ class FlowServiceTest {
             .anyMatch(c -> c.getMessage().contains("Failed to evaluate check condition") &&
                 c.getBehavior() == Check.Behavior.BLOCK_EXECUTION &&
                 c.getStyle() == Check.Style.ERROR);
+    }
+
+    @Test
+    void shouldAcceptExpressionWithFlowWhenRenderingChecks() {
+        // Given
+        Check passCheck = Check.builder().condition("{{ flow.id == 'test' }}").message("pass").build();
+
+        Flow flow = mock(Flow.class);
+        when(flow.getChecks()).thenReturn(List.of(passCheck));
+        when(flow.getNamespace()).thenReturn("io.kestra.unittest");
+        when(flow.getId()).thenReturn("test");
+
+        // When
+        List<Check> result = flowService.getFailedChecks(flow, Map.of());
+
+        // Then
+        assertThat(result).isEmpty();
     }
 }

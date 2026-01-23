@@ -9,6 +9,7 @@ interface GuidedProperties {
     manuallyContinue: boolean;
     template: any;
     saveFlow?: boolean;
+    glowExecuteButton?: boolean;
 }
 
 export const useCoreStore = defineStore("core", () => {

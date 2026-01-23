@@ -131,6 +131,36 @@ public class NsFilesMetadataMigrationCommandTest {
         }
     }
 
+    @Test
+    void namespaceWithoutNsFile() {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(out));
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(err));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+            String tenantId = TenantService.MAIN_TENANT;
+            String namespace = TestsUtils.randomNamespace();
+
+            // A flow is created from namespace 1, so the namespace files in this namespace should be migrated
+            FlowRepositoryInterface flowRepository = ctx.getBean(FlowRepositoryInterface.class);
+            flowRepository.create(GenericFlow.of(Flow.builder()
+                .tenantId(tenantId)
+                .id("a-flow")
+                .namespace(namespace)
+                .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("logging").build()))
+                .build()));
+
+            String[] nsFilesMetadataMigrationCommand = {
+                "migrate", "metadata", "nsfiles"
+            };
+            PicocliRunner.call(App.class, ctx, nsFilesMetadataMigrationCommand);
+
+            assertThat(out.toString()).contains("✅ Namespace Files Metadata migration complete.");
+            assertThat(err.toString()).doesNotContain("java.nio.file.NoSuchFileException");
+        }
+    }
+
     private static void putOldNsFile(StorageInterface storage, String namespace, String path, String value) throws IOException {
         URI nsFileStorageUri = getNsFileStorageUri(namespace, path);
         storage.put(TenantService.MAIN_TENANT, namespace, nsFileStorageUri, new StorageObject(

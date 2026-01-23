@@ -67,6 +67,7 @@ export const useDashboardFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions");
                         return VALUES.EXECUTION_STATES;
                     },
+                    searchable: true,
                     showComparatorSelection: true
                 },
                 {

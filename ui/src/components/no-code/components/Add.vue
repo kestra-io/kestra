@@ -2,16 +2,13 @@
     <button @click="emit('add', what)" class="py-2 adding" type="button">
         {{
             what
-                ? t("no_code.adding", {what})
-                : t("no_code.adding_default")
+                ? $t("no_code.adding", {what})
+                : $t("no_code.adding_default")
         }}
     </button>
 </template>
 
 <script setup lang="ts">
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
     const emit = defineEmits<{
         (e: "add", what: string | undefined): void;
     }>();

@@ -27,6 +27,7 @@ import java.util.function.Predicate;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 @Singleton
+@Deprecated(since = "1.3.0", forRemoval = true)
 public class RunnerUtils {
     public static final Duration DEFAULT_MAX_WAIT_DURATION = Duration.ofSeconds(15);
 
@@ -160,7 +161,7 @@ public class RunnerUtils {
             executionEmitter.run();
 
             if (duration == null) {
-                Await.untilWithSleepInterval(() -> receive.get() != null, Duration.ofMillis(10));
+                Await.until(() -> receive.get() != null, Duration.ofMillis(10));
             } else {
                 Await.until(() -> receive.get() != null, Duration.ofMillis(10), duration);
             }

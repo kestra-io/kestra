@@ -1,6 +1,8 @@
 package io.kestra.core.exceptions;
 
 import java.io.Serial;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * The top-level {@link KestraRuntimeException} for non-recoverable errors.

@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.trigger
+name: "trigger"
+title: "Trigger"
+description: "Tasks that start flows from schedules or events."
+body: "Define cron-based schedules, specific date triggers, webhooks, namespace flow triggers, or toggles; set required properties like cron expressions, webhook secrets, and target flow references to control when executions fire."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

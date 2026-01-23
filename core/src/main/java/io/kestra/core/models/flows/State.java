@@ -100,6 +100,7 @@ public class State {
     /**
      * @return either the Duration persisted in database, or calculate it on the fly for non-terminated executions
      */
+    @JsonIgnore
     public Duration getDurationOrComputeIt() {
         return this.getDuration().orElseGet(() -> Duration.between(this.getStartDate(), Instant.now()));
     }
@@ -146,6 +147,11 @@ public class State {
     @JsonIgnore
     public boolean isTerminated() {
         return this.current.isTerminated();
+    }
+
+    @JsonIgnore
+    public boolean canBeRestarted() {
+        return this.current.isTerminated() || this.current.isPaused();
     }
 
     @JsonIgnore
@@ -265,6 +271,10 @@ public class State {
 
         public boolean isRunning() {
             return this == Type.RUNNING || this == Type.KILLING;
+        }
+
+        public boolean onlyRunning() {
+            return this == Type.RUNNING;
         }
 
         public boolean isFailed() {

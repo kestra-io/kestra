@@ -21,6 +21,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                         const {VALUES} = useValues("executions");
                         return VALUES.EXECUTION_STATES;
                     },
+                    searchable: true,
                     visibleByDefault: true
                 },
                 {
@@ -73,7 +74,7 @@ export const useFlowExecutionFilter = (): ComputedRef<FilterConfiguration> => {
                     label: t("filter.labels_execution.label"),
                     description: t("filter.labels_execution.description"),
                     comparators: [Comparators.EQUALS, Comparators.NOT_EQUALS],
-                    valueType: "text",
+                    valueType: "key-value",
                 },
                 {
                     key: "triggerExecutionId",

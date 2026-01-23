@@ -2,8 +2,8 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.models.Setting;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.utils.VersionProvider;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +12,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@KestraTest
+@MicronautTest
 public abstract class AbstractSettingRepositoryTest {
     @Inject
     protected SettingRepositoryInterface settingRepository;

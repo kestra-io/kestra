@@ -2,7 +2,7 @@
     <div class="search-container" ref="searchContainer">
         <el-input
             v-model="searchQuery"
-            :placeholder="t('search_docs')"
+            :placeholder="$t('search_docs')"
             class="search-input"
             @input="handleSearch"
             @keydown.enter.prevent="handleEnterKey"
@@ -15,7 +15,7 @@
             </template>
         </el-input>
         <div v-if="loading" class="loading-indicator">
-            {{ t('searching') }}
+            {{ $t('searching') }}
         </div>
         <div v-if="showResults" class="search-results">
             <template v-if="searchResults.length > 0">
@@ -38,7 +38,7 @@
                 </ContextDocsLink>
             </template>
             <div v-else class="no-results">
-                {{ t("no_results_found") }}
+                {{ $t("no_results_found") }}
             </div>
         </div>
     </div>
@@ -47,12 +47,10 @@
 <script setup lang="ts">
     import {ref, computed, onMounted, onUnmounted} from "vue";
     import {useDocStore} from "../../stores/doc";
-    import {useI18n} from "vue-i18n";
     import Magnify from "vue-material-design-icons/Magnify.vue";
     import ContextDocsLink from "./ContextDocsLink.vue";
     import {debounce} from "lodash-es";
 
-    const {t} = useI18n({useScope: "global"});
     const docStore = useDocStore();
 
     const searchQuery = ref("");

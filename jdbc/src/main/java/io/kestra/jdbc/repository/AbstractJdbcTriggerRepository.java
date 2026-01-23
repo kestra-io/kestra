@@ -12,7 +12,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.ScheduleContextInterface;
@@ -63,9 +62,8 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcCrudRepo
     }
 
     public AbstractJdbcTriggerRepository(io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository,
-                                         QueueService queueService,
                                          JdbcFilterService filterService) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
 
         this.filterService = filterService;
     }

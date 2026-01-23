@@ -91,7 +91,7 @@
         if (!props.isFlow && !props.isNamespace) {
             // Preserve timeRange filter when switching dashboards
             const preservedQuery = Object.fromEntries(
-                Object.entries(route.query).filter(([key]) => 
+                Object.entries(route.query).filter(([key]) =>
                     key.includes("timeRange")
                 )
             );
@@ -113,6 +113,8 @@
             load(ID, processFlowYaml(YAML_FLOW, route.params.namespace as string, route.params.id as string));
         } else if (props.isNamespace) {
             load(ID, YAML_NAMESPACE);
+        } else {
+            load(ID, YAML_MAIN);
         }
     });
 

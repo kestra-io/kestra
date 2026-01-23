@@ -13,15 +13,15 @@ import org.junit.jupiter.api.Test;
 class FlowOutputTest {
 
     @Test
-    @ExecuteFlow("flows/valids/flow-with-outputs.yml")
+    @ExecuteFlow(value = "flows/valids/flow-with-outputs.yml", tenantId = "shouldgetsuccessexecutionforflowwithoutputs")
     void shouldGetSuccessExecutionForFlowWithOutputs(Execution execution) {
         assertThat(execution.getOutputs()).hasSize(1);
         assertThat(execution.getOutputs().get("key")).isEqualTo("{\"value\":\"flow-with-outputs\"}");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
-    
+
     @Test
-    @ExecuteFlow("flows/valids/flow-with-optional-outputs.yml")
+    @ExecuteFlow(value = "flows/valids/flow-with-optional-outputs.yml", tenantId = "shouldgetsuccessexecutionforflowwithoptionaloutputs")
     void shouldGetSuccessExecutionForFlowWithOptionalOutputs(Execution execution) {
         assertThat(execution.getOutputs()).isNull();
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -29,7 +29,7 @@ class FlowOutputTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @ExecuteFlow("flows/valids/flow-with-array-outputs.yml")
+    @ExecuteFlow(value = "flows/valids/flow-with-array-outputs.yml", tenantId = "shouldgetsuccessexecutionforflowwitharrayoutputs")
     void shouldGetSuccessExecutionForFlowWithArrayOutputs(Execution execution) {
         assertThat(execution.getOutputs()).hasSize(1);
         assertThat((List<String>) execution.getOutputs().get("myout")).contains("1rstValue", "2ndValue");
@@ -37,7 +37,7 @@ class FlowOutputTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/flow-with-outputs-failed.yml")
+    @ExecuteFlow(value = "flows/valids/flow-with-outputs-failed.yml", tenantId = "shouldgetfailexecutionforflowwithinvalidoutputs")
     void shouldGetFailExecutionForFlowWithInvalidOutputs(Execution execution) {
         assertThat(execution.getOutputs()).isNull();
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

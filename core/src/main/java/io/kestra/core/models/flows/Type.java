@@ -30,7 +30,6 @@ public enum Type {
 
     private final String clsName;
 
-
     Type(String clsName) {
         this.clsName = clsName;
     }

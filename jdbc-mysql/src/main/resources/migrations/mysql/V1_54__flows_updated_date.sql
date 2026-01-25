@@ -1,21 +1,2 @@
--- Add updated timestamp column to flows table for tracking revision creation time
-DELIMITER //
-CREATE PROCEDURE IF NOT EXISTS `?`()
-BEGIN
-    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
-    ALTER TABLE flows ADD COLUMN `updated` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6);
-END //
-DELIMITER ;
-CALL `?`();
-DROP PROCEDURE `?`;
-
--- Create index for efficient ordering by timestamp
-DELIMITER //
-CREATE PROCEDURE IF NOT EXISTS `?`()
-BEGIN
-    DECLARE CONTINUE HANDLER FOR SQLEXCEPTION BEGIN END;
-    CREATE INDEX ix_flows_updated ON flows (`updated`);
-END //
-DELIMITER ;
-CALL `?`();
-DROP PROCEDURE `?`;
+-- Add updated column for tracking revision creation time (extracted from value JSON)
+alter table flows add `updated` VARCHAR(250) GENERATED ALWAYS AS (value ->> '$.updated') STORED;

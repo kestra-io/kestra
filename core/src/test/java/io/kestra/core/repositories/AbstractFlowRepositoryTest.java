@@ -623,7 +623,7 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    protected void shouldReturnUpdatedDateInFindRevisions() {
+    protected void shouldReturnUpdatedInFindRevisions() {
         // Given
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         final List<Flow> toDelete = new ArrayList<>();
@@ -636,15 +636,15 @@ public abstract class AbstractFlowRepositoryTest {
             FlowWithSource updated = flowRepository.update(createTestingLogFlow(tenant, flowId, "second"), created);
             toDelete.add(updated);
 
-            // Then: findRevisions should return updatedDate for each revision
+            // Then: findRevisions should return updated for each revision
             List<FlowWithSource> revisions = flowRepository.findRevisions(tenant, TEST_NAMESPACE, flowId, true);
             
             assertThat(revisions).hasSize(2);
             
-            // Each revision should have an updatedDate
+            // Each revision should have an updated timestamp
             for (FlowWithSource revision : revisions) {
-                assertThat(revision.getUpdatedDate())
-                    .as("Revision %d should have updatedDate", revision.getRevision())
+                assertThat(revision.getUpdated())
+                    .as("Revision %d should have updated", revision.getRevision())
                     .isNotNull();
             }
             

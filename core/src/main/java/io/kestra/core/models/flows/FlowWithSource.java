@@ -7,8 +7,6 @@ import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.time.Instant;
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
@@ -86,35 +84,8 @@ public class FlowWithSource extends Flow {
             .retry(flow.retry)
             .sla(flow.sla)
             .checks(flow.checks)
+            .updated(flow.updated)
             .build();
     }
     
-    public static FlowWithSource of(Flow flow, String source, Instant updatedDate) {
-        return FlowWithSource.builder()
-            .tenantId(flow.tenantId)
-            .id(flow.id)
-            .namespace(flow.namespace)
-            .revision(flow.revision)
-            .description(flow.description)
-            .labels(flow.labels)
-            .inputs(flow.inputs)
-            .outputs(flow.outputs)
-            .variables(flow.variables)
-            .tasks(flow.tasks)
-            .errors(flow.errors)
-            ._finally(flow._finally)
-            .afterExecution(flow.afterExecution)
-            .listeners(flow.listeners)
-            .triggers(flow.triggers)
-            .pluginDefaults(flow.pluginDefaults)
-            .disabled(flow.disabled)
-            .deleted(flow.deleted)
-            .source(source)
-            .updatedDate(updatedDate)
-            .concurrency(flow.concurrency)
-            .retry(flow.retry)
-            .sla(flow.sla)
-            .checks(flow.checks)
-            .build();
-    }
 }

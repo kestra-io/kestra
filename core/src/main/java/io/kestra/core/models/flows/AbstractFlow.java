@@ -38,7 +38,7 @@ public abstract class AbstractFlow implements FlowInterface {
     Integer revision;
 
     @Schema(description = "The timestamp when this revision was created or last updated.")
-    java.time.Instant updatedDate;
+    java.time.Instant updated;
 
     String description;
 

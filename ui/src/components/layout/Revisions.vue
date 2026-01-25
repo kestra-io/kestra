@@ -124,7 +124,7 @@
 
     export interface Revision {
         revision: number;
-        updatedDate?: string;  // ISO datetime string
+        updated?: string;  // ISO datetime string
         source?: string;
     }
 
@@ -247,14 +247,14 @@
     function options(excludeRevisionIndex: number | undefined) {
         return sortedRevisions.value
             .filter((_, index) => index !== excludeRevisionIndex)
-            .map(({revision, updatedDate}) => {
+            .map(({revision, updated}) => {
                 const isCurrent = currentRevisionWithSource.value.revision === revision;
                 return {
                     value: revisionIndex(revision.toString()),
                     revision: revision,
-                    timestamp: formatTimestamp(updatedDate),
+                    timestamp: formatTimestamp(updated),
                     isCurrent: isCurrent,
-                    text: formatRevisionText(revision, updatedDate)
+                    text: formatRevisionText(revision, updated)
                 };
             });
     }

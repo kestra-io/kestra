@@ -308,9 +308,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .map(record -> {
                         Flow flow = (Flow) jdbcRepository.map(record);
                         String source = record.get(SOURCE_FIELD);
-                        java.time.OffsetDateTime updatedDateTime = record.get(field("updated", java.time.OffsetDateTime.class));
-                        java.time.Instant updatedDate = updatedDateTime != null ? updatedDateTime.toInstant() : null;
-                        return FlowWithSource.of(flow, source, updatedDate);
+                        return FlowWithSource.of(flow, source);
                     });
             });
     }
@@ -743,7 +741,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         List<FlowWithSource> revisions = this.findRevisions(flow.getTenantId(), flow.getNamespace(), flow.getId(), true);
         final int revision = revisions.isEmpty() ? 1 : revisions.getLast().getRevision() + 1;
 
-        flow = flow.toBuilder().revision(revision).build();
+        flow = flow.toBuilder().revision(revision).updated(java.time.Instant.now()).build();
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(flow);
         fields.put(field("source_code"), flow.getSource());

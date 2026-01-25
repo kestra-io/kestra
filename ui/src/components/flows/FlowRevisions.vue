@@ -75,7 +75,7 @@
     onMounted(fetchRevisions);
 
     const flowRevisions = computed(() => {
-        // Use store revisions if available (includes updatedDate)
+        // Use store revisions if available (includes updated)
         if (storeRevisions.value && storeRevisions.value.length > 0) {
             return storeRevisions.value;
         }

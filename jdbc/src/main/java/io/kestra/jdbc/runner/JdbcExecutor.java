@@ -119,10 +119,6 @@ public class JdbcExecutor implements ExecutorInterface {
     private QueueInterface<SubflowExecutionEnd> subflowExecutionEndQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.CLUSTER_EVENT_NAMED)
-    private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
-
-    @Inject
     @Named(QueueFactoryInterface.MULTIPLE_CONDITION_EVENT_NAMED)
     private QueueInterface<MultipleConditionEvent> multipleConditionEventQueue;
 
@@ -330,7 +326,17 @@ public class JdbcExecutor implements ExecutorInterface {
         this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));
         this.receiveCancellations.addFirst(this.multipleConditionEventQueue.receive(Executor.class, this::multipleConditionEventQueue));
-        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        this.receiveCancellations.addFirst(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
+            @Override
+            public void onMaintenanceModeEnter() {
+                JdbcExecutor.this.enterMaintenance();
+            }
+
+            @Override
+            public void onMaintenanceModeExit() {
+                JdbcExecutor.this.exitMaintenance();
+            }
+        })::dispose);
 
         executionDelayFuture = scheduledDelay.scheduleAtFixedRate(
             this::executionDelaySend,
@@ -447,20 +453,6 @@ public class JdbcExecutor implements ExecutorInterface {
                     log.error("Unable to emit the execution {}", exec.getId(), e);
                 }
             });
-    }
-
-    private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a cluster event: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ClusterEvent clusterEvent = either.getLeft();
-        log.info("Cluster event received: {}", clusterEvent);
-        switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> enterMaintenance();
-            case MAINTENANCE_EXIT -> exitMaintenance();
-        }
     }
 
     private void enterMaintenance() {
@@ -780,11 +772,11 @@ public class JdbcExecutor implements ExecutorInterface {
     private Execution fail(Execution message, Exception e) {
         var failedExecution = message.failedExecutionFromExecutor(e);
         try {
-            logQueue.emitAsync(failedExecution.getLogs());
+            logQueue.emitAsync(failedExecution.logs());
         } catch (QueueException ex) {
             // fail silently
         }
-        return failedExecution.getExecution().getState().isFailed() ? failedExecution.getExecution() : failedExecution.getExecution().withState(State.Type.FAILED);
+        return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
     }
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
@@ -1182,7 +1174,7 @@ public class JdbcExecutor implements ExecutorInterface {
             if (hasFailure) {
                 this.executionQueue.emit(executor.getExecution());
             } else {
-                ((JdbcQueue<Execution>) this.executionQueue).emitOnly(null, executor.getExecution());
+                this.executionQueue.emitOnly(null, executor.getExecution());
             }
 
             Execution execution = executor.getExecution();
@@ -1220,33 +1212,31 @@ public class JdbcExecutor implements ExecutorInterface {
                     // if an execution was FAILED or CANCELLED due to concurrency limit exceeded, it would have never been counter inside the concurrency limit and should not lead to popping a new queued execution
                     boolean concurrencyShortCircuitState = Concurrency.possibleTransitions(execution.getState().getCurrent())
                         && execution.getState().getHistories().get(execution.getState().getHistories().size() - 2).getState().isCreated();
-                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitionned from KILLING to KILLED
+                    // as we may receive multiple time killed execution (one when we kill it, then one for each running worker task), we limit to the first we receive: when the state transitioned from KILLING to KILLED
                     boolean killingThenKilled = execution.getState().getCurrent().isKilled() && executor.getOriginalState() == State.Type.KILLING;
                     if (!queuedThenKilled && !concurrencyShortCircuitState && (!execution.getState().getCurrent().isKilled() || killingThenKilled)) {
-                        int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());
-
                         if (executor.getFlow().getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
                             var finalFlow = executor.getFlow();
 
-                            if (newLimit < finalFlow.getConcurrency().getLimit()) {
-                                executionQueuedStorage.pop(executor.getFlow().getTenantId(),
-                                    executor.getFlow().getNamespace(),
-                                    executor.getFlow().getId(),
-                                    throwBiConsumer((dslContext, queued) -> {
-                                        var newExecution = queued.withState(State.Type.RUNNING);
-                                        concurrencyLimitStorage.increment(dslContext, finalFlow);
-                                        executionQueue.emit(newExecution);
-                                        metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                            // Pop the next queued execution atomically with decrement/increment to avoid race conditions
+                            // that could leave executions stuck in the queue indefinitely (see issue #13785)
+                            concurrencyLimitStorage.decrementAndPop(
+                                finalFlow,
+                                executionQueuedStorage,
+                                throwBiConsumer((dslContext, queued) -> {
+                                    var newExecution = queued.withState(State.Type.RUNNING);
+                                    executionQueue.emit(newExecution);
+                                    metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
 
-                                        // process flow triggers to allow listening on RUNNING state after a QUEUED state
-                                        processFlowTriggers(newExecution);
-                                    })
-                                );
-                            } else {
-                                log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. No new executions will be dequeued.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
+                                    // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                                    processFlowTriggers(newExecution);
+                                })
+                            );
+                        } else {
+                            int newLimit = concurrencyLimitStorage.decrement(executor.getFlow());
+                            if (newLimit >= executor.getFlow().getConcurrency().getLimit()) {
+                                log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
                             }
-                        } else if (newLimit >= executor.getFlow().getConcurrency().getLimit()) {
-                            log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count due to the terminated execution {}. This should not happen.", executor.getFlow().getNamespace(), executor.getFlow().getId(), executor.getExecution().getId());
                         }
                     }
                 }
@@ -1530,12 +1520,12 @@ public class JdbcExecutor implements ExecutorInterface {
 
     private Executor handleFailedExecutionFromExecutor(Executor executor, FailedExecutionWithLog failedExecutionWithLog) {
         try {
-            logQueue.emitAsync(failedExecutionWithLog.getLogs());
+            logQueue.emitAsync(failedExecutionWithLog.logs());
         } catch (QueueException ex) {
             // fail silently
         }
 
-        return executor.withExecution(failedExecutionWithLog.getExecution(), "exception");
+        return executor.withExecution(failedExecutionWithLog.execution(), "exception");
     }
 
     /**

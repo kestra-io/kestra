@@ -119,7 +119,7 @@ export const Default: Story = {
             confirmButton.click();
         });
         await waitFor(() => expect(revisions[revisions.length - 1].revision).toEqual(5));
-        await expect(revisions[revisions.length - 1].source).toContain('"revision": 1');
+        await expect(revisions[revisions.length - 1].source).toContain("\"revision\": 1");
         await expect(revisionSourceMock).not.toHaveBeenCalledWith(5);
     }
 };

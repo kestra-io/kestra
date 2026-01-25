@@ -41,22 +41,23 @@ import java.util.concurrent.atomic.AtomicInteger;
         @Example(
             title = "Assert based on inputs data",
             full = true,
-            code = {
-                "id: assert\n" +
-                "namespace: company.team\n" +
-                "\n" +
-                "inputs:\n" +
-                "  - id: param\n" +
-                "    type: STRING\n" +
-                "    required: true\n" +
-                "\n" +
-                "tasks:\n" +
-                "  - id: fail\n" +
-                "    type: io.kestra.plugin.core.execution.Assert\n" +
-                "    conditions:\n" +
-                "      - \"{{ inputs.param == 'ok' }}\"\n" +
-                "      - \"{{ 1 + 1 == 3 }}\"\n"
-            }
+            code = """
+                id: assert
+                namespace: company.team
+
+
+                inputs:
+                  - id: param
+                    type: STRING
+                    required: true
+                    
+                tasks:
+                  - id: fail
+                    type: io.kestra.plugin.core.execution.Assert
+                    conditions:
+                      - "{{ inputs.param == 'ok' }}"
+                      - "{{ 1 + 1 == 3 }}"
+            """
         )
     },
     metrics = {

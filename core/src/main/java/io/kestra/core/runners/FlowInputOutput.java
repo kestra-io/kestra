@@ -450,15 +450,8 @@ public class FlowInputOutput {
         if (data.getType() == null) {
             return Optional.of(new AbstractMap.SimpleEntry<>(data.getId(), current));
         }
-        Type elementType = null;
-        if (data instanceof ItemTypeInterface itemType) {
-            elementType = itemType.getItemType();
-            if (!elementType.isAllowedAsItemType()) {
-                throw new FlowProcessingException(
-                    "Type '" + elementType + "' cannot be used as an item type"
-                );
-            }
-        }
+
+        final Type elementType = data instanceof ItemTypeInterface itemTypeInterface ? itemTypeInterface.getItemType() : null;
 
         return Optional.of(new AbstractMap.SimpleEntry<>(
             data.getId(),
@@ -474,18 +467,23 @@ public class FlowInputOutput {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
-                    SecretInput secretInput = (SecretInput) data;
-                    if (secretInput.getValidator() != null && !Pattern.matches(secretInput.getValidator(), current.toString())) {
-                        throw ManualConstraintViolation.toConstraintViolationException(
-                            "it must match the pattern `" + secretInput.getValidator() + "`",
-                            secretInput,
-                            SecretInput.class,
-                            secretInput.getId(),
-                            current.toString()
-                        );
+                    if(data != null){
+                        SecretInput secretInput = (SecretInput) data;
+                        if (secretInput.getValidator() != null && !Pattern.matches(secretInput.getValidator(), current.toString())) {
+                            throw ManualConstraintViolation.toConstraintViolationException(
+                                "it must match the pattern `" + secretInput.getValidator() + "`",
+                                secretInput,
+                                SecretInput.class,
+                                secretInput.getId(),
+                                current.toString()
+                            );
+                        }
+                        String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
+                        yield  EncryptedString.from(encrypted);
                     }
-                    String encrypted = EncryptionService.encrypt(secretKey.get(), current.toString());
-                    yield  EncryptedString.from(encrypted);
+                   else {
+                        throw new IllegalArgumentException("Type " + type + " can't be used as element type");
+                    }
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation

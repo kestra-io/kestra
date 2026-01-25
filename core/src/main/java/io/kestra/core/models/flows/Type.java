@@ -22,7 +22,7 @@ public enum Type {
     FILE(FileInput.class.getName()),
     JSON(JsonInput.class.getName()),
     URI(URIInput.class.getName()),
-    SECRET(SecretInput.class.getName(), false),
+    SECRET(SecretInput.class.getName()),
     ARRAY(ArrayInput.class.getName()),
     MULTISELECT(MultiselectInput.class.getName()),
     YAML(YamlInput.class.getName()),
@@ -30,20 +30,9 @@ public enum Type {
 
     private final String clsName;
 
-    private final Boolean allowedAsItemType;
 
     Type(String clsName) {
         this.clsName = clsName;
-        this.allowedAsItemType = true;
-    }
-
-    Type(String clsName, Boolean allowedAsItemType) {
-        this.clsName = clsName;
-        this.allowedAsItemType = allowedAsItemType;
-    }
-
-    public Boolean isAllowedAsItemType(){
-        return this.allowedAsItemType;
     }
 
     @SuppressWarnings("unchecked")

@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
 
-import jakarta.validation.ConstraintViolationException;
 import reactor.core.publisher.Flux;
 
 import java.io.*;
@@ -519,9 +518,9 @@ public class InputsTest {
     }
 
     @Test
-    @LoadFlows(value = "flows/invalids/secret-input-as-item-type.yaml")
-    void notAllowedSecretInputAsItemType(){
-        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "secret-input-as-item-type").get();
+    @LoadFlows(value = "flows/invalids/secret-element-type.yaml")
+    void notAllowedSecretElementType(){
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "secret-element-type").get();
         InputOutputValidationException ex = assertThrows(InputOutputValidationException.class, ()-> flowIO.readExecutionInputs(
             flow,
             Execution.builder()
@@ -531,9 +530,9 @@ public class InputsTest {
                 .flowRevision(1)
                 .flowId(flow.getId())
                 .build(),
-            Map.of("input1", "1245Abc@$Zk")
+            Map.of("input1", "[\"1245Abc@$Zk\"]")
         ));
-        assertThat(ex.getMessage()).isEqualTo("Type 'SECRET' cannot be used as an item type");
+        assertThat(ex.getMessage()).isEqualTo("Invalid value for input `input1`. Cause: Unable to parse array element as `SECRET` on `1245Abc@$Zk`");
     }
 
 

@@ -49,7 +49,6 @@
             "Installation Guide",
             "Tutorial",
             "Architecture",
-            "Contribute to Kestra",
             "User Interface",
         ],
         "Build with Kestra": [
@@ -74,7 +73,6 @@
             "Expressions",
             "API Reference",
             "Terraform Provider",
-            "Kestra CLI",
         ],
     }
 

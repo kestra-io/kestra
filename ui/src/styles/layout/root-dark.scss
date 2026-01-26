@@ -43,6 +43,12 @@ html.dark {
         }
     }
 
+    // Override gray for skipped/cancelled states to be more distinct from running (purple)
+    // Using a neutral gray that works well in dark mode
+    .bg-gray {
+        background-color: #5a6268;
+    }
+
     #{--bs-link-hover-color-rgb}: to-rgb(#E0E0FF);
 
     #{--card-bg}: $card-bg;

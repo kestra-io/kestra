@@ -507,7 +507,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .using(configuration)
                 .select(field("value"), field("namespace"), field("tenant_id"))
                 .from(fromLastRevision(true))
-                .where(DSL.or(NAMESPACE_FIELD.eq(namespacePrefix), NAMESPACE_FIELD.likeIgnoreCase(namespacePrefix + ".%"))));
+                .where(NAMESPACE_FIELD.eq(namespacePrefix).or(NAMESPACE_FIELD.startsWith(namespacePrefix + "."))));
     }
 
     @Override

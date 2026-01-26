@@ -75,9 +75,8 @@ public class PurgeFiles extends Task implements PurgeTask<NamespaceFile>, Runnab
         title = "Purge behavior",
         description = "Defines how files are purged."
     )
-    @Builder.Default
     @Valid
-    private Property<FilesPurgeBehavior> behavior = Property.ofValue(Version.builder().keepAmount(1).build());
+    private Property<FilesPurgeBehavior> behavior;
 
     @Schema(
         title = "Delete files from child namespaces",
@@ -91,7 +90,11 @@ public class PurgeFiles extends Task implements PurgeTask<NamespaceFile>, Runnab
         List<String> filesNamespaces = findNamespaces(runContext);
         runContext.logger().info("purging {} namespaces: {}", filesNamespaces.size(), filesNamespaces);
         AtomicLong count = new AtomicLong();
-        FilesPurgeBehavior renderedBehavior = runContext.render(behavior).as(FilesPurgeBehavior.class).orElseThrow();
+
+        FilesPurgeBehavior renderedBehavior = this.behavior == null
+            ? Version.builder().keepAmount(1).build()
+            : runContext.render(behavior).as(FilesPurgeBehavior.class).orElseThrow();
+
         for (String ns : filesNamespaces) {
             Namespace namespaceStorage = runContext.storage().namespace(ns);
             List<NamespaceFile> toPurge = filterItems(runContext, renderedBehavior.entriesToPurge(runContext.flowInfo().tenantId(), namespaceStorage));

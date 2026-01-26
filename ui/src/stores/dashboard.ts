@@ -33,6 +33,12 @@ export const useDashboardStore = defineStore("dashboard", () => {
     const chartErrors = ref<string[]>([]);
     const isCreating = ref<boolean>(false);
 
+    const MAX_CONCURRENT_LOADS = 2;
+
+    const activeLoads = ref(0);
+    const chartQueue = ref<any[]>([]);
+    const loadedCharts = ref<Record<string, any>>({});
+
     const sourceCode = ref("")
     const parsedSource = computed<{ id?: string, [key:string]: any } | undefined>((previous) => {
         try {
@@ -187,6 +193,32 @@ export const useDashboardStore = defineStore("dashboard", () => {
         return result;
     }
 
+    async function processChartQueue() {
+        if(activeLoads.value >= MAX_CONCURRENT_LOADS) return;
+        if(chartQueue.value.length === 0) return;
+
+        const chart = chartQueue.value.shift();
+        activeLoads.value++;
+
+        try {
+            const result = await loadChart(chart);
+            if(chart?.id) {
+                loadedCharts.value[chart.id] = result;
+            }
+        } finally {
+            activeLoads.value--;
+            processChartQueue();            
+        }
+    }
+
+    function enqueueChartLoad(chart: Chart) {
+        if(!chart?.id) return;
+        if(loadedCharts.value[chart.id]) return;
+
+        chartQueue.value.push(chart);
+        processChartQueue();
+    }
+
     const errors = ref<string[] | undefined>();
     const warnings = ref<string[] | undefined>();
     const coreStore = useCoreStore();
@@ -246,5 +278,7 @@ export const useDashboardStore = defineStore("dashboard", () => {
         rootProperties,
         sourceCode,
         parsedSource,
+        enqueueChartLoad,
+        loadedCharts,
     };
 });

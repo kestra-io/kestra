@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeMount, ref, useTemplateRef, watch} from "vue";
+    import {computed, nextTick, onBeforeMount, ref, useTemplateRef, watch} from "vue";
     import {stringify, parse} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
@@ -69,12 +69,11 @@
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const charts = ref<Chart[]>([]);
 
-    const loadCharts = async (allCharts: Chart[] = []) => {
-        charts.value = [];
-
-        for (const chart of allCharts) {
-            charts.value.push({...chart, content: stringify(chart)});
-        }
+    const loadCharts = (allCharts: Chart[] = []) => {
+        charts.value = allCharts.map(chart => ({
+            ...chart,
+            content: stringify(chart),
+        }));
     };
 
     const dashboardComponent = useTemplateRef("dashboardComponent");
@@ -105,6 +104,28 @@
         dashboard.value = id === "default" ? {id, charts: [], ...parse(defaultYAML)} : await dashboardStore.load(id);
         loadCharts(dashboard.value.charts);
     };
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                dashboardStore.enqueueChartLoad((entry.target as any).__chart);
+                observer.unobserve(entry.target);
+            }
+        });
+    });
+
+    watch(charts, async () => {
+        await nextTick();
+
+        document.querySelectorAll(".chart-container").forEach(el => {
+            const id = el.getAttribute("data-id");
+            const chart = charts.value.find(c => c.id === id);
+            if (chart) {
+                (el as any).__chart = chart;
+                observer.observe(el);
+            }
+        });
+    });
 
     onBeforeMount(() => {
         const ID = getDashboard(route, "id");

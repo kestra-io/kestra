@@ -250,6 +250,23 @@
                                 <template v-else-if="col.prop === 'trigger'">
                                     <TriggerAvatar :execution="scope.row" />
                                 </template>
+                                <template v-else-if="col.prop === 'trigger.variables.executionId'">
+                                    <RouterLink
+                                        v-if="scope.row?.trigger?.type === 'io.kestra.plugin.core.flow.Subflow' && scope.row?.trigger?.variables?.executionId"
+                                        :to="{
+                                            name: 'executions/update',
+                                            params: {
+                                                namespace: scope.row?.namespace,
+                                                flowId: scope.row?.flowId,
+                                                id: scope.row?.trigger?.variables?.executionId
+                                            }
+                                        }"
+                                        class="execution-id"
+                                    >
+                                        <Id :value="scope.row?.trigger?.variables?.executionId" :shrink="true" />
+                                    </RouterLink>
+                                    <span v-else>-</span>
+                                </template>
                             </template>
                             <template v-if="col.prop === 'taskRunList.taskId'" #header="scope">
                                 <el-tooltip :content="$t('taskid column details')" effect="light">
@@ -573,10 +590,16 @@
             description: t("filter.table_column.executions.task-id")
         },
         {
-            label: t("triggers"), 
-            prop: "trigger", 
-            default: true, 
+            label: t("triggers"),
+            prop: "trigger",
+            default: true,
             description: t("filter.table_column.executions.trigger")
+        },
+        {
+            label: t("parent execution"),
+            prop: "trigger.variables.executionId",
+            default: false,
+            description: t("filter.table_column.executions.parent-execution")
         }
     ]);
 
@@ -598,7 +621,7 @@
     );
 
     const isColumnSortable = (prop: string) => {
-        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger"].includes(prop);
+        return !["labels", "flowRevision", "inputs", "outputs", "taskRunList.taskId", "trigger", "trigger.variables.executionId"].includes(prop);
     };
 
     const selectionMapper = (execution: any) => {

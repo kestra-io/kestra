@@ -37,14 +37,14 @@ public class EachSequentialTest {
     private TestRunnerUtils runnerUtils;
 
     @Test
-    @ExecuteFlow("flows/valids/each-sequential.yaml")
+    @ExecuteFlow(value = "flows/valids/each-sequential.yaml", tenantId = "sequential")
     void sequential(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(11);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-object.yaml")
+    @ExecuteFlow(value = "flows/valids/each-object.yaml", tenantId = "object")
     void object(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(8);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -52,7 +52,7 @@ public class EachSequentialTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-object-in-list.yaml")
+    @ExecuteFlow(value = "flows/valids/each-object-in-list.yaml", tenantId = "objectinlist")
     void objectInList(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(8);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -60,7 +60,7 @@ public class EachSequentialTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-sequential-nested.yaml")
+    @ExecuteFlow(value = "flows/valids/each-sequential-nested.yaml", tenantId = "sequentialnested")
     void sequentialNested(Execution execution) throws InternalException {
         assertThat(execution.getTaskRunList()).hasSize(23);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -80,23 +80,28 @@ public class EachSequentialTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/each-empty.yaml")
+    @ExecuteFlow(value = "flows/valids/each-empty.yaml", tenantId = "eachempty")
     void eachEmpty(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
-    @LoadFlows({"flows/valids/each-null.yaml"})
+    @LoadFlows(value = {"flows/valids/each-null.yaml"}, tenantId = "eachnull")
     void eachNull() throws TimeoutException, QueueException {
-        EachSequentialTest.eachNullTest(runnerUtils, logQueue);
+        EachSequentialTest.eachNullTest("eachnull", runnerUtils, logQueue);
     }
 
-    public static void eachNullTest(TestRunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException, QueueException {
+    public static void eachNullTest(String tenant, TestRunnerUtils runnerUtils, QueueInterface<LogEntry> logQueue) throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
+        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either ->
+        {
+            if (tenant.equalsIgnoreCase(either.left().get().getTenantId())){
+                logs.add(either.getLeft());
+            }
+        });
 
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-null", Duration.ofSeconds(60));
+        Execution execution = runnerUtils.runOne(tenant, "io.kestra.tests", "each-null", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

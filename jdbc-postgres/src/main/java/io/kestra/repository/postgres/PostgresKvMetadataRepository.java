@@ -1,7 +1,6 @@
 package io.kestra.repository.postgres;
 
 import io.kestra.core.models.kv.PersistedKvMetadata;
-import io.kestra.core.queues.QueueService;
 import io.kestra.jdbc.repository.AbstractJdbcKvMetadataRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -18,10 +17,9 @@ import java.util.List;
 public class PostgresKvMetadataRepository extends AbstractJdbcKvMetadataRepository {
     @Inject
     public PostgresKvMetadataRepository(
-        @Named("kvMetadata") PostgresRepository<PersistedKvMetadata> repository,
-        QueueService queueService
+        @Named("kvMetadata") PostgresRepository<PersistedKvMetadata> repository
     ) {
-        super(repository, queueService);
+        super(repository);
     }
 
     @Override

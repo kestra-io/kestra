@@ -66,7 +66,6 @@ import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 @Slf4j
 public class JsonSchemaGenerator {
 
-    private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
     private static final List<Class<?>> SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA = List.of(Task.class, AbstractTrigger.class);
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
@@ -368,10 +367,6 @@ public class JsonSchemaGenerator {
                     return List.of(
                         javaType.getTypeParameters().getFirst()
                     );
-                } else if (isAssignableFromResolvedAsString(erasedType)) {
-                    return List.of(
-                        javaType.getTypeParameters().getFirst()
-                    );
                 } else {
                     return List.of(
                         javaType.getTypeParameters().getFirst(),
@@ -595,9 +590,46 @@ public class JsonSchemaGenerator {
             if (pluginAnnotation != null) {
                 ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
                 if (properties != null) {
-                    properties.set("type", context.getGeneratorConfig().createObjectNode()
-                        .put("const", pluginType.getName())
-                    );
+                    LinkedHashSet<String> allowedTypeValues = new LinkedHashSet<>();
+                    allowedTypeValues.add(pluginType.getName());
+
+                    try {
+                        Set<String> annotationAliases = io.kestra.core.models.Plugin.getAliases(pluginType);
+                        if (annotationAliases != null) {
+                            allowedTypeValues.addAll(annotationAliases.stream().filter(Objects::nonNull).toList());
+                        }
+                    } catch (Exception ignored) {
+                    }
+
+                    if (this.pluginRegistry != null) {
+                        for (RegisteredPlugin rp : this.getRegisteredPlugins()) {
+                            if (rp.getAliases() == null || rp.getAliases().isEmpty()) {
+                                continue;
+                            }
+
+                            for (Map.Entry<String, Class<?>> aliasEntry : rp.getAliases().values()) {
+                                if (aliasEntry == null || aliasEntry.getValue() == null || aliasEntry.getKey() == null) {
+                                    continue;
+                                }
+                                if (aliasEntry.getValue().equals(pluginType)) {
+                                    allowedTypeValues.add(aliasEntry.getKey());
+                                }
+                            }
+                        }
+                    }
+
+                    if (allowedTypeValues.size() == 1) {
+                        properties.set("type", context.getGeneratorConfig().createObjectNode()
+                            .put("const", allowedTypeValues.iterator().next())
+                        );
+                    } else {
+                        ArrayNode enumNode = context.getGeneratorConfig().createArrayNode();
+                        allowedTypeValues.forEach(enumNode::add);
+
+                        ObjectNode typeNode = context.getGeneratorConfig().createObjectNode();
+                        typeNode.set("enum", enumNode);
+                        properties.set("type", typeNode);
+                    }
                 }
             }
         });
@@ -656,15 +688,6 @@ public class JsonSchemaGenerator {
                 .put("const", defaultValue)
             );
         });
-    }
-
-    private boolean isAssignableFromResolvedAsString(Class<?> declaredType) {
-        for (Class<?> clazz : TYPES_RESOLVED_AS_STRING) {
-            if (clazz.isAssignableFrom(declaredType)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {

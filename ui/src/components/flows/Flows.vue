@@ -659,7 +659,7 @@
     }
 
     function chartFilters() {
-        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "P30D";
+        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H";
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,
@@ -686,10 +686,6 @@
 
 .flow-id {
     min-width: 200px;
-
-    & a {
-        color: var(--bs-code-color)
-    }
 }
 
 .flows-table .el-table__cell {

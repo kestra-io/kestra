@@ -18,10 +18,9 @@ import java.util.List;
 public class MysqlDashboardRepository extends AbstractJdbcDashboardRepository {
     @Inject
     public MysqlDashboardRepository(@Named("dashboards") MysqlRepository<Dashboard> repository,
-                                    QueueService queueService,
                                     ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher,
                                     List<QueryBuilderInterface<?>> queryBuilders) {
-        super(repository, queueService, eventPublisher, queryBuilders);
+        super(repository, eventPublisher, queryBuilders);
     }
 
     @Override

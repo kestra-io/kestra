@@ -9,7 +9,6 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
@@ -35,9 +34,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
     private static final String DATE_COLUMN = "timestamp";
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository,
-                                     QueueService queueService,
                                      JdbcFilterService filterService) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
 
         this.filterService = filterService;
     }

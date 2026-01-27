@@ -161,6 +161,7 @@
     import {useApiStore} from "../../stores/api";
     import {usePluginsStore} from "../../stores/plugins";
     import {useCoreStore} from "../../stores/core";
+    import {TUTORIAL_NAMESPACE} from "../../utils/constants";
 
     const router = useRouter();
 
@@ -305,7 +306,7 @@
                 router.push({
                     name: "flows/update",
                     params: {
-                        namespace: "tutorial",
+                        namespace: TUTORIAL_NAMESPACE,
                         id: flows.value[activeFlow.value]?.id,
                         tab: "edit",
                     },
@@ -447,7 +448,7 @@
     const exploreOther = (current) => {
         finishTour(current);
         dispatchEvent(current, "explore");
-        router.push({name: "flows/list", query: {namespace: "tutorial"}});
+        router.push({name: "flows/list", query: {namespace: TUTORIAL_NAMESPACE}});
     };
 
     onMounted(() => {

@@ -17,6 +17,7 @@ import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
+import {TUTORIAL_NAMESPACE} from "../utils/constants";
 
 const textYamlHeader = {
     headers: {
@@ -315,7 +316,7 @@ export const useFlowStore = defineStore("flow", () => {
             else {
                 flows.value = response.data.results
                 total.value = response.data.total
-                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== "tutorial").length
+                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
 
                 return response.data;
             }

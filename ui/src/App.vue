@@ -74,7 +74,7 @@
             uid: uid,
         });
 
-        await initPostHogForSetup(config);
+        void initPostHogForSetup(config);
 
         return config;
     }

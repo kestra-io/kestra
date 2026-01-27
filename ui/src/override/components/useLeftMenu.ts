@@ -1,4 +1,4 @@
-import {computed} from "vue";
+import {computed, onMounted, ref} from "vue";
 
 import {useRoute, useRouter} from "vue-router";
 import type {
@@ -12,6 +12,7 @@ import {useI18n} from "vue-i18n";
 import {useMiscStore} from "override/stores/misc";
 
 import {getDashboard} from "../../components/dashboard/composables/useDashboards";
+import {shouldShowWelcome} from "../../utils/welcomeGuard";
 
 // Main icons
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
@@ -27,6 +28,7 @@ import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue";
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
 import OfficeBuildingOutline from "vue-material-design-icons/OfficeBuildingOutline.vue";
 import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue";
+import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue";
 
 // Blueprints icons
 import Wrench from "vue-material-design-icons/Wrench.vue";
@@ -62,6 +64,19 @@ export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
 
     const configs = useMiscStore().configs;
+    const showWelcomeLink = ref(false);
+
+    const loadWelcomeLink = async () => {
+        try {
+            showWelcomeLink.value = await shouldShowWelcome();
+        } catch {
+            showWelcomeLink.value = false;
+        }
+    };
+
+    onMounted(() => {
+        void loadWelcomeLink();
+    });
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -95,6 +110,17 @@ export function useLeftMenu() {
 
     const menu = computed<MenuItem[]>(() => {
         const generated = [
+            {
+                title: t("product_tour"),
+                routes: routeStartWith("welcome"),
+                href: {
+                    name: "welcome",
+                },
+                icon: {
+                    element: RocketLaunchOutline,
+                },
+                hidden: !showWelcomeLink.value,
+            },
             {
                 title: t("dashboards.labels.plural"),
                 href: {

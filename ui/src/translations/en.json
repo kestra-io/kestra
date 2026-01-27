@@ -1830,7 +1830,8 @@
                 "inputs": "Input values provided to the execution",
                 "outputs": "Outputs emitted by the execution",
                 "task-id": "ID of the last task in the execution",
-                "trigger": "Trigger that started the execution"
+                "trigger": "Trigger that started the execution",
+                "parent-execution": "Parent execution ID that triggered this execution"
             },
             "kv": {
                 "namespace": "Logical grouping where the key-value pair is stored",

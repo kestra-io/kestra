@@ -679,13 +679,14 @@ public class ExecutionController {
     private HttpResponse<?> buildWebhookResponse(Object body, String responseContentType) {
         if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN)) {
             String responseBody;
-            if (body instanceof String) {
-                responseBody = (String) body;
-            } else if (body instanceof Map<?, ?> map && map.size() == 1) {
-                // Extract single value from outputs map for plain text response
-                responseBody = String.valueOf(map.values().iterator().next());
+            if (body instanceof String s) {
+                responseBody = s;
             } else {
-                responseBody = String.valueOf(body);
+                try {
+                    responseBody = objectMapper.writeValueAsString(body);
+                } catch (Exception e) {
+                    responseBody = String.valueOf(body);
+                }
             }
             return HttpResponse.ok(responseBody).contentType(MediaType.TEXT_PLAIN_TYPE);
         }

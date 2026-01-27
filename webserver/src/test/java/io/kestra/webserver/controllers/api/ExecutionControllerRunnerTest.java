@@ -2408,7 +2408,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(response.getStatus().getCode()).isEqualTo(200);
         assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("text/plain");
-        assertThat(response.body()).isEqualTo("hello-world");
+        assertThat(response.body()).isEqualTo("{\"response\":\"hello-world\"}");
     }
 
     @Test
@@ -2421,7 +2421,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(response.getStatus().getCode()).isEqualTo(200);
         assertThat(response.getContentType().orElseThrow().toString()).isEqualTo("text/plain");
-        assertThat(response.body()).isEqualTo("abc123");
+        assertThat(response.body()).isEqualTo("{\"response\":\"abc123\"}");
     }
 
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {

@@ -105,8 +105,6 @@
         savedFilter.filters.forEach((filter) => {
             addFilter(filter);
         });
-
-        searchQuery.value = savedFilter.searchQuery ?? "";
     };
 
     const refreshData = () => {
@@ -187,9 +185,14 @@
         display: flex;
         align-items: flex-start;
         flex-wrap: nowrap;
+        gap: 0.5rem;
         
         &.options {
             padding-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            flex-wrap: wrap;
         }
     }
 }

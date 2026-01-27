@@ -144,9 +144,7 @@
         if(response === undefined){
             response = await docStore.fetchResource(`docs${val ?? ""}`)
         }
-        if(response === undefined){
-            return;
-        }
+
         await setDocPageFromResponse(response);
         // Always add to history, empty string for home/default page
         addToHistory(val || "");

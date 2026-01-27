@@ -18,17 +18,17 @@ const hasFilterKey = (query: LocationQuery, prefix: string): boolean =>
     Object.keys(query).some(key => key.startsWith(prefix));
 
 export function applyDefaultFilters(
-    currentQuery?: LocationQuery, 
+    currentQuery?: LocationQuery,
     {
-        namespace, 
-        includeTimeRange, 
-        includeScope, 
+        namespace,
+        includeTimeRange,
+        includeScope,
         legacyQuery,
     }: DefaultFilterOptions = {}): { query: LocationQuery, change: boolean } {
-        
+
     const query = {...currentQuery};
     let change = false;
-   
+
 
     if (namespace !== null && defaultNamespace() && !hasFilterKey(query, NAMESPACE_FILTER_PREFIX)) {
         query[legacyQuery ? "namespace" : `${NAMESPACE_FILTER_PREFIX}[PREFIX]`] = defaultNamespace();
@@ -43,9 +43,18 @@ export function applyDefaultFilters(
     const TIME_FILTER_KEYS = /startDate|endDate|timeRange/;
 
     if (includeTimeRange && !Object.keys(query).some(key => TIME_FILTER_KEYS.test(key))) {
-        const defaultDuration = useMiscStore().configs?.chartDefaultDuration ?? "P30D";
+        const defaultDuration = useMiscStore().configs?.chartDefaultDuration ?? "PT24H";
         query[legacyQuery ? "timeRange" : `${TIME_RANGE_FILTER_PREFIX}[EQUALS]`] = defaultDuration;
         change = true;
+    }
+
+    if (!includeScope) {
+        Object.keys(query).forEach(key => {
+            if (key.startsWith(SCOPE_FILTER_PREFIX)) {
+                delete query[key];
+                change = true;
+            }
+        });
     }
 
     return {query, change};
@@ -79,4 +88,4 @@ export function useDefaultFilter(
     return {
         resetDefaultFilter
     }
-}   
+}

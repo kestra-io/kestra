@@ -35,9 +35,25 @@ import java.nio.charset.StandardCharsets;
 @Plugin(
     examples = {
         @Example(
-            code = {
-                "from: \"kestra://long/url/file1.txt\"",
-            }
+            title = "",
+            full = true,
+            code = """
+                id: reverse_file
+                namespace: company.team
+
+                tasks:
+                  - id: generate_file
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    commands:
+                      - echo "1\n2\n3" > numbers.txt
+                    outputFiles:
+                      - "numbers.txt"
+
+                  - id: reverse
+                    type: io.kestra.plugin.core.storage.Reverse
+                    from: "{{ outputs.generate_file.outputFiles['numbers.txt'] }}"
+
+            """
         ),
     },
     aliases = "io.kestra.core.tasks.storages.Reverse"

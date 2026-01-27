@@ -2,7 +2,7 @@
     <el-dropdown trigger="click" hideOnClick placement="bottom-end">
         <el-button :icon="ChartLineVariant" class="selected">
             <span v-if="!verticalLayout" class="text-truncate">
-                {{ selected ?? t("dashboards.default") }}
+                {{ selected ?? $t("dashboards.default") }}
             </span>
         </el-button>
 
@@ -15,13 +15,13 @@
                     :to="{name: 'dashboards/create', query}"
                     class="w-100"
                 >
-                    <small>{{ t("dashboards.creation.label") }}</small>
+                    <small>{{ $t("dashboards.creation.label") }}</small>
                 </el-button>
 
                 <Item
                     :dashboard="{
                         id: filtered.filter(d => d.title === selected)?.[0]?.id ?? 'default',
-                        title: selected ?? t('dashboards.default')
+                        title: selected ?? $t('dashboards.default')
                     }"
                     :edit="edit"
                     class="mt-3"
@@ -31,7 +31,7 @@
 
                 <el-input
                     v-model="search"
-                    :placeholder="t('search')"
+                    :placeholder="$t('search')"
                     :prefixIcon="Magnify"
                     clearable
                     class="my-1 mb-3 search"
@@ -47,7 +47,7 @@
                         @click="select(dashboard)"
                     />
                     <span v-if="!filtered.length" class="empty">
-                        {{ t("dashboards.empty") }}
+                        {{ $t("dashboards.empty") }}
                     </span>
                 </div>
             </el-dropdown-menu>

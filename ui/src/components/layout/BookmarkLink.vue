@@ -22,11 +22,11 @@
                 <div class="buttons">
                     <PencilOutline
                         @click.stop.prevent="startEditBookmark"
-                        :title="t('edit')"
+                        :title="$t('edit')"
                     />
                     <DeleteOutline
                         @click.prevent="deleteBookmark"
-                        :title="t('delete')"
+                        :title="$t('delete')"
                     />
                 </div>
             </a>

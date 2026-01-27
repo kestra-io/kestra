@@ -8,6 +8,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.AssetEmitter;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
 import org.slf4j.spi.LoggingEventBuilder;
@@ -31,6 +32,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
  * ::{"outputs":{"key":"value"}}::
  * }</pre>
  */
+@Singleton
 public class TaskLogLineMatcher {
 
     protected static final Pattern LOG_DATA_SYNTAX = Pattern.compile("^::(\\{.*})::$");

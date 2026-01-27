@@ -1,6 +1,6 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.queues.QueueService;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.data.model.Pageable;
@@ -37,15 +37,10 @@ import java.util.stream.Stream;
  * @param <T> the type of the persisted entity.
  */
 public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcRepository {
-    protected static final Field<String> KEY_FIELD = field("key", String.class);
-    protected static final Field<String> VALUE_FIELD = field("value", String.class);
-
     protected io.kestra.jdbc.AbstractJdbcRepository<T> jdbcRepository;
-    protected QueueService queueService;
 
-    public AbstractJdbcCrudRepository(io.kestra.jdbc.AbstractJdbcRepository<T> jdbcRepository, QueueService queueService) {
+    public AbstractJdbcCrudRepository(io.kestra.jdbc.AbstractJdbcRepository<T> jdbcRepository) {
         this.jdbcRepository = jdbcRepository;
-        this.queueService = queueService;
     }
 
     /**
@@ -97,13 +92,20 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
      * It uses an update statement, so the item must be already present in the database.
      */
     public T update(T current) {
+
+        if (!(current instanceof HasUID hasUID)) {
+            throw new IllegalArgumentException( "Cannot update entity: '" + current.getClass().getName() + "' doesn't implement HasUID");
+        }
+
+        String uid = hasUID.uid();
+
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSL.using(configuration)
                     .update(this.jdbcRepository.getTable())
                     .set(this.jdbcRepository.persistFields((current)))
-                    .where(KEY_FIELD.eq(queueService.key(current)))
+                    .where(KEY_FIELD.eq(uid))
                     .execute();
 
                 return current;
@@ -265,7 +267,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
                     select.orderBy(orderByFields);
                 }
 
-                try (Stream<Record1<String>> stream = select.fetchSize(FETCH_SIZE).stream()){
+                try (var stream = select.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
                         .forEach(emitter::next);
                 } finally {
@@ -379,7 +381,7 @@ public abstract class AbstractJdbcCrudRepository<T> extends AbstractJdbcReposito
                     .from(this.jdbcRepository.getTable())
                     .where(defaultFilter);
 
-                try (Stream<Record1<String>> stream = select.fetchSize(FETCH_SIZE).stream()){
+                try (var stream = select.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
                         .forEach(emitter::next);
                 } finally {

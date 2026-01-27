@@ -1,12 +1,10 @@
 package io.kestra.repository.postgres;
 
-import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.model.Pageable;
@@ -23,11 +21,13 @@ import org.jooq.Result;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import jakarta.annotation.Nullable;
+
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
 
 @PostgresRepositoryEnabled
 @EachBean(JdbcTableConfig.class)
@@ -35,9 +35,8 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
 
     @Inject
     public PostgresRepository(@Parameter JdbcTableConfig jdbcTableConfig,
-                              QueueService queueService,
                               JooqDSLContextWrapper dslContextWrapper) {
-        super(jdbcTableConfig, queueService, dslContextWrapper);
+        super(jdbcTableConfig, dslContextWrapper);
     }
 
     @Override
@@ -56,10 +55,10 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     @SneakyThrows
     @Override
     public Map<Field<Object>, Object> persistFields(T entity) {
-        String json = JdbcMapper.of().writeValueAsString(entity);
-        return new HashMap<>(ImmutableMap
-            .of(io.kestra.jdbc.repository.AbstractJdbcRepository.field("value"), DSL.val(JSONB.valueOf(json)))
-        );
+        String json = MAPPER.writeValueAsString(entity);
+        Map<Field<Object>, Object> fields = HashMap.newHashMap(1);
+        fields.put(VALUE_FIELD, DSL.val(JSONB.valueOf(json)));
+        return fields;
     }
 
     @SneakyThrows
@@ -69,9 +68,9 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
 
         context
             .insertInto(table)
-            .set(AbstractJdbcRepository.field("key"), key(entity))
+            .set(KEY_FIELD, key(entity))
             .set(finalFields)
-            .onConflict(AbstractJdbcRepository.field("key"))
+            .onConflict(KEY_FIELD)
             .doUpdate()
             .set(finalFields)
             .execute();
@@ -83,9 +82,9 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
 
         return dslContext
             .insertInto(table)
-            .set(io.kestra.jdbc.repository.AbstractJdbcRepository.field("key"), key(entity))
+            .set(KEY_FIELD, key(entity))
             .set(fields)
-            .onConflict(AbstractJdbcRepository.field("key"))
+            .onConflict(KEY_FIELD)
             .doUpdate()
             .set(fields);
     }
@@ -104,7 +103,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
         )
             .fetch();
 
-        Integer totalCount = results.size() > 0 ? results.getFirst().get("total_count", Integer.class) : 0;
+        Integer totalCount = !results.isEmpty() ? results.getFirst().get("total_count", Integer.class) : 0;
 
         List<E> map = results
             .map((Record record) -> mapper.map((R) record));

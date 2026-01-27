@@ -104,6 +104,7 @@
     import AcceptDecline from "./AcceptDecline.vue";
     import PlaygroundRunTaskButton from "./PlaygroundRunTaskButton.vue";
     import Utils from "../../utils/utils";
+    import {FILES_CLOSE_TAB_INJECTION_KEY} from "./FileExplorer.vue";
 
     const route = useRoute();
     const router = useRouter();
@@ -141,9 +142,32 @@
 
         const fileNamespace = namespace.value ?? route.params?.namespace;
         if (!fileNamespace) return;
-        sourceNS.value = await namespacesStore.readFile({namespace: fileNamespace.toString(), path: props.path ?? ""})
+        const result = await namespacesStore.readFile({
+            namespace: fileNamespace.toString(),
+            path: props.path ?? ""
+        });
 
-        savedSourceNS.value = source.value;
+        if(result.notFound) {
+            console.error(result.error);
+            closeCurrentTab();
+            return
+        }
+
+        if(result.error){
+            console.error(result.error);
+            return
+        }
+
+        if (result.content) {
+            sourceNS.value = result.content;
+            savedSourceNS.value = result.content;
+        }
+    }
+
+    const closeTab = inject(FILES_CLOSE_TAB_INJECTION_KEY, () => {});
+
+    function closeCurrentTab() {
+        closeTab(props);
     }
 
     const isDirty = computed(() => source.value !== savedSource.value);
@@ -259,6 +283,7 @@
 
         // only validate and update graph for flow files
         if(!props.flow) return
+
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {

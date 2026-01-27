@@ -478,7 +478,7 @@
         hidden: null,
         flowId: undefined,
         namespace: undefined,
-        defaultScopeFilter: undefined
+        defaultScopeFilter: true
     });
 
     const emit = defineEmits<{

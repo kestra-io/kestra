@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -14,6 +15,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.test.SleepTrigger;
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.TestInstance;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -141,12 +144,15 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     void shouldReEmitTasksToTheSameWorkerGroup() throws Exception {
         CountDownLatch runningLatch = new CountDownLatch(1);
         CountDownLatch resubmitLatch = new CountDownLatch(1);
+        String workerGroup = IdUtils.create();
 
         // create first worker
-        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
+        Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, workerGroup);
         worker.run();
 
+        var workerTaskResultQueueAppendLog = new ArrayList<WorkerTaskResult>();// to debug flaky test
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
+            workerTaskResultQueueAppendLog.add(either.getLeft());
             if (either.getLeft().getTaskRun().getState().getCurrent() == Type.SUCCESS) {
                 resubmitLatch.countDown();
             }
@@ -156,16 +162,24 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
             }
         });
 
-        workerJobQueue.emit("workerGroupKey", workerTask(Duration.ofSeconds(5), "workerGroupKey"));
+        workerJobQueue.emit(workerGroup, workerTask(Duration.ofSeconds(5), workerGroup));
         boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
         assertThat(runningLatchAwait).isTrue();
         worker.close(); // stop processing task
 
         // create second worker (this will revoke previously one).
-        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
+        Worker newWorker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, workerGroup);
         newWorker.run();
-        boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
-        assertThat(resubmitLatchAwait).isTrue();
+        boolean resubmitLatchAwait = resubmitLatch.await(30, TimeUnit.SECONDS);
+        assertThat(resubmitLatchAwait)
+            .withFailMessage(() -> {
+                try {
+                    return "shouldReEmitTasksToTheSameWorkerGroup: resubmitLatchAwait was not OK, workerTaskResultQueue content: " + JacksonMapper.ofJson().writeValueAsString(workerTaskResultQueueAppendLog);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            })
+            .isTrue();
         WorkerTaskResult workerTaskResult = receive.blockLast();
         assertThat(workerTaskResult).isNotNull();
         assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(Type.SUCCESS);

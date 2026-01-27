@@ -798,6 +798,7 @@
           "labels": "Ausführungs-Labels (key:value-Format)",
           "namespace": "Namespace, zu dem der ausgeführte flow gehört",
           "outputs": "Ausgaben, die von der Ausführung erzeugt wurden",
+          "parent-execution": "Übergeordnete Ausführungs-ID, die diese Ausführung ausgelöst hat",
           "revision": "Version des flow, die für diese Ausführung verwendet wird",
           "start-date": "Wann die Ausführung gestartet wurde",
           "state": "Aktueller Ausführungszustand",

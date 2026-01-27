@@ -16,6 +16,7 @@
         transition: left 0.2s ease;
         background-color: transparent !important;
         padding-bottom: 15px;
+        z-index: 3;
 
         svg {
             height: 20px !important;
@@ -119,10 +120,6 @@
             color: var(--ks-content-secondary);
         }
 
-        &.vsm--link_active .vsm--icon {
-            color: var(--ks-button-content-primary);
-        }
-
         &:before {
             content: "";
             position: absolute;
@@ -139,14 +136,6 @@
 
     .vsm--title span:first-child {
         flex-grow: 0;
-    }
-
-    .vsm--link_open.vsm--link_active {
-
-        .vsm--title,
-        .vsm--icon {
-            color: var(--ks-button-content-primary);
-        }
     }
 
     .vsm--arrow_default {

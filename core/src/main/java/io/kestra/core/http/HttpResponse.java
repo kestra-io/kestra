@@ -78,6 +78,9 @@ public class HttpResponse<T> {
             .build();
     }
 
+    /**
+     * This data class is part of the plugin API. Changes are potentially breaking.
+     */
     @Value
     @Builder
     public static class Status {

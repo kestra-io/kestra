@@ -1,6 +1,5 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -26,15 +25,16 @@ import java.util.Locale;
 import java.util.Map;
 import jakarta.annotation.Nullable;
 
+import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
+
 @H2RepositoryEnabled
 @EachBean(JdbcTableConfig.class)
 public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 
     @Inject
     public H2Repository(@Parameter JdbcTableConfig jdbcTableConfig,
-                        QueueService queueService,
                         JooqDSLContextWrapper dslContextWrapper) {
-        super(jdbcTableConfig, queueService, dslContextWrapper);
+        super(jdbcTableConfig, dslContextWrapper);
     }
 
     @Override
@@ -49,13 +49,13 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
         int affectedRows = context
             .update(table)
             .set(fields)
-            .where(AbstractJdbcRepository.field("key").eq(key(entity)))
+            .where(KEY_FIELD.eq(key(entity)))
             .execute();
 
         if (affectedRows == 0) {
            return  context
                 .insertInto(table)
-                .set(AbstractJdbcRepository.field("key"), key(entity))
+                .set(KEY_FIELD, key(entity))
                 .set(fields)
                 .execute();
         } else {
@@ -101,7 +101,7 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
             .map(s -> field.likeIgnoreCase("%" + s.toUpperCase(Locale.ROOT) + "%"))
             .toList();
 
-        if (match.size() == 0) {
+        if (match.isEmpty()) {
             return DSL.falseCondition();
         }
 
@@ -121,7 +121,7 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
             )
             .fetch();
 
-        Integer totalCount = results.size() > 0 ? results.getFirst().get("total_count", Integer.class) : 0;
+        Integer totalCount = !results.isEmpty() ? results.getFirst().get("total_count", Integer.class) : 0;
 
         List<E> map = results
             .map((Record record) -> mapper.map((R) record));

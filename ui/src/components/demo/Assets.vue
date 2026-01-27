@@ -7,8 +7,7 @@
             alt: t(`demos.assets.title`)
         }"
         :video="{
-            //TODO: replace with ASSET video
-            source: 'https://www.youtube.com/embed/jMZ9Cs3xxpo',
+            source: 'https://www.youtube.com/embed/XhICXP_GXic',
         }"
     >
         <template #message>

@@ -113,10 +113,6 @@ public class DefaultWorker implements Worker {
     private QueueInterface<LogEntry> logQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.CLUSTER_EVENT_NAMED)
-    private Optional<QueueInterface<ClusterEvent>> clusterEventQueue;
-
-    @Inject
     private MetricRegistry metricRegistry;
 
     @Inject
@@ -301,7 +297,18 @@ public class DefaultWorker implements Worker {
             }
         ));
 
-        this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
+        this.receiveCancellations.addFirst(maintenanceService.listen(new MaintenanceService.MaintenanceListener() {
+            @Override
+            public void onMaintenanceModeEnter() {
+                DefaultWorker.this.enterMaintenance();
+            }
+
+            @Override
+            public void onMaintenanceModeExit() {
+                DefaultWorker.this.exitMaintenance();
+            }
+        })::dispose);
+
         if (this.maintenanceService.isInMaintenanceMode()) {
             enterMaintenance();
         } else {
@@ -313,20 +320,6 @@ public class DefaultWorker implements Worker {
         }
         else {
             log.info("Worker started with {} thread(s)", numThreads);
-        }
-    }
-
-    private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
-        if (either.isRight()) {
-            log.error("Unable to deserialize a cluster event: {}", either.getRight().getMessage());
-            return;
-        }
-
-        ClusterEvent clusterEvent = either.getLeft();
-        log.info("Cluster event received: {}", clusterEvent);
-        switch (clusterEvent.eventType()) {
-            case MAINTENANCE_ENTER -> enterMaintenance();
-            case MAINTENANCE_EXIT -> exitMaintenance();
         }
     }
 

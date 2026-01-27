@@ -7,7 +7,6 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
@@ -36,10 +35,9 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
     private final Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new ConcurrentHashMap<>();
 
     public AbstractJdbcDashboardRepository(io.kestra.jdbc.AbstractJdbcRepository<Dashboard> jdbcRepository,
-                                           QueueService queueService,
                                            ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher,
                                            List<QueryBuilderInterface<?>> queryBuilders) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
         this.eventPublisher = eventPublisher;
         this.queryBuilders = queryBuilders;
     }
@@ -51,17 +49,16 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                Select<Record2<String, String>> from;
 
-                from = context
+                var from = context
                         .select(
                             field("source_code", String.class),
-                            field("value", String.class)
+                            VALUE_FIELD
                         )
                         .from(jdbcRepository.getTable())
                         .where(this.defaultFilter(tenantId))
                         .and(field("id", String.class).eq(id));
-                Record2<String, String> fetched = from.fetchAny();
+                Record2<String, Object> fetched = from.fetchAny();
 
                 if (fetched == null) {
                     return Optional.empty();

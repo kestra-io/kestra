@@ -91,9 +91,7 @@
     const chartsComponents = ref<{refresh(): void}[]>();
 
     function refreshCharts() {
-        chartsComponents.value!.forEach((component) => {
-            component.refresh();
-        });
+        (chartsComponents.value ?? []).forEach((component) => component.refresh());
     }
 
     defineExpose({

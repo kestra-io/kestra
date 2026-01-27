@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.*;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
@@ -10,6 +11,10 @@ import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Controller("/api/v1/{tenant}/cluster")
 @Requires(bean = ServiceInstanceRepositoryInterface.class)
@@ -29,5 +34,20 @@ public class ClusterController {
         return repository.findById(id)
             .map(HttpResponse::ok)
             .orElseGet(HttpResponse::notFound);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Get("/metrics")
+    @Operation(tags = {"Services"}, summary = "Get metrics for running workers")
+    public Map<String, Set<Metric>> metrics() {
+        return repository.find(
+                Pageable.unpaged(),
+                Service.ServiceState.allRunningStates(),
+                Set.of(ServiceType.WORKER)
+            ).stream()
+            .collect(Collectors.toMap(
+                ServiceInstance::uid,
+                ServiceInstance::metrics
+            ));
     }
 }

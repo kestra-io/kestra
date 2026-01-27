@@ -506,8 +506,6 @@
                     transition: all 0.3s;
                     min-width: 5px;
 
-
-
                     .progress {
                         height: 25px;
                         border-radius: var(--bs-border-radius-sm);

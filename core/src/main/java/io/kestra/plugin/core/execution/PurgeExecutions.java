@@ -30,14 +30,20 @@ import java.util.List;
     examples = {
         @Example(
             title = "Purge all flow execution data for flows that ended more than one month ago.",
-            code = {
-                "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
-                "states: ",
-                "  - KILLED",
-                "  - FAILED",
-                "  - WARNING",
-                "  - SUCCESS"
-            }
+            code = """
+            id: purge_exections
+            namespace: system
+            
+            tasks:
+              - id: purge
+                type: io.kestra.plugin.core.execution.PurgeExecutions
+                endDate: "{{ now() | dateAdd(-1, 'MONTHS') }}"
+                states: 
+                  - KILLED
+                  - FAILED
+                  - WARNING
+                  - SUCCESS
+            """
         )
     },
     aliases = {"io.kestra.core.tasks.storages.Purge", "io.kestra.plugin.core.storage.Purge"}

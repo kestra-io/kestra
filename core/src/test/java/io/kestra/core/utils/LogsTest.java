@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
@@ -21,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
+@org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)
 class LogsTest {
 
     private static final InMemoryAppender MEMORY_APPENDER = new InMemoryAppender();

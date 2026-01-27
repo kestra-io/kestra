@@ -1,6 +1,5 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
@@ -34,9 +33,8 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 
     @Inject
     public H2Repository(@Parameter JdbcTableConfig jdbcTableConfig,
-                        QueueService queueService,
                         JooqDSLContextWrapper dslContextWrapper) {
-        super(jdbcTableConfig, queueService, dslContextWrapper);
+        super(jdbcTableConfig, dslContextWrapper);
     }
 
     @Override

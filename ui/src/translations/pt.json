@@ -1458,6 +1458,7 @@
       "label": "Visualizar",
       "view": "Visualizar"
     },
+    "product_tour": "Passeio pelo Produto",
     "properties": {
       "hidden": "Oculto na Tabela",
       "hint": "Escolher Colunas Visíveis",

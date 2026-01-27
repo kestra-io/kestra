@@ -1458,6 +1458,7 @@
       "label": "预览",
       "view": "查看"
     },
+    "product_tour": "产品导览",
     "properties": {
       "hidden": "隐藏在表格中",
       "hint": "选择可见列",

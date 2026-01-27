@@ -1458,6 +1458,7 @@
       "label": "Anteprima",
       "view": "Visualizza"
     },
+    "product_tour": "Tour del prodotto",
     "properties": {
       "hidden": "Nascosto nella Tabella",
       "hint": "Scegli colonne visibili",

@@ -1231,7 +1231,7 @@ public class ExecutionController {
 
         Flow flow = flowRepository.findByExecution(execution.get());
 
-        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.taskRunId(), stateRequest.state());
         List<Label> newLabels = new ArrayList<>(replay.getLabels());
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
@@ -1243,10 +1243,9 @@ public class ExecutionController {
         return replay;
     }
 
-    @lombok.Value
-    public static class StateRequest {
-        String taskRunId;
-        State.Type state;
+    public record StateRequest(
+        String taskRunId,
+        State.Type state) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2452,7 +2451,7 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/flow")
     @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
     public FlowForExecution getFlowFromExecutionById(
-        @Parameter(description = "The execution that you want flow informations") String executionId
+        @Parameter(description = "The execution that you want flow information") String executionId
     ) {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 

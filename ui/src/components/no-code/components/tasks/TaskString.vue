@@ -56,6 +56,7 @@
             input
             @update:model-value="onInput"
             :largeSuggestions="false"
+            style="z-index: 1;"
         />
     </div>
 </template>

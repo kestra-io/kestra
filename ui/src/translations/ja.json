@@ -1458,6 +1458,7 @@
       "label": "プレビュー",
       "view": "表示"
     },
+    "product_tour": "プロダクトツアー",
     "properties": {
       "hidden": "テーブルに隠す",
       "hint": "表示する列を選択",

@@ -429,7 +429,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcCrudReposito
                 filterService,
                 filters,
                 getFieldsMapping()
-            );
+            ).and(NORMAL_KIND_CONDITION);
 
             Record result = selectConditionStep.fetchOne();
             if (result != null) {

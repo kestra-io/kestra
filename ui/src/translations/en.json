@@ -475,6 +475,7 @@
       "start": "Let's get your first workflow up and running.",
       "guide": "Need guidance to execute your first flow?"
     },
+    "product_tour": "Product Tour",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
@@ -1829,7 +1830,8 @@
                 "inputs": "Input values provided to the execution",
                 "outputs": "Outputs emitted by the execution",
                 "task-id": "ID of the last task in the execution",
-                "trigger": "Trigger that started the execution"
+                "trigger": "Trigger that started the execution",
+                "parent-execution": "Parent execution ID that triggered this execution"
             },
             "kv": {
                 "namespace": "Logical grouping where the key-value pair is stored",

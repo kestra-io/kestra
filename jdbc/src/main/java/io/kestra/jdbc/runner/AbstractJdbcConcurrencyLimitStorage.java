@@ -4,6 +4,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.ExecutionRunning;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
@@ -12,8 +13,10 @@ import org.jooq.impl.DSL;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
+@Slf4j
 public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository {
     protected io.kestra.jdbc.AbstractJdbcRepository<ConcurrencyLimit> jdbcRepository;
 
@@ -49,7 +52,7 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
                         Map<Field<Object>, Object> finalFields = this.jdbcRepository.persistFields(zeroConcurrencyLimit);
                         var insert = dslContext
                             .insertInto(this.jdbcRepository.getTable())
-                            .set(field("key"), this.jdbcRepository.key(zeroConcurrencyLimit))
+                            .set(KEY_FIELD, this.jdbcRepository.key(zeroConcurrencyLimit))
                             .set(finalFields);
                         if (dslContext.configuration().dialect().supports(SQLDialect.POSTGRES)) {
                             insert.onDuplicateKeyIgnore().execute();
@@ -87,6 +90,50 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
                         return newLimit;
                     }
                 ).orElse(0);
+            });
+    }
+
+    /**
+     * Atomically decrement the concurrency limit counter and pop a queued execution if available.
+     * This ensures the decrement, limit check, and pop all happen within the same transaction,
+     * preventing race conditions that could leave executions stuck in queue indefinitely.
+     *
+     * @param flow the flow to decrement the counter for
+     * @param executionQueuedStorage the storage to pop from
+     * @param consumer the consumer to call with the popped execution (only called if pop succeeds and limit allows)
+     */
+    public void decrementAndPop(FlowInterface flow, AbstractJdbcExecutionQueuedStorage executionQueuedStorage,
+                                BiConsumer<DSLContext, io.kestra.core.models.executions.Execution> consumer) {
+        this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                var dslContext = DSL.using(configuration);
+
+                // Decrement the counter
+                int newLimit = fetchOne(dslContext, flow).map(
+                    concurrencyLimit -> {
+                        int decremented = concurrencyLimit.getRunning() == 0 ? 0 : concurrencyLimit.getRunning() - 1;
+                        update(dslContext, concurrencyLimit.withRunning(decremented));
+                        return decremented;
+                    }
+                ).orElse(0);
+
+                // Only pop if we're below the limit
+                if (newLimit < flow.getConcurrency().getLimit()) {
+                    executionQueuedStorage.pop(
+                        dslContext,
+                        flow.getTenantId(),
+                        flow.getNamespace(),
+                        flow.getId(),
+                        (ctx, queued) -> {
+                            // Increment the counter for the newly running execution
+                            increment(ctx, flow);
+                            // Call the consumer
+                            consumer.accept(ctx, queued);
+                        }
+                    );
+                } else {
+                    log.error("Concurrency limit reached for flow {}.{} after decrementing the execution running count. No new executions will be dequeued.", flow.getNamespace(), flow.getId());                }
             });
     }
 
@@ -150,7 +197,7 @@ public class AbstractJdbcConcurrencyLimitStorage extends AbstractJdbcRepository 
             .transactionResult(configuration -> {
                 var select = DSL
                     .using(configuration)
-                    .select(field("value"))
+                    .select(VALUE_FIELD)
                     .from(this.jdbcRepository.getTable())
                     .where(this.buildTenantCondition(tenantId))
                     .and(field("namespace").eq(namespace))

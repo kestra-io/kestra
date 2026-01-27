@@ -14,8 +14,8 @@ import io.micronaut.context.annotation.Value;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -31,11 +31,10 @@ import static io.kestra.core.server.Service.ServiceState.allRunningStates;
  * @see ServiceInstance
  */
 @Singleton
+@Slf4j
 @JdbcRunnerEnabled
 @Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
 public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenessCoordinator {
-
-    private final static Logger log = LoggerFactory.getLogger(JdbcServiceLivenessCoordinator.class);
 
     private final AtomicReference<JdbcExecutor> executor = new AtomicReference<>();
     private final AbstractJdbcServiceInstanceRepository serviceInstanceRepository;

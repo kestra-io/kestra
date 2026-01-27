@@ -67,7 +67,7 @@ public interface HasSource {
                 List<String> sources = List.of(new String(bytes).split("(?m)^---\\s*$"));
                 for (int i = 0; i < sources.size(); i++) {
                     String source = sources.get(i);
-                    reader.accept(source, String.valueOf(i));
+                    reader.accept(source, fileName + "(flow number: " + i + ")");
                 }
             } else if (fileName.endsWith(".zip")) {
 

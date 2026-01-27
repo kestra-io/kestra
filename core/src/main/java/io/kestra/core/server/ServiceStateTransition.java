@@ -2,16 +2,15 @@ package io.kestra.core.server;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Optional;
 
+@Slf4j
 public final class ServiceStateTransition {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ServiceStateTransition.class);
 
     /**
      * Static helper method for validating a state transition for an existing service instance.
@@ -58,7 +57,7 @@ public final class ServiceStateTransition {
                                                        @NotNull final Service.ServiceState newState,
                                                        @Nullable final ImmutablePair<ServiceInstance, ServiceInstance> result) {
         if (result == null) {
-            LOG.debug("Failed to transition service [id={}, type={}, hostname={}] to {}. Cause: {}",
+            log.debug("Failed to transition service [id={}, type={}, hostname={}] to {}. Cause: {}",
                 initial.uid(),
                 initial.type(),
                 initial.server().hostname(),
@@ -72,7 +71,7 @@ public final class ServiceStateTransition {
         final ServiceInstance newInstance = result.getRight();
 
         if (newInstance == null) {
-            LOG.warn("Failed to transition service [id={}, type={}, hostname={}] from {} to {}. Cause: {}.",
+            log.warn("Failed to transition service [id={}, type={}, hostname={}] from {} to {}. Cause: {}.",
                 initial.uid(),
                 initial.type(),
                 initial.server().hostname(),
@@ -85,8 +84,8 @@ public final class ServiceStateTransition {
 
         // Logs if the state was changed, otherwise this method called for heartbeat purpose.
         if (!oldInstance.state().equals(newInstance.state())) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Service [id={}, type={}, hostname={}] transition from {} to {}.",
+            if (log.isDebugEnabled()) {
+                log.debug("Service [id={}, type={}, hostname={}] transition from {} to {}.",
                     initial.uid(),
                     initial.type(),
                     initial.server().hostname(),

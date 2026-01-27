@@ -2,3 +2,4 @@ contact_links:
   - name: Chat
     url: https://kestra.io/slack
     about: Chat with us on Slack
+blank_issues_enabled: false

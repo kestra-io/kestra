@@ -19,7 +19,7 @@ public abstract class AbstractFlow implements DeletedInterface, TenantInterface 
     @NotNull
     @NotBlank
     @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._-]*")
-    @Size(min = 1, max = 100)
+    @Size(min = 1, max = 150)
     String id;
 
     @NotNull

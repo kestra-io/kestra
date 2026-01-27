@@ -136,11 +136,6 @@ main {
     }
 }
 
-// Override gray for skipped/cancelled states to be more distinct from running (purple)
-.bg-gray {
-    background-color: #6c757d;
-}
-
 // Browser autofill background color
 input:-webkit-autofill,
 input:-webkit-autofill:focus {

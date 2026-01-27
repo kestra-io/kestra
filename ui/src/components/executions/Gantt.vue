@@ -506,6 +506,8 @@
                     transition: all 0.3s;
                     min-width: 5px;
 
+
+
                     .progress {
                         height: 25px;
                         border-radius: var(--bs-border-radius-sm);
@@ -516,6 +518,10 @@
                             position: absolute;
                             height: 25px;
                             transition: none;
+
+                            &.bg-gray {
+                                background-color: #5a6268;
+                            }
                         }
                     }
                 }

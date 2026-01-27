@@ -50,7 +50,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                   - id: error_message
                     type: io.kestra.plugin.core.log.Log
                     level: ERROR
-                    message: Fatel - error!
+                    message: This is an error message
 
                   - id: fetch
                     type: io.kestra.plugin.core.log.Fetch
@@ -73,7 +73,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                   - id: error_message
                     type: io.kestra.plugin.core.log.Log
                     level: ERROR
-                    message: Fatel - error!
+                    message: This is an error message
 
                   - id: fetch
                     type: io.kestra.plugin.core.log.Fetch

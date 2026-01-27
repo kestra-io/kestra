@@ -17,6 +17,7 @@ import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.repository.LocalRepository;
+import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -31,6 +32,9 @@ import org.slf4j.Logger;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -44,6 +48,11 @@ import java.util.List;
 public class MavenPluginDownloader implements Closeable {
     private static final String DEFAULT_LOCAL_REPOSITORY_PREFIX = "kestra-plugins-m2-repository";
     private static final String DEFAULT_REPOSITORY_TYPE = "default";
+    private static final String HTTP_PROXY_HOST = System.getProperty("http.proxyHost");
+    private static final String HTTP_PROXY_PORT = System.getProperty("http.proxyPort");
+    private static final String HTTPS_PROXY_HOST = System.getProperty("https.proxyHost");
+    private static final String HTTPS_PROXY_PORT = System.getProperty("https.proxyPort");
+
     public static final String LATEST = "latest";
 
     private final List<MavenPluginRepositoryConfig> repositoryConfigs;
@@ -150,6 +159,16 @@ public class MavenPluginDownloader implements Closeable {
                     authenticationBuilder.addUsername(repositoryConfig.basicAuth().username());
                     authenticationBuilder.addPassword(repositoryConfig.basicAuth().password());
                     build.setAuthentication(authenticationBuilder.build());
+                }
+
+                // Honor JDK proxy settings
+                if (repositoryConfig.url().startsWith("http") && HTTP_PROXY_HOST != null) {
+                    Proxy proxy = new Proxy(Proxy.TYPE_HTTP, HTTP_PROXY_HOST, HTTP_PROXY_PORT != null ? Integer.parseInt(HTTP_PROXY_PORT) : 80);
+                    build.setProxy(proxy);
+                }
+                if (repositoryConfig.url().startsWith("https") && HTTPS_PROXY_HOST != null) {
+                    Proxy proxy = new Proxy(Proxy.TYPE_HTTPS, HTTPS_PROXY_HOST, HTTPS_PROXY_PORT != null ? Integer.parseInt(HTTPS_PROXY_PORT) : 443);
+                    build.setProxy(proxy);
                 }
 
                 return build.build();

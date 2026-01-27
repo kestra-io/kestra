@@ -17,6 +17,7 @@ import io.kestra.core.models.flows.input.MultiselectInput;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.plugin.core.condition.Expression;
 import io.kestra.plugin.core.condition.TimeBetween;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
@@ -695,6 +696,32 @@ class ScheduleTest {
                 .type(TimeBetween.class.getName())
                 .before(Property.ofValue(before))
                 .after(Property.ofValue(after))
+                .build()
+            ))
+            .build();
+
+        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder().build();
+
+        ConditionContext conditionContext = ConditionContext.builder()
+            .runContext(runContextInitializer.forScheduler((DefaultRunContext) runContextFactory.of(), triggerContext, trigger))
+            .build();
+
+        Optional<ZonedDateTime> result = trigger.truePreviousNextDateWithCondition(trigger.executionTime(), conditionContext, now, true);
+        assertThat(result).isNotEmpty();
+    }
+
+    @Test
+    void shouldGetNextExecutionDateEvenIfExpressionConditionIsFalse() throws InternalException {
+        ZonedDateTime now = ZonedDateTime.now().withZoneSameLocal(ZoneId.of("Europe/Paris"));
+
+        Schedule trigger = Schedule.builder()
+            .id("schedule").type(Schedule.class.getName())
+            .cron("*/30 * * * * *")
+            .withSeconds(true)
+            .timezone("Europe/Paris")
+            .conditions(List.of(Expression.builder()
+                .type(Expression.class.getName())
+                .expression(Property.ofValue("false"))
                 .build()
             ))
             .build();

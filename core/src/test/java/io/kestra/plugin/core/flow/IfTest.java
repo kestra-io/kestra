@@ -16,21 +16,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class IfTest {
 
-    private static final String TENANT_ID = "true";
 
     @Inject
     private TestRunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows(value = {"flows/valids/if-condition.yaml"}, tenantId = TENANT_ID)
+    @LoadFlows(value = {"flows/valids/if-condition.yaml"}, tenantId = "iftruthy")
     void ifTruthy() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
+        Execution execution = runnerUtils.runOne("iftruthy", "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
         List<TaskRunAttempt> flowableAttempts=execution.findTaskRunsByTaskId("if").getFirst().getAttempts();
 
@@ -41,14 +39,14 @@ class IfTest {
         assertThat(flowableAttempts).isNotNull();
         assertThat(flowableAttempts.getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
+        execution = runnerUtils.runOne("iftruthy", "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", "true") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(TENANT_ID, "io.kestra.tests", "if-condition", null,
+        execution = runnerUtils.runOne("iftruthy", "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", 1) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
@@ -57,30 +55,30 @@ class IfTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/if-condition.yaml"})
+    @LoadFlows(value = {"flows/valids/if-condition.yaml"}, tenantId = "iffalsy")
     void ifFalsy() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
+        Execution execution = runnerUtils.runOne("iffalsy", "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", false) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
+        execution = runnerUtils.runOne("iffalsy", "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", "false") , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
+        execution = runnerUtils.runOne("iffalsy", "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", 0) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-false").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-condition", null,
+        execution = runnerUtils.runOne("iffalsy", "io.kestra.tests", "if-condition", null,
             (f, e) -> Map.of("param", -0) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
@@ -91,16 +89,16 @@ class IfTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/if-without-else.yaml"})
+    @LoadFlows(value = {"flows/valids/if-without-else.yaml"}, tenantId = "ifwithoutelse")
     void ifWithoutElse() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-without-else", null,
+        Execution execution = runnerUtils.runOne("ifwithoutelse", "io.kestra.tests", "if-without-else", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.findTaskRunsByTaskId("when-true").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-without-else", null,
+        execution = runnerUtils.runOne("ifwithoutelse", "io.kestra.tests", "if-without-else", null,
             (f, e) -> Map.of("param", false) , Duration.ofSeconds(120));
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.findTaskRunsByTaskId("when-true").isEmpty()).isTrue();
@@ -108,9 +106,9 @@ class IfTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/if-in-flowable.yaml"})
+    @LoadFlows(value = {"flows/valids/if-in-flowable.yaml"}, tenantId = "ifinflowable")
     void ifInFlowable() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if-in-flowable", null,
+        Execution execution = runnerUtils.runOne("ifinflowable", "io.kestra.tests", "if-in-flowable", null,
             (f, e) -> Map.of("param", true) , Duration.ofSeconds(120));
 
         assertThat(execution.getTaskRunList()).hasSize(8);
@@ -119,7 +117,7 @@ class IfTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/if-with-only-disabled-tasks.yaml")
+    @ExecuteFlow(value = "flows/valids/if-with-only-disabled-tasks.yaml", tenantId = "ifwithonlydisabledtasks")
     void ifWithOnlyDisabledTasks(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.findTaskRunsByTaskId("if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -127,14 +125,14 @@ class IfTest {
     }
 
     @Test
-    @ExecuteFlow("flows/valids/if-in-parallel.yaml")
+    @ExecuteFlow(value = "flows/valids/if-in-parallel.yaml", tenantId = "ifonparallelbranch")
     void ifOnParallelBranch(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(9);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
-    @ExecuteFlow("flows/valids/if-condition-fail.yaml")
+    @ExecuteFlow(value = "flows/valids/if-condition-fail.yaml", tenantId = "ifconditionfail")
     void ifConditionFail(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);

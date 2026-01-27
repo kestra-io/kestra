@@ -245,7 +245,7 @@ kestra:
 
   ui:
     charts:
-      default-duration: P30D
+      default-duration: PT24H
 
   anonymous-usage-report:
     enabled: true

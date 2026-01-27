@@ -3,7 +3,6 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Setting;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.SettingRepositoryInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -21,10 +20,9 @@ public abstract class AbstractJdbcSettingRepository extends AbstractJdbcCrudRepo
     @SuppressWarnings("unchecked")
     public AbstractJdbcSettingRepository(
         io.kestra.jdbc.AbstractJdbcRepository<Setting> jdbcRepository,
-        QueueService queueService,
         ApplicationContext applicationContext
     ) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
     }
 

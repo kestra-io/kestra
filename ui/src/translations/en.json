@@ -475,6 +475,7 @@
       "start": "Let's get your first workflow up and running.",
       "guide": "Need guidance to execute your first flow?"
     },
+    "product_tour": "Product Tour",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",

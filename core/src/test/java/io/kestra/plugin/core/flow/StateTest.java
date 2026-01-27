@@ -28,23 +28,23 @@ class StateTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows({"flows/valids/state.yaml"})
+    @LoadFlows(value = {"flows/valids/state.yaml"}, tenantId = "set")
     void set() throws TimeoutException, QueueException {
         String stateName = IdUtils.create();
 
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE,
+        Execution execution = runnerUtils.runOne("set", NAMESPACE,
             FLOW_ID,  null, (f, e) -> ImmutableMap.of(FLOW_ID, stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(((Map<String, Integer>) execution.findTaskRunsByTaskId("createGet").getFirst().getOutputs().get("data")).get("value")).isEqualTo(1);
 
-        execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE,
+        execution = runnerUtils.runOne("set", NAMESPACE,
             FLOW_ID,  null, (f, e) -> ImmutableMap.of(FLOW_ID, stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(((Map<String, Object>) execution.findTaskRunsByTaskId("updateGet").getFirst().getOutputs().get("data")).get("value")).isEqualTo("2");
 
-        execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE,
+        execution = runnerUtils.runOne("set", NAMESPACE,
             FLOW_ID,  null, (f, e) -> ImmutableMap.of(FLOW_ID, stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -53,10 +53,10 @@ class StateTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    @LoadFlows(value = {"flows/valids/state.yaml"}, tenantId = "tenant1")
+    @LoadFlows(value = {"flows/valids/state.yaml"}, tenantId = "each")
     void each() throws TimeoutException, InternalException, QueueException {
 
-        Execution execution = runnerUtils.runOne("tenant1", NAMESPACE,
+        Execution execution = runnerUtils.runOne("each", NAMESPACE,
             FLOW_ID,  null, (f, e) -> ImmutableMap.of(FLOW_ID, "each"));
         assertThat(execution.getTaskRunList()).hasSize(19);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

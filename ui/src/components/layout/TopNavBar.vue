@@ -1,44 +1,38 @@
 <template>
-    <nav class="d-flex align-items-center w-100 gap-3 top-bar">
+    <nav class="d-flex align-items-center w-100 gap-1 top-bar">
         <SidebarToggleButton
             v-if="layoutStore.sideMenuCollapsed"
             @toggle="layoutStore.setSideMenuCollapsed(false)"
         />
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
-            <div class="d-flex align-items-end gap-2">
-                <div class="d-flex flex-column gap-2">
-                    <el-breadcrumb v-if="breadcrumb">
-                        <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
-                            <a v-if="item.disabled || !item.link">
-                                {{ item.label }}
-                            </a>
-                            <RouterLink v-else :to="item.link">
-                                {{ item.label }}
-                            </RouterLink>
-                        </el-breadcrumb-item>
-                    </el-breadcrumb>
-                    <h1 class="h5 fw-semibold m-0 d-inline-flex">
-                        <slot name="title">
-                            {{ title }}
-                            <el-tooltip v-if="description" :content="description">
-                                <Information class="ms-2 icon" />
-                            </el-tooltip>
-                            <Badge v-if="beta" label="Beta" />
-                        </slot>
-                        <el-button
-                            class="icon"
-                            :class="{'active': bookmarked}"
-                            :icon="bookmarked ? StarIcon : StarOutlineIcon"
-                            circle
-                            @click="onStarClick"
-                        />
-                    </h1>
-                    <div class="description">
-                        <slot name="description">
-                            {{ longDescription }}
-                        </slot>
-                    </div>
-                </div>
+            <div class="d-flex align-items-center gap-2">
+                <Breadcrumb v-if="breadcrumbItems" :items="breadcrumbItems">
+                    <slot name="title">
+                        {{ title }}
+                    </slot>
+                </Breadcrumb>
+                <h1 v-else class="h5 fw-semibold m-0 d-inline-flex">
+                    <slot name="title">
+                        {{ title }}
+                    </slot>
+                </h1>
+                <el-tooltip v-if="description" :content="description">
+                    <Information class="ms-2 icon" />
+                </el-tooltip>
+                <Badge v-if="beta" label="Beta" />
+                <el-button
+                    class="icon"
+                    :class="{'active': bookmarked}"
+                    :icon="bookmarked ? StarIcon : StarOutlineIcon"
+                    circle
+                    @click="onStarClick"
+                />
+            </div>
+
+            <div v-if="longDescription || $slots.description" class="description">
+                <slot name="description">
+                    {{ longDescription }}
+                </slot>
             </div>
         </div>
         <div class="d-lg-flex side gap-2 flex-shrink-0 align-items-center mycontainer">
@@ -59,8 +53,10 @@
 <script setup lang="ts">
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useRoute, RouterLink} from "vue-router";
+    import {useRoute} from "vue-router";
     import GlobalSearch from "./GlobalSearch.vue";
+    import Breadcrumb from "./Breadcrumb.vue";
+    import type {BreadcrumbItem} from "./Breadcrumb.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
@@ -73,17 +69,11 @@
     import {useLayoutStore} from "../../stores/layout";
     import SidebarToggleButton from "./SidebarToggleButton.vue";
 
-    type RouterLinkTo = InstanceType<typeof RouterLink>["$props"]["to"];
-
     const props = defineProps<{
         title: string;
         description?: string;
         longDescription?: string;
-        breadcrumb?: {
-            label: string;
-            link?: RouterLinkTo;
-            disabled?: boolean;
-        }[];
+        breadcrumb?: BreadcrumbItem[];
         beta?: boolean;
     }>();
 
@@ -96,6 +86,15 @@
 
     const shouldDisplayDeleteButton = computed(() => {
         return route.name === "flows/update" && route.params?.tab === "logs";
+    });
+
+    const breadcrumbItems = computed(() => {
+        if (!props.breadcrumb) return undefined;
+
+        return [
+            {label: t("dashboards.labels.singular"), link: {name: "home"}},
+            ...props.breadcrumb
+        ];
     });
 
     const bookmarked = computed(() => {
@@ -156,7 +155,7 @@
         top: 0;
         position: sticky;
         z-index: 1000;
-        padding: 1rem 2rem;
+        padding: 0.5rem 1rem;
         border-bottom: 1px solid var(--ks-border-primary);
         background: var(--ks-background-card);
 
@@ -206,17 +205,6 @@
             &.active {
                 color: $base-purple-300;
             }
-        }
-
-        :deep(.el-breadcrumb__item) {
-            display: inline-block;
-        }
-
-        :deep(.el-breadcrumb__inner) {
-            white-space: nowrap;
-            max-width: 100%;
-            text-overflow: ellipsis;
-            overflow: hidden;
         }
 
         .side {

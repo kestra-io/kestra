@@ -82,7 +82,7 @@ public class PluginDefaultService {
 
     @Inject
     protected PluginRegistry pluginRegistry;
-    
+
     @Value("{kestra.templates.enabled:false}")
     private boolean templatesEnabled;
 
@@ -287,11 +287,12 @@ public class PluginDefaultService {
      *
      * @param flow the flow to be parsed
      * @param safe whether parsing errors should be handled gracefully
+     * @param strictParsing determine strictness of flow source parsing
      * @return a parsed {@link FlowWithSource}, or a {@link FlowWithException} if parsing fails and {@code safe} is {@code true}
      *
      * @throws FlowProcessingException if an error occurred while processing the flow and {@code safe} is {@code false}.
      */
-    public FlowWithSource injectVersionDefaults(final FlowInterface flow, final boolean safe) throws FlowProcessingException {
+    public FlowWithSource injectVersionDefaults(final FlowInterface flow, final boolean safe, final boolean strictParsing) throws FlowProcessingException {
         if (flow instanceof FlowWithSource flowWithSource) {
             // shortcut - if the flow is already fully parsed return it immediately.
             return flowWithSource;
@@ -305,7 +306,7 @@ public class PluginDefaultService {
                 source = OBJECT_MAPPER.writeValueAsString(flow);
             }
 
-            result = parseFlowWithAllDefaults(flow.getTenantId(), flow.getNamespace(), flow.getRevision(), flow.isDeleted(), source, true, false);
+            result = parseFlowWithAllDefaults(flow.getTenantId(), flow.getNamespace(), flow.getRevision(), flow.isDeleted(), source, true, strictParsing);
         } catch (Exception e) {
             if (safe) {
                 Logs.logExecution(flow, log, Level.ERROR, "Failed to read flow.", e);
@@ -318,6 +319,10 @@ public class PluginDefaultService {
             }
         }
         return result;
+    }
+
+    public  FlowWithSource injectVersionDefaults(final FlowInterface flow, final boolean safe) throws FlowProcessingException {
+        return injectVersionDefaults(flow, safe, false);
     }
 
     public Map<String, Object> injectVersionDefaults(@Nullable final String tenantId,

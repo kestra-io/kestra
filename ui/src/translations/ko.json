@@ -1458,6 +1458,7 @@
       "label": "미리보기",
       "view": "보기"
     },
+    "product_tour": "제품 둘러보기",
     "properties": {
       "hidden": "테이블에 숨김",
       "hint": "열 표시 선택",

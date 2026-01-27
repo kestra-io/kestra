@@ -516,6 +516,10 @@
                             position: absolute;
                             height: 25px;
                             transition: none;
+
+                            &.bg-gray {
+                                background-color: #5a6268;
+                            }
                         }
                     }
                 }

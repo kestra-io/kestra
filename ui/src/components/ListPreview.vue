@@ -90,14 +90,17 @@
 
     const generateTableColumns = computed(() => {
         const allKeys = new Set<string>();
-        previewData.value.forEach(item => {
-            Object.keys(item).forEach(key => allKeys.add(key));
+        props.value.forEach(item => {
+            if (item && typeof item === "object") {
+                Object.keys(item).forEach(key => allKeys.add(key));
+            }
         });
         return Array.from(allKeys);
     });
 
+
     const isComplex = (data: any): boolean => {
-        return data instanceof Array || data instanceof Object;
+        return data !== null && typeof data === "object";
     };
 
     const getCellKey = (rowIndex: number, column: string): string => {

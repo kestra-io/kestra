@@ -63,7 +63,7 @@
                         const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
                         if (!Object.keys(this.$route.query).some((key) => dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)))) {
-                            const DEFAULT_DURATION = this.miscStore.configs?.chartDefaultDuration ?? "P30D";
+                            const DEFAULT_DURATION = this.miscStore.configs?.chartDefaultDuration ?? "PT24H";
                             const newQuery = {...this.$route.query, "filters[timeRange][EQUALS]": DEFAULT_DURATION};
                             this.$router.replace({name: this.$route.name, params: this.$route.params, query: newQuery});
                         }

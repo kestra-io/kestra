@@ -7,7 +7,6 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
@@ -36,10 +35,9 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcCrudRe
     private final Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new ConcurrentHashMap<>();
 
     public AbstractJdbcDashboardRepository(io.kestra.jdbc.AbstractJdbcRepository<Dashboard> jdbcRepository,
-                                           QueueService queueService,
                                            ApplicationEventPublisher<CrudEvent<Dashboard>> eventPublisher,
                                            List<QueryBuilderInterface<?>> queryBuilders) {
-        super(jdbcRepository, queueService);
+        super(jdbcRepository);
         this.eventPublisher = eventPublisher;
         this.queryBuilders = queryBuilders;
     }

@@ -27,6 +27,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
+import io.kestra.plugin.core.dashboard.data.ExecutionsKPI;
 import io.kestra.plugin.core.debug.Return;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
@@ -54,6 +55,7 @@ import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -703,6 +705,51 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(data).first().hasFieldOrProperty("count");
         assertThat(data).first().extracting("count").hasToString("1");
         assertThat(data).first().hasFieldOrPropertyWithValue("id", execution.getId());
+    }
+
+    @Test
+    protected void dashboard_fetchValue() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var executionDuration = Duration.ofMinutes(220);
+        var executionCreateDate = Instant.now();
+        Execution execution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .build();
+        executionRepository.save(execution);
+
+        // test executions should not be returned
+        Execution testExecution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .kind(ExecutionKind.TEST)
+            .build();
+        executionRepository.save(testExecution);
+
+        var now = ZonedDateTime.now();
+        Double value = executionRepository.fetchValue(tenantId, ExecutionsKPI.builder()
+                .type(ExecutionsKPI.class.getName())
+                .columns(ColumnDescriptor.<ExecutionsKPI.Fields>builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
+                .build(),
+            now.minusHours(1),
+            now,
+            false
+        );
+        assertEquals(1.0, value);
     }
 
     @Test

@@ -3,7 +3,7 @@
         <div class="playground-header">
             <div class="title-section">
                 <ChartTimelineIcon class="tab-icon" />
-                {{ t("playground.title") }}
+                {{ $t("playground.title") }}
             </div>
             <div class="extra-options">
                 <Kill
@@ -15,10 +15,10 @@
                     <template #dropdown>
                         <el-dropdown-menu class="m-2">
                             <el-dropdown-item :icon="Backspace" @click="playgroundStore.clearExecutions()">
-                                <span class="small-text">{{ t('playground.clear_history') }}</span>
+                                <span class="small-text">{{ $t('playground.clear_history') }}</span>
                             </el-dropdown-item>
                             <el-dropdown-item :icon="CloseIcon" @click="playgroundStore.enabled = false">
-                                <span class="small-text">{{ t('close') }} {{ t('playground.toggle').toLowerCase() }}</span>
+                                <span class="small-text">{{ $t('close') }} {{ $t('playground.toggle').toLowerCase() }}</span>
                             </el-dropdown-item>
                         </el-dropdown-menu>
                     </template>
@@ -28,7 +28,7 @@
                     link
                     class="tab-icon"
                     @click="playgroundStore.enabled = false"
-                    :title="t('close')"
+                    :title="$t('close')"
                 />
             </div>
         </div>
@@ -55,12 +55,12 @@
                 </div>
                 <div v-else class="empty-state">
                     <img :src="EmptyVisualPlayground">
-                    <p>{{ t("playground.run_task_info") }}</p>
-                    <p>{{ t("playground.play_icon_info") }}</p>
+                    <p>{{ $t("playground.run_task_info") }}</p>
+                    <p>{{ $t("playground.play_icon_info") }}</p>
                 </div>
             </div>
             <div class="run-history" :class="{'history-visible': historyVisible}">
-                <h3><HistoryIcon class="tab-icon" />{{ t("playground.history") }}</h3>
+                <h3><HistoryIcon class="tab-icon" />{{ $t("playground.history") }}</h3>
                 <PlaygroundLog :executions="playgroundStore.executions" />
             </div>
             <button class="toggle-history" @click="historyVisible = !historyVisible">

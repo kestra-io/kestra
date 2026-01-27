@@ -1,6 +1,6 @@
 package io.kestra.repository.mysql;
 
-import io.kestra.jdbc.repository.AbstractJdbcKvMetadataRepositoryTest;
+import io.kestra.core.repositories.AbstractKvMetadataRepositoryTest;
 
-public class MysqlKvMetadataRepositoryTest extends AbstractJdbcKvMetadataRepositoryTest {
+public class MysqlKvMetadataRepositoryTest extends AbstractKvMetadataRepositoryTest {
 }

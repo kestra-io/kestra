@@ -100,6 +100,7 @@ public class State {
     /**
      * @return either the Duration persisted in database, or calculate it on the fly for non-terminated executions
      */
+    @JsonIgnore
     public Duration getDurationOrComputeIt() {
         return this.getDuration().orElseGet(() -> Duration.between(this.getStartDate(), Instant.now()));
     }

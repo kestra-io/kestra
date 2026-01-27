@@ -119,7 +119,7 @@
     const router = useRouter();
 
     const vueflowId = ref(Math.random().toString());
-    const {fitView} = useVueFlow(vueflowId.value);
+    const {fitView, setMinZoom} = useVueFlow(vueflowId.value);
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
 
@@ -181,6 +181,7 @@
         // Regenerate graph on window resize
         observeWidth();
         pluginsStore.fetchIcons()
+        setMinZoom(0.1);
     });
 
     watch(() => executionsStore.execution?.id, (id) => {

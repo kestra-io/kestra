@@ -482,7 +482,7 @@ public class FlowInputOutput {
                         yield  EncryptedString.from(encrypted);
                     }
                    else {
-                        throw new IllegalArgumentException("Type " + type + " can't be used as element type");
+                        throw new IllegalArgumentException("Type " + type + " can't be used as an element type since no Data is available for this type");
                     }
                 }
                 case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());

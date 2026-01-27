@@ -53,7 +53,7 @@ public class FlowsSyncFromSourceCommand extends AbstractApiCommand {
         stdOut("%s flow(s) successfully updated!".formatted(count));
 
         if (!flowsInError.isEmpty()) {
-            flowsInError.forEach(flowId -> stdOut("Flow %s hasn't been updated".formatted(flowId)));
+            flowsInError.forEach(flowId -> stdErr("Flow %s hasn't been updated".formatted(flowId)));
             return 1;
         }
 

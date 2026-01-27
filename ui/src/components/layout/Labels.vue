@@ -22,7 +22,7 @@
     const route = useRoute();
 
     interface Label {
-        key: string;
+        key?: string;
         value: string;
     }
 
@@ -66,12 +66,12 @@
             : `filters[${props.filterType}][EQUALS][${key}]`);
 
         if (isChecked(label)) {
-            const replacementQuery = {...route.query};
+            const replacementQuery = {...route.query} as Record<string, any>;
             delete replacementQuery[props.filterType === "type" ? getKey() : getKey(label.key)];
             replacementQuery.page = "1";
             router.replace({query: replacementQuery});
         } else {
-            const newQuery = {...route.query, page: "1"};
+            const newQuery = {...route.query, page: "1"} as Record<string, any>;
             if (props.filterType === "type") {
                 newQuery[getKey()] = label.value;
             } else {

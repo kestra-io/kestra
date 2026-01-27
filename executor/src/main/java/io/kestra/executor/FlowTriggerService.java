@@ -199,11 +199,7 @@ public class FlowTriggerService {
                 Optional.ofNullable(flowWithFlowTrigger.getTrigger().getConditions()).stream().flatMap(Collection::stream)
                     .filter(Predicate.not(MultipleCondition.class::isInstance))
                     .toList(),
-                conditionService.conditionContext(
-                    runContextFactory.of(flowWithFlowTrigger.getFlow(), execution),
-                    flowWithFlowTrigger.getFlow(),
-                    execution
-                )
+                execution
             )).toList();
     }
 

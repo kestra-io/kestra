@@ -119,7 +119,7 @@
     });
 
     const timeRange = computed<string>(() => {
-        return normalizedQuery.value.timeRange ? String(normalizedQuery.value.timeRange) : "P30D";
+        return normalizedQuery.value.timeRange ? String(normalizedQuery.value.timeRange) : "PT24H";
     });
 
     const startDate = computed<string | undefined>(() => {

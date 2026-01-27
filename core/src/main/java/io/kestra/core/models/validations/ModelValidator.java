@@ -24,7 +24,7 @@ public class ModelValidator {
     public <T> Optional<ConstraintViolationException> isValid(T model) {
         Set<ConstraintViolation<T>> violations = validator.validate(model);
 
-        if (violations.size() > 0) {
+        if (!violations.isEmpty()) {
             return Optional.of(new KestraConstraintViolationException(violations));
         }
 

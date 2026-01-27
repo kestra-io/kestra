@@ -27,7 +27,6 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @SuperBuilder
@@ -37,7 +36,9 @@ import java.util.Map;
 @NoArgsConstructor
 @Schema(
     title = "Resume a paused execution.",
-    description = "By default, the task assumes that you want to resume the current `executionId`. If you want to programmatically resume an execution of another flow, make sure to define the `executionId`, `flowId`, and `namespace` properties explicitly. Using the `inputs` property, you can additionally pass custom `onResume` input values to the execution."
+    description = """
+        **This task is deprecated**, please use `io.kestra.plugin.kestra.executions.Resume` instead.
+        By default, the task assumes that you want to resume the current `executionId`. If you want to programmatically resume an execution of another flow, make sure to define the `executionId`, `flowId`, and `namespace` properties explicitly. Using the `inputs` property, you can additionally pass custom `onResume` input values to the execution."""
 )
 @Plugin(
     examples = {
@@ -48,6 +49,7 @@ import java.util.Map;
         )
     }
 )
+@Deprecated(since = "1.2", forRemoval = true)
 public class Resume  extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Filter for a specific namespace in case `executionId` is set. In case you wonder why `executionId` is not enough — we require specifying the namespace to make permissions explicit. The Enterprise Edition of Kestra allows you to resume executions from another namespaces only if the permissions allow it. Check the [Allowed Namespaces](https://kestra.io/docs/enterprise/allowed-namespaces) documentation for more details."

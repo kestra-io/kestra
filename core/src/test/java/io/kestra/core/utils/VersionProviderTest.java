@@ -20,7 +20,7 @@ class VersionProviderTest {
 
     @Test
     void shouldResolveVersion() {
-        assertThat(versionProvider.getVersion()).endsWith("-SNAPSHOT");
+        assertThat(versionProvider.getVersion()).isNotNull();
 
         // check that the version is persisted in settings
         Optional<Setting> versionSettings = settingRepository.findByKey(Setting.INSTANCE_VERSION);

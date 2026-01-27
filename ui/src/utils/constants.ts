@@ -67,3 +67,5 @@ export const groupMemberships = {
     OWNER: "OWNER",
     MEMBER: "MEMBER",
 } as const;
+
+export const TUTORIAL_NAMESPACE = "tutorial";

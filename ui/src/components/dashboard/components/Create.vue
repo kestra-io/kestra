@@ -48,15 +48,17 @@
         const name = route.query.name as string
         const params = route.query.params as string;
 
-        const key = getDashboard({
-            name,
-            params: JSON.parse(params)
-        } as RouteLocationGeneric, "key")
-        if(key){
-            localStorage.setItem(key, response.id)
-        }
+        const key = getDashboard({name, ...(params ? JSON.parse(params) : {})} as RouteLocationGeneric, "key")
+        if(key) localStorage.setItem(key, response.id)
 
-        router.push({name, params: {...JSON.parse(params), ...(name === "home" ? {dashboard: response.id!} : {})}, query: {created: String(true)}})
+        router.push({
+            name,
+            params: {
+                ...(params ? JSON.parse(params) : {}),
+                ...(name === "home" ? {dashboard: response.id!} : {})
+            },
+            query: {created: String(true)}
+        })
     }
 
     onMounted(async () => {

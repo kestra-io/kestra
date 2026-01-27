@@ -1,0 +1,9 @@
+group: io.kestra.plugin.scripts.runner.docker
+name: "docker"
+title: "Docker Task Runner"
+description: "Run a task in a Docker container."
+body: "This task runner executes tasks in a container-based Docker-compatible engine."
+videos:
+  - "https://www.youtube.com/watch?v=N-Bq-TWqxiw"
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

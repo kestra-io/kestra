@@ -1458,6 +1458,7 @@
       "label": "Vorschau",
       "view": "Anzeigen"
     },
+    "product_tour": "Produkteinführung",
     "properties": {
       "hidden": "In Tabelle versteckt",
       "hint": "Sichtbare Spalten auswählen",

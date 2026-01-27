@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Op;
@@ -21,6 +22,7 @@ import io.kestra.jdbc.services.JdbcFilterService;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
+import jakarta.inject.Inject;
 import lombok.Getter;
 import org.jooq.*;
 import org.jooq.Record;
@@ -34,8 +36,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Stream;
 
-import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
-
 public abstract class AbstractJdbcRepository {
     public static final Field<Boolean> DELETED_FIELD = field("deleted", Boolean.class);
     public static final Field<String> TENANT_ID_FIELD = field("tenant_id", String.class);
@@ -45,8 +45,8 @@ public abstract class AbstractJdbcRepository {
     protected static final int FETCH_SIZE = 100;
 
     @Getter
-    @Value("${kestra.system-flows.namespace:" + SYSTEM_FLOWS_DEFAULT_NAMESPACE + "}")
-    private String systemFlowNamespace;
+    @Inject
+    private KestraConfig kestraConfig;
 
     protected Condition defaultFilter() {
         return DELETED_FIELD.eq(false);
@@ -465,7 +465,7 @@ public abstract class AbstractJdbcRepository {
         }
         FlowScope scope = flowScopes.getFirst();
 
-        String systemNamespace = this.getSystemFlowNamespace();
+        String systemNamespace = this.kestraConfig.getSystemFlowNamespace();
         return switch (operation){
             case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
             case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);

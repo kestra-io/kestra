@@ -2,6 +2,7 @@ package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.Label;
@@ -24,7 +25,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.kestra.plugin.core.debug.Return;
@@ -493,7 +493,7 @@ public abstract class AbstractExecutionRepositoryTest {
             tenant,
             State.Type.SUCCESS,
             "second"
-        ).namespace(NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE).build());
+        ).namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE).build());
 
         // mysql need some time ...
         Thread.sleep(500);

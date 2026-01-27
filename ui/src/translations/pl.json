@@ -1458,6 +1458,7 @@
       "label": "Podgląd",
       "view": "Zobacz"
     },
+    "product_tour": "Przewodnik po produkcie",
     "properties": {
       "hidden": "Ukryte w tabeli",
       "hint": "Wybierz widoczne kolumny",

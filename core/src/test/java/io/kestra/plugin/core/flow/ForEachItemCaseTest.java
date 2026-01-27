@@ -34,7 +34,6 @@ import java.util.stream.IntStream;
 
 import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.models.flows.State.Type.SUCCESS;
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
@@ -58,15 +57,15 @@ public class ForEachItemCaseTest {
     private ExecutionRepositoryInterface executionRepository;
 
     @SuppressWarnings("unchecked")
-    public void forEachItem() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItem(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item", null,
+        Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-subflow");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-subflow");
 
         // assert that iteration starts at 0
         Execution firstTriggered = triggeredExecs.stream()
@@ -116,16 +115,16 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemNoWait() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItemNoWait(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-no-wait", null,
+        Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-no-wait", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // assert that not all subflows ran (depending on the speed of execution, there can be some)
         // be careful that it's racy.
-        ArrayListTotal<Execution> subFlowExecs = executionRepository.findByFlowId(MAIN_TENANT,
+        ArrayListTotal<Execution> subFlowExecs = executionRepository.findByFlowId(tenantId,
             TEST_NAMESPACE, "for-each-item-subflow-sleep", Pageable.UNPAGED);
         assertThat(subFlowExecs.size()).isLessThanOrEqualTo(26);
 
@@ -143,7 +142,7 @@ public class ForEachItemCaseTest {
         assertThat(iterations.get("SUCCESS")).isEqualTo(26);
 
         // wait for the 26 flows to ends
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-subflow-sleep");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-subflow-sleep");
         Execution triggered = triggeredExecs.getLast();
 
         // assert on the last subflow execution
@@ -154,15 +153,15 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemFailed() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItemFailed(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-failed", null,
+        Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-failed", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(60));
 
         // we should have triggered 26 subflows
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-subflow-failed");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-subflow-failed");
         Execution triggered = triggeredExecs.getLast();
 
         // assert on the main flow execution
@@ -186,15 +185,15 @@ public class ForEachItemCaseTest {
     }
 
     @SuppressWarnings("unchecked")
-    public void forEachItemWithSubflowOutputs() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItemWithSubflowOutputs(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-outputs", null,
+        Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-outputs", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-outputs-subflow");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-outputs-subflow");
         Execution triggered = triggeredExecs.getLast();
 
         // assert on the main flow execution
@@ -220,7 +219,7 @@ public class ForEachItemCaseTest {
         // asserts for subflow merged outputs
         Map<String, Object> mergeTaskOutputs = execution.getTaskRunList().get(3).getOutputs();
         assertThat(mergeTaskOutputs.get("subflowOutputs")).isNotNull();
-        InputStream stream = storageInterface.get(MAIN_TENANT, execution.getNamespace(), URI.create((String) mergeTaskOutputs.get("subflowOutputs")));
+        InputStream stream = storageInterface.get(tenantId, execution.getNamespace(), URI.create((String) mergeTaskOutputs.get("subflowOutputs")));
 
         try (var br = new BufferedReader(new InputStreamReader(stream))) {
             // one line per sub-flows
@@ -283,15 +282,15 @@ public class ForEachItemCaseTest {
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 
-    public void forEachItemWithAfterExecution() throws TimeoutException, URISyntaxException, IOException, QueueException {
-        URI file = storageUpload(MAIN_TENANT);
+    public void forEachItemWithAfterExecution(String tenantId) throws TimeoutException, URISyntaxException, IOException, QueueException {
+        URI file = storageUpload(tenantId);
         Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
-        Execution execution = runnerUtils.runOne(MAIN_TENANT, TEST_NAMESPACE, "for-each-item-after-execution", null,
+        Execution execution = runnerUtils.runOne(tenantId, TEST_NAMESPACE, "for-each-item-after-execution", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows
-        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, MAIN_TENANT, TEST_NAMESPACE, "for-each-item-subflow-after-execution");
+        List<Execution> triggeredExecs = runnerUtils.awaitFlowExecutionNumber(26, tenantId, TEST_NAMESPACE, "for-each-item-subflow-after-execution");
         Execution triggered = triggeredExecs.getLast();
 
         // assert on the main flow execution

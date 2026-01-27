@@ -378,6 +378,7 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(
+                    Field.QUERY,
                     Field.ASSET_ID,
                     Field.NAMESPACE,
                     Field.FLOW_ID,

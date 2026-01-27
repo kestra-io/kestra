@@ -52,7 +52,7 @@ class KVStoreServiceTest {
     }
 
     @MockBean(NamespaceService.class)
-    public static class MockNamespaceService extends NamespaceService {
+    public static class MockNamespaceService extends DefaultNamespaceService {
 
         public MockNamespaceService() {
             super(Optional.empty());

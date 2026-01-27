@@ -93,8 +93,7 @@
         filter.saveFilter(
             name,
             description,
-            filter.appliedFilters.value,
-            filter.searchQuery.value
+            filter.appliedFilters.value
         );
     };
 

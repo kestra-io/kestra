@@ -2,8 +2,8 @@ package io.kestra.core.storages;
 
 import io.kestra.core.services.NamespaceService;
 import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -20,9 +20,8 @@ import java.util.Optional;
 /**
  * The default {@link Storage} implementation acting as a facade to the {@link StorageInterface}.
  */
+@Slf4j
 public class InternalStorage implements Storage {
-
-    private static final Logger LOG = LoggerFactory.getLogger(InternalStorage.class);
 
     private static final String PATH_SEPARATOR = "/";
 
@@ -39,7 +38,7 @@ public class InternalStorage implements Storage {
      * @param storage The storage to delegate operations.
      */
     public InternalStorage(StorageContext context, StorageInterface storage, NamespaceFactory namespaceFactory) {
-        this(LOG, context, storage, null, namespaceFactory);
+        this(log, context, storage, null, namespaceFactory);
     }
 
     /**

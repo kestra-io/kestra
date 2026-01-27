@@ -56,7 +56,6 @@ export interface SavedFilter {
     createdAt: Date;
     global?: boolean;
     description?: string;
-    searchQuery?: string;
     filters: AppliedFilter[];
 }
 

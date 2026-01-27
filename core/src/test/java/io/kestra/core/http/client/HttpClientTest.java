@@ -33,7 +33,6 @@ import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Builder;
-import lombok.Value;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -531,9 +530,8 @@ class HttpClientTest {
     }
 
     @Builder
-    @Value
-    public static class CustomObject {
-        String id;
-        String name;
+    public record CustomObject(
+        String id,
+        String name) {
     }
 }

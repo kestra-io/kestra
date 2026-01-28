@@ -52,6 +52,10 @@
         clearable: true
     });
 
+    defineOptions({
+        inheritAttrs: false
+    })
+
     const modelValue = defineModel<string | string[]>();
 
     const namespacesStore = useNamespacesStore();

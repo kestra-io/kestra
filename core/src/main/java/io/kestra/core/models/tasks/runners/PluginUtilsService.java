@@ -234,5 +234,51 @@ abstract public class PluginUtilsService {
         return new ExecutionInfo(realTenantId, realNamespace, realFlowId, realExecutionId);
     }
 
+    public static void createInputFilesRaw(RunContext runContext, Path workingDirectory, Map<String, String> inputFiles) throws IOException, URISyntaxException, IllegalVariableEvaluationException {
+        if (inputFiles != null && inputFiles.size() > 0) {
+            for (String fileName : inputFiles.keySet()) {
+                String finalFileName = runContext.render(fileName);
+
+                PluginUtilsService.validFilename(finalFileName);
+
+                File file = new File(fileName);
+
+                // path with "/", create the subfolders
+                if (file.getParent() != null) {
+                    Path subFolder = Paths.get(
+                        workingDirectory.toAbsolutePath().toString(),
+                        new File(finalFileName).getParent()
+                    );
+
+                    if (!subFolder.toFile().exists()) {
+                        Files.createDirectories(subFolder);
+                    }
+                }
+
+                String filePath = workingDirectory + "/" + finalFileName;
+                String render = inputFiles.get(fileName);
+
+
+                if (render.startsWith("kestra://")) {
+                    try (
+                        InputStream inputStream = runContext.storage().getFile(new URI(render));
+                        OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(filePath))
+                    ) {
+                        int byteRead;
+                        while ((byteRead = inputStream.read()) != -1) {
+                            outputStream.write(byteRead);
+                        }
+                        outputStream.flush();
+                    }
+                } else {
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
+                        writer.write(render);
+                    }
+                }
+            }
+        }
+    }
+
+
     public record ExecutionInfo(String tenantId, String namespace, String flowId, String id) {}
 }

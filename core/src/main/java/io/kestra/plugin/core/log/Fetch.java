@@ -31,7 +31,10 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @NoArgsConstructor
 @Schema(
     title = "Fetch execution logs and store them in a file.",
-    description = "This task is useful to automate moving logs between various systems and environments."
+    description = """
+        **This task is deprecated**, please use `io.kestra.plugin.kestra.logs.Fetch` instead.
+        This task is useful to automate moving logs between various systems and environments.
+        """
 )
 @Plugin(
     examples = {
@@ -46,7 +49,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World! 🚀
-                    
+
                   - id: error_message
                     type: io.kestra.plugin.core.log.Log
                     level: ERROR
@@ -69,7 +72,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World! 🚀
-                    
+
                   - id: error_message
                     type: io.kestra.plugin.core.log.Log
                     level: ERROR
@@ -85,6 +88,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
     },
     aliases = "io.kestra.core.tasks.log.Fetch"
 )
+@Deprecated(since = "1.2", forRemoval = true)
 public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Schema(
         title = "Filter for a specific namespace in case `executionId` is set."

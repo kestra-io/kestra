@@ -7,9 +7,7 @@ import io.grpc.ServerBuilder;
 import io.grpc.health.v1.HealthCheckResponse.ServingStatus;
 import io.grpc.protobuf.services.HealthStatusManager;
 import io.kestra.controller.config.ControllerConfiguration;
-import io.kestra.controller.grpc.server.GrpcConnectControllerService;
-import io.kestra.controller.grpc.server.GrpcLivenessControllerService;
-import io.kestra.controller.grpc.server.GrpcWorkerControllerService;
+import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
@@ -22,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -41,25 +40,20 @@ public class DefaultController extends AbstractService implements Controller {
     protected static final String HEALTH_SERVICE_NAME = "kestra.controller";
 
     private Server server;
-
-    protected final GrpcWorkerControllerService workerControllerService;
-    protected final GrpcLivenessControllerService livenessControllerService;
-    protected final GrpcConnectControllerService connectControllerService;
+    
+    private final List<WorkerControllerService> workerControllerServices;
+    
     protected final HealthStatusManager healthStatusManager;
 
     protected final ControllerConfiguration controllerConfiguration;
 
     @Inject
     public DefaultController(
-        GrpcWorkerControllerService workerControllerService,
-        GrpcLivenessControllerService livenessControllerService,
-        GrpcConnectControllerService connectControllerService,
+        List<WorkerControllerService> workerControllerServices,
         ControllerConfiguration controllerConfiguration,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher) {
         super(ServiceType.CONTROLLER, eventPublisher);
-        this.workerControllerService = workerControllerService;
-        this.livenessControllerService = livenessControllerService;
-        this.connectControllerService = connectControllerService;
+        this.workerControllerServices = workerControllerServices;
         this.controllerConfiguration = controllerConfiguration;
         this.healthStatusManager = new HealthStatusManager();
     }
@@ -76,7 +70,7 @@ public class DefaultController extends AbstractService implements Controller {
         LOG.info("Starting Controller");
         int port = controllerConfiguration.port();
         try {
-            server = buildServer(port);
+            server = buildServer(port).build().start();
             // Mark as serving after server starts
             healthStatusManager.setStatus(HEALTH_SERVICE_NAME, ServingStatus.SERVING);
             healthStatusManager.setStatus("", ServingStatus.SERVING);
@@ -87,14 +81,14 @@ public class DefaultController extends AbstractService implements Controller {
         setState(ServiceState.RUNNING);
     }
 
-    protected Server buildServer(int port) throws IOException {
+    protected ServerBuilder<?> buildServer(int port) {
         ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
-            .addService(workerControllerService)
-            .addService(livenessControllerService)
-            .addService(connectControllerService)
             .addService(healthStatusManager.getHealthService());
 
-        return serverBuilder.build().start();
+        for (WorkerControllerService service : workerControllerServices) {
+            serverBuilder = serverBuilder.addService(service);
+        }
+        return serverBuilder;
     }
 
     /**

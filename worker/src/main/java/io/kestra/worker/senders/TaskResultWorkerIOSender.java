@@ -1,10 +1,10 @@
 package io.kestra.worker.senders;
 
+import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc;
-import io.kestra.controller.grpc.WorkerTaskResultsRequest;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.senders.internals.LogStreamObserver;
@@ -34,7 +34,7 @@ public class TaskResultWorkerIOSender extends GrpcWorkerIOSender<WorkerTaskResul
         if (results.isEmpty()) return;
         
         results.forEach(result -> {
-            WorkerTaskResultsRequest request = WorkerTaskResultsRequest
+            OpaqueData request = OpaqueData
                 .newBuilder()
                 .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
                 .setMessage(MessageFormats.JSON.toByteString(BatchMessage.of(result)))

@@ -2,8 +2,7 @@ package io.kestra.worker.fetchers;
 
 import io.grpc.stub.ClientCallStreamObserver;
 import io.grpc.stub.ClientResponseObserver;
-import io.kestra.controller.grpc.FetchWorkerJobRequest;
-import io.kestra.controller.grpc.FetchWorkerJobResponse;
+import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc.WorkerControllerServiceStub;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.controller.messages.MessageFormats;
@@ -33,7 +32,7 @@ public class WorkerJobFetcher extends WorkerLoop {
     private final WorkerQueueRegistry workerQueueRegistry;
     private WorkerQueue<WorkerJob> workerJobQueue;
 
-    private final AtomicReference<ClientCallStreamObserver<FetchWorkerJobRequest>> currentStreamObserver = new AtomicReference<>();
+    private final AtomicReference<ClientCallStreamObserver<OpaqueData>> currentStreamObserver = new AtomicReference<>();
     private WorkerContext workerContext;
 
     /**
@@ -65,22 +64,22 @@ public class WorkerJobFetcher extends WorkerLoop {
     @Override
     protected void doOnLoop() throws Exception {
 
-        FetchWorkerJobRequest request = FetchWorkerJobRequest.newBuilder()
+        OpaqueData request = OpaqueData.newBuilder()
             .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
             .setMessage(MessageFormats.JSON.toByteString(new FetchWorkerJobMessage(workerContext.workerId(), workerContext.workerGroup())))
             .build();
         CountDownLatch completed = new CountDownLatch(1);
 
         // Start the streaming call
-        ClientResponseObserver<FetchWorkerJobRequest, FetchWorkerJobResponse> streamCompleted = new ClientResponseObserver<>() {
+        ClientResponseObserver<OpaqueData, OpaqueData> streamCompleted = new ClientResponseObserver<>() {
 
             @Override
-            public void beforeStart(ClientCallStreamObserver<FetchWorkerJobRequest> requestStream) {
+            public void beforeStart(ClientCallStreamObserver<OpaqueData> requestStream) {
                 currentStreamObserver.set(requestStream);
             }
 
             @Override
-            public void onNext(FetchWorkerJobResponse response) {
+            public void onNext(OpaqueData response) {
                 log.trace("Received WorkerJob: {}", response);
                 String messageFormat = response.getHeader().getMessageFormat();
                 WorkerJobBatchMessage workerJobBatch = MessageFormat
@@ -113,7 +112,7 @@ public class WorkerJobFetcher extends WorkerLoop {
      */
     @Override
     protected void cleanup() {
-        ClientCallStreamObserver<FetchWorkerJobRequest> active = currentStreamObserver.getAndSet(null);
+        ClientCallStreamObserver<OpaqueData> active = currentStreamObserver.getAndSet(null);
         if (active != null) {
             active.cancel("Worker stopping", null);
         }

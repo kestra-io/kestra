@@ -18,3 +18,13 @@ message RequestOrResponseHeader {
 message EmptyRequest {
   RequestOrResponseHeader header = 1;
 }
+
+message BooleanResponse {
+  RequestOrResponseHeader header = 1;
+  bool value = 2;
+}
+
+message OpaqueData {
+  RequestOrResponseHeader header = 1;
+  bytes message = 2;
+}

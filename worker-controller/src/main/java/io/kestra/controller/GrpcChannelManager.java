@@ -8,7 +8,7 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.NameResolverRegistry;
 import io.kestra.controller.config.WorkerControllersConfiguration;
 import io.kestra.controller.config.GrpcChannelConfiguration;
-import io.kestra.controller.resolver.StaticNameResolverProvider;
+import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
 import io.kestra.core.contexts.KestraContext;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;

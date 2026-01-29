@@ -1,9 +1,10 @@
-package io.kestra.controller.grpc.server;
+package io.kestra.controller.grpc.services;
 
 import io.grpc.stub.StreamObserver;
 import io.kestra.controller.grpc.ConnectControllerServiceGrpc;
 import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
+import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.core.services.WorkerGroupService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -17,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Singleton
 @Slf4j
-public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.ConnectControllerServiceImplBase {
+public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.ConnectControllerServiceImplBase implements WorkerControllerService {
 
     private final WorkerGroupService workerGroupService;
 

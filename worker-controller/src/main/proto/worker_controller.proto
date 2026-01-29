@@ -6,74 +6,20 @@ option java_multiple_files = true;
 import "request.proto";
 
 service WorkerControllerService {
-  rpc fetchWorkerJobs(FetchWorkerJobRequest) returns (FetchWorkerJobResponse);
+  rpc fetchWorkerJobs(OpaqueData) returns (OpaqueData);
 
   // [Server streaming]
-  rpc fetchWorkerJobsStream(FetchWorkerJobRequest) returns (stream FetchWorkerJobResponse);
+  rpc fetchWorkerJobsStream(OpaqueData) returns (stream OpaqueData);
 
   // [Unary] Service for publishing WorkerJobResult
-  rpc sendWorkerTaskResults(WorkerTaskResultsRequest) returns (WorkerTaskResultsResponse);
+  rpc sendWorkerTaskResults(OpaqueData) returns (OpaqueData);
 
   //[Unary] Service for publishing WorkerTriggerResult
-  rpc sendWorkerTriggerResults(WorkerTriggerResultsRequest) returns (WorkerTriggerResultsResponse);
+  rpc sendWorkerTriggerResults(OpaqueData) returns (OpaqueData);
 
   // [Unary] Service for publishing metric entries from worker.
-  rpc sendWorkerMetricEntries(WorkerMetricEntriesRequest) returns (WorkerMetricEntriesResponse);
+  rpc sendWorkerMetricEntries(OpaqueData) returns (OpaqueData);
 
   // [Unary] Service for publishing log entries from worker.
-  rpc sendWorkerLogEntries(WorkerLogEntriesRequest) returns (WorkerLogEntriesResponse);
-}
-
-// WorkerJob
-message FetchWorkerJobRequest {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
-}
-
-message FetchWorkerJobResponse {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
-}
-// WorkerTriggerResult
-message WorkerTriggerResultsRequest {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
-}
-
-message WorkerTriggerResultsResponse {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
-}
-
-// WorkerTaskResult
-message WorkerTaskResultsRequest {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
-}
-
-message WorkerTaskResultsResponse {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
-}
-
-// WorkerMetricEntry
-message WorkerMetricEntriesRequest {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
-}
-
-message WorkerMetricEntriesResponse {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
-}
-
-// WorkerLogEntry
-message WorkerLogEntriesRequest {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
-}
-
-message WorkerLogEntriesResponse {
-  RequestOrResponseHeader header = 1;
-  bytes message = 2;
+  rpc sendWorkerLogEntries(OpaqueData) returns (OpaqueData);
 }

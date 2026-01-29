@@ -1,0 +1,27 @@
+syntax = "proto3";
+import "request.proto";
+
+option java_package = "io.kestra.controller.grpc";
+option java_multiple_files = true;
+
+// Service for worker meta store operations - provides flow metadata
+service WorkerFlowMetaStoreService {
+  // Check if a namespace exists (has flows)
+  rpc IsNamespaceExists(NamespaceRequest) returns (BooleanResponse);
+}
+
+// Request to check if a namespace exists
+message NamespaceRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+  // The namespace name
+  string namespace = 3;
+}
+
+// Request to check if a namespace exists
+message TenantRequest {
+  RequestOrResponseHeader header = 1;
+  // The tenant ID
+  string tenant_id = 2;
+}

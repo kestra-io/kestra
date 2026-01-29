@@ -1,10 +1,10 @@
 package io.kestra.worker.senders;
 
+import io.kestra.controller.grpc.OpaqueData;
 import io.kestra.core.worker.models.WorkerTriggerResult;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormats;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc;
-import io.kestra.controller.grpc.WorkerTriggerResultsRequest;
 import io.kestra.controller.messages.RequestOrResponseHeaderFactory;
 import io.kestra.worker.queues.WorkerQueueRegistry;
 import io.kestra.worker.senders.internals.LogStreamObserver;
@@ -34,7 +34,7 @@ public class TriggerResultWorkerIOSender extends GrpcWorkerIOSender<WorkerTrigge
         if (results.isEmpty()) return;
         
         results.forEach(result -> {
-            WorkerTriggerResultsRequest request = WorkerTriggerResultsRequest
+            OpaqueData request = OpaqueData
                 .newBuilder()
                 .setHeader(RequestOrResponseHeaderFactory.create(workerContext))
                 .setMessage(MessageFormats.JSON.toByteString(BatchMessage.of(result)))

@@ -1,19 +1,11 @@
-package io.kestra.controller.grpc.server;
+package io.kestra.controller.grpc.services;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.grpc.stub.ServerCallStreamObserver;
 import io.grpc.stub.StreamObserver;
-import io.kestra.controller.grpc.FetchWorkerJobRequest;
-import io.kestra.controller.grpc.FetchWorkerJobResponse;
+import io.kestra.controller.grpc.OpaqueData;
+import io.kestra.controller.grpc.WorkerControllerService;
 import io.kestra.controller.grpc.WorkerControllerServiceGrpc;
-import io.kestra.controller.grpc.WorkerLogEntriesRequest;
-import io.kestra.controller.grpc.WorkerLogEntriesResponse;
-import io.kestra.controller.grpc.WorkerMetricEntriesRequest;
-import io.kestra.controller.grpc.WorkerMetricEntriesResponse;
-import io.kestra.controller.grpc.WorkerTaskResultsRequest;
-import io.kestra.controller.grpc.WorkerTaskResultsResponse;
-import io.kestra.controller.grpc.WorkerTriggerResultsRequest;
-import io.kestra.controller.grpc.WorkerTriggerResultsResponse;
 import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.FetchWorkerJobMessage;
 import io.kestra.controller.messages.MessageFormat;
@@ -51,7 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
 @Slf4j
-public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.WorkerControllerServiceImplBase {
+public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.WorkerControllerServiceImplBase implements WorkerControllerService {
 
     public static final TypeReference<BatchMessage<WorkerTaskResult>> WORKER_TASK_RESULT_BATCH_MESSAGE_TYPE_REFERENCE = new TypeReference<>() {
     };
@@ -81,11 +73,11 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     private final ConcurrentHashMap<String, Runnable> disposables = new ConcurrentHashMap<>();
 
     @Override
-    public void fetchWorkerJobsStream(FetchWorkerJobRequest request, StreamObserver<FetchWorkerJobResponse> responseObserver) {
+    public void fetchWorkerJobsStream(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
         FetchWorkerJobMessage message = messageFormat.fromByteString(request.getMessage(), FetchWorkerJobMessage.class);
 
-        ServerCallStreamObserver<FetchWorkerJobResponse> serverObserver = (ServerCallStreamObserver<FetchWorkerJobResponse>) responseObserver;
+        ServerCallStreamObserver<OpaqueData> serverObserver = (ServerCallStreamObserver<OpaqueData>) responseObserver;
 
         log.info("Received worker-job request from worker [{}]", message.workerId());
         serverObserver.setOnCancelHandler(() -> {
@@ -113,7 +105,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 Logs.logTaskRun(it.getTaskRun(), Level.INFO, "Sending task to worker [{}]", message.workerId());
             }
             
-            serverObserver.onNext(FetchWorkerJobResponse
+            serverObserver.onNext(OpaqueData
                 .newBuilder()
                 .setHeader(request.getHeader())
                 .setMessage(messageFormat.toByteString(new WorkerJobBatchMessage(List.of(job))))
@@ -137,7 +129,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     }
 
     @Override
-    public void sendWorkerTaskResults(WorkerTaskResultsRequest request, StreamObserver<WorkerTaskResultsResponse> responseObserver) {
+    public void sendWorkerTaskResults(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
         BatchMessage<WorkerTaskResult> message = messageFormat.fromByteString(request.getMessage(), WORKER_TASK_RESULT_BATCH_MESSAGE_TYPE_REFERENCE);
         message.records().forEach(workerTaskResult -> {
@@ -147,12 +139,12 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 throw new RuntimeException(e);
             }
         });
-        responseObserver.onNext(WorkerTaskResultsResponse.newBuilder().setHeader(request.getHeader()).build());
+        responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());
         responseObserver.onCompleted();
     }
 
     @Override
-    public void sendWorkerTriggerResults(WorkerTriggerResultsRequest request, StreamObserver<WorkerTriggerResultsResponse> responseObserver) {
+    public void sendWorkerTriggerResults(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
         BatchMessage<WorkerTriggerResult> message = messageFormat.fromByteString(request.getMessage(), WORKER_TRIGGER_RESULT_BATCH_MESSAGE_TYPE_REFERENCE);
         message.records().forEach(workerTriggerResult -> {
@@ -169,17 +161,17 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
             }
             workerJobRunningStateStore.deleteByKey(NoTransactionContext.INSTANCE, workerTriggerResult.id().uid());
         });
-        responseObserver.onNext(WorkerTriggerResultsResponse.newBuilder().setHeader(request.getHeader()).build());
+        responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());
         responseObserver.onCompleted();
     }
 
     @Override
-    public void sendWorkerLogEntries(WorkerLogEntriesRequest request, StreamObserver<WorkerLogEntriesResponse> responseObserver) {
+    public void sendWorkerLogEntries(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         // TODO
     }
 
     @Override
-    public void sendWorkerMetricEntries(WorkerMetricEntriesRequest request, StreamObserver<WorkerMetricEntriesResponse> responseObserver) {
+    public void sendWorkerMetricEntries(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         // TODO
     }
 

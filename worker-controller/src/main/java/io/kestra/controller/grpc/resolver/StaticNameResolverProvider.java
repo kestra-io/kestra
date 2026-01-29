@@ -1,4 +1,4 @@
-package io.kestra.controller.resolver;
+package io.kestra.controller.grpc.resolver;
 
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;

@@ -2,6 +2,7 @@ package io.kestra.controller.resolver;
 
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
+import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
 import org.junit.jupiter.api.Test;
 
 import java.net.InetSocketAddress;

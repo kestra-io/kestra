@@ -11,7 +11,6 @@
                 {{ execution.state.current }}
             </span>
         </h5>
-
         <p class="mt-4 mb-0">
             {{ $t('no_tasks_running') }}
         </p>
@@ -66,17 +65,9 @@
 <style scoped lang="scss">
 .queued {
     margin-top: -2rem;
-    /* Ensure the concurrency table doesn't overflow the template center */
-    :deep(.el-card) {
-        text-align: left;
-    }
 }
 
 p {
     color: var(--ks-content-secondary);
-}
-
-.fs-7 {
-    font-size: 0.85rem;
 }
 </style>

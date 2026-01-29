@@ -105,7 +105,7 @@ public class Exit extends Task implements ExecutionUpdatableTask {
                     Execution newExecution = execution.withTaskRun(newTaskRun);
                     // ends all parents
                     while (newTaskRun.getParentTaskRunId() != null) {
-                        newTaskRun = newExecution.findTaskRunByTaskRunId(newTaskRun.getParentTaskRunId()).withState(exitState);
+                        newTaskRun = newExecution.findTaskRunByTaskRunId(newTaskRun.getParentTaskRunId()).withStateAndAttempt(exitState);
                         newExecution = newExecution.withTaskRun(newTaskRun);
                     }
                     return newExecution;

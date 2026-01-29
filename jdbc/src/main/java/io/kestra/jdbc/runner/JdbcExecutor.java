@@ -82,6 +82,7 @@ public class JdbcExecutor implements ExecutorInterface {
     private final ScheduledExecutorService scheduledDelay = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> executionDelayFuture;
     private ScheduledFuture<?> monitorSLAFuture;
+    private ScheduledFuture<?> monitorConcurrencySlotFuture;
 
     @Inject
     private AbstractJdbcExecutionRepository executionRepository;
@@ -177,6 +178,9 @@ public class JdbcExecutor implements ExecutorInterface {
 
     @Inject
     private SLAMonitorStorage slaMonitorStorage;
+
+    @Inject
+    private ConcurrencySlotMonitorStorage concurrencySlotMonitorStorage;
 
     @Inject
     private SLAService slaService;
@@ -352,6 +356,13 @@ public class JdbcExecutor implements ExecutorInterface {
             TimeUnit.SECONDS
         );
 
+        monitorConcurrencySlotFuture = scheduledDelay.scheduleAtFixedRate(
+            this::concurrencySlotTimeoutCheck,
+            0,
+            1,
+            TimeUnit.SECONDS
+        );
+
         // look at exceptions on the scheduledDelay thread
         Thread.ofVirtual().name("jdbc-delay-exception-watcher").start(
             () -> {
@@ -383,6 +394,25 @@ public class JdbcExecutor implements ExecutorInterface {
                 } catch (ExecutionException | InterruptedException e) {
                     if (e.getCause() != null && e.getCause().getClass() != CannotCreateTransactionException.class) {
                         log.error("Executor fatal exception in the scheduledSLAMonitor thread", e);
+                        close();
+                        KestraContext.getContext().shutdown();
+                    }
+                }
+            }
+        );
+
+        // look at exceptions on the monitorConcurrencySlotFuture thread
+        Thread.ofVirtual().name("jdbc-concurrency-slot-monitor-exception-watcher").start(
+            () -> {
+                Await.until(monitorConcurrencySlotFuture::isDone);
+
+                try {
+                    monitorConcurrencySlotFuture.get();
+                } catch (CancellationException ignored) {
+
+                } catch (ExecutionException | InterruptedException e) {
+                    if (e.getCause() != null && e.getCause().getClass() != CannotCreateTransactionException.class) {
+                        log.error("Executor fatal exception in the monitorConcurrencySlot thread", e);
                         close();
                         KestraContext.getContext().shutdown();
                     }
@@ -614,6 +644,18 @@ public class JdbcExecutor implements ExecutorInterface {
                                 }
                                 return Pair.of(computed, concurrencyLimit);
                             });
+
+                            // Save concurrency slot monitor if duration is configured and execution got a slot
+                            if (processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.RUNNING
+                                && flow.getConcurrency().getDuration() != null) {
+                                concurrencySlotMonitorStorage.save(ConcurrencySlotMonitor.builder()
+                                    .tenantId(flow.getTenantId())
+                                    .namespace(flow.getNamespace())
+                                    .flowId(flow.getId())
+                                    .executionId(execution.getId())
+                                    .deadline(Instant.now().plus(flow.getConcurrency().getDuration()))
+                                    .build());
+                            }
 
                             // if the execution is queued or terminated due to concurrency limit, we stop here
                             if (processed.getExecution().getState().isTerminated() || processed.getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
@@ -1203,6 +1245,11 @@ public class JdbcExecutor implements ExecutorInterface {
                     slaMonitorStorage.purge(executor.getExecution().getId());
                 }
 
+                // purge concurrency slot monitor
+                if (executor.getFlow().getConcurrency() != null && executor.getFlow().getConcurrency().getDuration() != null) {
+                    concurrencySlotMonitorStorage.delete(executor.getExecution().getId());
+                }
+
                 // check if there exist a queued execution and submit it to the execution queue
                 if (executor.getFlow().getConcurrency() != null) {
                     // if an execution was queued but never running, it would have never been counted inside the concurrency limit and should not lead to popping a new queued execution
@@ -1227,6 +1274,17 @@ public class JdbcExecutor implements ExecutorInterface {
                                     var newExecution = queued.withState(State.Type.RUNNING);
                                     executionQueue.emit(newExecution);
                                     metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+
+                                    // Save concurrency slot monitor for the popped execution if duration is configured
+                                    if (finalFlow.getConcurrency().getDuration() != null) {
+                                        concurrencySlotMonitorStorage.save(ConcurrencySlotMonitor.builder()
+                                            .tenantId(finalFlow.getTenantId())
+                                            .namespace(finalFlow.getNamespace())
+                                            .flowId(finalFlow.getId())
+                                            .executionId(newExecution.getId())
+                                            .deadline(Instant.now().plus(finalFlow.getConcurrency().getDuration()))
+                                            .build());
+                                    }
 
                                     // process flow triggers to allow listening on RUNNING state after a QUEUED state
                                     processFlowTriggers(newExecution);
@@ -1446,6 +1504,89 @@ public class JdbcExecutor implements ExecutorInterface {
         });
     }
 
+    /**
+     * Check for concurrency slots that have been held longer than the configured duration.
+     * When a slot expires, we release it and pop the next queued execution.
+     */
+    private void concurrencySlotTimeoutCheck() {
+        if (this.shutdown.get() || this.isPaused.get()) {
+            return;
+        }
+
+        concurrencySlotMonitorStorage.processExpired(Instant.now(), monitor -> {
+            try {
+                // Load the flow to get concurrency configuration
+                FlowWithSource flow = flowListeners.flows()
+                    .stream()
+                    .filter(f -> Objects.equals(f.getTenantId(), monitor.getTenantId())
+                        && f.getNamespace().equals(monitor.getNamespace())
+                        && f.getId().equals(monitor.getFlowId()))
+                    .findFirst()
+                    .orElse(null);
+
+                if (flow == null || flow.getConcurrency() == null) {
+                    log.debug("Flow or concurrency configuration not found for expired slot monitor: tenant={}, namespace={}, flowId={}, executionId={}",
+                        monitor.getTenantId(), monitor.getNamespace(), monitor.getFlowId(), monitor.getExecutionId());
+                    return;
+                }
+
+                // Check if the execution is still running before releasing the slot
+                Execution execution = executionRepository.findById(monitor.getTenantId(), monitor.getExecutionId()).orElse(null);
+                if (execution == null || execution.getState().isTerminated()) {
+                    log.debug("Execution {} already terminated, slot monitor cleanup only", monitor.getExecutionId());
+                    return;
+                }
+
+                log.warn("Concurrency slot timeout: execution '{}' for flow '{}.{}' held slot longer than configured duration. " +
+                        "This may indicate the execution was orphaned (executor crash, pod eviction, etc.). Releasing slot.",
+                    monitor.getExecutionId(), monitor.getNamespace(), monitor.getFlowId());
+
+                // Record metric
+                metricRegistry
+                    .counter(MetricRegistry.METRIC_EXECUTOR_CONCURRENCY_SLOT_TIMEOUT_COUNT,
+                        MetricRegistry.METRIC_EXECUTOR_CONCURRENCY_SLOT_TIMEOUT_COUNT_DESCRIPTION,
+                        MetricRegistry.TAG_NAMESPACE_ID, monitor.getNamespace(),
+                        MetricRegistry.TAG_FLOW_ID, monitor.getFlowId(),
+                        monitor.getTenantId() != null ? MetricRegistry.TAG_TENANT_ID : "", monitor.getTenantId() != null ? monitor.getTenantId() : "")
+                    .increment();
+
+                // Release the slot and pop the next queued execution
+                if (flow.getConcurrency().getBehavior() == Concurrency.Behavior.QUEUE) {
+                    concurrencyLimitStorage.decrementAndPop(
+                        flow,
+                        executionQueuedStorage,
+                        throwBiConsumer((dslContext, queued) -> {
+                            var newExecution = queued.withState(State.Type.RUNNING);
+                            executionQueue.emit(newExecution);
+                            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT,
+                                MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION,
+                                metricRegistry.tags(newExecution)).increment();
+
+                            // Save a new slot monitor for the popped execution if duration is configured
+                            if (flow.getConcurrency().getDuration() != null) {
+                                concurrencySlotMonitorStorage.save(ConcurrencySlotMonitor.builder()
+                                    .tenantId(flow.getTenantId())
+                                    .namespace(flow.getNamespace())
+                                    .flowId(flow.getId())
+                                    .executionId(newExecution.getId())
+                                    .deadline(Instant.now().plus(flow.getConcurrency().getDuration()))
+                                    .build());
+                            }
+
+                            // process flow triggers to allow listening on RUNNING state after a QUEUED state
+                            processFlowTriggers(newExecution);
+                        })
+                    );
+                } else {
+                    concurrencyLimitStorage.decrement(flow);
+                }
+
+            } catch (Exception e) {
+                log.error("Error processing expired concurrency slot monitor for execution '{}'", monitor.getExecutionId(), e);
+            }
+        });
+    }
+
     private boolean deduplicateNexts(Execution execution, ExecutorState executorState, List<TaskRun> taskRuns) {
         return taskRuns
             .stream()
@@ -1541,7 +1682,7 @@ public class JdbcExecutor implements ExecutorInterface {
 
             setState(ServiceState.TERMINATING);
             this.receiveCancellations.forEach(Runnable::run);
-            ExecutorsUtils.closeScheduledThreadPool(scheduledDelay, Duration.ofSeconds(5), List.of(executionDelayFuture, monitorSLAFuture));
+            ExecutorsUtils.closeScheduledThreadPool(scheduledDelay, Duration.ofSeconds(5), List.of(executionDelayFuture, monitorSLAFuture, monitorConcurrencySlotFuture));
             setState(ServiceState.TERMINATED_GRACEFULLY);
 
             if (log.isDebugEnabled()) {

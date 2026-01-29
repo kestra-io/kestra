@@ -90,6 +90,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION = "The total number of executions queued by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT = "executor.execution.popped.count";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION = "The total number of executions popped by the Executor";
+    public static final String METRIC_EXECUTOR_CONCURRENCY_SLOT_TIMEOUT_COUNT = "executor.concurrency.slot.timeout.count";
+    public static final String METRIC_EXECUTOR_CONCURRENCY_SLOT_TIMEOUT_COUNT_DESCRIPTION = "The total number of concurrency slots released due to timeout (execution held slot longer than configured duration)";
 
     public static final String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";

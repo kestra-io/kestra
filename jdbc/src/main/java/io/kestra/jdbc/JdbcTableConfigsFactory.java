@@ -13,7 +13,12 @@ import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionWindow;
-import io.kestra.core.runners.*;
+import io.kestra.core.runners.ConcurrencyLimit;
+import io.kestra.core.runners.ConcurrencySlotMonitor;
+import io.kestra.core.runners.ExecutionDelay;
+import io.kestra.core.runners.ExecutionQueued;
+import io.kestra.core.runners.ExecutorState;
+import io.kestra.core.runners.WorkerJobRunning;
 import io.kestra.core.server.ServiceInstance;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.Factory;
@@ -143,6 +148,12 @@ public class JdbcTableConfigsFactory {
     @Named("namespacefilemetadata")
     public InstantiableJdbcTableConfig namespaceFileMetadata() {
         return new InstantiableJdbcTableConfig("namespacefilemetadata", NamespaceFileMetadata.class, "namespace_file_metadata");
+    }
+
+    @Bean
+    @Named("concurrencyslotmonitor")
+    public InstantiableJdbcTableConfig concurrencySlotMonitor() {
+        return new InstantiableJdbcTableConfig("concurrencyslotmonitor", ConcurrencySlotMonitor.class, "concurrency_slot_monitor");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

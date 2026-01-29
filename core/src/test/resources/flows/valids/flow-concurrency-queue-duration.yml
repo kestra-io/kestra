@@ -1,0 +1,13 @@
+id: flow-concurrency-queue-duration
+namespace: io.kestra.tests
+
+concurrency:
+  limit: 1
+  behavior: QUEUE
+  duration: PT5S
+
+tasks:
+  - id: sleep
+    type: io.kestra.plugin.scripts.shell.Commands
+    commands:
+      - sleep 30

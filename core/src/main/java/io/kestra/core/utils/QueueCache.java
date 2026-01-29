@@ -3,7 +3,9 @@ package io.kestra.core.utils;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasUID;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.core.queues.event.BroadcastEvent;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -14,26 +16,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * @param <T> the item of the cache
  */
 @Slf4j
-public class QueueCache<T extends DeletedInterface & HasUID> implements AutoCloseable {
+public class QueueCache<T extends DeletedInterface & HasUID & BroadcastEvent> implements AutoCloseable {
     private final Map<String, T> cache;
-    QueueInterface<T> queue;
-    private Disposable cancellation;
+    private final BroadcastQueueInterface<T> queue;
+
+    private QueueSubscriber<T> subscriber;
 
     /**
      * Create a cache backed by a queue.
      *
-     * @see #QueueCache(QueueInterface, List)
+     * @see #QueueCache(BroadcastQueueInterface, List)
      */
-    public QueueCache(QueueInterface<T> queue) {
+    public QueueCache(BroadcastQueueInterface<T> queue) {
         this(queue, Collections.emptyList());
     }
 
     /**
      * Create a cache backed by a queue initialized with a list of items.
      *
-     * @see #QueueCache(QueueInterface)
+     * @see #QueueCache(BroadcastQueueInterface)
      */
-    public QueueCache(QueueInterface<T> queue, List<T> initial) {
+    public QueueCache(BroadcastQueueInterface<T> queue, List<T> initial) {
         this.queue = queue;
         this.cache = new ConcurrentHashMap<>(calculateHashMapCapacity(initial.size()));
 
@@ -48,7 +51,7 @@ public class QueueCache<T extends DeletedInterface & HasUID> implements AutoClos
 
     public void start() {
         // listen to item updates from the queue
-        this.cancellation = Disposable.of(queue.receive(either -> {
+        this.subscriber = queue.subscriber().subscribe(either -> {
             if (either.isRight()) {
                 log.error("Unable to deserialize a message: {}", either.getRight().getMessage());
             } else {
@@ -59,7 +62,7 @@ public class QueueCache<T extends DeletedInterface & HasUID> implements AutoClos
                     cache.put(item.uid(), item);
                 }
             }
-        }));
+        });
     }
 
     /**
@@ -98,7 +101,7 @@ public class QueueCache<T extends DeletedInterface & HasUID> implements AutoClos
 
     @Override
     public void close() {
-        this.cancellation.dispose();
+        this.subscriber.close();
     }
 
     /**

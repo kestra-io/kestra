@@ -1225,7 +1225,7 @@ class ExecutionControllerRunnerTest {
         // wait for the original execution to have the system.replayed label
         awaitExecution(
             execution.getId(),
-            exec -> !exec.getLabels().contains(new Label(Label.REPLAYED, "true"))
+            exec -> exec.getLabels().contains(new Label(Label.REPLAYED, "true"))
         );
     }
 

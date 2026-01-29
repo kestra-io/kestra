@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -149,7 +150,7 @@ public class PurgeFilesTest {
         assertThat(output.getSize()).isEqualTo(2L);
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
         assertThat(namespaceFiles.size()).isEqualTo(1);
-        assertThat(namespaceFiles.getFirst().path()).isEqualTo("not/found.txt");
+        assertThat(toLogicalPath(namespaceFiles.getFirst().path())).isEqualTo("not/found.txt");
     }
 
     @Test

@@ -9,6 +9,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
@@ -283,4 +284,31 @@ public class RestartCaseTest {
             .map(TaskRun::getState)
             .forEach(state -> assertThat(state.getCurrent()).isIn(State.Type.SUCCESS, State.Type.SKIPPED));
     }
+
+
+    public void restartLoopUntil() throws Exception{
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "loop-until-restart").orElseThrow();
+
+        Execution firstExecution = runnerUtils.runOne(MAIN_TENANT, flow.getNamespace(), flow.getId(), Duration.ofSeconds(60));
+
+        assertThat(firstExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        Execution restartedExecution = executionService.restart(firstExecution, null);
+        assertThat(restartedExecution).isNotNull();
+        assertThat(restartedExecution.getId()).isEqualTo(firstExecution.getId());
+        assertThat(restartedExecution.getState().getCurrent()).isEqualTo(Type.RESTARTED);
+
+        Execution finalRestartedExecution = runnerUtils.restartExecution( execution -> execution.getState().isFailed(), restartedExecution);
+        assertThat(finalRestartedExecution.getState().getCurrent()).isEqualTo(Type.FAILED);
+
+        Optional<TaskRun> parentTaskRun = finalRestartedExecution.findTaskRunsByTaskId("loop_test").stream().findFirst();
+        assertThat(parentTaskRun.isPresent());
+
+        State.History lastFailed = parentTaskRun.get().getState().getHistories().getLast();
+        State.History lastRestarted = parentTaskRun.get().getState().getHistories().reversed().stream()
+            .filter(history -> history.getState() == Type.RESTARTED).findFirst().get();
+        assertThat(lastRestarted).isNotNull();
+        assertThat(lastRestarted.getDate().plus(10, ChronoUnit.SECONDS).isBefore(lastFailed.getDate()));
+    }
+
 }

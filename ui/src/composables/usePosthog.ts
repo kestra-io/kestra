@@ -28,10 +28,8 @@ function statsGlobalData(config: Config, uid: string): any {
         from: "APP",
         iid: config.uuid,
         uid: uid,
-        app: {
-            version: config.version,
-            type: config.edition
-        }
+        app_version: config.version,
+        app_type: config.edition
     }
 }
 
@@ -60,8 +58,6 @@ function installSurveyHooksOnce() {
 
 export async function initPostHogForSetup(config: Config): Promise<void> {
     try {
-        if (!config.isUiAnonymousUsageEnabled || import.meta.env.MODE === "development") return
-
         const uid = ensureUid()
 
         const {default: posthog} = await import("posthog-js")
@@ -86,7 +82,7 @@ export async function initPostHogForSetup(config: Config): Promise<void> {
             autocapture: false,
         })
 
-        posthog.register_once(statsGlobalData(config, uid));
+        posthog.register(statsGlobalData(config, uid));
 
         if (!posthog.get_property("__alias")) {
             posthog.alias(apiConfig.id)

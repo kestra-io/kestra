@@ -22,7 +22,7 @@ This file provides guidance for AI coding agents working on the Kestra project. 
 
 ### Prerequisites
 
-- Java 21+
+- Java 25+
 - Node.js 22+ and npm
 - Python 3, pip, and python venv
 - Docker & Docker Compose
@@ -168,7 +168,7 @@ make start-standalone-postgres
 
 ### Java Backend
 
-- Use Java 21 features
+- Use Java 25 features
 - Follow Micronaut framework patterns
 - Add Swagger annotations for API documentation
 - Use annotation processors (enable in IDE)

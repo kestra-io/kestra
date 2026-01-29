@@ -20,7 +20,7 @@
     import {useMiscStore} from "override/stores/misc";
     import Utils from "./utils/utils";
     import * as BasicAuth from "./utils/basicAuth";
-    import {initPostHogForSetup} from "./composables/usePosthog";
+    import {initPosthogIfEnabled} from "./utils/posthog";
     import ErrorToast from "./components/ErrorToast.vue";
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
@@ -74,7 +74,7 @@
             uid: uid,
         });
 
-        void initPostHogForSetup(config);
+        void initPosthogIfEnabled(config);
 
         return config;
     }

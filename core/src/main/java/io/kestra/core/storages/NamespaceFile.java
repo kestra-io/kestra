@@ -148,40 +148,29 @@ public record NamespaceFile(
         );
     }
 
-    public static Path normalize(String pathStr, boolean withLeadingSlash) {
-        return normalize(Path.of(pathStr), withLeadingSlash);
-    }
-
-    public static Path normalize(Path path, boolean withLeadingSlash) {
-        if (path == null) {
+    public static Path normalize(Path path) {
+        if(path == null){
             return Path.of("/");
         }
-
-        if (withLeadingSlash && !path.toString().startsWith("/")) {
-            return Path.of("/" + path);
+        String compatiblePath = toLogicalPath(path);
+        if(!compatiblePath.startsWith("/")){
+            compatiblePath = "/" + compatiblePath;
         }
-
-        if (!withLeadingSlash && path.toString().startsWith("/")) {
-            return Path.of(path.toString().substring(1));
-        }
-
-        return path;
+        return Path.of(compatiblePath);
     }
 
     /**
      * Returns the path of file relative to the namespace.
-     *
-     * @param withLeadingSlash specify whether to remove leading slash from the returned path.
      * @return The path.
      */
-    public Path path(boolean withLeadingSlash) {
+    public Path filePath() {
         String strPath = path;
         Matcher matcher = capturePathWithoutVersion.matcher(strPath);
         if (matcher.matches()) {
             strPath = matcher.group(1);
         }
 
-        return normalize(Path.of(strPath), withLeadingSlash);
+        return normalize(Path.of(strPath));
     }
 
     /**
@@ -215,5 +204,30 @@ public record NamespaceFile(
      */
     public boolean isRootDirectory() {
         return equals(NamespaceFile.of(namespace));
+    }
+
+    /**
+     * Converts a {@link Path} to a canonical **logical path** string.
+     * <p>
+     * Logical paths use forward slashes ('/') as separators regardless of the OS.
+     * This is useful for namespace storage, URI construction, or any cross-platform
+     * path handling where OS-dependent separators should be avoided.
+     *
+     * @param path the {@link Path} to convert
+     * @return a String representing the logical path with forward slashes
+     */
+    public static String toLogicalPath(Path path){ return toLogicalPath(path.toString());}
+
+    /**
+     * Converts a path string to a canonical **logical path**.
+     * <p>
+     * Replaces all backslashes ('\') with forward slashes ('/') to ensure
+     * cross-platform consistency.
+     *
+     * @param path the path string to convert
+     * @return a String representing the logical path with forward slashes
+     */
+    public static String toLogicalPath(String path) {
+        return path.replace("\\", "/");
     }
 }

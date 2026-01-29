@@ -164,7 +164,8 @@
     import {useI18n} from "vue-i18n"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
-    import {initPostHogForSetup, trackSetupEvent} from "../../composables/usePosthog"
+    import {trackSetupEvent} from "../../composables/usePosthog"
+    import {identifyPosthogUser, initPosthogIfEnabled} from "../../utils/posthog"
 
     import AccountPlus from "vue-material-design-icons/AccountPlus.vue"
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue"
@@ -228,7 +229,11 @@
                 return
             }
 
-            await initPostHogForSetup(config)
+            await initPosthogIfEnabled(config)
+
+            trackSetupEvent("setup_flow:started", {
+                setup_step: "account_creation"
+            }, userFormData.value)
 
             localStorage.setItem("basicAuthSetupInProgress", "true")
             localStorage.setItem("setupStartTime", Date.now().toString())
@@ -319,7 +324,13 @@
 
             BasicAuth.signIn(userFormData.value.username, userFormData.value.password)
 
-            await miscStore.loadConfigs()
+            const configs = await miscStore.loadConfigs()
+
+            await identifyPosthogUser(configs, {
+                email: userFormData.value.username.trim(),
+                first_name: userFormData.value.firstName,
+                last_name: userFormData.value.lastName
+            })
 
             trackSetupEvent("setup_flow:account_created", {
                 user_firstname: userFormData.value.firstName,

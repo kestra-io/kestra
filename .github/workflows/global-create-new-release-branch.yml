@@ -46,6 +46,7 @@ jobs:
           node-enabled: true
           python-enabled: true
           caches-enabled: true
+          java-version: 25
 
       - name: Configure Git
         run: |

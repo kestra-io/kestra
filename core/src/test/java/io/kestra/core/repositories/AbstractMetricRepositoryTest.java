@@ -16,6 +16,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.IMetrics;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.kestra.plugin.core.dashboard.data.Metrics;
+import io.kestra.plugin.core.dashboard.data.MetricsKPI;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -164,6 +165,26 @@ public abstract class AbstractMetricRepositoryTest {
 
         assertThat(results).hasSize(1);
         assertThat(results.getFirst().get("count")).isIn(1, 1L); // JDBC return an int but ES a long
+    }
+
+    @Test
+    protected void fetchValue() throws IOException {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
+        MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
+        metricRepository.save(counter);
+        metricRepository.save(testCounter);
+
+        var results = metricRepository.fetchValue(tenant,
+            MetricsKPI.builder().type(MetricsKPI.class.getName()).columns(ColumnDescriptor.<Metrics.Fields>builder().field(Metrics.Fields.EXECUTION_ID).agg(AggregationType.COUNT).build()).build(),
+            null,
+            null,
+            false
+        );
+
+        assertThat(results).isEqualTo(1.0);
     }
 
     private Counter counter(String metricName) {

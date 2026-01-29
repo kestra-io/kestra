@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Test;
 import java.net.URI;
 import java.nio.file.Path;
 
+import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
+import static org.assertj.core.api.Assertions.assertThat;
+
 class NamespaceFileTest {
 
     private static final String NAMESPACE = "io.kestra.test";
@@ -124,4 +127,18 @@ class NamespaceFileTest {
         );
         Assertions.assertTrue(namespaceFile.isDirectory());
     }
+
+    @Test
+    void shouldNormalizeNamespacePathIndependentlyOfOperatingSystem() {
+        Path windowsPath1 = NamespaceFile.normalize(Path.of("folder\\file.txt"));
+        Path windowsPath2 = NamespaceFile.normalize(Path.of("\\folder\\file.txt"));
+        Path unixPath1 = NamespaceFile.normalize(Path.of("folder/file.txt"));
+        Path unixPath2 = NamespaceFile.normalize(Path.of("/folder/file.txt"));
+
+        assertThat(toLogicalPath(windowsPath1)).isEqualTo("/folder/file.txt");
+        assertThat(toLogicalPath(windowsPath2)).isEqualTo("/folder/file.txt");
+        assertThat(toLogicalPath(unixPath1)).isEqualTo("/folder/file.txt");
+        assertThat(toLogicalPath(unixPath2)).isEqualTo("/folder/file.txt");
+    }
+
 }

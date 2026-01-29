@@ -125,6 +125,35 @@ import jakarta.validation.constraints.Size;
                         expression: "{{ trigger.body.hello == 'world' }}"
                 """,
             full = true
+        ),
+        @Example(
+            title = """
+                Webhook with text/plain response for Microsoft Graph validation handshakes.
+                When a service like Microsoft Graph validates the webhook endpoint, it sends a validationToken that must be echoed back as plain text.
+                """,
+            code = """
+                id: microsoft_graph_webhook
+                namespace: company.team
+
+                tasks:
+                  - id: handle_request
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "{{ trigger.parameters.validationToken[0] ?? 'notification processed' }}"
+
+                outputs:
+                  - id: response
+                    type: STRING
+                    value: "{{ outputs.handle_request.value }}"
+
+                triggers:
+                  - id: webhook
+                    type: io.kestra.plugin.core.trigger.Webhook
+                    key: 4wjtkzwVGBM9yKnjm3yv8r
+                    wait: true
+                    returnOutputs: true
+                    responseContentType: "text/plain"
+                """,
+            full = true
         )
     },
     aliases = "io.kestra.core.models.triggers.types.Webhook"
@@ -172,6 +201,18 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         description = "Requires `wait` to be `true`."
     )
     private Boolean returnOutputs = false;
+
+    @PluginProperty
+    @Schema(
+        title = "Custom response content type.",
+        description = """
+            If set, the webhook response will use this content type instead of the default `application/json`.
+            Requires `wait` and `returnOutputs` to be `true`.
+            This is useful for webhook validation handshakes that require specific content types (e.g., Microsoft Graph Change Notifications require `text/plain` responses).
+            """,
+        allowableValues = {"application/json", "text/plain"}
+    )
+    private String responseContentType;
 
     public Optional<Execution> evaluate(HttpRequest<String> request, FlowInterface flow) {
         String body = request.getBody().orElse(null);

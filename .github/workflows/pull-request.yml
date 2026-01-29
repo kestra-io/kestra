@@ -91,11 +91,17 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    with:
+      java-version: 25
 
   e2e-tests:
     name: E2E - Tests
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
-
+    with:
+      java-version: 25
+      
   generate-pull-request-docker-image:
     name: Generate PR docker image
     uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main
+    with:
+      java-version: 25

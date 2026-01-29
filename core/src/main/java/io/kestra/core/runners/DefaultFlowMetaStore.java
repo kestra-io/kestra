@@ -71,6 +71,11 @@ public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     }
 
     @Override
+    public boolean isNamespaceExists(String tenant, String namespace) {
+        return flowRepository.isNamespaceExists(tenant, namespace);
+    }
+
+    @Override
     public Collection<FlowWithSource> allLastVersion() {
         return this.cache.values();
     }

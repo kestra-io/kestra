@@ -798,6 +798,7 @@
           "labels": "Etichette di esecuzione (formato key:value)",
           "namespace": "Namespace a cui appartiene il flow eseguito",
           "outputs": "Output generati dall'esecuzione",
+          "parent-execution": "ID di esecuzione principale che ha attivato questa esecuzione",
           "revision": "Versione del flow utilizzata per questa esecuzione",
           "start-date": "Quando l'esecuzione è iniziata",
           "state": "Stato attuale dell'esecuzione",

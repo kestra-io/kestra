@@ -299,7 +299,7 @@
             <FlowRun
                 v-if="showRunModal && executionsStore.flow"
                 :redirect="false"
-                @execution-trigger="() => { showRunModal = false; $message.success('Execution has started'); }"
+                @execution-trigger="handleExecutionStart"
             />
         </el-dialog>
     </section>
@@ -554,6 +554,11 @@
 
     function updateDisplayColumns(newColumns: string[]) {
         updateVisibleColumns(newColumns);
+    }
+
+    function handleExecutionStart() {
+        showRunModal.value = false;
+        toast.success(t("execution_started"));
     }
 
     function exportFlows() {

@@ -4,7 +4,7 @@ import {useApiStore} from "../../stores/api";
 import * as BasicAuth from "../../utils/basicAuth"
 import {ref} from "vue";
 import {useAxios} from "../../utils/axios";
-import {initPostHogForSetup} from "../../composables/usePosthog";
+import {initPosthogIfEnabled} from "../../utils/posthog";
 import {ensureUid} from "../../utils/uid";
 
 
@@ -52,7 +52,7 @@ export const useMiscStore = defineStore("misc", () => {
         localStorage.setItem("firstName", options.firstName);
         localStorage.setItem("lastName", options.lastName);
         if (analyticsEnabled) {
-            void initPostHogForSetup(configs.value)
+            void initPosthogIfEnabled(configs.value)
         }
 
         await axios.post(`${apiUrl()}/basicAuth`, {

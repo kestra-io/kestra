@@ -15,7 +15,7 @@ import java.util.Map;
     description = "Start the local development server"
 )
 public class LocalCommand extends StandAloneCommand {
-    // @FIXME: Keep it for bug in micronaut that need to have inject on top level command to inject on abstract classe
+    // @FIXME: Keep it for bug in micronaut that need to have inject on top level command to inject on abstract classes
     @Inject
     private ApplicationContext applicationContext;
 

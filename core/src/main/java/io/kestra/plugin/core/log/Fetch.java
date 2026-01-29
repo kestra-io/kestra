@@ -31,27 +31,61 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @NoArgsConstructor
 @Schema(
     title = "Fetch execution logs and store them in a file.",
-    description = "This task is useful to automate moving logs between various systems and environments."
+    description = "**This task is deprecated**, please use the `io.kestra.plugin.kestra.logs.Fetch` task instead."
 )
 @Plugin(
     examples = {
         @Example(
-            code = {
-                "level: INFO",
-                "executionId: \"{{ trigger.executionId }}\""
-            }
+            title = "Fetch ERROR level logs from the same execution.",
+            full = true,
+            code = """
+                id: fetch_logs
+                namespace: company.team
+
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World! 🚀
+
+                  - id: error_message
+                    type: io.kestra.plugin.core.log.Log
+                    level: ERROR
+                    message: This is an error message
+
+                  - id: fetch
+                    type: io.kestra.plugin.core.log.Fetch
+                    executionId: "{{ execution.id }}"
+                    level: ERROR
+            """
         ),
         @Example(
-            code = {
-                "level: WARN",
-                "executionId: \"{{ execution.id }}\"",
-                "tasksId: ",
-                "  - \"previous_task_id\""
-            }
+            title = "Fetch INFO level logs from the `hello` task from the same execution.",
+            full = true,
+            code = """
+                id: fetch_logs
+                namespace: company.team
+
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World! 🚀
+
+                  - id: error_message
+                    type: io.kestra.plugin.core.log.Log
+                    level: ERROR
+                    message: This is an error message
+
+                  - id: fetch
+                    type: io.kestra.plugin.core.log.Fetch
+                    level: INFO
+                    tasksId:
+                      - hello
+            """
         )
     },
     aliases = "io.kestra.core.tasks.log.Fetch"
 )
+@Deprecated(since = "1.3", forRemoval = true)
 public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Schema(
         title = "Filter for a specific namespace in case `executionId` is set."

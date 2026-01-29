@@ -644,8 +644,8 @@ public class ExecutionController {
                     .last()
                     .map(event -> {
                         if (webhook.getReturnOutputs()) {
-                            return HttpResponse.ok(event.getData().getOutputs());
-
+                            // Only apply custom responseContentType when returnOutputs is true
+                            return buildWebhookResponse(event.getData().getOutputs(), webhook.getResponseContentType());
                         } else {
                             return (HttpResponse<?>) HttpResponse.ok(WebhookResponse.fromExecution(
                                 event.getData(),
@@ -655,6 +655,7 @@ public class ExecutionController {
                     })
                     .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
             } else {
+                // Without wait, always return JSON (responseContentType only applies with returnOutputs)
                 return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));
             }
         } catch (QueueException e) {
@@ -669,6 +670,28 @@ public class ExecutionController {
         public static WebhookResponse fromExecution(Execution execution, URI url) {
             return new WebhookResponse(execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getTrigger(), execution.getOutputs(), execution.getLabels(), execution.getState(), url);
         }
+    }
+
+    /**
+     * Build webhook response with optional custom content type.
+     * When responseContentType is set, the response will use that content type instead of the default application/json.
+     */
+    private HttpResponse<?> buildWebhookResponse(Object body, String responseContentType) {
+        if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN)) {
+            String responseBody;
+            if (body instanceof String s) {
+                responseBody = s;
+            } else {
+                try {
+                    responseBody = objectMapper.writeValueAsString(body);
+                } catch (Exception e) {
+                    responseBody = String.valueOf(body);
+                }
+            }
+            return HttpResponse.ok(responseBody).contentType(MediaType.TEXT_PLAIN_TYPE);
+        }
+        // Default: application/json (or no responseContentType set)
+        return HttpResponse.ok(body);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1231,7 +1254,7 @@ public class ExecutionController {
 
         Flow flow = flowRepository.findByExecution(execution.get());
 
-        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.taskRunId(), stateRequest.state());
         List<Label> newLabels = new ArrayList<>(replay.getLabels());
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
@@ -1243,10 +1266,9 @@ public class ExecutionController {
         return replay;
     }
 
-    @lombok.Value
-    public static class StateRequest {
-        String taskRunId;
-        State.Type state;
+    public record StateRequest(
+        String taskRunId,
+        State.Type state) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -2452,7 +2474,7 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/flow")
     @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
     public FlowForExecution getFlowFromExecutionById(
-        @Parameter(description = "The execution that you want flow informations") String executionId
+        @Parameter(description = "The execution that you want flow information") String executionId
     ) {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 

@@ -1,13 +1,16 @@
 import {useFlowStore} from "../stores/flow";
-import {useExecutionsStore} from "../stores/executions";
+import {TUTORIAL_NAMESPACE} from "./constants";
 
 export const DASHBOARD_ROUTE = "home";
 
 export const shouldShowWelcome = async () => {
-    const flows = await useFlowStore().findFlows({size: 1, onlyTotal: true});
-    const executions = await useExecutionsStore().findExecutions({size: 1, onlyTotal: true});
+    const nonTutorialFlows = await useFlowStore().findFlows({
+        size: 1,
+        onlyTotal: true,
+        "filters[namespace][NOT_EQUALS]": TUTORIAL_NAMESPACE,
+    });
 
-    return !flows && !executions;
+    return !nonTutorialFlows;
 };
 
 export const isDashboardRoute = (routeName: string) => routeName == DASHBOARD_ROUTE;

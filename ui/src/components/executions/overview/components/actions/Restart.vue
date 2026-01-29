@@ -2,9 +2,11 @@
     <el-tooltip
         v-if="isReplay || enabled"
         :placement="tooltipPosition"
+        :enterable="false"
         :persistent="false"
         :hideAfter="0"
         :content="tooltip"
+        popperClass="ks-restart-tooltip--no-pointer"
         rawContent
         transition=""
         effect="light"
@@ -18,7 +20,7 @@
             :class="componentClass"
             @click="isOpen = !isOpen"
         >
-            {{ t(replayOrRestart) }}
+            {{ $t(replayOrRestart) }}
         </component>
         <span v-else-if="component === 'el-dropdown-item'">
             <component
@@ -29,7 +31,7 @@
                 :class="componentClass"
                 @click="isOpen = !isOpen"
             >
-                {{ t(replayOrRestart) }}
+                {{ $t(replayOrRestart) }}
             </component>
         </span>
     </el-tooltip>
@@ -165,7 +167,7 @@
         execution: {type: Object, required: true},
         taskRun: {type: Object, required: false, default: undefined},
         attemptIndex: {type: Number, required: false, default: undefined},
-        tooltipPosition: {type: String, default: "bottom"}
+        tooltipPosition: {type: String, default: "bottom"},
     })
 
     const emit = defineEmits(["follow"])
@@ -318,6 +320,12 @@
 
     watch(isOpen, (newValue) => newValue && loadRevision())
 </script>
+
+<style lang="scss">
+    .ks-restart-tooltip--no-pointer {
+        pointer-events: none;
+    }
+</style>
 
 <style scoped lang="scss">
 .modal-header {

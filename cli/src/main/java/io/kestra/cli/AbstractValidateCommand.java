@@ -9,34 +9,34 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
+import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.client.netty.DefaultHttpClient;
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 import picocli.CommandLine;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import jakarta.validation.ConstraintViolationException;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 public abstract class AbstractValidateCommand extends AbstractApiCommand {
-    @CommandLine.Option(names = {"--local"}, description = "If validation should be done locally or using a remote server", defaultValue = "false")
-    protected boolean local;
-
-    @CommandLine.Parameters(index = "0", description = "the directory containing files to check")
+    @CommandLine.Parameters(index = "0", description = "The directory containing files to check")
     protected Path directory;
+
+    @CommandLine.Option(names = {"--local"}, description = "Whether validation should be done locally or using a remote server", defaultValue = "false")
+    protected boolean local;
 
     @Inject
     private TenantIdSelectorService tenantService;
 
-    /** {@inheritDoc} **/
+    /**
+     * {@inheritDoc}
+     **/
     @Override
     protected boolean loadExternalPlugins() {
         return local;
@@ -48,7 +48,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
             .forEach(constraintViolation -> {
                 stdErr(
                     "\t- @|bold,yellow {0} : {1} |@",
-                    constraintViolation.getMessage().replace("\n"," - "),
+                    constraintViolation.getMessage().replace("\n", " - "),
                     constraintViolation.getPropertyPath()
                 );
             });
@@ -62,21 +62,12 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
         );
     }
 
-    public static void handleValidateConstraintViolation(ValidateConstraintViolation validateConstraintViolation, String resource){
+    public static void handleValidateConstraintViolation(ValidateConstraintViolation validateConstraintViolation, String resource) {
         stdErr("\t@|fg(red) Unable to parse {0}s due to the following error:|@", resource);
         stdErr(
             "\t- @|bold,yellow {0}|@",
             validateConstraintViolation.getConstraints()
         );
-    }
-
-    public static String buildYamlBody(Path directory) throws IOException {
-        try(var files = Files.walk(directory)) {
-            return files.filter(Files::isRegularFile)
-                .filter(YamlParser::isValidExtension)
-                .map(throwFunction(path -> Files.readString(path, Charset.defaultCharset())))
-                .collect(Collectors.joining("\n---\n"));
-        }
     }
 
     // bug in micronaut, we can't inject ModelValidator, so we inject from implementation
@@ -92,52 +83,68 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
         AtomicInteger returnCode = new AtomicInteger(0);
         String clsName = cls.getSimpleName().toLowerCase();
 
-        if(this.local) {
-            try(var files = Files.walk(directory)) {
-                files.filter(Files::isRegularFile)
-                    .filter(YamlParser::isValidExtension)
-                    .forEach(path -> {
-                        try {
-                            Object parse = YamlParser.parse(path.toFile(), cls);
-                            modelValidator.validate(parse);
-                            stdOut("@|green \u2713|@ - " + identity.apply(parse));
-                            List<String> warnings = warningsFunction.apply(parse);
-                            warnings.forEach(warning -> stdOut("@|bold,yellow \u26A0|@ - " + warning));
-                            List<String> infos = infosFunction.apply(parse);
-                            infos.forEach(info -> stdOut("@|bold,blue \u2139|@ - " + info));
-                        } catch (ConstraintViolationException e) {
-                            stdErr("@|red \u2718|@ - " + path);
-                            AbstractValidateCommand.handleException(e, clsName);
-                            returnCode.set(1);
-                        }
-                    });
+        try (Stream<Path> files = Files.walk(directory)) {
+            List<Path> flows = files
+                .filter(Files::isRegularFile)
+                .filter(YamlParser::isValidExtension)
+                .toList();
+
+            // At least one flow file is expected for update
+            if (flows.isEmpty()) {
+                stdErr("No flow found in ''{0}''!", directory.toFile().getAbsolutePath());
+                return 1;
             }
-        } else {
-            String body = AbstractValidateCommand.buildYamlBody(directory);
 
-            try(DefaultHttpClient client = client()) {
-                MutableHttpRequest<String> request = HttpRequest
-                    .POST(apiUri("/flows/validate", tenantService.getTenantIdAndAllowEETenants(tenantId)), body).contentType(MediaType.APPLICATION_YAML);
+            if (this.local) {
+                // Perform local validation
+                flows.forEach(flow -> {
+                    try {
+                        Object parse = YamlParser.parse(flow.toFile(), cls);
+                        modelValidator.validate(parse);
 
-                List<ValidateConstraintViolation> validations = client.toBlocking().retrieve(
-                    this.requestOptions(request),
-                    Argument.listOf(ValidateConstraintViolation.class)
-                );
+                        stdOut("@|green \u2713|@ - {0}", identity.apply(parse));
 
-                validations
-                    .forEach(throwConsumer(validation -> {
+                        List<String> warnings = warningsFunction.apply(parse);
+                        warnings.forEach(warning -> stdOut("@|bold,yellow \u26A0|@ - {0}", warning));
+
+                        List<String> infos = infosFunction.apply(parse);
+                        infos.forEach(info -> stdOut("@|bold,blue \u2139|@ - {0}", info));
+                    } catch (ConstraintViolationException e) {
+                        stdErr("@|red \u2718|@ - {0}", flow);
+                        AbstractValidateCommand.handleException(e, clsName);
+                        returnCode.set(1);
+                    }
+                });
+            } else {
+                // Build multipart body with all available flow files
+                MultipartBody.Builder bodyBuilder = MultipartBody.builder();
+                flows.forEach(flow -> bodyBuilder.addPart("flows", flow.toFile().getName(), MediaType.APPLICATION_YAML_TYPE, flow.toFile()));
+
+                // Call validate API
+                try (DefaultHttpClient client = client()) {
+                    MutableHttpRequest<MultipartBody> request = HttpRequest.POST(
+                        apiUri("/flows/validate", tenantService.getTenantIdAndAllowEETenants(tenantId)),
+                        bodyBuilder.build()
+                    ).contentType(MediaType.MULTIPART_FORM_DATA);
+
+                    List<ValidateConstraintViolation> validations = client.toBlocking().retrieve(
+                        this.requestOptions(request),
+                        Argument.listOf(ValidateConstraintViolation.class)
+                    );
+
+                    validations.forEach(throwConsumer(validation -> {
                         if (validation.getConstraints() == null) {
-                            stdOut("@|green \u2713|@ - " + validation.getIdentity());
+                            stdOut("@|green \u2713|@ - {0}", validation.getIdentity());
                         } else {
-                            stdErr("@|red \u2718|@ - " + validation.getIdentity(directory));
+                            stdErr("@|red \u2718|@ - {0}", validation.getIdentity());
                             AbstractValidateCommand.handleValidateConstraintViolation(validation, clsName);
                             returnCode.set(1);
                         }
                     }));
-            } catch (HttpClientResponseException e){
-                AbstractValidateCommand.handleHttpException(e, clsName);
-
-                return 1;
+                } catch (HttpClientResponseException e) {
+                    AbstractValidateCommand.handleHttpException(e, clsName);
+                    return 1;
+                }
             }
         }
 

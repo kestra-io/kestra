@@ -244,8 +244,8 @@ class FlowValidationTest {
                     .id("log")
                     .type(Log.class.getName())
                     .message("any")
-                    .assets(io.kestra.core.models.property.Property.ofValue(
-                        new AssetsDeclaration(true, List.of(new AssetIdentifier(null, null, "anyId", "custom")), null))
+                    .assets(
+                        new AssetsDeclaration(true, List.of(new AssetIdentifier(null, null, "anyId", "custom")), null)
                     )
                     .build()
             ))

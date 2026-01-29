@@ -798,6 +798,7 @@
           "labels": "执行标签 (key:value 格式)",
           "namespace": "执行的flow所属的namespace",
           "outputs": "执行产生的输出",
+          "parent-execution": "触发此执行的父执行ID",
           "revision": "用于此次执行的flow版本",
           "start-date": "执行开始时",
           "state": "当前执行状态",

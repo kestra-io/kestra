@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
+
 @Slf4j
 @SuperBuilder
 @Getter
@@ -118,7 +120,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
                 try (InputStream is = runContext.storage().getFile(file.uri())) {
                     URI uri = runContext.storage().putFile(is, renderedDestination + file.path());
                     logger.debug(String.format("Downloaded %s", uri));
-                    return new AbstractMap.SimpleEntry<>(file.path(true).toString(), uri);
+                    return new AbstractMap.SimpleEntry<>(toLogicalPath(file.filePath()), uri);
                 }
             }))
             .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));

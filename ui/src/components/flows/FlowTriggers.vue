@@ -119,15 +119,22 @@
 
         <el-table-column columnKey="disable" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <el-switch
-                    v-if="canBeDisabled(scope.row)"
-                    size="small"
-                    :activeText="$t('enabled')"
-                    :modelValue="!scope.row.disabled"
-                    @change="setDisabled(scope.row, $event)"
-                    class="switch-text"
-                    :activeActionIcon="Check"
-                />
+                <el-tooltip
+                    v-if="hasTrigger(scope.row)"
+                    :content="$t('trigger disabled')"
+                    :disabled="!scope.row.sourceDisabled"
+                    effect="light"
+                >
+                    <el-switch
+                        size="small"
+                        :activeText="$t('enabled')"
+                        :modelValue="!(scope.row.disabled || scope.row.sourceDisabled)"
+                        @change="setDisabled(scope.row, $event)"
+                        class="switch-text"
+                        :activeActionIcon="Check"
+                        :disabled="scope.row.sourceDisabled"
+                    />
+                </el-tooltip>
             </template>
         </el-table-column>
 
@@ -575,9 +582,8 @@
         return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
     };
 
-    const canBeDisabled = (trigger: any) => {
-        return triggers.value.map((trigg: any) => trigg?.triggerId).includes(trigger?.id)
-            && !trigger?.sourceDisabled;
+    const hasTrigger = (trigger: any) => {
+        return triggers.value.map((trigg: any) => trigg?.triggerId).includes(trigger?.id);
     };
 
     const addNewTrigger = () => {

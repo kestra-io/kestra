@@ -57,12 +57,12 @@ public class ReadFileFunction extends AbstractFileFunction {
 
         if (args.containsKey(VERSION)) {
             return namespaceStorage.getFileContent(
-                    NamespaceFile.normalize(Path.of(path.getPath()), true),
+                    NamespaceFile.normalize(Path.of(path.getPath())),
                     Integer.parseInt(args.get(VERSION).toString())
                 );
         }
 
-        return namespaceStorage.getFileContent(NamespaceFile.normalize(Path.of(path.getPath()), true));
+        return namespaceStorage.getFileContent(NamespaceFile.normalize(Path.of(path.getPath())));
     }
 
     @Override

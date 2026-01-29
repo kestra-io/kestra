@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 
 ARG KESTRA_PLUGINS=""
 ARG APT_PACKAGES=""

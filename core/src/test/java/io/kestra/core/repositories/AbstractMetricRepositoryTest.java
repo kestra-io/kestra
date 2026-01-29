@@ -165,15 +165,14 @@ public abstract class AbstractMetricRepositoryTest {
 
     @Test
     protected void fetchValue() throws IOException {
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         String executionId = FriendlyId.createFriendlyId();
-        TaskRun taskRun1 = taskRun(tenant, executionId, "task");
+        TaskRun taskRun1 = taskRun(executionId, "task");
         MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"), null);
         MetricEntry testCounter = MetricEntry.of(taskRun1, counter("test"), ExecutionKind.TEST);
         metricRepository.save(counter);
         metricRepository.save(testCounter);
 
-        var results = metricRepository.fetchValue(tenant,
+        var results = metricRepository.fetchValue(null,
             MetricsKPI.builder().type(MetricsKPI.class.getName()).columns(ColumnDescriptor.<Metrics.Fields>builder().field(Metrics.Fields.EXECUTION_ID).agg(AggregationType.COUNT).build()).build(),
             null,
             null,

@@ -360,13 +360,12 @@ public abstract class AbstractLogRepositoryTest {
 
     @Test
     void fetchValue() throws IOException {
-        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
-        logRepository.save(logEntry(tenant, Level.INFO).build());
+        logRepository.save(logEntry(Level.INFO).build());
 
         // test log should not be included in the results
-        logRepository.save(logEntry(tenant, Level.INFO).executionKind(ExecutionKind.TEST).build());
+        logRepository.save(logEntry(Level.INFO).executionKind(ExecutionKind.TEST).build());
 
-        var results = logRepository.fetchValue(tenant,
+        var results = logRepository.fetchValue(MAIN_TENANT,
             LogsKPI.builder()
                 .type(LogsKPI.class.getName())
                 .columns(ColumnDescriptor.<Logs.Fields>builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build())

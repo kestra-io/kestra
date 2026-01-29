@@ -798,6 +798,7 @@
           "labels": "実行ラベル (key:value 形式)",
           "namespace": "実行されたflowが属するnamespace",
           "outputs": "実行によって生成されたOutputs",
+          "parent-execution": "この実行をトリガーした親実行ID",
           "revision": "この実行に使用されたflowのバージョン",
           "start-date": "実行が開始されたとき",
           "state": "現在の実行状態",
@@ -1458,6 +1459,7 @@
       "label": "プレビュー",
       "view": "表示"
     },
+    "product_tour": "プロダクトツアー",
     "properties": {
       "hidden": "テーブルに隠す",
       "hint": "表示する列を選択",

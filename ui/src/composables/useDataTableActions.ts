@@ -97,6 +97,7 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
 
     const onPageChanged = (item: PageChangeItem) => {
         if (internalPageSize.value === item.size && internalPageNumber.value === item.page) return;
+        localStorage.setItem("datatable-size-" + (route.name?.toString() || "default"), item.size.toString());
 
         internalPageSize.value = item.size;
         internalPageNumber.value = item.page;
@@ -158,8 +159,12 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
     };
 
     const refreshPaging = () => {
-        internalPageSize.value = pageSize.value ?? Number(route.query.size ?? 25);
+        const stored = localStorage.getItem("datatable-size-" + (route.name?.toString() || "default"));
+        internalPageSize.value = pageSize.value ?? Number(route.query.size ?? stored ?? 25);
         internalPageNumber.value = pageNumber.value ?? Number(route.query.page ?? 1);
+
+        if (!embed.value && !route.query.size && stored && !pageSize.value)
+            router.replace({query: {...route.query, size: internalPageSize.value}});
     };
 
     watch(
@@ -205,4 +210,3 @@ export function useDataTableActions(options: DataTableActionsOptions = {}) {
         refreshPaging
     };
 }
-

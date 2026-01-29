@@ -798,6 +798,7 @@
           "labels": "실행 레이블 (key:value 형식)",
           "namespace": "실행된 flow가 속한 namespace",
           "outputs": "실행에 의해 생성된 Outputs",
+          "parent-execution": "이 실행을 트리거한 상위 execution ID",
           "revision": "이 실행에 사용된 flow의 버전",
           "start-date": "실행이 시작되었을 때",
           "state": "현재 실행 상태",

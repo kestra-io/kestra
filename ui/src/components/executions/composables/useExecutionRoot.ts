@@ -112,6 +112,7 @@ export function useExecutionRoot() {
                 title: t("dependencies"),
                 count: dependenciesCount.value,
                 maximized: true,
+                disabled: dependenciesCount.value === 0,
                 props: {
                     isReadOnly: true,
                 },

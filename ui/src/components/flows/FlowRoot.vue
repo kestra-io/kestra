@@ -282,7 +282,8 @@
                         component: Dependencies,
                         title: this.$t("dependencies"),
                         count: this.dependenciesCount,
-                        maximized: true
+                        maximized: true,
+                        disabled: this.dependenciesCount === 0
                     });
                 }
 

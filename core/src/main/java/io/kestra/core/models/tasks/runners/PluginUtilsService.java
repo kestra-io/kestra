@@ -172,11 +172,7 @@ abstract public class PluginUtilsService {
     }
 
     /**
-     * Create input files in the working directory.
-     *
-     * @param render when true, file contents are rendered using Pebble expressions,
-     *               when false, contents are written as-is (useful for tools that
-     *               have their own templating syntax, e.g. Ansible).
+     * @param render whether to render file contents using Pebble expressions.
      */
     private static void createInputFilesInternal(RunContext runContext, Path workingDirectory, Map<String, String> inputFiles, Map<String, Object> additionalVars, boolean render) throws Exception {
         if (inputFiles != null && !inputFiles.isEmpty()) {
@@ -185,7 +181,7 @@ abstract public class PluginUtilsService {
 
                 PluginUtilsService.validFilename(finalFileName);
 
-                File file = new File(fileName);
+                File file = new File(finalFileName);
 
                 // path with "/", create the subfolders
                 if (file.getParent() != null) {

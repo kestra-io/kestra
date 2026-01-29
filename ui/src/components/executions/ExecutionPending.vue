@@ -1,5 +1,6 @@
 <template>
-    <EmptyTemplate class="queued">
+    <FlowConcurrency v-if="execution.state.current === 'QUEUED' && flowStore.flow" />
+    <EmptyTemplate v-else class="queued">
         <img src="../../assets/queued_visual.svg" alt="Queued Execution">
         <h5 class="mt-4 fw-bold">
             {{ $t('execution_status') }} 
@@ -11,26 +12,12 @@
             </span>
         </h5>
 
-        <div v-if="execution.state.current === 'QUEUED'" class="mt-4 w-100">
-            <template v-if="flowStore.flow">
-                <p class="mb-3 text-start fw-bold text-uppercase fs-7 opacity-75">
-                    {{ $t('concurrency_reason') }}
-                </p>
-                <FlowConcurrency />
-            </template>
-            <div v-else class="mt-4">
-                <el-skeleton :rows="3" animated />
-            </div>
-        </div>
-
-        <template v-else>
-            <p class="mt-4 mb-0">
-                {{ $t('no_tasks_running') }}
-            </p>
-            <p>
-                {{ $t('execution_starts_progress') }}
-            </p>
-        </template>
+        <p class="mt-4 mb-0">
+            {{ $t('no_tasks_running') }}
+        </p>
+        <p>
+            {{ $t('execution_starts_progress') }}
+        </p>
     </EmptyTemplate>
 </template>
 
@@ -40,7 +27,6 @@
     import FlowConcurrency from "../flows/FlowConcurrency.vue";
     import {useFlowStore} from "../../stores/flow";
 
-    // Kestra standard interfaces for strict typing
     interface ExecutionState {
         current: string;
     }
@@ -59,11 +45,8 @@
     });
 
     const flowStore = useFlowStore();
-
-    // Logic to ensure the Concurrency block isn't empty
     onMounted(async () => {
         if (props.execution && props.execution.state.current === "QUEUED") {
-            // Only fetch if the store doesn't already have the correct flow
             if (!flowStore.flow || flowStore.flow.id !== props.execution.flowId) {
                 await flowStore.loadFlow({
                     namespace: props.execution.namespace, 

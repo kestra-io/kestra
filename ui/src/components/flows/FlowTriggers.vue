@@ -120,7 +120,7 @@
         <el-table-column columnKey="disable" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
                 <el-tooltip
-                    v-if="isInTriggersList(scope.row)"
+                    v-if="hasTrigger(scope.row)"
                     :content="$t('trigger disabled')"
                     :disabled="!scope.row.sourceDisabled"
                     effect="light"
@@ -582,7 +582,7 @@
         return type === "io.kestra.plugin.core.trigger.Schedule" || type === "io.kestra.core.models.triggers.types.Schedule";
     };
 
-    const isInTriggersList = (trigger: any) => {
+    const hasTrigger = (trigger: any) => {
         return triggers.value.map((trigg: any) => trigg?.triggerId).includes(trigger?.id);
     };
 

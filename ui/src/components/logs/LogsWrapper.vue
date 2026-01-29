@@ -109,13 +109,17 @@
         return undefined;
     });
     const startDate = computed(() => {
+        // we mention the last refresh date here to trick
+        // VueJs fine grained reactivity system and invalidate
+        // computed property startDate
         if (route.query.startDate && lastRefreshDate.value) {
             return route.query.startDate;
         }
         if (route.query.timeRange) {
             return moment().subtract(moment.duration(route.query.timeRange as string).as("milliseconds")).toISOString(true);
         }
-
+        
+        // the default is PT30D
         return moment().subtract(7, "days").toISOString(true);
     });
     const flowId = computed(() => route.params.id);

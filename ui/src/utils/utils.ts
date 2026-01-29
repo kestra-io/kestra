@@ -289,12 +289,14 @@ export default class Utils {
         return obj;
     }
 
-    static getDateFormat(startDate: moment.MomentInput, endDate: moment.MomentInput) {
-        if (!startDate || !endDate) {
+    static getDateFormat(startDate: moment.MomentInput, endDate: moment.MomentInput, timeRange: string | undefined) {
+        if ((!startDate || !endDate) && timeRange === undefined) {
             return "yyyy-MM-DD";
         }
 
-        const duration = moment.duration(moment(endDate).diff(moment(startDate)));
+        const duration = timeRange === undefined
+            ? moment.duration(moment(endDate).diff(moment(startDate)))
+            : moment.duration(timeRange);
 
         if (duration.asDays() > 365) {
             return "yyyy-MM";

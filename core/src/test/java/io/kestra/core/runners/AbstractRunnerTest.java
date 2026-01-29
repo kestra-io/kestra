@@ -193,8 +193,8 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/loop-until-restart.yaml"})
-    protected void restartLoopUntil() throws Exception{
-        restartCaseTest.restartLoopUntil();
+    protected void restartOrReplayLoopUntil() throws Exception{
+        restartCaseTest.restartOrReplayLoopUntil();
     }
 
     @Test

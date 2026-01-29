@@ -1,0 +1,20 @@
+id: webhook-plaintext
+namespace: io.kestra.tests
+
+tasks:
+  - id: return_value
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ trigger.parameters.validationToken[0] ?? 'hello-world' }}"
+
+outputs:
+  - id: response
+    type: STRING
+    value: "{{ outputs.return_value.value }}"
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: webhook-plaintext
+    wait: true
+    returnOutputs: true
+    responseContentType: "text/plain"

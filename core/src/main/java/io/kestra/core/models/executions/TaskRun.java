@@ -319,12 +319,12 @@ public class TaskRun implements TenantInterface {
     }
 
     public TaskRun resetAttempts() {
-        List<State.History> wantedHistories = this.state.getHistories()
+        List<State.History> creationHistories = this.state.getHistories()
             .stream()
             .filter(history -> history.getState().isCreated())
             .toList();
         return this.toBuilder()
-            .state(new State(wantedHistories.getLast().getState(), wantedHistories))
+            .state(new State(creationHistories.getLast().getState(), creationHistories))
             .attempts(null)
             .build();
     }

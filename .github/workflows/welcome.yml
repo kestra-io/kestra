@@ -1,0 +1,36 @@
+# A GitHub Action to automatically welcome and encourage first-time contributors
+# https://github.com/marketplace/actions/first-contribution
+
+name: Contributor Onboarding
+
+on:
+  pull_request_target:
+    types: [opened]
+
+
+permissions: {}
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: plbstl/first-contribution@v4
+        with:
+          pr-opened-msg: |
+            ### Hey @{fc-author} :wave: 
+
+            Thanks for raising your first pull request - we really appreciate it! :heart:
+
+            Make sure you've checked our [contribution guide](https://kestra.io/docs/contribute-to-kestra/contributing), and don't forget to give us a star! :star:
+
+            If you're looking for more issues to contribute to, we'd suggest checking our [curated list of good first issues](https://go.kestra.io/contributing) to see if there's something you find interesting and feel comfortable tackling independently. You can further filter the list by labels to narrow down the results (we recommend `area/backend`, `area/frontend`, or `area/plugin`, depending on your preferences).
+          pr-merged-msg: |
+            ### 🎉 Congrats @{fc-author}!
+
+            Your first pull request has been merged - thanks a lot for your contribution, we really appreciate it! :heart:
+
+            If you'd like to keep contributing, feel free to check out our [good first issues](https://go.kestra.io/contributing). And don't forget to give us a star! :star:
+          pr-labels: kind/external
+          pr-reactions: +1, heart, hooray, rocket, eyes

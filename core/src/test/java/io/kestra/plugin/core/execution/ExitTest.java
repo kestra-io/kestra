@@ -35,7 +35,9 @@ class ExitTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList()).hasSize(4);
         assertThat(execution.findTaskRunsByTaskId("if_some_bool").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("if_some_bool").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("nested_bool_check").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("nested_bool_check").getFirst().getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("nested_was_false").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 }

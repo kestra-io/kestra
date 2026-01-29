@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import jakarta.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -32,17 +33,29 @@ public class FlowsSyncFromSourceCommand extends AbstractApiCommand {
         List<FlowWithSource> persistedFlows = repository.findAllWithSource(tenant);
 
         int count = 0;
+        List<String> flowsInError = new ArrayList<>();
         for (FlowWithSource persistedFlow : persistedFlows) {
-            // Ensure exactly one trailing newline. We need this new line
-            // because when we update a flow from its source,
-            // we don't update it if no change is detected.
-            // The goal here is to force an update from the source for every flows
-            GenericFlow flow = GenericFlow.fromYaml(tenant,persistedFlow.getSource() + System.lineSeparator());
-            repository.update(flow, persistedFlow);
-            stdOut("- %s.%s".formatted(flow.getNamespace(), flow.getId()));
-            count++;
+            try {
+                // Ensure exactly one trailing newline. We need this new line
+                // because when we update a flow from its source,
+                // we don't update it if no change is detected.
+                // The goal here is to force an update from the source for every flows
+                GenericFlow flow = GenericFlow.fromYaml(tenant,persistedFlow.getSource() + System.lineSeparator());
+                repository.update(flow, persistedFlow);
+                stdOut("- %s.%s".formatted(flow.getNamespace(), flow.getId()));
+                count++;
+            } catch (RuntimeException e){
+                stdErr("Unable to update flow %s".formatted(persistedFlow.getId()), e.getMessage());
+                flowsInError.add(persistedFlow.getId());
+            }
         }
+
         stdOut("%s flow(s) successfully updated!".formatted(count));
+
+        if (!flowsInError.isEmpty()) {
+            flowsInError.forEach(flowId -> stdErr("Flow %s hasn't been updated".formatted(flowId)));
+            return 1;
+        }
 
         return 0;
     }

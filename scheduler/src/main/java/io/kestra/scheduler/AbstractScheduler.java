@@ -1165,7 +1165,7 @@ public abstract class AbstractScheduler implements Scheduler {
                     .namespace(f.getTriggerContext().getNamespace())
                     .flowId(f.getTriggerContext().getFlowId())
                     .triggerId(f.getTriggerContext().getTriggerId())
-                    .date(f.getTriggerContext().getNextExecutionDate())
+                    .date(f.getTriggerContext().getDate())
                     .nextExecutionDate(f.getTriggerContext().getNextExecutionDate())
                     .backfill(f.getTriggerContext().getBackfill())
                     .stopAfter(f.getTriggerContext().getStopAfter())

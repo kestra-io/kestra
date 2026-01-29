@@ -798,6 +798,7 @@
           "labels": "निष्पादन लेबल (key:value प्रारूप)",
           "namespace": "जिस namespace में निष्पादित flow शामिल है",
           "outputs": "निष्पादन द्वारा उत्पन्न आउटपुट्स",
+          "parent-execution": "इस निष्पादन को ट्रिगर करने वाला पैरेंट execution ID",
           "revision": "इस execution के लिए उपयोग किए गए flow का संस्करण",
           "start-date": "जब निष्पादन शुरू हुआ",
           "state": "वर्तमान निष्पादन स्थिति",

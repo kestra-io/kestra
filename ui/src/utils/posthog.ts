@@ -1,3 +1,5 @@
+import {ensureUid} from "./uid";
+
 type PosthogCapturePayload = {
     event: string;
     properties: Record<string, any>;
@@ -11,6 +13,14 @@ let posthogInitPromise: Promise<void> | undefined;
 let posthogQueue: PosthogCapturePayload[] = [];
 let posthogClient: any | undefined;
 let posthogLoadPromise: Promise<any> | undefined;
+
+function isPosthogDisabled(configs: Record<string, any> | undefined) {
+    return configs?.isUiAnonymousUsageEnabled === false || import.meta.env.MODE === "development";
+}
+
+export function isPosthogEnabled(configs: Record<string, any> | undefined) {
+    return !isPosthogDisabled(configs);
+}
 
 async function loadPosthogClient() {
     if (posthogClient) return posthogClient;
@@ -59,36 +69,34 @@ function flushQueue() {
     }
 }
 
-function maybeInit(configs: Record<string, any> | undefined) {
-    if (isLoaded()) {
-        flushQueue();
-        return;
-    }
-
-    // If configs are not loaded yet, we can't decide whether PostHog is enabled.
-    if (configs === undefined) {
-        return;
-    }
-
-    if (configs.isUiAnonymousUsageEnabled === false) {
+async function ensurePosthogClient(configs: Record<string, any> | undefined) {
+    if (isLoaded()) return posthogClient;
+    if (configs === undefined) return undefined;
+    if (isPosthogDisabled(configs)) {
         posthogQueue = [];
-        return;
+        return undefined;
     }
 
-    if (posthogInitPromise) return;
+    if (!posthogInitPromise) {
+        posthogInitPromise = import("../composables/usePosthog")
+            .then(({initPostHogForSetup}) => initPostHogForSetup(configs))
+            .then(() => loadPosthogClient())
+            .then(() => {
+                flushQueue();
+            })
+            .catch(() => undefined)
+            .finally(() => {
+                posthogInitPromise = undefined;
+            });
+    }
 
-    posthogInitPromise = import("../composables/usePosthog")
-        .then(({initPostHogForSetup}) => initPostHogForSetup(configs))
-        .then(() => loadPosthogClient())
-        .then(() => {
-            flushQueue();
-        })
-        .catch(() => {
-            // swallow
-        })
-        .finally(() => {
-            posthogInitPromise = undefined;
-        });
+    try {
+        await posthogInitPromise;
+    } catch {
+        return undefined;
+    }
+
+    return isLoaded() ? posthogClient : undefined;
 }
 
 export function disablePosthog() {
@@ -111,7 +119,7 @@ export function capturePosthogEvent(
     eventName: string,
     properties: Record<string, any>
 ) {
-    if (configs?.isUiAnonymousUsageEnabled === false) {
+    if (isPosthogDisabled(configs)) {
         disablePosthog();
         return;
     }
@@ -119,7 +127,7 @@ export function capturePosthogEvent(
     pruneQueue();
 
     if (!isLoaded()) {
-        maybeInit(configs);
+        void ensurePosthogClient(configs);
 
         if (posthogQueue.length >= POSTHOG_QUEUE_MAX) {
             posthogQueue.shift();
@@ -141,4 +149,34 @@ export function capturePosthogEvent(
     }
 
     flushQueue();
+}
+
+export async function identifyPosthogUser(
+    configs: Record<string, any> | undefined,
+    properties: Record<string, any>
+) {
+    if (isPosthogDisabled(configs)) {
+        disablePosthog();
+        return;
+    }
+
+    if (!properties || Object.keys(properties).length === 0) return;
+
+    const client = await ensurePosthogClient(configs);
+    if (!client?.identify) return;
+
+    try {
+        client.identify(ensureUid(), properties);
+    } catch {
+        // swallow
+    }
+}
+
+export async function initPosthogIfEnabled(configs: Record<string, any> | undefined) {
+    if (isPosthogDisabled(configs)) {
+        disablePosthog();
+        return;
+    }
+
+    await ensurePosthogClient(configs);
 }

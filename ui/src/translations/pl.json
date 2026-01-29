@@ -798,6 +798,7 @@
           "labels": "Etykiety wykonania (format klucz:wartość)",
           "namespace": "Namespace, do którego należy wykonany flow",
           "outputs": "Wyniki wygenerowane przez wykonanie",
+          "parent-execution": "ID nadrzędnej wykonania, które uruchomiło to wykonanie",
           "revision": "Wersja flow używana dla tej wykonania",
           "start-date": "Kiedy rozpoczęła się wykonanie",
           "state": "Bieżący stan wykonania",

@@ -29,7 +29,7 @@ public final class NamespaceFilesUtils {
         maxThreads,
         60L,
         TimeUnit.SECONDS,
-        new SynchronousQueue<>(),
+        new LinkedBlockingQueue<>(),
         new ThreadFactoryBuilder().setNameFormat("namespace-files").build()
     );;
 
@@ -68,12 +68,16 @@ public final class NamespaceFilesUtils {
             .parallel(parallelism)
             .runOn(Schedulers.fromExecutorService(EXECUTOR_SERVICE))
             .doOnNext(throwConsumer(nsFile -> {
-                InputStream content = runContext.storage().getFile(nsFile.uri());
-                Path path = folderPerNamespace ?
-                    Path.of(nsFile.namespace() + "/" + nsFile.path()) :
-                    Path.of(nsFile.path());
-                runContext.workingDir().putFile(path, content, fileExistComportment);
+                try (InputStream content = runContext.storage().getFile(nsFile.uri())) {
+                    Path path = folderPerNamespace ?
+                        Path.of(nsFile.namespace() + "/" + nsFile.path()) :
+                        Path.of(nsFile.path());
+                    runContext.workingDir().putFile(path, content, fileExistComportment);
+                }
             }))
+            .doOnError(t -> {
+                runContext.logger().error("Error while loading namespace files", t);
+            })
             .sequential()
             .blockLast();
 

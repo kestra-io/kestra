@@ -197,11 +197,6 @@
                         if (!valid) {
                             return false;
                         }
-                        this.flow.inputs?.forEach((input) => {
-                            if (this.inputs[input.id] === undefined) {
-                                this.inputs[input.id] = input.default ?? "";
-                            }
-                        });
 
                         if (this.replaySubmit) {
                             this.replaySubmit({

@@ -1149,6 +1149,7 @@
     "item": "item",
     "items": "items",
     "cron": "Cron",
+    "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!\nLast error was",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
     "execution replay": "This execution is a replay of",

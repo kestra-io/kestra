@@ -251,29 +251,20 @@
 
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
-                                    <div class="action-buttons">
-                                        <Kicon
-                                            :tooltip="t('execute')"
-                                            placement="left"
-                                            @click="openExecuteModal(scope.row)"
-                                        >
+                                    <div class="flow-actions-cell">
+                                        <Kicon :tooltip="t('execute')" placement="left" @click="openExecuteModal(scope.row)">
                                             <Play />
                                         </Kicon>
                                         <router-link
                                             :to="{
                                                 name: 'flows/update',
                                                 params: {
-                                                    namespace:
-                                                        scope.row.namespace,
+                                                    namespace: scope.row.namespace,
                                                     id: scope.row.id,
                                                 },
                                             }"
                                         >
-                                            <Kicon
-                                                :tooltip="t('details')"
-                                                placement="left"
-                                                class="clickable"
-                                            >
+                                            <Kicon :tooltip="$t('details')" placement="left">
                                                 <TextSearch />
                                             </Kicon>
                                         </router-link>
@@ -285,25 +276,25 @@
                 </template>
             </DataTable>
         </div>
+
         <el-dialog
             v-model="showRunModal"
             destroyOnClose
-            :appendToBody="true"
+            appendToBody
             width="70%"
         >
             <template #header>
-                <span v-if="selectedFlow">
-                    {{ selectedFlow.namespace }}.{{ selectedFlow.id }}
-                </span>
+                <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
             </template>
             <FlowRun
-                v-if="showRunModal && executionsStore.flow"
+                v-if="executionsStore.flow"
                 :redirect="false"
                 @execution-trigger="handleExecutionStart"
             />
         </el-dialog>
     </section>
 </template>
+
 
 <script setup lang="ts">
     import {ref, computed, useTemplateRef} from "vue";
@@ -380,9 +371,6 @@
     const lastExecutionByFlowReady = ref(false);
     const latestExecutions = ref<any[]>([]);
     const file = ref<HTMLInputElement | null>(null);
-
-    const showRunModal = ref(false);
-    const selectedFlow = ref<any | null>(null);
 
     const optionalColumns = ref([
         {
@@ -552,8 +540,25 @@
     };
     CHART_DEFINITION.content = YAML_UTILS.stringify(CHART_DEFINITION);
 
+
+
     function updateDisplayColumns(newColumns: string[]) {
         updateVisibleColumns(newColumns);
+    }
+
+    const showRunModal = ref(false);
+    const selectedFlow = ref<any | null>(null);
+
+    async function openExecuteModal(flow: any) {
+        selectedFlow.value = flow;
+
+        await executionsStore.loadFlowForExecution({
+            namespace: flow.namespace,
+            flowId: flow.id,
+            store: true
+        });
+
+        showRunModal.value = true;
     }
 
     function handleExecutionStart() {
@@ -610,6 +615,7 @@
     }
 
     function enableFlows() {
+
         toast.confirm(
             t("flow enable", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
             () => {
@@ -672,18 +678,6 @@
         return latestExecutions.value.find(
             (e: any) => e.flowId === row.id && e.namespace === row.namespace
         ) ?? null;
-    }
-
-    async function openExecuteModal(flow: any) {
-        selectedFlow.value = flow;
-
-        await executionsStore.loadFlowForExecution({
-            namespace: flow.namespace,
-            flowId: flow.id,
-            store: true
-        });
-
-        showRunModal.value = true;
     }
 
     function loadQuery(base?: any) {
@@ -757,14 +751,7 @@
         align-items: flex-end;
     }
 }
-.action-buttons {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-::v-deep(.kicon svg) {
-    cursor: pointer;
-}
+
 .table-link {
     cursor: pointer;
 
@@ -774,6 +761,16 @@
 
     &:hover {
         text-decoration: none;
+    }
+}
+
+.flow-actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    & :deep(.kicon) {
+        cursor: pointer;
     }
 }
 </style>

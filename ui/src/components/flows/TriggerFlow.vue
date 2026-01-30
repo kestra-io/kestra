@@ -69,6 +69,7 @@
     </div>
 </template>
 
+
 <script>
     import FlowRun from "./FlowRun.vue";
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
@@ -126,7 +127,7 @@
         methods: {
             async handleExecutionStart() {
                 this.closeModal();
-                this.$toast().success("Execution has started");
+                this.$toast().success(this.$t("execution_started"));
             },
             onClick() {
                 if (this.$tours["guidedTour"]?.isRunning?.value) {

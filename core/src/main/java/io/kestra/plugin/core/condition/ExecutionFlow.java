@@ -23,7 +23,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for a specific flow of an execution."
+    title = "Match events from a specific flow.",
+    description = """
+        Passes only when the triggering execution belongs to the given Namespace and Flow ID.
+
+        Pair with the Flow trigger to react to a single upstream flow; for broader namespace matching use `ExecutionNamespace`."""
 )
 @Plugin(
     examples = {
@@ -55,11 +59,11 @@ import jakarta.validation.constraints.NotNull;
 )
 public class ExecutionFlow extends Condition {
     @NotNull
-    @Schema(title = "The namespace of the flow.")
+    @Schema(title = "The Flow Namespace")
     private Property<String> namespace;
 
     @NotNull
-    @Schema(title = "The flow id.")
+    @Schema(title = "The Flow ID")
     private Property<String> flowId;
 
     @Override

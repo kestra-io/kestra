@@ -2,7 +2,7 @@
     <TopNavBar v-if="!embed" :title="routeInfo.title" />
     <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
-            <DataTable @page-changed="onPageChangedWithSave" ref="dataTable" :total="logsStore.total" :size="internalPageSize" :page="internalPageNumber" :embed="embed">
+            <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="internalPageSize" :page="internalPageNumber" :embed="embed">
                 <template #navbar v-if="!embed || showFilters">
                     <KSFilter
                         :configuration="logFilter"
@@ -45,7 +45,7 @@
 
 <script setup lang="ts">
     import {ref, computed, onMounted, watch, useTemplateRef} from "vue";
-    import {useRoute, useRouter} from "vue-router";
+    import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
     import moment from "moment";
@@ -79,7 +79,6 @@
     });
 
     const route = useRoute();
-    const router = useRouter();
     const {t} = useI18n();
     const logsStore = useLogsStore();
     const logFilter = useLogFilter();
@@ -118,7 +117,7 @@
         if (route.query.timeRange) {
             return moment().subtract(moment.duration(route.query.timeRange as string).as("milliseconds")).toISOString(true);
         }
-        
+
         // the default is PT30D
         return moment().subtract(7, "days").toISOString(true);
     });
@@ -172,11 +171,6 @@
         loadData
     });
 
-    const onPageChangedWithSave = (pagination: {page: number, size: number}) => {
-        localStorage.setItem("logs_page_size", pagination.size.toString());
-        onPageChanged(pagination);
-    };
-
     const showStatChart = () => showChart.value;
 
     const onShowChartChange = (value: boolean) => {
@@ -205,22 +199,7 @@
 
     onMounted(() => {
         if (!props.embed) {
-            const stored = localStorage.getItem("logs_page_size");
-
-            if (!route.query.size && stored) {
-                setTimeout(() => {
-                    const sizeValue = parseInt(stored);
-                    internalPageSize.value = sizeValue;
-                    router.replace({
-                        query: {
-                            ...route.query,
-                            size: sizeValue,
-                            page: route.query.page || 1
-                        }
-                    });
-                }, 50);
-            } else
-                loadData();
+            loadData();
         }
     });
 </script>

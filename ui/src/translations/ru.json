@@ -595,6 +595,7 @@
         "title": "Компоненты Workflow"
       }
     },
+    "execution_started": "Выполнение началось!",
     "execution_starts_progress": "Как только начнется выполнение, вы увидите здесь обновления о ходе выполнения.",
     "execution_status": "Выполнение:",
     "executions": "Выполнения",

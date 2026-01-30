@@ -595,6 +595,7 @@
         "title": "工作流组件"
       }
     },
+    "execution_started": "执行已开始！",
     "execution_starts_progress": "一旦执行开始，您将在此处看到进度更新。",
     "execution_status": "执行状态是：",
     "executions": "执行",

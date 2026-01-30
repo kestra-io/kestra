@@ -5,8 +5,8 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.IdUtils;
@@ -29,8 +29,7 @@ public class AssertTest {
     RunContextFactory runContextFactory;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
+    private DispatchQueueInterface<LogEntry> logQueue;
 
     @Test
     void success() throws Exception {
@@ -53,7 +52,7 @@ public class AssertTest {
     @Test
     void failed() {
         List<LogEntry> logs = new ArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));
+        logQueue.addListener(logs::add);
 
 
         Assert task = Assert.builder()
@@ -75,7 +74,6 @@ public class AssertTest {
         assertThat(exception.getMessage()).contains("2 assertions failed");
 
         List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 2);
-        receive.blockLast();
 
 
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("inputs.key == 'value1'")).count()).isEqualTo(1L);

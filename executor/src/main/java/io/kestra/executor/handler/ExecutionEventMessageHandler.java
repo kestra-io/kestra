@@ -70,11 +70,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     @Inject
     private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
+    private DispatchQueueInterface<Execution> executionQueue;
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
+    private RunContextLoggerFactory runContextLoggerFactory;
 
     private final Tracer tracer;
 
@@ -241,7 +239,8 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                             log.info(msg);
 
-                            logQueue.emit(LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
+                            var logger = runContextLoggerFactory.create(execution);
+                            logger.emitLog(LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
                                 .level(Level.INFO)
                                 .message(msg)
                                 .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())
@@ -255,24 +254,15 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
                     return executor;
                 } catch (QueueException e) {
-                    try {
-                        Execution failedExecution = fail(execution, e);
-                        this.executionQueue.emit(failedExecution);
-                    } catch (QueueException ex) {
-                        log.error("Unable to emit the execution {}", execution.getId(), ex);
-                    }
-
                     Span.current().recordException(e).setStatus(StatusCode.ERROR);
-                    return null;
+
+                    Execution failedExecution = fail(execution, e);
+                    return new ExecutorContext(execution).withExecution(failedExecution, "queueException");
                 } catch (FlowNotFoundException e) {
                     // avoid infinite for FlowNotFoundException
                     if (!execution.getState().getCurrent().isFailed()) {
-                        try {
-                            Execution failedExecution = fail(execution, e);
-                            this.executionQueue.emit(failedExecution);
-                        } catch (QueueException ex) {
-                            log.error("Unable to emit the execution {}", execution.getId(), ex);
-                        }
+                        Execution failedExecution = fail(execution, e);
+                        return new ExecutorContext(execution).withExecution(failedExecution, "flowNotFound");
                     }
 
                     Span.current().recordException(e).setStatus(StatusCode.ERROR);
@@ -284,11 +274,8 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
 
     private Execution fail(Execution message, Exception e) {
         var failedExecution = message.failedExecutionFromExecutor(e);
-        try {
-            logQueue.emitAsync(failedExecution.logs());
-        } catch (QueueException ex) {
-            // fail silently
-        }
+        var logger = runContextLoggerFactory.create(failedExecution.execution());
+        logger.emitLogs(failedExecution.logs());
         return failedExecution.execution().getState().isFailed() ? failedExecution.execution() :  failedExecution.execution().withState(State.Type.FAILED);
     }
 }

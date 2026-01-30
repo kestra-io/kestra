@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -34,8 +35,7 @@ public class RestartCaseTest {
     private ExecutionService executionService;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
+    protected DispatchQueueInterface<Execution> executionQueue;
 
     public void restartFailedThenSuccess() throws Exception {
         Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "restart_last_failed").orElseThrow();

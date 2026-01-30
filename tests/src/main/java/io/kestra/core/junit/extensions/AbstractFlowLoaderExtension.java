@@ -48,6 +48,10 @@ public abstract class AbstractFlowLoaderExtension {
     }
 
     protected void deleteFlows(String tenantId, String[] paths) throws URISyntaxException {
+        if (!applicationContext.isRunning()) {
+            return;
+        }
+
         FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
 

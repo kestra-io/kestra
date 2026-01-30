@@ -9,9 +9,9 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -27,8 +27,7 @@ import reactor.core.publisher.Flux;
 @KestraTest(startRunner = true)
 class VariablesTest {
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    QueueInterface<LogEntry> workerTaskLogQueue;
+    DispatchQueueInterface<LogEntry> workerTaskLogQueue;
 
     @Inject
     private TestRunnerUtils runnerUtils;
@@ -48,7 +47,7 @@ class VariablesTest {
     @LoadFlows({"flows/valids/variables-invalid.yaml"})
     void invalidVars() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
+        workerTaskLogQueue.addListener(logs::add);
 
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "variables-invalid");
 
@@ -59,7 +58,6 @@ class VariablesTest {
             Objects.equals(logEntry.getTaskRunId(), execution.getTaskRunList().get(1).getId()) &&
                 logEntry.getMessage().contains("Unable to find `inputs` used in the expression `{{inputs.invalid}}`")
         );
-        receive.blockLast();
         assertThat(matchingLog).isNotNull();
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }

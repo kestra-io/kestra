@@ -23,9 +23,8 @@ import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.test.SleepTrigger;
@@ -34,7 +33,6 @@ import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
@@ -45,7 +43,6 @@ import lombok.experimental.SuperBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.event.Level;
-import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.net.URI;
@@ -68,8 +65,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
 class RunContextTest {
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    QueueInterface<LogEntry> workerTaskLogQueue;
+    DispatchQueueInterface<LogEntry> logQueue;
 
     @Inject
     RunContextFactory runContextFactory;
@@ -87,10 +83,6 @@ class RunContextTest {
     private String secretKey;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
-
-    @Inject
     private FlowInputOutput flowIO;
 
     @Inject
@@ -104,7 +96,7 @@ class RunContextTest {
     void logs() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         LogEntry matchingLog;
-        Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
+        logQueue.addListener(logs::add);
 
         Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "logs");
 
@@ -126,7 +118,6 @@ class RunContextTest {
         assertThat(matchingLog.getMessage()).isEqualTo("third logs");
 
         matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(3).getId()));
-        receive.blockLast();
         assertThat(matchingLog).isNull();
     }
 
@@ -134,7 +125,7 @@ class RunContextTest {
     @LoadFlows({"flows/valids/inputs-large.yaml"})
     void inputsLarge() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
+        logQueue.addListener(logs::add);
 
         char[] chars = new char[1024 * 16];
         Arrays.fill(chars, 'a');
@@ -155,7 +146,6 @@ class RunContextTest {
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         List<LogEntry> logEntries = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 3);
-        receive.blockLast();
         logEntries.sort(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()));
 
         assertThat(logEntries.getFirst().getTimestamp().toEpochMilli()).isEqualTo(logEntries.get(1).getTimestamp().toEpochMilli());
@@ -287,7 +277,7 @@ class RunContextTest {
     void secretTrigger() throws IllegalVariableEvaluationException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         List<LogEntry> matchingLog;
-        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
+        logQueue.addListener(logs::add);
 
         LogTrigger trigger = LogTrigger.builder()
             .type(SleepTrigger.class.getName())
@@ -307,7 +297,6 @@ class RunContextTest {
         trigger.evaluate(mockedTrigger.getKey().withRunContext(runContext), mockedTrigger.getValue().context());
 
         matchingLog = TestsUtils.awaitLogs(logs, 3);
-        receive.blockLast();
         assertThat(Objects.requireNonNull(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null)).getMessage()).isEqualTo("john ****** doe");
     }
 

@@ -1,12 +1,12 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.models.HasUID;
-import io.kestra.core.queues.QueueService;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.jdbc.JdbcTableConfig;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.condition.ConditionContext;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import lombok.SneakyThrows;
@@ -24,12 +24,14 @@ import org.jooq.impl.DSL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
 import jakarta.annotation.Nullable;
 
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
 
-@PostgresRepositoryEnabled
+@Requires(condition = PostgresRepository.PostgresCondition.class)
 @EachBean(JdbcTableConfig.class)
 public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 
@@ -117,6 +119,17 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
             return deserializer.apply(record);
         } else {
             return this.deserialize(record.get("value", JSONB.class).data());
+        }
+    }
+
+    // We need to create H2 repositories for the queue as it uses an H2Repository named 'queue',
+    // we may find a way to only create this one at some point as here we create unecessary beans.
+    static class PostgresCondition implements io.micronaut.context.condition.Condition {
+        @Override
+        public boolean matches(ConditionContext context) {
+            boolean isRepository = ((Optional<String>) context.get("kestra.repository.type", String.class)).map(it -> "postgres".equals(it)).orElse(false);
+            boolean isQueue = ((Optional<String>) context.get("kestra.queue.type", String.class)).map(it -> "postgres".equals(it)).orElse(false);
+            return isRepository || isQueue;
         }
     }
 }

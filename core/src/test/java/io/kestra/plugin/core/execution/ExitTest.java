@@ -26,7 +26,6 @@ class ExitTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.KILLED);
-
     }
 
     @Test

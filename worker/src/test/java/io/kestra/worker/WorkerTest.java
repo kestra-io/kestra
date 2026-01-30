@@ -7,6 +7,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -55,8 +56,7 @@ class WorkerTest {
     BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    QueueInterface<LogEntry> workerTaskLogQueue;
+    private DispatchQueueInterface<LogEntry> workerTaskLogQueue;
 
     @Inject
     RunContextFactory runContextFactory;
@@ -143,7 +143,8 @@ class WorkerTest {
 
     @Test
     void killed() throws InterruptedException, TimeoutException, QueueException {
-        Flux<LogEntry> receiveLogs = TestsUtils.receive(workerTaskLogQueue);
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        workerTaskLogQueue.addListener(logs::add);
 
         DefaultWorker worker = applicationContext.createBean(DefaultWorker.class, IdUtils.create(), 8, null);
         worker.run();
@@ -193,7 +194,7 @@ class WorkerTest {
         // child process is stopped and we never received 3 logs
         Thread.sleep(1000);
         worker.shutdown();
-        assertThat(receiveLogs.toStream().filter(logEntry -> logEntry.getMessage().equals("3")).count()).isEqualTo(0L);
+        assertThat(logs.stream().filter(logEntry -> logEntry.getMessage().equals("3")).count()).isEqualTo(0L);
     }
 
     @Test

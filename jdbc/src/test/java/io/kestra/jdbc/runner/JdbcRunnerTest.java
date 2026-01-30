@@ -4,11 +4,9 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.MessageTooBigException;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.*;
 import io.kestra.core.runners.AbstractRunnerTest;
+import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -24,30 +22,31 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public abstract class JdbcRunnerTest extends AbstractRunnerTest {
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
+    protected DispatchQueueInterface<Execution> executionQueue;
+
+    @Inject
+    protected DispatchQueueInterface<ExecutionEvent> executionEventQueue;
 
     public static final String NAMESPACE = "io.kestra.tests";
 
     @Test
     void avoidInfiniteExecutionLoop() throws QueueException, InterruptedException {
-        Flux<Execution> executionFlux = TestsUtils.receive(executionQueue);
+        CopyOnWriteArrayList<ExecutionEvent > executions = new CopyOnWriteArrayList<>();
+        executionEventQueue.addListener(e -> executions.add(e));
+
         Execution execution = Execution.newExecution(TestsUtils.mockFlow(), Collections.emptyList());
         executionQueue.emit(execution);
 
-        // Wait some time to ensure no infinite loop occurs
-        Thread.sleep(500);
-
         // We expect the initial execution message + the failed due to missing flow
-        assertThat(
-            Objects.requireNonNull(executionFlux.collectList().block()).stream()
-                .filter(e -> e.getId().equals(execution.getId()))
-                .toList()
-        ).hasSize(2);
+        await()
+            .during(Duration.ofMillis(500)) // Wait some time to ensure no infinite loop occurs
+            .atMost(Duration.ofSeconds(10))
+            .until(() -> executions.size() == 2);
     }
 
     @Test
@@ -106,8 +105,7 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
     @LoadFlows({"flows/valids/workertask-result-too-large.yaml"})
     void workerTaskResultTooLarge() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(logsQueue,
-            either -> logs.add(either.getLeft()));
+        logsQueue.addListener(l -> logs.add(l));
 
         Execution execution = runnerUtils.runOne(
             MAIN_TENANT,
@@ -117,7 +115,6 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
 
         LogEntry matchingLog = TestsUtils.awaitLog(logs, log -> log.getMessage()
             .startsWith("Unable to emit the worker task result to the queue"));
-        receive.blockLast();
 
         assertThat(matchingLog).isNotNull();
         assertThat(matchingLog.getLevel()).isEqualTo(Level.ERROR);
@@ -134,15 +131,13 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
     @LoadFlows("flows/valids/errors.yaml")
     void errors() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(logsQueue,
-            either -> logs.add(either.getLeft()));
+        logsQueue.addListener(l -> logs.add(l));
 
         Execution execution = runnerUtils.runOne(MAIN_TENANT, NAMESPACE, "errors", null, null,
             Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList()).hasSize(7);
 
-        receive.blockLast();
         LogEntry logEntry = TestsUtils.awaitLog(logs,
             log -> log.getMessage().contains("- task: failed, message: Task failure"));
         assertThat(logEntry).isNotNull();

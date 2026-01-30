@@ -23,6 +23,6 @@ public class MysqlExecutionDelayStateStore extends AbstractJdbcExecutionDelaySta
     protected Temporal getNow(Instant now) {
         // 'date' column in the table is in UTC
         // convert 'now' to UTC LocalDateTime to avoid any timezone/offset interpretation by the database.
-        return now.atZone(ZoneOffset.UTC);
+        return ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC).toLocalDateTime();
     }
 }

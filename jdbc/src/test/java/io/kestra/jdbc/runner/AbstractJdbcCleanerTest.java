@@ -2,9 +2,9 @@ package io.kestra.jdbc.runner;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -25,8 +25,7 @@ public abstract class AbstractJdbcCleanerTest {
     private JdbcCleaner cleaner;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logsQueue;
+    private DispatchQueueInterface<LogEntry> logsQueue;
 
     @Inject
     private LogRepositoryInterface logRepository;

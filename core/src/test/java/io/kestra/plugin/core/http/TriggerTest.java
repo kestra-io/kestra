@@ -2,6 +2,7 @@ package io.kestra.plugin.core.http;
 
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
@@ -31,9 +32,8 @@ class TriggerTest {
     private ApplicationContext applicationContext;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
-    
+    private DispatchQueueInterface<Execution> executionQueue;
+
     @Inject
     protected Scheduler scheduler;
 
@@ -41,7 +41,7 @@ class TriggerTest {
     @LoadFlows({"flows/valids/http-listen.yaml"})
     void trigger() throws Exception {
         Await.until(() -> scheduler.isActive(), Duration.ofMillis(100), Duration.ofSeconds(20));
-        
+
         // mock flow listeners
         CountDownLatch queueCount = new CountDownLatch(1);
 
@@ -50,8 +50,8 @@ class TriggerTest {
             Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null);
         ) {
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
-                if (execution.getLeft().getFlowId().equals("http-listen")) {
+            executionQueue.addListener(execution -> {
+                if (execution.getFlowId().equals("http-listen")) {
                     queueCount.countDown();
                 }
             });
@@ -59,10 +59,9 @@ class TriggerTest {
             worker.run();
 
             assertTrue(queueCount.await(1, TimeUnit.MINUTES));
-            receive.blockLast();
         }
     }
-    
+
     @Test
     @LoadFlows({"flows/valids/http-listen-encrypted.yaml"})
     void trigger_EncryptedBody() throws Exception {
@@ -75,8 +74,8 @@ class TriggerTest {
             Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 8, null)
         ) {
             // wait for execution
-            Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
-                if (execution.getLeft().getFlowId().equals("http-listen-encrypted")) {
+            executionQueue.addListener(execution -> {
+                if (execution.getFlowId().equals("http-listen-encrypted")) {
                     queueCount.countDown();
                 }
             });
@@ -84,7 +83,6 @@ class TriggerTest {
             worker.run();
 
             assertTrue(queueCount.await(1, TimeUnit.MINUTES));
-            receive.blockLast();
         }
     }
 }

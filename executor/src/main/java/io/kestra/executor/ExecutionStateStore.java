@@ -13,4 +13,6 @@ public interface ExecutionStateStore {
      * Lock an execution for processing using the provided function.
      */
     Optional<ExecutorContext> lock(String executionId, Function<Execution, ExecutorContext> function);
+
+    Execution create(Execution execution);
 }

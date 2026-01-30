@@ -31,9 +31,9 @@ public abstract class AbstractJdbcQueue<T extends Event> extends AbstractQueue<T
     }
 
     protected void internalEmit(@Nullable String routingKey, T message) throws QueueException {
-        String serialize = this.queueService.serialize(this.cls, message);
+        byte[] serialize = this.queueService.serialize(this.cls, message);
 
-        jdbcQueueClient.publish(this.queueName(), routingKey, message.key(), serialize);
+        jdbcQueueClient.publish(this.queueName(), routingKey, message.key(), new String(serialize));
 
         listeners().forEach(l -> l.accept(message));
     }
@@ -42,9 +42,9 @@ public abstract class AbstractJdbcQueue<T extends Event> extends AbstractQueue<T
         jdbcQueueClient.publish(messages
             .stream()
             .map(throwFunction(e -> {
-                String serialize = this.queueService.serialize(this.cls, e);
+                byte[] serialize = this.queueService.serialize(this.cls, e);
 
-                return new JdbcQueueClient.PublishedMessage(this.queueName(), routingKey, e.key(), serialize);
+                return new JdbcQueueClient.PublishedMessage(this.queueName(), routingKey, e.key(), new String(serialize));
             }))
             .toList()
         );

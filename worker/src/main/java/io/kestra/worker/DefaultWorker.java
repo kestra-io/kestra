@@ -105,15 +105,10 @@ public class DefaultWorker implements Worker {
     private BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.METRIC_QUEUE)
-    private QueueInterface<MetricEntry> metricEntryQueue;
+    private DispatchQueueInterface<MetricEntry> metricEntryQueue;
 
     @Inject
     private TriggerEventQueue triggerEventQueue;
-
-    @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
 
     @Inject
     private MetricRegistry metricRegistry;
@@ -503,11 +498,8 @@ public class DefaultWorker implements Worker {
             Execution execution = workerTrigger.getTrigger().isFailOnTriggerError() ? TriggerService.generateExecution(workerTrigger.getTrigger(), workerTrigger.getConditionContext(), workerTrigger.getTriggerContext(), (Output) null)
                 .withState(FAILED) : null;
             if (execution != null) {
-                try {
-                    logQueue.emitAsync(RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)));
-                } catch (QueueException ex) {
-                    // fail silently
-                }
+                var logger = runContextLoggerFactory.create(execution);
+                logger.emitLogs(RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)));
             }
             this.workerTriggerResultQueue.emit(
                 WorkerTriggerResult.builder()

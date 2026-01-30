@@ -2,6 +2,7 @@ package io.kestra.executor.handler;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -21,8 +22,7 @@ import java.util.Optional;
 @Slf4j
 public class ExecutionMessageHandler implements ExecutorMessageHandler<Execution> {
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
-    private QueueInterface<ExecutionEvent> executionEventQueue;
+    private DispatchQueueInterface<ExecutionEvent> executionEventQueue;
 
     @Inject
     private ExecutionStateStore executionStateStore;

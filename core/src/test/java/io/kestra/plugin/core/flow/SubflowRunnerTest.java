@@ -7,19 +7,15 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
+import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,12 +42,10 @@ class SubflowRunnerTest {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
-    protected QueueInterface<ExecutionEvent> executionEventQueue;
+    protected BroadcastQueueInterface<FollowExecutionEvent> executionEventQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
+    protected DispatchQueueInterface<Execution> executionQueue;
 
     @Test
     @LoadFlows({"flows/valids/subflow-inherited-labels-child.yaml", "flows/valids/subflow-inherited-labels-parent.yaml"})
@@ -85,7 +79,7 @@ class SubflowRunnerTest {
     void subflowOutputWithoutWait() throws QueueException, TimeoutException, InterruptedException {
         AtomicReference<Execution> childExecution = new AtomicReference<>();
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Runnable closing = executionEventQueue.receive(either -> {
+        QueueSubscriber<FollowExecutionEvent> closing = executionEventQueue.subscriber().subscribe(either -> {
             if (either.isLeft() && either.getLeft().flowId().equals("subflow-child-with-output") && either.getLeft().eventType() == ExecutionEventType.TERMINATED) {
                 childExecution.set(executionRepository.findById(either.getLeft().tenantId(), either.getLeft().executionId()).orElseThrow());
                 countDownLatch.countDown();
@@ -102,7 +96,7 @@ class SubflowRunnerTest {
         assertThat(childExecution.get().getId()).isEqualTo(childExecutionId);
         assertThat(childExecution.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(childExecution.get().getTaskRunList()).hasSize(1);
-        closing.run();
+        closing.close();
     }
 
     @Test
@@ -110,7 +104,7 @@ class SubflowRunnerTest {
     void subflowOutputWithWait() throws QueueException, TimeoutException, InterruptedException {
         List<Execution> childExecution = new ArrayList<>();
         CountDownLatch countDownLatch = new CountDownLatch(4);
-        Runnable closing = executionEventQueue.receive(either -> {
+        QueueSubscriber<FollowExecutionEvent> closing = executionEventQueue.subscriber().subscribe(either -> {
             if (either.isLeft() && either.getLeft().flowId().equals("subflow-to-retry") && either.getLeft().eventType() == ExecutionEventType.TERMINATED) {
                 var execution = executionRepository.findById(either.getLeft().tenantId(), either.getLeft().executionId()).orElseThrow();
                 childExecution.add(execution);
@@ -127,7 +121,7 @@ class SubflowRunnerTest {
         assertThat(childExecution).hasSize(4);
         assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.SUCCESS).count()).isEqualTo(2);
         assertThat(childExecution.stream().filter(e -> e.getState().getCurrent() == State.Type.FAILED).count()).isEqualTo(2);
-        closing.run();
+        closing.close();
     }
 
     @Test

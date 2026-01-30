@@ -7,8 +7,8 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.TaskCommands;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
@@ -46,8 +46,7 @@ class LogConsumerTest {
     private TestRunContextFactory runContextFactory;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
+    private DispatchQueueInterface<LogEntry> logQueue;
 
     @Test
     void run() throws Exception {
@@ -100,7 +99,7 @@ class LogConsumerTest {
     @FlakyTest
     void logs() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));
+        logQueue.addListener(logs::add);
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(Property.ofValue(List.of(
@@ -119,7 +118,6 @@ class LogConsumerTest {
         );
 
         Await.until(() -> logs.size() >= 10, null, Duration.ofSeconds(20));
-        receive.blockLast();
 
         assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.INFO)).count()).isEqualTo(1L);
         assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.ERROR)).count()).isEqualTo(1L);

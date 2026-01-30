@@ -7,18 +7,14 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.Await;
-import io.kestra.core.queues.BroadcastQueueInterface;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import java.time.Duration;
 import java.util.Comparator;
@@ -37,8 +33,7 @@ public class TestRunnerUtils {
     public static final Duration DEFAULT_MAX_WAIT_DURATION = Duration.ofSeconds(15);
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
+    protected DispatchQueueInterface<Execution> executionQueue;
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;

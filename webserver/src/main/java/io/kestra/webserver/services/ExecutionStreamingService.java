@@ -2,10 +2,10 @@ package io.kestra.webserver.services;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
-import io.kestra.core.runners.ExecutionEvent;
+import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -13,7 +13,6 @@ import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
@@ -37,15 +36,15 @@ public class ExecutionStreamingService {
     private final Map<String, Map<String, Pair<FluxSink<Event<Execution>>, Flow>>> subscribers = new ConcurrentHashMap<>();
     private final Object subscriberLock = new Object();
 
-    private final QueueInterface<ExecutionEvent> executionQueue;
+    private final BroadcastQueueInterface<FollowExecutionEvent> executionQueue;
     private final ExecutionService executionService;
     private final ExecutionRepositoryInterface executionRepository;
 
-    private Runnable queueConsumer;
+    private QueueSubscriber<FollowExecutionEvent> queueSubscriber;
 
     @Inject
     public ExecutionStreamingService(
-        @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED) QueueInterface<ExecutionEvent> executionQueue,
+        BroadcastQueueInterface<FollowExecutionEvent> executionQueue,
         ExecutionService executionService,
         ExecutionRepositoryInterface executionRepository
     ) {
@@ -57,13 +56,17 @@ public class ExecutionStreamingService {
     @PostConstruct
     void startQueueConsumer() {
         // Single queue consumer
-        this.queueConsumer = executionQueue.receive(either -> {
+        this.queueSubscriber = executionQueue.subscriber().subscribe(either -> {
             if (either.isRight()) {
                 log.error("Unable to deserialize execution: {}", either.getRight().getMessage());
                 return;
             }
 
-            ExecutionEvent event = either.getLeft();
+            if (subscribers.isEmpty()) {
+                return;
+            }
+
+            FollowExecutionEvent event = either.getLeft();
 
             // Get all subscribers for this execution
             Map<String, Pair<FluxSink<Event<Execution>>, Flow>> executionSubscribers = subscribers.get(event.executionId());
@@ -133,8 +136,8 @@ public class ExecutionStreamingService {
 
     @PreDestroy
     void shutdown() {
-        if (queueConsumer != null) {
-            queueConsumer.run();
+        if (queueSubscriber != null) {
+            queueSubscriber.close();
         }
     }
 }

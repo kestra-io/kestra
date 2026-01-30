@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.queues.event.Event;
 import io.kestra.core.utils.Either;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -16,13 +17,28 @@ import java.util.function.Consumer;
  */
 public interface QueueSubscriber<T extends Event> {
     /**
-     * Starts a subscription to consume messages from the queue.
+     * Starts a subscription to consume messages one by one from the queue.
      *
      * @param consumer the consumer that will process messages; receives either a successfully
      *                 deserialized event or a {@link DeserializationException}
      * @return this subscriber instance for method chaining
+     *
+     * @see #subscribeBatch(Consumer)
      */
     QueueSubscriber<T> subscribe(Consumer<Either<T, DeserializationException>> consumer);
+
+    /**
+     * Starts a subscription to consume messages in batch from the queue.
+     *
+     * @param consumer the consumer that will process messages; receives a list of either a successfully
+     *                 deserialized event or a {@link DeserializationException}
+     * @return this subscriber instance for method chaining
+     *
+     * @see #subscribe(Consumer)
+     */
+    default QueueSubscriber<T> subscribeBatch(Consumer<List<Either<T, DeserializationException>>> consumer) {
+        return subscribe(either -> consumer.accept(List.of(either)));
+    }
 
     /**
      * Pauses this subscriber, temporarily stopping message consumption.

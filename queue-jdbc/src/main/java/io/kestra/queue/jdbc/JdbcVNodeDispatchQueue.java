@@ -35,19 +35,19 @@ public class JdbcVNodeDispatchQueue<T extends VNodeDispatchEvent> extends Abstra
         jdbcQueueClient.publish(messages
             .stream()
             .map(throwFunction(e -> {
-                String serialize = this.queueService.serialize(this.cls, e);
+                byte[] serialize = this.queueService.serialize(this.cls, e);
 
                 return new JdbcQueueClient.PublishedMessage(
                     this.queueName(),
                     this.vNodeRoutingKey(this.queueService.computeVNode(e.key())),
                     e.key(),
-                    serialize
+                    new String(serialize)
                 );
             }))
             .toList()
         );
 
-        listeners().forEach(l -> messages.forEach(l::accept));
+        listeners().forEach(l -> messages.forEach(l));
     }
 
     @Override

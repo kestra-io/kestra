@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
+import io.kestra.core.runners.FollowLogEvent;
 import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.tenant.TenantService;
@@ -153,20 +154,20 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Logs"}, summary = "Follow logs for a specific execution")
-    public Flux<Event<LogEntry>> followLogsFromExecution(
+    public Flux<Event<FollowLogEvent>> followLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
         String subscriberId = UUID.randomUUID().toString();
         final List<String> levels = LogEntry.findLevelsByMin(minLevel).stream().map(Enum::name).toList();
 
-        return Flux.<Event<LogEntry>>create(emitter -> {
+        return Flux.<Event<FollowLogEvent>>create(emitter -> {
                 // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
-                emitter.next(Event.of(LogEntry.builder().build()).id("start"));
+                emitter.next(Event.of(FollowLogEvent.from(LogEntry.builder().build())).id("start"));
 
                 // fetch repository first
                 logService.getExecutionLogs(tenantService.resolveTenant(), executionId, minLevel, List.of(), true)
-                    .forEach(logEntry -> emitter.next(Event.of(logEntry).id("progress")));
+                    .forEach(logEntry -> emitter.next(Event.of(FollowLogEvent.from(logEntry)).id("progress")));
 
                 // consume in realtime
                 logStreamingService.registerSubscriber(executionId, subscriberId, emitter, levels);

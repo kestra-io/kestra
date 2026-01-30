@@ -57,13 +57,13 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private static final String SKIPPING_EXECUTION = "Skipping execution {}";
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
+    private DispatchQueueInterface<Execution> executionQueue;
     @Inject
     private DispatchQueueInterface<ExecutionCommand> executionCommandQueue;
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
-    private QueueInterface<ExecutionEvent> executionEventQueue;
+    private DispatchQueueInterface<ExecutionEvent> executionEventQueue;
+    @Inject
+    private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
     @Inject
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
     private QueueInterface<WorkerJob> workerJobQueue;
@@ -132,8 +132,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Inject
     private MultipleConditionEventMessageHandler multipleConditionEventMessageHandler;
 
-    @Value("${kestra.executor.clean.execution-queue:true}")
-    private boolean cleanExecutionQueue;
     @Value("${kestra.executor.clean.worker-queue:true}")
     private boolean cleanWorkerJobQueue;
 
@@ -188,9 +186,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Override
     public void run() {
         // listen to executor related queues
-        this.receiveCancellations.addFirst(this.executionQueue.receive(Executor.class, this::executionQueue));
-        this.receiveCancellations.addFirst(this.executionEventQueue.receiveBatch(
-            Executor.class,
+        this.queueSubscribers.addFirst(this.executionQueue.subscriber().subscribe(this::executionQueue));
+        this.queueSubscribers.addFirst(this.executionEventQueue.subscriber().subscribeBatch(
             executions -> {
                 // process execution message grouped by executionId to avoid concurrency as the execution level as it would
                 List<CompletableFuture<Void>> perExecutionFutures = executions.stream()
@@ -302,7 +299,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
         log.info("Executor started with {} thread(s)", numberOfThreads);
     }
 
-    // This serves as a temporal bridge between the old execution queue and the new execution event queue to avoid updating all code that uses the old queue
+    // The execution queue is used to send newly created executions, so the first step is to create the execution inside the database
     private void executionQueue(Either<Execution, DeserializationException> either) {
         if (either.isRight()) {
             log.error(UNABLE_TO_DESERIALIZE_AN_EXECUTION, either.getRight().getMessage());
@@ -310,11 +307,20 @@ public class DefaultExecutor extends AbstractService implements Executor {
         }
 
         Execution message = either.getLeft();
+
+        try {
+            // we create the execution even if skipped, so it is at least present in the DB
+            executionStateStore.create(message);
+        } catch (Exception e) {
+            log.error("Unable to create execution {}", message.getId(), e);
+        }
+
         if (skipExecutionService.skipExecution(message)) {
             log.warn(SKIPPING_EXECUTION, message.getId());
             return;
         }
 
+        // TODO investigate moving the CREATED code here, or if it's too dangerous, calling the ExecutionEventMessageHandler here to avoid a loop inside the executor event queue
         Optional<ExecutorContext> maybeExecutor = executionMessageHandler.handle(message);
         maybeExecutor.ifPresent(this::toExecution);
     }
@@ -569,7 +575,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     private void enterMaintenance() {
-        this.executionQueue.pause();
         this.workerTaskResultQueue.pause();
 
         this.queueSubscribers.forEach(QueueSubscriber::pause);
@@ -579,7 +584,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     private void exitMaintenance() {
-        this.executionQueue.resume();
         this.workerTaskResultQueue.resume();
 
         this.queueSubscribers.forEach(QueueSubscriber::resume);
@@ -701,11 +705,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     triggerEventQueue.send(new TriggerExecutionTerminated(triggerId, execution.getId(), execution.getState().getCurrent()));
                 }
 
-                if (cleanExecutionQueue) {
-                    executionEventQueue.deleteByKey(executor.getExecution().getId());
-                    executionQueue.deleteByKey(executor.getExecution().getId());
-                }
-
                 // Purge the workerTaskResultQueue and the workerJobQueue
                 // IMPORTANT: this is safe as only the executor is listening to WorkerTaskResult,
                 // and we are sure at this stage that all WorkerJob has been listened and processed by the Worker.
@@ -721,9 +720,15 @@ public class DefaultExecutor extends AbstractService implements Executor {
 
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED);
                 this.executionEventQueue.emit(event);
+
+                // update all execution followers
+                this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED));
             } else {
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED);
                 this.executionEventQueue.emit(event);
+
+                // update all execution followers
+                this.followExecutionEventQueue.emitAsync(new FollowExecutionEvent(executor.getExecution(), ExecutionEventType.UPDATED));
             }
         } catch (QueueException | FlowNotFoundException e) {
             if (!ignoreFailure) {

@@ -6,9 +6,9 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.flow.*;
 import jakarta.inject.Inject;
@@ -38,8 +38,7 @@ public abstract class AbstractRunnerTest {
     protected TestRunnerUtils runnerUtils;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    protected QueueInterface<LogEntry> logsQueue;
+    protected DispatchQueueInterface<LogEntry> logsQueue;
 
     @Inject
     protected RestartCaseTest restartCaseTest;
@@ -265,14 +264,13 @@ public abstract class AbstractRunnerTest {
     @LoadFlows(value = {"flows/valids/each-null.yaml"}, tenantId = "eachwithnull")
     void eachWithNull() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(logsQueue, either -> logs.add(either.getLeft()));
+        logsQueue.addListener(logs::add);
 
         Execution execution = runnerUtils.runOne("eachwithnull", "io.kestra.tests", "each-null", Duration.ofSeconds(60));
 
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
-        receive.blockLast();
         assertThat(matchingLog).isNotNull();
     }
 

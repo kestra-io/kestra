@@ -1,8 +1,5 @@
 package io.kestra.runner.h2;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
@@ -20,22 +17,6 @@ public class H2QueueFactory implements QueueFactoryInterface {
 
     @Inject
     ApplicationContext applicationContext;
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<Execution> execution() {
-        return new H2Queue<>(Execution.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<ExecutionEvent> executionEvent() {
-        return new H2Queue<>(ExecutionEvent.class, applicationContext);
-    }
 
     @Override
     @Singleton
@@ -59,22 +40,6 @@ public class H2QueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerTriggerResult> workerTriggerResult() {
         return new H2WorkerTriggerResultQueue(applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<LogEntry> logEntry() {
-        return new H2Queue<>(LogEntry.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.METRIC_QUEUE)
-    @Bean(preDestroy = "close")
-    public QueueInterface<MetricEntry> metricEntry() {
-        return new H2Queue<>(MetricEntry.class, applicationContext);
     }
 
     @Override

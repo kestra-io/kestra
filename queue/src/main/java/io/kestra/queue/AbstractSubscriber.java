@@ -1,5 +1,6 @@
 package io.kestra.queue;
 
+import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.Event;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,7 +10,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public abstract class AbstractSubscriber<T extends Event> implements io.kestra.core.queues.QueueSubscriber<T> {
+public abstract class AbstractSubscriber<T extends Event> implements QueueSubscriber<T> {
     private final CountDownLatch stopped = new CountDownLatch(1);
     private final ReentrantLock pauseLock = new ReentrantLock();
     private final Condition unpaused = pauseLock.newCondition();
@@ -87,9 +88,6 @@ public abstract class AbstractSubscriber<T extends Event> implements io.kestra.c
         this.changeState(State.STOPPED, State.RUNNING);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void pause() {
         if (log.isDebugEnabled()) {
@@ -103,9 +101,6 @@ public abstract class AbstractSubscriber<T extends Event> implements io.kestra.c
         this.changeState(State.RUNNING, State.PAUSED);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void resume() {
         if (log.isDebugEnabled()) {
@@ -138,9 +133,6 @@ public abstract class AbstractSubscriber<T extends Event> implements io.kestra.c
         this.stopped.countDown();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public void close() {
         if (log.isDebugEnabled()) {

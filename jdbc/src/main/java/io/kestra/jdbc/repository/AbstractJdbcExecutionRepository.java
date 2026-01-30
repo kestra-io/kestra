@@ -16,8 +16,6 @@ import io.kestra.core.models.executions.statistics.ExecutionStatistics;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.TriggerId;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.QueueIndexerRepository;
@@ -33,7 +31,6 @@ import io.kestra.plugin.core.dashboard.data.Executions;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -65,9 +62,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
     private static final Condition NORMAL_KIND_CONDITION = field("kind").isNull().or(field("kind").eq(ExecutionKind.NORMAL.name()));
 
     private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
-    private final ApplicationContext applicationContext;
-
-    private QueueInterface<Execution> executionQueue;
     private final KestraConfig kestraConfig;
 
     private final JdbcFilterService filterService;
@@ -105,19 +99,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
         this.eventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.kestraConfig = applicationContext.getBean(KestraConfig.class);
 
-        // we inject ApplicationContext in order to get the ExecutionQueue lazy to avoid StackOverflowError
-        this.applicationContext = applicationContext;
-
         this.filterService = filterService;
-    }
-
-    @SuppressWarnings("unchecked")
-    private QueueInterface<Execution> executionQueue() {
-        if (this.executionQueue == null) {
-            this.executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
-        }
-
-        return this.executionQueue;
     }
 
     /**
@@ -730,8 +712,6 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcCrudRe
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted);
         this.jdbcRepository.persist(deleted, fields);
-
-        executionQueue().emit(deleted);
 
         eventPublisher.publishEvent(CrudEvent.delete(deleted));
 

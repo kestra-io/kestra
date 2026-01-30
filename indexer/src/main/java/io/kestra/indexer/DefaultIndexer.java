@@ -3,9 +3,8 @@ package io.kestra.indexer;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.QueueService;
+import io.kestra.core.queues.*;
+import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.runners.IndexingRepository;
@@ -16,7 +15,6 @@ import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,7 +24,6 @@ import io.kestra.core.services.SkipExecutionService;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,12 +36,13 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 public class DefaultIndexer implements Indexer {
     private final LogRepositoryInterface logRepository;
-    private final QueueInterface<LogEntry> logQueue;
+    private final DispatchQueueInterface<LogEntry> logQueue;
 
     private final MetricRepositoryInterface metricRepository;
-    private final QueueInterface<MetricEntry> metricQueue;
+    private final DispatchQueueInterface<MetricEntry> metricQueue;
     private final MetricRegistry metricRegistry;
     private final List<Runnable> receiveCancellations = new ArrayList<>();
+    private final List<QueueSubscriber<?>> subscribers = new ArrayList<>();
 
     private final String id = IdUtils.create();
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
@@ -58,9 +56,9 @@ public class DefaultIndexer implements Indexer {
     @Inject
     public DefaultIndexer(
         LogRepositoryInterface logRepository,
-        @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED) QueueInterface<LogEntry> logQueue,
+        DispatchQueueInterface<LogEntry> logQueue,
         MetricRepositoryInterface metricRepositor,
-        @Named(QueueFactoryInterface.METRIC_QUEUE) QueueInterface<MetricEntry> metricQueue,
+        DispatchQueueInterface<MetricEntry> metricQueue,
         MetricRegistry metricRegistry,
         ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         SkipExecutionService skipExecutionService,
@@ -91,8 +89,8 @@ public class DefaultIndexer implements Indexer {
         this.sendBatch(metricQueue, metricRepository);
     }
 
-    protected <T> void sendBatch(QueueInterface<T> queueInterface, IndexingRepository<T> indexingRepository) {
-        this.receiveCancellations.addFirst(queueInterface.receiveBatch(Indexer.class, eithers -> {
+    protected <T extends DispatchEvent> void sendBatch(DispatchQueueInterface<T> queueInterface, IndexingRepository<T> indexingRepository) {
+        this.subscribers.addFirst(queueInterface.subscriber().subscribeBatch(eithers -> {
             // first, log all deserialization issues
             eithers.stream().filter(either -> either.isRight()).forEach(either -> log.error("unable to deserialize an item: {}", either.getRight().getMessage()));
 
@@ -152,18 +150,7 @@ public class DefaultIndexer implements Indexer {
                 log.debug("Terminating");
             }
             this.receiveCancellations.forEach(Runnable::run);
-            try {
-                stopQueue();
-                setState(ServiceState.TERMINATED_GRACEFULLY);
-            } catch (IOException e) {
-                log.error("Failed to close the queue", e);
-                setState(ServiceState.TERMINATED_FORCED);
-            }
+            setState(ServiceState.TERMINATED_GRACEFULLY);
         }
-    }
-
-    protected void stopQueue() throws IOException {
-        this.logQueue.close();
-        this.metricQueue.close();
     }
 }

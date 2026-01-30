@@ -3,8 +3,10 @@ package io.kestra.webserver.services;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.topologies.FlowNode;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.BroadcastQueueInterface;
+import io.kestra.core.queues.QueueSubscriber;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
+import io.kestra.core.runners.FollowExecutionEvent;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.MapUtils;
@@ -13,7 +15,6 @@ import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.FluxSink;
@@ -39,33 +40,40 @@ public class ExecutionDependenciesStreamingService {
     private final Map<String, Map<String, Subscriber>> subscribers = new ConcurrentHashMap<>();
     private final Object subscriberLock = new Object();
 
-    private final QueueInterface<Execution> executionQueue;
+    private final BroadcastQueueInterface<FollowExecutionEvent> executionQueue;
     private final ExecutionService executionService;
+    private final ExecutionRepositoryInterface executionRepositoryInterface;
 
-    private Runnable queueConsumer;
+    private QueueSubscriber<FollowExecutionEvent> queueSubscriber;
 
     public record Subscriber(String correlationId, List<FlowNode> dependencies, Map<String, Flow> flows, FluxSink<Event<ExecutionStatusEvent>> sink) {}
 
     @Inject
     public ExecutionDependenciesStreamingService(
-        @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        ExecutionService executionService
+        BroadcastQueueInterface<FollowExecutionEvent> executionQueue,
+        ExecutionService executionService,
+        ExecutionRepositoryInterface executionRepositoryInterface
     ) {
         this.executionQueue = executionQueue;
         this.executionService = executionService;
+        this.executionRepositoryInterface = executionRepositoryInterface;
     }
 
     @PostConstruct
     void startQueueConsumer() {
         // Single queue consumer
-        this.queueConsumer = executionQueue.receive(either -> {
+        this.queueSubscriber = executionQueue.subscriber().subscribe(either -> {
             if (either.isRight()) {
                 log.error("Unable to deserialize execution: {}", either.getRight().getMessage());
                 return;
             }
 
-            Execution execution = either.getLeft();
-            String executionId = execution.getId();
+            if (subscribers.isEmpty()) {
+                return;
+            }
+
+            String executionId = either.getLeft().executionId();
+            Execution execution = executionRepositoryInterface.findById(either.getLeft().tenantId(), executionId).orElseThrow();
             Optional<String> correlationId = execution.getLabels().stream().filter(label -> label.key().equals(CORRELATION_ID)).findAny().map(label -> label.value());
 
             // Get all subscribers for this correlationId
@@ -141,8 +149,8 @@ public class ExecutionDependenciesStreamingService {
 
     @PreDestroy
     void shutdown() {
-        if (queueConsumer != null) {
-            queueConsumer.run();
+        if (queueSubscriber != null) {
+            queueSubscriber.close();
         }
     }
 

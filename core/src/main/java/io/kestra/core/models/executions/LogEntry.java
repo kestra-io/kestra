@@ -5,6 +5,9 @@ import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.event.BroadcastEvent;
+import io.kestra.core.queues.event.DispatchEvent;
+import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
 import lombok.Builder;
@@ -21,7 +24,7 @@ import java.util.stream.Stream;
 
 @Value
 @Builder(toBuilder = true)
-public class LogEntry implements TenantInterface {
+public class LogEntry implements TenantInterface, DispatchEvent {
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
@@ -150,4 +153,9 @@ public class LogEntry implements TenantInterface {
         return map;
     }
 
+    @Override
+    public String key() {
+        // FIXME should we return null instead?
+        return IdUtils.create();
+    }
 }

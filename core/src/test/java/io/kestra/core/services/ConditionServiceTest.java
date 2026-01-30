@@ -11,8 +11,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -37,8 +37,7 @@ class ConditionServiceTest {
     RunContextFactory runContextFactory;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
+    private DispatchQueueInterface<LogEntry> logQueue;
 
     @Test
     void valid() {
@@ -67,7 +66,7 @@ class ConditionServiceTest {
     @Test
     void exception() {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
+        logQueue.addListener(logs::add);
 
         Flow flow = TestsUtils.mockFlow();
         Schedule schedule = Schedule.builder().id("unit").type(Schedule.class.getName()).cron("0 0 1 * *").build();
@@ -85,7 +84,6 @@ class ConditionServiceTest {
         conditionService.valid(flow, conditions, conditionContext);
 
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getNamespace().equals("io.kestra.core.services.conditionservicetest") && logEntry.getFlowId().equals("exception"));
-        receive.blockLast();
         assertThat(matchingLog).isNotNull();
     }
 }

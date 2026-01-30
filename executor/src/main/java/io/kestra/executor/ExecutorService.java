@@ -17,8 +17,6 @@ import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
@@ -40,7 +38,6 @@ import io.opentelemetry.context.Context;
 import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -93,8 +90,7 @@ public class ExecutorService {
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
+    private RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
     private AssetService assetService;
@@ -133,11 +129,8 @@ public class ExecutorService {
                     .withConcurrencyState(ExecutionRunning.ConcurrencyState.CANCELLED);
                 case FAIL -> {
                     var failedExecution = executionRunning.getExecution().failedExecutionFromExecutor(new IllegalStateException("Execution is FAILED due to concurrency limit exceeded"));
-                    try {
-                        logQueue.emitAsync(failedExecution.logs());
-                    } catch (QueueException ex) {
-                        // fail silently
-                    }
+                    var logger = runContextLoggerFactory.create(executionRunning.getExecution());
+                    logger.emitLogs(failedExecution.logs());
                     yield executionRunning
                         .withExecution(failedExecution.execution())
                         .withConcurrencyState(ExecutionRunning.ConcurrencyState.FAILED);
@@ -242,13 +235,8 @@ public class ExecutorService {
 
     public ExecutorContext handleFailedExecutionFromExecutor(ExecutorContext executor, Exception e) {
         Execution.FailedExecutionWithLog failedExecutionWithLog = executor.getExecution().failedExecutionFromExecutor(e);
-
-        try {
-            logQueue.emitAsync(failedExecutionWithLog.logs());
-        } catch (QueueException ex) {
-            // fail silently
-        }
-
+        var logger = runContextLoggerFactory.create(failedExecutionWithLog.execution());
+        logger.emitLogs(failedExecutionWithLog.logs());
         return executor.withExecution(failedExecutionWithLog.execution(), "exception");
     }
 

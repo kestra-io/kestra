@@ -170,8 +170,7 @@ public class ExecutionController {
     private ExecutionDependenciesStreamingService executionDependenciesStreamingService;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
+    protected DispatchQueueInterface<Execution> executionQueue;
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -802,7 +801,7 @@ public class ExecutionController {
                         .ifPresent(propagator -> propagator.inject(Context.current(), executionWithInputs, ExecutionTextMapSetter.INSTANCE));
 
                     executionQueue.emit(executionWithInputs);
-                    eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
+                    eventPublisher.publishEvent(CrudEvent.create(executionWithInputs));
 
                     if (!wait || executionWithInputs.getState().isFailed()) {
                         return Mono.just(ExecutionResponse.fromExecution(

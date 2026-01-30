@@ -17,10 +17,8 @@ import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContextLogger;
+import io.kestra.core.runners.RunContextLoggerFactory;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.Logs;
@@ -28,7 +26,6 @@ import io.kestra.core.utils.MapUtils;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -70,14 +66,10 @@ public class PluginDefaultService {
     protected PluginGlobalDefaultConfiguration pluginGlobalDefault;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    @Nullable
-    protected QueueInterface<LogEntry> logQueue;
+    private RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
     protected PluginRegistry pluginRegistry;
-    
-    private final AtomicBoolean warnOnce = new AtomicBoolean(false);
 
     @PostConstruct
     void validateGlobalPluginDefault() {
@@ -150,15 +142,8 @@ public class PluginDefaultService {
         try {
             return this.injectAllDefaults(flow, false);
         } catch (Exception e) {
-            try {
-                logQueue.emitAsync(RunContextLogger
-                    .logEntries(
-                        Execution.loggingEventFromException(e),
-                        LogEntry.of(execution)
-                    ));
-            } catch (QueueException e1) {
-                // silently do nothing
-            }
+            var logger = runContextLoggerFactory.create(execution);
+            logger.emitLogs(RunContextLogger.logEntries(Execution.loggingEventFromException(e), LogEntry.of(execution)));
             return readWithoutDefaultsOrThrow(flow);
         }
     }

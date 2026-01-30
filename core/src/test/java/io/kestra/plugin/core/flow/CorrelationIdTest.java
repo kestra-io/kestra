@@ -7,6 +7,7 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;

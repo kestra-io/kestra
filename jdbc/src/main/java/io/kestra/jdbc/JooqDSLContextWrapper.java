@@ -40,11 +40,19 @@ public class JooqDSLContextWrapper {
 
             SQLException cause = (SQLException) e.getCause();
 
+            // MySQL/MariaDB vendor codes:
+            // 1213 = ER_LOCK_DEADLOCK
+            // 1205 = ER_LOCK_WAIT_TIMEOUT
+            int vendorCode = cause.getErrorCode();
+            if (vendorCode == 1213 || vendorCode == 1205) {
+                return true;
+            }
+
             return
                 // standard deadlock
                 cause.getSQLState().equals("40001") ||
-                    // postgres deadlock
-                    cause.getSQLState().equals("40P01");
+                // postgres deadlock
+                cause.getSQLState().equals("40P01");
         };
     }
 

@@ -5,6 +5,7 @@ import io.kestra.cli.AbstractApiCommand;
 import io.kestra.cli.services.TenantIdSelectorService;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -81,7 +82,7 @@ public class FlowTestCommand extends AbstractApiCommand {
         ExecutionRepositoryInterface executionRepository = applicationContext.getBean(ExecutionRepositoryInterface.class);
         FlowInputOutput flowInputOutput = applicationContext.getBean(FlowInputOutput.class);
         TenantIdSelectorService tenantService =  applicationContext.getBean(TenantIdSelectorService.class);
-        QueueInterface<Execution> executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
+        DispatchQueueInterface<Execution> executionQueue = applicationContext.getBean(DispatchQueueInterface.class, Qualifiers.byTypeArguments(Execution.class));
 
         Map<String, Object> inputs = new HashMap<>();
 

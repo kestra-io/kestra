@@ -6,16 +6,10 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ConcurrencyLimitRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.ConcurrencyLimit;
-import io.kestra.core.runners.TestRunnerUtils;
-import io.kestra.core.runners.ExecutionEvent;
-import io.kestra.core.runners.ExecutionEventType;
-import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.runners.*;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -48,14 +42,12 @@ class ConcurrencyLimitServiceTest {
 
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
-    private QueueInterface<ExecutionEvent> executionEventQueue;
+    private BroadcastQueueInterface<FollowExecutionEvent> executionEventQueue;
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
+    private DispatchQueueInterface<Execution> executionQueue;
 
     @Inject
     private ConcurrencyLimitRepositoryInterface concurrencyLimitRepository;
@@ -65,7 +57,7 @@ class ConcurrencyLimitServiceTest {
     void unqueueExecution() throws QueueException, TimeoutException, InterruptedException {
         // await for the executions to be terminated
         CountDownLatch terminated = new CountDownLatch(2);
-        Flux<ExecutionEvent> receive = TestsUtils.receive(executionEventQueue, (either) -> {
+        Flux<FollowExecutionEvent> receive = TestsUtils.receive(executionEventQueue, (either) -> {
             if (either.getLeft().flowId().equals("flow-concurrency-queue") && either.getLeft().eventType() == ExecutionEventType.TERMINATED) {
                 terminated.countDown();
             }

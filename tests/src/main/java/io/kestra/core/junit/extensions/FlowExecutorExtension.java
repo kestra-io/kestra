@@ -64,6 +64,10 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
 
     @Override
     public void afterEach(ExtensionContext extensionContext) throws Exception {
+        if (!context.isRunning()) {
+            return;
+        }
+
         ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
         FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
         FlowService flowService = context.getBean(FlowService.class);

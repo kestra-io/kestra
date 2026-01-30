@@ -55,23 +55,21 @@ public class QueueService {
         return VNodes.computeVNode(this.vNodeCount, key);
     }
 
-    public <T extends Event> String serialize(Class<T> cls, T message) throws QueueException {
+    public <T extends Event> byte[] serialize(Class<T> cls, T message) throws QueueException {
         try {
-            String serialize = MAPPER.writeValueAsString(message);
+            byte[] serialize = MAPPER.writeValueAsBytes(message);
 
             if (log.isDebugEnabled()) {
-                log.debug("[{}] produced message: {}", cls.getSimpleName(), serialize);
+                log.debug("[{}] produced message: {}", cls.getSimpleName(), new String(serialize));
             }
 
-            int byteLength = serialize.getBytes(StandardCharsets.UTF_8).length;
-
-            if (queueConfiguration.getMessageProtection() != null && queueConfiguration.getMessageProtection().getEnabled() && byteLength >= queueConfiguration.getMessageProtection().getLimit()) {
+            if (queueConfiguration.getMessageProtection() != null && queueConfiguration.getMessageProtection().getEnabled() && serialize.length >= queueConfiguration.getMessageProtection().getLimit()) {
                 metricRegistry
                     .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, cls.getSimpleName()).increment();
 
                 // we let terminated execution messages to go through anyway
                 if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
-                    throw new MessageTooBigException("[" + cls.getSimpleName() + "] message of size " + byteLength + " has exceeded the configured limit of " + queueConfiguration.getMessageProtection().getLimit());
+                    throw new MessageTooBigException("[" + cls.getSimpleName() + "] message of size " + serialize.length + " has exceeded the configured limit of " + queueConfiguration.getMessageProtection().getLimit());
                 }
             }
 

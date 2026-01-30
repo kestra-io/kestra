@@ -1,14 +1,15 @@
 package io.kestra.queue.jdbc;
 
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.executor.command.ExecutionCommand;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.VNodeDispatchQueueInterface;
-import io.kestra.core.runners.MultipleConditionEvent;
-import io.kestra.core.runners.SubflowExecutionEnd;
+import io.kestra.core.runners.*;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.utils.ExecutorsUtils;
@@ -34,8 +35,22 @@ public class JdbcQueueFactory implements QueueFactoryInterface {
     @Bean
     @Singleton
     @Override
+    public DispatchQueueInterface<Execution> executionQueue() {
+        return new JdbcDispatchQueue<>(Execution.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
     public DispatchQueueInterface<ExecutionCommand> executionCommandQueue() {
         return new JdbcDispatchQueue<>(ExecutionCommand.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
+    public DispatchQueueInterface<ExecutionEvent> executionEventQueue() {
+        return new JdbcDispatchQueue<>(ExecutionEvent.class, queueService, jdbcQueueClient, executorsUtils);
     }
 
     @Bean
@@ -72,7 +87,7 @@ public class JdbcQueueFactory implements QueueFactoryInterface {
     public DispatchQueueInterface<FlowInterface> flowQueue() {
         return new JdbcDispatchQueue<>(FlowInterface.class, queueService, jdbcQueueClient, executorsUtils);
     }
-    
+
     @Bean
     @Singleton
     @Override
@@ -85,5 +100,33 @@ public class JdbcQueueFactory implements QueueFactoryInterface {
     @Override
     public VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue() {
         return new JdbcVNodeDispatchQueue<>(TriggerEvent.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
+    public DispatchQueueInterface<MetricEntry> metricQueue() {
+        return new JdbcDispatchQueue<>(MetricEntry.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
+    public BroadcastQueueInterface<FollowExecutionEvent> followExecutionQueue() {
+        return new JdbcBroadcastQueue<>(FollowExecutionEvent.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
+    public DispatchQueueInterface<LogEntry> logEntryQueue() {
+        return new JdbcDispatchQueue<>(LogEntry.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
+    public BroadcastQueueInterface<FollowLogEvent> followLogEventQueue() {
+        return new JdbcBroadcastQueue<>(FollowLogEvent.class, queueService, jdbcQueueClient, executorsUtils);
     }
 }

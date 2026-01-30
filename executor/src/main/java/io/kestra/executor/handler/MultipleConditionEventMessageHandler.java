@@ -2,6 +2,7 @@ package io.kestra.executor.handler;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -23,8 +24,7 @@ public class MultipleConditionEventMessageHandler implements MessageHandler<Mult
     private MultipleConditionStorageInterface multipleConditionStorage;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    private QueueInterface<Execution> executionQueue;
+    private DispatchQueueInterface<Execution> executionQueue;
 
     @Override
     public void handle(MultipleConditionEvent message) {

@@ -14,8 +14,8 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
@@ -84,8 +84,7 @@ class HttpClientTest {
         .withEnv(Map.of("AUTH_USER", "pr0xy", "AUTH_PASSWORD", "p4ss"));
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    QueueInterface<LogEntry> workerTaskLogQueue;
+    DispatchQueueInterface<LogEntry> workerTaskLogQueue;
 
     @BeforeEach
     void setUp() {
@@ -116,7 +115,7 @@ class HttpClientTest {
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
 
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
+        workerTaskLogQueue.addListener(logs::add);
 
         RunContext runContext = runContextFactory.of(flow, execution);
 

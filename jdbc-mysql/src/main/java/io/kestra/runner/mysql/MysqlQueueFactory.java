@@ -1,8 +1,5 @@
 package io.kestra.runner.mysql;
 
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
@@ -19,22 +16,6 @@ import jakarta.inject.Singleton;
 public class MysqlQueueFactory implements QueueFactoryInterface {
     @Inject
     ApplicationContext applicationContext;
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<Execution> execution() {
-        return new MysqlQueue<>(Execution.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<ExecutionEvent> executionEvent() {
-        return new MysqlQueue<>(ExecutionEvent.class, applicationContext);
-    }
 
     @Override
     @Singleton
@@ -58,22 +39,6 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerTriggerResult> workerTriggerResult() {
         return new MysqlWorkerTriggerResultQueue(applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    @Bean(preDestroy = "close")
-    public QueueInterface<LogEntry> logEntry() {
-        return new MysqlQueue<>(LogEntry.class, applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Named(QueueFactoryInterface.METRIC_QUEUE)
-    @Bean(preDestroy = "close")
-    public QueueInterface<MetricEntry> metricEntry() {
-        return new MysqlQueue<>(MetricEntry.class, applicationContext);
     }
 
     @Override

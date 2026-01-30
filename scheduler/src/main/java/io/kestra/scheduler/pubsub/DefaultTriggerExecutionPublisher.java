@@ -2,10 +2,10 @@ package io.kestra.scheduler.pubsub;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.runners.RunContextLoggerFactory;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -18,18 +18,16 @@ public class DefaultTriggerExecutionPublisher implements TriggerExecutionPublish
     private static final Logger LOG = LoggerFactory.getLogger(DefaultTriggerExecutionPublisher.class);
 
     private final ApplicationEventPublisher<CrudEvent<Execution>> executionEventPublisher;
-
-    // Queues
-    private final QueueInterface<Execution> executionQueue;
-    private final QueueInterface<LogEntry> logQueue;
+    private final DispatchQueueInterface<Execution> executionQueue;
+    private final RunContextLoggerFactory runContextLoggerFactory;
 
     @Inject
     public DefaultTriggerExecutionPublisher(ApplicationEventPublisher<CrudEvent<Execution>> executionEventPublisher,
-                                            QueueInterface<Execution> executionQueue,
-                                            QueueInterface<LogEntry> logQueue) {
+                                            DispatchQueueInterface<Execution> executionQueue,
+                                            RunContextLoggerFactory runContextLoggerFactory) {
         this.executionEventPublisher = executionEventPublisher;
         this.executionQueue = executionQueue;
-        this.logQueue = logQueue;
+        this.runContextLoggerFactory = runContextLoggerFactory;
     }
 
     public void send(final Execution execution) {
@@ -49,11 +47,8 @@ public class DefaultTriggerExecutionPublisher implements TriggerExecutionPublish
 
     private Execution fail(Execution message, Exception e) {
         var failedExecution = message.failedExecutionFromExecutor(e);
-        try {
-            logQueue.emitAsync(failedExecution.logs());
-        } catch (QueueException ex) {
-            // fail silently
-        }
+        var logger = runContextLoggerFactory.create(message);
+        logger.emitLogs(failedExecution.logs());
         return failedExecution.execution().getState().isFailed() ? failedExecution.execution() : failedExecution.execution().withState(State.Type.FAILED);
     }
 

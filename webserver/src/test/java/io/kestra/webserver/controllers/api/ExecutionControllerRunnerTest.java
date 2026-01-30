@@ -13,14 +13,11 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.storage.FileMetas;
 import io.kestra.core.models.tasks.common.EncryptedString;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.*;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.*;
@@ -34,7 +31,6 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
-import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.webserver.models.api.ApiAsyncEvent;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -52,12 +48,10 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.reactor.http.client.ReactorSseClient;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import lombok.extern.slf4j.Slf4j;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 
 import java.io.ByteArrayInputStream;
@@ -100,12 +94,10 @@ class ExecutionControllerRunnerTest {
     public static final String ENCODED_URL_LABEL_VALUE = URL_LABEL_VALUE.replace("/", URLEncoder.encode("/", StandardCharsets.UTF_8));
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_NAMED)
-    protected QueueInterface<Execution> executionQueue;
+    protected DispatchQueueInterface<Execution> executionQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.EXECUTION_EVENT_NAMED)
-    protected QueueInterface<ExecutionEvent> executionEventQueue;
+    protected BroadcastQueueInterface<FollowExecutionEvent> executionEventQueue;
 
     @Inject
     protected BroadcastQueueInterface<ExecutionKilled> killQueue;
@@ -1432,7 +1424,7 @@ class ExecutionControllerRunnerTest {
         // listen to the execution queue
         AtomicReference<Execution> killedExecution = new AtomicReference<>();
         CountDownLatch killedLatch = new CountDownLatch(1);
-        Flux<ExecutionEvent> receiveExecutions = TestsUtils.receive(executionEventQueue, e -> {
+        Flux<FollowExecutionEvent> receiveExecutions = TestsUtils.receive(executionEventQueue, e -> {
             if (e.getLeft().eventType() == ExecutionEventType.TERMINATED) {
                 killedExecution.set(executionRepositoryInterface.findById(e.getLeft().tenantId(), e.getLeft().executionId()).orElseThrow());
                 killedLatch.countDown();

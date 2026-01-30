@@ -19,6 +19,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.queues.event.DispatchEvent;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
@@ -54,7 +55,7 @@ import java.util.zip.CRC32;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class Execution implements SoftDeletable<Execution>, TenantInterface, HasUID {
+public class Execution implements SoftDeletable<Execution>, TenantInterface, HasUID, DispatchEvent {
 
     @With
     @Hidden
@@ -210,6 +211,11 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
         }
 
         return execution;
+    }
+
+    @Override
+    public String key() {
+        return id;
     }
 
 

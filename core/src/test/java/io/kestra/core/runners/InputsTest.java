@@ -10,9 +10,9 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
@@ -49,8 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @KestraTest(startRunner = true)
 public class InputsTest {
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
-    private QueueInterface<LogEntry> logQueue;
+    private DispatchQueueInterface<LogEntry> logQueue;
 
     @Inject
     private TestRunnerUtils runnerUtils;
@@ -395,8 +394,7 @@ public class InputsTest {
     void shouldNotLogSecretInput() throws TimeoutException, QueueException, InterruptedException {
         AtomicReference<LogEntry> logEntry = new AtomicReference<>();
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> {
-            LogEntry left = l.getLeft();
+        logQueue.addListener(left -> {
             if (left.getTenantId().equals("tenant16")){
                 logEntry.set(left);
                 countDownLatch.countDown();
@@ -413,8 +411,6 @@ public class InputsTest {
 
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-
-        receive.blockLast();
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
         assertThat(logEntry.get()).isNotNull();
         assertThat(logEntry.get().getMessage()).isEqualTo("These are my secrets: ****** - ******");

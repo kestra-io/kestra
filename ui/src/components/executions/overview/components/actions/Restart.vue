@@ -44,7 +44,7 @@
         width="600px"
     >
         <template #header>
-            <div class="modal-header">
+            <div class="modal-header m-0">
                 <h3 class="modal-title">
                     {{ t("replay execution title") }}
                 </h3>
@@ -52,57 +52,57 @@
             </div>
         </template>
 
-        <p class="execution-description">
-            {{ t("replay execution description") }}
-        </p>
-        <p class="execution-id">
-            <strong>{{ execution.id }}</strong>
-        </p>
+        <div class="p-3 pt-0">
+            <p class="mb-0">
+                {{ t("replay execution description") }}
+            </p>
+            <Id :value="execution.id" :shrink="false" />
 
-        <h4 class="section-title">
-            {{ t("replay using") }}:
-        </h4>
+            <h4 class="section-title">
+                {{ t("replay using") }}:
+            </h4>
 
-        <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
-            <el-radio label="original" class="radio-item">
-                {{ t("flow revision original") }}
-            </el-radio>
-            <el-radio label="latest" class="radio-item">
-                {{ t("flow revision latest") }}
-            </el-radio>
-            <el-radio label="specific" class="radio-item">
-                {{ t("flow revision specific") }}
-            </el-radio>
-        </el-radio-group>
+            <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
+                <el-radio label="original" class="radio-item">
+                    {{ t("flow revision original") }}
+                </el-radio>
+                <el-radio label="latest" class="radio-item">
+                    {{ t("flow revision latest") }}
+                </el-radio>
+                <el-radio label="specific" class="radio-item">
+                    {{ t("flow revision specific") }}
+                </el-radio>
+            </el-radio-group>
 
-        <el-form
-            v-if="replayRevisionMode === 'specific' && revisionsOptions?.length"
-            class="mt-2"
-        >
-            <el-form-item>
-                <el-select v-model="revisionsSelected">
-                    <el-option
-                        v-for="item in revisionsOptions"
-                        :key="item.value"
-                        :label="item.text"
-                        :value="item.value"
-                    />
-                </el-select>
-            </el-form-item>
-        </el-form>
+            <el-form
+                v-if="replayRevisionMode === 'specific' && revisionsOptions?.length"
+                class="mt-2"
+            >
+                <el-form-item>
+                    <el-select v-model="revisionsSelected">
+                        <el-option
+                            v-for="item in revisionsOptions"
+                            :key="item.value"
+                            :label="item.text"
+                            :value="item.value"
+                        />
+                    </el-select>
+                </el-form-item>
+            </el-form>
 
-        <h4 class="section-title">
-            {{ t("replay inputs") }}:
-        </h4>
+            <h4 class="section-title">
+                {{ t("replay inputs") }}:
+            </h4>
 
-        <el-radio-group v-model="inputMode" class="radio-vertical">
-            <el-radio label="reuse" class="radio-item">
-                {{ t("reuse original inputs") }}
-            </el-radio>
-            <el-radio label="modify" class="radio-item">
-                {{ t("modify inputs") }}
-            </el-radio>
-        </el-radio-group>
+            <el-radio-group v-model="inputMode" class="radio-vertical">
+                <el-radio label="reuse" class="radio-item">
+                    {{ t("reuse original inputs") }}
+                </el-radio>
+                <el-radio label="modify" class="radio-item">
+                    {{ t("modify inputs") }}
+                </el-radio>
+            </el-radio-group>
+        </div>
 
         <template #footer>
             <el-button @click="isOpen = false">
@@ -154,6 +154,7 @@
     import ReplayWithInputs from "../../../ReplayWithInputs.vue"
     import RestartIcon from "vue-material-design-icons/Restart.vue"
     import PlayBoxMultiple from "vue-material-design-icons/PlayBoxMultiple.vue"
+    import Id from "../../../../Id.vue"
 
     const props = defineProps({
         component: {type: String, default: "el-button"},
@@ -332,21 +333,8 @@
     }
 }
 .execution-description {
-    margin-top: 8px;   
-    margin-bottom: 8px;
     font-size: 13px;
-     color: var(--ks-color-text-secondary);
-}
-
-
-.execution-id {
-    margin: 0 0 20px 0;
-    
-    strong {
-        color: var(--bs-code-color);
-        font-size: 16px;
-        font-weight: 700;
-    }
+    color: var(--ks-color-text-secondary);
 }
 
 .section-title {
@@ -360,8 +348,8 @@
     display: flex;
     flex-direction: column;
     align-items: flex-start; 
-    gap: 12px;
 }
+
 .modal-header :deep(.el-divider--horizontal) {
     margin-bottom: 8px;
 }
@@ -381,7 +369,7 @@
     }
     
     :deep(.el-radio__label) {
-        font-size: 14px;
+        font-size: 13px;
         color: var(--el-text-color-regular);
         padding-left: 8px;
     }

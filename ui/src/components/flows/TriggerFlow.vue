@@ -177,7 +177,6 @@
                     namespace: this.namespace,
                     store: true
                 });
-                await this.$nextTick();
             },
             reset() {
                 this.isOpen = false;

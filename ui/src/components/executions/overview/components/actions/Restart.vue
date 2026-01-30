@@ -52,7 +52,6 @@
             </div>
         </template>
 
-        <!-- BODY -->
         <p class="execution-description">
             {{ t("replay execution description") }}
         </p>

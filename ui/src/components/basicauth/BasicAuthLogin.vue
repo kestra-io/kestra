@@ -93,6 +93,7 @@
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth";
     import {shouldShowWelcome} from "../../utils/welcomeGuard";
+    import {identifyPosthogUser} from "../../utils/posthog";
 
     interface Credentials {
         username: string
@@ -236,6 +237,9 @@
             BasicAuth.signIn(trimmedUsername, password)
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
+
+            const configs = await miscStore.loadConfigs()
+            await identifyPosthogUser(configs, {email: trimmedUsername})
 
             credentials.value = {username: "", password: ""}
 

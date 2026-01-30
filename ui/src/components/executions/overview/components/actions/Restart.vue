@@ -392,11 +392,4 @@
         }
     }
 }
-
-.mt-2 {
-    margin-top: 8px;
-}
-.mt-3 {
-    margin-top: 16px;
-}
 </style>

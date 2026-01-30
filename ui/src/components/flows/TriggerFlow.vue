@@ -18,7 +18,7 @@
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+            <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
         </el-dialog>
         <el-dialog
             v-if="isSelectFlowOpen"
@@ -61,7 +61,7 @@
                 </el-form-item>
                 <el-form-item v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
-                        <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+                        <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </el-form-item>
             </el-form>
@@ -125,6 +125,10 @@
             };
         },
         methods: {
+            async handleExecutionStart() {
+                this.closeModal();
+                this.$toast().success(this.$t("execution_started"));
+            },
             onClick() {
                 if (this.$tours["guidedTour"]?.isRunning?.value) {
                     this.$tours["guidedTour"]?.nextStep();

@@ -1,9 +1,9 @@
 package io.kestra.core.models.assets;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Plugin;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.utils.IdUtils;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.annotation.Nullable;
@@ -18,7 +18,7 @@ import java.util.*;
 
 @Getter
 @NoArgsConstructor
-public abstract class Asset implements HasUID, DeletedInterface, Plugin {
+public abstract class Asset implements HasUID, SoftDeletable<Asset>, Plugin {
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     protected String tenantId;
@@ -85,6 +85,7 @@ public abstract class Asset implements HasUID, DeletedInterface, Plugin {
         return (T) this;
     }
 
+    @Override
     public Asset toDeleted() {
         this.deleted = true;
         return this;

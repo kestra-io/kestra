@@ -1,6 +1,6 @@
 <template>
     <TopNavBar v-if="!embed" :title="routeInfo.title" />
-    <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
+    <section v-if="ready" v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
             <DataTable @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="internalPageSize" :page="internalPageNumber" :embed="embed">
                 <template #navbar v-if="!embed || showFilters">
@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch, useTemplateRef} from "vue";
+    import {ref, computed, watch, useTemplateRef} from "vue";
     import {useRoute} from "vue-router";
     import {useI18n} from "vue-i18n";
     import _merge from "lodash/merge";
@@ -150,14 +150,9 @@
     const loadData = (callback?: () => void) => {
         isLoading.value = true;
 
-        const data = {
-            page: props.filters ? internalPageNumber.value : route.query.page || internalPageNumber.value,
-            size: props.filters ? internalPageSize.value : route.query.size || internalPageSize.value,
-            ...props.filters
-        };
-
         logsStore.findLogs(loadQuery({
-            ...data,
+            page: parseInt(route.query?.page as string ?? "1"),
+            size: parseInt(route.query?.size as string ?? "25"),
             minLevel: props.filters ? null : selectedLogLevel.value,
             sort: "timestamp:desc"
         }))
@@ -167,7 +162,7 @@
             });
     };
 
-    const {onPageChanged, queryWithFilter, internalPageNumber, internalPageSize} = useDataTableActions({
+    const {onPageChanged, queryWithFilter, internalPageNumber, internalPageSize, ready} = useDataTableActions({
         loadData
     });
 
@@ -195,13 +190,6 @@
 
     watch(() => props.reloadLogs, (newValue) => {
         if (newValue) refresh();
-    });
-
-    onMounted(() => {
-        // Load data on mount if not embedded
-        if (!props.embed) {
-            loadData();
-        }
     });
 </script>
 <style scoped lang="scss">

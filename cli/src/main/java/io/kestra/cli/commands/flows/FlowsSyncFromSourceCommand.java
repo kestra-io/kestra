@@ -45,7 +45,7 @@ public class FlowsSyncFromSourceCommand extends AbstractApiCommand {
                 stdOut("- %s.%s".formatted(flow.getNamespace(), flow.getId()));
                 count++;
             } catch (RuntimeException e){
-                stdErr("Unable to update flow %s".formatted(persistedFlow.getId()), e.getMessage());
+                stdErr("Unable to update flow %s.%s".formatted(persistedFlow.getNamespace(), persistedFlow.getId()), e.getMessage());
                 flowsInError.add(persistedFlow.getId());
             }
         }

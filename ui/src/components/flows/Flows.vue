@@ -251,19 +251,24 @@
 
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
-                                    <router-link
-                                        :to="{
-                                            name: 'flows/update',
-                                            params: {
-                                                namespace: scope.row.namespace,
-                                                id: scope.row.id,
-                                            },
-                                        }"
-                                    >
-                                        <Kicon :tooltip="$t('details')" placement="left">
-                                            <TextSearch />
+                                    <div class="flow-actions-cell">
+                                        <Kicon :tooltip="t('execute')" placement="left" @click="openExecuteModal(scope.row)">
+                                            <Play />
                                         </Kicon>
-                                    </router-link>
+                                        <router-link
+                                            :to="{
+                                                name: 'flows/update',
+                                                params: {
+                                                    namespace: scope.row.namespace,
+                                                    id: scope.row.id,
+                                                },
+                                            }"
+                                        >
+                                            <Kicon :tooltip="$t('details')" placement="left">
+                                                <TextSearch />
+                                            </Kicon>
+                                        </router-link>
+                                    </div>
                                 </template>
                             </el-table-column>
                         </template>
@@ -271,6 +276,22 @@
                 </template>
             </DataTable>
         </div>
+
+        <el-dialog
+            v-model="showRunModal"
+            destroyOnClose
+            appendToBody
+            width="70%"
+        >
+            <template #header>
+                <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
+            </template>
+            <FlowRun
+                v-if="executionsStore.flow"
+                :redirect="false"
+                @execution-trigger="handleExecutionStart"
+            />
+        </el-dialog>
     </section>
 </template>
 
@@ -292,6 +313,7 @@
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
+    import Play from "vue-material-design-icons/Play.vue";
 
     import Kicon from "../Kicon.vue";
     import {Status} from "@kestra-io/ui-libs";
@@ -300,6 +322,8 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
     import DataTable from "../layout/DataTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
+    //@ts-expect-error no declaration file
+    import FlowRun from "./FlowRun.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
@@ -522,6 +546,26 @@
         updateVisibleColumns(newColumns);
     }
 
+    const showRunModal = ref(false);
+    const selectedFlow = ref<any | null>(null);
+
+    async function openExecuteModal(flow: any) {
+        selectedFlow.value = flow;
+
+        await executionsStore.loadFlowForExecution({
+            namespace: flow.namespace,
+            flowId: flow.id,
+            store: true
+        });
+
+        showRunModal.value = true;
+    }
+
+    function handleExecutionStart() {
+        showRunModal.value = false;
+        toast.success(t("execution_started"));
+    }
+
     function exportFlows() {
         toast.confirm(
             t("flow export", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
@@ -717,6 +761,16 @@
 
     &:hover {
         text-decoration: none;
+    }
+}
+
+.flow-actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    & :deep(.kicon) {
+        cursor: pointer;
     }
 }
 </style>

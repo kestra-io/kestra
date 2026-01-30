@@ -29,6 +29,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.Namespace;
 import io.kestra.core.storages.NamespaceFactory;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -37,6 +38,7 @@ import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.tenants.TenantValidationFilter;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.Pageable;
@@ -47,12 +49,14 @@ import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.sse.Event;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.reactor.http.client.ReactorSseClient;
+import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
@@ -86,6 +90,8 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @Slf4j
 @KestraTest(startRunner = true)
@@ -131,6 +137,18 @@ class ExecutionControllerRunnerTest {
     @Inject
     private NamespaceFactory namespaceFactory;
 
+    @MockBean(TenantService.class)
+    public TenantService getTenantService(){
+        return mock(TenantService.class);
+    }
+    @Inject
+    private TenantService tenantService;
+
+    @MockBean(TenantValidationFilter.class)
+    public TenantValidationFilter getTenantValidationFilter(){
+        return mock(TenantValidationFilter.class);
+    }
+
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TENANT_ID = "main";
 
@@ -151,6 +169,11 @@ class ExecutionControllerRunnerTest {
             - of
             - values""")
         .build();
+
+    @BeforeEach
+    public void initMock(){
+        when(tenantService.resolveTenant()).thenReturn(MAIN_TENANT);
+    }
 
     @AfterEach
     protected void setup() {
@@ -1227,6 +1250,60 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause-test.yaml"})
+    void updateExecutionStatusShouldFailForKilled() throws QueueException, TimeoutException {
+        String tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        HttpResponse<?> killResponse = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/%s/executions/%s/kill".formatted(tenantId, pausedExecution.getId())));
+        assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+
+        Execution killedExecution = awaitExecution(pausedExecution.getId(), exec -> exec.getState().getCurrent().isKilled());
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/%s/executions/%s/change-status?status=WARNING".formatted(tenantId, killedExecution.getId()),
+                    List.of(killedExecution.getId())
+                ),
+                Execution.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(e.getMessage()).contains("Illegal argument: You can only change the state of a terminated non killed execution.");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/%s/executions/change-status/by-ids?newStatus=WARNING".formatted(tenantId),
+                    List.of(killedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("execution not in a terminated state or is killed");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/%s/executions/change-status/by-query?newStatus=WARNING&filters[q][EQUALS]=%s".formatted(tenantId, killedExecution.getId()),
+                    List.of(killedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("execution not in a terminated state or is killed");
+    }
+
+    @Test
     @LoadFlows({"flows/valids/minimal.yaml"})
     void replayExecution() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(TENANT_ID, TESTS_FLOW_NS, "minimal");
@@ -1329,7 +1406,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/sleep-long.yml"})
-    void killExecution() throws TimeoutException, InterruptedException, QueueException {
+    void killExecution() throws InterruptedException, QueueException, TimeoutException {
         // listen to the execution queue
         AtomicReference<Execution> killedExecution = new AtomicReference<>();
         CountDownLatch killedLatch = new CountDownLatch(1);
@@ -2194,7 +2271,7 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/logs.yaml"})
-    void restartExecutionByIdShouldFailed() throws InterruptedException {
+    void restartExecutionByIdShouldFailed() {
         Execution execution = client.toBlocking().retrieve(
             POST(
                 "/api/v1/main/executions/" + TESTS_FLOW_NS + "/logs",
@@ -2252,6 +2329,60 @@ class ExecutionControllerRunnerTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getCount()).isEqualTo(1);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/pause-test.yaml"})
+    void restartExecutionShouldFailForKilled() throws QueueException, TimeoutException {
+        String tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+        Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
+
+        HttpResponse<?> killResponse = client.toBlocking().exchange(
+            HttpRequest.DELETE("/api/v1/%s/executions/%s/kill".formatted(tenantId, pausedExecution.getId())));
+        assertThat(killResponse.getStatus().getCode()).isEqualTo(HttpStatus.ACCEPTED.getCode());
+
+        Execution killedExecution = awaitExecution(pausedExecution.getId(), exec -> exec.getState().getCurrent().isKilled());
+        HttpClientResponseException e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/%s/executions/%s/restart".formatted(tenantId, killedExecution.getId()),
+                    List.of(killedExecution.getId())
+                ),
+                Execution.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).contains("Illegal state: Execution must be terminated or paused and not killed to be restarted, current state is 'KILLED' !");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/%s/executions/restart/by-ids".formatted(tenantId),
+                    List.of(killedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        Optional<String> bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("execution not in state PAUSED or terminated, or is KILLED");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/%s/executions/restart/by-query?filters[q][EQUALS]=%s".formatted(tenantId, killedExecution.getId()),
+                    List.of(killedExecution.getId())
+                ),
+                MutableHttpResponse.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.BAD_REQUEST.getCode());
+        bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("execution not in state PAUSED or terminated, or is KILLED");
     }
 
     @Test

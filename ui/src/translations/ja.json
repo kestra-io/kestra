@@ -503,6 +503,10 @@
         "content": "Flow CodeまたはNo-Codeを開いてflowの編集を開始するか、関連機能のために別のパネル（Topology、Documentation、Files、Blueprints、Namespace Context）を選択してください。",
         "title": "現在、パネルは開いていません。"
       },
+      "pluginDefaults": {
+        "content": "プラグインデフォルトを使用すると、プラグインの設定を一元管理し、namespace内のすべてのflowと共有できます。",
+        "title": "プラグインのデフォルトがまだありません！"
+      },
       "plugins": {
         "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
         "title": "このNamespaceにはプラグインのデフォルトが設定されていません。"
@@ -621,6 +625,8 @@
     "export all templates": "すべてのテンプレートをエクスポート",
     "export_csv": "CSVとしてエクスポート",
     "exports": "エクスポート",
+    "failed to export plugin defaults": "プラグインのデフォルトのエクスポートに失敗しました",
+    "failed to import plugin defaults": "プラグインのデフォルトのインポートに失敗しました",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
     "feeds": {
@@ -1444,13 +1450,36 @@
       "toggle": "プレイグラウンド",
       "tooltip_persistence": "Playgroundをオフにしてから再度オンにすると、ページに留まっている限り情報は保持されます。"
     },
-    "pluginDefaults": "プラグインのデフォルト",
+    "plugin defaults exported": "プラグインのデフォルトがエクスポートされました",
+    "plugin defaults imported": "プラグインのデフォルトがインポートされました",
+    "plugin defaults not imported": "一部のプラグインデフォルトをインポートできませんでした",
+    "pluginDefaults": {
+      "add": "プラグインデフォルトを追加",
+      "add_subtitle": "新しいプラグインのデフォルトをそのプロパティで設定する",
+      "cancel": "キャンセル",
+      "custom": "カスタムプラグイン",
+      "custom_configure": "カスタムプラグインタイプ - YAMLを使用して構成",
+      "custom_placeholder": "プラグインタイプを入力",
+      "custom_type": "カスタムプラグインタイプ",
+      "edit": "プラグインデフォルトを編集",
+      "edit_subtitle": "既存のプラグインのデフォルト設定を変更する",
+      "form": "フォーム",
+      "predefined": "定義済みプラグイン",
+      "select_predefined": "定義済みプラグインを選択",
+      "show_yaml": "YAMLを表示",
+      "title": "プラグインのデフォルト",
+      "update": "プラグインデフォルトを更新",
+      "use_custom": "カスタムを使用",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML設定"
+    },
     "pluginPage": {
       "alt": "プラグインアイコン",
       "search": "{count}+ プラグインを検索",
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。"
     },
+    "plugin_default_already_exists": "<code>{type}</code>のプラグインデフォルトはすでに存在します。",
     "plugins": {
       "name": "プラグイン",
       "names": "プラグイン",

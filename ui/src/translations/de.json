@@ -503,6 +503,10 @@
         "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Dateien, Blueprints, Namespace-Kontext) für verwandte Funktionen aus.",
         "title": "Derzeit sind keine Panels geöffnet."
       },
+      "pluginDefaults": {
+        "content": "Plugin-Standardeinstellungen ermöglichen es Ihnen, Ihre Plugin-Konfiguration zentral zu verwalten und mit allen flows in Ihrem namespace zu teilen.",
+        "title": "Sie haben noch keine Plugin-Standards!"
+      },
       "plugins": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Namespace sind keine Plugin-Standardeinstellungen festgelegt."
@@ -621,6 +625,8 @@
     "export all templates": "Alle Vorlagen exportieren",
     "export_csv": "Als CSV exportieren",
     "exports": "Exporte",
+    "failed to export plugin defaults": "Fehler beim Exportieren der Plugin-Standardeinstellungen",
+    "failed to import plugin defaults": "Fehler beim Importieren der Plugin-Standardeinstellungen",
     "failed to render pdf": "PDF-Vorschau konnte nicht gerendert werden",
     "false": "Falsch",
     "feeds": {
@@ -1444,13 +1450,36 @@
       "toggle": "Spielplatz",
       "tooltip_persistence": "Wenn Sie den Playground ausschalten und wieder einschalten, bleiben die Informationen erhalten, solange Sie auf der Seite bleiben."
     },
-    "pluginDefaults": "Plugin-Standardeinstellungen",
+    "plugin defaults exported": "Plugin-Standardeinstellungen exportiert",
+    "plugin defaults imported": "Plugin-Standardeinstellungen importiert",
+    "plugin defaults not imported": "Einige Plugin-Standardeinstellungen konnten nicht importiert werden",
+    "pluginDefaults": {
+      "add": "Plugin-Standard hinzufügen",
+      "add_subtitle": "Konfigurieren Sie ein neues Plugin-Standard mit seinen Eigenschaften",
+      "cancel": "Abbrechen",
+      "custom": "Benutzerdefiniertes Plugin",
+      "custom_configure": "Benutzerdefinierter Plugin-Typ - Konfiguration mit YAML",
+      "custom_placeholder": "Geben Sie den Plugin-Typ ein",
+      "custom_type": "Benutzerdefinierter Plugin-Typ",
+      "edit": "Standard-Plugin bearbeiten",
+      "edit_subtitle": "Ändern Sie die bestehende Standardkonfiguration des Plugins",
+      "form": "Formular",
+      "predefined": "Vordefiniertes Plugin",
+      "select_predefined": "Wählen Sie vordefiniertes Plugin",
+      "show_yaml": "YAML anzeigen",
+      "title": "Plugin-Standardeinstellungen",
+      "update": "Plugin-Standard aktualisieren",
+      "use_custom": "Benutzerdefiniert verwenden",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML-Konfiguration"
+    },
     "pluginPage": {
       "alt": "Plugins-Symbol",
       "search": "Suche in {count}+ Plugins",
       "title1": "Plugins sind Bausteine für Ihre Workflows.",
       "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen."
     },
+    "plugin_default_already_exists": "Standard-Plugin für <code>{type}</code> existiert bereits.",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",

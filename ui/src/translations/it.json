@@ -503,6 +503,10 @@
         "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Files, Blueprints, Namespace Context) per funzionalità correlate.",
         "title": "Nessun pannello è attualmente aperto."
       },
+      "pluginDefaults": {
+        "content": "I valori predefiniti del plugin ti permettono di gestire centralmente la configurazione del tuo plugin e condividerla con tutti i flow nel tuo namespace.",
+        "title": "Non hai ancora impostazioni predefinite per i plugin!"
+      },
       "plugins": {
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione.",
         "title": "Nessun valore predefinito del plugin è impostato per questo Namespace."
@@ -621,6 +625,8 @@
     "export all templates": "Esporta tutti i template",
     "export_csv": "Esporta come CSV",
     "exports": "Esportazioni",
+    "failed to export plugin defaults": "Impossibile esportare i valori predefiniti del plugin",
+    "failed to import plugin defaults": "Impossibile importare i default del plugin",
     "failed to render pdf": "Impossibile visualizzare l'anteprima PDF",
     "false": "Falso",
     "feeds": {
@@ -1444,13 +1450,36 @@
       "toggle": "Playground",
       "tooltip_persistence": "Se disattivi e riattivi il Playground, le informazioni rimangono finché resti sulla pagina."
     },
-    "pluginDefaults": "Plugin predefiniti",
+    "plugin defaults exported": "Predefiniti del plugin esportati",
+    "plugin defaults imported": "Predefiniti del plugin importati",
+    "plugin defaults not imported": "Alcuni valori predefiniti del plugin non possono essere importati",
+    "pluginDefaults": {
+      "add": "Aggiungi Plugin Predefinito",
+      "add_subtitle": "Configura un nuovo plugin predefinito con le sue proprietà",
+      "cancel": "Annulla",
+      "custom": "Plugin Personalizzato",
+      "custom_configure": "Tipo di plugin personalizzato - configurare utilizzando YAML",
+      "custom_placeholder": "Inserisci il tipo di plugin",
+      "custom_type": "Tipo di plugin personalizzato",
+      "edit": "Modifica Plugin Predefinito",
+      "edit_subtitle": "Modifica la configurazione predefinita del plugin esistente",
+      "form": "Modulo",
+      "predefined": "Plugin Predefinito",
+      "select_predefined": "Seleziona Plugin Predefinito",
+      "show_yaml": "Mostra YAML",
+      "title": "Predefiniti del Plugin",
+      "update": "Aggiorna Plugin Default",
+      "use_custom": "Usa Personalizzato",
+      "yaml": "YAML",
+      "yaml_configuration": "Configurazione YAML"
+    },
     "pluginPage": {
       "alt": "Icona Plugin",
       "search": "Cerca tra oltre {count} plugin",
       "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",
       "title2": "Cerca tasks e triggers per costruire il tuo flow."
     },
+    "plugin_default_already_exists": "Il plugin predefinito per <code>{type}</code> esiste già.",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",

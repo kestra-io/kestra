@@ -172,7 +172,11 @@
 
     const parseValue = (value) => {
         const date = moment(value, moment.ISO_8601, true);
-        return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
+        return date.isValid() ? date.format(KestraUtils.getDateFormat(
+            route.query.startDate ?? route.query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] as string,
+            route.query.endDate ?? route.query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] as string,
+            route.query["filters[timeRange][EQUALS]"]
+        )) : value;
     };
 
     const parsedData = computed(() => {

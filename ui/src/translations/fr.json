@@ -595,6 +595,7 @@
         "title": "Composants du Workflow"
       }
     },
+    "execution_started": "L'exécution a commencé !",
     "execution_starts_progress": "Une fois l'exécution commencée, vous verrez les mises à jour de progression ici.",
     "execution_status": "L'exécution est :",
     "executions": "Exécutions",

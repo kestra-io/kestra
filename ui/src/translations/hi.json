@@ -595,6 +595,7 @@
         "title": "वर्कफ़्लो घटक"
       }
     },
+    "execution_started": "निष्पादन शुरू हो गया है!",
     "execution_starts_progress": "जैसे ही execution शुरू होता है, आपको यहाँ प्रगति अपडेट दिखाई देंगे।",
     "execution_status": "Execution है:",
     "executions": "निष्पादन",

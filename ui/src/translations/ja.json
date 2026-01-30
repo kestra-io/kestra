@@ -595,6 +595,7 @@
         "title": "ワークフローコンポーネント"
       }
     },
+    "execution_started": "実行が開始されました！",
     "execution_starts_progress": "実行が開始されると、ここに進行状況の更新が表示されます。",
     "execution_status": "実行は:",
     "executions": "実行",

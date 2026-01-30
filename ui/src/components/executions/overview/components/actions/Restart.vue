@@ -36,7 +36,6 @@
         </span>
     </el-tooltip>
 
-    <!-- REFACTORED REPLAY MODAL -->
     <el-dialog
         v-if="enabled && isOpen"
         v-model="isOpen"
@@ -62,10 +61,9 @@
         </p>
 
         <h4 class="section-title">
-            {{ t("replay using") }}
+            {{ t("replay using") }}:
         </h4>
 
-        <!-- CHANGED: revision selection -->
         <el-radio-group v-model="replayRevisionMode" class="radio-vertical">
             <el-radio label="original" class="radio-item">
                 {{ t("flow revision original") }}
@@ -95,10 +93,9 @@
         </el-form>
 
         <h4 class="section-title">
-            {{ t("replay inputs") }}
+            {{ t("replay inputs") }}:
         </h4>
 
-        <!-- CHANGED: input selection -->
         <el-radio-group v-model="inputMode" class="radio-vertical">
             <el-radio label="reuse" class="radio-item">
                 {{ t("reuse original inputs") }}
@@ -108,7 +105,6 @@
             </el-radio>
         </el-radio-group>
 
-        <!-- FOOTER -->
         <template #footer>
             <el-button @click="isOpen = false">
                 {{ t("cancel") }}

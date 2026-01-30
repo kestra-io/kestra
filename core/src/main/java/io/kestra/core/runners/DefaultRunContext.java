@@ -620,8 +620,7 @@ public class DefaultRunContext extends RunContext {
                     this.assetEmitter = assetManagerFactory.of(
                         Optional.ofNullable(task).map(Task::getAssets)
                             .or(() -> Optional.ofNullable(trigger).map(AbstractTrigger::getAssets))
-                            .flatMap(throwFunction(asset -> this.render(asset).as(AssetsDeclaration.class)))
-                            .map(AssetsDeclaration::isEnableAuto)
+                            .flatMap(throwFunction(assets -> render(assets.getEnableAuto()).as(Boolean.class)))
                             .orElse(false)
                     );
                 }

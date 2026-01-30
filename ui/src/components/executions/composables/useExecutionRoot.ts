@@ -99,7 +99,8 @@ export function useExecutionRoot() {
                 name: "outputs",
                 component: ExecutionOutput,
                 title: t("outputs"),
-                maximized: true
+                maximized: true,
+                noOverflow: true
             },
             {
                 name: "metrics",

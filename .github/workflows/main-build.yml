@@ -45,6 +45,8 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+    with:
+      java-version: 25
 
   frontend-tests:
     name: Frontend tests
@@ -61,6 +63,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-publish-docker.yml@main
     with:
       plugin-version: 'LATEST-SNAPSHOT'
+      java-version: 25
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -79,6 +82,8 @@ jobs:
       SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
       SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
       SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
+    with:
+      java-version: 25
 
   end:
     runs-on: ubuntu-latest

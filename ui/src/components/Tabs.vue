@@ -14,7 +14,7 @@
                     </el-tooltip>
                     <EnterpriseBadge :enable="tab.locked">
                         {{ tab.title }}
-                        <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
+                        <el-badge :type="tab.badgeType || (tab.count > 0 ? 'danger' : 'primary')" :value="tab.count" v-if="tab.count !== undefined" />
                     </EnterpriseBadge>
                 </component>
             </template>
@@ -56,6 +56,7 @@
         disabled?: boolean;
         props?: any;
         count?: number;
+        badgeType?: string;
         locked?: boolean;
         query?: any;
         component?: any;

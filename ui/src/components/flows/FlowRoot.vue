@@ -277,13 +277,18 @@
                         this.flowStore.flow.namespace,
                     )
                 ) {
-                    tabs.push({
+                    const dependenciesTab = {
                         name: "dependencies",
                         component: Dependencies,
                         title: this.$t("dependencies"),
-                        count: this.dependenciesCount,
                         maximized: true
-                    });
+                    };
+                    if (this.dependenciesCount > 0) {
+                        dependenciesTab.count = this.dependenciesCount;
+                        dependenciesTab.badgeType = "primary";
+                    } else
+                        dependenciesTab.disabled = true;
+                    tabs.push(dependenciesTab);
                 }
 
                 tabs.push({

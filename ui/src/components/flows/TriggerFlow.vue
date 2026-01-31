@@ -3,7 +3,7 @@
         <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
-        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :icon="icon.Play" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
         <el-dialog
@@ -72,7 +72,6 @@
 
 <script>
     import FlowRun from "./FlowRun.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
     import {useMediaQuery} from "@vueuse/core";
@@ -119,7 +118,6 @@
                 localNamespace: undefined,
                 isLargeScreen: useMediaQuery("(min-width: 768px)"),
                 icon: {
-                    LightningBolt: shallowRef(LightningBolt),
                     Play: shallowRef(Play)
                 }
             };

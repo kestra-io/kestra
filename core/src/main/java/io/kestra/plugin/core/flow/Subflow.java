@@ -51,8 +51,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create a subflow execution.",
-    description = "Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language. Restarting a parent flow will restart any subflows that has previously been executed."
+    title = "Call another flow as a subflow.",
+    description = """
+        Starts a separate execution of `namespace`/`flowId` (optionally a specific revision), passing inputs and labels, and optionally waits for completion. If the parent restarts, previously started subflows are restarted too.
+
+        Use `wait`/`transmitFailed` to control propagation of the subflow result back to the parent."""
 )
 @Plugin(
     examples = {

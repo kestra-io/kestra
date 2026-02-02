@@ -1,6 +1,6 @@
 package io.kestra.runner.h2;
 
-import io.kestra.core.runners.AbstractRunnerConcurrencyTest;
+import io.kestra.jdbc.runner.JdbcConcurrencyRunnerTest;
 
-public class H2RunnerConcurrencyTest extends AbstractRunnerConcurrencyTest {
+public class H2RunnerConcurrencyTest extends JdbcConcurrencyRunnerTest {
 }

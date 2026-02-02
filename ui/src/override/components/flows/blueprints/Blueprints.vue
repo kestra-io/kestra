@@ -35,9 +35,8 @@
     import {useI18n} from "vue-i18n";
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
     import DottedLayout from "../../../../components/layout/DottedLayout.vue";
-    // @ts-expect-error - Component not typed
-    import BlueprintDetail from "../../../../components/flows/blueprints/BlueprintDetail.vue";
-    import BlueprintsBrowser from "./BlueprintsBrowser.vue";
+    import BlueprintDetail from "../../../../override/components/flows/blueprints/BlueprintDetail.vue";
+    import BlueprintsBrowser from "../../../../override/components/flows/blueprints/BlueprintsBrowser.vue";
     import DemoBlueprints from "../../../../components/demo/Blueprints.vue";
     import useRouteContext from "../../../../composables/useRouteContext";
 

@@ -13,9 +13,7 @@
                     @show="handlePopoverShow"
                 >
                     <template #reference>
-                        <el-button class="trigger-icon" @click="copyLink(trigger)" size="small">
-                            <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
-                        </el-button>
+                        <TaskIcon :onlyIcon="true" :cls="trigger?.type" :icons="pluginsStore.icons" />
                     </template>
                     <template #default>
                         <TriggerVars :data="trigger" :execution="execution" @on-copy="copyLink(trigger)" />

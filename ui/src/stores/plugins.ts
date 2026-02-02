@@ -16,7 +16,10 @@ export interface PluginComponent {
     version?: string;
     description?: string;
     properties?: Record<string, any>;
-    schema: Schemas;
+    schema: {
+        properties: Schemas;
+        outputs: Schemas;
+    };
     markdown?: string;
 }
 
@@ -208,7 +211,8 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         const id = options.version ? `${options.cls}/${options.version}` : options.cls;
-        const cachedPluginDoc = pluginsDocumentation.value[options.hash ? options.hash + id : id];
+        const cacheKey = options.hash ? options.hash + id : id;
+        const cachedPluginDoc = pluginsDocumentation.value[cacheKey];
         if (!options.all && cachedPluginDoc) {
             nextTick(() => {
                 plugin.value = cachedPluginDoc;
@@ -216,13 +220,16 @@ export const usePluginsStore = defineStore("plugins", () => {
             return cachedPluginDoc;
         }
 
-        const baseUrl = options.version ?
+        const url = options.version ?
             `${apiUrlWithoutTenants()}/plugins/${options.cls}/versions/${options.version}` :
             `${apiUrlWithoutTenants()}/plugins/${options.cls}`;
 
-        const url = options.hash ? `${baseUrl}?hash=${options.hash}` : baseUrl;
-
-        const response = await axios.get<PluginComponent>(url);
+        const response = await axios.get<PluginComponent>(url, options.all ? {
+            params: {
+                all: options.all,
+                hash: options.hash,
+            }
+        } : {});
 
         if (options.commit !== false) {
             if (options.all === true) {
@@ -233,10 +240,7 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         if (!options.all) {
-            pluginsDocumentation.value = {
-                ...pluginsDocumentation.value,
-                [options.hash ? options.hash+id : id]: response.data
-            };
+            pluginsDocumentation.value[cacheKey] = response.data;
         }
 
         return response.data;
@@ -283,30 +287,30 @@ export const usePluginsStore = defineStore("plugins", () => {
         });
     }
 
-    let currentlyLoading: {type?: string; version?: string} | undefined = undefined;
+    let currentlyLoading: {cls?: string; version?: string} | undefined = undefined;
 
-    async function updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean} & Record<string, any>) | undefined) {
-        if (!pluginElement?.type || !allTypes.value.includes(pluginElement.type)) {
+    async function updateDocumentation(pluginElement?: (LoadOptions & {forceRefresh?: boolean}) | undefined) {
+        if (!pluginElement?.cls || !allTypes.value.includes(pluginElement.cls)) {
             editorPlugin.value = undefined;
             currentlyLoading = undefined;
             return;
         }
 
-        const {type, version, forceRefresh = false} = pluginElement;
+        const {cls,  version, hash, forceRefresh = false} = pluginElement;
 
-        if (currentlyLoading?.type === type &&
+        if (currentlyLoading?.cls === cls &&
             currentlyLoading?.version === version &&
             !forceRefresh) {
             return
         }
 
         if (!forceRefresh &&
-            editorPlugin.value?.cls === type &&
+            editorPlugin.value?.cls === cls &&
             editorPlugin.value?.version === version) {
             return;
         }
 
-        let payload: LoadOptions = {cls: type, hash: pluginElement.hash};
+        let payload: LoadOptions = {cls, version, hash}
 
         if (version !== undefined) {
             if (semver.valid(version) !== null ||
@@ -321,21 +325,21 @@ export const usePluginsStore = defineStore("plugins", () => {
         }
 
         currentlyLoading = {
-            type,
+            cls,
             version,
         };
 
         const pluginData = await load(payload);
 
         editorPlugin.value = {
-            cls: type,
+            cls,
             version,
             ...pluginData,
         };
 
-        trackPluginDocumentationView(type);
+        trackPluginDocumentationView(cls);
 
-        forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "type" && k !== "version" && k !== "forceRefresh");
+        forceIncludeProperties.value = Object.keys(pluginElement).filter(k => k !== "cls" && k !== "version" && k !== "forceRefresh");
     }
 
     const {icons, iconsLoaded, fetchIcons} = usePluginsIcons()

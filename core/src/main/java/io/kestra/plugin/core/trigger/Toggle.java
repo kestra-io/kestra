@@ -30,7 +30,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Toggle a trigger: enable or disable it."
+    title = "Enable or disable a trigger (deprecated).",
+    description = """
+        Deprecated; use `io.kestra.plugin.kestra.triggers.Toggle`.
+
+        Renders target Flow/Namespace/trigger id (defaults to current Flow) and flips its `disabled` flag via the trigger repository. Fails if the Flow/trigger isn’t found or not authorized."""
 )
 @Plugin(
     examples = {
@@ -73,6 +77,7 @@ import java.util.Optional;
     },
     aliases = "io.kestra.core.tasks.trigger.Toggle"
 )
+@Deprecated(since = "1.2", forRemoval = true)
 public class Toggle extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "The flow identifier of the trigger to toggle",

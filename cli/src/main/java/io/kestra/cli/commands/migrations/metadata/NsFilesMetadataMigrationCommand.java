@@ -15,11 +15,14 @@ public class NsFilesMetadataMigrationCommand extends AbstractCommand {
     @Inject
     private Provider<MetadataMigrationService> metadataMigrationServiceProvider;
 
+    @CommandLine.Option(names = {"-lm", "--log-migrations"}, description = "Log all files that are migrated", defaultValue = "false")
+    public boolean logMigrations = false;
+
     @Override
     public Integer call() throws Exception {
         super.call();
         try {
-            metadataMigrationServiceProvider.get().nsFilesMigration();
+            metadataMigrationServiceProvider.get().nsFilesMigration(logMigrations);
         } catch (Exception e) {
             System.err.println("❌ Namespace Files Metadata migration failed: " + e.getMessage());
             e.printStackTrace();

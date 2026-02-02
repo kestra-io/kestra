@@ -42,6 +42,7 @@
                 :elements="getElements()"
                 @select="selectNode"
                 :selected="selectedNodeID"
+                :subtype="SUBTYPE"
             />
         </el-splitter-panel>
     </el-splitter>
@@ -54,7 +55,7 @@
     import Empty from "../layout/empty/Empty.vue";
 
     import {useDependencies} from "./composables/useDependencies";
-    import {FLOW, EXECUTION, NAMESPACE} from "./utils/types";
+    import {FLOW, EXECUTION, NAMESPACE, ASSET} from "./utils/types";
 
     const PANEL = {size: "70%", min: "30%", max: "80%"};
 
@@ -66,13 +67,27 @@
     import SelectionRemove from "vue-material-design-icons/SelectionRemove.vue";
     import FitToScreenOutline from "vue-material-design-icons/FitToScreenOutline.vue";
 
-    const SUBTYPE = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : EXECUTION;
+    const props = defineProps<{
+        fetchAssetDependencies?: () => Promise<{
+            data: any[];
+            count: number;
+        }>;
+    }>();
+
+    const SUBTYPE = route.name === "flows/update" ? FLOW : route.name === "namespaces/update" ? NAMESPACE : route.name === "assets/update" ? ASSET : EXECUTION;
 
     const container = ref(null);
-    const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE ? String(route.params.id) : String(route.params.flowId);
+    const initialNodeID: string = SUBTYPE === FLOW || SUBTYPE === NAMESPACE || SUBTYPE === ASSET ? String(route.params.id || route.params.assetId) : String(route.params.flowId);
     const TESTING = false; // When true, bypasses API data fetching and uses mock/test data.
 
-    const {getElements, isLoading, isRendering, selectedNodeID, selectNode, handlers} = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING);
+    const {
+        getElements,
+        isLoading,
+        isRendering,
+        selectedNodeID,
+        selectNode,
+        handlers,
+    } = useDependencies(container, SUBTYPE, initialNodeID, route.params, TESTING, props.fetchAssetDependencies);
 </script>
 
 <style scoped lang="scss">
@@ -95,7 +110,7 @@
 
         & .controls {
             position: absolute;
-            bottom: 10px;
+            bottom: 16px;
             left: 10px;
             display: flex;
             flex-direction: column;

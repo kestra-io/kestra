@@ -489,9 +489,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             Await.until(() -> this.triggerState.findLast(trigger).map(t -> t.getDisabled()).orElse(false).booleanValue(), Duration.ofMillis(100), Duration.ofSeconds(10));
         }
     }
-
     @Test
-    void failedEvaluationTest() {
+    void failedEvaluationFromFailedCondition() {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "failedEvaluation", false)
@@ -527,6 +526,61 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
+                assertThat(execution).isNotNull();
+                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
+                assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+                queueCount.countDown();
+            });
+
+            scheduler.run();
+
+            queueCount.await(1, TimeUnit.MINUTES);
+            // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
+            receive.blockLast();
+
+            assertThat(queueCount.getCount()).isEqualTo(0L);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    @Test
+    void failedEvaluationFromInvalidExpression() {
+        // mock flow listeners
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "failedEvaluation", false)
+            .inputs(
+                Map.of("invalidExpressionInput", Expression.builder()
+                    .type(Expression.class.getName())
+                    .expression(Property.ofExpression("{{ now().hour == 0 ? 3 : 2 }}"))
+                    .build()
+                )
+            )
+            .build();
+        FlowWithSource flow = createFlow(this.tenantId,Collections.singletonList(schedule));
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        // to avoid waiting too much before a trigger execution, we add a last trigger with a date now - 1m.
+        Trigger lastTrigger = Trigger
+            .builder()
+            .triggerId("failedEvaluation")
+            .tenantId(this.tenantId)
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(ZonedDateTime.now().minusMinutes(1L))
+            .build();
+        triggerState.create(lastTrigger);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        // scheduler
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+            // wait for execution
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+                Execution execution = either.getLeft();
+                assertThat(execution).isNotNull();
                 assertThat(execution.getFlowId()).isEqualTo(flow.getId());
                 assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 

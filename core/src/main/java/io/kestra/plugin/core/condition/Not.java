@@ -27,7 +27,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to exclude other conditions."
+    title = "Invert one or more conditions.",
+    description = """
+        Fails the evaluation if any nested condition is true; otherwise passes.
+
+        Combine with other schedule conditions to express “not these dates/states” patterns."""
 )
 @Plugin(
     examples = {

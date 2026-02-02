@@ -30,28 +30,65 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Fetch execution logs and store them in a file.",
-    description = "This task is useful to automate moving logs between various systems and environments."
+    title = "Fetch execution logs to a file (deprecated).",
+    description = """
+        Deprecated; use `io.kestra.plugin.kestra.logs.Fetch`.
+
+        Streams logs for a given execution (current by default) into an ION file in internal storage. You can filter by task ids and minimum log level. Execution can be targeted via `executionId`/`namespace`/`flowId` with ACL checks."""
 )
 @Plugin(
     examples = {
         @Example(
-            code = {
-                "level: INFO",
-                "executionId: \"{{ trigger.executionId }}\""
-            }
+            title = "Fetch ERROR level logs from the same execution.",
+            full = true,
+            code = """
+                id: fetch_logs
+                namespace: company.team
+
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World! 🚀
+
+                  - id: error_message
+                    type: io.kestra.plugin.core.log.Log
+                    level: ERROR
+                    message: This is an error message
+
+                  - id: fetch
+                    type: io.kestra.plugin.core.log.Fetch
+                    executionId: "{{ execution.id }}"
+                    level: ERROR
+            """
         ),
         @Example(
-            code = {
-                "level: WARN",
-                "executionId: \"{{ execution.id }}\"",
-                "tasksId: ",
-                "  - \"previous_task_id\""
-            }
+            title = "Fetch INFO level logs from the `hello` task from the same execution.",
+            full = true,
+            code = """
+                id: fetch_logs
+                namespace: company.team
+
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: Hello World! 🚀
+
+                  - id: error_message
+                    type: io.kestra.plugin.core.log.Log
+                    level: ERROR
+                    message: This is an error message
+
+                  - id: fetch
+                    type: io.kestra.plugin.core.log.Fetch
+                    level: INFO
+                    tasksId:
+                      - hello
+            """
         )
     },
     aliases = "io.kestra.core.tasks.log.Fetch"
 )
+@Deprecated(since = "1.3", forRemoval = true)
 public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Schema(
         title = "Filter for a specific namespace in case `executionId` is set."

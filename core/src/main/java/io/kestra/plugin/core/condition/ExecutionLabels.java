@@ -29,7 +29,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition that checks labels of an execution."
+    title = "Match executions by label set.",
+    description = """
+        Evaluates true only if the execution carries all provided labels. Labels can be declared as a map or list; system-reserved labels are rejected.
+
+        Useful for filtering Flow triggers to specific environments, owners, or any custom tagging strategy."""
 )
 @Plugin(
     examples = {

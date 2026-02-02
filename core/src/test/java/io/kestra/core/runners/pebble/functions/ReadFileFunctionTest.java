@@ -10,8 +10,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.annotation.Property;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.pebbletemplates.pebble.error.PebbleException;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -34,7 +33,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest(rebuildContext = true)
+@MicronautTest(rebuildContext = true)
 @Property(name="kestra.server-type", value="WORKER")
 @Execution(ExecutionMode.SAME_THREAD)
 class ReadFileFunctionTest {

@@ -1,0 +1,10 @@
+id: each-pause
+namespace: io.kestra.tests
+
+tasks:
+  - id: each_task
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["a", "b"]'
+    tasks:
+      - id: pause
+        type: io.kestra.plugin.core.flow.Pause

@@ -7,14 +7,14 @@
         v-if="deleted"
         type="default"
         :icon="BackupRestore"
-        :label="t('restore')"
+        :label="$t('restore')"
         @click="restoreFlow"
     />
     <Action
         v-if="canEdit && !deleted && tab !== 'edit'"
         type="default"
         :icon="Pencil"
-        :label="t('edit flow')"
+        :label="$t('edit flow')"
         @click="editFlow"
     />
     <TriggerFlow
@@ -28,7 +28,6 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    import {useI18n} from "vue-i18n";
     import {useRoute, useRouter} from "vue-router";
     import {useFlowStore} from "../../../stores/flow";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -43,8 +42,6 @@
     import action from "../../../models/action";
     import {useAuthStore} from "override/stores/auth";
     import {useUnsavedChangesStore} from "../../../stores/unsavedChanges";
-
-    const {t} = useI18n();
 
     const onSelectDashboard = (value: any) => {
         router.replace({

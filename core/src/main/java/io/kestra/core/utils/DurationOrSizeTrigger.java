@@ -27,7 +27,7 @@ public class DurationOrSizeTrigger<V> implements Predicate<Collection<V>> {
             return true;
         }
 
-        if (buffer.size() > 0 && this.next.isBefore(Instant.now())) {
+        if (!buffer.isEmpty() && this.next.isBefore(Instant.now())) {
             this.nextDate();
             return true;
         }

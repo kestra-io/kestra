@@ -103,10 +103,46 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
+        METADATA("metadata") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
+            }
+        },
         FLOW_ID("flowId") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
+            }
+        },
+        FLOW_REVISION("flowRevision") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN);
+            }
+        },
+        ID("id") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX);
+            }
+        },
+        ASSET_ID("assetId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX);
+            }
+        },
+        TYPE("type") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX);
+            }
+        },
+        CREATED("created") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
         },
         UPDATED("updated") {
@@ -151,7 +187,25 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.IN, Op.NOT_IN);
             }
         },
+        TRIGGER_STATE("triggerState"){
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
         EXECUTION_ID("executionId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.IN, Op.NOT_IN);
+            }
+        },
+        TASK_ID("taskId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.IN, Op.NOT_IN);
+            }
+        },
+        TASK_RUN_ID("taskRunId") {
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.IN, Op.NOT_IN);
@@ -271,7 +325,7 @@ public record QueryFilter(
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.QUERY, Field.SCOPE, Field.NAMESPACE, Field.WORKER_ID, Field.FLOW_ID,
-                    Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID
+                    Field.START_DATE, Field.END_DATE, Field.TRIGGER_ID, Field.TRIGGER_STATE
                 );
             }
         },
@@ -304,6 +358,50 @@ public record QueryFilter(
                     Field.PARENT_PATH,
                     Field.VERSION,
                     Field.UPDATED
+                );
+            }
+        },
+        ASSET {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.ID,
+                    Field.TYPE,
+                    Field.NAMESPACE,
+                    Field.METADATA,
+                    Field.UPDATED
+                );
+            }
+        },
+        ASSET_USAGE {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.ASSET_ID,
+                    Field.NAMESPACE,
+                    Field.FLOW_ID,
+                    Field.FLOW_REVISION,
+                    Field.EXECUTION_ID,
+                    Field.TASK_ID,
+                    Field.TASK_RUN_ID,
+                    Field.CREATED
+                );
+            }
+        },
+        ASSET_LINEAGE_EVENT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.ASSET_ID,
+                    Field.NAMESPACE,
+                    Field.FLOW_ID,
+                    Field.FLOW_REVISION,
+                    Field.EXECUTION_ID,
+                    Field.TASK_ID,
+                    Field.TASK_RUN_ID,
+                    Field.CREATED
                 );
             }
         };

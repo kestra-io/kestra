@@ -21,7 +21,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -40,6 +38,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -177,11 +177,29 @@ class KVControllerTest {
     @ParameterizedTest
     @MethodSource("kvGetKeyValueArgs")
     void getKeyValue(Object value, KVType expectedType, String expectedValue) throws IOException {
+        Instant beforeInsertion = Instant.now();
         kvStore().put("my-key", new KVValueAndMetadata(new KVMetadata(null, Instant.now().plus(Duration.ofMinutes(5))), value));
+        Instant afterInsertion = Instant.now();
 
         String res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key"), String.class);
         assertThat(res).contains("\"type\":\"" + expectedType + "\"");
         assertThat(res).contains("\"value\":" + expectedValue);
+        assertThat(res).contains("\"revision\":" + 1);
+        Pattern updatedDateFinder = Pattern.compile("\"updated\":\\s*\"([^\"]+)\"");
+        Matcher matcher = updatedDateFinder.matcher(res);
+        matcher.find();
+        assertThat(Instant.parse(matcher.group(1))).isBetween(beforeInsertion, afterInsertion);
+
+        beforeInsertion = Instant.now();
+        // Test that revision and update date are properly updated
+        kvStore().put("my-key", new KVValueAndMetadata(new KVMetadata("some description", Instant.now().plus(Duration.ofMinutes(5))), value));
+        afterInsertion = Instant.now();
+
+        res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key"), String.class);
+        assertThat(res).contains("\"revision\":" + 2);
+        matcher = updatedDateFinder.matcher(res);
+        matcher.find();
+        assertThat(Instant.parse(matcher.group(1))).isBetween(beforeInsertion, afterInsertion);
     }
 
     @Test
@@ -302,6 +320,21 @@ class KVControllerTest {
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
     }
+
+    @Test
+    void jsonFallback() throws IOException, ResourceExpiredException {
+
+        client.toBlocking().exchange(
+                HttpRequest.PUT("/api/v1/main/namespaces/" + NAMESPACE + "/kv/my-key", "1.2.3")
+                        .contentType(MediaType.TEXT_PLAIN)
+        );
+
+        KVStore kvStore = kvStore();
+        Object stored = kvStore.getValue("my-key").orElseThrow().value();
+        assertThat(stored).isInstanceOf(String.class);
+        assertThat(stored).isEqualTo("1.2.3");
+    }
+
 
     private URI toKVUri(String namespace, String key) {
         String slashLedKey;

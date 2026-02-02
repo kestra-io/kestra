@@ -16,8 +16,8 @@ import java.util.function.Function;
 public interface TriggerRepositoryInterface extends QueryBuilderInterface<Triggers.Fields> {
     Optional<Trigger> findLast(TriggerContext trigger);
 
-    Optional<Trigger> findByExecution(Execution execution);
-
+    Optional<Trigger> findByUid(String uid);
+    
     List<Trigger> findAll(String tenantId);
 
     List<Trigger> findAllForAllTenants();

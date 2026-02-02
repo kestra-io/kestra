@@ -37,7 +37,7 @@ export interface FilterContext {
     hasPreApplied: (filterKey: string) => boolean;
     getPreApplied: (filterKey: string) => AppliedFilter | undefined;
     updateSavedFilter: (id: string, name: string, description: string) => void;
-    saveFilter: (name: string, description: string, filters: AppliedFilter[], searchQuery?: string) => void;
+    saveFilter: (name: string, description: string, filters: AppliedFilter[]) => void;
 }
 
 export const FILTER_CONTEXT_INJECTION_KEY = Symbol("filter-context-injection-key") as InjectionKey<FilterContext>;

@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.runner
+name: "runner"
+title: "Runner"
+description: "Tasks that execute commands on the Kestra worker."
+body: "Run shell processes with configurable command, environment, working directory, and input/output handling; ensure commands are idempotent and set expected exit codes or resource needs when invoking external binaries."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

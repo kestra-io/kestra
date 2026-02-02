@@ -47,7 +47,6 @@ import static org.hamcrest.Matchers.*;
 @KestraTest
 class JsonSchemaGeneratorTest {
 
-
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;
 
@@ -170,10 +169,11 @@ class JsonSchemaGeneratorTest {
 
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
             assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
-                Matchers.aMapWithSize(3),
+                Matchers.aMapWithSize(4),
                 hasKey("conditions"),
                 hasKey("stopAfter"),
-                hasKey("type")
+                hasKey("type"),
+                hasKey("allowConcurrent")
             ));
         });
     }
@@ -204,6 +204,12 @@ class JsonSchemaGeneratorTest {
             var returnTask = definitions.get(Return.class.getName());
             var metrics = (List<Object>) returnTask.get("$metrics");
             assertThat(metrics.size(), is(2));
+
+            var properties = (Map<String, Object>) returnTask.get("properties");
+            var typeProperty = (Map<String, Object>) properties.get("type");
+            assertThat(typeProperty, is(notNullValue()));
+            var enumList = (List<?>) typeProperty.get("enum");
+            assertThat(enumList.size(), is(2));
 
             var firstMetric = (Map<String, Object>) metrics.getFirst();
             assertThat(firstMetric.get("name"), is("length"));
@@ -345,7 +351,7 @@ class JsonSchemaGeneratorTest {
     void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
         var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
-        assertThat(definitions.size(), is(27));
+        assertThat(definitions.size(), is(30));
     }
 
     @SuppressWarnings("unchecked")

@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.Schedule;
@@ -19,10 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.With;
 
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -43,6 +41,20 @@ public final class RunVariables {
             "id", task.getId(),
             "type", task.getType()
         );
+    }
+
+    public static Map<String, Object> executionFormattedOutputMap(TaskRun taskRun) {
+        return Optional.ofNullable(taskRun.getOutputs())
+            .map(o -> Map.of(
+                    "outputs",
+                    (Object) Map.of(
+                        taskRun.getTaskId(),
+                        Optional.ofNullable(taskRun.getValue())
+                            .map(v -> Map.of(v, (Object) o))
+                            .orElse(o)
+                    )
+                )
+            ).orElse(Collections.emptyMap());
     }
 
     /**
@@ -302,9 +314,18 @@ public final class RunVariables {
                     // if a secret input is used, add it to the list of secrets to mask on the logger
                     if (logger != null && !ListUtils.isEmpty(secretInputs)) {
                         for (String secretInput : secretInputs) {
-                            String secret = (String) inputs.get(secretInput);
-                            if (secret != null) {
-                                logger.usedSecret(secret);
+                            Object secretValue = inputs.get(secretInput);
+                            if(secretValue != null) {
+                                String secret;
+                                // if decryption is disabled, secret input would be still a map of type and encrypted value
+                                if (!decryptVariables) {
+                                    secret = ((Map<String, String>) secretValue).get("value");
+                                } else {
+                                    secret = (String) secretValue;
+                                }
+                                if (secret != null) {
+                                    logger.usedSecret(secret);
+                                }
                             }
                         }
                     }
@@ -383,7 +404,8 @@ public final class RunVariables {
                 decodeInput(secret, restOfId, (Map<String, Object>) inputs.get(nestedId));
             } else if (inputs.containsKey(id)) {
                 try {
-                    String decoded = secret.decrypt(((String) inputs.get(id)));
+                    Map<String, String> encryptedString = (Map<String,String>) inputs.get(id);
+                    String decoded = secret.decrypt(encryptedString.get("value"));
                     inputs.put(id, decoded);
                 } catch (GeneralSecurityException e) {
                     throw new RuntimeException(e);

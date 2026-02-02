@@ -26,6 +26,7 @@ public record Label(
     public static final String REPLAYED = SYSTEM_PREFIX + "replayed";
     public static final String SIMULATED_EXECUTION = SYSTEM_PREFIX + "simulatedExecution";
     public static final String TEST = SYSTEM_PREFIX + "test";
+    public static final String FROM = SYSTEM_PREFIX + "from";
 
     /**
      * Static helper method for converting a list of labels to a nested map.

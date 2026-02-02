@@ -19,7 +19,8 @@
     import {Chart, getDashboard} from "../composables/useDashboards";
     import {useChartGenerator} from "../composables/useDashboards";
 
-
+    import {useBreakpoints, breakpointsElement} from "@vueuse/core";
+    const verticalLayout = useBreakpoints(breakpointsElement).smallerOrEqual("sm");
 
     import {customBarLegend} from "../composables/useLegend";
     import {useTheme} from "../../../utils/utils";
@@ -102,7 +103,7 @@
                     beginAtZero: true,
                     position: "left",
                     ...DEFAULTS,
-                    display: props.short ? false : true,
+                    display: verticalLayout.value ? false : (props.short ? false : true),
                     ticks: {
                         ...DEFAULTS.ticks,
                         callback: value => isDurationAgg() ? Utils.humanDuration(value) : value

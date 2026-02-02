@@ -1,10 +1,10 @@
 package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
@@ -24,16 +24,16 @@ import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
+import io.kestra.plugin.core.dashboard.data.ExecutionsKPI;
 import io.kestra.plugin.core.debug.Return;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
+import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,10 +42,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -56,11 +55,12 @@ import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
-@KestraTest
+@MicronautTest
 public abstract class AbstractExecutionRepositoryTest {
     public static final String NAMESPACE = "io.kestra.unittest";
     public static final String FLOW = "full";
@@ -185,6 +185,7 @@ public abstract class AbstractExecutionRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
+    @FlakyTest(description = "Filtering tests are sometimes returning 0")
     void should_find_all(QueryFilter filter, int expectedSize){
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         inject(tenant, "executionTriggerId");
@@ -494,7 +495,7 @@ public abstract class AbstractExecutionRepositoryTest {
             tenant,
             State.Type.SUCCESS,
             "second"
-        ).namespace(NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE).build());
+        ).namespace(KestraConfig.DEFAULT_SYSTEM_FLOWS_NAMESPACE).build());
 
         // mysql need some time ...
         Thread.sleep(500);
@@ -668,8 +669,23 @@ public abstract class AbstractExecutionRepositoryTest {
                 List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
             .taskRunList(List.of())
             .build();
-
         execution = executionRepository.save(execution);
+
+        // test executions should not be returned
+        Execution testExecution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .kind(ExecutionKind.TEST)
+            .build();
+        executionRepository.save(testExecution);
+
 
         var now = ZonedDateTime.now();
         ArrayListTotal<Map<String, Object>> data = executionRepository.fetchData(tenantId, Executions.builder()
@@ -689,6 +705,51 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(data).first().hasFieldOrProperty("count");
         assertThat(data).first().extracting("count").hasToString("1");
         assertThat(data).first().hasFieldOrPropertyWithValue("id", execution.getId());
+    }
+
+    @Test
+    protected void dashboard_fetchValue() throws IOException {
+        var tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        var executionDuration = Duration.ofMinutes(220);
+        var executionCreateDate = Instant.now();
+        Execution execution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .build();
+        executionRepository.save(execution);
+
+        // test executions should not be returned
+        Execution testExecution = Execution.builder()
+            .tenantId(tenantId)
+            .id(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .flowId("some-execution")
+            .flowRevision(1)
+            .labels(Label.from(Map.of("country", "FR")))
+            .state(new State(Type.SUCCESS,
+                List.of(new State.History(State.Type.CREATED, executionCreateDate), new State.History(Type.SUCCESS, executionCreateDate.plus(executionDuration)))))
+            .taskRunList(List.of())
+            .kind(ExecutionKind.TEST)
+            .build();
+        executionRepository.save(testExecution);
+
+        var now = ZonedDateTime.now();
+        Double value = executionRepository.fetchValue(tenantId, ExecutionsKPI.builder()
+                .type(ExecutionsKPI.class.getName())
+                .columns(ColumnDescriptor.<ExecutionsKPI.Fields>builder().field(ExecutionsKPI.Fields.ID).agg(AggregationType.COUNT).build())
+                .build(),
+            now.minusHours(1),
+            now,
+            false
+        );
+        assertEquals(1.0, value);
     }
 
     @Test

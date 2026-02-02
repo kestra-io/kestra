@@ -557,7 +557,6 @@ public class ExecutionController {
         if (flow.isDisabled()) {
             throw new IllegalStateException("Cannot execute a disabled flow");
         }
-
         if (flow instanceof FlowWithException fwe) {
             throw new IllegalStateException("Cannot execute an invalid flow: " + fwe.getException());
         }
@@ -591,10 +590,16 @@ public class ExecutionController {
             throw new HttpStatusException(HttpStatus.NOT_FOUND, "No execution triggered");
         }
 
-        var result = execution.get();
+        List<Label> labels = new ArrayList<>();
+        labels.add(new Label(Label.FROM, "trigger"));
         if (flow.getLabels() != null) {
-            result = result.withLabels(LabelService.labelsExcludingSystem(flow));
+            labels.addAll(LabelService.labelsExcludingSystem(flow));
         }
+        if (labels.stream().noneMatch(label -> label.key().equals(CORRELATION_ID))) {
+            labels.add(new Label(CORRELATION_ID, execution.get().getId()));
+        }
+
+        var result = execution.get().withLabels(labels);
 
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
         var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
@@ -626,7 +631,7 @@ public class ExecutionController {
             }
 
             executionQueue.emit(result);
-            eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
+            eventPublisher.publishEvent(CrudEvent.create(result));
 
             if (webhook.getWait()) {
                 var subscriberId = UUID.randomUUID().toString();
@@ -642,8 +647,8 @@ public class ExecutionController {
                     .last()
                     .map(event -> {
                         if (webhook.getReturnOutputs()) {
-                            return HttpResponse.ok(event.getData().getOutputs());
-
+                            // Only apply custom responseContentType when returnOutputs is true
+                            return buildWebhookResponse(event.getData().getOutputs(), webhook.getResponseContentType());
                         } else {
                             return (HttpResponse<?>) HttpResponse.ok(WebhookResponse.fromExecution(
                                 event.getData(),
@@ -653,6 +658,7 @@ public class ExecutionController {
                     })
                     .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
             } else {
+                // Without wait, always return JSON (responseContentType only applies with returnOutputs)
                 return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));
             }
         } catch (QueueException e) {
@@ -667,6 +673,28 @@ public class ExecutionController {
         public static WebhookResponse fromExecution(Execution execution, URI url) {
             return new WebhookResponse(execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getTrigger(), execution.getOutputs(), execution.getLabels(), execution.getState(), url);
         }
+    }
+
+    /**
+     * Build webhook response with optional custom content type.
+     * When responseContentType is set, the response will use that content type instead of the default application/json.
+     */
+    private HttpResponse<?> buildWebhookResponse(Object body, String responseContentType) {
+        if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN)) {
+            String responseBody;
+            if (body instanceof String s) {
+                responseBody = s;
+            } else {
+                try {
+                    responseBody = objectMapper.writeValueAsString(body);
+                } catch (Exception e) {
+                    responseBody = String.valueOf(body);
+                }
+            }
+            return HttpResponse.ok(responseBody).contentType(MediaType.TEXT_PLAIN_TYPE);
+        }
+        // Default: application/json (or no responseContentType set)
+        return HttpResponse.ok(body);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -745,11 +773,13 @@ public class ExecutionController {
 
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(executionInputs -> {
-                Check.Behavior behavior = Check.resolveBehavior(flowService.getFailedChecks(flow, executionInputs));
+                List<Check> failed = flowService.getFailedChecks(flow, executionInputs);
+                Check.Behavior behavior = Check.resolveBehavior(failed);
                 if (Check.Behavior.BLOCK_EXECUTION.equals(behavior)) {
                     return Mono.error(new IllegalArgumentException(
                         "Flow execution blocked: one or more condition checks evaluated to false."
-                    ));
+                        + "\nFailed checks: " + failed.stream().map(Check::getMessage).collect(Collectors.joining(", ")
+                    )));
                 }
 
                 final Execution executionWithInputs = Optional.of(current.withInputs(executionInputs))
@@ -854,15 +884,22 @@ public class ExecutionController {
     }
 
     protected List<Label> parseLabels(List<String> labels) {
-        List<Label> parsedLabels = labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
+        List<Label> parsedLabels = labels == null ? new ArrayList<>() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
-            .toList();
+            .collect(Collectors.toList());
 
-        // check for system labels: none can be passed at execution creation time except system.correlationId
-        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
+        // check for system labels: none can be passed at execution creation time except system.correlationId and system.from
+        Optional<Label> first = parsedLabels.stream().filter(label -> !label.key().equals(CORRELATION_ID) && !label.key().equals(Label.FROM) && label.key().startsWith(SYSTEM_PREFIX)).findFirst();
         if (first.isPresent()) {
             throw new IllegalArgumentException("System labels can only be set by Kestra itself, offending label: " + first.get().key() + "=" + first.get().value());
         }
+
+        // from can be passed by the UI so we only add it if it didn't exist anymore
+        // if we want to be more restrictive, we may want to restrict it to only have the `ui` value
+        if (parsedLabels.stream().noneMatch(l -> l.key().equals(Label.FROM))) {
+            parsedLabels.add(new Label(Label.FROM, "api"));
+        }
+
         return parsedLabels;
     }
 
@@ -1027,9 +1064,9 @@ public class ExecutionController {
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
 
-            if (execution.isPresent() && !execution.get().getState().isFailed()) {
+            if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in state FAILED",
+                    "execution not in state PAUSED or terminated, or is KILLED",
                     executionId,
                     String.class,
                     "execution",
@@ -1220,7 +1257,7 @@ public class ExecutionController {
 
         Flow flow = flowRepository.findByExecution(execution.get());
 
-        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.getTaskRunId(), stateRequest.getState());
+        Execution replay = executionService.changeTaskRunState(execution.get(), flow, stateRequest.taskRunId(), stateRequest.state());
         List<Label> newLabels = new ArrayList<>(replay.getLabels());
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
@@ -1232,10 +1269,9 @@ public class ExecutionController {
         return replay;
     }
 
-    @lombok.Value
-    public static class StateRequest {
-        String taskRunId;
-        State.Type state;
+    public record StateRequest(
+        String taskRunId,
+        State.Type state) {
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1254,8 +1290,8 @@ public class ExecutionController {
             return null;
         }
 
-        if (!execution.get().getState().isTerminated()) {
-            throw new IllegalArgumentException("You can only change the state of a terminated execution.");
+        if (!execution.get().getState().canChangeStatus()) {
+            throw new IllegalArgumentException("You can only change the state of a terminated non killed execution.");
         }
 
         Execution updated = execution.get().withState(status);
@@ -1284,9 +1320,9 @@ public class ExecutionController {
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && !execution.get().getState().isTerminated()) {
+            if (execution.isPresent() && !execution.get().getState().canChangeStatus()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in a terminated state",
+                    "execution not in a terminated state or is killed",
                     executionId,
                     String.class,
                     "execution",
@@ -1380,7 +1416,7 @@ public class ExecutionController {
     public HttpResponse<?> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade
-    ) throws InternalException, QueueException {
+    ) throws QueueException {
 
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {
@@ -2441,7 +2477,7 @@ public class ExecutionController {
     @Get(uri = "/{executionId}/flow")
     @Operation(tags = {"Executions"}, summary = "Get flow information's for an execution")
     public FlowForExecution getFlowFromExecutionById(
-        @Parameter(description = "The execution that you want flow informations") String executionId
+        @Parameter(description = "The execution that you want flow information") String executionId
     ) {
         Execution execution = executionRepository.findById(tenantService.resolveTenant(), executionId).orElseThrow(() -> new io.kestra.core.exceptions.NotFoundException("Execution %s not found when fetching flow".formatted(executionId)));
 
@@ -2661,7 +2697,12 @@ public class ExecutionController {
         ) {
         }
 
-        public static ApiValidateExecutionInputsResponse of(String id, String namespace, List<Check> checks, List<InputAndValue> inputs) {
+        public static ApiValidateExecutionInputsResponse of(
+            String id,
+            String namespace,
+            List<Check> checks,
+            List<InputAndValue> inputs
+        ) {
             return new ApiValidateExecutionInputsResponse(
                 id,
                 namespace,
@@ -2670,14 +2711,21 @@ public class ExecutionController {
                     it.value(),
                     it.enabled(),
                     it.isDefault(),
-                    Optional.ofNullable(it.exception()).map(exception ->
-                        exception.getConstraintViolations()
-                            .stream()
-                            .map(cv -> new ApiInputError(cv.getMessage()))
+                    // Map the Set<InputOutputValidationException> to ApiInputError
+                    Optional.ofNullable(it.exceptions())
+                        .map(exSet -> exSet.stream()
+                            .map(e -> new ApiInputError(e.getMessage()))
                             .toList()
-                    ).orElse(List.of())
+                        )
+                        .orElse(List.of())
                 )).toList(),
-                checks.stream().map(check -> new ApiCheckFailure(check.getMessage(), check.getStyle(), check.getBehavior())).toList()
+                checks.stream()
+                    .map(check -> new ApiCheckFailure(
+                        check.getMessage(),
+                        check.getStyle(),
+                        check.getBehavior()
+                    ))
+                    .toList()
             );
         }
     }

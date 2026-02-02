@@ -13,3 +13,5 @@ on:
 jobs:
   e2e:
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
+    with:
+      java-version: 25

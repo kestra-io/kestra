@@ -1,0 +1,8 @@
+group: io.kestra.plugin.core.condition
+name: "condition"
+title: "Condition"
+description: "Tasks that evaluate conditions to control flow execution or triggers."
+body: "Use these predicates to gate tasks or triggers based on time windows, calendars, execution metadata, labels, namespaces, retries, or custom expressions; configure required parameters such as allowed states, namespaces, date ranges, or JEXL expressions to return a true/false result."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"

@@ -2,7 +2,7 @@
     <section id="input">
         <el-input
             v-model="search"
-            :placeholder="$t('dependency.search.placeholder')"
+            :placeholder="$t(props.subtype === ASSET ? 'dependency.search.asset_placeholder' : 'dependency.search.placeholder')"
             clearable
         />
     </section>
@@ -38,10 +38,13 @@
                             size="small"
                         />
                         <RouterLink
-                            v-if="[FLOW, NAMESPACE].includes(row.data.metadata.subtype)"
+                            v-if="[FLOW, NAMESPACE, ASSET].includes(row.data.metadata.subtype)"
                             :to="{
-                                name: 'flows/update',
-                                params: {namespace: row.data.namespace, id: row.data.flow}}"
+                                name: row.data.metadata.subtype === ASSET ? 'assets/update' : 'flows/update',
+                                params: row.data.metadata.subtype === ASSET 
+                                    ? {namespace: row.data.namespace, assetId: row.data.flow}
+                                    : {namespace: row.data.namespace, id: row.data.flow}
+                            }"
                         >
                             <el-icon :size="16">
                                 <OpenInNew />
@@ -64,12 +67,13 @@
 
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
 
-    import {NODE, FLOW, EXECUTION, NAMESPACE, type Node} from "../utils/types";
+    import {NODE, FLOW, EXECUTION, NAMESPACE, ASSET, type Node} from "../utils/types";
 
     const emits = defineEmits<{ (e: "select", id: Node["id"]): void }>();
     const props = defineProps<{
         elements: cytoscape.ElementDefinition[];
         selected: Node["id"] | undefined;
+        subtype?: typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET;
     }>();
 
     const focusSelectedRow = () => {
@@ -177,6 +181,10 @@ section#row {
     & section#right {
         flex-shrink: 0;
         margin-left: 0.5rem;
+
+        :deep(a:hover .el-icon) {
+            color: var(--ks-content-link-hover);
+        }
     }
 }
 </style>

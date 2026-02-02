@@ -56,8 +56,10 @@ import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -191,9 +193,10 @@ public class FlowController {
     @Operation(tags = {"Flows"}, summary = "Get revisions for a flow")
     public List<FlowWithSource> listFlowRevisions(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
-        @Parameter(description = "The flow id") @PathVariable String id
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @QueryValue(defaultValue = "false") Boolean allowDelete
     ) {
-        return flowRepository.findRevisions(tenantService.resolveTenant(), namespace, id);
+        return flowRepository.findRevisions(tenantService.resolveTenant(), namespace, id, allowDelete);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -327,6 +330,38 @@ public class FlowController {
             .stream()
             .map(source -> parseFlowSource(source.trim()))
             .toList();
+
+        return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "{namespace}", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(
+        tags = {"Flows"},
+        summary = "Update a complete namespace from yaml source",
+        description = "All flows will be created / updated for this namespace.\n" +
+            "Existing flows missing from `flows` will be deleted if the query delete is `true`"
+    )
+    public List<FlowInterface> updateFlowsInNamespace(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @RequestBody(description = "A list of flow files") @Part("flows") Publisher<CompletedFileUpload> flowsPublisher,
+        @Parameter(description = "If namespace of all provided flows should be overridden") @QueryValue(defaultValue = "false") Boolean override,
+        @Parameter(description = "If missing flows should be deleted") @QueryValue(defaultValue = "true") Boolean delete
+    ) throws ConstraintViolationException, IOException {
+        List<CompletedFileUpload> flowFiles = Flux.from(flowsPublisher)
+            .collectList()
+            .blockOptional()
+            .orElse(Collections.emptyList());
+
+        List<GenericFlow> genericFlows = new ArrayList<>();
+        for (CompletedFileUpload flowFile : flowFiles) {
+            String source = new String(flowFile.getBytes()).trim();
+            if (override) {
+                source = source.replaceFirst("(?m)^namespace:.+", "namespace: " + namespace);
+            }
+
+            genericFlows.add(parseFlowSource(source));
+        }
 
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false);
     }
@@ -519,7 +554,7 @@ public class FlowController {
                       "Flow that already created but not in `flows` will be deleted if the query delete is `true`"
     )
     public List<FlowInterface> bulkUpdateFlows(
-        @RequestBody(description = "A list of flows source code splitted with \"---\"") @Body @Nullable String flows,
+        @RequestBody(description = "A list of flows source code split with \"---\"") @Body @Nullable String flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete,
         @Parameter(description = "The namespace where to update flows") @QueryValue @Nullable String namespace,
         @Parameter(description = "If namespace child should are allowed to be updated") @QueryValue(defaultValue = "false") Boolean allowNamespaceChild
@@ -586,6 +621,23 @@ public class FlowController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Delete(uri = "{namespace}/{id}/revisions")
+    @Operation(tags = {"Flows"}, summary = "Delete revisions for a flow")
+    public HttpResponse<Void> deleteRevisions(
+        @Parameter(description = "The flow namespace") @PathVariable String namespace,
+        @Parameter(description = "The flow id") @PathVariable String id,
+        @QueryValue @NotEmpty List<@Min(1) Integer> revisions
+    ) {
+        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(tenantService.resolveTenant(), namespace, id);
+        if (flow.isPresent()) {
+            flowRepository.deleteRevisions(tenantService.resolveTenant(), namespace, id, revisions);
+            return HttpResponse.status(HttpStatus.NO_CONTENT);
+        } else {
+            return HttpResponse.status(HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "distinct-namespaces")
     @Operation(tags = {"Flows"}, summary = "List all distinct namespaces")
     public List<String> listDistinctNamespaces(
@@ -618,7 +670,32 @@ public class FlowController {
     public List<ValidateConstraintViolation> validateFlows(
         @RequestBody(description = "A list of flows source code in a single string") @Body String flows
     ) {
-        return flowService.validate(tenantService.resolveTenant(), flows);
+        List<FlowSource> flowSources = Arrays.stream(flows.split("\\n+---\\n*?"))
+            .map(flow -> new FlowSource(null, flow))
+            .toList();
+
+        return flowService.validate(tenantService.resolveTenant(), flowSources);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "validate", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Operation(tags = {"Flows"}, summary = "Validate a list of flows")
+    public List<ValidateConstraintViolation> validateFlows(
+        @RequestBody(description = "A list of flow files") @Part("flows") Publisher<CompletedFileUpload> flowsPublisher
+    ) throws IOException {
+        List<CompletedFileUpload> flowFiles = Flux.from(flowsPublisher)
+            .collectList()
+            .blockOptional()
+            .orElse(Collections.emptyList());
+
+        List<FlowSource> flowSources = new ArrayList<>();
+        for (CompletedFileUpload flowFile : flowFiles) {
+            String source = new String(flowFile.getBytes()).trim();
+
+            flowSources.add(new FlowSource(flowFile.getFilename(), source));
+        }
+
+        return flowService.validate(tenantService.resolveTenant(), flowSources);
     }
 
     // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience
@@ -900,7 +977,7 @@ public class FlowController {
             return HttpResponse.badRequest();
         }
         if (failOnError && !wrongFiles.isEmpty()) {
-            throw new IllegalArgumentException("Following invalids flows were not imported: " + String.join(", ", wrongFiles));
+            throw new IllegalArgumentException("Following invalid flows were not imported: " + String.join(", ", wrongFiles));
         }
         return HttpResponse.ok(wrongFiles);
     }

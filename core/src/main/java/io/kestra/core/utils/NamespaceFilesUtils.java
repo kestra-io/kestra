@@ -1,13 +1,12 @@
 package io.kestra.core.utils;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.tasks.FileExistComportment;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.NamespaceFile;
-import jakarta.annotation.PostConstruct;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -19,24 +18,25 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Singleton
 public class NamespaceFilesUtils {
-    @Inject
-    private ExecutorsUtils executorsUtils;
-
-    private ExecutorService executorService;
-
-    @PostConstruct
-    public void postConstruct() {
-        this.executorService = executorsUtils.maxCachedThreadPool(Math.max(Runtime.getRuntime().availableProcessors() * 4, 32), "namespace-file");
-    }
+    private static final int maxThreads = Math.max(Runtime.getRuntime().availableProcessors() * 4, 32);
+    private static final ExecutorService EXECUTOR_SERVICE = new ThreadPoolExecutor(
+        0,
+        maxThreads,
+        60L,
+        TimeUnit.SECONDS,
+        new LinkedBlockingQueue<>(),
+        new ThreadFactoryBuilder().setNameFormat("namespace-files").build()
+    );
 
     public void loadNamespaceFiles(
         RunContext runContext,
@@ -60,18 +60,25 @@ public class NamespaceFilesUtils {
                 .namespace(namespace)
                 .findAllFilesMatching(include, exclude);
 
-          matchedNamespaceFiles.addAll(files);
+            matchedNamespaceFiles.addAll(files);
         }
 
+        int parallelism = maxThreads / 2;
         Flux.fromIterable(matchedNamespaceFiles)
+            .parallel(parallelism)
+            .runOn(Schedulers.fromExecutorService(EXECUTOR_SERVICE))
             .doOnNext(throwConsumer(nsFile -> {
-                InputStream content = runContext.storage().getFile(nsFile.uri());
-                Path path = folderPerNamespace ?
-                    Path.of(nsFile.namespace() + "/" + nsFile.path()) :
-                    Path.of(nsFile.path());
-                runContext.workingDir().putFile(path, content, fileExistComportment);
+                try (InputStream content = runContext.storage().getFile(nsFile.uri())) {
+                    Path path = folderPerNamespace ?
+                        Path.of(nsFile.namespace() + "/" + nsFile.path()) :
+                        Path.of(nsFile.path());
+                    runContext.workingDir().putFile(path, content, fileExistComportment);
+                }
             }))
-            .publishOn(Schedulers.fromExecutorService(executorService))
+            .doOnError(t -> {
+                runContext.logger().error("Error while loading namespace files", t);
+            })
+            .sequential()
             .blockLast();
 
         Duration duration = stopWatch.getDuration();

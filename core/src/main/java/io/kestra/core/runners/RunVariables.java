@@ -20,10 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.With;
 
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -44,6 +41,20 @@ public final class RunVariables {
             "id", task.getId(),
             "type", task.getType()
         );
+    }
+
+    public static Map<String, Object> executionFormattedOutputMap(TaskRun taskRun) {
+        return Optional.ofNullable(taskRun.getOutputs())
+            .map(o -> Map.of(
+                    "outputs",
+                    (Object) Map.of(
+                        taskRun.getTaskId(),
+                        Optional.ofNullable(taskRun.getValue())
+                            .map(v -> Map.of(v, (Object) o))
+                            .orElse(o)
+                    )
+                )
+            ).orElse(Collections.emptyMap());
     }
 
     /**

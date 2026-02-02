@@ -1,11 +1,13 @@
 package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.TestRunnerUtils;
 import jakarta.inject.Inject;
 
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
@@ -34,8 +36,12 @@ public class LoopUntilCaseTest {
 
     public void waitforMaxDuration(String tenantId) throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(tenantId, "io.kestra.tests", "waitfor-max-duration");
-
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        TaskRun parentTaskRun = execution.findTaskRunsByTaskId("waitfor").getFirst();
+        State.History creationHistory = parentTaskRun.getState().getHistories().getFirst();
+        State.History failureHistory = parentTaskRun.getState().getHistories().getLast();
+        assertThat(creationHistory.getDate().plus(5, ChronoUnit.SECONDS).isBefore(failureHistory.getDate()));
     }
 
     public void waitforNoSuccess(String tenantId) throws TimeoutException, QueueException {

@@ -69,3 +69,33 @@
     const buttonTag = computed(() => (props.to ? "router-link" : undefined));
     const nativeType = computed(() => (props.to ? undefined : "button"));
 </script>
+
+<style scoped lang="scss">
+    .ks-icon-button {
+        color: var(--ks-content-primary);
+        width: 24px;
+        height: 24px;
+        min-width: 24px;
+        border-radius: var(--bs-border-radius);
+        text-align: center;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        cursor: pointer;
+
+        &:hover {
+            color: var(--ks-content-primary);
+            background-color: var(--ks-tag-background);
+        }
+
+        :deep(.material-design-icon__svg) {
+            width: 16px;
+            height: 16px;
+            transform: translateY(1px) translateX(-0.5px);
+        }
+    }
+</style>

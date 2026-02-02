@@ -433,7 +433,9 @@ export const useFlowStore = defineStore("flow", () => {
     function createFlow(options: { flow: string }) {
         return axios.post(`${apiUrl()}/flows`, options.flow, {
             ...textYamlHeader,
-            ...VALIDATE
+            ...VALIDATE,
+            // @ts-expect-error showMessageOnError is a custom axios config property
+            showMessageOnError: false
         }).then(response => {
             if (response.status >= 300) {
                 return Promise.reject(response)
@@ -449,6 +451,29 @@ export const useFlowStore = defineStore("flow", () => {
             creationId.value = undefined;
 
             return response.data;
+        }).catch(async (error) => {
+            const status = error?.response?.status;
+            const payload = error?.response?.data ?? error;
+            const message = String(payload?.message || "").toLowerCase();
+            const embeddedErrors = payload?._embedded?.errors || [];
+            const embeddedMessage = embeddedErrors.length ? String(embeddedErrors[0]?.message || "").toLowerCase() : "";
+
+            const isConflict = status === 409 || message.includes("already exist") || embeddedMessage.includes("already exist");
+            if (isConflict) {
+                const parsed = YAML_UTILS.parse(options.flow);
+                const msg = t("flow_already_exists_create_revision", {id: parsed.id, namespace: parsed.namespace});
+                const result = await toast.confirm(msg, () => saveFlow({flow: options.flow}));
+
+                return result || Promise.reject(error);
+            }
+
+            coreStore.message = {
+                variant: "error",
+                response: error.response,
+                content: payload
+            };
+
+            return Promise.reject(error);
         })
     }
 

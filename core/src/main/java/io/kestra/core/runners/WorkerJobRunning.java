@@ -20,10 +20,7 @@ import jakarta.validation.constraints.NotNull;
 public abstract class WorkerJobRunning implements HasUID {
     @NotNull
     private WorkerInstance workerInstance;
-
-    @NotNull
-    private int partition;
-
+    
     abstract public String getType();
 
 }

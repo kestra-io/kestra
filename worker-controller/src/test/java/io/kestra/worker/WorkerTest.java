@@ -50,7 +50,6 @@ class WorkerTest {
     QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.KILL_NAMED)
     QueueInterface<ExecutionKilled> executionKilledQueue;
 
     @Inject

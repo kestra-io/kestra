@@ -7,12 +7,7 @@ public interface QueueFactoryInterface {
     String WORKERTASKRESULT_NAMED = "workerTaskResultQueue";
     String WORKERTRIGGERRESULT_NAMED = "workerTriggerResultQueue";
     String WORKERJOBRUNNING_NAMED = "workerJobRunningQueue";
-
-    WorkerJobQueueInterface workerJob();
-
+    
     QueueInterface<WorkerTaskResult> workerTaskResult();
-
-    QueueInterface<WorkerTriggerResult> workerTriggerResult();
-
-    QueueInterface<WorkerJobRunning> workerJobRunning();
+    
 }

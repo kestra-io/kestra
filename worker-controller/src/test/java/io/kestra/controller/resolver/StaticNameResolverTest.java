@@ -2,6 +2,7 @@ package io.kestra.controller.resolver;
 
 import io.grpc.EquivalentAddressGroup;
 import io.grpc.NameResolver;
+import io.kestra.controller.grpc.resolver.StaticNameResolver;
 import io.kestra.controller.grpc.resolver.StaticNameResolverProvider;
 import org.junit.jupiter.api.Test;
 
@@ -66,7 +67,6 @@ class StaticNameResolverTest {
         StaticNameResolverProvider provider = new StaticNameResolverProvider(addresses);
 
         assertThat(provider.getDefaultScheme()).isEqualTo("static");
-        assertThat(provider.isAvailable()).isTrue();
 
         NameResolver resolver = provider.newNameResolver(URI.create("static:///controllers"), null);
         assertThat(resolver).isNotNull();

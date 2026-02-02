@@ -5,6 +5,7 @@ import io.kestra.controller.grpc.ConnectControllerServiceGrpc;
 import io.kestra.controller.grpc.ConnectRequest;
 import io.kestra.controller.grpc.ConnectResponse;
 import io.kestra.controller.grpc.WorkerControllerService;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.services.WorkerGroupService;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -44,7 +45,7 @@ public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.C
 
         String resolvedWorkerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
 
-        if (resolvedWorkerGroup != null) {
+        if (resolvedWorkerGroup != null && !resolvedWorkerGroup.isEmpty()) {
             log.info("Worker group resolved: '{}' for key '{}'", resolvedWorkerGroup, workerGroupKey);
         } else {
             log.debug("No worker group resolved for key '{}'", workerGroupKey);

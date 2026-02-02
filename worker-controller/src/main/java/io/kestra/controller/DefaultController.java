@@ -85,6 +85,18 @@ public class DefaultController extends AbstractService implements Controller {
         ServerBuilder<?> serverBuilder = Grpc.newServerBuilderForPort(port, InsecureServerCredentials.create())
             .addService(healthStatusManager.getHealthService());
 
+        // Configure maxConnectionAge for load balancing across multiple controllers
+        // This forces workers to periodically reconnect, redistributing them across available controllers
+        if (controllerConfiguration.maxConnectionAge() != null 
+                && !controllerConfiguration.maxConnectionAge().isZero()) {
+            long maxAgeMillis = controllerConfiguration.maxConnectionAge().toMillis();
+            serverBuilder
+                .maxConnectionAge(maxAgeMillis, TimeUnit.MILLISECONDS)
+                // Grace period allows in-flight RPCs to complete before forcing disconnect
+                .maxConnectionAgeGrace(30, TimeUnit.SECONDS);
+            LOG.info("Controller configured with maxConnectionAge={}ms", maxAgeMillis);
+        }
+
         for (WorkerControllerService service : workerControllerServices) {
             serverBuilder = serverBuilder.addService(service);
         }

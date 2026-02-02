@@ -55,7 +55,7 @@ class KVStoreServiceTest {
     public static class MockNamespaceService extends DefaultNamespaceService {
 
         public MockNamespaceService() {
-            super(Optional.empty());
+            super(null);
         }
 
         @Override

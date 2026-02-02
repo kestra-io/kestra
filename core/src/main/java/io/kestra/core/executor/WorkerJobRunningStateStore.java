@@ -38,7 +38,6 @@ public interface WorkerJobRunningStateStore {
 
     /**
      * Save a running worker job.
-     * This is used by the {@link io.kestra.core.queues.WorkerJobQueueInterface} to save running worker jobs for resubmission.
      *
      * @implNote Implementors that support transaction must use the provided {@link TransactionContext} to attach to the current transaction.
      */

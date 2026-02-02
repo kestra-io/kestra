@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
+import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -64,9 +65,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     private DispatchQueueInterface<ExecutionEvent> executionEventQueue;
     @Inject
     private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
-    @Inject
-    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    private QueueInterface<WorkerJob> workerJobQueue;
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
     private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
@@ -715,7 +713,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                         .map(taskRun -> taskRun.getId())
                         .toList();
                     workerTaskResultQueue.deleteByKeys(taskRunKeys);
-                    workerJobQueue.deleteByKeys(taskRunKeys);
+                    // workerJobQueue.deleteByKeys(taskRunKeys);  TODO
                 }
 
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED);

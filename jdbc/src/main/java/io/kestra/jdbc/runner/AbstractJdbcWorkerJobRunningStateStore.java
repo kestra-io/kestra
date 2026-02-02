@@ -92,7 +92,7 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
             dslContext
                 .select(field("value"))
                 .from(this.jdbcRepository.getTable())
-                .where(field("worker_uuid").eq(workerUid))
+                .where(field("worker_uid").eq(workerUid))
                 .forUpdate()
                 .fetch()
                 .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)))
@@ -104,7 +104,7 @@ public abstract class AbstractJdbcWorkerJobRunningStateStore extends AbstractJdb
                     DSL.using(configuration)
                         .select(field("value"))
                         .from(this.jdbcRepository.getTable())
-                        .where(field("worker_uuid").eq(workerUid))
+                        .where(field("worker_uid").eq(workerUid))
                         .forUpdate()
                         .fetch()
                         .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)))

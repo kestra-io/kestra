@@ -7,14 +7,16 @@ import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerGroupMetaStore;
-import io.kestra.core.runners.WorkerJob;
+import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.services.WorkerGroupService;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,13 +32,16 @@ public class TriggerWorkerJobPublisher {
     
     private final WorkerGroupMetaStore workerGroupMetaStore;
     private final WorkerGroupService workerGroupService;
-    private final QueueInterface<WorkerJob> workerJobQueue;
+    private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     
     @Inject
-    public TriggerWorkerJobPublisher(WorkerGroupMetaStore workerGroupMetaStore, WorkerGroupService workerGroupService, QueueInterface<WorkerJob> workerJobQueue) {
+    public TriggerWorkerJobPublisher(
+            WorkerGroupMetaStore workerGroupMetaStore,
+            WorkerGroupService workerGroupService,
+            KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue) {
         this.workerGroupMetaStore = workerGroupMetaStore;
         this.workerGroupService = workerGroupService;
-        this.workerJobQueue = workerJobQueue;
+        this.workerJobEventQueue = workerJobEventQueue;
     }
     
     public void send(TriggerState triggerState, AbstractTrigger trigger, FlowInterface flow, ConditionContext conditionContext) throws InternalException {
@@ -67,7 +72,7 @@ public class TriggerWorkerJobPublisher {
                 if (workerGroupMetaStore.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                     // Check whether at-least one worker is available
                     if (workerGroupMetaStore.isWorkerGroupAvailableForKey(workerGroupKey)) {
-                        this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                        this.workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
                     } else {
                         WorkerGroup.Fallback fallback = workerGroup.map(WorkerGroup::getFallback).orElse(WorkerGroup.Fallback.WAIT);
                         switch(fallback) {
@@ -77,7 +82,7 @@ public class TriggerWorkerJobPublisher {
                                 .warn("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
                             case WAIT -> {runContext.logger()
                                 .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
-                                this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                                this.workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
                             }
                         };
                     }
@@ -85,7 +90,8 @@ public class TriggerWorkerJobPublisher {
                     runContext.logger().error("No worker group exist for key '{}', ignoring the trigger.", workerGroupKey);
                 }
             } else {
-                this.workerJobQueue.emit(workerTrigger);
+                // No worker group specified - use default (null key)
+                this.workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
             }
         } catch (QueueException e) {
             log.error("Unable to emit the Worker Trigger job", e);

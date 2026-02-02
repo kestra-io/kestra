@@ -3,13 +3,18 @@ package io.kestra.queue;
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.queues.VNodeDispatchQueueInterface;
-import io.kestra.core.runners.*;
 import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
+import io.kestra.core.queues.KeyedDispatchQueueInterface;
+import io.kestra.core.queues.VNodeDispatchQueueInterface;
+import io.kestra.core.runners.*;
+import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.runners.MultipleConditionEvent;
+import io.kestra.core.runners.SubflowExecutionEnd;
+import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.runners.WorkerJobEvent;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.TriggerEvent;
 
@@ -41,4 +46,6 @@ public interface QueueFactoryInterface {
     DispatchQueueInterface<LogEntry> logEntryQueue();
 
     BroadcastQueueInterface<FollowLogEvent> followLogEventQueue();
+
+    KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue();
 }

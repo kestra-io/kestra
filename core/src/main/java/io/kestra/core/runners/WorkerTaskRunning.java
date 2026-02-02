@@ -36,10 +36,9 @@ public class WorkerTaskRunning extends WorkerJobRunning {
         return this.taskRun.getId();
     }
 
-    public static WorkerTaskRunning of(WorkerTask workerTask, WorkerInstance workerInstance, int partition) {
+    public static WorkerTaskRunning of(WorkerTask workerTask, WorkerInstance workerInstance) {
         return WorkerTaskRunning.builder()
             .workerInstance(workerInstance)
-            .partition(partition)
             .taskRun(workerTask.getTaskRun())
             .task(workerTask.getTask())
             .runContext(workerTask.getRunContext())

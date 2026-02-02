@@ -4,9 +4,9 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
+import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.*;
@@ -61,7 +61,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
     
     private final LockService lockService;
     private final SkipExecutionService skipExecutionService;
-    private final QueueInterface<WorkerJob> workerJobQueue;
+    private final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     private final WorkerJobRunningStateStore workerJobRunningStateStore;
     private final MetricRegistry metricRegistry;
     private final VNodeController vNodeController;
@@ -86,7 +86,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                                              final ServiceInstanceRepositoryInterface serviceInstanceRepository,
                                              final LockService lockService,
                                              final SkipExecutionService skipExecutionService,
-                                             final @Named(QueueFactoryInterface.WORKERJOB_NAMED) QueueInterface<WorkerJob> workerJobQueue,
+                                             final KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue,
                                              final WorkerJobRunningStateStore workerJobRunningStateStore,
                                              final ServerConfig serverConfig,
                                              final MetricRegistry metricRegistry,
@@ -98,7 +98,7 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         this.serviceInstanceRepository = serviceInstanceRepository;
         this.store = store;
         this.skipExecutionService = skipExecutionService;
-        this.workerJobQueue = workerJobQueue;
+        this.workerJobEventQueue = workerJobEventQueue;
         this.workerJobRunningStateStore = workerJobRunningStateStore;
         this.lockService = lockService;
         this.metricRegistry = metricRegistry;
@@ -356,12 +356,13 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
                 workerJobRunningStateStore.deleteByKey(txContext, workerTaskRunning.uid());
             } else {
                 try {
-                    workerJobQueue.emit(workerTaskRunning.getWorkerInstance().workerGroup(), WorkerTask.builder()
+                    String workerGroupKey = workerTaskRunning.getWorkerInstance().workerGroup();
+                    WorkerTask workerTask = WorkerTask.builder()
                         .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
                         .task(workerTaskRunning.getTask())
                         .runContext(workerTaskRunning.getRunContext())
-                        .build()
-                    );
+                        .build();
+                    workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
                     Logs.logTaskRun(
                         workerTaskRunning.getTaskRun(),
                         Level.WARN,
@@ -381,11 +382,13 @@ public class DefaultServiceLivenessCoordinator extends AbstractServiceLivenessTa
         // WorkerTriggerRunning
         if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
             try {
-                workerJobQueue.emit(workerTriggerRunning.getWorkerInstance().workerGroup(), WorkerTrigger.builder()
+                String workerGroupKey = workerTriggerRunning.getWorkerInstance().workerGroup();
+                WorkerTrigger workerTrigger = WorkerTrigger.builder()
                     .trigger(workerTriggerRunning.getTrigger())
                     .conditionContext(workerTriggerRunning.getConditionContext())
                     .triggerContext(workerTriggerRunning.getTriggerContext())
-                    .build());
+                    .build();
+                workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTrigger, workerGroupKey));
                 Logs.logTrigger(
                     workerTriggerRunning.getTriggerContext(),
                     Level.WARN,

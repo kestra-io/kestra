@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.model.TriggerState;
+import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
@@ -58,8 +59,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     private TestRunContextFactory runContextFactory;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    private QueueInterface<WorkerJob> workerJobQueue;
+    private KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -100,7 +100,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             }
         });
 
-        workerJobQueue.emit(workerTask(Duration.ofSeconds(5)));
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(5)), null));
         boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
         assertThat(runningLatchAwait).isTrue();
         worker.close(); // stop processing task
@@ -139,7 +139,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             }
         });
 
-        workerJobQueue.emit("workerGroupKey", workerTask(Duration.ofSeconds(5), "workerGroupKey"));
+        workerJobEventQueue.emit("workerGroupKey", WorkerJobEvent.of(workerTask(Duration.ofSeconds(5), "workerGroupKey"), "workerGroupKey"));
         boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
         assertThat(runningLatchAwait).isTrue();
         worker.close(); // stop processing task
@@ -180,7 +180,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             }
         });
 
-        workerJobQueue.emit(workerTask);
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask, null));
         boolean runningLatchAwait = runningLatch.await(10, TimeUnit.SECONDS);
         assertThat(runningLatchAwait).isTrue();
         worker.close();
@@ -212,7 +212,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
                 }
             }));
 
-        workerJobQueue.emit(workerTrigger);
+        workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTrigger, null));
         assertTrue(receivedLatch.await(10, TimeUnit.SECONDS));
 
         worker.close();
@@ -239,7 +239,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
             }
         }));
         
-        workerJobQueue.emit("workerGroupKey", workerTrigger);
+        workerJobEventQueue.emit("workerGroupKey", WorkerJobEvent.of(workerTrigger, "workerGroupKey"));
         assertTrue(receivedLatch.await(10, TimeUnit.SECONDS));
         worker.close();
 

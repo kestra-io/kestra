@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.sla.ExecutionMonitoringSLA;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.SLAMonitor;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -65,8 +66,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
     private FlowMetaStoreInterface flowMetaStore;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    private QueueInterface<WorkerJob> workerJobQueue;
+    private KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
     @Inject
     private DispatchQueueInterface<SubflowExecutionResult> subflowExecutionResultQueue;
     @Inject
@@ -177,10 +177,10 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                 .orElse(null);
                                             if (workerTask.getTask() instanceof WorkingDirectory) {
                                                 // WorkingDirectory is a flowable so it will be moved to RUNNING a few lines under
-                                                workerJobQueue.emit(workerGroupKey, workerTask);
+                                                workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask, workerGroupKey));
                                             } else {
                                                 TaskRun taskRun = workerTask.getTaskRun().withState(State.Type.SUBMITTED);
-                                                workerJobQueue.emit(workerGroupKey, workerTask.withTaskRun(taskRun));
+                                                workerJobEventQueue.emit(workerGroupKey, WorkerJobEvent.of(workerTask.withTaskRun(taskRun), workerGroupKey));
                                                 workerTaskResults.add(new WorkerTaskResult(taskRun));
                                             }
                                         }

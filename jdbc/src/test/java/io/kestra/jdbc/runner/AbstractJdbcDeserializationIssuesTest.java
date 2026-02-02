@@ -105,6 +105,11 @@ public abstract class AbstractJdbcDeserializationIssuesTest {
     FlowMetaStoreInterface noOp() {
         return new FlowMetaStoreInterface() {
             @Override
+            public boolean isNamespaceExists(String tenant, String namespace) {
+                return false;
+            }
+
+            @Override
             public Collection<FlowWithSource> allLastVersion() {
                 return List.of();
             }

@@ -37,13 +37,12 @@ public class WorkerTriggerRunning extends WorkerJobRunning {
         return triggerContext.uid();
     }
 
-    public static WorkerTriggerRunning of(WorkerTrigger workerTrigger, WorkerInstance workerInstance, int partition) {
+    public static WorkerTriggerRunning of(WorkerTrigger workerTrigger, WorkerInstance workerInstance) {
         return WorkerTriggerRunning.builder()
             .trigger(workerTrigger.getTrigger())
             .triggerContext(workerTrigger.getTriggerContext())
             .conditionContext(workerTrigger.getConditionContext())
             .workerInstance(workerInstance)
-            .partition(partition)
             .build();
     }
 }

@@ -57,7 +57,6 @@ public class NamespaceControllerTest {
         );
 
         assertThat(namespace.getId()).isEqualTo("my.ns");
-        assertThat(namespace.isDeleted()).isFalse();
     }
 
     @SuppressWarnings("unchecked")

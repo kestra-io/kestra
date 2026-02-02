@@ -1173,11 +1173,13 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 Map<String, String> mergedMap = new HashMap<>();
 
                 labelFilters.forEach(labelFilter -> {
-                    Map<String, String> currentMap =
-                        labelFilter.getValue() instanceof String stringLabel ?
-                            Label.from(stringLabel)
-                            : (Map<String, String>) labelFilter.getValue();
-                    mergedMap.putAll(currentMap);
+                    if (labelFilter.getLabelKey() != null) {
+                        mergedMap.put(labelFilter.getLabelKey(), labelFilter.getValue().toString());
+                    } else if (labelFilter.getValue() instanceof String stringLabel) {
+                        mergedMap.putAll(Label.from(stringLabel));
+                    } else {
+                        mergedMap.putAll((Map<String, String>) labelFilter.getValue());
+                    }
                 });
 
                 selectConditionStep = selectConditionStep.and(findCondition(null, mergedMap));

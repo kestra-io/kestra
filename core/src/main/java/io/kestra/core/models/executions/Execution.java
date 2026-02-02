@@ -576,6 +576,17 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .findFirst();
     }
 
+    public Optional<TaskRun> findFirstRunning() {
+        if (this.taskRunList == null) {
+            return Optional.empty();
+        }
+
+        return this.taskRunList
+            .stream()
+            .filter(t -> t.getState().isRunning())
+            .findFirst();
+    }
+
     public Optional<TaskRun> findLastNotTerminated() {
         if (this.taskRunList == null) {
             return Optional.empty();

@@ -1,7 +1,6 @@
 package io.kestra.core.models.executions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -22,7 +21,7 @@ import java.util.stream.Stream;
 
 @Value
 @Builder(toBuilder = true)
-public class LogEntry implements DeletedInterface, TenantInterface {
+public class LogEntry implements TenantInterface {
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
@@ -56,10 +55,6 @@ public class LogEntry implements DeletedInterface, TenantInterface {
     String thread;
 
     String message;
-
-    @NotNull
-    @Builder.Default
-    boolean deleted = false;
 
     @Nullable
     ExecutionKind executionKind;

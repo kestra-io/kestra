@@ -83,7 +83,7 @@ abstract public class Task implements TaskInterface {
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     @Valid
     @Nullable
-    private Property<AssetsDeclaration> assets;
+    private AssetsDeclaration assets;
 
     public Optional<Task> findById(String id) {
         if (this.getId().equals(id)) {

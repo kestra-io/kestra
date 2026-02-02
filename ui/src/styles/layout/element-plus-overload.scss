@@ -454,25 +454,36 @@ form.ks-horizontal {
             white-space: nowrap;
         }
 
-        a, button {
+        a, button, .kicon, .el-button {
             color: var(--ks-content-primary);
-            width: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: var(--bs-border-radius);
             text-align: center;
             display: flex;
             justify-content: center;
             align-items: center;
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+            cursor: pointer;
 
-            .material-design-icon__svg {
-                bottom: -0.125rem;
-            }
-        }
-
-        button {
             .material-design-icon__svg {
                 bottom: 0;
+                width: 16px;
+                height: 16px;
+                transform: translateY(1px) translateX(-0.5px);
             }
         }
+
+        a:hover,
+        button:hover,
+        .kicon:hover,
+        .el-button:hover {
+            background-color: var(--ks-tag-background);
+        }
+
     }
 
     th.shrink {

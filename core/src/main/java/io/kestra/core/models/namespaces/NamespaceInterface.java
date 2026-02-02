@@ -1,13 +1,13 @@
 package io.kestra.core.models.namespaces;
 
-import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasUID;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public interface NamespaceInterface extends DeletedInterface, HasUID {
+public interface NamespaceInterface extends HasUID {
+    String getId();
 
     /**
      * Static helper method to convert a namespace string into a tree structure.
@@ -24,9 +24,6 @@ public interface NamespaceInterface extends DeletedInterface, HasUID {
 
         return terms;
     }
-
-    String getId();
-
 
     /** {@inheritDoc **/
     @Override

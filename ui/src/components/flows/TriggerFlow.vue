@@ -3,7 +3,7 @@
         <el-button v-if="playgroundStore.enabled" id="run-all-button" :icon="icon.Play" class="el-button--playground" :disabled="isDisabled() || !playgroundStore.readyToStart" @click="playgroundStore.runUntilTask()">
             {{ $t("playground.run_all_tasks") }}
         </el-button>
-        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :icon="icon.LightningBolt" :type="type" :disabled="isDisabled()" @click="onClick()">
+        <el-button v-else id="execute-button" :class="{'onboarding-glow': coreStore.guidedProperties.glowExecuteButton}" :icon="icon.Play" :type="type" :disabled="isDisabled()" @click="onClick()">
             {{ $t("execute") }}
         </el-button>
         <el-dialog
@@ -18,7 +18,7 @@
             <template #header>
                 <span v-html="$t('execute the flow', {id: flowId})" />
             </template>
-            <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+            <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
         </el-dialog>
         <el-dialog
             v-if="isSelectFlowOpen"
@@ -61,7 +61,7 @@
                 </el-form-item>
                 <el-form-item v-if="localFlow" :label="$t('inputs')">
                     <div class="w-100">
-                        <FlowRun @execution-trigger="closeModal" :redirect="!playgroundStore.enabled" />
+                        <FlowRun @execution-trigger="handleExecutionStart" :redirect="!playgroundStore.enabled" />
                     </div>
                 </el-form-item>
             </el-form>
@@ -72,7 +72,6 @@
 
 <script>
     import FlowRun from "./FlowRun.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import Play from "vue-material-design-icons/Play.vue";
     import {shallowRef} from "vue";
     import {useMediaQuery} from "@vueuse/core";
@@ -119,12 +118,15 @@
                 localNamespace: undefined,
                 isLargeScreen: useMediaQuery("(min-width: 768px)"),
                 icon: {
-                    LightningBolt: shallowRef(LightningBolt),
                     Play: shallowRef(Play)
                 }
             };
         },
         methods: {
+            async handleExecutionStart() {
+                this.closeModal();
+                this.$toast().success(this.$t("execution_started"));
+            },
             onClick() {
                 if (this.$tours["guidedTour"]?.isRunning?.value) {
                     this.$tours["guidedTour"]?.nextStep();

@@ -50,11 +50,9 @@
     const hasSelection = ref(false);
     const container = ref<HTMLElement>(null);
     
-    // State for Shift-Selection
     const lastCheckedIndex = ref<number | null>(null);
     const isShiftPressed = ref(false);
 
-    // Track global shift key state
     const handleGlobalClick = (event: MouseEvent) => {
         isShiftPressed.value = event.shiftKey;
     };
@@ -68,11 +66,10 @@
         emit("selection-change", selection);
     };
 
-    const onSelect = (selection: any[], row: any) => {
+    const onSelect = async (selection: any[], row: any) => {
         const data = props.data ?? [];
         const currentIndex = data.indexOf(row);
-        
-        // Determine if checked or unchecked
+    
         const isChecked = selection.some(s => 
             typeof props.rowKey === "function" 
                 ? props.rowKey(s) === props.rowKey(row) 
@@ -86,8 +83,13 @@
             for (let i = start; i <= end; i++) {
                 table.value?.toggleRowSelection(data[i], isChecked);
             }
-            
-            // Cleanup browser text selection
+        
+            await nextTick();
+        
+            // 4. Now fetch the actual selection and force the counter to update
+            const finalSelection = table.value?.getSelectionRows() ?? [];
+            selectionChanged(finalSelection);
+
             window.getSelection()?.removeAllRanges();
         }
 

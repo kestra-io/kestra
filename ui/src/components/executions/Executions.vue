@@ -281,13 +281,12 @@
                             :label="$t('actions')"
                         >
                             <template #default="scope">
-                                <router-link
+                                <IconButton
+                                    :tooltip="$t('details')"
                                     :to="{name: 'executions/update', params: {namespace: scope.row?.namespace, flowId: scope.row?.flowId, id: scope.row?.id}, query: {revision: scope.row?.flowRevision}}"
                                 >
-                                    <Kicon :tooltip="$t('details')" placement="left">
-                                        <TextSearch />
-                                    </Kicon>
-                                </router-link>
+                                    <TextSearch />
+                                </IconButton>
                             </template>
                         </el-table-column>
                     </template>
@@ -426,7 +425,7 @@
     import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import {State, Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";

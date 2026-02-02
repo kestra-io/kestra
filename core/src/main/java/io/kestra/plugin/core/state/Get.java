@@ -18,7 +18,9 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get a state from the state store (Deprecated, use KV store instead)."
+    title = "Get state from the legacy state store (deprecated).",
+    description = """
+        Deprecated; use the KV store instead. Fetches the named state (default Flow state if `name` unset). If `errorOnMissing` is true, missing state raises an error; otherwise returns empty data."""
 )
 @Plugin(
     examples = {

@@ -22,7 +22,11 @@ import java.util.function.BiPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition for an execution namespace."
+    title = "Match executions by namespace.",
+    description = """
+        Compares the triggering execution’s namespace against a target string using `EQUALS`, `PREFIX`, or `SUFFIX`. The `prefix` boolean is a shorthand for `comparison: PREFIX`.
+
+        If no comparison is set, it defaults to strict equality unless `prefix` is true."""
 )
 @Plugin(
     examples = {

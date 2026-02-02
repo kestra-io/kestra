@@ -94,7 +94,7 @@ export function defaultConfig(override, theme) {
 
 export function extractState(value) {
     if (!value || typeof value !== "string") return value;
-    
+
     if (value.includes(",")) {
         const stateNames = State.arrayAllStates().map(state => state.name);
         const matchedState = value.split(",")
@@ -102,7 +102,7 @@ export function extractState(value) {
             .find(part => stateNames.includes(part.toUpperCase()));
         return matchedState || value;
     }
-    
+
     return value;
 }
 
@@ -203,7 +203,7 @@ export function getConsistentHEXColor(theme, value) {
     // Idea is to separate the value to parts and only use the status
     // Needs to be made more generic and robust as part of the https://github.com/kestra-io/kestra/issues/9149#issuecomment-2969506266
     const result = value.includes(",") ? value.split(",").pop().trim() : value;
-    
+
     let hex;
 
     hex = getSchemeValue(result, "executions");
@@ -212,7 +212,7 @@ export function getConsistentHEXColor(theme, value) {
     }
 
     hex = getSchemeValue(result, "logs");
-    if (hex) {
+    if (hex && hex !== "transparent") {
         return hex;
     }
 

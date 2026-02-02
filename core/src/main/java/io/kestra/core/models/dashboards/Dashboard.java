@@ -58,6 +58,7 @@ public class Dashboard implements HasUID, DeletedInterface {
     @Hidden
     private Instant updated;
 
+    @Hidden
     private String sourceCode;
 
     @Override

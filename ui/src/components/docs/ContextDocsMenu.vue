@@ -10,14 +10,14 @@
                         {{ sectionName.toUpperCase() }}
                     </span>
                     <RecursiveToc :parent="{children}">
-                        <template #default="{path, title}">
+                        <template #default="{path, sidebarTitle, title}">
                             <ContextDocsLink
                                 :href="path.slice(5)"
                                 useRaw
                                 :class="{'active-page': isCurrentPage(path)}"
                                 @click="menuOpen = false"
                             >
-                                {{ title.capitalize() }}
+                                {{ (sidebarTitle ?? title).capitalize() }}
                             </ContextDocsLink>
                         </template>
                     </RecursiveToc>
@@ -45,35 +45,35 @@
 
     const SECTIONS = {
         "Get Started with Kestra": [
-            "Getting Started",
+            "Quickstart",
+            "Installation Guide",
             "Tutorial",
             "Architecture",
-            "Installation Guide",
-            "User Interface"
+            "User Interface",
         ],
         "Build with Kestra": [
             "Concepts",
             "Workflow Components",
             "Multi-Language Script Tasks",
+            "AI Tools",
+            "No-Code",
             "Version Control & CI/CD",
             "Plugin Developer Guide",
-            "How-to Guides"
+            "How-to Guides",
         ],
         "Scale with Kestra": [
             "Cloud & Enterprise Edition",
             "Task Runners",
-            "Best Practices"
+            "Best Practices",
         ],
-        "Manage Kestra": [
-            "Administrator Guide",
-            "Migration Guide"
-        ],
+        "Manage Kestra": ["Administrator Guide", "Migration Guide", "Performance"],
         "Reference Docs": [
             "Configuration",
+            "Releases & LTS Policy",
             "Expressions",
             "API Reference",
             "Terraform Provider",
-        ]
+        ],
     }
 
     const rawStructure = ref<Record<string, any> | undefined>();
@@ -107,7 +107,7 @@
         rawStructure.value = await docStore.children();
     });
 
-    const toc = computed<{title: string}[]>(() => {
+    const toc = computed<{sidebarTitle: string, path: string}[]>(() => {
         if (rawStructure.value === undefined) {
             return undefined;
         }
@@ -144,7 +144,12 @@
             return undefined;
         }
 
-        return Object.entries(SECTIONS).map(([section, childrenTitles]) => [section, toc.value.filter(({title}) => childrenTitles.includes(title))] as [string, {title: string, path: string}[]]);
+        return Object.entries(SECTIONS)
+            .map(([section, childrenTitles]: [string, string[]]) => {
+                return [section, toc.value.filter(({sidebarTitle}) => {
+                    return childrenTitles.includes(sidebarTitle)
+                })] as const
+            });
     });
 </script>
 

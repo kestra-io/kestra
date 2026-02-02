@@ -2,13 +2,13 @@
     <div id="buttons">
         <el-button
             :icon="ChevronLeft"
-            :disabled="prevDisabled"
+            :disabled="!results.previous"
             @click="navigate('previous')"
         >
             {{ $t("prev_execution") }}
         </el-button>
 
-        <el-button :disabled="nextDisabled" @click="navigate('next')">
+        <el-button :disabled="!results.next" @click="navigate('next')">
             {{ $t("next_execution") }}
             <el-icon class="el-icon--right">
                 <ChevronRight />
@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, computed, ref} from "vue";
+    import {onMounted, ref} from "vue";
 
     import {useRouter} from "vue-router";
     const router = useRouter();
@@ -36,70 +36,49 @@
 
     const props = defineProps<{ execution: Execution }>();
 
-    const currentPage = ref(1);
-
-    const total = ref(0);
-    const results = ref<Execution[]>([]);
-
-    const currentIdx = ref(-1);
-
-    const prevDisabled = computed(
-        () => !!(total.value && currentIdx.value + 1 === total.value),
-    );
-    const nextDisabled = computed(() => !!(total.value && currentIdx.value === 0));
+    const results = ref<{
+        previous: Execution | null;
+        current: Execution;
+        next: Execution | null;
+    }>({
+        previous: null,
+        current: props.execution,
+        next: null,
+    });
 
     const loadExecutions = async () => {
-        const params = {
+        const baseParams = {
             "filters[namespace][PREFIX]": props.execution.namespace,
             "filters[flowId][EQUALS]": props.execution.flowId,
-            "filters[timeRange][EQUALS]": "P365D", // Extended to 365 days for better navigation
-            page: currentPage.value,
-            size: 100,
             sort: "state.startDate:desc",
+            size: 1,
         };
 
-        const response = await store.findExecutions(params);
+        const [newerRes, olderRes] = await Promise.all([
+            // one execution AFTER (more recent than) current startDate
+            store.findExecutions({
+                ...baseParams,
+                "filters[startDate][GREATER_THAN]": props.execution.state.startDate,
+            }),
+            // one execution BEFORE (older than) current startDate
+            store.findExecutions({
+                ...baseParams,
+                "filters[startDate][LESS_THAN]": props.execution.state.startDate,
+            }),
+        ]);
 
-        total.value = response.total;
-        results.value.push(...response.results);
-
-        currentIdx.value = results.value.findIndex(
-            (e: Execution) => e.id === props.execution.id,
-        );
-
-        // If not found and more pages exist, load next page
-        if (currentIdx.value === -1 && results.value.length < total.value) {
-            currentPage.value += 1;
-            await loadExecutions();
-        }
-
-        // If found, move router
-        if (currentIdx.value !== -1) {
-            router.push(createLink("executions", results.value[currentIdx.value]));
-        }
+        results.value = {
+            previous: newerRes.results?.[0] ?? null,
+            current: props.execution,
+            next: olderRes.results?.[0] ?? null,
+        };
     };
 
     const navigate = async (direction: "previous" | "next") => {
-        if (currentIdx.value === -1) return;
+        if (direction === "previous" && !results.value.previous) return;
+        if (direction === "next" && !results.value.next) return;
 
-        if (direction === "previous") {
-            if (prevDisabled.value) return;
-            currentIdx.value += 1;
-        } else {
-            if (nextDisabled.value) return;
-            currentIdx.value -= 1;
-        }
-
-        // If we reached the end of loaded data but not total, load new page
-        if (
-            currentIdx.value >= results.value.length - 1 &&
-            results.value.length < total.value
-        ) {
-            currentPage.value += 1;
-            await loadExecutions();
-        } else {
-            router.push(createLink("executions", results.value[currentIdx.value]));
-        }
+        router.push(createLink("executions", results.value[direction]!));
     };
 
     onMounted(async () => {

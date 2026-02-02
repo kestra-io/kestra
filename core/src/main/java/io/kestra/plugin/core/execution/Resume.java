@@ -35,10 +35,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Resume a paused execution.",
+    title = "Resume a paused execution (deprecated).",
     description = """
-        **This task is deprecated**, please use `io.kestra.plugin.kestra.executions.Resume` instead.
-        By default, the task assumes that you want to resume the current `executionId`. If you want to programmatically resume an execution of another flow, make sure to define the `executionId`, `flowId`, and `namespace` properties explicitly. Using the `inputs` property, you can additionally pass custom `onResume` input values to the execution."""
+        Deprecated; use `io.kestra.plugin.kestra.executions.Resume`.
+
+        Resumes a paused execution, defaulting to the current execution unless `executionId` is provided. For cross-flow resumes, specify `namespace` and `flowId` to satisfy permissions. Optional `inputs` are passed to the flow’s `onResume` block."""
 )
 @Plugin(
     examples = {

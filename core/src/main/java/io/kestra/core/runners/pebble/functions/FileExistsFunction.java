@@ -23,7 +23,7 @@ public class FileExistsFunction extends AbstractFileFunction {
             case LocalPath.FILE_SCHEME -> localPathFactory.createLocalPath().exists(path);
             case Namespace.NAMESPACE_FILE_SCHEME  -> {
                 Namespace namespaceStorage = namespaceFactory.of(tenantId, namespace, storageInterface);
-                yield namespaceStorage.exists(NamespaceFile.normalize(Path.of(path.getPath()), true));
+                yield namespaceStorage.exists(NamespaceFile.normalize(Path.of(path.getPath())));
             }
             default -> throw new IllegalArgumentException(SCHEME_NOT_SUPPORTED_ERROR.formatted(path));
         };

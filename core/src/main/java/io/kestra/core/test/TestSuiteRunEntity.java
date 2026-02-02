@@ -1,6 +1,6 @@
 package io.kestra.core.test;
 
-import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.test.flow.UnitTestResult;
@@ -24,7 +24,7 @@ public record TestSuiteRunEntity(
     String flowId,
     TestState state,
     List<UnitTestResult> results
-) implements DeletedInterface, TenantInterface, HasUID {
+) implements SoftDeletable<TestSuiteRunEntity>, TenantInterface, HasUID {
 
     public static TestSuiteRunEntity create(String tenantId, TestSuiteUid testSuiteUid, TestSuiteRunResult testSuiteRunResult) {
         return new TestSuiteRunEntity(
@@ -40,23 +40,6 @@ public record TestSuiteRunEntity(
             testSuiteRunResult.flowId(),
             testSuiteRunResult.state(),
             testSuiteRunResult.results()
-        );
-    }
-
-    public TestSuiteRunEntity delete() {
-        return new TestSuiteRunEntity(
-            this.uid,
-            this.id,
-            this.tenantId,
-            true,
-            this.startDate,
-            this.endDate,
-            this.testSuiteId,
-            this.testSuiteUid,
-            this.namespace,
-            this.flowId,
-            this.state,
-            this.results
         );
     }
 
@@ -84,6 +67,24 @@ public record TestSuiteRunEntity(
     @Override
     public boolean isDeleted() {
         return this.deleted;
+    }
+
+    @Override
+    public TestSuiteRunEntity toDeleted() {
+        return new TestSuiteRunEntity(
+            this.uid,
+            this.id,
+            this.tenantId,
+            true,
+            this.startDate,
+            this.endDate,
+            this.testSuiteId,
+            this.testSuiteUid,
+            this.namespace,
+            this.flowId,
+            this.state,
+            this.results
+        );
     }
 
     @Override

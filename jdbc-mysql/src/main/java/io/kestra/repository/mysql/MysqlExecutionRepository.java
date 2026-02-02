@@ -39,7 +39,7 @@ public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     }
 
     @Override
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
         return MysqlExecutionRepositoryService.findLabelCondition(input, operation);
     }
 

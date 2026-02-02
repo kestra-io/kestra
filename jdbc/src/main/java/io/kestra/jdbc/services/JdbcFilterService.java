@@ -1,10 +1,15 @@
 package io.kestra.jdbc.services;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.services.AbstractFilterService;
+import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcDashboardRepository;
+import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.micronaut.context.annotation.Requires;
+import jakarta.inject.Inject;
+import jakarta.inject.Provider;
 import jakarta.inject.Singleton;
 import org.jooq.*;
 import org.jooq.Record;
@@ -17,6 +22,9 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 @Singleton
 @Requires(bean = AbstractJdbcDashboardRepository.class)
 public class JdbcFilterService extends AbstractFilterService<SelectConditionStep<Record>> {
+    @Inject
+    private Provider<AbstractJdbcExecutionRepository> executionRepositoryInterface;
+
     public AggregateFunction<?> buildAggregation(Field<?> field, AggregationType agg) {
 
         return switch (agg) {
@@ -140,6 +148,10 @@ public class JdbcFilterService extends AbstractFilterService<SelectConditionStep
     }
 
     private <F extends Enum<F>> org.jooq.Condition containsCondition(String field, Contains<F> filter) {
+        if (filter.getLabelKey() != null) {
+            return executionRepositoryInterface.get().findLabelCondition(Either.left(Map.of(filter.getLabelKey(), filter.getValue())), QueryFilter.Op.EQUALS);
+        }
+
         return field(field).contains(filter.getValue().toString());
     }
 

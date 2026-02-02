@@ -379,7 +379,7 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: ");
     }
 
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 

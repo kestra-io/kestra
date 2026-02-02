@@ -93,24 +93,18 @@
                             />
                         </div>
                         <template v-if="!scope.row.backfill.paused">
-                            <el-button size="small" @click="pauseBackfill(scope.row)">
-                                <Kicon :tooltip="$t('pause backfill')">
-                                    <Pause />
-                                </Kicon>
-                            </el-button>
+                            <IconButton size="small" :tooltip="$t('pause backfill')" @click="pauseBackfill(scope.row)">
+                                <Pause />
+                            </IconButton>
                         </template>
                         <template v-else-if="userCan(action.UPDATE)">
-                            <el-button size="small" @click="unpauseBackfill(scope.row)">
-                                <Kicon :tooltip="$t('continue backfill')">
-                                    <Play />
-                                </Kicon>
-                            </el-button>
+                            <IconButton size="small" :tooltip="$t('continue backfill')" @click="unpauseBackfill(scope.row)">
+                                <Play />
+                            </IconButton>
 
-                            <el-button size="small" @click="deleteBackfill(scope.row)">
-                                <Kicon :tooltip="$t('delete backfill')">
-                                    <Delete />
-                                </Kicon>
-                            </el-button>
+                            <IconButton size="small" :tooltip="$t('delete backfill')" @click="deleteBackfill(scope.row)">
+                                <Delete />
+                            </IconButton>
                         </template>
                     </div>
                 </template>
@@ -140,21 +134,29 @@
 
         <el-table-column columnKey="restart" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <el-button size="small" v-if="scope.row.evaluateRunningDate" @click="restart(scope.row)">
-                    <Kicon :tooltip="$t('restart trigger.button')">
-                        <Restart />
-                    </Kicon>
-                </el-button>
+                <IconButton
+                    v-if="scope.row.evaluateRunningDate"
+                    size="small"
+                    :tooltip="$t('restart trigger.button')"
+                    placement="left"
+                    @click="restart(scope.row)"
+                >
+                    <Restart />
+                </IconButton>
             </template>
         </el-table-column>
 
         <el-table-column columnKey="unlock" className="row-action" v-if="userCan(action.UPDATE)">
             <template #default="scope">
-                <el-button size="small" v-if="scope.row.executionId" @click="unlock(scope.row)">
-                    <Kicon :tooltip="$t('unlock trigger.button')">
-                        <LockOff />
-                    </Kicon>
-                </el-button>
+                <IconButton
+                    v-if="scope.row.executionId"
+                    size="small"
+                    :tooltip="$t('unlock trigger.button')"
+                    placement="left"
+                    @click="unlock(scope.row)"
+                >
+                    <LockOff />
+                </IconButton>
             </template>
         </el-table-column>
 
@@ -166,11 +168,9 @@
 
         <el-table-column columnKey="action" className="row-action">
             <template #default="scope">
-                <el-button size="small" @click="triggerId = scope.row.id; isOpen = true">
-                    <Kicon :tooltip="$t('details')" placement="left">
-                        <TextSearch />
-                    </Kicon>
-                </el-button>
+                <IconButton size="small" :tooltip="$t('details')" @click="triggerId = scope.row.id; isOpen = true">
+                    <TextSearch />
+                </IconButton>
             </template>
         </el-table-column>
     </el-table>
@@ -278,7 +278,7 @@
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
 
     import Id from "../Id.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import Drawer from "../Drawer.vue";
     //@ts-expect-error no declared types
     import FlowRun from "./FlowRun.vue";

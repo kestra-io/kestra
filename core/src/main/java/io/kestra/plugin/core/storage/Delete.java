@@ -21,7 +21,11 @@ import java.util.NoSuchElementException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a file from Kestra's internal storage."
+    title = "Delete a file from Kestra internal storage.",
+    description = """
+        Removes the file at the given `kestra://` URI. If `errorOnMissing` is true and the file doesn’t exist, the task fails.
+
+        Useful for cleaning temp artifacts after merges/downloads."""
 )
 @Plugin(
     examples = {

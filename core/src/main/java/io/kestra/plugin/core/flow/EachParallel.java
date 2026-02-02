@@ -32,18 +32,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "For each value in the list, execute one or more tasks in parallel (Deprecated).",
-    description = "This task is deprecated, please use the `io.kestra.plugin.core.flow.ForEach` task instead.\n\n" +
-        "The list of `tasks` will be executed for each item in parallel. " +
-        "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`.\n" +
-        "You can access the current iteration value using the variable `{{ taskrun.value }}`.\n\n" +
-        "The task list will be executed in parallel for each item. For example, if you have a list with 3 elements and 2 tasks defined in the list of `tasks`, all " +
-        "6 tasks will be computed in parallel without any order guarantee.\n\n" +
-        "If you want to execute a group of sequential tasks for each value in parallel, you can wrap the list of `tasks` " +
-        "with the [Sequential task](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.sequential).\n" +
-        "If your list of values is large, you can limit the number of concurrent tasks using the `concurrent` property.\n\n" +
-        "We highly recommend triggering a subflow for each value (e.g. using the [ForEachItem](https://kestra.io/plugins/core/tasks/flow/io.kestra.plugin.core.flow.foreachitem) task) instead of specifying many tasks wrapped in a `Sequential` task. " +
-        "This allows better scalability and modularity. Check the [flow best practices documentation](https://kestra.io/docs/best-practices/flows) for more details."
+    title = "Fan out tasks in parallel for each value (deprecated).",
+    description = """
+        Deprecated; use `io.kestra.plugin.core.flow.ForEach`.
+
+        Renders `value` (array/JSON) and runs the child task list for each item in parallel, capped by `concurrent` (0 = no cap). Current item is available as `taskrun.value`. For large fan-out, prefer subflows (`ForEachItem`) for scalability."""
 )
 @Plugin(
     examples = {

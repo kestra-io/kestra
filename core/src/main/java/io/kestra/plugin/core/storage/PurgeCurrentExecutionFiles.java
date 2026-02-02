@@ -18,12 +18,9 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Purge all files from Kestra's internal storage created by this execution.",
-    description = "This will delete all the generated files from a flow for the current execution. This will delete all files from:\n" +
-        "- inputs\n" +
-        "- outputs\n" +
-        "- triggers\n\n" +
-        "If the current execution doesn't have any generated files, the task will not fail."
+    title = "Purge files created by the current Execution.",
+    description = """
+        Deletes all internal-storage files produced by this Execution (inputs, outputs, triggers). No-op if nothing was generated."""
 )
 @Plugin(
     examples = {

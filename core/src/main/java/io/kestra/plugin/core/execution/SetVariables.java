@@ -23,7 +23,11 @@ import java.util.Collections;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Allow to set execution variables. These variables are available via the `{{ vars.name }}` expression."
+    title = "Set execution-scoped variables.",
+    description = """
+        Renders a map and merges it into the execution variables, making them available via `{{ vars.* }}`. By default, existing keys are overwritten; set `overwrite` to false to fail when a key already exists.
+
+        Deep merges preserve nested maps rather than replacing them entirely."""
 )
 @Plugin(
     examples = {

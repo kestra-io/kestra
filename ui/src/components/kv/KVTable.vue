@@ -90,35 +90,40 @@
 
                 <el-table-column columnKey="copy" className="row-action">
                     <template #default="scope">
-                        <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
-                            <el-button
-                                :icon="ContentCopy"
-                                link
-                                @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
-                            />
-                        </el-tooltip>
+                        <IconButton
+                            v-if="scope.row.key !== undefined"
+                            :tooltip="$t('copy_to_clipboard')"
+                            placement="left"
+                            @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)"
+                        >
+                            <ContentCopy />
+                        </IconButton>
                     </template>
                 </el-table-column>
 
                 <el-table-column v-if="!paneView" columnKey="update" className="row-action">
                     <template #default="scope">
-                        <el-button
+                        <IconButton
                             v-if="canUpdate(scope.row)"
-                            :icon="FileDocumentEdit"
-                            link
+                            :tooltip="$t('update')"
+                            placement="left"
                             @click="updateKvModal(scope.row)"
-                        />
+                        >
+                            <FileDocumentEdit />
+                        </IconButton>
                     </template>
                 </el-table-column>
 
                 <el-table-column v-if="!paneView" columnKey="delete" className="row-action">
                     <template #default="scope">
-                        <el-button
+                        <IconButton
                             v-if="canDelete(scope.row)"
-                            :icon="Delete"
-                            link
+                            :tooltip="$t('delete')"
+                            placement="left"
                             @click="removeKv(scope.row.namespace, scope.row.key)"
-                        />
+                        >
+                            <Delete />
+                        </IconButton>
                     </template>
                 </el-table-column>
             </SelectTable>
@@ -244,6 +249,7 @@
     import FileDocumentEdit from "vue-material-design-icons/FileDocumentEdit.vue";
 
     import Id from "../Id.vue";
+    import IconButton from "../IconButton.vue";
     import Drawer from "../Drawer.vue";
     import Editor from "../inputs/Editor.vue";
     import InheritedKVs from "./InheritedKVs.vue";

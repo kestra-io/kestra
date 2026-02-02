@@ -33,7 +33,11 @@ import java.util.TreeSet;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete one or multiple files from your namespace files."
+    title = "Delete files from Namespace storage.",
+    description = """
+        Removes files in a Namespace matching provided paths or glob patterns. Optional `deleteParentFolder` cleans up now-empty parent directories.
+
+        Accepts string or list for `files`; Namespace authoritzation applies when deleting outside the current Flow Namespace."""
 )
 @Plugin(
     examples = {

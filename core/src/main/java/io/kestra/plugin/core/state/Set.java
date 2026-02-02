@@ -20,15 +20,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Set a state in the state store (Deprecated, use KV store instead).",
-    description = "Values will be merged: \n" +
-        "* If you provide a new key, the new key will be added.\n" +
-        "* If you provide an existing key, the previous key will be overwrite.\n" +
-        "\n" +
-        "::alert{type=\"warning\"}\n" +
-        "This method is not concurrency safe. If many executions for the same flow are concurrent, there is no guarantee on isolation on the value.\n" +
-        "The value can be overwritten by other executions.\n" +
-        "::\n"
+    title = "Set state in the legacy state store (deprecated).",
+    description = """
+        Deprecated; use the KV store instead. Merges provided `data` into the named state (default state for the Flow if `name` unset). New keys are added; existing keys are overwritten.
+
+        Not concurrency safe: parallel Flow executions can overwrite each other."""
 )
 @Plugin(
     examples = {

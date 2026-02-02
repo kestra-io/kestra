@@ -1,18 +1,21 @@
 <template>
-    <span class="kicon">
-        <el-tooltip
-            effect="light"
-            v-if="tooltip"
-            :content="tooltip"
-            :rawContent="true"
-            v-bind="placement ? {placement} : {}"
-            :persistent="false"
-            transition=""
-            :hideAfter="0"
-        >
+    <el-tooltip
+        effect="light"
+        v-if="tooltip"
+        :content="tooltip"
+        :rawContent="true"
+        v-bind="placement ? {placement} : {}"
+        :persistent="false"
+        :enterable="false"
+        transition=""
+        :hideAfter="0"
+    >
+        <span class="kicon">
             <slot />
-        </el-tooltip>
-        <slot v-else />
+        </span>
+    </el-tooltip>
+    <span v-else class="kicon">
+        <slot />
     </span>
 </template>
 <script setup lang="ts">

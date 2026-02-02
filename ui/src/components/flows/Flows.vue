@@ -767,10 +767,6 @@
 .flow-actions-cell {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-
-    & :deep(.kicon) {
-        cursor: pointer;
-    }
+    gap: 0.25rem;
 }
 </style>

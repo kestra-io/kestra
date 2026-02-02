@@ -15,7 +15,7 @@
                     <EnterpriseBadge :enable="tab.locked">
                         <span class="tab-label-wrapper">
                             {{ tab.title }}
-                            <el-badge :type="tab.badgeType || (tab.count > 0 ? 'danger' : 'primary')" :value="tab.count" v-if="tab.count !== undefined" class="inline-badge" />
+                            <el-badge v-if="tab.count !== undefined" :value="tab.count" type="primary" class="inline-badge" />
                         </span>
                     </EnterpriseBadge>
                 </component>
@@ -58,7 +58,6 @@
         disabled?: boolean;
         props?: any;
         count?: number;
-        badgeType?: string;
         locked?: boolean;
         query?: any;
         component?: any;

@@ -242,10 +242,6 @@ export const createAxios = (
             }
 
             if (errorResponse.response.status === 400) {
-                // Preserve full error when caller opted out of global toast handling
-                if (errorResponse?.config?.showMessageOnError === false) {
-                    return Promise.reject(errorResponse)
-                }
                 return Promise.reject(errorResponse.response.data)
             }
 

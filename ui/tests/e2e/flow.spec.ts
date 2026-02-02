@@ -82,7 +82,7 @@ test.describe("Flow Page", () => {
             await page.getByRole("button", {name: "Save"}).click();
             await expect(page.getByRole("heading", {name: "Successfully saved"})).toBeVisible();
             await page.getByRole("link", {name: "Overview"}).click();
-            await expect(page.locator("h1").getByText(flowId)).toBeVisible();
+            await expect(page.locator("#app").getByText(flowId)).toBeVisible();
         });
 
         const inputValue = "my-input_" + testUUID;

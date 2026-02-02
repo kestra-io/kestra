@@ -85,30 +85,42 @@ Deploy Kestra on Google Cloud Infrastructure Manager using [our Terraform module
 Make sure that Docker is running. Then, start Kestra in a single command:
 
 ```bash
-docker run --pull=always --rm -it -p 8080:8080 --user=root \
+docker run --pull=always -it -p 8080:8080 --user=root \
+  --name kestra --restart=always \
+  -v kestra_data:/app/storage \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  -v /tmp:/tmp kestra/kestra:latest server local
+  -v /tmp:/tmp \
+  kestra/kestra:latest server local
 ```
 
 If you're on Windows and use PowerShell:
 ```powershell
-docker run --pull=always --rm -it -p 8080:8080 --user=root `
-    -v "/var/run/docker.sock:/var/run/docker.sock" `
-    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+docker run --pull=always -it -p 8080:8080 --user=root `
+  --name kestra --restart=always `
+  -v "kestra_data:/app/storage" `
+  -v "/var/run/docker.sock:/var/run/docker.sock" `
+  -v "C:/Temp:/tmp" `
+  kestra/kestra:latest server local
 ```
 
 If you're on Windows and use Command Prompt (CMD):
 ```cmd
-docker run --pull=always --rm -it -p 8080:8080 --user=root ^
-    -v "/var/run/docker.sock:/var/run/docker.sock" ^
-    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+docker run --pull=always -it -p 8080:8080 --user=root ^
+  --name kestra --restart=always ^
+  -v "kestra_data:/app/storage" ^
+  -v "/var/run/docker.sock:/var/run/docker.sock" ^
+  -v "C:/Temp:/tmp" ^
+  kestra/kestra:latest server local
 ```
 
 If you're on Windows and use WSL (Linux-based environment in Windows):
 ```bash
-docker run --pull=always --rm -it -p 8080:8080 --user=root \
-    -v "/var/run/docker.sock:/var/run/docker.sock" \
-    -v "/mnt/c/Temp:/tmp" kestra/kestra:latest server local
+docker run --pull=always -it -p 8080:8080 --user=root \
+  --name kestra --restart=always \
+  -v kestra_data:/app/storage \
+  -v "/var/run/docker.sock:/var/run/docker.sock" \
+  -v "/mnt/c/Temp:/tmp" \
+  kestra/kestra:latest server local
 ```
 
 Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
@@ -236,4 +248,3 @@ Give our repository a star to stay informed about the latest features and update
 ---
 
 Thank you for considering Kestra for your workflow orchestration needs. We can't wait to see what you'll build!
-

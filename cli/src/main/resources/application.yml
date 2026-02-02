@@ -137,6 +137,11 @@ flyway:
       # We must ignore missing migrations as we delete some wrong or not used anymore migrations
       ignore-migration-patterns: "*:missing,*:future"
       out-of-order: true
+      properties:
+        flyway:
+          postgresql:
+            transactional:
+              lock: false
     mysql:
       enabled: true
       locations:

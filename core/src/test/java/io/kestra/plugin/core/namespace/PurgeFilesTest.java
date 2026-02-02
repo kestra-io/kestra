@@ -100,7 +100,7 @@ public class PurgeFilesTest {
             .build();
         List<String> namespaces = purgeFiles.findNamespaces(runContextFactory.of(NAMESPACE));
 
-        assertThat(namespaces).containsExactlyInAnyOrder(PARENT_NAMESPACE);
+        assertThat(namespaces).containsExactlyInAnyOrder(PARENT_NAMESPACE, "ns1", "ns2");
     }
 
     @Test
@@ -114,7 +114,7 @@ public class PurgeFilesTest {
             .build();
         List<String> namespaces = purgeFiles.findNamespaces(runContextFactory.of(NAMESPACE));
 
-        assertThat(namespaces).containsExactlyInAnyOrder(PARENT_NAMESPACE, CHILD_NAMESPACE);
+        assertThat(namespaces).containsExactlyInAnyOrder(PARENT_NAMESPACE, CHILD_NAMESPACE, "ns1", "ns2");
     }
 
     @Test

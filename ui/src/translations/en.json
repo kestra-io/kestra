@@ -575,6 +575,8 @@
     "task id": "Task ID",
     "taskid column details": "Last task being executed and its number of attempts.",
     "flow already exists": "Flow already exists",
+    "flow already exists message": "Flow {id} already exists in namespace {namespace}. Do you want to create a new revision?",
+    "create new revision": "Create new revision",
     "namespace not allowed": "Namespace not allowed",
     "switch-view": "Switch view",
     "source and topology": "Source and topology",

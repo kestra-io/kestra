@@ -30,8 +30,11 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Fetch execution logs and store them in a file.",
-    description = "This task is useful to automate moving logs between various systems and environments."
+    title = "Fetch execution logs to a file (deprecated).",
+    description = """
+        Deprecated; use `io.kestra.plugin.kestra.logs.Fetch`.
+
+        Streams logs for a given execution (current by default) into an ION file in internal storage. You can filter by task ids and minimum log level. Execution can be targeted via `executionId`/`namespace`/`flowId` with ACL checks."""
 )
 @Plugin(
     examples = {
@@ -46,7 +49,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World! 🚀
-                    
+
                   - id: error_message
                     type: io.kestra.plugin.core.log.Log
                     level: ERROR
@@ -69,7 +72,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                   - id: hello
                     type: io.kestra.plugin.core.log.Log
                     message: Hello World! 🚀
-                    
+
                   - id: error_message
                     type: io.kestra.plugin.core.log.Log
                     level: ERROR
@@ -85,6 +88,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
     },
     aliases = "io.kestra.core.tasks.log.Fetch"
 )
+@Deprecated(since = "1.3", forRemoval = true)
 public class Fetch extends Task implements RunnableTask<Fetch.Output> {
     @Schema(
         title = "Filter for a specific namespace in case `executionId` is set."

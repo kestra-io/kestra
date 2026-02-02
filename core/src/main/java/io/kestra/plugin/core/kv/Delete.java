@@ -19,7 +19,11 @@ import java.util.NoSuchElementException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a KV pair."
+    title = "Delete a key-value entry.",
+    description = """
+        Renders `key`/`namespace` (defaults to Flow Namespace) and removes the entry. If `errorOnMissing` is true and the key doesn’t exist, the task fails.
+
+        Requires Namespace authorization when deleting outside the current namespace."""
 )
 @Plugin(
     examples = {

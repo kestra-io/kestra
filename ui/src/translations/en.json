@@ -227,6 +227,15 @@
         "All blocked tasks will be executed."
       ]
     },
+    "replay execution title": "Replay execution",
+    "replay execution description": "This will create a new execution based on the selected execution.",
+    "replay using": "Replay using",
+    "flow revision original": "Original flow revision",
+    "flow revision latest": "Latest flow revision",
+    "flow revision specific": "Specific flow revision",
+    "replay inputs": "Inputs",
+    "reuse original inputs": "Reuse original inputs",
+    "modify inputs": "Modify inputs",
     "change state tooltip": "Change the execution state",
     "change execution state confirm": "Are you sure you want to change the state of the execution <code>{id}</code>?",
     "change execution state done": "Execution state updated",
@@ -475,6 +484,7 @@
       "start": "Let's get your first workflow up and running.",
       "guide": "Need guidance to execute your first flow?"
     },
+    "product_tour": "Product Tour",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
@@ -1148,6 +1158,7 @@
     "item": "item",
     "items": "items",
     "cron": "Cron",
+    "execution_started": "Execution has started!",
     "execution_failed": "Execution failed!\nLast error was",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
     "execution replay": "This execution is a replay of",
@@ -1829,7 +1840,8 @@
                 "inputs": "Input values provided to the execution",
                 "outputs": "Outputs emitted by the execution",
                 "task-id": "ID of the last task in the execution",
-                "trigger": "Trigger that started the execution"
+                "trigger": "Trigger that started the execution",
+                "parent-execution": "Parent execution ID that triggered this execution"
             },
             "kv": {
                 "namespace": "Logical grouping where the key-value pair is stored",

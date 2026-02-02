@@ -24,7 +24,10 @@ import java.util.List;
 @NoArgsConstructor
 @Schema(
     title = "Purge executions, logs, metrics, and storage files.",
-    description = "This task can be used to purge flow executions data for all flows, for a specific namespace, or for a specific flow."
+    description = """
+        Deletes historical execution data by namespace/flow, bounded by `startDate`/`endDate`, and optionally filtered by states. Each category can be toggled (`purgeExecution`, `purgeLog`, `purgeMetric`, `purgeStorage`).
+
+        Respects Namespace authorization checks (there must be purge rights on the target namespace); default batch size is 100. Irreversible — use carefully in production."""
 )
 @Plugin(
     examples = {

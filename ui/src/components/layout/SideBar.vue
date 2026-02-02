@@ -136,18 +136,12 @@
 <style scoped lang="scss">
 .collapseButton {
     position: absolute;
-    top: .5rem;
-    right: 0;
+    top: .75rem;
+    right: .5rem;
     z-index: 1;
 
     #side-menu & {
         border: none;
-        background: none;
-
-        &:hover {
-            background: none !important;
-            color: var(--ks-content-link) !important;
-        }
     }
 }
 

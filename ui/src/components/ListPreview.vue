@@ -26,26 +26,21 @@
             </el-table-column>
         </el-table>
 
-        <div v-if="totalPages > 1" class="pagination-controls">
-            <el-pagination
-                v-model:currentPage="currentPage"
-                :pageSize="MAX_PREVIEW_ROWS"
-                :total="props.value.length"
-                layout="prev, pager, next"
-                :hideOnSinglePage="true"
-                @current-change="goToPage"
-            />
-            <div class="pagination-summary">
-                {{ $t('preview.showing_rows', {start: startRow, end: endRow, total: props.value.length}) }}
-            </div>
-        </div>
+        <Pagination
+            v-if="totalPages > 1"
+            :total="props.value.length"
+            :size="pageSize"
+            :page="currentPage"
+            @page-changed="onPageChanged"
+        />
     </div>
 </template>
 
 <script setup lang="ts">
     import {ref, computed} from "vue";
-    const MAX_PREVIEW_ROWS = 50; 
-    const MAX_CELL_CHARS = 2000; 
+    import Pagination from "./layout/Pagination.vue";
+
+    const MAX_CELL_CHARS = 2000;
 
     const props = defineProps({
         value: {
@@ -56,36 +51,30 @@
 
     const expandedCells = ref(new Set<string>());
     const currentPage = ref(1);
+    const pageSize = ref(50);
 
     const previewData = computed(() => {
-        const startIndex = (currentPage.value - 1) * MAX_PREVIEW_ROWS;
-        const endIndex = startIndex + MAX_PREVIEW_ROWS;
+        const startIndex = (currentPage.value - 1) * pageSize.value;
+        const endIndex = startIndex + pageSize.value;
         return props.value.slice(startIndex, endIndex);
     });
 
     const totalPages = computed(() => {
-        const pages = Math.ceil(props.value.length / MAX_PREVIEW_ROWS);
-        return pages;
+        return Math.ceil(props.value.length / pageSize.value);
     });
 
     const indexMethod = (index: number) => {
-        return (currentPage.value - 1) * MAX_PREVIEW_ROWS + index + 1;
+        return (currentPage.value - 1) * pageSize.value + index + 1;
     };
 
-
-    const startRow = computed(() => {
-        return (currentPage.value - 1) * MAX_PREVIEW_ROWS + 1;
-    });
-
-    const endRow = computed(() => {
-        return Math.min(currentPage.value * MAX_PREVIEW_ROWS, props.value.length);
-    });
-
-    const goToPage = (page: number): void => {
-        if (page >= 1 && page <= totalPages.value) {
-            currentPage.value = page;
-            expandedCells.value.clear();
+    const onPageChanged = (payload: { page?: number; size?: number }): void => {
+        if (payload.page !== undefined) {
+            currentPage.value = payload.page;
         }
+        if (payload.size !== undefined) {
+            pageSize.value = payload.size;
+        }
+        expandedCells.value.clear();
     };
 
     const generateTableColumns = computed(() => {
@@ -119,11 +108,11 @@
         if (expandedCells.value.has(cellKey)) {
             return stringified;
         }
-        
+
         if (stringified.length > MAX_CELL_CHARS) {
             return stringified.slice(0, MAX_CELL_CHARS) + "... [truncated]";
         }
-        
+
         return stringified;
     };
 
@@ -146,7 +135,7 @@
     .ion-table-preview {
         table-layout: fixed;
         width: 100%;
-        
+
         :deep(.el-table__body-wrapper) {
             overflow-x: auto;
         }
@@ -158,7 +147,7 @@
         position: relative;
         display: block;
         word-break: break-word;
-        
+
         &.expanded {
             max-height: none;
             overflow: visible;
@@ -177,23 +166,6 @@
     .expand-button {
         margin-top: 4px;
         font-size: 12px;
-    }
-
-    .pagination-controls {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        padding: 16px;
-        border-top: 1px solid var(--ks-border-primary);
-        background-color: var(--ks-background-secondary);
-    }
-
-    .pagination-summary {
-        font-size: 14px;
-        color: var(--ks-text-secondary);
-        text-align: center;
     }
 
     :deep(.ks-editor) {

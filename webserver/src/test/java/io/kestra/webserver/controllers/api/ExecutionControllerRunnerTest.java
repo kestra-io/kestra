@@ -1250,9 +1250,9 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml"})
+    @LoadFlows(value = {"flows/valids/pause-test.yaml"}, tenantId = "updateexecutionstatusshouldfailforkilled")
     void updateExecutionStatusShouldFailForKilled() throws QueueException, TimeoutException {
-        String tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenantId = "updateexecutionstatusshouldfailforkilled";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();
@@ -2332,9 +2332,9 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-test.yaml"})
+    @LoadFlows(value = {"flows/valids/pause-test.yaml"}, tenantId = "restartexecutionshouldfailforkilled")
     void restartExecutionShouldFailForKilled() throws QueueException, TimeoutException {
-        String tenantId = TestsUtils.randomTenant(this.getClass().getSimpleName());
+        String tenantId = "restartexecutionshouldfailforkilled";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution pausedExecution = runnerUtils.runOneUntilPaused(tenantId, TESTS_FLOW_NS, "pause-test");
         assertThat(pausedExecution.getState().isPaused()).isTrue();

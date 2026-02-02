@@ -23,6 +23,7 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorState;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
@@ -209,10 +210,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
 
-    @Override
-    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return findCondition(value, operation);
-    }
+    abstract public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation);
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
@@ -892,17 +890,17 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(NORMAL_KIND_CONDITION)
                     .and(field("end_date").isNotNull())
                     .and(DSL.or(
-                        ListUtils.emptyOnNull(flows).isEmpty() ?
-                            DSL.trueCondition()
-                        :
-                            DSL.or(
-                                flows.stream()
-                                    .map(flow -> DSL.and(
-                                        field("namespace").eq(flow.getNamespace()),
-                                        field("flow_id").eq(flow.getId())
-                                    ))
-                                    .toList()
-                            )
+                            ListUtils.emptyOnNull(flows).isEmpty() ?
+                                DSL.trueCondition()
+                                :
+                                DSL.or(
+                                    flows.stream()
+                                        .map(flow -> DSL.and(
+                                            field("namespace").eq(flow.getNamespace()),
+                                            field("flow_id").eq(flow.getId())
+                                        ))
+                                        .toList()
+                                )
                         )
                     );
 

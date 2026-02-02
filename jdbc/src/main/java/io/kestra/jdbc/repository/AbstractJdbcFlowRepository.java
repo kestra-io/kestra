@@ -23,6 +23,7 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.JdbcMapper;
 import io.micronaut.context.ApplicationContext;
@@ -137,18 +138,18 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 from = revision
                     .map(integer -> context
-                    .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
-                    .from(jdbcRepository.getTable())
-                    .where(this.noAclDefaultFilter(tenantId))
-                    .and(NAMESPACE_FIELD.eq(namespace))
-                    .and(field("id", String.class).eq(id))
-                    .and(field("revision", Integer.class).eq(integer))
-                ).orElseGet(() -> context
-                    .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
-                    .from(fromLastRevision(true))
-                    .where(this.noAclDefaultFilter(tenantId))
-                    .and(NAMESPACE_FIELD.eq(namespace))
-                    .and(field("id", String.class).eq(id))
+                        .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                        .from(jdbcRepository.getTable())
+                        .where(this.noAclDefaultFilter(tenantId))
+                        .and(NAMESPACE_FIELD.eq(namespace))
+                        .and(field("id", String.class).eq(id))
+                        .and(field("revision", Integer.class).eq(integer))
+                    ).orElseGet(() -> context
+                        .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_FIELD)
+                        .from(fromLastRevision(true))
+                        .where(this.noAclDefaultFilter(tenantId))
+                        .and(NAMESPACE_FIELD.eq(namespace))
+                        .and(field("id", String.class).eq(id))
                     );
 
                 return this.jdbcRepository.fetchOne(from).map(it -> (Flow)it);
@@ -256,7 +257,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
     @Override
     public List<FlowWithSource> findRevisions(String tenantId, String namespace, String id) {
-         return jdbcRepository
+        return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 Select<Record4<String, String, String, String>> select = DSL
@@ -420,7 +421,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .transactionResult(configuration -> {
                 SelectConditionStep<Record3<Object, Object, Object>> select =
                     findByNamespaceSelect(namespace)
-                    .and(this.defaultFilter(tenantId));
+                        .and(this.defaultFilter(tenantId));
 
                 return (List)this.jdbcRepository.fetch(select);
             });
@@ -447,7 +448,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .transactionResult(configuration -> {
                 SelectConditionStep<Record3<Object, Object, Object>> select =
                     findByNamespaceSelect(namespace)
-                    .and(this.defaultExecutionFilter(tenantId));
+                        .and(this.defaultExecutionFilter(tenantId));
 
                 return this.jdbcRepository.fetch(select);
             }).stream().map(it -> (Flow)it).map(FlowForExecution::of).toList();
@@ -553,8 +554,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     abstract protected Condition findCondition(Object value, QueryFilter.Op operation);
 
     @Override
-    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        return findCondition(value, operation);
+    public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
+        return findCondition(value.getLeft(), operation);
     }
 
     @Override

@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -43,7 +44,7 @@ public abstract class AbstractJdbcRepository {
     private String systemFlowNamespace;
 
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
-    
+
     protected Condition defaultFilter() {
         return field("deleted", Boolean.class).eq(false);
     }
@@ -327,7 +328,7 @@ public abstract class AbstractJdbcRepository {
             case CONTAINS -> DSL.field(columnName).like("%" + value + "%");
             case REGEX -> DSL.field(columnName).likeRegex((String) value);
             case PREFIX -> DSL.field(columnName).like(value + ".%")
-                    .or(DSL.field(columnName).eq(value));
+                .or(DSL.field(columnName).eq(value));
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
     }
@@ -336,7 +337,7 @@ public abstract class AbstractJdbcRepository {
         throw new InvalidQueryFiltersException("Unsupported operation: ");
     }
 
-    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
         throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 

@@ -3,6 +3,7 @@ package io.kestra.repository.mysql;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcExecutionRepository;
 import io.kestra.jdbc.runner.AbstractJdbcExecutorStateStorage;
 import io.kestra.jdbc.services.JdbcFilterService;
@@ -37,6 +38,11 @@ public class MysqlExecutionRepository extends AbstractJdbcExecutionRepository {
     @Override
     protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation) {
         return MysqlExecutionRepositoryService.findCondition(value, operation);
+    }
+
+    @Override
+    public Condition findLabelCondition(Either<Map<?, ?>, String> input, QueryFilter.Op operation) {
+        return MysqlExecutionRepositoryService.findLabelCondition(input, operation);
     }
 
     @Override

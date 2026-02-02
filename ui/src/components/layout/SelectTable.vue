@@ -50,11 +50,11 @@
     const hasSelection = ref(false);
     const container = ref<HTMLElement>(null);
     
-    // State
+    // State for Shift-Selection
     const lastCheckedIndex = ref<number | null>(null);
     const isShiftPressed = ref(false);
 
-    // Capture the shift key state globally within the component
+    // Track global shift key state
     const handleGlobalClick = (event: MouseEvent) => {
         isShiftPressed.value = event.shiftKey;
     };
@@ -72,7 +72,7 @@
         const data = props.data ?? [];
         const currentIndex = data.indexOf(row);
         
-        // Check if the current row is being checked or unchecked
+        // Determine if checked or unchecked
         const isChecked = selection.some(s => 
             typeof props.rowKey === "function" 
                 ? props.rowKey(s) === props.rowKey(row) 
@@ -87,7 +87,7 @@
                 table.value?.toggleRowSelection(data[i], isChecked);
             }
             
-            // Clear text selection highlight
+            // Cleanup browser text selection
             window.getSelection()?.removeAllRanges();
         }
 
@@ -169,3 +169,28 @@
         waitTableRender
     });
 </script>
+
+<style scoped lang="scss">
+    .bulk-select-header {
+        z-index: 1;
+        position: absolute;
+        height: var(--table-header-height);
+        width: var(--table-header-width);
+        background-color: var(--ks-background-table-header);
+        border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
+        border-bottom: 1px solid var(--ks-border-primary);
+        overflow-x: auto;
+
+        & ~ .el-table {
+            z-index: 0;
+        }
+    }
+
+    @media (max-width: 500px) {
+        :deep(.el-table__empty-text) {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+</style>

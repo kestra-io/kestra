@@ -24,6 +24,16 @@ public abstract class AbstractSubscriber<T extends Event> implements io.kestra.c
         this.queueService = queueService;
     }
 
+    /**
+     * Blocks the calling thread if this subscriber is currently paused.
+     * <p>
+     * This method should be called by subclasses before processing each message
+     * to honor the pause/resume contract. If the subscriber is not paused, this
+     * method returns immediately. If paused, it blocks until {@link #resume()}
+     * is called.
+     *
+     * @throws InterruptedException if the thread is interrupted while waiting
+     */
     protected void waitIfPaused() throws InterruptedException {
         // return immediately if not paused.
         if (!this.state.get().equals(State.PAUSED)) {
@@ -77,14 +87,26 @@ public abstract class AbstractSubscriber<T extends Event> implements io.kestra.c
         this.changeState(State.STOPPED, State.RUNNING);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void pause() {
         if (log.isDebugEnabled()) {
             log.debug("{} pause received", logPrefix);
         }
 
+        if (this.state.get() == State.PAUSED) {
+            return; // already paused
+        }
+
         this.changeState(State.RUNNING, State.PAUSED);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void resume() {
         if (log.isDebugEnabled()) {
             log.debug("{} resume received", logPrefix);
@@ -92,6 +114,10 @@ public abstract class AbstractSubscriber<T extends Event> implements io.kestra.c
 
         pauseLock.lock();
         try {
+            if (this.state.get() == State.RUNNING) {
+                return; // already running
+            }
+
             if (this.changeState(State.PAUSED, State.RUNNING)) {
                 unpaused.signalAll();
             }
@@ -112,15 +138,17 @@ public abstract class AbstractSubscriber<T extends Event> implements io.kestra.c
         this.stopped.countDown();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void close() {
         if (log.isDebugEnabled()) {
             log.debug("{} close received", logPrefix);
         }
 
         // in case it's paused and blocked
-        if (this.isPaused()) {
-            resume();
-        }
+        resume();
 
         // already stopped
         try {
@@ -129,7 +157,7 @@ public abstract class AbstractSubscriber<T extends Event> implements io.kestra.c
             return;
         }
 
-        // wait for the queue to be stooped
+        // wait for the queue to be stopped
         try {
             stopped.await();
         } catch (InterruptedException e) {

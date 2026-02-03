@@ -252,10 +252,11 @@
                             <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
                                     <div class="flow-actions-cell">
-                                        <Kicon :tooltip="t('execute')" placement="left" @click="openExecuteModal(scope.row)">
+                                        <IconButton :tooltip="t('execute')" @click="openExecuteModal(scope.row)">
                                             <Play />
-                                        </Kicon>
-                                        <router-link
+                                        </IconButton>
+                                        <IconButton
+                                            :tooltip="$t('details')"
                                             :to="{
                                                 name: 'flows/update',
                                                 params: {
@@ -264,10 +265,8 @@
                                                 },
                                             }"
                                         >
-                                            <Kicon :tooltip="$t('details')" placement="left">
-                                                <TextSearch />
-                                            </Kicon>
-                                        </router-link>
+                                            <TextSearch />
+                                        </IconButton>
                                     </div>
                                 </template>
                             </el-table-column>
@@ -315,7 +314,7 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import Play from "vue-material-design-icons/Play.vue";
 
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import {Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";

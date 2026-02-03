@@ -205,24 +205,21 @@
                         >
                             <template #default="scope">
                                 <div class="action-container">
-                                    <el-button v-if="scope.row.executionId || scope.row.evaluateRunningDate">
-                                        <Kicon
-                                            :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
-                                            placement="left"
-                                            @click="triggerToUnlock = scope.row"
-                                        >
-                                            <LockOff />
-                                        </Kicon>
-                                    </el-button>
-                                    <el-button>
-                                        <Kicon
-                                            :tooltip="$t('delete trigger')"
-                                            placement="left"
-                                            @click="confirmDeleteTrigger(scope.row)"
-                                        >
-                                            <Delete />
-                                        </Kicon>
-                                    </el-button>
+                                    <IconButton
+                                        v-if="scope.row.executionId || scope.row.evaluateRunningDate"
+                                        :tooltip="$t(`unlock trigger.tooltip.${scope.row.executionId ? 'execution' : 'evaluation'}`)"
+                                        placement="left"
+                                        @click="triggerToUnlock = scope.row"
+                                    >
+                                        <LockOff />
+                                    </IconButton>
+                                    <IconButton
+                                        :tooltip="$t('delete trigger')"
+                                        placement="left"
+                                        @click="confirmDeleteTrigger(scope.row)"
+                                    >
+                                        <Delete />
+                                    </IconButton>
                                 </div>
                             </template>
                         </el-table-column>
@@ -372,7 +369,7 @@
     import Download from "vue-material-design-icons/Download.vue";
 
     import Id from "../Id.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     //@ts-expect-error No declaration file
     import FlowRun from "../flows/FlowRun.vue";
     import DateAgo from "../layout/DateAgo.vue";

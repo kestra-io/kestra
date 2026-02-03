@@ -23,7 +23,11 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Split a file from Kestra's internal storage into multiple files."
+    title = "Split a file from Kestra internal storage.",
+    description = """
+        Splits an input file by size (`bytes`), line count (`rows`), partitions, or regex grouping (first capture group), emitting new files in internal storage. Optional `separator` inserted between grouped lines.
+
+        Provide exactly one split strategy at a time."""
 )
 @Plugin(
     examples = {

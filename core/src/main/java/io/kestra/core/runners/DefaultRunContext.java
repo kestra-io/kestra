@@ -61,6 +61,7 @@ public class DefaultRunContext extends RunContext {
     private WorkingDir workingDir;
     private Validator validator;
     private LocalPath localPath;
+    private SDK sdk;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -167,6 +168,7 @@ public class DefaultRunContext extends RunContext {
             this.validator = applicationContext.getBean(Validator.class);
             this.localPath = applicationContext.getBean(LocalPathFactory.class).createLocalPath(this);
             this.assetManagerFactory = applicationContext.getBean(AssetManagerFactory.class);
+            this.sdk = applicationContext.getBean(RunContextSDKFactory.class).create(applicationContext, this);
         }
     }
 
@@ -638,6 +640,11 @@ public class DefaultRunContext extends RunContext {
     @Override
     public InputAndOutput inputAndOutput() {
         return new InputAndOutputImpl(this.applicationContext, this);
+    }
+
+    @Override
+    public SDK sdk() {
+        return this.sdk;
     }
 
     /**

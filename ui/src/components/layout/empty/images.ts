@@ -9,6 +9,7 @@ import triggers from "./assets/visuals/triggers.png";
 import versionPlugin from "./assets/visuals/versionPlugin.png";
 import panels from "./assets/visuals/panels.png";
 import assets from "./assets/visuals/assets.png";
+import pluginDefaults from "./assets/visuals/pluginDefaults.png";
 
 export const images: Record<string, string> = {
     announcements,
@@ -24,5 +25,6 @@ export const images: Record<string, string> = {
     triggers,
     versionPlugin,
     panels,
-    assets
+    assets,
+    pluginDefaults
 };

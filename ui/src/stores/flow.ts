@@ -254,11 +254,34 @@ export const useFlowStore = defineStore("flow", () => {
 
         const isCreatingBackup = isCreating.value;
         if (isCreating.value && !overrideFlow) {
-            await createFlow({flow: flowSource ?? ""})
-                .then((response: Flow) => {
-                    toast.saved(response.id);
-                    isCreating.value = false;
-                });
+            try {
+                const response = await createFlow({flow: flowSource ?? ""});
+                toast.saved(response.id);
+                isCreating.value = false;
+            } catch (error: any) {
+                if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
+                    return toast.confirm(
+                        t("flow already exists message", flowParsed.value),
+                        async () => {
+                            const response = await saveFlow({flow: flowSource});
+                            toast.saved(response.id);
+                            isCreating.value = false;
+                            return "redirect_to_update";
+                        },
+                        "warning"
+                    )
+                }
+
+                if (error.response?.data) {
+                    coreStore.message = {
+                        variant: "error",
+                        response: error.response,
+                        content: error.response.data
+                    }
+                }
+                
+                throw error;
+            }
         } else {
             await saveFlow({flow: flowSource})
                 .then((response: Flow) => {
@@ -433,7 +456,8 @@ export const useFlowStore = defineStore("flow", () => {
     function createFlow(options: { flow: string }) {
         return axios.post(`${apiUrl()}/flows`, options.flow, {
             ...textYamlHeader,
-            ...VALIDATE
+            ...VALIDATE,
+            showMessageOnError: false
         }).then(response => {
             if (response.status >= 300) {
                 return Promise.reject(response)

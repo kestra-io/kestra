@@ -577,6 +577,7 @@
     "flow already exists": "Flow already exists",
     "flow already exists message": "Flow {id} already exists in namespace {namespace}. Do you want to create a new revision?",
     "create new revision": "Create new revision",
+    "plugin_default_already_exists": "Plugin default for <code>{type}</code> already exists.",
     "namespace not allowed": "Namespace not allowed",
     "switch-view": "Switch view",
     "source and topology": "Source and topology",
@@ -1043,7 +1044,26 @@
     "no_namespaces": "Zero namespaces match the search criteria.",
     "system_namespace": "Keep your platform in check with system flows.",
     "system_namespace_description": "Automate maintenance tasks, from failure alerts to automated cleanups.",
-    "pluginDefaults": "Plugin defaults",
+    "pluginDefaults": {
+      "title": "Plugin Defaults",
+      "add": "Add Plugin Default",
+      "edit": "Edit Plugin Default",
+      "add_subtitle": "Configure a new plugin default with its properties",
+      "edit_subtitle": "Modify the existing plugin default configuration",
+      "predefined": "Predefined Plugin",
+      "custom": "Custom Plugin",
+      "form": "Form",
+      "yaml": "YAML",
+      "select_predefined": "Select Predefined Plugin",
+      "cancel": "Cancel",
+      "update": "Update Plugin Default",
+      "custom_type": "Custom plugin type",
+      "custom_placeholder": "Enter plugin type",
+      "use_custom": "Use Custom",
+      "custom_configure": "Custom plugin type - configure using YAML",
+      "yaml_configuration": "YAML Configuration",
+      "show_yaml": "Show YAML"
+    },
     "secret": {
       "add": "New secret",
       "update": "Update secret '{name}'",
@@ -1169,6 +1189,11 @@
     "active": "Active",
     "flows imported": "Flows imported",
     "flow not imported": "Some flow could not be imported",
+    "plugin defaults exported": "Plugin defaults exported",
+    "failed to export plugin defaults": "Failed to export plugin defaults",
+    "plugin defaults imported": "Plugin defaults imported",
+    "plugin defaults not imported": "Some plugin defaults could not be imported",
+    "failed to import plugin defaults": "Failed to import plugin defaults",
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",
@@ -1407,6 +1432,10 @@
       "concurrency_limit": {
         "title": "No limits are set for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
+      },
+      "pluginDefaults": {
+        "title": "You have no plugin defaults yet!",
+        "content": "Plugin Defaults let you centrally govern your plugin configuration and share it with all flows in your namespace."
       },
       "dependencies": {
         "FLOW": {

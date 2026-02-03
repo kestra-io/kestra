@@ -503,6 +503,10 @@
         "content": "Otwórz Flow Code lub No-Code, aby rozpocząć edycję swoich flows, lub wybierz inny panel (Topology, Documentation, Files, Blueprints, Namespace Context) dla powiązanych funkcji.",
         "title": "Obecnie żadne panele nie są otwarte."
       },
+      "pluginDefaults": {
+        "content": "Domyślne ustawienia Pluginów pozwalają centralnie zarządzać konfiguracją pluginów i udostępniać ją wszystkim flow w twoim namespace.",
+        "title": "Nie masz jeszcze domyślnych pluginów!"
+      },
       "plugins": {
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limitach Concurrency</a></strong> w naszej dokumentacji.",
         "title": "Dla tego namespace nie ustawiono domyślnych pluginów."
@@ -621,6 +625,8 @@
     "export all templates": "Eksportuj wszystkie szablony",
     "export_csv": "Eksportuj jako CSV",
     "exports": "Eksporty",
+    "failed to export plugin defaults": "Nie udało się wyeksportować domyślnych ustawień wtyczki",
+    "failed to import plugin defaults": "Nie udało się zaimportować domyślnych ustawień wtyczki",
     "failed to render pdf": "Nie udało się wygenerować podglądu PDF",
     "false": "Fałsz",
     "feeds": {
@@ -1444,13 +1450,36 @@
       "toggle": "Plac zabaw",
       "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
     },
-    "pluginDefaults": "Domyślne ustawienia pluginu",
+    "plugin defaults exported": "Domyślne ustawienia pluginu wyeksportowane",
+    "plugin defaults imported": "Domyślne ustawienia wtyczki zaimportowane",
+    "plugin defaults not imported": "Niektóre domyślne ustawienia pluginów nie mogły zostać zaimportowane",
+    "pluginDefaults": {
+      "add": "Dodaj Domyślną Wtyczkę",
+      "add_subtitle": "Skonfiguruj nową domyślną wtyczkę z jej właściwościami",
+      "cancel": "Anuluj",
+      "custom": "Wtyczka niestandardowa",
+      "custom_configure": "Niestandardowy typ wtyczki - konfiguruj za pomocą YAML",
+      "custom_placeholder": "Wprowadź typ pluginu",
+      "custom_type": "Niestandardowy typ wtyczki",
+      "edit": "Edytuj domyślny plugin",
+      "edit_subtitle": "Zmodyfikuj domyślną konfigurację istniejącej wtyczki",
+      "form": "Formularz",
+      "predefined": "Wstępnie zdefiniowana wtyczka",
+      "select_predefined": "Wybierz Wstępnie Zdefiniowaną Wtyczkę",
+      "show_yaml": "Pokaż YAML",
+      "title": "Domyślne ustawienia wtyczki",
+      "update": "Aktualizuj domyślną wtyczkę",
+      "use_custom": "Użyj niestandardowego",
+      "yaml": "YAML",
+      "yaml_configuration": "Konfiguracja YAML"
+    },
     "pluginPage": {
       "alt": "Ikona wtyczek",
       "search": "Wyszukaj wśród {count}+ wtyczek",
       "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
       "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow."
     },
+    "plugin_default_already_exists": "Domyślna wtyczka dla <code>{type}</code> już istnieje.",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",

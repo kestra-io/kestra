@@ -503,6 +503,10 @@
         "content": "Flow Code 또는 No-Code를 열어 flow 편집을 시작하거나, 관련 기능을 위해 다른 패널(Topology, Documentation, Files, Blueprints, Namespace Context)을 선택하세요.",
         "title": "현재 열려 있는 패널이 없습니다."
       },
+      "pluginDefaults": {
+        "content": "플러그인 기본값을 사용하면 플러그인 구성을 중앙에서 관리하고 namespace의 모든 flow와 공유할 수 있습니다.",
+        "title": "아직 플러그인 기본값이 없습니다!"
+      },
       "plugins": {
         "content": "우리 문서에서 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>에 대해 더 읽어보세요.",
         "title": "이 Namespace에 대한 플러그인 기본값이 설정되지 않았습니다."
@@ -621,6 +625,8 @@
     "export all templates": "모든 템플릿 내보내기",
     "export_csv": "CSV로 내보내기",
     "exports": "내보내기 목록",
+    "failed to export plugin defaults": "플러그인 기본값 내보내기에 실패했습니다.",
+    "failed to import plugin defaults": "플러그인 기본값 가져오기에 실패했습니다",
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",
     "feeds": {
@@ -1444,13 +1450,36 @@
       "toggle": "플레이그라운드",
       "tooltip_persistence": "Playground를 끄고 다시 켜면, 페이지에 머무르는 동안 정보가 유지됩니다."
     },
-    "pluginDefaults": "플러그인 기본값",
+    "plugin defaults exported": "플러그인 기본값 내보내기 완료",
+    "plugin defaults imported": "플러그인 기본값이 가져왔습니다.",
+    "plugin defaults not imported": "일부 플러그인 기본값을 가져올 수 없습니다.",
+    "pluginDefaults": {
+      "add": "플러그인 기본값 추가",
+      "add_subtitle": "새 플러그인 기본값을 해당 속성으로 구성하십시오.",
+      "cancel": "취소",
+      "custom": "사용자 정의 플러그인",
+      "custom_configure": "사용자 정의 플러그인 유형 - YAML을 사용하여 구성",
+      "custom_placeholder": "플러그인 유형 입력",
+      "custom_type": "사용자 정의 플러그인 유형",
+      "edit": "플러그인 기본값 편집",
+      "edit_subtitle": "기존 플러그인 기본 설정 수정",
+      "form": "폼",
+      "predefined": "사전 정의된 플러그인",
+      "select_predefined": "미리 정의된 플러그인 선택",
+      "show_yaml": "YAML 보기",
+      "title": "플러그인 기본값",
+      "update": "플러그인 기본값 업데이트",
+      "use_custom": "사용자 정의 사용",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML 구성"
+    },
     "pluginPage": {
       "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."
     },
+    "plugin_default_already_exists": "<code>{type}</code>에 대한 플러그인 기본값이 이미 존재합니다.",
     "plugins": {
       "name": "플러그인",
       "names": "플러그인들",

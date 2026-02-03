@@ -503,6 +503,10 @@
         "content": "打开 Flow Code 或 No-Code 开始编辑您的 flows，或选择其他面板（拓扑、文档、文件、Blueprints、Namespace Context）以获取相关功能。",
         "title": "当前没有打开的面板。"
       },
+      "pluginDefaults": {
+        "content": "插件默认设置允许您集中管理插件配置，并与namespace中的所有flow共享。",
+        "title": "您还没有插件默认值！"
+      },
       "plugins": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Namespace未设置插件默认值。"
@@ -621,6 +625,8 @@
     "export all templates": "导出所有模板",
     "export_csv": "导出为CSV",
     "exports": "导出",
+    "failed to export plugin defaults": "无法导出插件默认值",
+    "failed to import plugin defaults": "无法导入插件默认值",
     "failed to render pdf": "渲染PDF预览失败",
     "false": "假",
     "feeds": {
@@ -1444,13 +1450,36 @@
       "toggle": "游乐场",
       "tooltip_persistence": "如果您关闭并重新打开Playground，只要您停留在页面上，信息将保持不变。"
     },
-    "pluginDefaults": "插件默认值",
+    "plugin defaults exported": "插件默认值已导出",
+    "plugin defaults imported": "插件默认值已导入",
+    "plugin defaults not imported": "某些插件默认设置无法导入",
+    "pluginDefaults": {
+      "add": "添加插件默认值",
+      "add_subtitle": "配置新插件默认值及其属性",
+      "cancel": "取消",
+      "custom": "自定义插件",
+      "custom_configure": "自定义插件类型 - 使用 YAML 配置",
+      "custom_placeholder": "输入插件类型",
+      "custom_type": "自定义插件类型",
+      "edit": "编辑插件默认值",
+      "edit_subtitle": "修改现有插件默认配置",
+      "form": "表单",
+      "predefined": "预定义插件",
+      "select_predefined": "选择预定义插件",
+      "show_yaml": "显示 YAML",
+      "title": "插件默认值",
+      "update": "更新插件默认值",
+      "use_custom": "使用自定义",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML 配置"
+    },
     "pluginPage": {
       "alt": "插件图标",
       "search": "在{count}+个插件中搜索",
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。"
     },
+    "plugin_default_already_exists": "<code>{type}</code>的插件默认值已存在。",
     "plugins": {
       "name": "插件",
       "names": "插件",

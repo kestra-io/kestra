@@ -503,6 +503,10 @@
         "content": "Flow Code या No-Code खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Files, Blueprints, Namespace Context)।",
         "title": "कोई पैनल वर्तमान में खुला नहीं है।"
       },
+      "pluginDefaults": {
+        "content": "प्लगइन डिफॉल्ट्स आपको अपने प्लगइन कॉन्फ़िगरेशन को केंद्रीय रूप से प्रबंधित करने और इसे आपके namespace के सभी flows के साथ साझा करने की अनुमति देते हैं।",
+        "title": "आपके पास अभी तक कोई प्लगइन डिफॉल्ट नहीं है!"
+      },
       "plugins": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
         "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।"
@@ -621,6 +625,8 @@
     "export all templates": "सभी templates निर्यात करें",
     "export_csv": "CSV के रूप में निर्यात करें",
     "exports": "निर्यात",
+    "failed to export plugin defaults": "प्लगइन डिफॉल्ट्स को निर्यात करने में विफल",
+    "failed to import plugin defaults": "प्लगइन डिफॉल्ट्स आयात करने में विफल",
     "failed to render pdf": "PDF प्रस्तुत करने में विफल",
     "false": "असत्य",
     "feeds": {
@@ -1444,13 +1450,36 @@
       "toggle": "प्लेग्राउंड",
       "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
     },
-    "pluginDefaults": "प्लगइन डिफॉल्ट्स",
+    "plugin defaults exported": "प्लगइन डिफॉल्ट्स एक्सपोर्ट किए गए",
+    "plugin defaults imported": "प्लगइन डिफ़ॉल्ट्स आयातित",
+    "plugin defaults not imported": "कुछ प्लगइन डिफ़ॉल्ट आयात नहीं किए जा सके",
+    "pluginDefaults": {
+      "add": "प्लगइन डिफ़ॉल्ट जोड़ें",
+      "add_subtitle": "इसके गुणों के साथ एक नया प्लगइन डिफ़ॉल्ट कॉन्फ़िगर करें",
+      "cancel": "रद्द करें",
+      "custom": "कस्टम प्लगइन",
+      "custom_configure": "कस्टम प्लगइन प्रकार - YAML का उपयोग करके कॉन्फ़िगर करें",
+      "custom_placeholder": "प्लगइन प्रकार दर्ज करें",
+      "custom_type": "कस्टम प्लगइन प्रकार",
+      "edit": "प्लगइन डिफ़ॉल्ट संपादित करें",
+      "edit_subtitle": "मौजूदा प्लगइन डिफ़ॉल्ट कॉन्फ़िगरेशन को संशोधित करें",
+      "form": "फॉर्म",
+      "predefined": "पूर्वनिर्धारित प्लगइन",
+      "select_predefined": "पूर्वनिर्धारित प्लगइन चुनें",
+      "show_yaml": "YAML दिखाएं",
+      "title": "प्लगइन डिफॉल्ट्स",
+      "update": "प्लगइन डिफ़ॉल्ट अपडेट करें",
+      "use_custom": "कस्टम उपयोग करें",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML कॉन्फ़िगरेशन"
+    },
     "pluginPage": {
       "alt": "प्लगइन्स आइकन",
       "search": "{count}+ प्लगइन्स में खोजें",
       "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
       "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।"
     },
+    "plugin_default_already_exists": "<code>{type}</code> के लिए प्लगइन डिफ़ॉल्ट पहले से मौजूद है।",
     "plugins": {
       "name": "plugin",
       "names": "plugins",

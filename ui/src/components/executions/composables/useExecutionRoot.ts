@@ -1,5 +1,5 @@
 import {ref, computed, onMounted, onUnmounted, watch} from "vue";
-import {useRoute, useRouter} from "vue-router";
+import {useRoute} from "vue-router";
 import {useI18n} from "vue-i18n";
 
 import {useFlowStore} from "../../../stores/flow";
@@ -21,8 +21,6 @@ import Dependencies from "../../dependencies/Dependencies.vue";
 export function useExecutionRoot() {
     const {t} = useI18n();
     const route = useRoute();
-    const router = useRouter();
-
     const flowStore = useFlowStore();
     const executionsStore = useExecutionsStore();
 
@@ -141,10 +139,6 @@ export function useExecutionRoot() {
 
     const setupLifecycle = () => {
         onMounted(async () => {
-            if (!route.params.tab) {
-                const tab = localStorage.getItem("executeDefaultTab") || undefined;
-                router.replace({name: "executions/update", params: {...route.params, tab}});
-            }
 
             follow();
             window.addEventListener("popstate", follow);

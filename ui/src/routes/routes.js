@@ -41,7 +41,7 @@ export default [
                 });
                 return;
             }
-            if(change) {
+            if (change) {
                 next({
                     ...to,
                     query,
@@ -70,7 +70,26 @@ export default [
         path: "/:tenant?/executions",
         component: () => import("../components/executions/Executions.vue"),
     },
-    {name: "executions/update", path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?", component: () => import("../components/executions/ExecutionRoot.vue")},
+    {
+        name: "executions/update",
+        path: "/:tenant?/executions/:namespace/:flowId/:id/:tab?",
+        component: () => import("../components/executions/ExecutionRoot.vue"),
+        beforeEnter: (to, _from, next) => {
+            if (!to.params.tab) {
+                const tab = localStorage.getItem("executeDefaultTab") || "overview";
+                next({
+                    ...to,
+                    replace: true,
+                    params: {
+                        ...to.params,
+                        tab: tab
+                    }
+                });
+            } else {
+                next();
+            }
+        }
+    },
 
     //KV
     {name: "kv/list", path: "/:tenant?/kv", component: () => import("../components/kv/KVs.vue")},
@@ -84,7 +103,7 @@ export default [
 
     //Documentation
     {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/Plugin.vue")},
-    {name: "plugins/view", path: "/:tenant?/plugins/:cls/:version?",   component: () => import("../components/plugins/Plugin.vue")},
+    {name: "plugins/view", path: "/:tenant?/plugins/:cls/:version?", component: () => import("../components/plugins/Plugin.vue")},
 
     //Templates
     {name: "templates/list", path: "/:tenant?/templates", component: () => import("../components/templates/Templates.vue")},

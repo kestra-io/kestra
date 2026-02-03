@@ -1,10 +1,10 @@
 package io.kestra.queue.jdbc;
 
+import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.core.queues.event.KeyedDispatchEvent;
 import io.kestra.core.utils.ExecutorsUtils;
-import io.kestra.core.queues.KeyedDispatchQueueInterface;
-import io.kestra.core.queues.QueueSubscriber;
 import io.kestra.queue.QueueService;
 import io.kestra.queue.jdbc.client.JdbcDispatchSubscriber;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
@@ -46,7 +46,7 @@ public class JdbcKeyedDispatchQueue<T extends KeyedDispatchEvent> extends Abstra
             queueService,
             jdbcQueueClient,
             queueName(),
-            List.of(routingKey)
+            routingKey == null ? List.of() : List.of(routingKey)
         );
     }
 }

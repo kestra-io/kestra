@@ -103,8 +103,10 @@ public class JdbcQueueClient {
                 .from(this.jdbcRepository.getTable())
                 .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("type").eq(queueNameToType(queue)));
 
-            if (routingKeys != null) {
+            if (routingKeys != null && !routingKeys.isEmpty()) {
                 select = select.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("routing_key").in(routingKeys));
+            } else {
+                select = select.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("routing_key").isNull());
             }
 
             List<JdbcQueueItem> queueItems = select
@@ -129,8 +131,10 @@ public class JdbcQueueClient {
                         .where(io.kestra.jdbc.repository.AbstractJdbcRepository.field("type").eq(queueNameToType(queue)))
                         .and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("offset", Long.class).in(processedItems));
 
-                    if (routingKeys != null) {
+                    if (routingKeys != null && !routingKeys.isEmpty()) {
                         delete = delete.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("routing_key").in(routingKeys));
+                    } else {
+                        delete = delete.and(io.kestra.jdbc.repository.AbstractJdbcRepository.field("routing_key").isNull());
                     }
 
                     delete.execute();

@@ -143,12 +143,10 @@
                     ? props.rowKey(r) === props.rowKey(sel)
                     : r[props.rowKey] === sel[props.rowKey]);
             });
-
             if (validSelection.length !== currentSelection.length) {
                 table.value?.clearSelection();
                 hasSelection.value = false;
                 lastCheckedIndex.value = null;
-
             } else if (table.value) {
                 selectionChanged(currentSelection);
             }
@@ -164,7 +162,6 @@
         waitTableRender
     });
 </script>
-
 <style scoped lang="scss">
     .bulk-select-header {
         z-index: 1;

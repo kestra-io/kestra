@@ -1,5 +1,5 @@
 <template>
-    <div ref="container" class="position-relative" @click.capture="handleGlobalClick">
+    <div ref="container" class="position-relative" @click.capture="(e) => isShiftPressed = e.shiftKey">
         <div v-if="hasSelection && data.length" class="bulk-select-header">
             <slot name="select-actions" />
         </div>
@@ -13,11 +13,7 @@
             @selection-change="selectionChanged"
             @select="onSelect"
         >
-            <el-table-column
-                type="selection"
-                v-if="selectable && showSelection"
-                reserveSelection
-            />
+            <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
             <slot name="default" />
         </el-table>
     </div>
@@ -48,14 +44,10 @@
 
     const table = ref<any>(null);
     const hasSelection = ref(false);
-    const container = ref<HTMLElement>(null);
+    const container = ref<HTMLElement | null>(null);
     
     const lastCheckedIndex = ref<number | null>(null);
     const isShiftPressed = ref(false);
-
-    const handleGlobalClick = (event: MouseEvent) => {
-        isShiftPressed.value = event.shiftKey;
-    };
 
     const toggleRowExpansion = (row: any, expand?: boolean) => {
         table.value?.toggleRowExpansion(row, expand);
@@ -156,6 +148,7 @@
                 table.value?.clearSelection();
                 hasSelection.value = false;
                 lastCheckedIndex.value = null;
+
             } else if (table.value) {
                 selectionChanged(currentSelection);
             }

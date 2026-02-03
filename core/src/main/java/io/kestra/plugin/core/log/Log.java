@@ -25,7 +25,11 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Log a message to the console."
+    title = "Emit log entries from a flow.",
+    description = """
+        Render one or many messages (strings or arrays) and write them to the task log at a specified level.
+
+        Uses the same templating engine as other tasks, so you can interpolate variables or secrets. The `level` property sets the severity of the emitted entry; the flow-level `logLevel` setting still controls which entries are persisted, so align both when troubleshooting missing logs."""
 )
 @Plugin(
     examples = {
@@ -125,5 +129,4 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
         }
     }
 }
-
 

@@ -16,8 +16,8 @@ export interface Tab {
     name: string;
     title: string;
     component: Component;
-
     props?: Record<string, any>;
+    count?: number;
 }
 
 export interface Breadcrumb {

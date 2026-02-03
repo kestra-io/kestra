@@ -31,7 +31,11 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Concat files from Kestra’s internal storage."
+    title = "Concatenate files from Kestra internal storage.",
+    description = """
+        Reads a list of `kestra://` URIs (list or JSON string), streams them in order into a single file, and returns the new URI. Optional `separator` is inserted between files; output extension defaults to `.tmp`.
+
+        Use when you need to merge task outputs without downloading locally."""
 )
 @Plugin(
     examples = {

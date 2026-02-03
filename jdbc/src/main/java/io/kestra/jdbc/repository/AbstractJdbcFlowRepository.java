@@ -595,7 +595,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     abstract protected Condition findCondition(Object value, QueryFilter.Op operation);
 
     @Override
-    protected Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
+    public Condition findLabelCondition(Either<Map<?, ?>, String> value, QueryFilter.Op operation) {
         return findCondition(value.getLeft(), operation);
     }
 

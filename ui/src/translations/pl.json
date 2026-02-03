@@ -203,6 +203,7 @@
     "copy_to_clipboard": "Kopiuj do schowka",
     "create": "Utwórz",
     "create first task": "Stwórz swój pierwszy task",
+    "create new revision": "Utwórz nową wersję",
     "create_flow": "Utwórz Flow",
     "created date": "Data utworzenia",
     "creation": "Utworzenie",
@@ -502,6 +503,10 @@
         "content": "Otwórz Flow Code lub No-Code, aby rozpocząć edycję swoich flows, lub wybierz inny panel (Topology, Documentation, Files, Blueprints, Namespace Context) dla powiązanych funkcji.",
         "title": "Obecnie żadne panele nie są otwarte."
       },
+      "pluginDefaults": {
+        "content": "Domyślne ustawienia Pluginów pozwalają centralnie zarządzać konfiguracją pluginów i udostępniać ją wszystkim flow w twoim namespace.",
+        "title": "Nie masz jeszcze domyślnych pluginów!"
+      },
       "plugins": {
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limitach Concurrency</a></strong> w naszej dokumentacji.",
         "title": "Dla tego namespace nie ustawiono domyślnych pluginów."
@@ -595,6 +600,7 @@
         "title": "Komponenty Workflow"
       }
     },
+    "execution_started": "Rozpoczęto wykonanie!",
     "execution_starts_progress": "Gdy tylko rozpocznie się wykonanie, zobaczysz tutaj aktualizacje postępu.",
     "execution_status": "Wykonanie jest:",
     "executions": "Wykonania",
@@ -619,6 +625,8 @@
     "export all templates": "Eksportuj wszystkie szablony",
     "export_csv": "Eksportuj jako CSV",
     "exports": "Eksporty",
+    "failed to export plugin defaults": "Nie udało się wyeksportować domyślnych ustawień wtyczki",
+    "failed to import plugin defaults": "Nie udało się zaimportować domyślnych ustawień wtyczki",
     "failed to render pdf": "Nie udało się wygenerować podglądu PDF",
     "false": "Fałsz",
     "feeds": {
@@ -988,6 +996,7 @@
     "fix_with_ai": "Napraw za pomocą AI",
     "flow": "Flow",
     "flow already exists": "Flow już istnieje",
+    "flow already exists message": "Flow {id} już istnieje w namespace {namespace}. Czy chcesz utworzyć nową wersję?",
     "flow creation": "Utworzenie flow",
     "flow creation denied in namespace": "Nie masz uprawnień do tworzenia flow w namespace `{namespace}`.",
     "flow delete": "Czy na pewno chcesz usunąć <code>{flowCount}</code> flow(s)?",
@@ -998,6 +1007,9 @@
     "flow must have id and namespace": "Flow musi mieć id i namespace.",
     "flow must not be empty": "Flow nie może być pusty",
     "flow not imported": "Niektóre flow nie mogły zostać zaimportowane",
+    "flow revision latest": "Najnowsza wersja flow",
+    "flow revision original": "Oryginalna wersja flow",
+    "flow revision specific": "Specyficzna wersja flow",
     "flow source not found": "Źródło flow nie znalezione",
     "flow-dependencies": "zależności",
     "flow-no-dependencies": "Twój flow nie ma żadnych zależności",
@@ -1112,6 +1124,7 @@
     "min": "Min",
     "minutes": "Minuty",
     "missingSource": "Brak źródła",
+    "modify inputs": "Modyfikuj inputy",
     "modify_inputs": "Modyfikuj inputy",
     "monogram": "Monogram",
     "months": "Miesiące",
@@ -1437,13 +1450,36 @@
       "toggle": "Plac zabaw",
       "tooltip_persistence": "Jeśli wyłączysz i ponownie włączysz Playground, informacje pozostaną, dopóki pozostaniesz na stronie."
     },
-    "pluginDefaults": "Domyślne ustawienia pluginu",
+    "plugin defaults exported": "Domyślne ustawienia pluginu wyeksportowane",
+    "plugin defaults imported": "Domyślne ustawienia wtyczki zaimportowane",
+    "plugin defaults not imported": "Niektóre domyślne ustawienia pluginów nie mogły zostać zaimportowane",
+    "pluginDefaults": {
+      "add": "Dodaj Domyślną Wtyczkę",
+      "add_subtitle": "Skonfiguruj nową domyślną wtyczkę z jej właściwościami",
+      "cancel": "Anuluj",
+      "custom": "Wtyczka niestandardowa",
+      "custom_configure": "Niestandardowy typ wtyczki - konfiguruj za pomocą YAML",
+      "custom_placeholder": "Wprowadź typ pluginu",
+      "custom_type": "Niestandardowy typ wtyczki",
+      "edit": "Edytuj domyślny plugin",
+      "edit_subtitle": "Zmodyfikuj domyślną konfigurację istniejącej wtyczki",
+      "form": "Formularz",
+      "predefined": "Wstępnie zdefiniowana wtyczka",
+      "select_predefined": "Wybierz Wstępnie Zdefiniowaną Wtyczkę",
+      "show_yaml": "Pokaż YAML",
+      "title": "Domyślne ustawienia wtyczki",
+      "update": "Aktualizuj domyślną wtyczkę",
+      "use_custom": "Użyj niestandardowego",
+      "yaml": "YAML",
+      "yaml_configuration": "Konfiguracja YAML"
+    },
     "pluginPage": {
       "alt": "Ikona wtyczek",
       "search": "Wyszukaj wśród {count}+ wtyczek",
       "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
       "title2": "Wyszukaj tasks i triggers, aby zbudować swój flow."
     },
+    "plugin_default_already_exists": "Domyślna wtyczka dla <code>{type}</code> już istnieje.",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
@@ -1479,10 +1515,14 @@
     "remove_bookmark": "Czy na pewno chcesz usunąć tę zakładkę?",
     "replay": "Odtwórz",
     "replay confirm": "Czy na pewno chcesz odtworzyć to wykonanie <code>{id}</code> i utworzyć nowe?",
+    "replay execution description": "To utworzy nową wykonanie na podstawie wybranego wykonania.",
+    "replay execution title": "Ponowne wykonanie",
     "replay from beginning tooltip": "Utwórz podobne wykonanie zaczynając od początku",
     "replay from task tooltip": "Utwórz podobne wykonanie zaczynając od task <code>{taskId}</code>",
+    "replay inputs": "Wejścia",
     "replay latest revision": "Odtwórz używając najnowszej wersji",
     "replay the execution": "Odtwórz wykonanie <code>{executionId}</code> dla flow <code>{flowId}</code>",
+    "replay using": "Odtwórz używając",
     "replay with inputs": "Odtwórz z inputami",
     "replayed": "Wykonanie zostało odtworzone",
     "required field": "Wymagane pole",
@@ -1504,6 +1544,7 @@
     "resumed confirm": "Czy na pewno chcesz wznowić wykonanie <code>{id}</code>?",
     "resumed done": "Wykonanie zostało wznowione",
     "resumed title": "Wznów wykonanie <code>{id}</code>",
+    "reuse original inputs": "Ponownie użyj oryginalnych inputów",
     "reuse_original_inputs": "Ponownie użyj oryginalnych inputów",
     "revision": "Wersja",
     "revision deleted": "Revision {revision} został pomyślnie usunięty",

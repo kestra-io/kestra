@@ -24,7 +24,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events on public holidays."
+    title = "Allow events on public holidays.",
+    description = """
+        Uses the Jollyday calendar to check whether a rendered date (defaults to `{{ trigger.date }}`) is a public holiday for the given country/sub-division.
+
+        If `country` is omitted, the default locale is used. Provide ISO 3166-1 (country) and optionally 3166-2 (region) codes."""
 )
 @Plugin(
     examples = {

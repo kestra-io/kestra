@@ -9,6 +9,7 @@ import io.kestra.core.models.dashboards.filters.LessThanOrEqualTo;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public interface IExecutions extends IData<IExecutions.Fields> {
 
@@ -28,7 +29,11 @@ public interface IExecutions extends IData<IExecutions.Fields> {
             if (!labelFilters.isEmpty()) {
                 updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LABELS));
                 labelFilters.forEach(f -> {
-                    updatedWhere.add(Contains.<Fields>builder().field(Fields.LABELS).value(f.value()).build());
+                    if (f.value() instanceof Map<?, ?> m) {
+                        m.forEach((key, value) -> updatedWhere.add(Contains.<Fields>builder().field(Fields.LABELS).labelKey(key.toString()).value(value).build()));
+                    } else {
+                        updatedWhere.add(Contains.<Fields>builder().field(Fields.LABELS).value(f.value()).build());
+                    }
                 });
             }
 

@@ -25,8 +25,11 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Templatize task properties using Kestra’s Pebble templating.",
-    description = "This task's `spec` property allows you to fully templatize all task properties using Kestra's Pebble templating. This way, all task properties and their values can be dynamically rendered based on your custom inputs, variables, and outputs from other tasks."
+    title = "Render and run a task from a templated spec.",
+    description = """
+        Renders a YAML task definition from `spec` using Pebble and executes it. The rendered task must be a RunnableTask and cannot itself be `TemplatedTask`.
+
+        Useful for highly dynamic task definitions driven by inputs or previous outputs."""
 )
 @Plugin(
     examples = {

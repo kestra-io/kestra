@@ -26,8 +26,11 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Purge flow execution logs and trigger-related logs.",
-    description = "This task can be used to purge flow execution and trigger logs for all flows, for a specific namespace, or for a specific flow."
+    title = "Purge execution and trigger logs.",
+    description = """
+        Deletes logs in bulk by namespace/flow/execution filters and optional level/date ranges. Requires namespace authorization when targeting other namespaces.
+
+        For performance, use this instead of per-execution deletions; consider keeping ERROR logs by filtering `logLevels`."""
 )
 @Plugin(
     examples = {

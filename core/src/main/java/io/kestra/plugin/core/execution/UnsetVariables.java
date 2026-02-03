@@ -21,7 +21,11 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Unset execution variables."
+    title = "Remove execution variables.",
+    description = """
+        Renders a list of keys and deletes them from `vars`. Supports dotted paths for nested maps. If `ignoreMissing` is false (default), missing keys cause an error.
+
+        Useful for cleaning sensitive or transient data mid-flow."""
 )
 @Plugin(
     examples = {

@@ -22,8 +22,11 @@ import org.slf4j.event.Level;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Log a message in the task logs (Deprecated).",
-    description = "This task is deprecated, please use the `io.kestra.plugin.core.log.Log` task instead.",
+    title = "Log a templated message (deprecated).",
+    description = """
+        Renders a string and writes it to the task log at the chosen level.
+
+        This task is deprecated; use `io.kestra.plugin.core.log.Log`, which supports multiple messages and richer options. Keep in mind the `level` here only controls the emitted log entry, not the flow-level `logLevel` filter.""",
     deprecated = true
 )
 @Plugin(

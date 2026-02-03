@@ -23,7 +23,10 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @Schema(
     title = "Intentionally fail the execution.",
-    description = "Used to fail the execution, for example, on a switch branch or on some conditions based on the execution context."
+    description = """
+        Throws an error to end the flow. If `condition` is provided, it is rendered and coerced to boolean (via TruthUtils); failure occurs only when it is truthy. Without `condition` the task always fails.
+
+        Use `errorMessage` to control the logged/raised message; helpful for explicit branch failures or alert routing."""
 )
 @Plugin(
     examples = {

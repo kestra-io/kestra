@@ -27,7 +27,11 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to execute tasks on a specific day of the week relative to the current month (first, last, ...)"
+    title = "Allow events on an nth weekday within the month.",
+    description = """
+        Renders a date (defaults to the trigger timestamp) and checks whether it matches the requested weekday and position in the month (`FIRST`, `SECOND`, `THIRD`, `FOURTH`, or `LAST`).
+
+        Useful for patterns like “first Monday” or “last Friday”. Dates must be valid ISO-8601 strings."""
 )
 @Plugin(
     examples = {

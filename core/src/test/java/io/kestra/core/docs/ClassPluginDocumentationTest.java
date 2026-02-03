@@ -124,7 +124,7 @@ class ClassPluginDocumentationTest {
 
             assertThat(((Map<?, ?>) doc.getPropertiesSchema().get("properties")).get("version")).isNotNull();
             assertThat(doc.getCls()).isEqualTo("io.kestra.plugin.core.runner.Process");
-            assertThat(doc.getPropertiesSchema().get("title")).isEqualTo("Task runner that executes a task as a subprocess on the Kestra host.");
+            assertThat(doc.getPropertiesSchema().get("title")).isEqualTo("Run tasks as local subprocesses on the worker.");
             assertThat(doc.getDefs()).isEmpty();
         }));
     }

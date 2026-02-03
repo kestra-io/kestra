@@ -30,8 +30,11 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Fetch execution logs and store them in a file.",
-    description = "**This task is deprecated**, please use the `io.kestra.plugin.kestra.logs.Fetch` task instead."
+    title = "Fetch execution logs to a file (deprecated).",
+    description = """
+        Deprecated; use `io.kestra.plugin.kestra.logs.Fetch`.
+
+        Streams logs for a given execution (current by default) into an ION file in internal storage. You can filter by task ids and minimum log level. Execution can be targeted via `executionId`/`namespace`/`flowId` with ACL checks."""
 )
 @Plugin(
     examples = {

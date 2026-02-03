@@ -144,7 +144,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 var from = revision.map(integer -> context
                     .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                     .from(jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId, allowDeleted))
+                    .where(this.defaultFilter(tenantId, true))
                     .and(NAMESPACE_FIELD.eq(namespace))
                     .and(field("id", String.class).eq(id))
                     .and(REVISION_FIELD.eq(integer)
@@ -172,14 +172,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                     .map(integer -> context
                         .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                         .from(jdbcRepository.getTable())
-                        .where(this.defaultFilterWithNoACL(tenantId, false))
+                        .where(this.defaultFilterWithNoACL(tenantId, true))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(REVISION_FIELD.eq(integer))
                     ).orElseGet(() -> context
                         .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                         .from(fromLastRevision(true))
-                        .where(this.defaultFilterWithNoACL(tenantId, false))
+                        .where(this.defaultFilterWithNoACL(tenantId, true))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                     );
@@ -215,7 +215,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                             TENANT_ID_FIELD
                         )
                         .from(jdbcRepository.getTable())
-                        .where(this.defaultFilter(tenantId, allowDeleted))
+                        .where(this.defaultFilter(tenantId, true))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(REVISION_FIELD.eq(integer)))
@@ -256,14 +256,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 var from = revision.map(integer -> context
                         .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                         .from(jdbcRepository.getTable())
-                        .where(this.defaultFilterWithNoACL(tenantId, false))
+                        .where(this.defaultFilterWithNoACL(tenantId, true))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id))
                         .and(REVISION_FIELD.eq(integer)))
                     .orElseGet(() -> context
                         .select(SOURCE_FIELD, VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                         .from(fromLastRevision(true))
-                        .where(this.defaultFilterWithNoACL(tenantId, false))
+                        .where(this.defaultFilterWithNoACL(tenantId, true))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id)));
                 Record4<String, Object, String, String> fetched = from.fetchAny();

@@ -10,51 +10,9 @@
             </ul>
         </template>
     </Navbar>
-    <section
-        class="d-flex flex-column fill-height padding-bottom"
-        :class="miscStore.configs?.secretsEnabled === undefined ? 'mt-0 p-0' : 'container'"
-    >
-        <EmptyTemplate v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
-            <div class="no-secret-manager-block d-flex flex-column gap-6 mt-3">
-                <div class="header-block d-flex align-items-center">
-                    <div class="d-flex flex-column">
-                        <div class="d-flex flex-row gap-2">
-                            <div class="d-flex flex-column align-items-start justify-content-center">
-                                <h5 class="fw-bold">
-                                    {{ $t('demos.secrets.title') }}
-                                </h5>
-                                <p>{{ $t('demos.secrets.message') }}</p>
-                            </div>
-                            <img :src="sourceImg" :alt="$t('demos.secrets.title')" class="img-wrapper">
-                        </div>
-                        <div>
-                            <div v-if="isOnline" class="video-container">
-                                <iframe
-                                    src="https://www.youtube.com/embed/u0yuOYG-qMI"
-                                />
-                            </div>
-                            <DemoButtons />
-                        </div>
-                    </div>
-                </div>
-                <p class="mb-0">
-                    {{ $t('demos.secrets.detected_env') }}
-                </p>
-                <div v-if="hasData === false">
-                    <p class="text-tertiary mb-4">
-                        {{ $t('demos.secrets.empty_env') }}
-                    </p>
-                    <div class="text-secondary">
-                        <p class="bold mb-0">
-                            {{ $t('demos.secrets.add_env.intro') }}
-                        </p>
-                        <ul>
-                            <li v-html="$t('demos.secrets.add_env.first')" />
-                            <li v-html="$t('demos.secrets.add_env.second')" />
-                            <li v-html="$t('demos.secrets.add_env.third')" />
-                        </ul>
-                    </div>
-                </div>
+    <section class="d-flex flex-column fill-height padding-bottom container">
+        <div v-if="miscStore.configs?.secretsEnabled === undefined" class="d-flex flex-column text-start m-0 p-0 mw-100">
+            <div class="oss-secrets-block d-flex flex-column gap-4">
                 <SecretsTable
                     v-show="hasData === true"
                     :filterable="false"
@@ -64,8 +22,45 @@
                     @update:add-secret-modal-visible="addSecretModalVisible = $event"
                     @has-data="hasData = $event"
                 />
+                <div v-if="hasData === false" class="oss-secrets-hint">
+                    <h6 class="fw-bold mb-1">
+                        {{ $t('demos.secrets.add_env.intro') }}
+                    </h6>
+                    <ul class="mb-0">
+                        <li v-html="$t('demos.secrets.add_env.first')" />
+                        <li v-html="$t('demos.secrets.add_env.second')" />
+                        <li v-html="$t('demos.secrets.add_env.third')" />
+                    </ul>
+                </div>
             </div>
-        </EmptyTemplate>
+            <div class="secrets-divider my-4" />
+            <div class="no-secret-manager-block d-flex flex-column gap-6">
+                <div class="header-block d-flex align-items-center">
+                    <div class="ee-promo-layout">
+                        <div v-if="isOnline" class="video-container">
+                            <iframe
+                                src="https://www.youtube.com/embed/u0yuOYG-qMI"
+                            />
+                        </div>
+                        <div class="ee-promo-content d-flex flex-column">
+                            <div class="d-flex flex-row gap-2">
+                                <div class="d-flex flex-column align-items-start justify-content-center">
+                                    <div class="enterprise-tag">
+                                        <div class="flare" />
+                                        {{ $t('demos.enterprise_edition') }}
+                                    </div>
+                                    <h5 class="fw-bold">
+                                        {{ $t('demos.secrets.title') }}
+                                    </h5>
+                                    <p>{{ $t('demos.secrets.message') }}</p>
+                                </div>
+                            </div>
+                            <DemoButtons />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <SecretsTable
             v-else
             filterable
@@ -87,9 +82,7 @@
     import {computed, ref} from "vue";
     import useRouteContext from "../../composables/useRouteContext";
     import {useMiscStore} from "override/stores/misc";
-    import sourceImg from "../../assets/demo/secrets.png";
     import DemoButtons from "../demo/DemoButtons.vue";
-    import EmptyTemplate from "../layout/EmptyTemplate.vue";
 
     const miscStore = useMiscStore();
 
@@ -110,40 +103,34 @@
 </script>
 
 <style scoped lang="scss">
+    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
+    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
     .no-secret-manager-block {
-        padding: 0 10.75rem;
+        padding: 0 0 1.5rem;
 
         *[style*="display: none"] { display: none !important }
 
         .header-block {
-            border-bottom: 1px solid var(--ks-border-primary);
-
             p {
                 font-size: .875rem;
             }
 
-            .img-wrapper {
-                width: 350px;
-                height: 300px;
-                overflow: visible;
-                direction: rtl;
-                flex-shrink: 0;
-            }
         }
 
-        .text-secondary {
-            color: var(--ks-content-secondary) !important;
+        .ee-promo-layout {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
 
-            .bold {
-                font-weight: bold;
-            }
+        .ee-promo-content {
+            flex: 1;
         }
 
         .video-container {
             width: 100%;
-            max-width: 640px;
+            flex: 1;
             aspect-ratio: 16 / 9;
-            margin-bottom: 1rem;
             border-radius: 8px;
             border: 1px solid var(--ks-border-primary);
             overflow: hidden;
@@ -155,20 +142,104 @@
             }
         }
 
-        @media (max-width: 1200px) {
-            padding: 0 4rem;
+        @keyframes move-border {
+            0%{background-position: 0% 0%}
+            50%{background-position: 100% 100%}
+            100%{background-position: 0% 0%}
+        }
 
-            .header-block {
-                .img-wrapper {
-                    width: 250px;
-                    height: 214px;
+        .enterprise-tag::before,
+        .enterprise-tag::after{
+            content: "";
+            display: block;
+            position: absolute;
+            border-radius: 1rem;
+        }
+
+        .enterprise-tag::before{
+            z-index: -2;
+            background-image: linear-gradient(138.8deg, #CCE8FE 0%, #CDA0FF 27.03%, #8489F5 41.02%, #CDF1FF 68.68%, #B591E9 94%, #CCE8FE 100%);
+            background-size: 200% 200%;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
+            animation: move-border 3s linear infinite;
+        }
+
+        .enterprise-tag::after{
+            z-index: -1;
+            background: $base-gray-100;
+            top: 1px;
+            left: 1px;
+            bottom: 1px;
+            right: 1px;
+            html.dark & {
+                background: $base-gray-400;
+            }
+        }
+
+        .enterprise-tag{
+            position: relative;
+            background: $base-gray-200;
+            padding: .125rem 0.5rem;
+            border-radius: 1rem;
+            display: inline-block;
+            z-index: 2;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            html.dark &{
+                background: #FBFBFB26;
+            }
+            .flare{
+                display: none;
+                position: absolute;
+                content: "";
+                height: 2rem;
+                width: 2rem;
+                z-index: 12;
+                top: -1.1rem;
+                right: 0;
+                background-image:
+                    // vertical flare
+                    linear-gradient(0deg, rgba($base-gray-200, 0) 0%, $base-gray-200 50%, rgba($base-gray-200, 0) 100%),
+                    // horizontal flare
+                    linear-gradient(90deg, rgba($base-gray-200, 0) 0%, $base-gray-200 50%, rgba($base-gray-200, 0) 100%),
+                    // flare effect
+                    radial-gradient(circle, $base-gray-200 0%, rgba($base-gray-200, .1) 50%,rgba($base-gray-200, 0) 70%);
+                background-size:  1px 100%, 100% 1px, 40% 40%;
+                background-repeat: no-repeat;
+                background-position: center, center, center;
+                transform:rotate(-13deg);
+                &::before{
+                    content: "";
+                    display: block;
+                    position: absolute;
+                    height: 2rem;
+                    width: 2rem;
+                    background-image:
+                        // vertical flare
+                        linear-gradient(0deg, rgba($base-gray-200, 0) 0%, rgba($base-gray-200, .7) 50%, rgba($base-gray-200, 0) 100%),
+                        // horizontal flare
+                        linear-gradient(90deg, rgba($base-gray-200, 0) 0%, rgba($base-gray-200, .7) 50%, rgba($base-gray-200, 0) 100%);
+                    background-size:  1px 50%, 50% 1px;
+                    background-repeat: no-repeat;
+                    background-position: center, center, center;
+                    transform: rotate(45deg);
+                }
+                html.dark &{
+                    display: block;
                 }
             }
         }
 
-        @media (max-width: 992px) {
-            padding: 0 2rem;
+        @media (max-width: 1200px) {
+            .ee-promo-layout {
+                flex-direction: column;
+            }
+        }
 
+        @media (max-width: 992px) {
             .header-block {
                 .d-flex.flex-row {
                     flex-direction: column !important;
@@ -179,18 +250,10 @@
                         align-items: center !important;
                     }
                 }
-
-                .img-wrapper {
-                    width: 200px;
-                    height: 171px;
-                    direction: ltr;
-                }
             }
         }
 
         @media (max-width: 768px) {
-            padding: 0 1.5rem;
-
             .header-block {
 
                 p {
@@ -204,8 +267,6 @@
         }
 
         @media (max-width: 576px) {
-            padding: 0 1rem;
-
             .header-block {
 
                 h5 {
@@ -217,5 +278,22 @@
                 }
             }
         }
+    }
+
+    .oss-secrets-block {
+        padding: 0;
+    }
+
+    .oss-secrets-hint {
+        text-align: left;
+
+        ul,
+        li {
+            font-size: .875rem;
+        }
+    }
+
+    .secrets-divider {
+        border-top: 1px solid var(--ks-border-primary);
     }
 </style>

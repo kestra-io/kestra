@@ -36,8 +36,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Add or overwrite labels for the current execution at runtime.",
-    description = "Trying to pass a system label (a label starting with `system.`) will fail the task."
+    title = "Add or overwrite labels on the current execution.",
+    description = """
+        Accepts labels as a map, list of `{key,value}` pairs, or JSON string. Values are rendered, merged into existing labels, and overwrite by default.
+
+        System labels (`system.*`) are rejected and empty values are not allowed. Useful for tagging runs with payload metadata (customer, env, etc.)."""
 )
 @Plugin(
     examples = {

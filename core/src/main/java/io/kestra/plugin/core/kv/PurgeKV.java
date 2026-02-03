@@ -34,8 +34,11 @@ import java.util.concurrent.atomic.AtomicLong;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete expired keys globally for a specific namespace.",
-    description = "This task will delete expired keys from the Kestra KV store. By default, it will only delete expired keys, but you can choose to delete all keys by setting `expiredOnly` to false. You can also filter keys by a specific pattern and choose to include child namespaces."
+    title = "Purge keys from the KV store.",
+    description = """
+        Deletes keys across Namespaces using a purge `behavior` (default: expired-only). Filter by explicit `namespaces` or `namespacePattern`, optional `keyPattern`, and include/exclude child namespaces.
+
+        Deprecated `expiredOnly` overrides `behavior` if set."""
 )
 @Plugin(
     examples = {

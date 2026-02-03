@@ -23,7 +23,9 @@ import java.util.function.Predicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Fetch all keys matching a given KV pair prefix."
+    title = "List keys in the KV store by prefix.",
+    description = """
+        Renders `namespace` (defaults to flow namespace) and returns all keys, optionally filtered by the `prefix` value. Requires namespace ACL if targeting another namespace."""
 )
 @Plugin(
     examples = {

@@ -20,7 +20,8 @@ import java.net.URI;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get the size of a file from Kestra's internal storage."
+    title = "Get the size of a file in Kestra internal storage.",
+    description = "Reads the file attributes for the given `kestra://` URI and returns its size in bytes."
 )
 @Plugin(
     examples = {

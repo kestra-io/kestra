@@ -32,56 +32,13 @@ import jakarta.validation.constraints.Size;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a flow from an API call triggered by a webhook.",
+    title = "Trigger a Flow via an authenticated webhook URL.",
     description = """
-        Webhook trigger allows you to create a unique URL that you can use to trigger a Kestra flow execution based on events in another application such as GitHub or Amazon EventBridge. In order to use that URL, you have to add a secret key to secure your webhook URL.
+        Exposes a signed endpoint `.../executions/webhook/{Namespace}/{flowId}/{key}` that accepts GET/POST/PUT to start a Flow. Secured by the required `key`; keep it secret.
 
-        The URL will then follow the following format: `https://{your_hostname}/api/v1/{tenant}/executions/webhook/{namespace}/{flowId}/{key}`. Replace the templated values according to your workflow setup.
+        Request data is available as `trigger.body`, `trigger.headers`, and `trigger.parameters`. Supports `wait`/`returnOutputs` to block and return Flow outputs, and optional `responseContentType`. Conditions are allowed except `MultipleCondition`.
 
-        The webhook URL accepts `GET`, `POST`, and `PUT` requests.
-
-        You can access the request body and headers sent by another application using the following template variables:
-        - `{{ trigger.body }}`
-        - `{{ trigger.headers }}`
-
-        The webhook response will be one of the following HTTP status codes:
-        - 404 if the namespace, flow, or webhook key is not found.
-        - 200 if the webhook triggers an execution.
-        - 204 if the webhook cannot trigger an execution due to a lack of matching event conditions sent by other application.
-
-        The response body will contain the execution ID if the execution is successfully triggered using the following format:
-        ```json
-        {
-          "tenantId": "your_tenant_id",
-          "namespace": "your_namespace",
-          "flowId": "your_flow_id",
-          "flowRevision": 1,
-          "trigger": {
-            "id": "the_trigger_id",
-            "type": "io.kestra.plugin.core.trigger.Webhook",
-            "variables": {
-                # The variables sent by the webhook caller
-            },
-            "logFile": "the_log_file_url"
-          },
-          "outputs": {
-            # The outputs of the flow, only available if `wait` is set to true
-          },
-          "labels": [
-            {"key": "value" }
-          ],
-          "state": {
-            "type": "RUNNING",
-            "histories": [
-              # The state histories of the execution
-            ]
-           },
-           "url": "the_execution_url_inside_ui",
-        }
-        ```
-        If you set the `wait` property to `true` and `returnOutputs` to `true`, the webhook call will wait for the flow to finish and return the flow outputs as response.
-
-        A webhook trigger can have conditions, but it doesn't support conditions of type `MultipleCondition`."""
+        Responses: 404 (not found), 200 (triggered), 204 (conditions not met)."""
 )
 @Plugin(
     examples = {

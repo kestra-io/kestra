@@ -58,4 +58,9 @@ public class FlowForExecution extends AbstractFlow {
     public String getSource() {
         return null;
     }
+
+    @Override
+    public FlowForExecution toDeleted() {
+        throw new UnsupportedOperationException("Can't delete a FlowForExecution");
+    }
 }

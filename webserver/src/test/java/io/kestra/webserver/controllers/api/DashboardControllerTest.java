@@ -57,7 +57,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -140,7 +140,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -195,7 +195,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -246,7 +246,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -330,7 +330,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -378,7 +378,6 @@ class DashboardControllerTest {
             .namespace(fakeNamespace)
             .level(Level.INFO)
             .attemptNumber(1)
-            .deleted(false)
             .executionId(fakeExecutionId)
             .tenantId(MAIN_TENANT)
             .executionKind(ExecutionKind.NORMAL)
@@ -447,7 +446,6 @@ class DashboardControllerTest {
             .namespace(fakeNamespace)
             .level(Level.INFO)
             .attemptNumber(1)
-            .deleted(false)
             .executionId(fakeExecutionId)
             .tenantId(MAIN_TENANT)
             .executionKind(ExecutionKind.NORMAL)

@@ -30,7 +30,11 @@ import java.nio.file.Path;
 import java.util.Map;
 
 @Schema(
-    title = "Filter a file by retaining only the items that match a given expression."
+    title = "Filter line-oriented files with a Pebble expression.",
+    description = """
+        Reads a line-delimited file from internal storage, evaluates `filterCondition` per item, and writes matched lines to a new file. `filterType` controls include vs exclude; `errorOrNullBehavior` handles expression errors or nulls.
+
+        Expressions can reference columns directly (rendered as strings unless cast) and must return a boolean."""
 )
 @Plugin(
     examples = {

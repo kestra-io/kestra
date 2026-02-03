@@ -1063,7 +1063,7 @@ public class ExecutionController {
 
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in state PAUSED or terminated",
+                    "execution not in state PAUSED or terminated, or is KILLED",
                     executionId,
                     String.class,
                     "execution",
@@ -1287,8 +1287,8 @@ public class ExecutionController {
             return null;
         }
 
-        if (!execution.get().getState().isTerminated()) {
-            throw new IllegalArgumentException("You can only change the state of a terminated execution.");
+        if (!execution.get().getState().canChangeStatus()) {
+            throw new IllegalArgumentException("You can only change the state of a terminated non killed execution.");
         }
 
         Execution updated = execution.get().withState(status);
@@ -1317,9 +1317,9 @@ public class ExecutionController {
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && !execution.get().getState().isTerminated()) {
+            if (execution.isPresent() && !execution.get().getState().canChangeStatus()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in a terminated state",
+                    "execution not in a terminated state or is killed",
                     executionId,
                     String.class,
                     "execution",
@@ -1413,7 +1413,7 @@ public class ExecutionController {
     public HttpResponse<?> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade
-    ) throws InternalException, QueueException {
+    ) throws QueueException {
 
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {

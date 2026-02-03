@@ -1,4 +1,4 @@
-package io.kestra.core.tests;
+package io.kestra.core.test;
 
 import io.kestra.core.utils.IdUtils;
 

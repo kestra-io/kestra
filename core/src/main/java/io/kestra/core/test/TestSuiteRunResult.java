@@ -1,6 +1,6 @@
-package io.kestra.core.tests;
+package io.kestra.core.test;
 
-import io.kestra.core.tests.flow.UnitTestResult;
+import io.kestra.core.test.flow.UnitTestResult;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;

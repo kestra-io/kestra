@@ -1,4 +1,4 @@
-package io.kestra.core.tests.flow;
+package io.kestra.core.test.flow;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -7,6 +7,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.validations.TestSuiteAssertionValidation;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import static io.kestra.core.tests.flow.Assertion.Operator.*;
+import static io.kestra.core.test.flow.Assertion.Operator.*;
 
 @Getter
 @Builder

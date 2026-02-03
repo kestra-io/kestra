@@ -1,7 +1,7 @@
-package io.kestra.core.tests.flow;
+package io.kestra.core.test.flow;
 
 
-import io.kestra.core.tests.TestState;
+import io.kestra.core.test.TestState;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 

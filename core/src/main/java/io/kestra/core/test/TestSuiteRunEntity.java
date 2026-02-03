@@ -1,9 +1,9 @@
-package io.kestra.core.tests;
+package io.kestra.core.test;
 
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
-import io.kestra.core.tests.flow.UnitTestResult;
+import io.kestra.core.test.flow.UnitTestResult;
 
 import java.time.Instant;
 import java.util.List;

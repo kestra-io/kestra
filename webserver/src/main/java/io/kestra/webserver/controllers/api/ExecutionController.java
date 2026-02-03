@@ -30,7 +30,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.*;
 import io.kestra.core.tenant.TenantService;
-import io.kestra.core.test.flow.TaskFixture;
+import io.kestra.core.tests.flow.TaskFixture;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.kestra.core.utils.Await;

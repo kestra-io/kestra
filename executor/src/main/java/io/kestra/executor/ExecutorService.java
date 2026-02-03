@@ -22,7 +22,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
-import io.kestra.core.test.flow.TaskFixture;
+import io.kestra.core.tests.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Logs;

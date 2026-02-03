@@ -1,4 +1,4 @@
-package io.kestra.core.test;
+package io.kestra.core.tests;
 
 import io.kestra.core.serializers.YamlParser;
 import org.junit.jupiter.api.Test;

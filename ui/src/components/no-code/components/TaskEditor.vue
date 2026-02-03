@@ -26,6 +26,7 @@
             @update:model-value="onTaskInput"
             :schema
             :properties
+            :typeBased="isTaskDefinitionBasedOnType"
         />
     </div>
 </template>
@@ -178,7 +179,10 @@
     // when tab is opened, load the documentation
     onActivated(() => {
         if(selectedTaskType.value && parentPath !== "inputs"){
-            pluginsStore.updateDocumentation({cls: selectedTaskType.value, ...taskModel.value});
+            pluginsStore.updateDocumentation({
+                cls: selectedTaskType.value, 
+                ...taskModel.value
+            });
         }
     });
 
@@ -303,6 +307,19 @@
         // IE: when only one schema is available take it and run with it
         if (resolvedLocalSchema.value?.properties) {
             return resolvedLocalSchema.value.properties
+        }
+
+        if(resolvedLocalSchema.value?.allOf){
+            // merge allOf properties
+            return resolvedLocalSchema.value.allOf.reduce((acc: Record<string, any>, item: any) => {
+                const resolvedItem = item.$ref
+                    ? getValueAtJsonPath(fullSchema.value, item.$ref)
+                    : item;
+                if(resolvedItem?.properties){
+                    Object.assign(acc, resolvedItem.properties);
+                }
+                return acc;
+            }, {});
         }
 
         // if there is more than one schema valid, try to find common properties

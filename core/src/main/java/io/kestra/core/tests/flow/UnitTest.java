@@ -1,5 +1,6 @@
-package io.kestra.core.test.flow;
+package io.kestra.core.tests.flow;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -15,7 +16,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class UnitTest {
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "type", visible = true, include = JsonTypeInfo.As.PROPERTY)
+public class UnitTest implements io.kestra.core.models.Plugin {
     @NotNull
     private String id;
 

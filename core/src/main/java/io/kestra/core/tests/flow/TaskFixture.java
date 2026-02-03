@@ -1,4 +1,4 @@
-package io.kestra.core.test.flow;
+package io.kestra.core.tests.flow;
 
 import io.kestra.core.models.assets.Asset;
 import io.kestra.core.models.flows.State;

@@ -1,11 +1,11 @@
-package io.kestra.core.test;
+package io.kestra.core.tests;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
-import io.kestra.core.test.flow.UnitTest;
+import io.kestra.core.tests.flow.UnitTest;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.validations.TestSuiteValidation;
 import io.micronaut.core.annotation.Introspected;

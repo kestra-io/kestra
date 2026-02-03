@@ -1,9 +1,9 @@
-package io.kestra.core.test;
+package io.kestra.core.tests;
 
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.test.flow.Assertion;
-import io.kestra.core.test.flow.AssertionResult;
+import io.kestra.core.tests.flow.Assertion;
+import io.kestra.core.tests.flow.AssertionResult;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -11,8 +11,8 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static io.kestra.core.test.flow.Assertion.Operator.EQUAL_TO;
-import static io.kestra.core.test.flow.Assertion.Operator.IS_NOT_NULL;
+import static io.kestra.core.tests.flow.Assertion.Operator.EQUAL_TO;
+import static io.kestra.core.tests.flow.Assertion.Operator.IS_NOT_NULL;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest

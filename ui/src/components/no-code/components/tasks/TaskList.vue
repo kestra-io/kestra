@@ -186,7 +186,12 @@
     const blockSchema = computed(() => getValueAtJsonPath(fullSchema.value, blockSchemaPath.value) ?? {});
 
     // resolve parentPathComplete field schema from pluginsStore
-    const typeFieldSchema = computed(() => blockSchema.value?.type ? "type" : blockSchema.value?.on ? "on" : "type");
+    const typeFieldSchema = computed(() => 
+        blockSchema.value?.properties?.type 
+            ? "type" 
+            : blockSchema.value?.properties?.on 
+                ? "on" 
+                : "type");
 </script>
 
 <style scoped lang="scss">

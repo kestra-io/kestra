@@ -9,7 +9,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.test.flow.TaskFixture;
+import io.kestra.core.tests.flow.TaskFixture;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;

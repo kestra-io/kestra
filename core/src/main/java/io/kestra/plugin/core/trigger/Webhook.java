@@ -3,32 +3,30 @@ package io.kestra.plugin.core.trigger;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.validations.WebhookValidation;
-import io.micronaut.http.HttpRequest;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import io.kestra.core.http.HttpResponse;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionTrigger;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerOutput;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.WebhookValidation;
+import io.micronaut.http.MediaType;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 @Getter
 @NoArgsConstructor
 @Schema(
@@ -116,22 +114,9 @@ import jakarta.validation.constraints.Size;
     aliases = "io.kestra.core.models.triggers.types.Webhook"
 )
 @WebhookValidation
-public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Output> {
+public class Webhook extends AbstractWebhookTrigger implements TriggerOutput<Webhook.Output> {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
         .setDefaultPropertyInclusion(JsonInclude.Include.USE_DEFAULTS);
-
-    @Size(max = 256)
-    @NotNull
-    @Schema(
-        title = "The unique key that will be part of the URL.",
-        description = "The key is used for generating the webhook URL.\n" +
-            "\n" +
-            "::alert{type=\"warning\"}\n" +
-            "Make sure to keep the webhook key secure. It's the only security mechanism to protect your endpoint from bad actors, and must be considered as a secret. You can use a random key generator to create the key.\n" +
-            "::\n"
-    )
-    @PluginProperty(dynamic = true)
-    private String key;
 
     @PluginProperty
     @Builder.Default
@@ -143,13 +128,6 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
            """
     )
     private Boolean wait = false;
-
-
-    @Schema(
-        title = "The inputs to pass to the triggered flow"
-    )
-    @PluginProperty(dynamic = true)
-    private Map<String, Object> inputs;
 
     @PluginProperty
     @Builder.Default
@@ -171,34 +149,81 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
     )
     private String responseContentType;
 
-    public Optional<Execution> evaluate(HttpRequest<String> request, FlowInterface flow) {
-        String body = request.getBody().orElse(null);
+    @Override
+    public HttpResponse<?> evaluate(WebhookContext context) throws Exception {
+        // Reject path since not expected
+        if (context.getPath() != null || context.getRequest().getUri().getPath().endsWith("/")) {
+            return HttpResponse.of(HttpResponse.Status.NOT_FOUND);
+        }
 
-        Execution.ExecutionBuilder builder = Execution.builder()
-            .id(IdUtils.create())
-            .tenantId(flow.getTenantId())
-            .namespace(flow.getNamespace())
-            .flowId(flow.getId())
-            .flowRevision(flow.getRevision())
-            .inputs(inputs)
-            .variables(flow.getVariables())
-            .state(new State())
-            .trigger(ExecutionTrigger.of(
-                this,
-                Output.builder()
-                    .body(tryMap(body)
-                        .or(() -> tryArray(body))
-                        .orElse(body)
-                    )
-                    .headers(request.getHeaders().asMap())
-                    .parameters(request.getParameters().asMap())
-                    .build()
-            ));
+        String body = context.getRequest().getBody() != null ? (String) context.getRequest().getBody().getContent() : null;
 
-        return Optional.of(builder.build());
+        Optional<Execution> maybeExecution = context.getWebhookService().newExecution(
+            context,
+            context.getFlow(),
+            this,
+            Webhook.Output.builder()
+                .body(tryMap(body)
+                    .or(() -> tryArray(body))
+                    .orElse(body)
+                )
+                .headers(context.getRequest().getHeaders() != null ? context.getRequest().getHeaders().map() : null)
+                .parameters(context.getWebhookService().parseParameters(context))
+                .build()
+        );
+
+        if (maybeExecution.isEmpty()) {
+            return HttpResponse.of(HttpResponse.Status.CONFLICT);
+        }
+
+        Execution execution = maybeExecution.get();
+
+        try {
+            context.getWebhookService().startExecution(execution);
+        } catch (QueueException e) {
+            return HttpResponse.of(HttpResponse.Status.INTERNAL_SERVER_ERROR);
+        }
+
+        if (!this.wait) {
+            return HttpResponse.of(context.getWebhookService().executionResponse(execution));
+        }
+
+        return context
+            .getWebhookService()
+            .followExecution(execution, context.getFlow())
+            .last()
+            .map(throwFunction(event -> {
+                if (this.getReturnOutputs()) {
+                    return buildOutputResponse(event.getData().getOutputs(), responseContentType);
+
+                } else {
+                    return HttpResponse.of(context.getWebhookService().executionResponse(event.getData()));
+                }
+            }))
+            .block();
     }
 
-    private Optional<Object> tryMap(String body) {
+    private HttpResponse<?> buildOutputResponse(Object body, String responseContentType) {
+        if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN)) {
+            String responseBody;
+            if (body instanceof String s) {
+                responseBody = s;
+            } else {
+                try {
+                    responseBody = MAPPER.writeValueAsString(body);
+                } catch (Exception e) {
+                    responseBody = String.valueOf(body);
+                }
+            }
+
+            return HttpResponse.of(HttpResponse.Status.OK, responseBody, MediaType.TEXT_PLAIN_TYPE.toString());
+        }
+
+        // Default: application/json (or no responseContentType set)
+        return HttpResponse.of(HttpResponse.Status.OK, body, responseContentType);
+    }
+
+    private static Optional<Object> tryMap(String body) {
         try {
             return Optional.of(MAPPER.readValue(body, new TypeReference<Map<String, Object>>() {}));
         } catch (Exception ignored) {
@@ -206,7 +231,7 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         }
     }
 
-    private Optional<Object> tryArray(String body) {
+    private static Optional<Object> tryArray(String body) {
         try {
             return Optional.of(MAPPER.readValue(body, new TypeReference<List<Object>>() {}));
         } catch (Exception ignored) {
@@ -232,7 +257,6 @@ public class Webhook extends AbstractTrigger implements TriggerOutput<Webhook.Ou
         @Schema(title = "The headers for the webhook request")
         @NotNull
         private Map<String, List<String>> headers;
-
 
         @Schema(title = "The parameters for the webhook request")
         @NotNull

@@ -1,0 +1,17 @@
+id: webhook-plugin
+namespace: io.kestra.tests
+
+tasks:
+  - id: log_request
+    type: io.kestra.plugin.core.log.Log
+    message: "Webhook triggered: {{ trigger.body }}"
+
+triggers:
+  - id: webhook1
+    type: io.kestra.webserver.controllers.api.WebhookPluginTest$WebhookTestPlugin
+    key: case1
+
+  - id: webhook2
+    type: io.kestra.webserver.controllers.api.WebhookPluginTest$WebhookTestPlugin
+    key: case2
+

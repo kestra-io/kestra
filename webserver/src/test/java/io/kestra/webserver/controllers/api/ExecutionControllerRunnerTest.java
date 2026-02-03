@@ -36,6 +36,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.plugin.core.trigger.WebhookResponse;
 import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
@@ -1020,7 +1021,7 @@ class ExecutionControllerRunnerTest {
                 .GET(
                     "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-wait/" + key
                 ),
-            ExecutionController.WebhookResponse.class
+            WebhookResponse.class
         );
 
         assertThat(execution.state().getCurrent()).isEqualTo(State.Type.SUCCESS);

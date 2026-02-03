@@ -53,7 +53,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @NoArgsConstructor
 @Slf4j
 @Schema(
-    title = "Include a reusable template inside a flow (Deprecated)."
+    title = "Insert a reusable flow template (deprecated).",
+    description = """
+        Deprecated templating task that injects a saved template (`namespace`/`templateId`) into the current flow, forwarding arguments via `args`.
+
+        Prefer the newer template features in flows; this task remains for legacy compatibility."""
 )
 @Deprecated
 @Plugin(

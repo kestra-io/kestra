@@ -40,25 +40,19 @@
             <el-form-item>
                 <el-button-group class="ks-b-group">
                     <Restart v-if="executionsStore.execution" :execution="executionsStore.execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
-                    <el-button @click="downloadContent()">
-                        <Kicon :tooltip="$t('download logs')">
-                            <Download />
-                        </Kicon>
-                    </el-button>
-                    <el-button @click="copyAllLogs()">
-                        <Kicon :tooltip="$t('copy logs')">
-                            <ContentCopy />
-                        </Kicon>
-                    </el-button>
+                    <IconButton :tooltip="$t('download logs')" @click="downloadContent()">
+                        <Download />
+                    </IconButton>
+                    <IconButton :tooltip="$t('copy logs')" @click="copyAllLogs()">
+                        <ContentCopy />
+                    </IconButton>
                 </el-button-group>
             </el-form-item>
             <el-form-item>
                 <el-button-group class="ks-b-group">
-                    <el-button @click="loadLogs()">
-                        <Kicon :tooltip="$t('refresh')">
-                            <Refresh />
-                        </Kicon>
-                    </el-button>
+                    <IconButton :tooltip="$t('refresh')" @click="loadLogs()">
+                        <Refresh />
+                    </IconButton>
                 </el-button-group>
             </el-form-item>
         </Collapse>
@@ -125,7 +119,7 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import ViewList from "vue-material-design-icons/ViewList.vue";
     import ViewGrid from "vue-material-design-icons/ViewGrid.vue";
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
@@ -146,7 +140,7 @@
             LogLine,
             TaskRunDetails,
             LogLevelNavigator,
-            Kicon,
+            IconButton,
             Download,
             ContentCopy,
             Collapse,

@@ -26,7 +26,10 @@ import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
 @NoArgsConstructor
 @Schema(
     title = "Condition based on the outputs of an upstream execution.",
-    description = "The condition returns `false` if the execution has no output. If the result is an empty string, a space, or `false`, the condition will also be considered as `false`."
+    description = """
+        Renders the provided boolean expression against the upstream execution outputs exposed under `trigger.outputs`.
+
+        If the execution exposes no outputs the condition is false and the expression is skipped. A rendered result of blank, space-only, or literal `false` is treated as false."""
 )
 @Plugin(
     examples = {

@@ -178,7 +178,7 @@
                 const itemsType = schema.items?.format ?? schema.items?.type;
 
                 return {
-                    label: itemsType.charAt(0).toUpperCase() + itemsType.slice(1),
+                    label: itemsType?.charAt(0).toUpperCase() + itemsType?.slice(1),
                     value: makeKey(schema),
                     id: itemsType,
                 };
@@ -224,7 +224,7 @@
             const lastPartOfValue = cleanSchemaRef.slice(commonPart.length);
 
             return {
-                label: lastPartOfValue.charAt(0).toUpperCase() + lastPartOfValue.slice(1),
+                label: lastPartOfValue?.charAt(0).toUpperCase() + lastPartOfValue?.slice(1),
                 value: schemaRef,
                 id: cleanSchemaRef,
             };
@@ -255,7 +255,7 @@
     });
 
     onMounted(() => {
-        const schema = schemaOptions.value.find((item: any) =>
+        const schema = schemaOptions.value?.find((item: any) =>
             item.value === model.value?.type ||
             (typeof model.value === "string" && item.value === "string") ||
             (typeof model.value === "number" && item.value === "integer") ||

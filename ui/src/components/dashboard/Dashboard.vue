@@ -96,10 +96,13 @@
                 )
             );
 
-            router.replace({
-                params: {...route.params, dashboard: id},
-                query: route.params.dashboard !== id ? preservedQuery : {...route.query},
-            });
+            if (route.params.dashboard !== id) {
+                await router.replace({
+                    params: {...route.params, dashboard: id},
+                    query: preservedQuery,
+                });
+                return;
+            }
         }
 
         dashboard.value = id === "default" ? {id, charts: [], ...parse(defaultYAML)} : await dashboardStore.load(id);

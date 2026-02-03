@@ -281,7 +281,8 @@
                         name: "dependencies",
                         component: Dependencies,
                         title: this.$t("dependencies"),
-                        count: this.dependenciesCount,
+                        count: (this.dependenciesCount ?? 0) > 0 ? this.dependenciesCount : undefined,
+                        disabled: !this.dependenciesCount,
                         maximized: true
                     });
                 }

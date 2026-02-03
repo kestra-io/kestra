@@ -53,14 +53,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a subflow for each batch of items",
+    title = "Spawn a subflow for each batch of items.",
     description = """
-        The `items` value must be Kestra's internal storage URI (e.g. an output file from a previous task, or a file from inputs of FILE type).
-        Two special variables are available to pass as inputs to the subflow:
-        - `taskrun.items` which is the URI of internal storage file containing the batch of items to process
-        - `taskrun.iteration` which is the iteration or batch number
+        Reads `items` from a Kestra internal storage URI (newline JSON, Ion, CSV, etc.), optionally splits into batches, and starts one subflow execution per batch.
 
-        Restarting a parent flow will restart any subflows that has previously been executed."""
+        Special variables: `taskrun.items` (URI of the batch file) and `taskrun.iteration` (batch index). If the parent flow restarts, already-started subflows are restarted too."""
 )
 @Plugin(
     examples = {

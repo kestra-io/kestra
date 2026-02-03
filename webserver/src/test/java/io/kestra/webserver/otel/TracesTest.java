@@ -63,7 +63,7 @@ public class TracesTest {
         );
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        List<SpanData> spans = otelTesting.getSpans();
+        List<SpanData> spans = otelTesting.getSpans().stream().filter(span -> tenantId.equals(span.getAttributes().get(TraceUtils.ATTR_TENANT_ID))).toList();
         assertThat(spans).hasSizeGreaterThanOrEqualTo(6); // rarely, CI shows 6 traces and not 7 and even sometimes 14, probably due to asynchronicity
         assertThat(spans).extracting(SpanData::getName).contains("EXECUTOR - %s_io.kestra.tests_minimal".formatted(tenantId), "WORKER - io.kestra.plugin.core.debug.Return");
         Attributes attributes = spans.getFirst().getAttributes();

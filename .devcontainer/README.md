@@ -8,7 +8,7 @@ This devcontainer provides a quick and easy setup for anyone using VSCode to get
 
 ### Setup:
 
-Take a look at this guide to get an idea of what the setup is like as this devcontainer setup follows this approach: https://kestra.io/docs/getting-started/contributing
+Take a look at this guide to get an idea of what the setup is like as this devcontainer setup follows this approach: https://kestra.io/docs/contribute-to-kestra
 
 Once you have this repo cloned to your local system, you will need to install the VSCode extension [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack).
 

@@ -537,22 +537,16 @@ tasks.register('executableJar', Zip) {
 /**********************************************************************************************************************\
  * Standalone
  **********************************************************************************************************************/
-tasks.register('runLocal', JavaExec) {
+tasks.register('runLocal') {
     group = "application"
     description = "Run Kestra as server local"
-    classpath = project(":cli").sourceSets.main.runtimeClasspath
-    mainClass = mainClassName
-    environment 'MICRONAUT_ENVIRONMENTS', 'override'
-    args 'server', 'local', '--plugins', 'local/plugins'
+    dependsOn ':cli:runLocal'
 }
 
-tasks.register('runStandalone', JavaExec) {
+tasks.register('runStandalone') {
     group = "application"
-    description = "Run Kestra as server local"
-    classpath = project(":cli").sourceSets.main.runtimeClasspath
-    mainClass = mainClassName
-    environment 'MICRONAUT_ENVIRONMENTS', 'override'
-    args 'server', 'standalone', '--plugins', 'local/plugins'
+    description = "Run Kestra as server standalone"
+    dependsOn ':cli:runStandalone'
 }
 
 /**********************************************************************************************************************\

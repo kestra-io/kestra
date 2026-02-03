@@ -586,7 +586,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .findFirst();
     }
 
-    /**
+    /*
      * Using reversed().findFirst() is intended for better performance,
      * as these methods are used heavily.
      * Do not replace it with Streams.findLast() in these methods,

@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.queue.*;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
@@ -68,5 +69,12 @@ public class JdbcQueueFactory implements QueueFactoryInterface {
     @Override
     public DispatchQueueInterface<FlowInterface> flowQueue() {
         return new JdbcDispatchQueue<>(FlowInterface.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+    
+    @Bean
+    @Singleton
+    @Override
+    public BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue() {
+        return new JdbcBroadcastQueue<>(SchedulerEvent.class, queueService, jdbcQueueClient, executorsUtils);
     }
 }

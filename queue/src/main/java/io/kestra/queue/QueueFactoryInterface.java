@@ -8,6 +8,7 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.scheduler.events.SchedulerEvent;
 
 public interface QueueFactoryInterface {
     DispatchQueueInterface<ExecutionCommand> executionCommandQueue();
@@ -21,4 +22,6 @@ public interface QueueFactoryInterface {
     DispatchQueueInterface<MultipleConditionEvent> multipleConditionEventQueue();
 
     DispatchQueueInterface<FlowInterface> flowQueue();
+
+    BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue();
 }

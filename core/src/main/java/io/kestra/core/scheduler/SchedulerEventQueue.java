@@ -8,6 +8,8 @@ import java.util.function.Consumer;
 
 /**
  * Represents a queue for publishing and subscribing to {@link SchedulerEvent} instances.
+ * <p>
+ * This interface acts as a facade of an underlying queuing system, to only expose scheduler event related operations.
  */
 public interface SchedulerEventQueue extends Closeable {
     

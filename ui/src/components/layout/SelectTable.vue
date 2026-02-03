@@ -78,7 +78,6 @@
         
             await nextTick();
         
-            // 4. Now fetch the actual selection and force the counter to update
             const finalSelection = table.value?.getSelectionRows() ?? [];
             selectionChanged(finalSelection);
 

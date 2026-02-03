@@ -2,7 +2,7 @@ package io.kestra.scheduler.utils;
 
 import io.kestra.core.scheduler.vnodes.VNodes;
 import io.kestra.core.utils.Disposable;
-import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerEvent;
 
 import java.util.ArrayList;

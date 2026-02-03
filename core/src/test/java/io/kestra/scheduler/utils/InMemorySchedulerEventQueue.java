@@ -1,7 +1,7 @@
 package io.kestra.scheduler.utils;
 
 import io.kestra.core.utils.Disposable;
-import io.kestra.core.scheduler.SchedulerEventQueue;
+import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 
 import java.util.ArrayList;

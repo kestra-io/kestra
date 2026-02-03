@@ -32,7 +32,7 @@ import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
-import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.QueueSubscriber;

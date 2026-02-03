@@ -1,4 +1,4 @@
-package io.kestra.core.scheduler;
+package io.kestra.core.scheduler.queue;
 
 import io.kestra.core.utils.Disposable;
 import io.kestra.core.scheduler.events.TriggerEvent;

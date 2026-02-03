@@ -2,6 +2,7 @@ package io.kestra.queue.jdbc;
 
 import io.kestra.core.executor.command.ExecutionCommand;
 import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.queues.VNodeDispatchQueueInterface;
 import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.core.models.executions.ExecutionKilled;
@@ -9,6 +10,7 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.scheduler.events.SchedulerEvent;
+import io.kestra.core.scheduler.events.TriggerEvent;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.queue.*;
 import io.kestra.queue.jdbc.client.JdbcQueueClient;
@@ -76,5 +78,12 @@ public class JdbcQueueFactory implements QueueFactoryInterface {
     @Override
     public BroadcastQueueInterface<SchedulerEvent> schedulerEventQueue() {
         return new JdbcBroadcastQueue<>(SchedulerEvent.class, queueService, jdbcQueueClient, executorsUtils);
+    }
+
+    @Bean
+    @Singleton
+    @Override
+    public VNodeDispatchQueueInterface<TriggerEvent> triggerEventQueue() {
+        return new JdbcVNodeDispatchQueue<>(TriggerEvent.class, queueService, jdbcQueueClient, executorsUtils);
     }
 }

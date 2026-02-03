@@ -9,7 +9,7 @@ import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.runners.WorkerTriggerResult;
-import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.utils.Disposable;
 import jakarta.inject.Singleton;

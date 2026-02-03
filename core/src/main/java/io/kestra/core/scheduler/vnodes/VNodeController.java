@@ -2,7 +2,7 @@ package io.kestra.core.scheduler.vnodes;
 
 import io.kestra.core.lock.LockService;
 import io.kestra.core.scheduler.SchedulerConfiguration;
-import io.kestra.core.scheduler.SchedulerEventQueue;
+import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.server.ServerInstance;
 import io.kestra.core.server.Service;

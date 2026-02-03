@@ -17,7 +17,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerCreated;
 import io.kestra.core.scheduler.events.TriggerDeleted;
 import io.kestra.core.scheduler.events.TriggerEvent;

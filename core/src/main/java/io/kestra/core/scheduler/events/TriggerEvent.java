@@ -10,7 +10,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.kestra.core.events.EventId;
 import io.kestra.core.models.HasUID;
+import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.triggers.TriggerId;
+import io.kestra.core.queues.event.VNodeDispatchEvent;
 import io.kestra.core.utils.Enums;
 
 import java.time.Instant;
@@ -33,7 +35,7 @@ import java.util.Map;
     @JsonSubTypes.Type(value = TriggerReceived.class, name = "TRIGGER_RECEIVED"),
     @JsonSubTypes.Type(value = TriggerEvent.Invalid.class, name = "INVALID"),
 })
-public interface TriggerEvent extends HasUID {
+public interface TriggerEvent extends VNodeDispatchEvent, HasUID {
 
     /**
      * @return the trigger identifier.
@@ -73,6 +75,16 @@ public interface TriggerEvent extends HasUID {
     @Override
     default String uid() {
         return this.id().uid();
+    }
+
+    /**
+     * The key used for vNode dispatching.
+     *
+     * @return the routing key.
+     */
+    @Override
+    default String key() {
+        return FlowId.uidWithoutRevision(FlowId.of(id().getTenantId(), id().getNamespace(), id().getFlowId(), null));
     }
 
     record Invalid(TriggerId id,

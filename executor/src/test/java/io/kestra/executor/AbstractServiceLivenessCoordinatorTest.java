@@ -11,7 +11,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.WorkerGroup;
-import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.queues.QueueFactoryInterface;

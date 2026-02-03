@@ -14,7 +14,7 @@ import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
-import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;

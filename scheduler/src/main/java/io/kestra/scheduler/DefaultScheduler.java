@@ -4,7 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.scheduler.SchedulerClock;
-import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.vnodes.VNodesAssigner;
 import io.kestra.core.server.AbstractService;
 import io.kestra.core.server.ServiceStateChangeEvent;

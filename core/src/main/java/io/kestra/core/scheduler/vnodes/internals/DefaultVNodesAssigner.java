@@ -1,6 +1,6 @@
 package io.kestra.core.scheduler.vnodes.internals;
 
-import io.kestra.core.scheduler.SchedulerEventQueue;
+import io.kestra.core.scheduler.queue.SchedulerEventQueue;
 import io.kestra.core.scheduler.events.SchedulerEvent;
 import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRelease;
 import io.kestra.core.scheduler.events.SchedulerEvent.VNodesAssignmentRequest;

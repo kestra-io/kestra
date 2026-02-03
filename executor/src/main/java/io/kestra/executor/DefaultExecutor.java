@@ -27,7 +27,7 @@ import io.kestra.core.utils.*;
 import io.kestra.core.runners.MultipleConditionEvent;
 import io.kestra.core.runners.SubflowExecutionEnd;
 import io.kestra.executor.handler.*;
-import io.kestra.core.scheduler.TriggerEventQueue;
+import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerExecutionTerminated;
 import io.kestra.core.queues.BroadcastQueueInterface;
 import io.kestra.core.queues.DispatchQueueInterface;

@@ -1,4 +1,4 @@
-package io.kestra.core.scheduler;
+package io.kestra.core.scheduler.queue;
 
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.queues.BroadcastQueueInterface;

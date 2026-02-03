@@ -12,7 +12,6 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,17 +36,16 @@ public class ClusterController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get("/metrics")
+    @Get("/metrics/{serviceType}")
     @Operation(tags = {"Services"}, summary = "Get metrics for running workers")
-    public Map<String, Set<Metric>> metrics() {
+    public Set<Metric> metrics(@QueryValue ServiceType serviceType) {
         return repository.find(
                 Pageable.unpaged(),
                 Service.ServiceState.allRunningStates(),
-                Set.of(ServiceType.WORKER)
+                Set.of(serviceType)
             ).stream()
-            .collect(Collectors.toMap(
-                ServiceInstance::uid,
-                ServiceInstance::metrics
-            ));
+            .map(ServiceInstance::metrics)
+            .flatMap(Set::stream)
+            .collect(Collectors.toSet());
     }
 }

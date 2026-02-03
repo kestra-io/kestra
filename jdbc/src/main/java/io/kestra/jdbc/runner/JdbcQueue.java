@@ -8,6 +8,7 @@ import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.*;
+import io.kestra.core.runners.WorkerGroupExecutorInterface;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.ExecutorsUtils;
 import io.kestra.core.utils.IdUtils;
@@ -55,6 +56,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     private final ExecutorService poolExecutor;
     private final ExecutorService asyncPoolExecutor;
+    private final WorkerGroupExecutorInterface workerGroupExecutor;
 
     protected final QueueService queueService;
 
@@ -90,6 +92,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.configuration = applicationContext.getBean(Configuration.class);
         this.messageProtectionConfiguration = applicationContext.getBean(MessageProtectionConfiguration.class);
         this.metricRegistry = applicationContext.getBean(MetricRegistry.class);
+        this.workerGroupExecutor = applicationContext.getBean(WorkerGroupExecutorInterface.class);
 
         JdbcTableConfigs jdbcTableConfigs = applicationContext.getBean(JdbcTableConfigs.class);
 
@@ -212,6 +215,32 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return this.cls.getName();
     }
 
+
+    @Override
+    public Map<String, Integer> queueLagByWorkerGroup(Class<?> queueType) {
+        Set<String> workerGroupKeys = new HashSet<>(workerGroupExecutor.listAllWorkerGroupKeys());
+        workerGroupKeys.add(null);
+
+        Map<String, Integer> result = dslContextWrapper.transactionResult(configuration -> {
+            DSLContext ctx = DSL.using(configuration);
+
+            return ctx.select(
+                    CONSUMER_GROUP_FIELD,
+                    DSL.count().as("count")
+                )
+                .from(this.table)
+                .where(buildTypeCondition(queueType()).and(buildConsumerCondition(queueType)))
+                .groupBy(CONSUMER_GROUP_FIELD)
+                .fetchMap(
+                    r -> r.get(CONSUMER_GROUP_FIELD, String.class),
+                    r -> r.get("count", Integer.class)
+                );
+        });
+
+        workerGroupKeys.forEach(k -> result.putIfAbsent(k, 0));
+        return result;
+    }
+
     /**
      * Delete all messages of the queue for a set of keys.
      * This is used to purge a queue for specific keys.
@@ -282,6 +311,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     abstract protected void doUpdateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
 
     protected abstract Condition buildTypeCondition(String type);
+
+    protected abstract Condition buildConsumerCondition(Class<?> queueType);
 
     @Override
     public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {

@@ -32,6 +32,9 @@ dependencies {
 
     implementation("de.siegmar:fastcsv")
 
+    // kubernetes client for scale-to-zero controller
+    implementation("io.kubernetes:client-java")
+
     // test
     testAnnotationProcessor project(':processor')
     testImplementation project(':core').sourceSets.test.output

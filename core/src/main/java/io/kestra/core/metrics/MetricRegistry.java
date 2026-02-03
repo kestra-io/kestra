@@ -10,7 +10,6 @@ import io.kestra.core.runners.*;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
 import io.micrometer.core.instrument.search.Search;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -18,7 +17,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 @Singleton
 @Slf4j
@@ -90,6 +88,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION = "The total number of executions queued by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT = "executor.execution.popped.count";
     public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION = "The total number of executions popped by the Executor";
+    public static final String WORKER_MESSAGES_UNCONSUMMATED_COUNT = "queue.worker.messages.unconsummated.count";
+    public static final String WORKER_MESSAGES_UNCONSUMMATED_COUNT_DESCRIPTION = "Total number of worker jobs in the queue that are not yet consumed by a worker";
 
     public static final String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";
@@ -145,6 +145,7 @@ public class MetricRegistry {
     public static final String TAG_STATE = "state";
     public static final String TAG_ATTEMPT_COUNT = "attempt_count";
     public static final String TAG_WORKER_GROUP = "worker_group";
+    public static final String SERVICE_ID = "service_id";
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";
@@ -161,11 +162,14 @@ public class MetricRegistry {
      */
     public static final String TAG_LABEL_PLACEHOLDER = "__none__";
 
-    @Inject
-    private MeterRegistry meterRegistry;
+    private final MeterRegistry meterRegistry;
 
-    @Inject
-    private MetricConfig metricConfig;
+    private final MetricConfig metricConfig;
+
+    public MetricRegistry(MeterRegistry meterRegistry, MetricConfig metricConfig) {
+        this.meterRegistry = meterRegistry;
+        this.metricConfig = metricConfig;
+    }
 
     /**
      * Tracks a monotonically increasing value.

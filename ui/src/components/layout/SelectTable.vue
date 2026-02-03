@@ -1,5 +1,5 @@
 <template>
-    <div ref="container" class="position-relative" @click.capture="handleGlobalClick">
+    <div ref="container" class="position-relative">
         <div v-if="hasSelection && data.length" class="bulk-select-header">
             <slot name="select-actions" />
         </div>
@@ -11,13 +11,8 @@
             :rowKey
             :emptyText="data.length === 0 ? noDataText : ''"
             @selection-change="selectionChanged"
-            @select="onSelect"
         >
-            <el-table-column
-                type="selection"
-                v-if="selectable && showSelection"
-                reserveSelection
-            />
+            <el-table-column type="selection" v-if="selectable && showSelection" reserveSelection />
             <slot name="default" />
         </el-table>
     </div>
@@ -49,13 +44,6 @@
     const table = ref<any>(null);
     const hasSelection = ref(false);
     const container = ref<HTMLElement>(null);
-    
-    const lastCheckedIndex = ref<number | null>(null);
-    const isShiftPressed = ref(false);
-
-    const handleGlobalClick = (event: MouseEvent) => {
-        isShiftPressed.value = event.shiftKey;
-    };
 
     const toggleRowExpansion = (row: any, expand?: boolean) => {
         table.value?.toggleRowExpansion(row, expand);
@@ -66,40 +54,9 @@
         emit("selection-change", selection);
     };
 
-    const onSelect = async (selection: any[], row: any) => {
-        const data = props.data ?? [];
-        const currentIndex = data.indexOf(row);
-    
-        const isChecked = selection.some(s => 
-            typeof props.rowKey === "function" 
-                ? props.rowKey(s) === props.rowKey(row) 
-                : s[props.rowKey] === row[props.rowKey]
-        );
-
-        if (isShiftPressed.value && lastCheckedIndex.value !== null) {
-            const start = Math.min(lastCheckedIndex.value, currentIndex);
-            const end = Math.max(lastCheckedIndex.value, currentIndex);
-
-            for (let i = start; i <= end; i++) {
-                table.value?.toggleRowSelection(data[i], isChecked);
-            }
-        
-            await nextTick();
-        
-            // 4. Now fetch the actual selection and force the counter to update
-            const finalSelection = table.value?.getSelectionRows() ?? [];
-            selectionChanged(finalSelection);
-
-            window.getSelection()?.removeAllRanges();
-        }
-
-        lastCheckedIndex.value = currentIndex;
-    };
-
     const clearSelection = () => {
         table.value?.clearSelection();
         hasSelection.value = false;
-        lastCheckedIndex.value = null;
     };
 
     const setSelection = (selection: any[]) => {
@@ -120,10 +77,7 @@
         const tableElement = table.value?.$el;
         if (!tableElement || !container.value) return;
         container.value.style.setProperty("--table-header-width", `${tableElement.clientWidth}px`);
-        const thead = tableElement.querySelector("thead");
-        if (thead) {
-            container.value.style.setProperty("--table-header-height", `${thead.clientHeight}px`);
-        }
+        container.value.style.setProperty("--table-header-height", `${tableElement.querySelector("thead").clientHeight}px`);
     };
 
     onMounted(() => {
@@ -142,7 +96,6 @@
         if (props.data.length === 0) {
             hasSelection.value = false;
             table.value?.clearSelection();
-            lastCheckedIndex.value = null;
         } else {
             const currentSelection = table.value?.getSelectionRows() ?? [];
             const validSelection = currentSelection.filter((sel: any) => {
@@ -151,11 +104,9 @@
                     ? props.rowKey(r) === props.rowKey(sel)
                     : r[props.rowKey] === sel[props.rowKey]);
             });
-
             if (validSelection.length !== currentSelection.length) {
                 table.value?.clearSelection();
                 hasSelection.value = false;
-                lastCheckedIndex.value = null;
             } else if (table.value) {
                 selectionChanged(currentSelection);
             }
@@ -171,7 +122,6 @@
         waitTableRender
     });
 </script>
-
 <style scoped lang="scss">
     .bulk-select-header {
         z-index: 1;

@@ -152,7 +152,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 ).orElseGet(() -> context
                     .select(VALUE_FIELD, NAMESPACE_FIELD, TENANT_ID_FIELD)
                     .from(fromLastRevision(true))
-                    .where(this.defaultFilter(tenantId, allowDeleted))
+                    .where(this.defaultFilter(tenantId, Boolean.TRUE.equals(allowDeleted)))
                     .and(NAMESPACE_FIELD.eq(namespace))
                     .and(field("id", String.class).eq(id))
                 );
@@ -227,7 +227,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                             TENANT_ID_FIELD
                         )
                         .from(fromLastRevision(true))
-                        .where(this.defaultFilter(tenantId, allowDeleted))
+                        .where(this.defaultFilter(tenantId, Boolean.TRUE.equals(allowDeleted)))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id)));
 
@@ -291,7 +291,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
-                Condition tenantAndRevisionCondition = this.defaultFilter(tenantId, allowDeleted);
+                Condition tenantAndRevisionCondition = this.defaultFilter(tenantId, Boolean.TRUE.equals(allowDeleted));
                 if (!ListUtils.isEmpty(revisions)) {
                     tenantAndRevisionCondition = tenantAndRevisionCondition.and(REVISION_FIELD.in(revisions));
                 }

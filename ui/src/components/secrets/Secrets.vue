@@ -45,9 +45,10 @@
                         <div class="ee-promo-content d-flex flex-column">
                             <div class="d-flex flex-row gap-2">
                                 <div class="d-flex flex-column align-items-start justify-content-center">
-                                    <div class="enterprise-tag">
-                                        <div class="flare" />
-                                        {{ $t('demos.enterprise_edition') }}
+                                    <div class="ee-tag-wrap">
+                                        <EnterpriseTag>
+                                            {{ $t('demos.enterprise_edition') }}
+                                        </EnterpriseTag>
                                     </div>
                                     <h5 class="fw-bold">
                                         {{ $t('demos.secrets.title') }}
@@ -83,6 +84,7 @@
     import useRouteContext from "../../composables/useRouteContext";
     import {useMiscStore} from "override/stores/misc";
     import DemoButtons from "../demo/DemoButtons.vue";
+    import EnterpriseTag from "../EnterpriseTag.vue";
 
     const miscStore = useMiscStore();
 
@@ -103,8 +105,6 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
-    @import "@kestra-io/ui-libs/src/scss/_variables.scss";
     .no-secret-manager-block {
         padding: 0 0 1.5rem;
 
@@ -139,97 +139,6 @@
                 width: 100%;
                 height: 100%;
                 border: 0;
-            }
-        }
-
-        @keyframes move-border {
-            0%{background-position: 0% 0%}
-            50%{background-position: 100% 100%}
-            100%{background-position: 0% 0%}
-        }
-
-        .enterprise-tag::before,
-        .enterprise-tag::after{
-            content: "";
-            display: block;
-            position: absolute;
-            border-radius: 1rem;
-        }
-
-        .enterprise-tag::before{
-            z-index: -2;
-            background-image: linear-gradient(138.8deg, #CCE8FE 0%, #CDA0FF 27.03%, #8489F5 41.02%, #CDF1FF 68.68%, #B591E9 94%, #CCE8FE 100%);
-            background-size: 200% 200%;
-            top: 0px;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            animation: move-border 3s linear infinite;
-        }
-
-        .enterprise-tag::after{
-            z-index: -1;
-            background: $base-gray-100;
-            top: 1px;
-            left: 1px;
-            bottom: 1px;
-            right: 1px;
-            html.dark & {
-                background: $base-gray-400;
-            }
-        }
-
-        .enterprise-tag{
-            position: relative;
-            background: $base-gray-200;
-            padding: .125rem 0.5rem;
-            border-radius: 1rem;
-            display: inline-block;
-            z-index: 2;
-            margin-bottom: 0.5rem;
-            font-size: 0.75rem;
-            html.dark &{
-                background: #FBFBFB26;
-            }
-            .flare{
-                display: none;
-                position: absolute;
-                content: "";
-                height: 2rem;
-                width: 2rem;
-                z-index: 12;
-                top: -1.1rem;
-                right: 0;
-                background-image:
-                    // vertical flare
-                    linear-gradient(0deg, rgba($base-gray-200, 0) 0%, $base-gray-200 50%, rgba($base-gray-200, 0) 100%),
-                    // horizontal flare
-                    linear-gradient(90deg, rgba($base-gray-200, 0) 0%, $base-gray-200 50%, rgba($base-gray-200, 0) 100%),
-                    // flare effect
-                    radial-gradient(circle, $base-gray-200 0%, rgba($base-gray-200, .1) 50%,rgba($base-gray-200, 0) 70%);
-                background-size:  1px 100%, 100% 1px, 40% 40%;
-                background-repeat: no-repeat;
-                background-position: center, center, center;
-                transform:rotate(-13deg);
-                &::before{
-                    content: "";
-                    display: block;
-                    position: absolute;
-                    height: 2rem;
-                    width: 2rem;
-                    background-image:
-                        // vertical flare
-                        linear-gradient(0deg, rgba($base-gray-200, 0) 0%, rgba($base-gray-200, .7) 50%, rgba($base-gray-200, 0) 100%),
-                        // horizontal flare
-                        linear-gradient(90deg, rgba($base-gray-200, 0) 0%, rgba($base-gray-200, .7) 50%, rgba($base-gray-200, 0) 100%);
-                    background-size:  1px 50%, 50% 1px;
-                    background-repeat: no-repeat;
-                    background-position: center, center, center;
-                    transform: rotate(45deg);
-                }
-                html.dark &{
-                    display: block;
-                }
             }
         }
 
@@ -295,5 +204,11 @@
 
     .secrets-divider {
         border-top: 1px solid var(--ks-border-primary);
+    }
+
+    .ee-tag-wrap {
+        :deep(.enterprise-tag) {
+            margin: 0 0 0.5rem 0;
+        }
     }
 </style>

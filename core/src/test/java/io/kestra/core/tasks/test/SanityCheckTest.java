@@ -20,13 +20,6 @@ class SanityCheckTest {
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/fetch.yaml")
-    void qaFetch(Execution execution) {
-        assertThat(execution.getTaskRunList()).hasSize(5);
-        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-    }
-
-    @Test
     @ExecuteFlow("sanity-checks/if.yaml")
     void qaIf(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(8);

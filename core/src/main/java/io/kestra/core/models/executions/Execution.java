@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Streams;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.SoftDeletable;
@@ -587,6 +586,14 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .findFirst();
     }
 
+    /**
+     * Using reversed().findFirst() is intended for better performance,
+     * as these methods are used heavily.
+     * Do not replace it with Streams.findLast() in these methods,
+     * as Streams.findLast() performs worse.
+     *
+     * See: @see <a href="https://github.com/kestra-io/kestra/pull/14385">KESTRA#14385</a>
+     */
     public Optional<TaskRun> findLastNotTerminated() {
         if (this.taskRunList == null) {
             return Optional.empty();
@@ -598,6 +605,7 @@ public class Execution implements SoftDeletable<Execution>, TenantInterface, Has
             .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
             .findFirst();
     }
+
 
     public Optional<TaskRun> findLastByState(List<TaskRun> taskRuns, State.Type state) {
         return taskRuns

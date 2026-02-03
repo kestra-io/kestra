@@ -25,7 +25,9 @@ public class ExecutionsBenchmark {
             taskRuns.add(taskRunSetUp(state));
         }
     }
-
+    /**
+     * @see <a href="https://github.com/kestra-io/kestra/pull/14385">KESTRA#14385</a>
+     */
     @Benchmark
     public Optional<TaskRun> oldFindLastCreatedTaskRun(){
         return Streams.findLast(

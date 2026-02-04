@@ -111,7 +111,7 @@ dependencies {
         api group: 'com.github.victools', name: 'jsonschema-module-jackson', version: jsonschemaVersion
         api group: 'com.github.victools', name: 'jsonschema-module-swagger-2', version: jsonschemaVersion
         api 'com.h2database:h2:2.4.240'
-        api 'com.mysql:mysql-connector-j:9.5.0'
+        api 'com.mysql:mysql-connector-j:9.6.0'
         api 'org.postgresql:postgresql:42.7.9'
         api 'com.github.docker-java:docker-java:3.6.0'
         api 'com.github.docker-java:docker-java-transport-httpclient5:3.6.0'

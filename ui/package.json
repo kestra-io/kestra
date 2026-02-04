@@ -91,7 +91,7 @@
         "@types/humanize-duration": "^3.27.4",
         "@types/js-yaml": "^4.0.9",
         "@types/moment": "^2.13.0",
-        "@types/node": "^25.0.10",
+        "@types/node": "^25.2.0",
         "@types/nprogress": "^0.2.3",
         "@types/path-browserify": "^1.0.3",
         "@types/semver": "^7.7.1",

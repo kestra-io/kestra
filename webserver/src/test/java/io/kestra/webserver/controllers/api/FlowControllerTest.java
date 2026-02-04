@@ -872,7 +872,23 @@ class FlowControllerTest {
     }
 
     @Test
-    void importFlowsWithInvalidNotAllowed() throws IOException {
+    void importFlowsWithInvalidNotAllowedWhenModelValidationEnabled() throws IOException {
+        var yaml = generateInvalidFlowWithNotAllowedSystemLabel("system_labels_test",TEST_NAMESPACE);
+        var temp = File.createTempFile("flows", ".yaml");
+        Files.writeString(temp.toPath(), yaml);
+
+        var body1 = MultipartBody.builder()
+            .addPart("fileUpload", "flows.yaml", temp)
+            .build();
+        var exception = assertThrows(HttpClientResponseException.class, () -> {
+            client.toBlocking().exchange(POST("/api/v1/main/flows/import?failOnError=true", body1).contentType(MediaType.MULTIPART_FORM_DATA));
+        });
+
+        assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
+    }
+
+    @Test
+    void importFlowsWithInvalidNotAllowedWhenStrictParsingEnabled() throws IOException {
         var yaml1 = generateFlowAsString(TEST_NAMESPACE,"a") + "---" +
             generateInvalidFlowAsString("importFlowsWithInvalidNotAllowed",TEST_NAMESPACE);
         var temp1 = File.createTempFile("flows", ".yaml");
@@ -888,9 +904,9 @@ class FlowControllerTest {
         assertThat(exception1.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());
         temp1.delete();
 
-        var yaml2 = generateInvalidFlowAsStringForStrictParsing1("invalid_trigger_property", TEST_NAMESPACE )
+        var yaml2 = generateInvalidFlowAsStringWithInvalidTriggerProperty("invalid_trigger_property", TEST_NAMESPACE )
             + "---" +
-            generateInvalidFlowAsStringForStrictParsing2("missing_uri_property_for_download", TEST_NAMESPACE ) ;
+            generateInvalidFlowAsStringWithMissingProperty("missing_uri_property_for_download", TEST_NAMESPACE ) ;
         var temp2 = File.createTempFile("flows", ".yaml");
         Files.writeString(temp2.toPath(), yaml2);
 
@@ -1590,7 +1606,26 @@ class FlowControllerTest {
             """.formatted(id, namespace);
     }
 
-    private String generateInvalidFlowAsStringForStrictParsing1(String id, String namespace) {
+    private String generateInvalidFlowWithNotAllowedSystemLabel(String id, String namespace){
+    return """
+        id: %s
+        namespace: %s
+        tasks:
+          - id: hello
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{labels.system.replay}}"
+
+        triggers:
+          - id: schedule
+            type: io.kestra.plugin.core.trigger.Schedule
+            cron: "*/3 * * * *"
+            labels:
+              - key: system.replay
+                value: test_replay
+            """.formatted(id,namespace);
+    }
+
+    private String generateInvalidFlowAsStringWithInvalidTriggerProperty(String id, String namespace) {
         return """
             id: %s
             namespace: %s
@@ -1610,7 +1645,7 @@ class FlowControllerTest {
             """.formatted(id, namespace);
     }
 
-    private String generateInvalidFlowAsStringForStrictParsing2(String id, String namespace) {
+    private String generateInvalidFlowAsStringWithMissingProperty(String id, String namespace) {
         return """
             id: %s
             namespace: %s

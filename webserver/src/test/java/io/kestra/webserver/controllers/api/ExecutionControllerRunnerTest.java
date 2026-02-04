@@ -409,6 +409,42 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows(value = {"flows/valids/webhook-plugin.yaml"}, tenantId = "triggerencrypted")
+    void triggerEncrypted() throws InterruptedException {
+        String tenantId = "triggerencrypted";
+        when(tenantService.resolveTenant()).thenReturn(tenantId);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
+            if (execution.getLeft().getFlowId().equals("webhook-plugin") && execution.getLeft().getState().isTerminated()) {
+                queueCount.countDown();
+            }
+        });
+
+        var response = client.toBlocking().exchange(
+            PUT(
+                "/api/v1/triggerencrypted/executions/webhook/io.kestra.tests/webhook-plugin/case1",
+                "{\"test\": \"data\"}"
+            ),
+            String.class
+        );
+
+        assertThat((Object)response.getStatus()).isEqualTo(HttpStatus.OK);
+
+        queueCount.await(180, TimeUnit.SECONDS);
+        var execution = Objects.requireNonNull(receive.blockLast());
+
+        // the output is automatically decrypted so the return has the decrypted value of the hello task output
+        TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
+        assertThat(Objects.requireNonNull(returnTask.getOutputs()).get("value")).isEqualTo("Hello World");
+
+        // the output of a trigger is also decrypted automatically
+        TaskRun outTask = execution.findTaskRunsByTaskId("out").getFirst();
+        assertThat(((Map<String, String>)Objects.requireNonNull(outTask.getOutputs()).get("values")).get("encrypted")).isEqualTo("super-secret");
+    }
+
+    @Test
     @LoadFlows(value = {"flows/valids/restart_with_inputs.yaml"}, tenantId = "restartexecutionfromunknowntaskid")
     void restartExecutionFromUnknownTaskId() throws TimeoutException, QueueException {
         String tenantId = "restartexecutionfromunknowntaskid";

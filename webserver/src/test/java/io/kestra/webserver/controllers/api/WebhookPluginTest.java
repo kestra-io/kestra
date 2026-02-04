@@ -3,11 +3,10 @@ package io.kestra.webserver.controllers.api;
 import io.kestra.core.http.HttpResponse;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
-import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.VoidOutput;
+import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.models.triggers.TriggerOutput;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -15,13 +14,11 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
-import io.kestra.plugin.core.trigger.Webhook;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.*;
@@ -33,12 +30,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import static io.micronaut.http.HttpRequest.*;
+import static io.micronaut.http.HttpRequest.POST;
+import static io.micronaut.http.HttpRequest.PUT;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -110,7 +106,7 @@ public class WebhookPluginTest {
     @Getter
     @NoArgsConstructor
     @Plugin
-    public static class WebhookTestPlugin extends AbstractWebhookTrigger implements TriggerOutput<VoidOutput> {
+    public static class WebhookTestPlugin extends AbstractWebhookTrigger implements TriggerOutput<WebhookTestOutput> {
         @Builder.Default
         private Boolean failed = false;
 
@@ -124,10 +120,9 @@ public class WebhookPluginTest {
                 context,
                 context.getFlow(),
                 this,
-                Webhook.Output.builder()
+                WebhookTestOutput.builder()
                     .body(JacksonMapper.toMap((String) context.getRequest().getBody().getContent()))
-                    .headers(context.getRequest().getHeaders().map())
-                    .parameters(context.getWebhookService().parseParameters(context))
+                    .encryptedString(EncryptedString.from("super-secret", context.getWebhookService().runContext(context.getFlow(), context.getTrigger())))
                     .build()
             );
 
@@ -145,5 +140,16 @@ public class WebhookPluginTest {
 
             return HttpResponse.of(HttpStatus.OK);
         }
+    }
+
+    @Builder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WebhookTestOutput implements io.kestra.core.models.tasks.Output {
+        private Object body;
+        private EncryptedString encryptedString;
     }
 }

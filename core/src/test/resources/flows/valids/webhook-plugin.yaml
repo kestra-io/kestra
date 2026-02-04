@@ -2,9 +2,16 @@ id: webhook-plugin
 namespace: io.kestra.tests
 
 tasks:
-  - id: log_request
-    type: io.kestra.plugin.core.log.Log
-    message: "Webhook triggered: {{ trigger.body }}"
+  - id: hello
+    type: io.kestra.core.tasks.test.Encrypted
+    format: "Hello World"
+  - id: return
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{outputs.hello.value}}"
+  - id: out
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      encrypted: "{{ trigger.encryptedString }}"
 
 triggers:
   - id: webhook1

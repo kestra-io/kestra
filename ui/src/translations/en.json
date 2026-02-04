@@ -896,7 +896,7 @@
         "empty_env": "You don't have any Secrets in your environment yet.",
         "add_env": {
           "intro": "Create a New Secret",
-          "first": "Encode the <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a></strong>",
+          "first": "Encode the <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a>",
           "second": "Set an environment variable named <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> with the encoded value.",
           "third": "Restart your Kestra instance so the secret is loaded."
         }

@@ -95,7 +95,9 @@ final class SchedulableExecutionFactory {
         List<Label> labels = LabelService.fromTrigger(runContext, flow, (AbstractTrigger) trigger);
 
         if (backfill != null && backfill.getLabels() != null) {
-            for (Label label : backfill.getLabels()) {
+            // It is better to remove system labels before rendering
+            List<Label> backfillLabels = LabelService.labelsExcludingSystem(backfill.getLabels());
+            for (Label label : backfillLabels) {
                 final var value = runContext.render(label.value());
                 if (value != null) {
                     labels.add(new Label(label.key(), value));

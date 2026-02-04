@@ -22,6 +22,17 @@ public final class LabelService {
     }
 
     /**
+     * Return labels after excluding system labels.
+     * This method is used generally for any labels list
+     */
+    public static List<Label> labelsExcludingSystem(List<Label> labels) {
+        return ListUtils.emptyOnNull(labels)
+                .stream()
+                .filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX))
+                .toList();
+    }
+
+    /**
      * Return flow labels excluding system labels concatenated with trigger labels.
      *
      * Trigger labels will be rendered via the run context but not flow labels.
@@ -31,11 +42,13 @@ public final class LabelService {
         final List<Label> labels = new ArrayList<>();
 
         if (flow.getLabels() != null) {
-            labels.addAll(LabelService.labelsExcludingSystem(flow)); // no need for rendering
+            labels.addAll(labelsExcludingSystem(flow)); // no need for rendering
         }
 
         if (trigger.getLabels() != null) {
-            for (Label label : trigger.getLabels()) {
+            // It is better to remove system labels before rendering
+            List<Label> triggerLabels = labelsExcludingSystem(trigger.getLabels());
+            for (Label label : triggerLabels) {
                 final var value = renderLabelValue(runContext, label);
                 if (value != null) {
                     labels.add(new Label(label.key(), value));

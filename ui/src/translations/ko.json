@@ -370,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">비밀 값 Base64로 인코딩</a></strong>",
+          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">비밀 값</a>을 Base64로 인코딩하십시오.",
           "intro": "새 Secret을 생성하려면:",
           "second": "위의 값을 사용하여 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>'라는 환경 변수를 추가하세요.",
           "third": "Kestra 인스턴스를 재시작하십시오"

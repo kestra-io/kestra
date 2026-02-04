@@ -370,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Codifique o <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a></strong>",
+          "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",
           "intro": "Para criar um novo Secret:",
           "second": "Adicione uma variável de ambiente chamada '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' com o valor acima",
           "third": "Reinicie sua instância do Kestra"

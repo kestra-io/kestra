@@ -371,9 +371,9 @@
       "secrets": {
         "add_env": {
           "first": "将<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value 编码为 Base64</a></strong>",
-          "intro": "创建新Secret：",
-          "second": "添加一个名为 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' 的环境变量，并使用上述值",
-          "third": "重新启动您的Kestra实例"
+          "intro": "创建新Secret",
+          "second": "将环境变量命名为<code>SECRET_&lt;MY_SECRET_KEY&gt;</code>，并设置编码后的值。",
+          "third": "重新启动您的 Kestra 实例以加载密钥。"
         },
         "detected_env": "以下是在实例启动时识别的secret-type环境变量：",
         "empty_env": "您还没有在您的环境中添加任何Secrets。",

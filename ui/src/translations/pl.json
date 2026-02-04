@@ -371,9 +371,9 @@
       "secrets": {
         "add_env": {
           "first": "Zakoduj <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">wartość secret w Base64</a></strong>",
-          "intro": "Aby utworzyć nowy Secret:",
-          "second": "Dodaj zmienną środowiskową o nazwie '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' z powyższą wartością",
-          "third": "Uruchom ponownie instancję Kestra"
+          "intro": "Utwórz Nowy Sekret",
+          "second": "Ustaw zmienną środowiskową o nazwie <code>SECRET_&lt;MY_SECRET_KEY&gt;</code> z zakodowaną wartością.",
+          "third": "Uruchom ponownie instancję Kestra, aby sekret został załadowany."
         },
         "detected_env": "Oto zmienne środowiskowe typu secret zidentyfikowane podczas uruchamiania instancji:",
         "empty_env": "Nie masz jeszcze żadnych Secrets w swoim środowisku.",

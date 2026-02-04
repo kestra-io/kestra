@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -219,6 +220,9 @@ public class DashboardController {
     private FetchChartDataQuery buildDashboardChardDataQuery(String id, String chartId, ChartFiltersOverrides globalFilter) {
         String tenantId = tenantService.resolveTenant();
         List<QueryFilter> filters = globalFilter.getFilters();
+
+        filters = formatLabelsFilters(filters);
+
         Dashboard dashboard = dashboardRepository.get(tenantId, id).orElse(null);
         if (dashboard == null) {
             return null;
@@ -255,6 +259,21 @@ public class DashboardController {
         return new FetchChartDataQuery(chart, filters, startDate, endDate, tenantId, pageable);
     }
 
+    private List<QueryFilter> formatLabelsFilters(List<QueryFilter> filters) {
+        return Optional.ofNullable(filters)
+            .map(queryFilters -> queryFilters.stream().map(f -> {
+                if (f.field() == QueryFilter.Field.LABELS && f.value() instanceof String filterStr) {
+                    return QueryFilter.builder()
+                        .field(f.field())
+                        .operation(f.operation())
+                        .value(Label.from(filterStr))
+                        .build();
+                }
+                return f;
+            }).toList())
+            .orElse(null);
+    }
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "charts/preview")
     @Operation(tags = {"Dashboards"}, summary = "Preview a chart data")
@@ -273,8 +292,10 @@ public class DashboardController {
         List<QueryFilter> filters =
             globalFilter != null ? globalFilter.getFilters() : null;
 
+        filters = formatLabelsFilters(filters);
+
         ZonedDateTime endDate = null;
-        ZonedDateTime startDate = null;
+        ZonedDateTime startDate;
         if (filters != null) {
             TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
             validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());

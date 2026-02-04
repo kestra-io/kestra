@@ -60,6 +60,7 @@ public class Dashboard implements HasUID, SoftDeletable<Dashboard> {
     @Hidden
     private Instant updated;
 
+    @Hidden
     private String sourceCode;
 
     @Override

@@ -370,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "将<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value 编码为 Base64</a></strong>",
+          "first": "将<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value编码为Base64</a>",
           "intro": "创建新Secret：",
           "second": "添加一个名为 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' 的环境变量，并使用上述值",
           "third": "重新启动您的Kestra实例"

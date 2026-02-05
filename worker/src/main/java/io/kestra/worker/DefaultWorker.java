@@ -469,7 +469,7 @@ public class DefaultWorker implements Worker {
         if (flow.getLabels() != null) {
             evaluate = evaluate.map(execution -> {
                     List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
-                    executionLabels.addAll(LabelService.labelsExcludingSystem(flow));
+                    executionLabels.addAll(LabelService.labelsExcludingSystem(flow.getLabels()));
                     return execution.withLabels(executionLabels);
                 }
             );

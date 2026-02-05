@@ -15,13 +15,6 @@ public final class LabelService {
     private LabelService() {}
 
     /**
-     * Return flow labels excluding system labels.
-     */
-    public static List<Label> labelsExcludingSystem(FlowInterface flow) {
-        return ListUtils.emptyOnNull(flow.getLabels()).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
-    }
-
-    /**
      * Return labels after excluding system labels.
      * This method is used generally for any labels list
      */
@@ -39,14 +32,10 @@ public final class LabelService {
      * In case rendering is not possible, the label will be omitted.
      */
     public static List<Label> fromTrigger(RunContext runContext, FlowInterface flow, AbstractTrigger trigger) {
-        final List<Label> labels = new ArrayList<>();
 
-        if (flow.getLabels() != null) {
-            labels.addAll(labelsExcludingSystem(flow)); // no need for rendering
-        }
+        final List<Label> labels = new ArrayList<>(labelsExcludingSystem(flow.getLabels())); // no need for rendering
 
-        if (trigger.getLabels() != null) {
-            // It is better to remove system labels before rendering
+        // It is better to remove system labels before rendering
             List<Label> triggerLabels = labelsExcludingSystem(trigger.getLabels());
             for (Label label : triggerLabels) {
                 final var value = renderLabelValue(runContext, label);
@@ -54,7 +43,6 @@ public final class LabelService {
                     labels.add(new Label(label.key(), value));
                 }
             }
-        }
 
         return labels;
     }

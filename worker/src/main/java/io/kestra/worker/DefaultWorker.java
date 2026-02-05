@@ -466,14 +466,14 @@ public class DefaultWorker implements Worker {
         }
 
         var flow = workerTrigger.getConditionContext().getFlow();
-        if (flow.getLabels() != null) {
-            evaluate = evaluate.map(execution -> {
+
+        evaluate = evaluate.map(execution -> {
                     List<Label> executionLabels = execution.getLabels() != null ? execution.getLabels() : new ArrayList<>();
                     executionLabels.addAll(LabelService.labelsExcludingSystem(flow.getLabels()));
                     return execution.withLabels(executionLabels);
                 }
             );
-        }
+
 
         try {
             this.workerTriggerResultQueue.emit(

@@ -17,6 +17,7 @@ public final class LabelService {
     /**
      * Return labels after excluding system labels.
      * This method is used generally for any labels list
+     * When labels list is null it handles it implicitly to prevent unnecessary null checks at the callers
      */
     public static List<Label> labelsExcludingSystem(List<Label> labels) {
         return ListUtils.emptyOnNull(labels)

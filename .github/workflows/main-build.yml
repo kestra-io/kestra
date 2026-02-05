@@ -39,7 +39,7 @@ jobs:
   backend-tests:
     name: Backend tests
     if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@try-oss-backend-inherit-secrets
     secrets: inherit
     with:
       java-version: 25

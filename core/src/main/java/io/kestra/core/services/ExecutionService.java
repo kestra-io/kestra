@@ -338,7 +338,7 @@ public class ExecutionService {
         Execution newExecution = markAs(execution, flow, taskRunId, newState);
 
         // if the execution was terminated, it could have executed errors/finally/afterExecutions, we must remove them as the execution will be restarted
-        if (execution.getState().isTerminated()) {
+        if (execution.getState().canChangeStatus()) {
             List<TaskRun> newTaskRuns =  newExecution.getTaskRunList();
             // We need to remove global error tasks and flowable error tasks if any
             flow
@@ -356,7 +356,7 @@ public class ExecutionService {
 
             return newExecution.withTaskRunList(newTaskRuns);
         } else {
-            return newExecution;
+            throw new IllegalArgumentException("You can only change the state of a task run for a terminated non killed execution.");
         }
     }
 

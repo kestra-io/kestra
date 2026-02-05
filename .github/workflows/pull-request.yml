@@ -99,7 +99,7 @@ jobs:
     uses: kestra-io/actions/.github/workflows/kestra-oss-e2e-tests.yml@main
     with:
       java-version: 25
-      
+
   generate-pull-request-docker-image:
     name: Generate PR docker image
     uses: kestra-io/actions/.github/workflows/kestra-oss-pullrequest-publish-docker.yml@main

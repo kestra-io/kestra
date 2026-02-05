@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.event.BroadcastEvent;
 import io.kestra.core.utils.Enums;
 import io.kestra.core.utils.IdUtils;
@@ -20,11 +21,12 @@ import java.util.Set;
     @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentRelease.class, name = "VNODES_ASSIGNMENT_RELEASE"),
     @JsonSubTypes.Type(value = SchedulerEvent.VNodesAssignmentRejected.class, name = "VNODES_ASSIGNMENT_REJECTED"),
 })
-public interface SchedulerEvent extends BroadcastEvent {
+public interface SchedulerEvent extends BroadcastEvent, HasUID {
 
     /**
      * @return the event unique identifier.
      */
+    @Override
     String uid();
 
     /**

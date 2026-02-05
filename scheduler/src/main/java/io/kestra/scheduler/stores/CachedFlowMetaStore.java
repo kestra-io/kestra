@@ -50,27 +50,42 @@ public class CachedFlowMetaStore implements FlowMetaStore {
      */
     @Override
     public Optional<FlowWithSource> find(FlowId flowId) {
-        if (flowId.getRevision() != null) {
-            return delegate.find(flowId);
+        final int vNode = VNodes.computeVNodeFromFlow(flowId, schedulerConfiguration.vnodes());
+        final String cacheKey = FlowId.uidWithoutRevision(flowId);
+        
+        FlowWithSource cached = Optional.ofNullable(partitionedCache.get(vNode))
+            .map(cache -> cache.getIfPresent(cacheKey))
+            .orElse(null);
+        
+        // If cache missed
+        if (cached == null) {
+            Optional<FlowWithSource> state = delegate.find(flowId);
+            state.ifPresent(s ->
+                partitionedCache
+                .computeIfAbsent(vNode, k -> newCache())
+                .put(cacheKey, s)
+            );
+            return state;
+        }
+
+        // If null or same revision, then return the cached value
+        if (flowId.getRevision() == null || flowId.getRevision().equals(cached.getRevision())) {
+            return Optional.of(cached);
         }
         
-        int vnode = VNodes.computeVNodeFromFlow(flowId, schedulerConfiguration.vnodes());
-        Cache<String, FlowWithSource> cache = partitionedCache.get(vnode);
-        
-        if (cache != null) {
-            FlowWithSource cached = cache.getIfPresent(FlowId.uidWithoutRevision(flowId));
-            if (cached != null) {
-                return Optional.of(cached);
+        // Otherwise, fetch new revision, and update the cache if more recent
+        Optional<FlowWithSource> maybeNewRevision = delegate.find(flowId);
+        maybeNewRevision.ifPresent(current -> {
+            if (current.getRevision() > cached.getRevision()) {
+                partitionedCache.get(vNode).put(cacheKey, current);
+            } else {
+                // must not happen. Otherwise, this would mean that:
+                // - TriggerEvent are not consumed in order for a same flow
+                // - Concurrent access between the TriggerEventHandler and TriggerScheduler (not possible by design)
+                LOG.warn("Unexpected access to flow metastore for earliest revision {}, expected {}.", current.getRevision(), cached.getRevision());
             }
-        }
-        
-        Optional<FlowWithSource> state = delegate.find(flowId);
-        state.ifPresent(s -> {
-            partitionedCache
-                .computeIfAbsent(vnode, k -> newCache())
-                .put(s.uid(), s);
         });
-        return state;
+        return maybeNewRevision;
     }
     
     /**

@@ -4,6 +4,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.Condition;
+import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
@@ -44,8 +45,11 @@ public abstract class PostgresFlowRepositoryService {
                 String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
                 if (operation.equals(EQUALS)) {
                     conditions.add(DSL.condition(sql));
-                } else {
-                    conditions.add(DSL.not(DSL.condition(sql)));
+                } else if (operation.equals(QueryFilter.Op.NOT_EQUALS)) {
+                    // For NOT_EQUALS: match flows where the label key doesn't exist OR the label value is different
+                    String extractValueSql = "(SELECT jsonb_path_query_first(value, '$.labels[*] ? (@.key == \"" + key + "\").value')#>>'{}')";
+                    Field<String> extractedValue = DSL.field(extractValueSql, String.class);
+                    conditions.add(extractedValue.isNull().or(extractedValue.ne((String) value)));
                 }
             });
         }

@@ -32,5 +32,4 @@ jobs:
             Your first pull request has been merged - thanks a lot for your contribution, we really appreciate it! :heart:
 
             If you'd like to keep contributing, feel free to check out our [good first issues](https://go.kestra.io/contributing). And don't forget to give us a star! :star:
-          pr-labels: kind/external
           pr-reactions: +1, heart, hooray, rocket, eyes

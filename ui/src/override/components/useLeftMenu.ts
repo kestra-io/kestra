@@ -126,7 +126,10 @@ export function useLeftMenu() {
                 href: {
                     name: "home",
                     params: {
-                        dashboard: getDashboard($route, "id"),
+                        dashboard: getDashboard({
+                            ...$route,
+                            name: "home"
+                        }, "id"),
                     },
                 },
                 icon: {

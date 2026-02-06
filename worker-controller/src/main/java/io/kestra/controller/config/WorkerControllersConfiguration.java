@@ -40,7 +40,7 @@ import static io.kestra.controller.config.ControllerConfiguration.DEFAULT_GRPC_P
  *         policy: ROUND_ROBIN
  *       health-check:
  *         enabled: true
- *         interval: 10s
+ *         interval: PT30S
  * </pre>
  */
 @ConfigurationProperties("kestra.worker.controllers")
@@ -111,7 +111,7 @@ public record WorkerControllersConfiguration(
         @Bindable(defaultValue = "SRV")
         DnsRecordType recordType,
 
-        @Bindable(defaultValue = "30s")
+        @Bindable(defaultValue = "PT30S")
         Duration refreshInterval
     ) {
         /**

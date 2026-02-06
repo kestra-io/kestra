@@ -30,6 +30,5 @@ public record ControllerConfiguration(
      * Default max connection age: 30 minutes.
      * This provides a reasonable balance between connection stability and load redistribution.
      */
-    public static final Duration DEFAULT_MAX_CONNECTION_AGE = Duration.ofMinutes(30);
-    public static final String DEFAULT_MAX_CONNECTION_AGE_STRING = "30m";
+    public static final String DEFAULT_MAX_CONNECTION_AGE_STRING = "PT30M";
 }

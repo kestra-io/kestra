@@ -14,6 +14,7 @@ import io.kestra.core.worker.models.WorkerContext;
 import io.kestra.worker.fetchers.WorkerJobFetcher;
 import io.kestra.worker.senders.WorkerIOSender;
 import io.kestra.worker.services.WorkerConnectionService;
+import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;

@@ -7,10 +7,8 @@ import io.kestra.core.worker.models.WorkerContext;
  * <p>
  * A sender mostly does network operations.
  * 
- * @see LogEntryWorkerIOSender
- * @see MetricsWorkerIOSender
- * @see TaskResultWorkerIOSender
- * @see TriggerResultWorkerIOSender
+ * @see GrpcWorkerIOSender
+ * @see WorkerIOSenderFactory
  */
 public interface WorkerIOSender extends Runnable {
 

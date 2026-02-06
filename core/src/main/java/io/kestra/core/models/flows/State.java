@@ -137,6 +137,16 @@ public class State {
     }
 
     @JsonIgnore
+    public boolean canBeRestarted() {
+        return (this.current.isTerminated() || this.current.isPaused()) && !this.current.isKilled();
+    }
+
+    @JsonIgnore
+    public boolean canChangeStatus() {
+        return this.current.isTerminated() && !this.current.isKilled();
+    }
+
+    @JsonIgnore
     public boolean isTerminatedNoFail() {
         return this.current.isTerminatedNoFail();
     }

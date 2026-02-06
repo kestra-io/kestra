@@ -187,8 +187,8 @@ public class ExecutionService {
     }
 
     public Execution restart(final Execution execution, @Nullable Integer revision) throws Exception {
-        if (!(execution.getState().isTerminated() || execution.getState().isPaused())) {
-            throw new IllegalStateException("Execution must be terminated to be restarted, " +
+        if (!execution.getState().canBeRestarted()) {
+            throw new IllegalStateException("Execution must be terminated or paused and not killed to be restarted, " +
                 "current state is '" + execution.getState().getCurrent() + "' !"
             );
         }
@@ -737,8 +737,8 @@ public class ExecutionService {
         } else {
             newExecution = execution.withState(killingOrAfterKillState);
         }
-        
-        // Because this method is expected to be called by the Executor we can return the Execution 
+
+        // Because this method is expected to be called by the Executor we can return the Execution
         // immediately without publishing a CrudEvent like it's done on pause/resume method.
         return newExecution;
     }

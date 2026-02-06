@@ -74,6 +74,10 @@
             if(!editorView.value?.openTabs.includes("code")) editorView.value?.setTabValue("code")
             else editorView.value?.focusTab("code")
         }
+        if(route.query.section === "triggers"){
+            if(!editorView.value?.openTabs.includes("nocode")) editorView.value?.setTabValue("nocode")
+            else editorView.value?.focusTab("nocode")
+        }
     })
 
     const playgroundStore = usePlaygroundStore()

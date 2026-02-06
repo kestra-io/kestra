@@ -265,7 +265,7 @@
     import {useI18n} from "vue-i18n";
     import _isEqual from "lodash/isEqual";
     import {useRoute, useRouter} from "vue-router";
-    import {ref, computed, watch, onMounted, nextTick} from "vue";
+    import {ref, computed, watch, onMounted} from "vue";
 
     import Play from "vue-material-design-icons/Play.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -437,10 +437,6 @@
         return false
     });
 
-    const editorViewType = computed(() => {
-        return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
-    });
-
     const userCan = (act: any) => {
         if (!flowStore.flow) return false;
         return authStore.user?.isAllowed(permission.EXECUTION, act ? act : action.READ, flowStore.flow?.namespace);
@@ -588,39 +584,18 @@
 
     const addNewTrigger = () => {
         if (!flowStore.flow) return;
-        localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, "NO_CODE");
-
-        const baseUrl = {
+        router.push({
             name: "flows/update",
             params: {
                 tenant: route.params?.tenant,
                 namespace: flowStore.flow?.namespace,
                 id: flowStore.flow?.id,
                 tab: "edit"
+            },
+            query: {
+                section: "triggers"
             }
-        };
-
-        if (editorViewType.value) {
-            const r = {
-                ...baseUrl,
-                query: {
-                    section: "triggers"
-                }
-            };
-
-            nextTick(() => {
-                router.push(r).then(() => {
-                    router.replace({
-                        ...r,
-                        query: {
-                            ...r.query,
-                        }
-                    });
-                });
-            });
-        } else {
-            router.push(baseUrl);
-        }
+        });
     };
 
     onMounted(() => {

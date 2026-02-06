@@ -77,6 +77,16 @@
 
             .property {
                 background-color: var(--ks-dropdown-background);
+	            border-bottom: 1px solid var(--ks-border-primary);
+
+	            &:last-child {
+	                border-bottom: 0;
+	            }
+                
+                .property-detail {
+	                background-color: var(--ks-background-body);
+	                padding: 1rem 0;
+	            }
 
                 button:hover {
                     background-color: var(--ks-dropdown-background-hover);

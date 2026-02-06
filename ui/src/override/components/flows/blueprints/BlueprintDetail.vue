@@ -3,7 +3,7 @@
         <template #additional-right>
             <ul v-if="userCanCreate">
                 <router-link :to="editorRoute">
-                    <el-button type="primary" v-if="!embed">
+                    <el-button type="primary" v-if="!embed" @click="trackBlueprintUse('detail')">
                         {{ $t('use') }}
                     </el-button>
                 </router-link>
@@ -100,6 +100,7 @@
     import {useFlowStore} from "../../../../stores/flow";
     import {usePluginsStore} from "../../../../stores/plugins";
     import {useBlueprintsStore} from "../../../../stores/blueprints";
+    import {useApiStore} from "../../../../stores/api";
 
     import {canCreate} from "override/composables/blueprintsPermissions";
     import {parse as parseFlow} from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -128,6 +129,7 @@
     const pluginsStore = usePluginsStore();
     const blueprintsStore = useBlueprintsStore();
     const flowStore = useFlowStore();
+    const apiStore = useApiStore();
 
     const flowGraph = ref();
     const blueprint = ref();
@@ -191,6 +193,19 @@
                 }
             });
         }
+    };
+
+    const trackBlueprintUse = (source: "detail" | "browser") => {
+        apiStore.posthogEvents({
+            type: "BLUEPRINT",
+            action: "use_click",
+            blueprint: {
+                blueprint_id: props.blueprintId,
+                blueprint_kind: props.kind,
+                blueprint_type: props.combinedView ? props.blueprintType : route.params?.tab,
+                source,
+            },
+        });
     };
 
     const loadTags = async () => {

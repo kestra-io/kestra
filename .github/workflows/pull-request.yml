@@ -85,7 +85,7 @@ jobs:
     name: Backend - Tests
     needs: file-changes
     if: "needs.file-changes.outputs.backend == 'true'"
-    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@main
+    uses: kestra-io/actions/.github/workflows/kestra-oss-backend-tests.yml@try-oss-backend-inherit-secrets
     secrets: inherit
     # FIXME do not merge like this, some secrets names changed
     with:

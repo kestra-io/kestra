@@ -91,6 +91,7 @@
                 <el-table-column columnKey="copy" className="row-action">
                     <template #default="scope">
                         <IconButton
+                            data-testid="copy-kv-button"
                             v-if="scope.row.key !== undefined"
                             :tooltip="$t('copy_to_clipboard')"
                             placement="left"
@@ -104,6 +105,7 @@
                 <el-table-column v-if="!paneView" columnKey="update" className="row-action">
                     <template #default="scope">
                         <IconButton
+                            data-testid="edit-kv-button"
                             v-if="canUpdate(scope.row)"
                             :tooltip="$t('update')"
                             placement="left"
@@ -117,6 +119,7 @@
                 <el-table-column v-if="!paneView" columnKey="delete" className="row-action">
                     <template #default="scope">
                         <IconButton
+                            data-testid="delete-kv-button"
                             v-if="canDelete(scope.row)"
                             :tooltip="$t('delete')"
                             placement="left"
@@ -185,6 +188,7 @@
                     type="date"
                 />
                 <TimeSelect
+                    data-testid="time-select"
                     v-else-if="kv.type === 'DURATION'"
                     :fromNow="false"
                     :timeRange="kv.value"
@@ -208,6 +212,7 @@
 
             <el-form-item :label="$t('expiration')" prop="ttl">
                 <TimeSelect
+                    data-testid="ttl-select"
                     :fromNow="false"
                     allowInfinite
                     allowCustom

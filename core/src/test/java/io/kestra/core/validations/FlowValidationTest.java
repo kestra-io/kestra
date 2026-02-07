@@ -141,7 +141,7 @@ class FlowValidationTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getMessage()).contains(": Invalid Flow: Recursive call to flow [io.kestra.tests.recursive-flow]");
+        assertThat(validate.get().getMessage()).contains("Invalid Flow: Recursive call to flow [io.kestra.tests.recursive-flow]");
     }
 
     @Test
@@ -244,8 +244,8 @@ class FlowValidationTest {
                     .id("log")
                     .type(Log.class.getName())
                     .message("any")
-                    .assets(io.kestra.core.models.property.Property.ofValue(
-                        new AssetsDeclaration(true, List.of(new AssetIdentifier(null, null, "anyId", "custom")), null))
+                    .assets(
+                        new AssetsDeclaration(true, List.of(new AssetIdentifier(null, null, "anyId", "custom")), null)
                     )
                     .build()
             ))

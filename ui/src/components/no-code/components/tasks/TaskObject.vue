@@ -222,6 +222,7 @@
 
 <style lang="scss">
     .el-form-item__content {
+        display: block !important;
         .el-form-item {
             width: 100%;
         }

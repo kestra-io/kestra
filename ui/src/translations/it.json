@@ -203,6 +203,7 @@
     "copy_to_clipboard": "Copia negli appunti",
     "create": "Crea",
     "create first task": "Crea il tuo primo task",
+    "create new revision": "Crea nuova revisione",
     "create_flow": "Crea Flow",
     "created date": "Data di creazione",
     "creation": "Creazione",
@@ -369,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Codifica il <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valore segreto in Base64</a></strong>",
+          "first": "Codifica il <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valore segreto in Base64</a>",
           "intro": "Per creare un nuovo Secret:",
           "second": "Aggiungi una variabile di ambiente chiamata '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' con il valore sopra indicato",
           "third": "Riavvia la tua istanza di Kestra"
@@ -502,6 +503,10 @@
         "content": "Apri Flow Code o No-Code per iniziare a modificare i tuoi flow, oppure seleziona un altro pannello (Topology, Documentation, Files, Blueprints, Namespace Context) per funzionalità correlate.",
         "title": "Nessun pannello è attualmente aperto."
       },
+      "pluginDefaults": {
+        "content": "I valori predefiniti del plugin ti permettono di gestire centralmente la configurazione del tuo plugin e condividerla con tutti i flow nel tuo namespace.",
+        "title": "Non hai ancora impostazioni predefinite per i plugin!"
+      },
       "plugins": {
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione.",
         "title": "Nessun valore predefinito del plugin è impostato per questo Namespace."
@@ -595,6 +600,7 @@
         "title": "Componenti del Workflow"
       }
     },
+    "execution_started": "L'esecuzione è iniziata!",
     "execution_starts_progress": "Una volta avviata l'esecuzione, vedrai gli aggiornamenti sul progresso qui.",
     "execution_status": "L'esecuzione è:",
     "executions": "Esecuzioni",
@@ -619,6 +625,8 @@
     "export all templates": "Esporta tutti i template",
     "export_csv": "Esporta come CSV",
     "exports": "Esportazioni",
+    "failed to export plugin defaults": "Impossibile esportare i valori predefiniti del plugin",
+    "failed to import plugin defaults": "Impossibile importare i default del plugin",
     "failed to render pdf": "Impossibile visualizzare l'anteprima PDF",
     "false": "Falso",
     "feeds": {
@@ -988,6 +996,7 @@
     "fix_with_ai": "Correggi con AI",
     "flow": "Flow",
     "flow already exists": "Flow già esistente",
+    "flow already exists message": "Il flow {id} esiste già nel namespace {namespace}. Vuoi creare una nuova revisione?",
     "flow creation": "Creazione del flow",
     "flow creation denied in namespace": "Non hai il permesso di creare flow nel namespace `{namespace}`.",
     "flow delete": "Sei sicuro di voler eliminare <code>{flowCount}</code> flow?",
@@ -998,6 +1007,9 @@
     "flow must have id and namespace": "Il flow deve avere un id e un namespace.",
     "flow must not be empty": "Il flow non deve essere vuoto",
     "flow not imported": "Alcuni flow non possono essere importati",
+    "flow revision latest": "Ultima revisione del flow",
+    "flow revision original": "Revisione originale del flow",
+    "flow revision specific": "Revisione specifica del flow",
     "flow source not found": "Sorgente del flow non trovata",
     "flow-dependencies": "dipendenze",
     "flow-no-dependencies": "Il tuo flow non ha dipendenze",
@@ -1112,6 +1124,7 @@
     "min": "Min",
     "minutes": "Minuti",
     "missingSource": "Sorgente mancante",
+    "modify inputs": "Modifica input",
     "modify_inputs": "Modifica input",
     "monogram": "Monogramma",
     "months": "Mesi",
@@ -1437,13 +1450,36 @@
       "toggle": "Playground",
       "tooltip_persistence": "Se disattivi e riattivi il Playground, le informazioni rimangono finché resti sulla pagina."
     },
-    "pluginDefaults": "Plugin predefiniti",
+    "plugin defaults exported": "Predefiniti del plugin esportati",
+    "plugin defaults imported": "Predefiniti del plugin importati",
+    "plugin defaults not imported": "Alcuni valori predefiniti del plugin non possono essere importati",
+    "pluginDefaults": {
+      "add": "Aggiungi Plugin Predefinito",
+      "add_subtitle": "Configura un nuovo plugin predefinito con le sue proprietà",
+      "cancel": "Annulla",
+      "custom": "Plugin Personalizzato",
+      "custom_configure": "Tipo di plugin personalizzato - configurare utilizzando YAML",
+      "custom_placeholder": "Inserisci il tipo di plugin",
+      "custom_type": "Tipo di plugin personalizzato",
+      "edit": "Modifica Plugin Predefinito",
+      "edit_subtitle": "Modifica la configurazione predefinita del plugin esistente",
+      "form": "Modulo",
+      "predefined": "Plugin Predefinito",
+      "select_predefined": "Seleziona Plugin Predefinito",
+      "show_yaml": "Mostra YAML",
+      "title": "Predefiniti del Plugin",
+      "update": "Aggiorna Plugin Default",
+      "use_custom": "Usa Personalizzato",
+      "yaml": "YAML",
+      "yaml_configuration": "Configurazione YAML"
+    },
     "pluginPage": {
       "alt": "Icona Plugin",
       "search": "Cerca tra oltre {count} plugin",
       "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",
       "title2": "Cerca tasks e triggers per costruire il tuo flow."
     },
+    "plugin_default_already_exists": "Il plugin predefinito per <code>{type}</code> esiste già.",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
@@ -1479,10 +1515,14 @@
     "remove_bookmark": "Sei sicuro di voler rimuovere questo segnalibro?",
     "replay": "Ripeti",
     "replay confirm": "Sei sicuro di voler ripetere questa esecuzione <code>{id}</code> e crearne una nuova?",
+    "replay execution description": "Questo creerà una nuova esecuzione basata sull'esecuzione selezionata.",
+    "replay execution title": "Riesegui esecuzione",
     "replay from beginning tooltip": "Crea un'esecuzione simile a partire dall'inizio",
     "replay from task tooltip": "Crea un'esecuzione simile a partire dal task <code>{taskId}</code>",
+    "replay inputs": "Ingressi",
     "replay latest revision": "Ripeti utilizzando l'ultima revisione",
     "replay the execution": "Ripeti l'esecuzione <code>{executionId}</code> per il flow <code>{flowId}</code>",
+    "replay using": "Riproduci utilizzando",
     "replay with inputs": "Riesegui con input",
     "replayed": "L'esecuzione è stata ripetuta",
     "required field": "Campo obbligatorio",
@@ -1504,6 +1544,7 @@
     "resumed confirm": "Sei sicuro di voler riprendere l'esecuzione <code>{id}</code>?",
     "resumed done": "L'esecuzione è stata ripresa",
     "resumed title": "Riprendi esecuzione <code>{id}</code>",
+    "reuse original inputs": "Riutilizza gli input originali",
     "reuse_original_inputs": "Riutilizza gli input originali",
     "revision": "Revisione",
     "revision deleted": "La revisione {revision} è stata eliminata con successo",

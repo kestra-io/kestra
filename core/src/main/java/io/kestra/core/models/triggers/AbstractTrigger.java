@@ -91,7 +91,7 @@ abstract public class AbstractTrigger implements TriggerInterface {
     private boolean allowConcurrent = false;
 
     @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
-    private Property<AssetsDeclaration> assets;
+    private AssetsDeclaration assets;
 
     /**
      * For backward compatibility: we rename minLogLevel to logLevel.

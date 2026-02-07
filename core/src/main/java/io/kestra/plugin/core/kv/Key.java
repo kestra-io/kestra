@@ -24,7 +24,8 @@ public class Key extends KvPurgeBehavior {
     protected String type = "key";
 
     @Schema(
-        title = "Delete only expired keys"
+        title = "Delete only expired keys",
+        description = "When true (default), purge removes entries whose `expirationDate` is in the past; otherwise all matched keys are purged."
     )
     @Builder.Default
     private boolean expiredOnly = true;

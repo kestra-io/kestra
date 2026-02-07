@@ -31,7 +31,6 @@ import java.util.Optional;
 public class FileChangedEventListener {
     @Nullable
     private final FileWatchConfiguration fileWatchConfiguration;
-    @Nullable
     private final WatchService watchService;
 
     @Inject
@@ -53,7 +52,7 @@ public class FileChangedEventListener {
     private boolean isStarted = false;
 
     @Inject
-    public FileChangedEventListener(@Nullable FileWatchConfiguration fileWatchConfiguration, @Nullable WatchService watchService) {
+    public FileChangedEventListener(@Nullable FileWatchConfiguration fileWatchConfiguration, WatchService watchService) {
         this.fileWatchConfiguration = fileWatchConfiguration;
         this.watchService = watchService;
     }

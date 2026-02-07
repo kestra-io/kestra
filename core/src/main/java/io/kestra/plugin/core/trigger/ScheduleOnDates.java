@@ -37,7 +37,11 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Schedule a flow on specific dates."
+    title = "Schedule a Flow on specific dates.",
+    description = """
+        Triggers on an explicit list of `dates` (ZonedDateTime). Timezone defaults to server but can be overridden. Honors backfill/recover logic like other schedulables.
+
+        Use when a cron can’t express required occurrences (e.g., ad-hoc or irregular calendars)."""
 )
 @Plugin
 public class ScheduleOnDates extends AbstractTrigger implements Schedulable, TriggerOutput<VoidOutput> {

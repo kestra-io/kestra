@@ -644,8 +644,8 @@ public class ExecutionController {
                     .last()
                     .map(event -> {
                         if (webhook.getReturnOutputs()) {
-                            return HttpResponse.ok(event.getData().getOutputs());
-
+                            // Only apply custom responseContentType when returnOutputs is true
+                            return buildWebhookResponse(event.getData().getOutputs(), webhook.getResponseContentType());
                         } else {
                             return (HttpResponse<?>) HttpResponse.ok(WebhookResponse.fromExecution(
                                 event.getData(),
@@ -655,6 +655,7 @@ public class ExecutionController {
                     })
                     .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
             } else {
+                // Without wait, always return JSON (responseContentType only applies with returnOutputs)
                 return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));
             }
         } catch (QueueException e) {
@@ -669,6 +670,28 @@ public class ExecutionController {
         public static WebhookResponse fromExecution(Execution execution, URI url) {
             return new WebhookResponse(execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getTrigger(), execution.getOutputs(), execution.getLabels(), execution.getState(), url);
         }
+    }
+
+    /**
+     * Build webhook response with optional custom content type.
+     * When responseContentType is set, the response will use that content type instead of the default application/json.
+     */
+    private HttpResponse<?> buildWebhookResponse(Object body, String responseContentType) {
+        if (responseContentType != null && responseContentType.equals(MediaType.TEXT_PLAIN)) {
+            String responseBody;
+            if (body instanceof String s) {
+                responseBody = s;
+            } else {
+                try {
+                    responseBody = objectMapper.writeValueAsString(body);
+                } catch (Exception e) {
+                    responseBody = String.valueOf(body);
+                }
+            }
+            return HttpResponse.ok(responseBody).contentType(MediaType.TEXT_PLAIN_TYPE);
+        }
+        // Default: application/json (or no responseContentType set)
+        return HttpResponse.ok(body);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1040,7 +1063,7 @@ public class ExecutionController {
 
             if (execution.isPresent() && !execution.get().getState().canBeRestarted()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in state PAUSED or terminated",
+                    "execution not in state PAUSED or terminated, or is KILLED",
                     executionId,
                     String.class,
                     "execution",
@@ -1264,8 +1287,8 @@ public class ExecutionController {
             return null;
         }
 
-        if (!execution.get().getState().isTerminated()) {
-            throw new IllegalArgumentException("You can only change the state of a terminated execution.");
+        if (!execution.get().getState().canChangeStatus()) {
+            throw new IllegalArgumentException("You can only change the state of a terminated non killed execution.");
         }
 
         Execution updated = execution.get().withState(status);
@@ -1294,9 +1317,9 @@ public class ExecutionController {
 
         for (String executionId : executionsId) {
             Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
-            if (execution.isPresent() && !execution.get().getState().isTerminated()) {
+            if (execution.isPresent() && !execution.get().getState().canChangeStatus()) {
                 invalids.add(ManualConstraintViolation.of(
-                    "execution not in a terminated state",
+                    "execution not in a terminated state or is killed",
                     executionId,
                     String.class,
                     "execution",
@@ -1390,7 +1413,7 @@ public class ExecutionController {
     public HttpResponse<?> killExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Specifies whether killing the execution also kill all subflow executions.") @QueryValue(defaultValue = "true") Boolean isOnKillCascade
-    ) throws InternalException, QueueException {
+    ) throws QueueException {
 
         Optional<Execution> maybeExecution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (maybeExecution.isEmpty()) {

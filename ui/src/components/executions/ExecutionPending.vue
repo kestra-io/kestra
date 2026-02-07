@@ -1,5 +1,6 @@
 <template>
-    <EmptyTemplate class="queued">
+    <FlowConcurrency v-if="execution.state.current === 'QUEUED' && flowStore.flow" />
+    <EmptyTemplate v-else class="queued">
         <img src="../../assets/queued_visual.svg" alt="Queued Execution">
         <h5 class="mt-4 fw-bold">
             {{ $t('execution_status') }} 
@@ -20,22 +21,37 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType} from "vue";
-
+    import {PropType, onMounted} from "vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
+    import FlowConcurrency from "../flows/FlowConcurrency.vue";
+    import {useFlowStore} from "../../stores/flow";
 
     interface ExecutionState {
         current: string;
     }
 
     interface Execution {
+        namespace: string;
+        flowId: string;
         state: ExecutionState;
     }
 
-    defineProps({
+    const props = defineProps({
         execution: {
             type: Object as PropType<Execution>,
             required: true
+        }
+    });
+
+    const flowStore = useFlowStore();
+    onMounted(async () => {
+        if (props.execution && props.execution.state.current === "QUEUED") {
+            if (!flowStore.flow || flowStore.flow.id !== props.execution.flowId) {
+                await flowStore.loadFlow({
+                    namespace: props.execution.namespace, 
+                    id: props.execution.flowId
+                });
+            }
         }
     });
 

@@ -26,7 +26,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Retrieve a value of a KV pair by a key."
+    title = "Read a key-value entry.",
+    description = """
+        Renders `key`/`namespace` (defaults to flow namespace) and fetches the value. In the same namespace it walks dot-delimited parents to support hierarchical lookup. Set `errorOnMissing` to true to fail when absent.
+
+        Respects namespace ACLs when reading other namespaces."""
 )
 @Plugin(
     examples = {

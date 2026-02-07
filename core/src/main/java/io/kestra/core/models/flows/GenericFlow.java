@@ -96,4 +96,9 @@ public class GenericFlow extends AbstractFlow implements HasUID {
     public List<GenericTrigger> getTriggers() {
         return Optional.ofNullable(triggers).orElse(List.of());
     }
+
+    @Override
+    public FlowInterface toDeleted() {
+        throw new UnsupportedOperationException("Can't delete a GenericFlow");
+    }
 }

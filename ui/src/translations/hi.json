@@ -203,6 +203,7 @@
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
     "create": "बनाएँ",
     "create first task": "अपना पहला Task बनाएं",
+    "create new revision": "नई संशोधन बनाएं",
     "create_flow": "फ़्लो बनाएं",
     "created date": "निर्माण तिथि",
     "creation": "निर्माण",
@@ -369,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">गुप्त value को Base64 में एन्कोड करें</a></strong>",
+          "first": "<a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">गुप्त मान को Base64 में एन्कोड करें</a>",
           "intro": "नया Secret बनाने के लिए:",
           "second": "'<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' नामक एक environment variable जोड़ें उपरोक्त value के साथ",
           "third": "अपने Kestra instance को पुनः प्रारंभ करें"
@@ -502,6 +503,10 @@
         "content": "Flow Code या No-Code खोलें ताकि आप अपने flows को संपादित करना शुरू कर सकें, या संबंधित सुविधाओं के लिए कोई अन्य पैनल चुनें (Topology, Documentation, Files, Blueprints, Namespace Context)।",
         "title": "कोई पैनल वर्तमान में खुला नहीं है।"
       },
+      "pluginDefaults": {
+        "content": "प्लगइन डिफॉल्ट्स आपको अपने प्लगइन कॉन्फ़िगरेशन को केंद्रीय रूप से प्रबंधित करने और इसे आपके namespace के सभी flows के साथ साझा करने की अनुमति देते हैं।",
+        "title": "आपके पास अभी तक कोई प्लगइन डिफॉल्ट नहीं है!"
+      },
       "plugins": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
         "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।"
@@ -595,6 +600,7 @@
         "title": "वर्कफ़्लो घटक"
       }
     },
+    "execution_started": "निष्पादन शुरू हो गया है!",
     "execution_starts_progress": "जैसे ही execution शुरू होता है, आपको यहाँ प्रगति अपडेट दिखाई देंगे।",
     "execution_status": "Execution है:",
     "executions": "निष्पादन",
@@ -619,6 +625,8 @@
     "export all templates": "सभी templates निर्यात करें",
     "export_csv": "CSV के रूप में निर्यात करें",
     "exports": "निर्यात",
+    "failed to export plugin defaults": "प्लगइन डिफॉल्ट्स को निर्यात करने में विफल",
+    "failed to import plugin defaults": "प्लगइन डिफॉल्ट्स आयात करने में विफल",
     "failed to render pdf": "PDF प्रस्तुत करने में विफल",
     "false": "असत्य",
     "feeds": {
@@ -988,6 +996,7 @@
     "fix_with_ai": "AI से ठीक करें",
     "flow": "Flow",
     "flow already exists": "Flow पहले से मौजूद है",
+    "flow already exists message": "namespace {namespace} में Flow {id} पहले से मौजूद है। क्या आप एक नया संशोधन बनाना चाहते हैं?",
     "flow creation": "Flow निर्माण",
     "flow creation denied in namespace": "आपके पास namespace `{namespace}` में flows बनाने की अनुमति नहीं है।",
     "flow delete": "क्या आप वाकई <code>{flowCount}</code> flow(s) को हटाना चाहते हैं?",
@@ -998,6 +1007,9 @@
     "flow must have id and namespace": "Flow में एक id और एक namespace होना चाहिए।",
     "flow must not be empty": "Flow खाली नहीं होना चाहिए",
     "flow not imported": "कुछ flow आयात नहीं किया जा सका",
+    "flow revision latest": "नवीनतम flow संशोधन",
+    "flow revision original": "मूल flow संशोधन",
+    "flow revision specific": "विशिष्ट flow संशोधन",
     "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
@@ -1112,6 +1124,7 @@
     "min": "न्यूनतम",
     "minutes": "मिनट्स",
     "missingSource": "स्रोत अनुपलब्ध",
+    "modify inputs": "इनपुट्स संशोधित करें",
     "modify_inputs": "इनपुट्स संशोधित करें",
     "monogram": "मोनोग्राम",
     "months": "महीने",
@@ -1437,13 +1450,36 @@
       "toggle": "प्लेग्राउंड",
       "tooltip_persistence": "यदि आप Playground को बंद करके फिर से चालू करते हैं, तो जानकारी तब तक बनी रहती है जब तक आप पृष्ठ पर रहते हैं।"
     },
-    "pluginDefaults": "प्लगइन डिफॉल्ट्स",
+    "plugin defaults exported": "प्लगइन डिफॉल्ट्स एक्सपोर्ट किए गए",
+    "plugin defaults imported": "प्लगइन डिफ़ॉल्ट्स आयातित",
+    "plugin defaults not imported": "कुछ प्लगइन डिफ़ॉल्ट आयात नहीं किए जा सके",
+    "pluginDefaults": {
+      "add": "प्लगइन डिफ़ॉल्ट जोड़ें",
+      "add_subtitle": "इसके गुणों के साथ एक नया प्लगइन डिफ़ॉल्ट कॉन्फ़िगर करें",
+      "cancel": "रद्द करें",
+      "custom": "कस्टम प्लगइन",
+      "custom_configure": "कस्टम प्लगइन प्रकार - YAML का उपयोग करके कॉन्फ़िगर करें",
+      "custom_placeholder": "प्लगइन प्रकार दर्ज करें",
+      "custom_type": "कस्टम प्लगइन प्रकार",
+      "edit": "प्लगइन डिफ़ॉल्ट संपादित करें",
+      "edit_subtitle": "मौजूदा प्लगइन डिफ़ॉल्ट कॉन्फ़िगरेशन को संशोधित करें",
+      "form": "फॉर्म",
+      "predefined": "पूर्वनिर्धारित प्लगइन",
+      "select_predefined": "पूर्वनिर्धारित प्लगइन चुनें",
+      "show_yaml": "YAML दिखाएं",
+      "title": "प्लगइन डिफॉल्ट्स",
+      "update": "प्लगइन डिफ़ॉल्ट अपडेट करें",
+      "use_custom": "कस्टम उपयोग करें",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML कॉन्फ़िगरेशन"
+    },
     "pluginPage": {
       "alt": "प्लगइन्स आइकन",
       "search": "{count}+ प्लगइन्स में खोजें",
       "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
       "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।"
     },
+    "plugin_default_already_exists": "<code>{type}</code> के लिए प्लगइन डिफ़ॉल्ट पहले से मौजूद है।",
     "plugins": {
       "name": "plugin",
       "names": "plugins",
@@ -1479,10 +1515,14 @@
     "remove_bookmark": "क्या आप वाकई इस बुकमार्क को हटाना चाहते हैं?",
     "replay": "पुनः चलाएँ",
     "replay confirm": "क्या आप वाकई इस निष्पादन <code>{id}</code> को पुनः चलाना चाहते हैं और एक नया निष्पादन बनाना चाहते हैं?",
+    "replay execution description": "यह चयनित execution के आधार पर एक नया execution बनाएगा।",
+    "replay execution title": "प्रदर्शन पुनः चलाएं",
     "replay from beginning tooltip": "शुरुआत से शुरू होने वाला एक समान निष्पादन बनाएँ",
     "replay from task tooltip": "Task <code>{taskId}</code> से शुरू होने वाला एक समान निष्पादन बनाएँ",
+    "replay inputs": "इनपुट्स",
     "replay latest revision": "नवीनतम पुनरीक्षण का उपयोग करके पुनः चलाएँ",
     "replay the execution": "फ्लो <code>{flowId}</code> के लिए निष्पादन <code>{executionId}</code> को पुनः चलाएं",
+    "replay using": "पुनः चलाएं उपयोग करते हुए",
     "replay with inputs": "इनपुट्स के साथ पुनः चलाएं",
     "replayed": "निष्पादन पुनः चलाया गया है",
     "required field": "आवश्यक फ़ील्ड",
@@ -1504,6 +1544,7 @@
     "resumed confirm": "क्या आप वाकई निष्पादन <code>{id}</code> को पुनः आरंभ करना चाहते हैं?",
     "resumed done": "निष्पादन पुनः आरंभ किया गया है",
     "resumed title": "निष्पादन <code>{id}</code> पुनः आरंभ करें",
+    "reuse original inputs": "मूल inputs का पुनः उपयोग करें",
     "reuse_original_inputs": "मूल inputs का पुनः उपयोग करें",
     "revision": "संशोधन",
     "revision deleted": "समीक्षा {revision} को सफलतापूर्वक हटा दिया गया है",

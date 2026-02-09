@@ -2,14 +2,20 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.Label;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.Dashboard;
+import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
 import io.kestra.webserver.models.ChartFiltersOverrides;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -46,6 +52,9 @@ class DashboardControllerTest {
     LogRepositoryInterface logRepository;
 
     @Inject
+    ExecutionRepositoryInterface executionRepository;
+
+    @Inject
     DashboardRepositoryInterface dashboardRepository;
 
     @Test
@@ -57,7 +66,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -140,7 +149,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -195,7 +204,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -246,7 +255,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -330,7 +339,7 @@ class DashboardControllerTest {
             timeWindow:
               default: P30D # P30DT30H
               max: P365D
-            
+
             charts:
               - id: logs_timeseries
                 type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -378,7 +387,6 @@ class DashboardControllerTest {
             .namespace(fakeNamespace)
             .level(Level.INFO)
             .attemptNumber(1)
-            .deleted(false)
             .executionId(fakeExecutionId)
             .tenantId(MAIN_TENANT)
             .executionKind(ExecutionKind.NORMAL)
@@ -447,7 +455,6 @@ class DashboardControllerTest {
             .namespace(fakeNamespace)
             .level(Level.INFO)
             .attemptNumber(1)
-            .deleted(false)
             .executionId(fakeExecutionId)
             .tenantId(MAIN_TENANT)
             .executionKind(ExecutionKind.NORMAL)
@@ -490,5 +497,57 @@ class DashboardControllerTest {
         byte[] csvBytes = client.toBlocking().retrieve(POST(DASHBOARD_PATH + "/charts/export/to-csv", previewRequest), Argument.of(byte[].class));
         var csv = new String(csvBytes, StandardCharsets.UTF_8);
         assertThat(csv).isEqualTo("chart_namespace,chart_execution_id\r\n%s,%s\r\n".formatted(fakeNamespace, fakeExecutionId));
+    }
+
+    @Test
+    void previewWithLabels() {
+        String namespace = TestsUtils.randomNamespace();
+        executionRepository.save(Execution.builder()
+            .tenantId(MAIN_TENANT)
+            .id(IdUtils.create())
+            .namespace(namespace)
+            .flowId("flow")
+            .state(new State())
+            .labels(Label.from(Map.of("a", "b")))
+            .build());
+        String idForLabelAC = IdUtils.create();
+        executionRepository.save(Execution.builder()
+            .tenantId(MAIN_TENANT)
+            .id(idForLabelAC)
+            .namespace(namespace)
+            .flowId("flow")
+            .state(new State())
+            .labels(Label.from(Map.of("a", "c")))
+            .build());
+
+        String chartYaml = """
+            id: table_executions_chart_id
+            type: io.kestra.plugin.core.dashboard.chart.Table
+            data:
+              type: io.kestra.plugin.core.dashboard.data.Executions
+              columns:
+                execution_id:
+                  field: ID
+              where:
+                - field: NAMESPACE
+                  type: EQUAL_TO
+                  value: "%s"
+            """.formatted(namespace);
+
+        // Compute a dashboard, making sure the query is correct
+        var previewRequest = new DashboardController.PreviewRequest(chartYaml, ChartFiltersOverrides.builder().filters(List.of(
+            QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.EQUALS)
+                .value("a:c")
+                .build()
+        )).build());
+        PagedResults<Map<String, Object>> chartData = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH + "/charts/preview", previewRequest),
+            PagedResults.class
+        );
+        assertThat(chartData).isNotNull();
+        assertThat(chartData.getTotal()).isEqualTo(1);
+        assertThat(chartData.getResults().get(0).get("execution_id")).isEqualTo(idForLabelAC);
     }
 }

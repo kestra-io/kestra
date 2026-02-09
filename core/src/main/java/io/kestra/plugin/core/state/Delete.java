@@ -17,7 +17,9 @@ import java.io.FileNotFoundException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a state from the state store (Deprecated, use KV store instead)."
+    title = "Delete state from the legacy state store (deprecated).",
+    description = """
+        Deprecated; use the KV store instead. Deletes the named state (default Flow state if `name` unset). If `errorOnMissing` is true and the state doesn’t exist, the task fails."""
 )
 @Plugin(
     examples = {

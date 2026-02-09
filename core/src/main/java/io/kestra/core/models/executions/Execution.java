@@ -8,10 +8,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Streams;
 import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.DeletedInterface;
+import io.kestra.core.models.SoftDeletable;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
@@ -54,7 +53,7 @@ import java.util.zip.CRC32;
 @AllArgsConstructor
 @ToString
 @EqualsAndHashCode
-public class Execution implements DeletedInterface, TenantInterface, HasUID {
+public class Execution implements SoftDeletable<Execution>, TenantInterface, HasUID {
 
     @With
     @Hidden
@@ -587,50 +586,65 @@ public class Execution implements DeletedInterface, TenantInterface, HasUID {
             .findFirst();
     }
 
+    /*
+     * Using reversed().findFirst() is intended for better performance,
+     * as these methods are used heavily.
+     * Do not replace it with Streams.findLast() in these methods,
+     * as Streams.findLast() performs worse.
+     *
+     * See: @see <a href="https://github.com/kestra-io/kestra/pull/14385">KESTRA#14385</a>
+     */
     public Optional<TaskRun> findLastNotTerminated() {
         if (this.taskRunList == null) {
             return Optional.empty();
         }
 
-        return Streams.findLast(this.taskRunList
+        return this.taskRunList
+            .reversed()
             .stream()
             .filter(t -> !t.getState().isTerminated() || !t.getState().isPaused())
-        );
+            .findFirst();
     }
 
+
     public Optional<TaskRun> findLastByState(List<TaskRun> taskRuns, State.Type state) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().getCurrent() == state)
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastCreated(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().isCreated())
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastSubmitted(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().getCurrent() == State.Type.SUBMITTED)
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastRunning(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().isRunning())
-        );
+            .findFirst();
     }
 
     public Optional<TaskRun> findLastTerminated(List<TaskRun> taskRuns) {
-        return Streams.findLast(taskRuns
+        return taskRuns
+            .reversed()
             .stream()
             .filter(t -> t.getState().isTerminated())
-        );
+            .findFirst();
     }
 
     public boolean isTerminated(List<ResolvedTask> resolvedTasks) {
@@ -1130,7 +1144,7 @@ public class Execution implements DeletedInterface, TenantInterface, HasUID {
             .toList();
     }
 
-
+    @Override
     public Execution toDeleted() {
         return this.toBuilder()
             .deleted(true)

@@ -88,11 +88,13 @@
     import Logo from "../home/Logo.vue"
 
     import {useCoreStore} from "../../stores/core"
+    import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
     import * as BasicAuth from "../../utils/basicAuth";
     import {shouldShowWelcome} from "../../utils/welcomeGuard";
+    import {identifyPosthogUser} from "../../utils/posthog";
 
     interface Credentials {
         username: string
@@ -103,6 +105,7 @@
     const route = useRoute()
     const {t} = useI18n()
     const coreStore = useCoreStore()
+    const apiStore = useApiStore()
     const miscStore = useMiscStore()
     const {shouldShowHelloDialog} = useSurveySkip()
 
@@ -237,6 +240,9 @@
             localStorage.removeItem("basicAuthSetupInProgress")
             sessionStorage.setItem("sessionActive", "true")
 
+            const configs = await miscStore.loadConfigs()
+            await identifyPosthogUser(configs, {email: trimmedUsername})
+
             credentials.value = {username: "", password: ""}
 
             if (shouldShowHelloDialog()) {
@@ -269,6 +275,10 @@
     }
 
     const openTroubleshootingGuide = () => {
+        apiStore.posthogEvents({
+            type: "ossauth",
+            action: "forgot_password_click",
+        })
         window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting", "_blank")
     }
 </script>

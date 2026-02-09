@@ -123,8 +123,12 @@ export class FlowAutoCompletion extends YamlAutoCompletion {
         switch (parentField) {
             case "inputs":
                 return Promise.resolve(parsed?.inputs?.map((input: {id?: string}) => input.id) ?? []);
-            case "outputs":
-                return Promise.resolve(parsed?.tasks?.map((task: {id?: string}) => task.id).filter(Boolean) ?? []);
+           case "outputs": {
+    const currentTaskId = this.flowStore.task?.id;
+    const taskIds = parsed?.tasks?.map((task: { id?: string }) => task.id).filter(Boolean) as string[] ?? [];
+
+    return Promise.resolve(taskIds.filter((id: string) => id !== currentTaskId));
+}
             case "labels":
                 return Promise.resolve(Object.keys(parsed?.labels ?? {}));
             case "flow":

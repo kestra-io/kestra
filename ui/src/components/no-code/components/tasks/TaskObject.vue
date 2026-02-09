@@ -149,8 +149,13 @@
         return propertiesProc
             ? (Object.entries(propertiesProc) as Entry[]).filter(([key, value]) => {
                 // Allow "type" field for outputs context, filter it out for other contexts
+<<<<<<< fix/nocode-type
                 const shouldFilterType = key === "type" && props.typeBased;
                 return !shouldFilterType && !Array.isArray(value);
+=======
+                const shouldFilterType = key === "type" && !isOutputsContext;
+                return value && !shouldFilterType && !Array.isArray(value);
+>>>>>>> develop
             })
             : [];
     });

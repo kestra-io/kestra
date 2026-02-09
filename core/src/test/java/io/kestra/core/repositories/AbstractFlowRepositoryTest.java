@@ -180,6 +180,51 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void shouldFilterFlowsWithNotEqualsLabelOperator() {
+        String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
+
+        FlowWithSource flowWithLabel = builder(tenant)
+            .id("flow-with-label")
+            .labels(Label.from(Map.of("foo", "bar")))
+            .build();
+
+        FlowWithSource flowWithoutLabel = builder(tenant)
+            .id("flow-without-label")
+            .build();
+
+        FlowWithSource flowWithDifferentLabel =builder(tenant)
+            .id("flow-with-different-label")
+            .labels(Label.from(Map.of("foo", "baz")))
+            .build();
+
+        try {
+            flowWithLabel = flowRepository.create(GenericFlow.of(flowWithLabel));
+            flowWithoutLabel = flowRepository.create(GenericFlow.of(flowWithoutLabel));
+            flowWithDifferentLabel = flowRepository.create(GenericFlow.of(flowWithDifferentLabel));
+
+            // Filter: Labels NOT_EQUALS foo:bar
+            // Should return: flow-without-label and flow-with-different-label
+            QueryFilter filter = QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.NOT_EQUALS)
+                .value(Map.of("foo", "bar"))
+                .build();
+
+            ArrayListTotal<Flow> results = flowRepository.find(Pageable.UNPAGED, tenant, List.of(filter));
+
+            assertThat(results).hasSize(2);
+            assertThat(results)
+                .extracting(Flow::getId)
+                .containsExactlyInAnyOrder("flow-without-label", "flow-with-different-label");
+
+        } finally {
+            deleteFlow(flowWithLabel);
+            deleteFlow(flowWithoutLabel);
+            deleteFlow(flowWithDifferentLabel);
+        }
+    }
+
+    @Test
     void findByIdWithoutAcl() {
         String tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         FlowWithSource flow = builder(tenant)

@@ -184,7 +184,7 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                                                 workerTaskResults.add(new WorkerTaskResult(taskRun));
                                             }
                                         }
-                                        /// flowable attempt state transition to running
+                                        // flowable attempt state transition to running
                                         if (workerTask.getTask().isFlowable()) {
                                             List<TaskRunAttempt> attempts = Optional.ofNullable(workerTask.getTaskRun().getAttempts())
                                                 .map(ArrayList::new)
@@ -235,7 +235,9 @@ public class ExecutionEventMessageHandler implements ExecutorMessageHandler<Exec
                     if (!executor.getSubflowExecutions().isEmpty()) {
                         executor.getSubflowExecutions().forEach(throwConsumer(subflowExecution -> {
                             Execution subExecution = subflowExecution.getExecution();
-                            String msg = String.format("Created new execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]]", subExecution.getId(), subExecution.getFlowId(), subExecution.getNamespace());
+                            String msg = subExecution.getState().getCurrent() == State.Type.RESTARTED ?
+                                String.format("Restarted execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]]", subExecution.getId(), subExecution.getFlowId(), subExecution.getNamespace()) :
+                                String.format("Created new execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]]", subExecution.getId(), subExecution.getFlowId(), subExecution.getNamespace());
 
                             log.info(msg);
 

@@ -10,6 +10,7 @@ datasources:
     connectionTimeout: 30000
     idleTimeout: 600000
     maxLifetime: 1800000
+    transactionIsolation: TRANSACTION_READ_COMMITTED
 
 flyway:
   datasources:

@@ -77,7 +77,7 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
             return true;
         }
 
-        throw new IllegalStateException(logPrefix + " illegal state change to " + newState + " from " + newState + ", current state is " + this.state.get());
+        throw new IllegalStateException(logPrefix + " illegal state change to " + newState + " from " + expected + ", current state is " + this.state.get());
     }
 
     protected void markReady() {
@@ -103,6 +103,10 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
 
     @Override
     public void resume() {
+        if (this.state.get() == State.STOPPED) {
+            return;
+        }
+
         if (log.isDebugEnabled()) {
             log.debug("{} resume received", logPrefix);
         }
@@ -135,6 +139,10 @@ public abstract class AbstractSubscriber<T extends Event> implements QueueSubscr
 
     @Override
     public void close() {
+        if (this.state.get() == State.STOPPED) {
+            return;
+        }
+
         if (log.isDebugEnabled()) {
             log.debug("{} close received", logPrefix);
         }

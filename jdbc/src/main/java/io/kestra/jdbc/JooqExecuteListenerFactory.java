@@ -7,9 +7,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.jooq.ExecuteContext;
 import org.jooq.ExecuteListener;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.sql.DataSource;
 import jakarta.validation.constraints.NotNull;
 
@@ -22,11 +25,24 @@ public class JooqExecuteListenerFactory {
             @Override
             public @NotNull ExecuteListener provide() {
                 return new ExecuteListener() {
-                    Long startTime;
+                    private static final AtomicBoolean CONNECTION_CHECKED = new AtomicBoolean(false);
+                    private Long startTime;
 
                     @Override
                     public void executeStart(ExecuteContext ctx) {
                         startTime = System.currentTimeMillis();
+
+                        // check that isolation level is READ UNCOMMITED, it's the default for Postgres but not for MySQL,
+                        // our queue system didn't work correctly otherwise.
+                        if (!CONNECTION_CHECKED.getAndSet(true)) {
+                            try {
+                                if (ctx.connection().getTransactionIsolation() != Connection.TRANSACTION_READ_COMMITTED) {
+                                    throw new IllegalStateException("Isolation level must be READ COMMITTED");
+                                }
+                            } catch (SQLException e) {
+                                // silently ignore any exception here
+                            }
+                        }
                     }
 
                     @Override

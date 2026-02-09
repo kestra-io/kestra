@@ -12,8 +12,8 @@ public class JdbcQueueConfigurationTest {
     @Test
     void shouldFailWhenMaxPollLessThanMinPoll() {
         var configuration = new JdbcQueueConfiguration(
-            Duration.ofMillis(2),
-            Duration.ofMillis(1),
+            Duration.ofSeconds(2),
+            Duration.ofSeconds(1),
             Duration.ofSeconds(60),
             100,
             5,
@@ -75,8 +75,8 @@ public class JdbcQueueConfigurationTest {
     @Test
     void shouldComputeSingleStepWhenMinEqualsMax() {
         var configuration = new JdbcQueueConfiguration(
-            Duration.ofMillis(1),
-            Duration.ofMillis(1),
+            Duration.ofSeconds(1),
+            Duration.ofSeconds(1),
             Duration.ofSeconds(60),
             100,
             5,

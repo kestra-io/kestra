@@ -521,10 +521,7 @@ class ExecutionControllerRunnerTest {
 
         assertThat(replay).isNotNull();
 
-        Execution finishedChildExecution = runnerUtils.awaitChildExecution(
-            flow.get(),
-            parentExecution,
-            Duration.ofSeconds(15));
+        Execution finishedChildExecution = awaitExecution(parentExecution.getId(), exec -> exec.getState().getCurrent().isSuccess());
 
         assertThat(finishedChildExecution).isNotNull();
         assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
@@ -568,6 +565,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(replay).isNotNull();
+        awaitExecution(parentExecution.getId(), exec -> exec.getState().getCurrent().isSuccess());
 
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
             flow.get(),
@@ -1481,7 +1479,8 @@ class ExecutionControllerRunnerTest {
 
         assertThat(executions.getTotal()).isEqualTo(0L);
 
-        triggerExecutionInputsFlowExecution(tenantId, false);
+        Execution execution = triggerExecutionInputsFlowExecution(tenantId, false);
+        awaitExecution(execution.getId(), exec -> exec.getState().getCurrent().isSuccess());
 
         // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
         executions = client.toBlocking().retrieve(
@@ -1789,6 +1788,7 @@ class ExecutionControllerRunnerTest {
             ApiAsyncEvent.class
         );
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(result.getId(), exec -> exec.getState().getCurrent() == State.Type.PAUSED);
 
         // resume it, it should then go to completion
         response = client.toBlocking().exchange(
@@ -1910,6 +1910,7 @@ class ExecutionControllerRunnerTest {
             HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + result1.getId() + "/unqueue?state=CANCELLED", null)
         );
         assertThat(cancelResponse.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(result1.getId(), exec -> exec.getState().getCurrent() == State.Type.CANCELLED);
 
         Optional<Execution> cancelledExecution = executionRepositoryInterface.findById(tenantId, result1.getId());
         assertThat(cancelledExecution.isPresent()).isTrue();
@@ -1945,6 +1946,8 @@ class ExecutionControllerRunnerTest {
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+        awaitExecution(result.getId(), exec -> exec.getState().getCurrent() != State.Type.QUEUED);
+
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(tenantId, result.getId());
         assertThat(forcedRun.isPresent()).isTrue();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.QUEUED);
@@ -1977,9 +1980,11 @@ class ExecutionControllerRunnerTest {
         String tenantId = "shouldforcerunexecutionacreatedflow";
         when(tenantService.resolveTenant()).thenReturn(tenantId);
         Execution result = this.createExecution(tenantId, TESTS_FLOW_NS, "minimal");
-        this.executionQueue.emit(result);
+        this.executionRepositoryInterface.save(result);
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/" + tenantId + "/executions/" + result.getId() + "/force-run", null));
+        awaitExecution(result.getId(), exec -> exec.getState().getCurrent() != Type.CREATED);
+
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(tenantId, result.getId());
         assertThat(forcedRun.isPresent()).isTrue();

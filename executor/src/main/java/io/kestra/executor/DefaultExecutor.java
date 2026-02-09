@@ -320,7 +320,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
             return;
         }
 
-        // TODO investigate moving the CREATED code here, or if it's too dangerous, calling the ExecutionEventMessageHandler here to avoid a loop inside the executor event queue
+        // TODO investigate calling the ExecutionEventMessageHandler here to avoid a loop inside the executor event queue
         Optional<ExecutorContext> maybeExecutor = executionMessageHandler.handle(message);
         maybeExecutor.ifPresent(this::toExecution);
     }

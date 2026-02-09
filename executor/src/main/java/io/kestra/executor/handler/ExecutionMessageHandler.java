@@ -30,7 +30,8 @@ public class ExecutionMessageHandler implements ExecutorMessageHandler<Execution
     @Override
     public Optional<ExecutorContext> handle(Execution message) {
         try {
-            executionEventQueue.emit(new ExecutionEvent(message, ExecutionEventType.CREATED));
+            var eventType = message.getState().isCreated() ? ExecutionEventType.CREATED : ExecutionEventType.UPDATED;
+            executionEventQueue.emit(new ExecutionEvent(message, eventType));
             return Optional.empty();
         } catch (QueueException e) {
             // If we cannot send the execution event, we fail the execution

@@ -11,11 +11,11 @@
             >
                 <template #title>
                     <span v-if="disabledPages.includes(child.path) || !makeIndexNavigable">
-                        {{ child.title.capitalize() }}
+                        {{ child.sidebarTitle.capitalize() }}
                     </span>
                     <slot v-else v-bind="child">
                         <router-link :to="{path: '/' + child.path}">
-                            {{ child.title.capitalize() }}
+                            {{ child.sidebarTitle.capitalize() }}
                         </router-link>
                     </slot>
                 </template>
@@ -28,7 +28,7 @@
             <div v-else>
                 <slot v-bind="child">
                     <router-link :to="{path: '/' + child.path}">
-                        {{ child.title.capitalize() }}
+                        {{ child.sidebarTitle.capitalize() }}
                     </router-link>
                 </slot>
             </div>
@@ -48,7 +48,13 @@
 
     defineProps({
         parent: {
-            type: Object as () => {children?: {path: string, title: string, children?: any[]}[]},
+            type: Object as () => {
+                children?: {
+                    path: string, 
+                    title: string, 
+                    sidebarTitle: string, 
+                    children?: any[]
+                }[]},
             required: true
         },
         makeIndexNavigable: {

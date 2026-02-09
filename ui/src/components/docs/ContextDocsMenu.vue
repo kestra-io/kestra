@@ -5,19 +5,24 @@
         </el-button>
         <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
             <template v-if="rawStructure">
-                <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName" :class="{'active-section': isCurrentSection(sectionName)}">
+                <li 
+                    v-for="({section, children}) of sectionsWithChildren" 
+                    :key="section"
+                    :class="{'active-section': isCurrentSection(section)}"
+                >
                     <span class="text-secondary">
-                        {{ sectionName.toUpperCase() }}
+                        {{ section.toUpperCase() }}
                     </span>
                     <RecursiveToc :parent="{children}">
-                        <template #default="{path, title}">
+                        <template #default="{path, sidebarTitle}">
                             <ContextDocsLink
+                                v-if="sidebarTitle"
                                 :href="path.slice(5)"
                                 useRaw
                                 :class="{'active-page': isCurrentPage(path)}"
                                 @click="menuOpen = false"
                             >
-                                {{ title.capitalize() }}
+                                {{ sidebarTitle?.capitalize() }}
                             </ContextDocsLink>
                         </template>
                     </RecursiveToc>
@@ -98,7 +103,7 @@
 
     const isCurrentSection = (sectionName: string) => {
         if (!currentDocPath.value) return false;
-        const sectionChildren = sectionsWithChildren.value?.find(([name]) => name === sectionName)?.[1] || [];
+        const sectionChildren = sectionsWithChildren.value?.find(({section}) => section === sectionName)?.children || [];
         return sectionChildren.some((child: { path: string }) => isCurrentPage(child.path));
     };
 
@@ -107,9 +112,9 @@
         rawStructure.value = await docStore.children();
     });
 
-    const toc = computed<{title: string}[]>(() => {
+    const toc = computed(() => {
         if (rawStructure.value === undefined) {
-            return undefined;
+            return [];
         }
 
         const childrenWithMetadata = Object.entries(rawStructure.value)
@@ -136,15 +141,22 @@
             }
         }
 
-        return Object.entries(childrenWithMetadata)[0]?.[1]?.children;
+        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string}[];
     })
 
     const sectionsWithChildren = computed(() => {
         if (toc.value === undefined) {
-            return undefined;
+            return [];
         }
 
-        return Object.entries(SECTIONS).map(([section, childrenTitles]) => [section, toc.value.filter(({title}) => childrenTitles.includes(title))] as [string, {title: string, path: string}[]]);
+        const sections = Object.entries(SECTIONS)
+            .map(([section, childrenTitles]) => 
+                ({
+                    section, 
+                    children: toc.value?.filter(({title, sidebarTitle}) => 
+                        childrenTitles.includes(sidebarTitle) || childrenTitles.includes(title))}));
+        
+        return sections
     });
 </script>
 

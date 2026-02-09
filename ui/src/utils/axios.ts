@@ -17,7 +17,7 @@ let requestsTotal = 0
 let requestsCompleted = 0
 const latencyThreshold = 0
 
-const JWT_REFRESHED_QUERY = "__jwt_refreshed__"
+const REFRESHED_HEADER = "X-JWT-Refreshed"
 
 const progressComplete = () => {
     pendingRoute = false
@@ -172,13 +172,10 @@ const createAxios = (
                 }
 
                 if (!refreshing) {
-                    const originalRequestData = typeof originalRequest.data === "string"
-                        ? JSON.parse(originalRequest.data || "{}")
-                        : (originalRequest.data ?? {})
 
                     // if we already tried refreshing the token,
                     // the user simply does not have access to this feature
-                    if (originalRequestData[JWT_REFRESHED_QUERY] === 1) {
+                    if (originalRequest.headers[REFRESHED_HEADER] === "1") {
                         return Promise.reject(errorResponse)
                     }
 
@@ -203,8 +200,7 @@ const createAxios = (
                         refreshing = false
 
                         // Retry original request
-                        originalRequestData[JWT_REFRESHED_QUERY] = 1
-                        originalRequest.data = originalRequest.data ? JSON.stringify(originalRequestData) : undefined
+                        originalRequest.headers[REFRESHED_HEADER] = "1"
 
                         return instance(originalRequest)
 
@@ -301,23 +297,23 @@ export default (
     callback(createAxios(...args).instance);
 }
 
-let clientInstance: Client | null = null;
+let axiosInstance: Client | null = null;
 
 export function useClient(){
     const router = useRouter();
 
     const miscStore = useMiscStore();
     const {edition} = miscStore.configs || {};
-        
-    if (!clientInstance) {
-        clientInstance = createAxios(router, edition === "OSS");
+
+    if (!axiosInstance) {
+        axiosInstance = createAxios(router, edition === "OSS");
     }
 
-    return clientInstance;
+    return axiosInstance;
 };
 
 export function useAxios(){
-    const clientInstance = useClient();
+    const axiosInstance = useClient();
 
-    return clientInstance.instance;
+    return axiosInstance.instance;
 };

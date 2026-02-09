@@ -7,6 +7,7 @@ import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
 import DemoTests from "../components/demo/Tests.vue"
+import DemoAssets from "../components/demo/Assets.vue"
 import {applyDefaultFilters} from "../components/filter/composables/useDefaultFilter";
 
 export default [
@@ -29,17 +30,6 @@ export default [
             // - using a flag in route meta and a beforeEnter in KSFilter to apply default filters
             // but both were more complex and fragile than this simple check.
             const {query, change} = applyDefaultFilters(to.query, {includeTimeRange: true, legacyQuery: false})
-            if (!to.params.dashboard) {
-                next({
-                    ...to,
-                    params: {
-                        ...to.params,
-                        dashboard: "default",
-                    },
-                    query,
-                });
-                return;
-            }
             if(change) {
                 next({
                     ...to,
@@ -99,7 +89,6 @@ export default [
 
     //Namespaces
     {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("override/components/namespaces/Namespaces.vue")},
-    {name: "namespaces/create", path: "/:tenant?/namespaces/new/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
     {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
 
     //Docs
@@ -124,8 +113,9 @@ export default [
     //Demo Pages
     {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
     {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
+    {name: "assets/list", path: "/:tenant?/assets", component: DemoAssets},
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
-    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants", component: DemoTenants},
+    {name: "admin/tenants/list", path: "/:tenant?/admin/tenants/list", component: DemoTenants},
     {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},
     {name: "admin/instance", path: "/:tenant?/admin/instance", component: DemoInstance},
 ];

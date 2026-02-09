@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.plugins.PluginRegistry;
@@ -12,7 +13,6 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.EditionProvider;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
@@ -68,9 +68,9 @@ public class MiscController {
     Optional<TemplateRepositoryInterface> templateRepository;
 
     @Inject
-    NamespaceUtils namespaceUtils;
+    KestraConfig kestraConfig;
 
-    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:P30D}")
+    @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
 private String chartDefaultDuration;
 
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
@@ -132,7 +132,7 @@ private String chartDefaultDuration;
                 .build())
             .isAiEnabled(applicationContext.containsBean(AiController.class))
             .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
-            .systemNamespace(namespaceUtils.getSystemFlowNamespace())
+            .systemNamespace(kestraConfig.getSystemFlowNamespace())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())

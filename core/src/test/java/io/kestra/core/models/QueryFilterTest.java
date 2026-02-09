@@ -28,7 +28,7 @@ public class QueryFilterTest {
         InvalidQueryFiltersException e = assertThrows(
             InvalidQueryFiltersException.class,
             () -> QueryFilter.validateQueryFilters(List.of(filter), resource));
-        assertThat(e.formatedInvalidObjects()).contains("Operation");
+        assertThat(e.getMessage()).contains("Operation");
     }
 
     static Stream<Arguments> validOperationFilters() {

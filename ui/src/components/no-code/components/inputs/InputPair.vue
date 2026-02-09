@@ -19,7 +19,7 @@
             <el-col :span="8">
                 <InputText
                     :modelValue="pair[0]"
-                    :placeholder="t('key')"
+                    :placeholder="$t('key')"
                     @update:model-value="(changed) => handleKeyInput(index, changed)"
                     :haveError="duplicatedKeys.includes(pair[0])"
                 />
@@ -28,7 +28,7 @@
                 <slot name="value-field" :value="pair[1]" :key="pair[0]" :index="index" :updateValue="updateValue">
                     <InputText
                         :modelValue="pair[1]"
-                        :placeholder="t('value')"
+                        :placeholder="$t('value')"
                         @update:model-value="(changed) => updateValue(index, changed)"
                         class="w-100 me-2"
                     />

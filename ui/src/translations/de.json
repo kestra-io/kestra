@@ -49,7 +49,7 @@
     "ai": {
       "flow": {
         "enable_instructions": {
-          "footer": "Hinweis: Derzeit wird nur Gemini als KI-Anbieter unterstützt.\n\nStarten Sie Ihre Kestra-Instanz neu, nachdem Sie die Konfiguration gespeichert haben.",
+          "footer": "Hinweis: Derzeit wird nur Gemini als KI-Anbieter für die Open Source Edition unterstützt. Für die Enterprise Edition konsultieren Sie bitte die AI Copilot-Dokumentation für die Konfiguration anderer Modellanbieter.\n\nStarten Sie Ihre Kestra-Instanz neu, nachdem Sie die Konfiguration gespeichert haben.",
           "header": "<b>AI Copilot wurde noch nicht konfiguriert.</b>\n\nUm AI Copilot zu aktivieren, fügen Sie den folgenden Ausschnitt in die Konfigurationsdatei Ihrer Kestra-Instanz ein (z. B. <code>application.yml</code>) und ersetzen Sie <code>geminiApiKey</code> durch Ihren tatsächlichen Schlüssel:"
         },
         "generating": "Erzeuge Flow YAML für Sie...",
@@ -62,6 +62,7 @@
     "api": "API",
     "appBlocks": "App-Blöcke",
     "apps": "Apps",
+    "assets": "Vermögenswerte",
     "attempt": "Versuch",
     "attempts": "Versuch(e)",
     "auditlogs": "Audit Logs",
@@ -202,6 +203,7 @@
     "copy_to_clipboard": "In die Zwischenablage kopieren",
     "create": "Erstellen",
     "create first task": "Erstellen Sie Ihren ersten Task",
+    "create new revision": "Neue Revision erstellen",
     "create_flow": "Flow erstellen",
     "created date": "Erstellungsdatum",
     "creation": "Erstellung",
@@ -294,6 +296,8 @@
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Diese Ausführung läuft noch, das Löschen wird sie nicht stoppen.<br />Sie müssen die Ausführung beenden, um sie zu stoppen.</div>",
     "delete logs": "Logs löschen",
     "delete ok": "ist gelöscht",
+    "delete revision confirm": "Möchten Sie die Revision {revision} wirklich löschen?",
+    "delete revision error": "Fehler beim Löschen der Revision {revision} mit Fehler {error}",
     "delete task confirm": "Möchten Sie den Task <code>{taskId}</code> wirklich löschen?",
     "delete trigger": "Trigger löschen",
     "delete trigger confirmation": "Möchten Sie den Trigger {id} wirklich löschen? WARNING: Das Löschen eines Triggers kann zu doppelten Ausführungen führen, wenn der Trigger noch in einem flow aktiv ist.",
@@ -314,6 +318,12 @@
         "message": "Apps in der Kestra Enterprise Edition ermöglichen es Ihnen, benutzerdefinierte UIs zu erstellen, die mit Kestra-Workflows außerhalb der Plattform interagieren. Diese Funktion erlaubt es Ihnen, Ihre Workflows als Backend für benutzerdefinierte Anwendungen zu nutzen, sodass nicht-technische Benutzer Daten über Formulare einreichen oder pausierte Workflows, die auf eine Genehmigung warten, fortsetzen können.",
         "title": "Erstellen Sie benutzerdefinierte Apps mit Kestra"
       },
+      "assets": {
+        "header": "Assets-Metadaten und Observability",
+        "label": "Assets",
+        "message": "Assets verbinden Observability-, Lineage- und Ownership-Metadaten, damit Plattformteams schneller Probleme beheben und mit Vertrauen bereitstellen können.",
+        "title": "Bringen Sie jedes Dataset, jeden Service und jede Abhängigkeit in Sicht."
+      },
       "audit-logs": {
         "message": "Kestra Enterprise Edition protokolliert jede Aktivität mit robusten, unveränderlichen Aufzeichnungen, was es einfach macht, Änderungen nachzuverfolgen, die Einhaltung von Vorschriften zu gewährleisten und Probleme zu beheben.",
         "title": "Änderungen mit Audit Logs nachverfolgen"
@@ -329,6 +339,10 @@
         "title": "Verwalten Sie die Infrastruktur in Ihrer Instanz"
       },
       "namespace": {
+        "assets": {
+          "message": "In Kestra Enterprise Edition führt Assets ein Live-Inventar der Ressourcen, mit denen Ihre Workflows interagieren. Diese Ressourcen können Datenbanktabellen, virtuelle Maschinen, Dateien oder jedes externe System sein, mit dem Sie arbeiten.",
+          "title": "Zentralisiere Asset-Management"
+        },
         "audit-logs": {
           "message": "In der Kestra Enterprise Edition können Sie Audit-Logs auf Namespace-Ebene mit detaillierten Diffs anzeigen, die Ihnen eine klare Historie darüber geben, wer was und wann an allen Ressourcen geändert hat.",
           "title": "Alle Änderungen an einem Ort verfolgen"
@@ -356,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Kodieren Sie den <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">geheimen Wert in Base64</a></strong>",
+          "first": "Kodieren Sie den <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">geheimen Wert in Base64</a>",
           "intro": "Um ein neues Secret zu erstellen:",
           "second": "Fügen Sie eine Umgebungsvariable mit dem Namen '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' mit dem obigen Wert hinzu",
           "third": "Starte deine Kestra-Instanz neu"
@@ -389,6 +403,7 @@
         "zoom_out": "Rauszoomen"
       },
       "search": {
+        "asset_placeholder": "Suche nach Asset, flow oder namespace...",
         "no_results": "Keine Ergebnisse gefunden für {term}",
         "placeholder": "Suche nach flow oder namespace..."
       }
@@ -454,6 +469,10 @@
         "content": "Beginnen Sie mit dem Erstellen von Apps, um mit Kestra von der Außenwelt zu interagieren.",
         "title": "Sie haben noch keine Apps!"
       },
+      "assets": {
+        "content": "Fügen Sie Assets hinzu, um Ihre Daten-Assets, Dienste und Infrastruktur zu verfolgen und zu verwalten.",
+        "title": "Sie haben noch keine Assets!"
+      },
       "concurrency_executions": {
         "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Ausführungen</a></strong> in unserer Dokumentation.",
         "title": "Keine laufenden Ausführungen für diesen Flow."
@@ -463,6 +482,10 @@
         "title": "Für diesen Flow sind keine Grenzen festgelegt."
       },
       "dependencies": {
+        "ASSET": {
+          "content": "Dieses Asset hat keine Upstream- oder Downstream-Abhängigkeiten mit flows oder anderen Assets.",
+          "title": "Derzeit gibt es keine Abhängigkeiten."
+        },
         "EXECUTION": {
           "content": "Erfahren Sie mehr über <a href=\"https://kestra.io/docs/ui/executions#dependencies\" target=\"_blank\">Ausführungsabhängigkeiten</a> in unserer Dokumentation.",
           "title": "Derzeit gibt es keine Abhängigkeiten."
@@ -479,6 +502,10 @@
       "panels": {
         "content": "Öffnen Sie Flow Code oder No-Code, um mit der Bearbeitung Ihrer flows zu beginnen, oder wählen Sie ein anderes Panel (Topologie, Dokumentation, Dateien, Blueprints, Namespace-Kontext) für verwandte Funktionen aus.",
         "title": "Derzeit sind keine Panels geöffnet."
+      },
+      "pluginDefaults": {
+        "content": "Plugin-Standardeinstellungen ermöglichen es Ihnen, Ihre Plugin-Konfiguration zentral zu verwalten und mit allen flows in Ihrem namespace zu teilen.",
+        "title": "Sie haben noch keine Plugin-Standards!"
       },
       "plugins": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
@@ -573,6 +600,7 @@
         "title": "Workflow-Komponenten"
       }
     },
+    "execution_started": "Die Ausführung hat begonnen!",
     "execution_starts_progress": "Sobald die Ausführung beginnt, sehen Sie hier Fortschrittsaktualisierungen.",
     "execution_status": "Die Ausführung ist:",
     "executions": "Ausführungen",
@@ -597,6 +625,8 @@
     "export all templates": "Alle Vorlagen exportieren",
     "export_csv": "Als CSV exportieren",
     "exports": "Exporte",
+    "failed to export plugin defaults": "Fehler beim Exportieren der Plugin-Standardeinstellungen",
+    "failed to import plugin defaults": "Fehler beim Importieren der Plugin-Standardeinstellungen",
     "failed to render pdf": "PDF-Vorschau konnte nicht gerendert werden",
     "false": "Falsch",
     "feeds": {
@@ -653,6 +683,7 @@
       "end_date": "Enddatum",
       "enter description": "Filterbeschreibung eingeben",
       "enter label": "Filter-Label eingeben",
+      "enter name": "Filtername eingeben",
       "execution_kind": {
         "playground": "Spielplatz",
         "playground_description": "Ausführungen, die im Playground-Modus ausgelöst wurden",
@@ -699,6 +730,7 @@
         "description": "Nach Metriktyp filtern",
         "label": "Metrik"
       },
+      "name": "Name",
       "namespace": {
         "description": "Nach namespace filtern",
         "label": "Namespace"
@@ -774,6 +806,7 @@
           "labels": "Ausführungs-Labels (key:value-Format)",
           "namespace": "Namespace, zu dem der ausgeführte flow gehört",
           "outputs": "Ausgaben, die von der Ausführung erzeugt wurden",
+          "parent-execution": "Übergeordnete Ausführungs-ID, die diese Ausführung ausgelöst hat",
           "revision": "Version des flow, die für diese Ausführung verwendet wird",
           "start-date": "Wann die Ausführung gestartet wurde",
           "state": "Aktueller Ausführungszustand",
@@ -883,6 +916,12 @@
         "description": "Nach Trigger-ID filtern",
         "label": "Trigger-ID"
       },
+      "triggerState": {
+        "description": "Nach Trigger-Zustand filtern",
+        "disabled": "Deaktiviert",
+        "enabled": "Aktiviert",
+        "label": "Trigger-Zustand"
+      },
       "update": "Aktualisieren",
       "value": "Wert",
       "workerId": {
@@ -957,6 +996,7 @@
     "fix_with_ai": "Mit KI beheben",
     "flow": "Flow",
     "flow already exists": "Flow existiert bereits",
+    "flow already exists message": "Flow {id} existiert bereits im namespace {namespace}. Möchten Sie eine neue Revision erstellen?",
     "flow creation": "Flow-Erstellung",
     "flow creation denied in namespace": "Sie haben keine Berechtigung, Flows im Namespace `{namespace}` zu erstellen.",
     "flow delete": "Sind Sie sicher, dass Sie <code>{flowCount}</code> Flow(s) löschen möchten?",
@@ -967,6 +1007,9 @@
     "flow must have id and namespace": "Flow muss eine Id und einen Namespace haben.",
     "flow must not be empty": "Flow darf nicht leer sein",
     "flow not imported": "Einige Flows konnten nicht importiert werden",
+    "flow revision latest": "Neueste flow-Revision",
+    "flow revision original": "Ursprüngliche flow-Revision",
+    "flow revision specific": "Spezifische flow-Revision",
     "flow source not found": "Flow-Quelle nicht gefunden",
     "flow-dependencies": "Abhängigkeiten",
     "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
@@ -1005,7 +1048,6 @@
     "input_custom_duration": "oder benutzerdefinierte Dauer eingeben:",
     "inputs": "Inputs",
     "instance": "Instanz",
-    "instance_administration": "Instanzverwaltung",
     "invalid bulk delete": "Ausführungen konnten nicht gelöscht werden",
     "invalid bulk force run": "Konnte Ausführungen nicht erzwingen",
     "invalid bulk kill": "Ausführungen konnten nicht beendet werden",
@@ -1082,6 +1124,8 @@
     "min": "Min",
     "minutes": "Minuten",
     "missingSource": "Fehlende Quelle",
+    "modify inputs": "Eingaben ändern",
+    "modify_inputs": "Eingaben ändern",
     "monogram": "Monogramm",
     "months": "Monate",
     "more_actions": "Weitere Aktionen",
@@ -1115,7 +1159,9 @@
       "dialog": {
         "deletion": {
           "confirm": "Bestätigen",
+          "file_single": "Möchten Sie die Datei <code>{name}</code> wirklich löschen?",
           "files": "Möchten Sie wirklich <code>{count}</code> Datei(en) löschen?",
+          "folder_single": "Möchten Sie den Ordner <code>{name}</code> und alle seine Inhalte wirklich löschen?",
           "folders": "Möchten Sie wirklich <code>{count}</code> Ordner und alle seine Inhalte löschen?",
           "mixed": "Möchten Sie wirklich den Ordner <code>{folders}</code> und die Datei <code>{files}</code> löschen?",
           "title": "Bestätigen Sie das Löschen des Inhalts"
@@ -1221,6 +1267,7 @@
       },
       "fields": {
         "general": {
+          "checks": "Überprüfungen",
           "concurrency": "Nebenläufigkeit",
           "disabled": "Deaktiviert",
           "labels": "Labels",
@@ -1289,6 +1336,7 @@
     "no_logs_data_description": "Keine Logs für die ausgewählten Filter gefunden. <br> Bitte versuchen Sie, Ihre Filter anzupassen, den Zeitraum zu ändern oder überprüfen Sie, ob der flow kürzlich ausgeführt wurde.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
     "no_results": {
+      "assets": "Keine Assets gefunden",
       "executions": "Keine Ausführungen gefunden",
       "flows": "Keine Flows gefunden",
       "kv_pairs": "Keine Key-Value-Paare gefunden",
@@ -1308,7 +1356,7 @@
       "next": "Weiter",
       "no_flows": "Keine Flows unter der tutorial Namespace verfügbar.",
       "previous": "Zurück",
-      "skip": "Tutorial überspringen",
+      "skip": "Produkt-Tour überspringen",
       "steps": {
         "0": {
           "content": "Wir freuen uns, dass Sie hier sind.<br />Lassen Sie uns Ihren ersten Flow erstellen.",
@@ -1402,13 +1450,36 @@
       "toggle": "Spielplatz",
       "tooltip_persistence": "Wenn Sie den Playground ausschalten und wieder einschalten, bleiben die Informationen erhalten, solange Sie auf der Seite bleiben."
     },
-    "pluginDefaults": "Plugin-Standardeinstellungen",
+    "plugin defaults exported": "Plugin-Standardeinstellungen exportiert",
+    "plugin defaults imported": "Plugin-Standardeinstellungen importiert",
+    "plugin defaults not imported": "Einige Plugin-Standardeinstellungen konnten nicht importiert werden",
+    "pluginDefaults": {
+      "add": "Plugin-Standard hinzufügen",
+      "add_subtitle": "Konfigurieren Sie ein neues Plugin-Standard mit seinen Eigenschaften",
+      "cancel": "Abbrechen",
+      "custom": "Benutzerdefiniertes Plugin",
+      "custom_configure": "Benutzerdefinierter Plugin-Typ - Konfiguration mit YAML",
+      "custom_placeholder": "Geben Sie den Plugin-Typ ein",
+      "custom_type": "Benutzerdefinierter Plugin-Typ",
+      "edit": "Standard-Plugin bearbeiten",
+      "edit_subtitle": "Ändern Sie die bestehende Standardkonfiguration des Plugins",
+      "form": "Formular",
+      "predefined": "Vordefiniertes Plugin",
+      "select_predefined": "Wählen Sie vordefiniertes Plugin",
+      "show_yaml": "YAML anzeigen",
+      "title": "Plugin-Standardeinstellungen",
+      "update": "Plugin-Standard aktualisieren",
+      "use_custom": "Benutzerdefiniert verwenden",
+      "yaml": "YAML",
+      "yaml_configuration": "YAML-Konfiguration"
+    },
     "pluginPage": {
       "alt": "Plugins-Symbol",
       "search": "Suche in {count}+ Plugins",
       "title1": "Plugins sind Bausteine für Ihre Workflows.",
       "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen."
     },
+    "plugin_default_already_exists": "Standard-Plugin für <code>{type}</code> existiert bereits.",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
@@ -1424,6 +1495,7 @@
       "label": "Vorschau",
       "view": "Anzeigen"
     },
+    "product_tour": "Produkteinführung",
     "properties": {
       "hidden": "In Tabelle versteckt",
       "hint": "Sichtbare Spalten auswählen",
@@ -1443,10 +1515,14 @@
     "remove_bookmark": "Sind Sie sicher, dass Sie dieses Lesezeichen entfernen möchten?",
     "replay": "Wiederholen",
     "replay confirm": "Sind Sie sicher, dass Sie diese Ausführung <code>{id}</code> wiederholen und eine neue erstellen möchten?",
+    "replay execution description": "Dies wird eine neue Ausführung basierend auf der ausgewählten Ausführung erstellen.",
+    "replay execution title": "Ausführung wiederholen",
     "replay from beginning tooltip": "Eine ähnliche Ausführung von Anfang an erstellen",
     "replay from task tooltip": "Eine ähnliche Ausführung ab Task <code>{taskId}</code> erstellen",
+    "replay inputs": "Eingaben",
     "replay latest revision": "Wiederholen mit neuester Revision",
     "replay the execution": "Führen Sie die Ausführung <code>{executionId}</code> für den flow <code>{flowId}</code> erneut aus.",
+    "replay using": "Wiederholen mit",
     "replay with inputs": "Wiedergabe mit Inputs",
     "replayed": "Ausführung ist wiederholt",
     "required field": "Erforderliches Feld",
@@ -1468,7 +1544,10 @@
     "resumed confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> fortsetzen möchten?",
     "resumed done": "Ausführung ist fortgesetzt",
     "resumed title": "Ausführung <code>{id}</code> fortsetzen",
+    "reuse original inputs": "Original-Inputs wiederverwenden",
+    "reuse_original_inputs": "Ursprüngliche Inputs wiederverwenden",
     "revision": "Revision",
+    "revision deleted": "Revision {revision} wurde erfolgreich gelöscht",
     "revisions": "Revisionen",
     "row count": "Zeilenanzahl",
     "run task in playground": "Task im Playground ausführen",
@@ -1738,7 +1817,6 @@
       "names": "Mandanten"
     },
     "tenantId": "Mandanten-ID",
-    "tenant_administration": "Mandantenverwaltung",
     "test-badge-text": "Test",
     "test-badge-tooltip": "Diese Ausführung wurde durch einen Test erstellt",
     "theme": "Modus",
@@ -1822,6 +1900,7 @@
     "update aborted": "Aktualisierung abgebrochen",
     "update ok": "ist aktualisiert",
     "updated date": "Aktualisierungsdatum",
+    "usage": "Verwendung",
     "use": "Verwenden",
     "use_dark_background": "Verwenden Sie diese Version, wenn Sie auf einem dunklen Hintergrund arbeiten, um sicherzustellen, dass unser Name lesbar bleibt.",
     "validate": "Validieren",
@@ -1857,7 +1936,7 @@
     },
     "welcome aboard": "🚀 Willkommen bei Kestra!",
     "welcome aboard content": "Nutzen Sie unsere geführte Tour, um Ihren ersten Flow zu erstellen, und schauen Sie sich Blueprints an, um weitere Beispiele zu finden.",
-    "welcome button create": "Meinen ersten Flow erstellen",
+    "welcome button create": "Produkt-Tour starten",
     "welcome display require": "Führen Sie Ihren <strong>ersten Flow</strong> aus, um loszulegen",
     "welcome_page": {
       "guide": "Benötigen Sie Unterstützung, um Ihren ersten flow auszuführen?",
@@ -1873,7 +1952,6 @@
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",
-    "years": "Jahre",
-    "your usage": "Ihre Nutzung"
+    "years": "Jahre"
   }
 }

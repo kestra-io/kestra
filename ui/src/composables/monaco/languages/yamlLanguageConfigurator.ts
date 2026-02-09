@@ -1,3 +1,4 @@
+import {computed, watch} from "vue";
 import {useI18n} from "vue-i18n";
 import {configureMonacoYaml} from "monaco-yaml";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
@@ -21,6 +22,7 @@ import {
     registerPebbleAutocompletion
 } from "./pebbleLanguageConfigurator";
 import {usePluginsStore} from "../../../stores/plugins";
+import {useBlueprintsStore} from "../../../stores/blueprints";
 import {languages} from "monaco-editor/esm/vs/editor/editor.api";
 import CompletionItem = languages.CompletionItem;
 
@@ -34,11 +36,14 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
     }
 
     async configureLanguage(pluginsStore: ReturnType<typeof usePluginsStore>) {
+        const validateYAML = computed(() => useBlueprintsStore().validateYAML);
+        watch(validateYAML, (shouldValidate) => configureMonacoYaml(monaco, {validate: shouldValidate}));
+
         configureMonacoYaml(monaco, {
             enableSchemaRequest: true,
             hover: localStorage.getItem("hoverTextEditor") === "true",
             completion: true,
-            validate: true,
+            validate: validateYAML.value ?? true,
             format: true,
             schemas: yamlSchemas()
         });

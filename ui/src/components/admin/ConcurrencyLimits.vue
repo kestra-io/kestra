@@ -31,18 +31,18 @@
                 </el-table>
             </template>
         </DataTable>
-        <el-dialog v-model="editRunning" :title="t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
+        <el-dialog v-model="editRunning" :title="$t('concurrency_limit.dialog_title')" destroyOnClose :appendToBody="true" width="400px">
             <el-alert type="warning" :closable="false" showIcon>
-                {{ t("concurrency_limit.warning") }}
+                {{ $t("concurrency_limit.warning") }}
             </el-alert>
             <br>
             <el-input-number v-model="newRunningCount" />
             <template #footer>
                 <el-button @click="editRunning = false">
-                    {{ t("cancel") }}
+                    {{ $t("cancel") }}
                 </el-button>
                 <el-button type="primary" @click="saveEditRunning()">
-                    {{ t("save") }}
+                    {{ $t("save") }}
                 </el-button>
             </template>
         </el-dialog>

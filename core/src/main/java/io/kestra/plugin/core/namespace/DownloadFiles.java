@@ -27,13 +27,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.storages.NamespaceFile.toLogicalPath;
+
 @Slf4j
 @SuperBuilder
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Download one or multiple files from your namespace files.",
-    description = "Use a regex glob pattern or a file path to download files from your namespace files. This can be useful to share code between projects and teams, which is located in different namespaces."
+    title = "Download files from Namespace storage.",
+    description = """
+        Fetches files from a Namespace using file paths or glob patterns, storing them into the current working storage with preserved relative paths. Useful for sharing assets across Namespaces.
+
+        `files` accepts a string or list (globs allowed); `destination` prefixes the output location."""
 )
 @Plugin(
     examples = {
@@ -118,7 +123,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
                 try (InputStream is = runContext.storage().getFile(file.uri())) {
                     URI uri = runContext.storage().putFile(is, renderedDestination + file.path());
                     logger.debug(String.format("Downloaded %s", uri));
-                    return new AbstractMap.SimpleEntry<>(file.path(true).toString(), uri);
+                    return new AbstractMap.SimpleEntry<>(toLogicalPath(file.filePath()), uri);
                 }
             }))
             .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));

@@ -203,18 +203,20 @@ public abstract class AbstractCommand implements Callable<Integer> {
                 server.start();
 
                 if (this.endpointConfiguration.getPort().isPresent()) {
-                    URI endpoint = null;
+                    URI managementEndpoint = null;
+                    URI healthEndpoint = null;
                     try {
-                        endpoint = UriBuilder.of(server.getURL().toURI())
+                        managementEndpoint = UriBuilder.of(server.getURL().toURI())
                             .port(this.endpointConfiguration.getPort().get())
-                            .path("/health")
                             .build();
+                        healthEndpoint = managementEndpoint.resolve("./health");
                     } catch (URISyntaxException e) {
                         e.printStackTrace();
                     }
-                    log.info("Server Running: {}, Management server on port {}", server.getURL(), endpoint);
+                    log.info("Main server is running at {}, management server at {}", server.getURL(), managementEndpoint);
+                    log.info("Health endpoint is available at {}", healthEndpoint);
                 } else {
-                    log.info("Server Running: {}", server.getURL());
+                    log.info("Server is running at {}", server.getURL());
                 }
 
                 if (isFlowAutoLoadEnabled()) {
@@ -233,12 +235,12 @@ public abstract class AbstractCommand implements Callable<Integer> {
         Runtime.getRuntime().addShutdownHook(new Thread(
             () -> {
                 if (logShutdown) {
-                    log.warn("Receiving shutdown ! Try to graceful exit");
+                    log.warn("Shutdown signal received. Initiating graceful shutdown.");
                 }
                 try {
                     run.run();
                 } catch (Exception e) {
-                    log.error("Failed to close gracefully!", e);
+                    log.error("Failed to complete graceful shutdown", e);
                 }
             },
             "command-shutdown"

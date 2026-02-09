@@ -12,6 +12,7 @@ import {useAxios} from "../utils/axios";
 export interface PluginComponent {
     icon?: string;
     cls?: string;
+    title?: string;
     deprecated?: boolean;
     version?: string;
     description?: string;

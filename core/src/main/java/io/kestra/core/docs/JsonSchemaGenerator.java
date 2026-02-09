@@ -22,6 +22,8 @@ import com.github.victools.jsonschema.module.swagger2.Swagger2Module;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetExporter;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -63,8 +65,7 @@ import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 @Singleton
 @Slf4j
 public class JsonSchemaGenerator {
-    
-    private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
+
     private static final List<Class<?>> SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA = List.of(Task.class, AbstractTrigger.class);
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
@@ -276,10 +277,10 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
             .with(Option.ALLOF_CLEANUP_AT_THE_END);
-            
-        // HACK: Registered a custom JsonUnwrappedDefinitionProvider prior to the JacksonModule 
+
+        // HACK: Registered a custom JsonUnwrappedDefinitionProvider prior to the JacksonModule
         // to be able to return an CustomDefinition with an empty node when the ResolvedType can't be found.
-        builder.forTypesInGeneral().withCustomDefinitionProvider(new JsonUnwrappedDefinitionProvider(){
+        builder.forTypesInGeneral().withCustomDefinitionProvider(new JsonUnwrappedDefinitionProvider() {
             @Override
             public CustomDefinition provideCustomSchemaDefinition(ResolvedType javaType, SchemaGenerationContext context) {
                 try {
@@ -321,7 +322,7 @@ public class JsonSchemaGenerator {
         // inline some type
         builder.forTypesInGeneral()
             .withCustomDefinitionProvider(new CustomDefinitionProviderV2() {
-                
+
                 @Override
                 public CustomDefinition provideCustomSchemaDefinition(ResolvedType javaType, SchemaGenerationContext context) {
                     if (javaType.isInstanceOf(Map.class) || javaType.isInstanceOf(Enum.class)) {
@@ -363,10 +364,6 @@ public class JsonSchemaGenerator {
                         javaType.getTypeParameters().getFirst()
                     );
                 } else if (List.class.isAssignableFrom(erasedType) || Map.class.isAssignableFrom(erasedType)) {
-                    return List.of(
-                        javaType.getTypeParameters().getFirst()
-                    );
-                } else if (isAssignableFromResolvedAsString(erasedType)) {
                     return List.of(
                         javaType.getTypeParameters().getFirst()
                     );
@@ -589,12 +586,50 @@ public class JsonSchemaGenerator {
         // The `const` property is used by editors for auto-completion based on that schema.
         builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
             final Class<?> pluginType = scope.getType().getErasedType();
-            if (pluginType.getAnnotation(Plugin.class) != null) {
+            Plugin pluginAnnotation = pluginType.getAnnotation(Plugin.class);
+            if (pluginAnnotation != null) {
                 ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
                 if (properties != null) {
-                    properties.set("type", context.getGeneratorConfig().createObjectNode()
-                        .put("const", pluginType.getName())
-                    );
+                    LinkedHashSet<String> allowedTypeValues = new LinkedHashSet<>();
+                    allowedTypeValues.add(pluginType.getName());
+
+                    try {
+                        Set<String> annotationAliases = io.kestra.core.models.Plugin.getAliases(pluginType);
+                        if (annotationAliases != null) {
+                            allowedTypeValues.addAll(annotationAliases.stream().filter(Objects::nonNull).toList());
+                        }
+                    } catch (Exception ignored) {
+                    }
+
+                    if (this.pluginRegistry != null) {
+                        for (RegisteredPlugin rp : this.getRegisteredPlugins()) {
+                            if (rp.getAliases() == null || rp.getAliases().isEmpty()) {
+                                continue;
+                            }
+
+                            for (Map.Entry<String, Class<?>> aliasEntry : rp.getAliases().values()) {
+                                if (aliasEntry == null || aliasEntry.getValue() == null || aliasEntry.getKey() == null) {
+                                    continue;
+                                }
+                                if (aliasEntry.getValue().equals(pluginType)) {
+                                    allowedTypeValues.add(aliasEntry.getKey());
+                                }
+                            }
+                        }
+                    }
+
+                    if (allowedTypeValues.size() == 1) {
+                        properties.set("type", context.getGeneratorConfig().createObjectNode()
+                            .put("const", allowedTypeValues.iterator().next())
+                        );
+                    } else {
+                        ArrayNode enumNode = context.getGeneratorConfig().createArrayNode();
+                        allowedTypeValues.forEach(enumNode::add);
+
+                        ObjectNode typeNode = context.getGeneratorConfig().createObjectNode();
+                        typeNode.set("enum", enumNode);
+                        properties.set("type", typeNode);
+                    }
                 }
             }
         });
@@ -653,15 +688,6 @@ public class JsonSchemaGenerator {
                 .put("const", defaultValue)
             );
         });
-    }
-
-    private boolean isAssignableFromResolvedAsString(Class<?> declaredType) {
-        for (Class<?> clazz : TYPES_RESOLVED_AS_STRING) {
-            if (clazz.isAssignableFrom(declaredType)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     protected List<ResolvedType> subtypeResolver(ResolvedType declaredType, TypeContext typeContext, List<String> allowedPluginTypes) {
@@ -764,6 +790,22 @@ public class JsonSchemaGenerator {
                         consumer.accept(typeContext.resolve(clz));
                     }
                 }).toList();
+        } else if (declaredType.getErasedType() == Asset.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getAssets().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .map(typeContext::resolve)
+                .toList();
+        } else if (declaredType.getErasedType() == AssetExporter.class) {
+            return getRegisteredPlugins()
+                .stream()
+                .flatMap(registeredPlugin -> registeredPlugin.getAssetExporters().stream())
+                .filter(p -> allowedPluginTypes.isEmpty() || allowedPluginTypes.contains(p.getName()))
+                .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
+                .map(typeContext::resolve)
+                .toList();
         }
 
         return null;
@@ -839,7 +881,7 @@ public class JsonSchemaGenerator {
         Class<?> baseCls = target.getMember().getDeclaringType().getErasedType();
         if (Modifier.isAbstract(baseCls.getModifiers())) {
             // we must retrieve the instance class that leads to this field in this abstract class.
-            // there is no direct way, so we use the hierarchy of classes and get the first one that is not a mixin (not overriden)
+            // there is no direct way, so we use the hierarchy of classes and get the first one that is not a mixin (not overridden)
             Optional<HierarchicType> concreteCls = target.getDeclaringTypeMembers().mainTypeAndOverrides()
                 .stream()
                 .filter(type -> !type.isMixin())

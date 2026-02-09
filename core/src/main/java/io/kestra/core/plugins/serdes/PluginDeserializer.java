@@ -13,8 +13,8 @@ import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
 import io.micronaut.context.exceptions.NoSuchBeanException;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
@@ -29,9 +29,8 @@ import java.util.Optional;
  * The {@link PluginDeserializer} uses the {@link PluginRegistry} to found the plugin class corresponding to
  * a plugin type.
  */
-public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
-
-    private static final Logger log = LoggerFactory.getLogger(PluginDeserializer.class);
+@Slf4j
+public class PluginDeserializer<T extends Plugin> extends JsonDeserializer<T> {
 
     private static final String TYPE = "type";
     private static final String VERSION = "version";
@@ -93,6 +92,10 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
                 identifier
             );
             pluginType = pluginRegistry.findClassByIdentifier(identifier);
+
+            if (pluginType == null) {
+                pluginType = fallbackClass();
+            }
         }
 
         if (pluginType == null) {
@@ -152,5 +155,9 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
         }
 
         return isVersioningSupported && version != null && !version.isEmpty() ? type + ":" + version : type;
+    }
+
+    protected Class<? extends Plugin> fallbackClass() {
+        return null;
     }
 }

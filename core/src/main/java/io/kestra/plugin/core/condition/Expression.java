@@ -25,7 +25,10 @@ import jakarta.validation.constraints.NotNull;
 @NoArgsConstructor
 @Schema(
     title = "Condition based on variable expression.",
-    description = "If the result is an empty string, a string containing only space or `false`, the condition will be considered as false."
+    description = """
+        Renders a templated expression and treats the result as truthy/falsey to decide whether the condition passes.
+
+        Blank strings or the literal `false` (case-sensitive) evaluate to false; everything else is true. Expressions can reference any flow variables available at evaluation time, so make sure they resolve without errors."""
 )
 @Plugin(
     examples = {
@@ -53,7 +56,7 @@ import jakarta.validation.constraints.NotNull;
     },
     aliases = {"io.kestra.core.models.conditions.types.VariableCondition", "io.kestra.plugin.core.condition.ExpressionCondition"}
 )
-public class Expression extends Condition implements ScheduleCondition {
+public class Expression extends Condition {
     @NotNull
     private Property<String> expression;
 

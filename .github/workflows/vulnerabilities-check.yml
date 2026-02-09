@@ -6,7 +6,7 @@ on:
   workflow_dispatch: {}
 
 env:
-  JAVA_VERSION: '21'
+  JAVA_VERSION: '25'
 
 permissions:
   contents: read
@@ -27,6 +27,7 @@ jobs:
         with:
           java-enabled: true
           node-enabled: true
+          java-version: 25
 
       # Npm
       - name: Npm - Install
@@ -68,6 +69,7 @@ jobs:
         with:
           java-enabled: false
           node-enabled: false
+          java-version: 25
 
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check
@@ -105,6 +107,7 @@ jobs:
         with:
           java-enabled: false
           node-enabled: false
+          java-version: 25
 
       # Run Trivy image scan for Docker vulnerabilities, see https://github.com/aquasecurity/trivy-action
       - name: Docker Vulnerabilities Check

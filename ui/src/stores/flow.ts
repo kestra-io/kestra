@@ -10,15 +10,14 @@ import {useUnsavedChangesStore} from "./unsavedChanges";
 import {defineStore} from "pinia";
 import {FlowGraph} from "@kestra-io/ui-libs/vue-flow-utils";
 import {makeToast} from "../utils/toast";
+import {InputType} from "../utils/inputs";
 import {globalI18n} from "../translations/i18n";
 import {transformResponse} from "../components/dependencies/composables/useDependencies";
 import {useAuthStore} from "override/stores/auth";
 import {useRoute} from "vue-router";
 import {useAxios} from "../utils/axios";
 import {defaultNamespace} from "../composables/useNamespaces";
-import {Flow, FlowWithSource} from "../generated/kestra-api";
-import * as flowSdk from "../generated/kestra-api/sdk/ks-Flows.gen";
-import {InputType} from "../utils/inputs";
+import {TUTORIAL_NAMESPACE} from "../utils/constants";
 
 const textYamlHeader = {
     headers: {
@@ -56,9 +55,26 @@ interface FlowValidations {
     deprecationPaths?: string[];
 }
 
+export interface Flow {
+    id: string;
+    namespace: string;
+    source: string;
+    revision?: number;
+    deleted?: boolean;
+    disabled?: boolean;
+    labels?: Record<string, string | boolean>;
+    triggers?: Trigger[];
+    inputs?: Input[];
+    errors?: { message: string; code?: string, id?: string }[];
+    concurrency?: {
+        limit: number;
+        behavior: string;
+    };
+}
+
 export const useFlowStore = defineStore("flow", () => {
     const flows = ref<Flow[]>()
-    const flow = ref<FlowWithSource>()
+    const flow = ref<Flow>()
     const task = ref<Task>()
     const search = ref<any[]>()
     const total = ref<number>(0)
@@ -238,14 +254,34 @@ export const useFlowStore = defineStore("flow", () => {
 
         const isCreatingBackup = isCreating.value;
         if (isCreating.value && !overrideFlow) {
-            await flowSdk.createFlow({body: flowSource ?? ""})
-                .then((response) => {
-                    if(!response){
-                        return;
+            try {
+                const response = await createFlow({flow: flowSource ?? ""});
+                toast.saved(response.id);
+                isCreating.value = false;
+            } catch (error: any) {
+                if (error?.response?.status === 422 && error?.response?.data?.message?.includes("Flow id already exists")) {
+                    return toast.confirm(
+                        t("flow already exists message", flowParsed.value),
+                        async () => {
+                            const response = await saveFlow({flow: flowSource});
+                            toast.saved(response.id);
+                            isCreating.value = false;
+                            return "redirect_to_update";
+                        },
+                        "warning"
+                    )
+                }
+
+                if (error.response?.data) {
+                    coreStore.message = {
+                        variant: "error",
+                        response: error.response,
+                        content: error.response.data
                     }
-                    toast.saved(response.id);
-                    isCreating.value = false;
-                });
+                }
+                
+                throw error;
+            }
         } else {
             await saveFlow({flow: flowSource})
                 .then((response: Flow) => {
@@ -279,7 +315,7 @@ export const useFlowStore = defineStore("flow", () => {
 
     async function initYamlSource() {
         if (!flow.value) return;
-        const {source = ""} = flow.value;
+        const {source} = flow.value;
         flowYaml.value = source;
         flowYamlOrigin.value = source;
         if (flowHaveTasks.value) {
@@ -287,24 +323,23 @@ export const useFlowStore = defineStore("flow", () => {
         }
 
         // validate flow on first load
-        return validateFlow({
-            flow: isCreating.value ? source : yamlWithNextRevision.value
-        })
+        return validateFlow({flow: isCreating.value ? source : yamlWithNextRevision.value})
     }
 
-    function findFlows(options: Parameters<typeof flowSdk.searchFlows>[0] & { onlyTotal?: boolean }) {
-        return flowSdk.searchFlows(options).then(response => {
-            if(!response.data){
-                return undefined
-            }
+    function findFlows(options: { [key: string]: any }) {
+        const sortString = options.sort ? `?sort=${options.sort}` : ""
+        delete options.sort
+        return axios.get(`${apiUrl()}/flows/search${sortString}`, {
+            params: options
+        }).then(response => {
             if (options.onlyTotal) {
                 return response.data.total;
             }
 
             else {
-                flows.value = response.data?.results
+                flows.value = response.data.results
                 total.value = response.data.total
-                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== "tutorial").length
+                overallTotal.value = response.data.results.filter((f: any) => f.namespace !== TUTORIAL_NAMESPACE).length
 
                 return response.data;
             }
@@ -329,22 +364,20 @@ export const useFlowStore = defineStore("flow", () => {
         })
     }
 
-    function loadFlow(options: { namespace: string, id: string, revision?: number, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
-        const httpClient = options.httpClient
-        return sdk.flowsGetFlow({
-                    id: options.id,
-                    namespace: options.namespace,
+    function loadFlow(options: { namespace: string, id: string, revision?: string, allowDeleted?: boolean, source?: boolean, store?: boolean, deleted?: boolean, httpClient?: any }) {
+        const httpClient = options.httpClient ?? axios
+        return httpClient.get(`${apiUrl()}/flows/${options.namespace}/${options.id}`,
+            {
+                params: {
                     revision: options.revision,
-                    allowDeleted: options.allowDeleted ?? false,
-                    source: options.source === undefined ? true : false
+                    allowDeleted: options.allowDeleted,
+                    source: options.source === undefined ? true : undefined
+                },
+                validateStatus: (status: number) => {
+                    return options.deleted ? status === 200 || status === 404 : status === 200;
                 }
-            , {
-                client: httpClient
             })
-            .then((response) => {
-                if(!response.data){
-                    return Promise.reject("Flow not found");
-                }
+            .then((response: any) => {
                 if (response.data.exception) {
                     coreStore.message = {
                         title: "Invalid source code",
@@ -364,8 +397,8 @@ export const useFlowStore = defineStore("flow", () => {
                 }
 
                 flow.value = response.data;
-                flowYaml.value = response.data.source ?? "";
-                flowYamlOrigin.value = response.data.source ?? "";
+                flowYaml.value = response.data.source;
+                flowYamlOrigin.value = response.data.source;
                 overallTotal.value = 1;
 
                 return response.data;
@@ -421,11 +454,12 @@ export const useFlowStore = defineStore("flow", () => {
     }
 
     function createFlow(options: { flow: string }) {
-        return sdk.flowsCreateFlow({body: options.flow}, {
+        return axios.post(`${apiUrl()}/flows`, options.flow, {
             ...textYamlHeader,
-            ...VALIDATE
+            ...VALIDATE,
+            showMessageOnError: false
         }).then(response => {
-            if (!response?.status || response.status >= 300) {
+            if (response.status >= 300) {
                 return Promise.reject(response)
             }
 
@@ -576,7 +610,7 @@ function deleteFlowAndDependencies() {
             .then(response => response.data)
     }
 
-    function loadRevisions(options: { namespace: string, id: string, store?: boolean }) {
+    function loadRevisions(options: { namespace: string, id: string, store?: boolean, allowDeleted?: boolean }) {
         return axios.get(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions`).then(response => {
             if (options.store !== false) {
                 revisions.value = response.data
@@ -616,9 +650,11 @@ function deleteFlowAndDependencies() {
         window.URL.revokeObjectURL(url);
     }
 
-    function importFlows(options: { file: File, namespace: string, override?: boolean }) {
-        return axios.post(`${apiUrl()}/flows/import`, Utils.toFormData(options), {
-            headers: {"Content-Type": "multipart/form-data"}
+    function importFlows(options: { file: FormData,  failOnError: boolean }) {
+         const {file, failOnError} = options;
+        return axios.post(`${apiUrl()}/flows/import`, file, {
+            headers: {"Content-Type": "multipart/form-data"},
+            params: {failOnError}
         }).then(response => {
             return response;
         });
@@ -644,12 +680,7 @@ function deleteFlowAndDependencies() {
         return axios.delete(`${apiUrl()}/flows/delete/by-query`, {params: options})
     }
 
-    function validateFlow(options: { flow?: string }) {
-        if(!options.flow) {
-            return Promise.resolve({
-                constraints: t("flow must not be empty")
-            });
-        }
+    function validateFlow(options: { flow: string }) {
         const flowValidationIssues: FlowValidations = {};
         if(isCreating.value) {
             const {namespace} = YAML_UTILS.getMetadata(options.flow);
@@ -757,6 +788,10 @@ function deleteFlowAndDependencies() {
         flowVar.triggers.push(trigger)
 
         flow.value = {...flowVar}
+    }
+
+    function deleteRevision(options: { namespace: string, id: string, revision: string }) {
+        return axios.delete(`${apiUrl()}/flows/${options.namespace}/${options.id}/revisions?revisions=${options.revision}`);
     }
 
     const authStore = useAuthStore()
@@ -917,5 +952,6 @@ function deleteFlowAndDependencies() {
         loadTaskAggregatedMetrics,
         loadTasksWithMetrics,
         getNamespace,
+        deleteRevision
     }
 })

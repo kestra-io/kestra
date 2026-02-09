@@ -2,6 +2,7 @@ package io.kestra.core.models.executions;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
+import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
@@ -57,6 +58,10 @@ public class TaskRun implements TenantInterface {
     @Schema(implementation = Object.class)
     Variables outputs;
 
+    @With
+    @Nullable
+    AssetsInOut assets;
+
     @NotNull
     State state;
 
@@ -87,6 +92,7 @@ public class TaskRun implements TenantInterface {
             this.value,
             this.attempts,
             this.outputs,
+            this.assets,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -114,6 +120,7 @@ public class TaskRun implements TenantInterface {
             this.value,
             newAttempts,
             this.outputs,
+            this.assets,
             this.state.withState(state),
             this.iteration,
             this.dynamic,
@@ -137,6 +144,7 @@ public class TaskRun implements TenantInterface {
             this.value,
             newAttempts,
             this.outputs,
+            this.assets,
             this.state.withState(State.Type.FAILED),
             this.iteration,
             this.dynamic,
@@ -156,6 +164,7 @@ public class TaskRun implements TenantInterface {
             .value(this.getValue())
             .attempts(this.getAttempts())
             .outputs(this.getOutputs())
+            .assets(this.getAssets())
             .state(state == null ? this.getState() : state)
             .iteration(this.getIteration())
             .build();
@@ -185,15 +194,11 @@ public class TaskRun implements TenantInterface {
     }
 
     public TaskRunAttempt lastAttempt() {
-        if (this.attempts == null) {
+        if (this.attempts == null || this.attempts.isEmpty()) {
             return null;
         }
 
-        return this
-            .attempts
-            .stream()
-            .reduce((a, b) -> b)
-            .orElse(null);
+        return this.attempts.getLast();
     }
 
     public TaskRun onRunningResend() {
@@ -242,6 +247,7 @@ public class TaskRun implements TenantInterface {
             ", parentTaskRunId=" + this.getParentTaskRunId() +
             ", state=" + this.getState().getCurrent().toString() +
             ", outputs=" + this.getOutputs() +
+            ", assets=" + this.getAssets() +
             ", attempts=" + this.getAttempts() +
             ")";
     }
@@ -264,8 +270,7 @@ public class TaskRun implements TenantInterface {
      * @return The next retry date, null if maxAttempt || maxDuration is reached
      */
     public Instant nextRetryDate(AbstractRetry retry, Execution execution) {
-        if (retry.getMaxAttempts() != null && execution.getMetadata().getAttemptNumber() >= retry.getMaxAttempts()) {
-
+        if (this.attempts == null || this.attempts.isEmpty() || retry.getMaxAttempts() != null && execution.getMetadata().getAttemptNumber() >= retry.getMaxAttempts()) {
             return null;
         }
         Instant base = this.lastAttempt().getState().maxDate();

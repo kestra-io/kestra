@@ -35,13 +35,12 @@ export function useSavedFilters(prefix: string) {
         }
     });
 
-    const saveFilter = (name: string, description: string, filters: any[], searchQuery?: string) => {
+    const saveFilter = (name: string, description: string, filters: any[]) => {
         savedFilters.value = [...savedFilters.value, {
             id: `saved_${Date.now()}`,
             name,
             description,
             filters: [...filters],
-            searchQuery,
             createdAt: new Date(),
         }];
     };

@@ -71,7 +71,7 @@ public class NamespaceFileController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The string the file path should contain") @QueryValue String q
     ) throws IOException {
-        return namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface).all(q).stream().map(namespaceFile -> namespaceFile.path(true).toString()).toList();
+        return namespaceFactory.of(tenantService.resolveTenant(), namespace, storageInterface).all(q).stream().map(namespaceFile -> namespaceFile.filePath().toString()).toList();
     }
 
     @ExecuteOn(TaskExecutors.IO)

@@ -143,6 +143,8 @@ public abstract class RunContext implements PropertyContext {
     @Deprecated(forRemoval = true)
     public abstract String tenantId();
 
+    public abstract TaskRunInfo taskRunInfo();
+
     public abstract FlowInfo flowInfo();
 
     /**
@@ -190,7 +192,19 @@ public abstract class RunContext implements PropertyContext {
      */
     public abstract LocalPath localPath();
 
+    public record TaskRunInfo(String executionId, String taskId, String taskRunId, Object value) {
+
+    }
+
     public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
+        public static FlowInfo from(Map<String, Object> flowInfoMap) {
+            return new FlowInfo(
+                (String) flowInfoMap.get("tenantId"),
+                (String) flowInfoMap.get("namespace"),
+                (String) flowInfoMap.get("id"),
+                (Integer) flowInfoMap.get("revision")
+            );
+        }
     }
 
     /**
@@ -207,6 +221,11 @@ public abstract class RunContext implements PropertyContext {
     public abstract AclChecker acl();
 
     /**
+     * Get access to the Assets handler.
+     */
+    public abstract AssetEmitter assets() throws IllegalVariableEvaluationException;
+
+    /**
      * Clone this run context for a specific plugin.
      * @return a new run context with the plugin configuration of the given plugin.
      */
@@ -216,4 +235,9 @@ public abstract class RunContext implements PropertyContext {
      * @return an InputAndOutput that can be used to work with inputs and outputs.
      */
     public abstract InputAndOutput inputAndOutput();
+
+    /**
+     * Get access to the SDK handler which allows to interact easily with the Kestra API via the SDK.
+     */
+    public abstract SDK sdk();
 }

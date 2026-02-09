@@ -4,19 +4,19 @@
             <ul class="header-actions-list">
                 <li>
                     <el-button v-if="canRead" :icon="Download" @click="exportFlowsAsStream()">
-                        {{ t('export_csv') }}
+                        {{ $t('export_csv') }}
                     </el-button>
                 </li>
                 <li>
                     <el-button :icon="Upload" @click="file?.click()">
-                        {{ t("import") }}
+                        {{ $t("import") }}
                     </el-button>
                     <input ref="file" type="file" accept=".zip, .yml, .yaml" @change="importFlows()" class="d-none">
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
                         <el-button :icon="TextBoxSearch">
-                            {{ t("source search") }}
+                            {{ $t("source search") }}
                         </el-button>
                     </router-link>
                 </li>
@@ -29,7 +29,7 @@
                         v-if="canCreate"
                     >
                         <el-button :icon="Plus" type="primary">
-                            {{ t("create") }}
+                            {{ $t("create") }}
                         </el-button>
                     </router-link>
                 </li>
@@ -58,7 +58,7 @@
                             refresh: {shown: true, callback: refresh}
                         }"
                         @update-properties="updateDisplayColumns"
-                        :defaultScope="!route.name?.toString().startsWith('namespaces/')"
+                        :defaultScope="defaultScopeFilter"
                     />
                 </template>
 
@@ -74,7 +74,7 @@
                         :rowClassName="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
-                        :no-data-text="t('no_results.flows')"
+                        :no-data-text="$t('no_results.flows')"
                         class="flows-table"
                         :rowKey="(row: any) => `${row.namespace}-${row.id}`"
                     >
@@ -87,24 +87,24 @@
                                 @unselect="toggleAllUnselected"
                             >
                                 <el-button v-if="canRead" :icon="Download" @click="exportFlows()">
-                                    {{ t("export") }}
+                                    {{ $t("export") }}
                                 </el-button>
                                 <el-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
-                                    {{ t("delete") }}
+                                    {{ $t("delete") }}
                                 </el-button>
                                 <el-button
                                     v-if="canUpdate && anyFlowDisabled()"
                                     @click="enableFlows"
                                     :icon="FileDocumentCheckOutline"
                                 >
-                                    {{ t("enable") }}
+                                    {{ $t("enable") }}
                                 </el-button>
                                 <el-button
                                     v-if="canUpdate && anyFlowEnabled()"
                                     @click="disableFlows"
                                     :icon="FileDocumentRemoveOutline"
                                 >
-                                    {{ t("disable") }}
+                                    {{ $t("disable") }}
                                 </el-button>
                             </BulkSelect>
                         </template>
@@ -113,7 +113,7 @@
                                 prop="id"
                                 sortable="custom"
                                 :sortOrders="['ascending', 'descending']"
-                                :label="t('id')"
+                                :label="$t('id')"
                             >
                                 <template #default="scope">
                                     <div class="flow-id">
@@ -152,7 +152,7 @@
                             <template v-for="colProp in displayColumns" :key="colProp">
                                 <el-table-column
                                     v-if="colProp === 'labels'"
-                                    :label="t('labels')"
+                                    :label="$t('labels')"
                                 >
                                     <template #default="scope">
                                         <Labels :labels="scope.row.labels" />
@@ -164,7 +164,7 @@
                                     prop="namespace"
                                     sortable="custom"
                                     :sortOrders="['ascending', 'descending']"
-                                    :label="t('namespace')"
+                                    :label="$t('namespace')"
                                     :formatter="(_: any, __: any, cellValue: string) =>
                                         FILTERS.invisibleSpace(cellValue)
                                     "
@@ -173,7 +173,7 @@
                                 <el-table-column
                                     v-else-if="colProp === 'state.startDate' && user.hasAny(permission.EXECUTION)"
                                     prop="state.startDate"
-                                    :label="t('last execution date')"
+                                    :label="$t('last execution date')"
                                 >
                                     <template #default="scope">
                                         <router-link
@@ -196,7 +196,7 @@
                                 <el-table-column
                                     v-else-if="colProp === 'state.current' && user.hasAny(permission.EXECUTION)"
                                     prop="state.current"
-                                    :label="t('last execution status')"
+                                    :label="$t('last execution status')"
                                 >
                                     <template #default="scope">
                                         <div
@@ -223,7 +223,7 @@
                                 <el-table-column
                                     v-else-if="colProp === 'state' && user.hasAny(permission.EXECUTION)"
                                     prop="state"
-                                    :label="t('execution statistics')"
+                                    :label="$t('execution statistics')"
                                     className="row-graph"
                                 >
                                     <template #default="scope">
@@ -240,7 +240,7 @@
 
                                 <el-table-column
                                     v-else-if="colProp === 'triggers'"
-                                    :label="t('triggers')"
+                                    :label="$t('triggers')"
                                     className="row-action"
                                 >
                                     <template #default="scope">
@@ -249,21 +249,25 @@
                                 </el-table-column>
                             </template>
 
-                            <el-table-column columnKey="action" className="row-action" :label="t('actions')">
+                            <el-table-column columnKey="action" className="row-action" :label="$t('actions')">
                                 <template #default="scope">
-                                    <router-link
-                                        :to="{
-                                            name: 'flows/update',
-                                            params: {
-                                                namespace: scope.row.namespace,
-                                                id: scope.row.id,
-                                            },
-                                        }"
-                                    >
-                                        <Kicon :tooltip="t('details')" placement="left">
+                                    <div class="flow-actions-cell">
+                                        <IconButton :tooltip="t('execute')" @click="openExecuteModal(scope.row)">
+                                            <Play />
+                                        </IconButton>
+                                        <IconButton
+                                            :tooltip="$t('details')"
+                                            :to="{
+                                                name: 'flows/update',
+                                                params: {
+                                                    namespace: scope.row.namespace,
+                                                    id: scope.row.id,
+                                                },
+                                            }"
+                                        >
                                             <TextSearch />
-                                        </Kicon>
-                                    </router-link>
+                                        </IconButton>
+                                    </div>
                                 </template>
                             </el-table-column>
                         </template>
@@ -271,6 +275,22 @@
                 </template>
             </DataTable>
         </div>
+
+        <el-dialog
+            v-model="showRunModal"
+            destroyOnClose
+            appendToBody
+            width="70%"
+        >
+            <template #header>
+                <span v-if="selectedFlow.id" v-html="$t('execute the flow', {id: selectedFlow.id})" />
+            </template>
+            <FlowRun
+                v-if="executionsStore.flow"
+                :redirect="false"
+                @execution-trigger="handleExecutionStart"
+            />
+        </el-dialog>
     </section>
 </template>
 
@@ -292,8 +312,9 @@
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
+    import Play from "vue-material-design-icons/Play.vue";
 
-    import Kicon from "../Kicon.vue";
+    import IconButton from "../IconButton.vue";
     import {Status} from "@kestra-io/ui-libs";
     import Labels from "../layout/Labels.vue";
     import DateAgo from "../layout/DateAgo.vue";
@@ -301,6 +322,7 @@
     import DataTable from "../layout/DataTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
     //@ts-expect-error no declaration file
+    import FlowRun from "./FlowRun.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import KSFilter from "../filter/components/KSFilter.vue";
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
@@ -325,10 +347,12 @@
         topbar?: boolean;
         namespace?: string;
         id?: string | null;
+        defaultScopeFilter?: boolean,
     }>(), {
         topbar: true,
         namespace: undefined,
         id: undefined,
+        defaultScopeFilter: true,
     });
 
     const flowStore = useFlowStore();
@@ -521,6 +545,26 @@
         updateVisibleColumns(newColumns);
     }
 
+    const showRunModal = ref(false);
+    const selectedFlow = ref<any | null>(null);
+
+    async function openExecuteModal(flow: any) {
+        selectedFlow.value = flow;
+
+        await executionsStore.loadFlowForExecution({
+            namespace: flow.namespace,
+            flowId: flow.id,
+            store: true
+        });
+
+        showRunModal.value = true;
+    }
+
+    function handleExecutionStart() {
+        showRunModal.value = false;
+        toast.success(t("execution_started"));
+    }
+
     function exportFlows() {
         toast.confirm(
             t("flow export", {flowCount: queryBulkAction.value ? flowStore.total : selection.value.length}),
@@ -616,7 +660,7 @@
         const formData = new FormData();
         if (file.value && file.value.files && file.value.files[0]) {
             formData.append("fileUpload", file.value.files[0]);
-            flowStore.importFlows(formData as any).then((res: any) => {
+            flowStore.importFlows({file: formData, failOnError: true}).then((res: any) => {
                 if (res.data.length > 0) {
                     toast.warning(t("flows not imported") + ": " + res.data.join(", "));
                 } else {
@@ -658,7 +702,7 @@
     }
 
     function chartFilters() {
-        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "P30D";
+        const DEFAULT_DURATION = miscStore.configs?.chartDefaultDuration ?? "PT24H";
         return [{
             field: "timeRange",
             value: DEFAULT_DURATION,
@@ -685,10 +729,6 @@
 
 .flow-id {
     min-width: 200px;
-
-    & a {
-        color: var(--bs-code-color)
-    }
 }
 
 .flows-table .el-table__cell {
@@ -721,5 +761,11 @@
     &:hover {
         text-decoration: none;
     }
+}
+
+.flow-actions-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 </style>

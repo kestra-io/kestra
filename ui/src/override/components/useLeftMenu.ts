@@ -1,11 +1,18 @@
-import {computed} from "vue";
+import {computed, onMounted, ref} from "vue";
 
-import {useRoute, useRouter, type RouteRecordNameGeneric} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
+import type {
+    RouteLocationRaw,
+    RouteLocationNamedRaw,
+    RouteRecordNameGeneric,
+} from "vue-router";
+
 import {useI18n} from "vue-i18n";
 
 import {useMiscStore} from "override/stores/misc";
 
 import {getDashboard} from "../../components/dashboard/composables/useDashboards";
+import {shouldShowWelcome} from "../../utils/welcomeGuard";
 
 // Main icons
 import ChartLineVariant from "vue-material-design-icons/ChartLineVariant.vue";
@@ -15,12 +22,13 @@ import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
 import PlayOutline from "vue-material-design-icons/PlayOutline.vue";
 import FileDocumentOutline from "vue-material-design-icons/FileDocumentOutline.vue";
 import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
-// import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue";
+import PackageVariantClosed from "vue-material-design-icons/PackageVariantClosed.vue";
 import FolderOpenOutline from "vue-material-design-icons/FolderOpenOutline.vue";
 import PuzzleOutline from "vue-material-design-icons/PuzzleOutline.vue";
 import ShapePlusOutline from "vue-material-design-icons/ShapePlusOutline.vue";
 import OfficeBuildingOutline from "vue-material-design-icons/OfficeBuildingOutline.vue";
 import ServerNetworkOutline from "vue-material-design-icons/ServerNetworkOutline.vue";
+import RocketLaunchOutline from "vue-material-design-icons/RocketLaunchOutline.vue";
 
 // Blueprints icons
 import Wrench from "vue-material-design-icons/Wrench.vue";
@@ -34,13 +42,10 @@ import Battery40 from "vue-material-design-icons/Battery40.vue";
 import ShieldAccount from "vue-material-design-icons/ShieldAccount.vue";
 
 export type MenuItem = {
+    id?: string; // Generated at the end of menu computation
     title: string;
     routes?: RouteRecordNameGeneric[];
-    href?: {
-        name: string;
-        params?: Record<string, any>;
-        query?: Record<string, any>;
-    };
+    href?: RouteLocationRaw;
     icon?: {
         element?: any;
         class?: any;
@@ -59,6 +64,19 @@ export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
 
     const configs = useMiscStore().configs;
+    const showWelcomeLink = ref(false);
+
+    const loadWelcomeLink = async () => {
+        try {
+            showWelcomeLink.value = await shouldShowWelcome();
+        } catch {
+            showWelcomeLink.value = false;
+        }
+    };
+
+    onMounted(() => {
+        void loadWelcomeLink();
+    });
 
     /**
      * Returns the names of all registered routes whose name starts with the given prefix.
@@ -75,14 +93,43 @@ export function useLeftMenu() {
             .map((r) => r.name);
     }
 
+    /**
+     * Recursively flattens a nested menu structure into a flat array.
+     *
+     * Each item is included in the result. If an item has `child` items,
+     * they are recursively flattened and included immediately after the parent item.
+     *
+     * @param {MenuItem[]} items - The array of menu items to flatten. Each item may have a `child` property containing nested MenuItems.
+     * @returns {MenuItem[]} A flat array of all menu items, preserving the parent-child order.
+     */
+    const flatten = (items: MenuItem[]): MenuItem[] => {
+        return items.flatMap((item) =>
+            item.child ? [item, ...flatten(item.child)] : [item],
+        );
+    };
+
     const menu = computed<MenuItem[]>(() => {
-        return [
+        const generated = [
+            {
+                title: t("product_tour"),
+                routes: routeStartWith("welcome"),
+                href: {
+                    name: "welcome",
+                },
+                icon: {
+                    element: RocketLaunchOutline,
+                },
+                hidden: !showWelcomeLink.value,
+            },
             {
                 title: t("dashboards.labels.plural"),
                 href: {
                     name: "home",
                     params: {
-                        dashboard: getDashboard($route, "id"),
+                        dashboard: getDashboard({
+                            ...$route,
+                            name: "home"
+                        }, "id"),
                     },
                 },
                 icon: {
@@ -145,8 +192,19 @@ export function useLeftMenu() {
                     locked: true,
                 },
             },
-            // TODO: To add Assets entry here in future release
-            // Uncomment PackageVariantClosed on line 25 and use as the icon
+            {
+                title: t("demos.assets.label"),
+                routes: routeStartWith("assets"),
+                href: {
+                    name: "assets/list",
+                },
+                icon: {
+                    element: PackageVariantClosed,
+                },
+                attributes: {
+                    locked: true,
+                },
+            },
             {
                 title: t("namespaces"),
                 routes: routeStartWith("namespaces"),
@@ -180,7 +238,6 @@ export function useLeftMenu() {
             },
             {
                 title: t("blueprints.title"),
-                routes: routeStartWith("blueprints"),
                 icon: {
                     element: ShapePlusOutline,
                 },
@@ -233,7 +290,7 @@ export function useLeftMenu() {
                 ],
             },
             {
-                title: t("tenant_administration"),
+                title: t("tenant.name"),
                 routes: [
                     "admin/stats",
                     "kv",
@@ -332,7 +389,7 @@ export function useLeftMenu() {
                 ],
             },
             {
-                title: t("instance_administration"),
+                title: t("instance"),
                 routes: routeStartWith("admin/instance"),
                 href: {
                     name: "admin/instance",
@@ -344,20 +401,30 @@ export function useLeftMenu() {
                     locked: true,
                 },
             },
-        ].map((item: MenuItem) => {
-            if (item.icon?.element) {
-                item.icon.class = "menu-icon"; // Add default class to all menu icons
-            }
+        ];
 
-            if (item.href && item.href?.name === $route.name) {
-                item.href.query = {
-                    ...$route.query,
-                    ...item.href?.query,
-                };
-            }
+        flatten(generated).forEach((item: MenuItem) => {
+            item.id = item.title.toLowerCase().replaceAll(" ", "-");
 
-            return item;
+            if (item.icon?.element) item.icon.class = "menu-icon";
+
+            if (item.href && typeof item.href !== "string") {
+                const rObject = item.href as RouteLocationNamedRaw;
+
+                // Merge query if route matches
+                if (rObject.name === $route.name) {
+                    rObject.query = {
+                        ...$route.query,
+                        ...rObject.query,
+                    };
+                }
+
+                // Convert object href to string path
+                item.href = $router.resolve(rObject).fullPath;
+            }
         });
+
+        return generated;
     });
 
     return {menu};

@@ -101,6 +101,11 @@
     async function submitPrompt() {
         error.value = undefined;
         waitingForReply.value = true;
+        apiStore.posthogEvents({
+            type: "AI_COPILOT",
+            action: "prompt_submit",
+            ai_copilot_configured: configured.value === true,
+        });
 
         let aiResponse;
         try {

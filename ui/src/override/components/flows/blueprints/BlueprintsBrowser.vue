@@ -108,6 +108,7 @@
     import Utils from "../../../../utils/utils";
     import {usePluginsStore} from "../../../../stores/plugins";
     import {useBlueprintsStore} from "../../../../stores/blueprints";
+    import {useApiStore} from "../../../../stores/api";
     import {useCoreStore} from "../../../../stores/core";
     import {useDocStore} from "../../../../stores/doc";
     import {canCreate} from "override/composables/blueprintsPermissions";
@@ -166,6 +167,7 @@
 
     const pluginsStore = usePluginsStore();
     const blueprintsStore = useBlueprintsStore();
+    const apiStore = useApiStore();
     const coreStore = useCoreStore();
     const docStore = useDocStore();
 
@@ -189,6 +191,16 @@
     };
 
     async function blueprintToEditor (blueprintId: string) {
+        apiStore.posthogEvents({
+            type: "BLUEPRINT",
+            action: "use_click",
+            blueprint: {
+                id: blueprintId,
+                kind: props.blueprintKind,
+                type: props.blueprintType,
+                source: "browser",
+            },
+        });
         localStorage.setItem(editorViewTypes.STORAGE_KEY, editorViewTypes.SOURCE_TOPOLOGY);
         router.push(editorRoute(blueprintId));
     };

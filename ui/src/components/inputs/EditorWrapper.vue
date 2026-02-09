@@ -34,7 +34,7 @@
                     v-if="aiCopilotAllowed"
                     :show="flow"
                     :opened="aiCopilotOpened"
-                    @click="draftSource = undefined; aiCopilotOpened = true"
+                    @click="onAiCopilotButtonClick"
                 />
                 <ContentSave v-if="!flow" @click="saveFileContent" />
             </template>
@@ -92,6 +92,7 @@
     import {EDITOR_CURSOR_INJECTION_KEY, EDITOR_WRAPPER_INJECTION_KEY} from "../no-code/injectionKeys";
     import {usePluginsStore} from "../../stores/plugins";
     import {useFlowStore} from "../../stores/flow";
+    import {useApiStore} from "../../stores/api";
     import {useAuthStore} from "override/stores/auth"
     import {useNamespacesStore} from "override/stores/namespaces";
     import {useMiscStore} from "override/stores/misc";
@@ -257,6 +258,7 @@
     const pluginsStore = usePluginsStore();
     const namespacesStore = useNamespacesStore();
     const miscStore = useMiscStore();
+    const apiStore = useApiStore();
     const hash = computed<number>(() => miscStore.configs?.pluginsHash ?? 0);
 
     const editorScrollKey = computed(() => {
@@ -366,7 +368,22 @@
 
     const conversationId = ref<string>(Utils.uid());
 
+    function trackAiCopilotAction(action: string) {
+        apiStore.posthogEvents({
+            type: "AI_COPILOT",
+            action,
+            ai_copilot_configured: miscStore.configs?.isAiEnabled === true,
+        });
+    }
+
+    function onAiCopilotButtonClick() {
+        trackAiCopilotAction("open_click");
+        draftSource.value = undefined;
+        aiCopilotOpened.value = true;
+    }
+
     function acceptDraft() {
+        trackAiCopilotAction("changes_apply");
         const accepted = draftSource.value;
         draftSource.value = undefined;
         conversationId.value = Utils.uid();
@@ -374,6 +391,7 @@
     }
 
     function declineDraft() {
+        trackAiCopilotAction("changes_reject");
         draftSource.value = undefined;
         aiCopilotOpened.value = true;
     }

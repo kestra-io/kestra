@@ -8,7 +8,7 @@ develocity {
     buildScan {
         uploadInBackground = !isCI
         publishing.onlyIf {
-            it.isAuthenticated
+            it.authenticated
         }
     }
 }

@@ -65,10 +65,12 @@
     import KeyboardReturn from "vue-material-design-icons/KeyboardReturn.vue";
     import AiIcon from "./AiIcon.vue";
     import {useAiStore} from "../../stores/ai";
+    import {useApiStore} from "../../stores/api";
     import Utils from "../../utils/utils";
     import {useMiscStore} from "override/stores/misc";
 
     const aiStore = useAiStore();
+    const apiStore = useApiStore();
     const emit = defineEmits<{
         close: [];
         generatedYaml: [string];
@@ -101,6 +103,11 @@
     async function submitPrompt() {
         error.value = undefined;
         waitingForReply.value = true;
+        apiStore.posthogEvents({
+            type: "AI_COPILOT",
+            action: "prompt_submit",
+            ai_copilot_configured: configured.value === true,
+        });
 
         let aiResponse;
         try {

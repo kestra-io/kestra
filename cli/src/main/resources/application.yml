@@ -239,6 +239,9 @@ kestra:
     cache-enabled: true
     cache-size: 1000
 
+  metrics:
+    prefix: kestra
+
   traces:
     root: DISABLED
 

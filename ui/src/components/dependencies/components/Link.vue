@@ -9,11 +9,12 @@
 <script setup lang="ts">
     import {computed} from "vue";
 
-    import {FLOW, EXECUTION, NAMESPACE, ASSET, type Node} from "../utils/types";
+    import {ASSET} from "../utils/types";
+    import type {Types, Node} from "../utils/types";    
 
     const props = defineProps<{
         node: Node;
-        subtype: typeof FLOW | typeof EXECUTION | typeof NAMESPACE | typeof ASSET;
+        subtype: Types;
     }>();
 
     const to = computed(() => {

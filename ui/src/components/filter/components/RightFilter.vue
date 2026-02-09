@@ -62,9 +62,13 @@
             />
         </el-popover>
 
-        <el-tooltip :content="$t('filter.show data options tooltip')" placement="top" effect="light">
+        <el-tooltip
+            v-if="filter.buttons.value?.tableOptions?.shown !== false"
+            :content="$t('filter.show data options tooltip')"
+            placement="top"
+            effect="light"
+        >
             <el-button
-                v-if="filter.buttons.value?.tableOptions?.shown !== false"
                 type="default"
                 size="default"
                 @click="filter.toggleOptions"

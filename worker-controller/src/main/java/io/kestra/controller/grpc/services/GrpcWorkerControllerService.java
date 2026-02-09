@@ -13,39 +13,37 @@ import io.kestra.controller.messages.BatchMessage;
 import io.kestra.controller.messages.MessageFormat;
 import io.kestra.core.executor.WorkerJobRunningStateStore;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.NoTransactionContext;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.scheduler.events.TriggerEvaluated;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.service.TriggerExecutionPublisher;
 import io.kestra.core.worker.models.WorkerTriggerResult;
-import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Singleton
 @Slf4j
 public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.WorkerControllerServiceImplBase implements WorkerControllerService {
 
-    public static final TypeReference<BatchMessage<WorkerTaskResult>> WORKER_TASK_RESULT_BATCH_MESSAGE_TYPE_REFERENCE = new TypeReference<>() {
-    };
-    public static final TypeReference<BatchMessage<WorkerTriggerResult>> WORKER_TRIGGER_RESULT_BATCH_MESSAGE_TYPE_REFERENCE = new TypeReference<>() {
-    };
-
     // QUEUES
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-    private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
+
+    @Inject
+    private DispatchQueueInterface<MetricEntry> metricEntryQueue;
+
+    @Inject
+    private DispatchQueueInterface<LogEntry> logEntryQueue;
 
     @Inject
     private TriggerEventQueue triggerEventQueue;
@@ -62,8 +60,6 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     @Inject
     private WorkerJobDispatcher workerJobDispatcher;
 
-    private final ConcurrentHashMap<String, Runnable> disposables = new ConcurrentHashMap<>();
-    
     /**
      * Bidirectional streaming RPC for job distribution using the pull/ack pattern.
      * <p>
@@ -170,7 +166,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     @Override
     public void sendWorkerTaskResults(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
-        BatchMessage<WorkerTaskResult> message = messageFormat.fromByteString(request.getMessage(), WORKER_TASK_RESULT_BATCH_MESSAGE_TYPE_REFERENCE);
+        BatchMessage<WorkerTaskResult> message = messageFormat.fromByteString(request.getMessage(), TypeReferences.WORKER_TASK_RESULT);
         message.records().forEach(workerTaskResult -> {
             try {
                 workerTaskResultQueue.emit(workerTaskResult);
@@ -185,7 +181,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     @Override
     public void sendWorkerTriggerResults(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
         final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
-        BatchMessage<WorkerTriggerResult> message = messageFormat.fromByteString(request.getMessage(), WORKER_TRIGGER_RESULT_BATCH_MESSAGE_TYPE_REFERENCE);
+        BatchMessage<WorkerTriggerResult> message = messageFormat.fromByteString(request.getMessage(), TypeReferences.WORKER_TRIGGER_RESULT);
         message.records().forEach(workerTriggerResult -> {
             // Get if an Execution is attached to the TriggerResult.
             Execution execution = workerTriggerResult.execution();
@@ -206,16 +202,40 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
 
     @Override
     public void sendWorkerLogEntries(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
-        // TODO
+        final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
+        BatchMessage<LogEntry> message = messageFormat.fromByteString(request.getMessage(), TypeReferences.LOG_ENTRY);
+        if (!message.records().isEmpty()) {
+            logEntryQueue.emitAsync(message.records());
+        }
+        responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());
+        responseObserver.onCompleted();
     }
 
     @Override
     public void sendWorkerMetricEntries(OpaqueData request, StreamObserver<OpaqueData> responseObserver) {
-        // TODO
+        final MessageFormat messageFormat = MessageFormat.resolve(request.getHeader().getMessageFormat());
+        BatchMessage<MetricEntry> message = messageFormat.fromByteString(request.getMessage(), TypeReferences.METRIC_ENTRY);
+        if (!message.records().isEmpty()) {
+            metricEntryQueue.emitAsync(message.records());
+        }
+        responseObserver.onNext(OpaqueData.newBuilder().setHeader(request.getHeader()).build());
+        responseObserver.onCompleted();
     }
 
-    @PreDestroy
-    public void close() {
-        this.disposables.values().forEach(Runnable::run);
+    /**
+     * TypeReferences for deserialization of BatchMessages with different record types.
+     */
+    interface TypeReferences {
+        TypeReference<BatchMessage<WorkerTaskResult>> WORKER_TASK_RESULT = new TypeReference<>() {
+        };
+
+        TypeReference<BatchMessage<WorkerTriggerResult>> WORKER_TRIGGER_RESULT = new TypeReference<>() {
+        };
+
+        TypeReference<BatchMessage<MetricEntry>> METRIC_ENTRY = new TypeReference<>() {
+        };
+
+        TypeReference<BatchMessage<LogEntry>> LOG_ENTRY = new TypeReference<>() {
+        };
     }
 }

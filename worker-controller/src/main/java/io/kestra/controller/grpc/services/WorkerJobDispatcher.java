@@ -141,8 +141,11 @@ public class WorkerJobDispatcher {
     private GroupState createGroupState(String workerGroup) {
         String workerGroupOrNull = workerGroup.isEmpty() ? null : workerGroup;
         QueueSubscriber<WorkerJobEvent> subscriber = workerJobEventQueue.subscriber(workerGroupOrNull);
-        subscriber.pause();  // Start paused until workers connect with permits
         subscriber.subscribe(either -> handleIncomingJob(workerGroup, either));
+        
+        // TODO we should be able to start in paused state and only resume when the first worker with permits connects,
+        //  but that requires a code change in the queue implementation to support starting paused
+        subscriber.pause();  // Start paused until workers connect with permits
         log.info("Created queue subscription for worker group '{}' (initially paused)", WorkerGroup.forLog(workerGroup));
         return new GroupState(subscriber);
     }
@@ -274,7 +277,7 @@ public class WorkerJobDispatcher {
         }
 
         WorkerJobEvent event = either.getLeft();
-        WorkerJob job = event.getJob();
+        WorkerJob job = event.job();
 
         GroupState state = groupStates.get(workerGroup);
         if (state == null) {
@@ -414,7 +417,7 @@ public class WorkerJobDispatcher {
         try {
             workerJobEventQueue.emit(event.key(), event);
         } catch (QueueException e) {
-            log.error("Failed to re-queue job {}: {}", event.getJob().uid(), e.getMessage(), e);
+            log.error("Failed to re-queue job {}: {}", event.job().uid(), e.getMessage(), e);
             throw new RuntimeException("Failed to re-queue job", e);
         }
     }

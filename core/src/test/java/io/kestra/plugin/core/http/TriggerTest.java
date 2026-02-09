@@ -3,24 +3,17 @@ package io.kestra.plugin.core.http;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Scheduler;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 

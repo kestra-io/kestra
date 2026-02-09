@@ -3,20 +3,11 @@ package io.kestra.core.runners;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import reactor.core.publisher.Flux;
 
-import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -214,8 +205,7 @@ public class DeserializationIssuesCaseTest {
     """;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-    protected QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    protected DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
     protected DispatchQueueInterface<FlowInterface> flowQueue;
@@ -223,22 +213,25 @@ public class DeserializationIssuesCaseTest {
     public record QueueMessage(Class<?> type, String key, String value) {}
 
 
-    public void workerTaskDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException {
+    public void workerTaskDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {
         AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>();
-        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
-            if (either != null) {
-                workerTaskResult.set(either.getLeft());
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        var subscriber = workerTaskResultQueue.subscriber().subscribe(either -> {
+            if (either.isLeft()) {
+                WorkerTaskResult result = either.getLeft();
+                countDownLatch.countDown();
             }
         });
 
         sendToQueue.accept(new QueueMessage(WorkerJob.class, INVALID_WORKER_TASK_KEY, INVALID_WORKER_TASK_VALUE));
 
-        Await.until(
-            () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerminated(),
-            Duration.ofMillis(100),
-            Duration.ofSeconds(10)
-        );
-        receive.blockLast();
+        try {
+            sendToQueue.accept(new QueueMessage(FlowInterface.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
+            assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        } finally {
+            subscriber.close();
+        }
+
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(2);
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);

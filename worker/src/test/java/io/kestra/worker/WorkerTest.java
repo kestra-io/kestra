@@ -9,8 +9,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.plugin.core.flow.Pause;
@@ -23,10 +21,8 @@ import io.kestra.core.queues.BroadcastQueueInterface;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -34,7 +30,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.utils.Rethrow.throwSupplier;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,12 +40,10 @@ class WorkerTest {
     ApplicationContext applicationContext;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    QueueInterface<WorkerJob> workerTaskQueue;
+    DispatchQueueInterface<WorkerJobEvent> workerTaskQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-    QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
     BroadcastQueueInterface<ExecutionKilled> executionKilledQueue;
@@ -66,35 +59,26 @@ class WorkerTest {
         Worker worker = applicationContext.createBean(Worker.class);
         worker.start(8, null);
 
-        AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResult.set(either.getLeft()));
-
-        workerTaskQueue.emit(workerTask(1000));
+        List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
+        workerTaskResultQueue.addListener(workerTaskResult::add);
+        workerTaskQueue.emit(WorkerJobEvent.of(workerTask(1000), null));
 
         Await.until(
-            () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isTerminated(),
+            () -> !workerTaskResult.isEmpty() && workerTaskResult.getLast().getTaskRun().getState().isTerminated(),
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );
-        receive.blockLast();
         worker.close();
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
+        assertThat(workerTaskResult.getLast().getTaskRun().getState().getHistories().size()).isEqualTo(3);
     }
-
-//    @Test
-//    void workerGroup() {
-//        Worker worker = applicationContext.getBean(Worker.class);
-//        worker.start(8, "???");
-//        assertThat(worker.getWorkerGroup()).isNull();
-//    }
 
     @Test
     void failOnWorkerTaskWithFlowable() throws TimeoutException, QueueException, JsonProcessingException {
         Worker worker = applicationContext.createBean(Worker.class);
         worker.start(8, null);
 
-        AtomicReference<WorkerTaskResult> workerTaskResult = new AtomicReference<>(null);
-        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResult.set(either.getLeft()));
+        List<WorkerTaskResult> workerTaskResult = new ArrayList<>();
+        workerTaskResultQueue.addListener(workerTaskResult::add);
 
         Pause pause = Pause.builder()
             .type(Pause.class.getName())
@@ -124,21 +108,19 @@ class WorkerTest {
             .taskRun(TaskRun.of(execution, resolvedTask))
             .build();
 
-        workerTaskQueue.emit(workerTask);
+        workerTaskQueue.emit(WorkerJobEvent.of(workerTask, null));
 
         Await.until(
             throwSupplier(() -> {
-                WorkerTaskResult taskResult = workerTaskResult.get();
+                WorkerTaskResult taskResult = workerTaskResult.getLast();
                 return "WorkerTaskResult was " + (taskResult == null ? null : JacksonMapper.ofJson().writeValueAsString(taskResult));
             }),
-            () -> workerTaskResult.get() != null && workerTaskResult.get().getTaskRun().getState().isFailed(),
+            () -> !workerTaskResult.isEmpty() && workerTaskResult.getLast().getTaskRun().getState().isFailed(),
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );
-        receive.blockLast();
         worker.close();
-
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
+        assertThat(workerTaskResult.getLast().getTaskRun().getState().getHistories().size()).isEqualTo(3);
     }
 
     @Test
@@ -150,17 +132,15 @@ class WorkerTest {
         worker.start(8, null);
 
         List<WorkerTaskResult> workerTaskResult = new CopyOnWriteArrayList<>();
-        Flux<WorkerTaskResult> receiveWorkerTaskResults = TestsUtils.receive(workerTaskResultQueue, either -> workerTaskResult.add(either.getLeft()));
-
+        workerTaskResultQueue.addListener(workerTaskResult::add);
         WorkerTask workerTask = workerTask(999000);
 
-        workerTaskQueue.emit(workerTask);
-        workerTaskQueue.emit(workerTask);
-        workerTaskQueue.emit(workerTask);
-        workerTaskQueue.emit(workerTask);
-
+        workerTaskQueue.emit(WorkerJobEvent.of(workerTask, null));
+        workerTaskQueue.emit(WorkerJobEvent.of(workerTask, null));
+        workerTaskQueue.emit(WorkerJobEvent.of(workerTask, null));
+        workerTaskQueue.emit(WorkerJobEvent.of(workerTask, null));
         WorkerTask notKilled = workerTask(2000);
-        workerTaskQueue.emit(notKilled);
+        workerTaskQueue.emit(WorkerJobEvent.of(notKilled, null));
 
         Thread.sleep(500);
 
@@ -175,7 +155,6 @@ class WorkerTest {
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );
-        receiveWorkerTaskResults.blockLast();
 
         WorkerTaskResult oneKilled = workerTaskResult.stream()
             .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED)

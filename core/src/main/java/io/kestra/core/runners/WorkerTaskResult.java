@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.queues.event.DispatchEvent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Value;
@@ -14,7 +15,7 @@ import jakarta.validation.constraints.NotNull;
 @Value
 @AllArgsConstructor
 @Builder
-public class WorkerTaskResult implements HasUID {
+public class WorkerTaskResult implements DispatchEvent, HasUID {
     @NotNull
     TaskRun taskRun;
 
@@ -30,5 +31,13 @@ public class WorkerTaskResult implements HasUID {
     @Override
     public String uid() {
         return taskRun.getId();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String key() {
+        return uid();
     }
 }

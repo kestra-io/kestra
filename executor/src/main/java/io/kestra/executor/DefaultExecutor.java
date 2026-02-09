@@ -12,10 +12,7 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.triggers.TriggerId;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
-import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.server.AbstractService;
@@ -37,7 +34,6 @@ import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,8 +62,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
     @Inject
     private BroadcastQueueInterface<FollowExecutionEvent> followExecutionEventQueue;
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-    private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
     @Inject
     private BroadcastQueueInterface<ExecutionKilled> killQueue;
     @Inject
@@ -206,15 +201,8 @@ public class DefaultExecutor extends AbstractService implements Executor {
                 CompletableFuture.allOf(perExecutionFutures.toArray(CompletableFuture[]::new)).join();
             }
         ));
-        this.receiveCancellations.addFirst(this.workerTaskResultQueue.receiveBatch(
-            Executor.class,
-            workerTaskResults -> {
-                List<CompletableFuture<Void>> futures = workerTaskResults.stream()
-                    .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
-                    .toList();
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-            }
-        ));
+
+        this.queueSubscribers.addFirst(this.workerTaskResultQueue.subscriber().subscribe(this::workerTaskResultQueue));
         this.queueSubscribers.addFirst(this.executionCommandQueue.subscriber().subscribe(this::executionCommandQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionResultQueue.subscriber().subscribe(this::subflowExecutionResultQueue));
         this.queueSubscribers.addFirst(this.subflowExecutionEndQueue.subscriber().subscribe(this::subflowExecutionEndQueue));
@@ -573,8 +561,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     private void enterMaintenance() {
-        this.workerTaskResultQueue.pause();
-
         this.queueSubscribers.forEach(QueueSubscriber::pause);
 
         this.isPaused.set(true);
@@ -582,8 +568,6 @@ public class DefaultExecutor extends AbstractService implements Executor {
     }
 
     private void exitMaintenance() {
-        this.workerTaskResultQueue.resume();
-
         this.queueSubscribers.forEach(QueueSubscriber::resume);
 
         this.isPaused.set(false);
@@ -712,7 +696,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     List<String> taskRunKeys = executor.getExecution().getTaskRunList().stream()
                         .map(taskRun -> taskRun.getId())
                         .toList();
-                    workerTaskResultQueue.deleteByKeys(taskRunKeys);
+                    // workerTaskResultQueue.deleteByKeys(taskRunKeys); TODO
                     // workerJobQueue.deleteByKeys(taskRunKeys);  TODO
                 }
 

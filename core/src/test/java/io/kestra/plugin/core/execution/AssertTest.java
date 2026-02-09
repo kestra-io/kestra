@@ -6,15 +6,12 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;

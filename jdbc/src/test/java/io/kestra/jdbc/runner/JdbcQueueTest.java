@@ -6,13 +6,10 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -29,8 +26,7 @@ abstract public class JdbcQueueTest {
     protected DispatchQueueInterface<FlowInterface> flowQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-    protected QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    protected DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Test
     void noGroup() throws InterruptedException, QueueException {

@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.assets.Asset;
+import io.kestra.core.models.assets.AssetIdentifier;
 import io.kestra.core.models.assets.AssetsDeclaration;
 import io.kestra.core.models.assets.AssetsInOut;
 import io.kestra.core.models.executions.MetricEntry;
@@ -19,6 +20,7 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextInitializer;
 import io.kestra.core.runners.RunContextLogger;
 import io.kestra.core.runners.RunContextLoggerFactory;
+import io.kestra.core.runners.RunVariables;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.serializers.JacksonMapper;
@@ -415,11 +417,15 @@ public class WorkerTaskProcessor extends AbstractWorkerJobProcessor<WorkerTask> 
             Variables variables = variablesService.of(StorageContext.forTask(taskRun), workerTaskCallable.getTaskOutput());
             taskRun = taskRun.withOutputs(variables);
             if (workerTask.getTask().getAssets() != null) {
+                // We need to have the task outputs injected before rendering the assets
+                Map<String, Object> formattedOutputsMap = RunVariables.executionFormattedOutputMap(taskRun);
+
                 List<Asset> outputAssets = runContext.assets().outputs();
-                Optional<AssetsDeclaration> renderedAssetsDeclaration = runContext.render(workerTask.getTask().getAssets()).as(AssetsDeclaration.class);
-                renderedAssetsDeclaration.map(AssetsDeclaration::getOutputs).ifPresent(outputAssets::addAll);
+                AssetsDeclaration assetsDeclaration = workerTask.getTask().getAssets();
+
+                outputAssets.addAll(runContext.render(assetsDeclaration.getOutputs()).asList(Asset.class, formattedOutputsMap));
                 taskRun = taskRun.withAssets(new AssetsInOut(
-                    renderedAssetsDeclaration.map(AssetsDeclaration::getInputs).orElse(null),
+                    runContext.render(assetsDeclaration.getInputs()).asList(AssetIdentifier.class, formattedOutputsMap),
                     outputAssets
                 ));
             }

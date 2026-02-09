@@ -11,13 +11,11 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.runners.VariableRenderer;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,7 +27,6 @@ import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import reactor.core.publisher.Flux;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 

@@ -6,7 +6,6 @@ import io.kestra.core.lock.LockService;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.server.*;
@@ -19,7 +18,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.scheduling.annotation.Scheduled;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.event.Level;
 

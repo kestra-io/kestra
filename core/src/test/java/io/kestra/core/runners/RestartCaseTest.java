@@ -6,8 +6,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.ExecutionService;
 
@@ -16,7 +14,6 @@ import java.util.List;
 import java.util.Optional;
 
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;

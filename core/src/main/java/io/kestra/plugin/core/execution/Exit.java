@@ -13,8 +13,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ExecutionUpdatableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.BroadcastQueueInterface;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.inject.qualifiers.Qualifiers;

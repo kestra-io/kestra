@@ -8,7 +8,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.TaskCommands;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.DispatchQueueInterface;
-import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;

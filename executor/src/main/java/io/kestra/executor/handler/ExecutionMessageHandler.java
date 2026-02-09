@@ -4,15 +4,12 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.ExecutionEvent;
 import io.kestra.core.runners.ExecutionEventType;
 import io.kestra.executor.ExecutionStateStore;
 import io.kestra.executor.ExecutorContext;
 import io.kestra.executor.ExecutorMessageHandler;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 

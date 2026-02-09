@@ -11,12 +11,11 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.scheduler.queue.TriggerEventQueue;
 import io.kestra.core.scheduler.events.TriggerReceived;
 import io.kestra.core.scheduler.model.TriggerState;
 import io.kestra.core.queues.KeyedDispatchQueueInterface;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.services.WorkerGroupService;
@@ -29,11 +28,9 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -62,8 +59,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
     private KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue;
 
     @Inject
-    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-    private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
     private DefaultServiceLivenessCoordinator jdbcServiceLivenessHandler;
@@ -90,14 +86,10 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class);
         worker.start(1, null);
 
-        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
-            if (either.getLeft().getTaskRun().getState().getCurrent() == State.Type.SUCCESS) {
-                resubmitLatch.countDown();
-            }
-
-            if (either.getLeft().getTaskRun().getState().getCurrent() == State.Type.RUNNING) {
-                runningLatch.countDown();
-            }
+        var taskResults = new ArrayList<WorkerTaskResult>();
+        workerTaskResultQueue.addListener(item -> {
+            taskResults.add(item);
+            resubmitLatch.countDown();
         });
 
         workerJobEventQueue.emit(null, WorkerJobEvent.of(workerTask(Duration.ofSeconds(5)), null));
@@ -110,11 +102,11 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         newWorker.start(1, null);
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait).isTrue();
-        WorkerTaskResult workerTaskResult = receive.blockLast();
-        assertThat(workerTaskResult).isNotNull();
-        assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(workerTaskResult.getTaskRun().getAttempts()).hasSize(2);
-        assertThat(workerTaskResult.getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESUBMITTED)).isTrue();
+
+        assertThat(taskResults).isNotEmpty();
+        assertThat(taskResults.getFirst().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskResults.getFirst().getTaskRun().getAttempts()).hasSize(2);
+        assertThat(taskResults.getFirst().getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESUBMITTED)).isTrue();
         newWorker.close();
     }
 
@@ -127,16 +119,10 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         Worker worker = applicationContext.createBean(TestMethodScopedWorker.class, IdUtils.create(), 1, "workerGroupKey");
         worker.start(1, null);
 
-        var workerTaskResultQueueAppendLog = new ArrayList<WorkerTaskResult>();// to debug flaky test
-        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
-            workerTaskResultQueueAppendLog.add(either.getLeft());
-            if (either.getLeft().getTaskRun().getState().getCurrent() == State.Type.SUCCESS) {
-                resubmitLatch.countDown();
-            }
-
-            if (either.getLeft().getTaskRun().getState().getCurrent() == State.Type.RUNNING) {
-                runningLatch.countDown();
-            }
+        var taskResults = new ArrayList<WorkerTaskResult>();
+        workerTaskResultQueue.addListener(item -> {
+            taskResults.add(item);
+            resubmitLatch.countDown();
         });
 
         workerJobEventQueue.emit("workerGroupKey", WorkerJobEvent.of(workerTask(Duration.ofSeconds(5), "workerGroupKey"), "workerGroupKey"));
@@ -149,13 +135,12 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         newWorker.start(1, null);
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait)
-            .withFailMessage(() -> "shouldReEmitTasksToTheSameWorkerGroup: resubmitLatchAwait was not OK, workerTaskResultQueue content: " + TestsUtils.stringify(workerTaskResultQueueAppendLog))
+            .withFailMessage(() -> "shouldReEmitTasksToTheSameWorkerGroup: resubmitLatchAwait was not OK, workerTaskResultQueue content: " + TestsUtils.stringify(taskResults))
             .isTrue();
-        WorkerTaskResult workerTaskResult = receive.blockLast();
-        assertThat(workerTaskResult).isNotNull();
-        assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(workerTaskResult.getTaskRun().getAttempts()).hasSize(2);
-        assertThat(workerTaskResult.getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESUBMITTED)).isTrue();
+        assertThat(taskResults).isNotEmpty();
+        assertThat(taskResults.getFirst().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(taskResults.getFirst().getTaskRun().getAttempts()).hasSize(2);
+        assertThat(taskResults.getFirst().getTaskRun().getAttempts().getFirst().getState().getHistories().stream().anyMatch(it -> it.getState() == State.Type.RESUBMITTED)).isTrue();
         newWorker.close();
     }
 
@@ -169,13 +154,15 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
         WorkerTask workerTask = workerTask(Duration.ofSeconds(5));
         skipExecutionService.setSkipExecutions(List.of(workerTask.getTaskRun().getExecutionId()));
 
-        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
-            if (either.getLeft().getTaskRun().getState().getCurrent() == State.Type.SUCCESS) {
+        var taskResults = new ArrayList<WorkerTaskResult>();
+        workerTaskResultQueue.addListener(item -> {
+            taskResults.add(item);
+            if (item.getTaskRun().getState().getCurrent() == State.Type.SUCCESS) {
                 // no resubmit should happen!
                 fail();
             }
 
-            if (either.getLeft().getTaskRun().getState().getCurrent() == State.Type.RUNNING) {
+            if (item.getTaskRun().getState().getCurrent() == State.Type.RUNNING) {
                 runningLatch.countDown();
             }
         });
@@ -190,9 +177,8 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         // wait a little to be sure there is no resubmit
         Thread.sleep(500);
-        receive.blockLast();
         newWorker.close();
-        assertThat(receive.blockLast().getTaskRun().getState().getCurrent()).isNotEqualTo(State.Type.SUCCESS);
+        assertThat(taskResults.getLast().getTaskRun().getState().getCurrent()).isNotEqualTo(State.Type.SUCCESS);
     }
 
     @FlakyTest

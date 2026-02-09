@@ -48,4 +48,6 @@ public interface QueueFactoryInterface {
     BroadcastQueueInterface<FollowLogEvent> followLogEventQueue();
 
     KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue();
+
+    DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue();
 }

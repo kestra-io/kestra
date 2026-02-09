@@ -1,14 +1,8 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.queues.event.KeyedDispatchEvent;
-import lombok.Getter;
-import lombok.ToString;
-
 import jakarta.annotation.Nullable;
-import jakarta.validation.constraints.NotNull;
 
 /**
  * Event wrapper for WorkerJob that implements KeyedDispatchEvent.
@@ -17,35 +11,24 @@ import jakarta.validation.constraints.NotNull;
  * with the worker group key used for routing to specific worker groups.
  * <p>
  * The key is the worker group key (null or empty string for the default group).
+ *
+ * @param workerGroupKey The worker group key for routing. Null or empty string means the default worker group.
+ * @param job            The actual worker job payload.
+ *
  */
-@Getter
-@ToString
-public class WorkerJobEvent implements KeyedDispatchEvent, HasUID {
+public record WorkerJobEvent(
+    String workerGroupKey,
+    WorkerJob job
+) implements KeyedDispatchEvent, HasUID {
 
-    /**
-     * The worker group key for routing. Null or empty string means the default worker group.
-     */
-    @Nullable
-    private final String workerGroupKey;
-
-    /**
-     * The actual worker job payload.
-     */
-    @NotNull
-    private final WorkerJob job;
-
-    @JsonCreator
-    public WorkerJobEvent(
-            @JsonProperty("workerGroupKey") @Nullable String workerGroupKey,
-            @JsonProperty("job") @NotNull WorkerJob job) {
-        this.workerGroupKey = normalizeWorkerGroup(workerGroupKey);
-        this.job = job;
+    public WorkerJobEvent {
+        workerGroupKey = normalizeWorkerGroup(workerGroupKey);
     }
 
     /**
      * Creates a WorkerJobEvent for a WorkerTask.
      *
-     * @param workerTask the worker task
+     * @param workerTask     the worker task
      * @param workerGroupKey the worker group key (can be null for default group)
      * @return a new WorkerJobEvent
      */
@@ -56,7 +39,7 @@ public class WorkerJobEvent implements KeyedDispatchEvent, HasUID {
     /**
      * Creates a WorkerJobEvent for a WorkerTrigger.
      *
-     * @param workerTrigger the worker trigger
+     * @param workerTrigger  the worker trigger
      * @param workerGroupKey the worker group key (can be null for default group)
      * @return a new WorkerJobEvent
      */
@@ -67,7 +50,7 @@ public class WorkerJobEvent implements KeyedDispatchEvent, HasUID {
     /**
      * Creates a WorkerJobEvent from an existing WorkerJob.
      *
-     * @param job the worker job
+     * @param job            the worker job
      * @param workerGroupKey the worker group key (can be null for default group)
      * @return a new WorkerJobEvent
      */

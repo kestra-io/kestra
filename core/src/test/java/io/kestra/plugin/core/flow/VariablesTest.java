@@ -11,18 +11,15 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
-import reactor.core.publisher.Flux;
 
 @KestraTest(startRunner = true)
 class VariablesTest {

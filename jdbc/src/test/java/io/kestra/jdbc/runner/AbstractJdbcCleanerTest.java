@@ -4,12 +4,10 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.DispatchQueueInterface;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 

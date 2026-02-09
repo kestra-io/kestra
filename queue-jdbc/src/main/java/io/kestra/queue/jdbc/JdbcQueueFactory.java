@@ -142,4 +142,11 @@ public class JdbcQueueFactory implements QueueFactoryInterface {
     public KeyedDispatchQueueInterface<WorkerJobEvent> workerJobEventQueue() {
         return new JdbcKeyedDispatchQueue<>(WorkerJobEvent.class, queueService, jdbcQueueClient, executorsUtils);
     }
+
+    @Bean
+    @Singleton
+    @Override
+    public DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue() {
+        return new JdbcDispatchQueue<>(WorkerTaskResult.class, queueService, jdbcQueueClient, executorsUtils);
+    }
 }

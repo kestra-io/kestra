@@ -107,7 +107,11 @@
         rawStructure.value = await docStore.children();
     });
 
-    const toc = computed<{sidebarTitle: string, path: string}[]>(() => {
+    const toc = computed<{
+        sidebarTitle: string, 
+        title: string, 
+        path: string
+    }[]>(() => {
         if (rawStructure.value === undefined) {
             return undefined;
         }
@@ -136,7 +140,7 @@
             }
         }
 
-        return Object.entries(childrenWithMetadata)[0]?.[1]?.children;
+        return Object.values(childrenWithMetadata);
     })
 
     const sectionsWithChildren = computed(() => {
@@ -146,8 +150,8 @@
 
         return Object.entries(SECTIONS)
             .map(([section, childrenTitles]: [string, string[]]) => {
-                return [section, toc.value.filter(({sidebarTitle}) => {
-                    return childrenTitles.includes(sidebarTitle)
+                return [section, toc.value.filter(({sidebarTitle, title}) => {
+                    return childrenTitles.includes(sidebarTitle) || childrenTitles.includes(title);
                 })] as const
             });
     });

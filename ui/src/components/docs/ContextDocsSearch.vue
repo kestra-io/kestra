@@ -9,6 +9,7 @@
             @keydown.up.prevent="handleKeyUp"
             @keydown.down.prevent="handleKeyDown"
             :loading="loading"
+            type="search"
         >
             <template #prefix>
                 <Magnify class="search-icon" />

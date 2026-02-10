@@ -6,20 +6,19 @@
         <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
             <template v-if="rawStructure">
                 <li 
-                    v-for="({section, children}) of sectionsWithChildren" 
-                    :key="section"
+                    v-for="{section, children} in sectionsWithChildren" 
+                    :key="section" 
                     :class="{'active-section': isCurrentSection(section)}"
                 >
                     <span class="text-secondary">
                         {{ section.toUpperCase() }}
                     </span>
-                    <RecursiveToc :parent="{children}">
-                        <template #default="{path, sidebarTitle}">
+                    <RecursiveToc :parent="{children: children ?? []}">
+                        <template #default="{path, sidebarTitle, class: childClass}">
                             <ContextDocsLink
-                                v-if="sidebarTitle"
-                                :href="path.slice(5)"
+                                :href="path"
                                 useRaw
-                                :class="{'active-page': isCurrentPage(path)}"
+                                :class="[{'active-page': isCurrentPage(path)}, childClass]"
                                 @click="menuOpen = false"
                             >
                                 {{ sidebarTitle?.capitalize() }}
@@ -118,14 +117,17 @@
         }
 
         const childrenWithMetadata = Object.entries(rawStructure.value)
+            .filter(([p]) => p.startsWith("docs/") && !p.endsWith(".png") && !p.endsWith(".svg"))
             .reduce((acc: Record<string, any>, [url, metadata]) => {
                 if(!metadata || metadata.hideSidebar){
                     return acc;
                 }
 
-                acc[url] = {
+                const cleanUrl = url.replace(/\/index\.mdx?$/, "").replace(/\.mdx?$/, "");
+
+                acc[cleanUrl] = {
                     ...metadata,
-                    path: url
+                    path: cleanUrl
                 };
 
                 return acc
@@ -141,23 +143,18 @@
             }
         }
 
-        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string}[];
+        return Object.values(childrenWithMetadata) as {path: string, title: string, sidebarTitle: string, children: any[]}[];
     })
 
-    const sectionsWithChildren = computed(() => {
-        if (toc.value === undefined) {
-            return [];
-        }
-
-        const sections = Object.entries(SECTIONS)
-            .map(([section, childrenTitles]) => 
-                ({
-                    section, 
-                    children: toc.value?.filter(({title, sidebarTitle}) => 
-                        childrenTitles.includes(sidebarTitle) || childrenTitles.includes(title))}));
-        
-        return sections
-    });
+    const sectionsWithChildren = computed(() => Object.entries(SECTIONS)
+        .map(([section, childrenTitles]) => 
+            ({
+                section, 
+                children: toc.value?.filter(({title, sidebarTitle}) => 
+                    childrenTitles.includes(sidebarTitle) || childrenTitles.includes(title))
+            })
+        )
+    )
 </script>
 
 <style scoped lang="scss">
@@ -217,12 +214,14 @@
     }
 
     .docsMenuWrapper{
-        position: relative;
+        position: sticky;
+        top: 1rem;
         display: flex;
         flex-direction: column;
         gap: 1rem;
         padding-left: 27px;
         padding-right: 27px;
+        z-index: 3;
     }
 
     .menuOpener{

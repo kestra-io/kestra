@@ -63,6 +63,10 @@ public interface PurgeTask<T> {
                         return false;
                     }).toList());
             }
+
+            // add the rendered namespace if not already present, this can happen it's a parent namespace with no flow
+            filesNamespaces.addAll(renderedNamespaces.stream().filter(ns -> !filesNamespaces.contains(ns)).toList());
+
         } else {
             filesNamespaces.addAll(distinctNamespaces);
         }

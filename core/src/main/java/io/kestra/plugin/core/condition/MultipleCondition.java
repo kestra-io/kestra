@@ -26,11 +26,11 @@ import java.util.*;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a flow if the list of preconditions is met in a time window.",
+    title = "Run a flow when multiple preconditions are true within a window (deprecated).",
     description = """
-        **This task is deprecated**, use the `preconditions` property of the `io.kestra.plugin.core.trigger.Flow` trigger instead.
-        Will trigger an executions when all the flows defined by the preconditions are successfully executed in a specific period of time.
-        The period is defined by the `timeWindow` property and is by default a duration window of 24 hours."""
+        Deprecated; prefer the `preconditions` block on `io.kestra.plugin.core.trigger.Flow`.
+
+        Evaluates a map of conditions and triggers when they all become true inside the `timeWindow` (default rolling 24h). By default, a successful evaluation resets so the set must be met again to retrigger; disable with `resetOnSuccess: false`."""
 )
 @Plugin(
     examples = {

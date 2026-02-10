@@ -16,8 +16,8 @@ export interface Tab {
     name: string;
     title: string;
     component: Component;
-
     props?: Record<string, any>;
+    count?: number;
 }
 
 export interface Breadcrumb {
@@ -45,6 +45,7 @@ export const ORDER = [
     "executions",
     "dependencies",
     "secrets",
+    "credentials",
     "assets",
     "variables",
     "plugin-defaults",

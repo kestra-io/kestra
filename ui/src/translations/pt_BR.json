@@ -203,6 +203,7 @@
     "copy_to_clipboard": "Copiar para a área de transferência",
     "create": "Criar",
     "create first task": "Crie sua primeira task",
+    "create new revision": "Criar nova revisão",
     "create_flow": "Criar Flow",
     "created date": "Data de criação",
     "creation": "Criação",
@@ -369,7 +370,7 @@
       },
       "secrets": {
         "add_env": {
-          "first": "Codifique o <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a></strong>",
+          "first": "Codifique o <a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a>",
           "intro": "Para criar um novo Secret:",
           "second": "Adicione uma variável de ambiente chamada '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' com o valor acima",
           "third": "Reinicie sua instância do Kestra"
@@ -502,6 +503,10 @@
         "content": "Abra o Flow Code ou No-Code para começar a editar seus flows, ou selecione outro painel (Topology, Documentation, Files, Blueprints, Namespace Context) para recursos relacionados.",
         "title": "Atualmente, nenhum painel está aberto."
       },
+      "pluginDefaults": {
+        "content": "Os Padrões de Plugin permitem que você governe centralmente a configuração do seu plugin e a compartilhe com todos os flows no seu namespace.",
+        "title": "Você ainda não tem padrões de plugin!"
+      },
       "plugins": {
         "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
         "title": "Nenhum padrão de plugin está definido para este Namespace."
@@ -620,6 +625,8 @@
     "export all templates": "Exportar todos os templates",
     "export_csv": "Exportar como CSV",
     "exports": "Exportações",
+    "failed to export plugin defaults": "Falha ao exportar padrões do plugin",
+    "failed to import plugin defaults": "Falha ao importar padrões do plugin",
     "failed to render pdf": "Falha ao renderizar a pré-visualização do PDF",
     "false": "Falso",
     "feeds": {
@@ -989,6 +996,7 @@
     "fix_with_ai": "Corrigir com AI",
     "flow": "Flow",
     "flow already exists": "Flow já existe",
+    "flow already exists message": "O flow {id} já existe no namespace {namespace}. Deseja criar uma nova revisão?",
     "flow creation": "Criação de flow",
     "flow creation denied in namespace": "Você não tem permissão para criar flows no namespace `{namespace}`.",
     "flow delete": "Tem certeza de que deseja excluir <code>{flowCount}</code> flow(s)?",
@@ -1442,13 +1450,36 @@
       "toggle": "Playground",
       "tooltip_persistence": "Se você desligar e ligar o Playground novamente, as informações permanecem enquanto você estiver na página."
     },
-    "pluginDefaults": "Padrões do plugin",
+    "plugin defaults exported": "Padrões do plugin exportados",
+    "plugin defaults imported": "Padrões de plugin importados",
+    "plugin defaults not imported": "Alguns padrões de plugin não puderam ser importados",
+    "pluginDefaults": {
+      "add": "Adicionar Plugin Padrão",
+      "add_subtitle": "Configurar um novo plugin padrão com suas propriedades",
+      "cancel": "Cancelar",
+      "custom": "Plugin Personalizado",
+      "custom_configure": "Tipo de plugin personalizado - configure usando YAML",
+      "custom_placeholder": "Insira o tipo de plugin",
+      "custom_type": "Tipo de plugin personalizado",
+      "edit": "Editar Padrão do Plugin",
+      "edit_subtitle": "Modificar a configuração padrão do plugin existente",
+      "form": "Formulário",
+      "predefined": "Plugin Predefinido",
+      "select_predefined": "Selecionar Plugin Predefinido",
+      "show_yaml": "Mostrar YAML",
+      "title": "Padrões do Plugin",
+      "update": "Atualizar Plugin Padrão",
+      "use_custom": "Usar Personalizado",
+      "yaml": "YAML",
+      "yaml_configuration": "Configuração YAML"
+    },
     "pluginPage": {
       "alt": "Ícone de Plugins",
       "search": "Pesquisar em mais de {count} plugins",
       "title1": "Plugins são blocos de construção para seus workflows.",
       "title2": "Pesquise por tasks e triggers para construir seu flow."
     },
+    "plugin_default_already_exists": "O padrão do plugin para <code>{type}</code> já existe.",
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",

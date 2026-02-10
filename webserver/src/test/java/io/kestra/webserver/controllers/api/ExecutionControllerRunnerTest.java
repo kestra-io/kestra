@@ -36,6 +36,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.controllers.api.ExecutionController.StateRequest;
 import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
@@ -1325,6 +1326,20 @@ class ExecutionControllerRunnerTest {
         bulkErrorResponse = e.getResponse().getBody(String.class);
         assertThat(bulkErrorResponse).isPresent();
         assertThat(bulkErrorResponse.get()).contains("execution not in a terminated state or is killed");
+
+        e = assertThrows(
+            HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(
+                POST("/api/v1/%s/executions/%s/state".formatted(tenantId, killedExecution.getId()),
+                    new StateRequest(killedExecution.getTaskRunList().getFirst().getId(), Type.WARNING)
+                ),
+                MutableHttpResponse.class
+            ));
+
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        bulkErrorResponse = e.getResponse().getBody(String.class);
+        assertThat(bulkErrorResponse).isPresent();
+        assertThat(bulkErrorResponse.get()).contains("You can only change the state of a task run for a terminated non killed execution.");
     }
 
     @Test

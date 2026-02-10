@@ -27,8 +27,11 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Allow a list of tasks to fail without stopping the execution of downstream tasks in the flow.",
-    description = "If any child task of the `AllowFailure` task fails, the flow will stop executing this block of tasks (i.e. the next tasks in the `AllowFailure` block will no longer be executed), but the flow execution of the tasks, following the `AllowFailure` task, will continue."
+    title = "Let a block fail without stopping the rest of the flow.",
+    description = """
+        Runs the nested tasks sequentially; if one fails, remaining siblings in the block are skipped but downstream tasks after `AllowFailure` continue.
+
+        Useful to mark best-effort sections. Combine with `allowWarning` to downgrade failures inside the block to warnings."""
 )
 @Plugin(
     examples = {

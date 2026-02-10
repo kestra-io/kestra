@@ -17,13 +17,13 @@
 </template>
 
 <script setup lang="ts">
-    import {useId, computed, ref} from "vue";
+    import {useId, computed, useTemplateRef} from "vue";
     import Lock from "vue-material-design-icons/Lock.vue";
 
     defineOptions({inheritAttrs: false});
 
     const uid = useId();
-    const elInputRef = ref();
+    const elInputRef = useTemplateRef("elInputRef");
 
     const emits = defineEmits(["update:modelValue"]);
     const props = defineProps({

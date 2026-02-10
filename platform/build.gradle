@@ -25,7 +25,7 @@ dependencies {
     def jacksonAnnotationsVersion = "2.21"
     def jugVersion = "5.2.0"
     def langchain4jVersion = "1.11.0"
-    def langchain4jCommunityVersion = "1.10.0-beta18"
+    def langchain4jCommunityVersion = "1.11.0-beta19"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
@@ -99,7 +99,7 @@ dependencies {
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-apache', version: mavenResolverVersion
         api 'com.github.oshi:oshi-core:6.9.3'
-        api 'io.pebbletemplates:pebble:4.1.0'
+        api 'io.pebbletemplates:pebble:4.1.1'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.7.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion

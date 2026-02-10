@@ -22,6 +22,24 @@ kestra:
     liveness:
       enabled: false
     termination-grace-period: 5s
+  grpc:
+    maxRetryAttempts: 1
+    shutdownTimeout: 3s
+  controller:
+    port: ${random.port}
+  worker:
+    controllers:
+      type: STATIC
+      static:
+        endpoints:
+          - host: localhost
+            port: ${kestra.controller.port}
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false
 micronaut:
   http:
     services:

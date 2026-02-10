@@ -1,5 +1,7 @@
 package io.kestra.worker.queues;
 
+import io.kestra.core.exceptions.KestraRuntimeException;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -9,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Default in-memory {@link WorkerQueue} based on {@link LinkedBlockingQueue}.
  *
- * @param <T>   the vent type.
+ * @param <T>   the event type.
  */
 public class InMemoryWorkerQueue<T> implements WorkerQueue<T> {
 
@@ -39,14 +41,13 @@ public class InMemoryWorkerQueue<T> implements WorkerQueue<T> {
      */
     @Override
     public List<T> poll(int maxMessages, Duration timeout) throws InterruptedException {
-        List<T> results = new ArrayList<>();
-
         // Wait for the first element with timeout
         T first = queue.poll(timeout.toMillis(), TimeUnit.MILLISECONDS);
         if (first == null) {
-            return results;
+            return List.of();
         }
 
+        List<T> results = new ArrayList<>();
         results.add(first);
 
         if (maxMessages == 1) {
@@ -67,7 +68,8 @@ public class InMemoryWorkerQueue<T> implements WorkerQueue<T> {
         try {
             this.queue.put(event);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            Thread.currentThread().interrupt();
+            throw new KestraRuntimeException("Thread was interrupted while putting an event in the queue", e);
         }
     }
 

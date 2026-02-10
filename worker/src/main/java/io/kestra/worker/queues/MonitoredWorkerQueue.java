@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.Counter;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Decorate a queue with monitoring capabilities.
@@ -13,10 +14,10 @@ import java.util.List;
  */
 public class MonitoredWorkerQueue<T> extends AbstractDelegateWorkerQueue<T> {
 
-    public static final String QUEUE_SIZE = "queue.size";
-    public static final String QUEUE_REMAINING_CAPACITY = "queue.remaining.capacity";
-    public static final String QUEUE_ENQUEUED = "queue.enqueued";
-    public static final String QUEUE_DEQUEUED = "queue.dequeued";
+    public static final String QUEUE_SIZE = "worker.queue.size";
+    public static final String QUEUE_REMAINING_CAPACITY = "worker.queue.remaining.capacity";
+    public static final String QUEUE_ENQUEUED = "worker.queue.enqueued";
+    public static final String QUEUE_DEQUEUED = "worker.queue.dequeued";
 
     private final Counter enqueuedCounter;
     private final Counter dequeuedCounter;
@@ -25,8 +26,8 @@ public class MonitoredWorkerQueue<T> extends AbstractDelegateWorkerQueue<T> {
         super(queue);
 
         String[] tags = new String[]{"name", queueName};
-        metricRegistry.registerGauge(QUEUE_SIZE, "Current number of items in the queue", this::size, tags);
-        metricRegistry.registerGauge(QUEUE_REMAINING_CAPACITY, "Remaining capacity in the queue", this::size, tags);
+        metricRegistry.gauge(QUEUE_SIZE, "Current number of items in the queue", (Supplier<Integer>) this::size, tags);
+        metricRegistry.gauge(QUEUE_REMAINING_CAPACITY, "Remaining capacity in the queue", (Supplier<Integer>) this::remainingCapacity, tags);
         this.enqueuedCounter = metricRegistry.counter(QUEUE_ENQUEUED, "Number of items enqueued", tags);
         this.dequeuedCounter = metricRegistry.counter(QUEUE_DEQUEUED, "Number of items dequeued", tags);
     }

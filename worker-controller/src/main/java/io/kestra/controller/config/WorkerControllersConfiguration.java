@@ -144,12 +144,23 @@ public record WorkerControllersConfiguration(
             /**
              * Round-robin load balancing (default gRPC policy).
              */
-            ROUND_ROBIN,
+            ROUND_ROBIN("round_robin"),
             /**
              * Pick first available endpoint.
              */
-            PICK_FIRST
+            PICK_FIRST("pick_first");
+            
+            private final String grpcName;
+            
+            Policy(String grpcName) {
+                this.grpcName = grpcName;
+            }
+
+            public String getGrpcName() {
+                return grpcName;
+            }
         }
+        
     }
 
     /**

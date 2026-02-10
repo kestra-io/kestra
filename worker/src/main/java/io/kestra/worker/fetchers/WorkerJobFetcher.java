@@ -60,6 +60,12 @@ public class WorkerJobFetcher extends WorkerLoop {
     private final AtomicReference<ClientCallStreamObserver<WorkerJobRequest>> requestObserverRef = new AtomicReference<>();
 
     /**
+     * Lock to serialize onNext() calls on the request stream observer.
+     * gRPC's StreamObserver is not thread-safe for concurrent onNext() calls.
+     */
+    private final Object streamLock = new Object();
+
+    /**
      * Tracks the last permits value sent to avoid sending duplicates.
      */
     private final AtomicInteger lastSentPermits = new AtomicInteger(-1);
@@ -144,7 +150,11 @@ public class WorkerJobFetcher extends WorkerLoop {
 
                 @Override
                 public void onError(Throwable t) {
-                    log.error("Stream error: {}", t.getMessage(), t);
+                    if (!isRunning()) {
+                        log.debug("Stream closed during shutdown: {}", t.getMessage());
+                    } else {
+                        log.error("Stream error: {}", t.getMessage(), t);
+                    }
                     requestObserverRef.set(null);
                     streamCompleted.countDown();
                 }
@@ -184,7 +194,7 @@ public class WorkerJobFetcher extends WorkerLoop {
 
         requestStream.onNext(requestBuilder.build());
         lastSentPermits.set(initialPermits);
-        log.info("Connected to controller with pull/ack pattern: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
+        log.info("Connected to controller: workerId={}, workerGroup={}, maxConcurrency={}, initialPermits={}",
             workerContext.workerId(),
             WorkerGroup.forLog(workerGroup),
             workerContext.workerThreads(),
@@ -234,7 +244,7 @@ public class WorkerJobFetcher extends WorkerLoop {
             .build();
 
         try {
-            observer.onNext(request);
+            doSend(observer, request);
             lastSentPermits.set(permits);
             log.trace("Sent permits={}, acks={}", permits, acks.size());
         } catch (Exception e) {
@@ -278,11 +288,17 @@ public class WorkerJobFetcher extends WorkerLoop {
             .build();
 
         try {
-            observer.onNext(request);
+            doSend(observer, request);
             lastSentPermits.set(permits);
             log.debug("Sent permit update: permits={}", permits);
         } catch (Exception e) {
             log.error("Error sending permit update: {}", e.getMessage());
+        }
+    }
+
+    private void doSend(ClientCallStreamObserver<WorkerJobRequest> observer, WorkerJobRequest request) {
+        synchronized (streamLock) {
+            observer.onNext(request);
         }
     }
 

@@ -169,13 +169,11 @@ public class GrpcChannelManager {
             .userAgent(getUserAgent())
             .keepAliveTime(grpcChannelConfiguration.keepAliveTime().toSeconds(), TimeUnit.SECONDS)
             .keepAliveWithoutCalls(true)
+            .maxInboundMessageSize(grpcChannelConfiguration.maxInboundMessageSize())
             .executor(sharedExecutorService);
 
         // Configure load balancing policy
-        String loadBalancingPolicy = switch (controllersConfig.loadBalancing().policy()) {
-            case ROUND_ROBIN -> "round_robin";
-            case PICK_FIRST -> "pick_first";
-        };
+        String loadBalancingPolicy = controllersConfig.loadBalancing().policy().getGrpcName();
         log.debug("Using load balancing policy: {}", loadBalancingPolicy);
         builder.defaultLoadBalancingPolicy(loadBalancingPolicy);
 
@@ -200,7 +198,7 @@ public class GrpcChannelManager {
         if (!stopped.compareAndSet(false, true)) {
             return; // Method called twice
         }
-
+        log.info("Closing gRPC channel manager");
         // Shutdown channel first
         if (this.defaultChannel != null && !this.defaultChannel.isShutdown()) {
             try {

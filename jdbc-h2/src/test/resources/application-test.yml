@@ -41,12 +41,21 @@ kestra:
       message-protection:
         enabled: true
         limit: 1048576
+  grpc:
+    maxRetryAttempts: 1
+    shutdownTimeout: 3s
+  controller:
+    port: ${random.port}
   worker:
-    liveness:
-      enabled: false
     controllers:
       type: STATIC
       static:
         endpoints:
           - host: localhost
-            port: 9096
+            port: ${kestra.controller.port}
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false

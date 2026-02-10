@@ -26,7 +26,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.stream.Stream;
 
 import java.util.function.Supplier;
 
@@ -216,7 +215,7 @@ public class MetricRegistry {
      * statement.
      */
     public <T extends Number> T gauge(String name, String description, T number, String... tags) {
-        registerGauge(name, description, () -> number, tags);
+        gauge(name, description, (Supplier<T>)() -> number, tags);
         return number;
     }
     
@@ -231,7 +230,7 @@ public class MetricRegistry {
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    public <T extends Number> Gauge registerGauge(String name, String description, Supplier<T> supplier, String... tags) {
+    public <T extends Number> Gauge gauge(String name, String description, Supplier<T> supplier, String... tags) {
         return Gauge.builder(metricName(name),supplier)
             .description(description)
             .tags(tags)

@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.ConnectControllerServiceImplBase implements WorkerControllerService {
 
+    public static final String DEFAULT_WORKER_GROUP = "";
     private final WorkerGroupService workerGroupService;
 
     @Inject
@@ -40,20 +41,19 @@ public class GrpcConnectControllerService extends ConnectControllerServiceGrpc.C
     @Override
     public void connect(ConnectRequest request, StreamObserver<ConnectResponse> responseObserver) {
         String workerGroupKey = request.getWorkerGroupKey();
-
-        log.debug("Worker connect request received with workerGroupKey: {}", workerGroupKey);
+        log.info("Worker connect request received with workerGroupKey: {}", workerGroupKey);
 
         String resolvedWorkerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
 
         if (resolvedWorkerGroup != null && !resolvedWorkerGroup.isEmpty()) {
-            log.info("Worker group resolved: '{}' for key '{}'", resolvedWorkerGroup, workerGroupKey);
+            log.debug("Worker group resolved: '{}' for key '{}'", resolvedWorkerGroup, workerGroupKey);
         } else {
             log.debug("No worker group resolved for key '{}'", workerGroupKey);
         }
 
         ConnectResponse response = ConnectResponse.newBuilder()
             .setHeader(request.getHeader())
-            .setWorkerGroup(resolvedWorkerGroup != null ? resolvedWorkerGroup : "")
+            .setWorkerGroup(resolvedWorkerGroup != null ? resolvedWorkerGroup : DEFAULT_WORKER_GROUP)
             .build();
 
         responseObserver.onNext(response);

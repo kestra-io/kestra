@@ -99,13 +99,21 @@ kestra:
             lists:
               - val:
                   key: test
+  grpc:
+    maxRetryAttempts: 1
+    shutdownTimeout: 3s
+  controller:
+    port: ${random.port}
   worker:
     controllers:
       type: STATIC
       static:
         endpoints:
           - host: localhost
-            port: 9096
-    grpc:
-      channel:
-        shutdownTimeout: 1s
+            port: ${kestra.controller.port}
+# Disable Micronaut embedded gRPC server and health check
+grpc:
+  server:
+    enabled: false
+    health:
+      enabled: false

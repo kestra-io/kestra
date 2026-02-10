@@ -377,7 +377,8 @@ class GrpcChannelManagerTest {
         GrpcChannelConfiguration channelConfig = new GrpcChannelConfiguration(
             5,         // maxRetryAttempts
             Duration.ofMinutes(30),   // keepAliveTime
-            Duration.ofSeconds(15)    // shutdownTimeout
+            Duration.ofSeconds(15),   // shutdownTimeout
+            10485760                  // maxInboundMessageSize
         );
         WorkerControllersConfiguration config = createStaticConfig(
             List.of(new Endpoint("localhost", 9096))
@@ -490,7 +491,8 @@ class GrpcChannelManagerTest {
         return new GrpcChannelConfiguration(
             10,       // maxRetryAttempts
             Duration.ofHours(1),     // keepAliveTime
-            Duration.ofSeconds(30)   // shutdownTimeout
+            Duration.ofSeconds(30),   // shutdownTimeout,
+            10485760                  // maxInboundMessageSize
         );
     }
 }

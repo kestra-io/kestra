@@ -161,6 +161,7 @@ public class WorkerJobDispatcher {
 
         WorkerStreamContext<WorkerJobResponse> context = activeStreams.get(workerId);
         if (context == null) {
+            log.warn("Worker [{}] not found", workerId);
             return;
         }
 

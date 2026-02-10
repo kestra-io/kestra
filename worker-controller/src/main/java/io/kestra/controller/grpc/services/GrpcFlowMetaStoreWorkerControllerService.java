@@ -18,14 +18,14 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 @Requires(property = "kestra.server-type", pattern = "(CONTROLLER|STANDALONE)")
-public class GrpcWorkerFlowMetaStoreService extends WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceImplBase implements WorkerControllerService {
+public class GrpcFlowMetaStoreWorkerControllerService extends WorkerFlowMetaStoreServiceGrpc.WorkerFlowMetaStoreServiceImplBase implements WorkerControllerService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GrpcWorkerFlowMetaStoreService.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GrpcFlowMetaStoreWorkerControllerService.class);
 
     private final FlowMetaStoreInterface flowMetaStore;
 
     @Inject
-    public GrpcWorkerFlowMetaStoreService(FlowMetaStoreInterface flowMetaStore) {
+    public GrpcFlowMetaStoreWorkerControllerService(FlowMetaStoreInterface flowMetaStore) {
         this.flowMetaStore = flowMetaStore;
     }
 

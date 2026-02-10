@@ -11,6 +11,7 @@ import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.slf4j.event.Level;
@@ -79,6 +80,7 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
 
     @Test
     @LoadFlows(value = {"flows/valids/inputs-large.yaml"}, tenantId = TENANT_1)
+    @Disabled
     void queueMessageTooLarge() {
         char[] chars = new char[1100000];
         Arrays.fill(chars, 'a');

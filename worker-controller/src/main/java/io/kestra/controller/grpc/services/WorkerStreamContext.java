@@ -173,12 +173,20 @@ public class WorkerStreamContext<T> {
     }
 
     /**
+     * Lock to serialize onNext() calls on the response stream observer.
+     * gRPC's StreamObserver is not thread-safe for concurrent onNext() calls.
+     */
+    private final Object streamLock = new Object();
+
+    /**
      * Sends a response to the worker via the stream observer.
      *
      * @param response the response to send
      */
     public void sendResponse(T response) {
-        responseObserver.onNext(response);
+        synchronized (streamLock) {
+            responseObserver.onNext(response);
+        }
     }
 
     /**

@@ -111,7 +111,7 @@ jackson:
   mapper:
     ACCEPT_CASE_INSENSITIVE_ENUMS: true
 
-# Disable Micronaut GRPC
+# Disable Micronaut embedded gRPC server and health check
 grpc:
   server:
     enabled: false
@@ -206,14 +206,15 @@ kestra:
         initial-delay: 1h
         fixed-delay: 1d
         retention: 30d
-  
+  controller:
+    port: 50051
   worker:
     controllers:
       type: STATIC
       static:
         endpoints:
           - host: localhost
-            port: 9096
+            port: ${kestra.controller.port}
   
   jdbc:
     queues:

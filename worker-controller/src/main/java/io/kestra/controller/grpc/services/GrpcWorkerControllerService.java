@@ -35,7 +35,6 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.WorkerControllerServiceImplBase implements WorkerControllerService {
 
-    // QUEUES
     @Inject
     private DispatchQueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
@@ -48,15 +47,12 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
     @Inject
     private TriggerEventQueue triggerEventQueue;
 
-    // SERVICES
     @Inject
     private TriggerExecutionPublisher triggerExecutionPublisher;
 
-    // STORES
     @Inject
     private WorkerJobRunningStateStore workerJobRunningStateStore;
 
-    // DISPATCHERS
     @Inject
     private WorkerJobDispatcher workerJobDispatcher;
 
@@ -100,11 +96,7 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                     // First message must contain connection info
                     if (!request.hasConnectionInfo()) {
                         log.error("First message in stream must contain connectionInfo");
-                        responseObserver.onError(
-                            io.grpc.Status.INVALID_ARGUMENT
-                                .withDescription("First message must contain connectionInfo")
-                                .asRuntimeException()
-                        );
+                        responseObserver.onError(io.grpc.Status.INVALID_ARGUMENT.withDescription("First message must contain connectionInfo").asRuntimeException());
                         return;
                     }
 
@@ -126,16 +118,22 @@ public class GrpcWorkerControllerService extends WorkerControllerServiceGrpc.Wor
                 }
 
                 WorkerStreamContext<WorkerJobResponse> context = contextRef.get();
+                if (context == null) {
+                    // This should never happen - defensive check
+                    log.error("Received message before context initialization");
+                    responseObserver.onError(io.grpc.Status.INTERNAL.withDescription("Context not initialized").asRuntimeException());
+                    return;
+                }
 
                 // Process permits
                 int permits = request.getPermits();
-                if (permits > 0 && context != null) {
+                if (permits > 0) {
                     workerJobDispatcher.onPermitsReceived(context, permits);
                 }
 
                 // Process ACKs
                 List<String> acks = request.getAcknowledgedJobIdsList();
-                if (!acks.isEmpty() && context != null) {
+                if (!acks.isEmpty()) {
                     workerJobDispatcher.onAcksReceived(context, acks);
                 }
             }

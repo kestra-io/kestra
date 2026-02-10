@@ -696,8 +696,7 @@ public class DefaultExecutor extends AbstractService implements Executor {
                     List<String> taskRunKeys = executor.getExecution().getTaskRunList().stream()
                         .map(taskRun -> taskRun.getId())
                         .toList();
-                    // workerTaskResultQueue.deleteByKeys(taskRunKeys); TODO
-                    // workerJobQueue.deleteByKeys(taskRunKeys);  TODO
+                    // TODO
                 }
 
                 ExecutionEvent event = new ExecutionEvent(executor.getExecution(), ExecutionEventType.TERMINATED);

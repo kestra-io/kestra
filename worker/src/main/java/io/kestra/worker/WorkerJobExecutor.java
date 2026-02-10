@@ -14,7 +14,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -34,6 +37,7 @@ public class WorkerJobExecutor {
 
     private ExecutorService executorService;
     private List<WorkerJobConsumer> workerJobConsumers;
+    private List<Thread> consumerThreads;
 
     private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -49,17 +53,23 @@ public class WorkerJobExecutor {
     public void start(final io.kestra.core.worker.models.WorkerContext context) {
         WorkerQueue<WorkerJob> workerJobQueue = workerQueueRegistry.getOrCreate(context, WorkerJob.class);
         if (this.started.compareAndSet(false, true)) {
+            // Thread pool for task and trigger execution
             this.executorService = executorsUtils.maxCachedThreadPool(context.workerThreads(), EXECUTOR_NAME);
             this.workerJobConsumers = new ArrayList<>(context.workerThreads());
+            this.consumerThreads = new ArrayList<>(context.workerThreads());
             for (int i = 0; i < context.workerThreads(); i++) {
                 WorkerJobConsumer consumer = new WorkerJobConsumer(
                     i,
                     workerJobQueue,
                     workerJobProcessorFactory,
-                    context
+                    context,
+                    executorService
                 );
                 this.workerJobConsumers.add(consumer);
-                this.executorService.submit(consumer);
+                // Consumers on virtual threads — they only poll and wait
+                this.consumerThreads.add(Thread.ofVirtual()
+                    .name("worker-consumer-" + i)
+                    .start(consumer));
             }
         } else {
             throw new IllegalStateException("already started");
@@ -140,24 +150,35 @@ public class WorkerJobExecutor {
             return true; // Already shut down or not started.
         }
 
-        // Initiate a graceful shutdown
-        this.executorService.shutdown();
-
-        // Notify all WorkerJobConsumers to stop
+        // Stop consumers from polling new jobs
         this.workerJobConsumers.forEach(consumer -> consumer.stop(Duration.ZERO));
 
         if (terminationGracePeriod == null || terminationGracePeriod.equals(Duration.ZERO)) {
+            // Force: kill in-flight tasks, then unblock consumers
             this.executorService.shutdownNow();
+            this.consumerThreads.forEach(Thread::interrupt);
             return false;
         }
 
-        // Wait for all WorkerJobConsumers to terminate
-        boolean terminated = this.executorService.awaitTermination(
-            terminationGracePeriod.toMillis(), TimeUnit.MILLISECONDS);
+        // Graceful: wait for consumers to finish (they exit once the in-flight task completes)
+        long remaining = terminationGracePeriod.toMillis();
+        for (Thread consumerThread : this.consumerThreads) {
+            long start = System.nanoTime();
+            consumerThread.join(remaining);
+            remaining -= TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+            if (remaining <= 0) {
+                break;
+            }
+        }
+
+        // Now safe to shut down the executor — no more submissions possible
+        this.executorService.shutdown();
+        boolean terminated = remaining > 0 && this.executorService.awaitTermination(remaining, TimeUnit.MILLISECONDS);
 
         if (!terminated) {
             log.warn("Worker still has pending jobs after the termination grace period. Forcing shutdown.");
             this.executorService.shutdownNow();
+            this.consumerThreads.forEach(Thread::interrupt);
         }
 
         return terminated;
@@ -168,29 +189,33 @@ public class WorkerJobExecutor {
      * for new {@link WorkerJob} and processing them sequentially.
      */
     private static class WorkerJobConsumer extends WorkerLoop {
-        
+
         private final AtomicReference<WorkerJobProcessor<WorkerJob>> running = new AtomicReference<>(null);
         private final AtomicReference<WorkerJob> workerJob = new AtomicReference<>(null);
 
         private final WorkerQueue<WorkerJob> workerJobQueue;
         private final WorkerJobProcessorFactory workerJobProcessorFactory;
         private final io.kestra.core.worker.models.WorkerContext workerContext;
+        private final ExecutorService taskExecutorService;
 
         public WorkerJobConsumer(int index,
                                  WorkerQueue<WorkerJob> workerJobQueue,
                                  WorkerJobProcessorFactory workerJobProcessorFactory,
-                                 io.kestra.core.worker.models.WorkerContext workerContext) {
+                                 io.kestra.core.worker.models.WorkerContext workerContext,
+                                 ExecutorService taskExecutorService) {
             super("WorkerJobConsumer-" + index);
             this.workerJobQueue = workerJobQueue;
             this.workerJobProcessorFactory = workerJobProcessorFactory;
             this.workerContext = workerContext;
+            this.taskExecutorService = taskExecutorService;
         }
 
         /**
          * Polls for new {@link WorkerJob} and processes them sequentially.
          * <p>
          * It blocks while waiting for new jobs and ensures that only one job is processed
-         * at a time. This method will not return unless interrupted or explicitly stopped.
+         * at a time. Tasks are submitted to the platform thread pool for execution,
+         * providing interrupt isolation between the consumer and the task.
          */
         @Override
         protected void doOnLoop() throws Exception {
@@ -206,7 +231,14 @@ public class WorkerJobExecutor {
                 WorkerJobProcessor<WorkerJob> processor = workerJobProcessorFactory.create(workerContext, job);
                 running.set(processor);
                 workerJob.set(job);
-                processor.process(job);
+
+                // Submit task to thread pool; consumer waits
+                Future<?> future = taskExecutorService.submit(() -> processor.process(job));
+                future.get();
+            } catch (ExecutionException | RejectedExecutionException e) {
+                // Task exception is fully contained — consumer never fails from task errors
+                Throwable cause = e.getCause() != null ? e.getCause() : e;
+                log.error("Error while processing job '{}'", job.uid(), cause);
             } finally {
                 running.set(null);
                 workerJob.set(null);

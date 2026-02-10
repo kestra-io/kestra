@@ -95,7 +95,6 @@
     const activeNames = ref<string[]>([]);
 
     const FIRST_FIELDS = ["id", "forced", "on", "field", "type"];
-    const GENERIC_TASK_FIELDS = ["retry", "timeout", "runIf", "disabled", "allowFailure", "allowWarning", "logLevel", "logToFile", "workerGroup", "description"];
 
     type Entry = [string, any];
 
@@ -111,13 +110,8 @@
                 return aIndex - bIndex;
             }
 
-            const aIsGeneric = GENERIC_TASK_FIELDS.includes(a[0]);
-            const bIsGeneric = GENERIC_TASK_FIELDS.includes(b[0]);
-            if (aIsGeneric && !bIsGeneric) return 1;
-            if (!aIsGeneric && bIsGeneric) return -1;
-
-            const aRequired = (required || []).includes(a[0]) || a[1]?.$required === true;
-            const bRequired = (required || []).includes(b[0]) || b[1]?.$required === true;
+            const aRequired = (required || []).includes(a[0]);
+            const bRequired = (required || []).includes(b[0]);
 
             if (aRequired && !bRequired) return -1;
             if (!aRequired && bRequired) return 1;
@@ -163,7 +157,7 @@
 
     const sortedProperties = computed<Entry[]>(() => sortProperties(filteredProperties.value, props.schema?.required));
 
-    const isRequired = (key: string) => props.schema?.properties?.[key]?.$required === true;
+    const isRequired = (key: string) => Boolean(props.schema?.required?.includes(key));
 
     const dataTypesMap = inject(DATA_TYPES_MAP_INJECTION_KEY, ref<Record<string, string[] | undefined>>({}));
 
@@ -221,7 +215,7 @@
             fieldKey: key,
             task: props.modelValue,
             schema: schema,
-            required: isRequired(key),
+            required: props.schema?.required,
         } as const;
     }
 </script>

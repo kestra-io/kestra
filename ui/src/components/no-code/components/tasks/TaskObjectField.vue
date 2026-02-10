@@ -104,8 +104,7 @@
     const taskComponent = useTemplateRef<{resetSelectType?: () => void}>("taskComponent");
 
     const isRequired = computed(() => {
-        if (props.disabled) return false;
-        return props.schema?.$required === true || Array.isArray(props.required) && props.required.includes(props.fieldKey)
+        return !props.disabled && props.required?. includes(props.fieldKey);// && props.schema.$required;
     });
 
 
@@ -239,19 +238,5 @@
         color: var(--ks-content-secondary);
         cursor: pointer;
     }
-}
-
-.field-label-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
-}
-
-.required-asterisk {
-    color: var(--ks-content-alert);
-    font-size: 1.2em;
-    font-weight: bold;
-    line-height: 1;
 }
 </style>

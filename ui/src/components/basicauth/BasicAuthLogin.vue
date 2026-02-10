@@ -88,6 +88,7 @@
     import Logo from "../home/Logo.vue"
 
     import {useCoreStore} from "../../stores/core"
+    import {useApiStore} from "../../stores/api"
     import {useMiscStore} from "override/stores/misc"
     import {useSurveySkip} from "../../composables/useSurveyData"
     import {apiUrlWithoutTenants, apiUrl} from "override/utils/route"
@@ -104,6 +105,7 @@
     const route = useRoute()
     const {t} = useI18n()
     const coreStore = useCoreStore()
+    const apiStore = useApiStore()
     const miscStore = useMiscStore()
     const {shouldShowHelloDialog} = useSurveySkip()
 
@@ -273,6 +275,10 @@
     }
 
     const openTroubleshootingGuide = () => {
+        apiStore.posthogEvents({
+            type: "ossauth",
+            action: "forgot_password_click",
+        })
         window.open("https://kestra.io/docs/administrator-guide/basic-auth-troubleshooting", "_blank")
     }
 </script>

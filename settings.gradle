@@ -1,4 +1,17 @@
+plugins {
+    id("com.gradle.develocity") version "4.3.2"
+    id("com.gradle.common-custom-user-data-gradle-plugin") version "2.4.0"
+}
+def isCI = System.getenv('CI') != null
+develocity {
+    server = "https://develocity.kestra.io"
+    buildScan {
+        uploadInBackground = !isCI
+    }
+}
+
 rootProject.name = "kestra"
+
 
 include 'platform'
 

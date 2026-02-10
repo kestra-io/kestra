@@ -136,7 +136,7 @@
         if(allSchemaSameType.value && schema.items){
             return `${schema.type}.${schema.items.type}${schema.items.format ? `.${schema.items.format}` : ""}`;
         }
-        return schema.type;
+        return schema.format ?? schema.type;
     }
 
     const schemaByType = computed(() => {
@@ -174,13 +174,14 @@
         // if all schemas are of type array we have to
         // look at the type of their items to differentiate them
         if(allSchemaSameType.value){
-            return schemas.value.map((schema: any) => {
-                const itemsType = schema.items?.format ?? schema.items?.type;
+            return schemas.value.map((schema) => {
+                const itemsType = schema.type === "array" ? schema.items?.format ?? schema.items?.type : schema.format ?? schema.type;
+                const itemsTypeString = typeof itemsType === "object" ? itemsType.const : itemsType;
 
                 return {
-                    label: itemsType?.charAt(0).toUpperCase() + itemsType?.slice(1),
+                    label: itemsTypeString ? itemsTypeString.charAt(0).toUpperCase() + itemsTypeString.slice(1) : "Unknown",
                     value: makeKey(schema),
-                    id: itemsType,
+                    id: itemsTypeString,
                 };
             })
         }

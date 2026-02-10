@@ -335,6 +335,7 @@
     import {useToast} from "../../utils/toast";
 
     import {useFlowStore} from "../../stores/flow";
+    import {useApiStore} from "../../stores/api";
     import {useAuthStore} from "override/stores/auth";
     import {useMiscStore} from "override/stores/misc";
     import {useExecutionsStore} from "../../stores/executions";
@@ -356,6 +357,7 @@
     });
 
     const flowStore = useFlowStore();
+    const apiStore = useApiStore();
     const authStore = useAuthStore();
     const executionsStore = useExecutionsStore();
     const miscStore = useMiscStore();
@@ -549,6 +551,10 @@
     const selectedFlow = ref<any | null>(null);
 
     async function openExecuteModal(flow: any) {
+        apiStore.posthogEvents({
+            type: "FLOW_EXECUTION",
+            action: "open_modal",
+        });
         selectedFlow.value = flow;
 
         await executionsStore.loadFlowForExecution({

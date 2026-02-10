@@ -123,11 +123,18 @@
             };
         },
         methods: {
+            trackExecutionAction(action) {
+                this.apiStore.posthogEvents({
+                    type: "FLOW_EXECUTION",
+                    action,
+                });
+            },
             async handleExecutionStart() {
                 this.closeModal();
                 this.$toast().success(this.$t("execution_started"));
             },
             onClick() {
+                this.trackExecutionAction("open_modal");
                 if (this.$tours["guidedTour"]?.isRunning?.value) {
                     this.$tours["guidedTour"]?.nextStep();
                     this.apiStore.events({

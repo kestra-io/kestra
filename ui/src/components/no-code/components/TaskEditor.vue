@@ -394,9 +394,7 @@
 
         const cleanedValue = removeNullAndUndefined(toRaw(val));
         if (typeof modelValue.value === "string") {
-            modelValue.value = YAML_UTILS.stringify(isPluginDefaults.value
-                ? [cleanedValue]
-                : cleanedValue);
+            modelValue.value = YAML_UTILS.stringify(cleanedValue);
         } else {
             modelValue.value = cleanedValue;
         }
